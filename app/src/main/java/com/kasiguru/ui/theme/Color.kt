@@ -3,8 +3,7 @@ package com.kasiguru.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * KasiGuru color palette — inspired by the coastal beauty of Casiguran, Aurora.
- * Ocean teals, sunset golds, and deep navy create a premium, culturally-rooted feel.
+ * KasiGuru color palette — matches custom mockup NEW ui.png and coastal Casiguran, Aurora vibes.
  */
 
 // ─── Primary: Deep Ocean Teal ───
@@ -24,6 +23,32 @@ val Accent = Color(0xFFFF6B6B)
 val AccentLight = Color(0xFFFF8A8A)
 val AccentContainer = Color(0xFFFFD0D0)
 
+// ─── New Custom UI Theme Colors (NEW ui.png) ───
+val LightThemeBackground = Color(0xFFF2F4F8)
+val LightSurfaceCard = Color(0xFFFFFFFF)
+val TextHeadingBlack = Color(0xFF12161F)
+val TextSubtleGray = Color(0xFF6B7280)
+
+// Card Pastels (NEW ui.png)
+val HeroCardStart = Color(0xFFCBD4FF)
+val HeroCardEnd = Color(0xFFE4E9FF)
+
+val VocabCardStart = Color(0xFFFFC66C)
+val VocabCardEnd = Color(0xFFFFA42B)
+
+val StoriesCardStart = Color(0xFFB8D7FF)
+val StoriesCardEnd = Color(0xFF8DBFFF)
+
+val MiniGamesCardStart = Color(0xFFFFC6F3)
+val MiniGamesCardEnd = Color(0xFFF3A0E5)
+
+val QuestsCardStart = Color(0xFFC7F4EB)
+val QuestsCardEnd = Color(0xFFA1EBDC)
+
+// Floating Bottom Bar (NEW ui.png)
+val FloatingNavBackground = Color(0xFF12161F)
+val FloatingNavActive = Color(0xFFFFFFFF)
+
 // ─── Background & Surface (Dark Theme) ───
 val DarkBackground = Color(0xFF0A1628)
 val DarkSurface = Color(0xFF132039)
@@ -32,17 +57,17 @@ val DarkSurfaceElevated = Color(0xFF213358)
 val DarkCard = Color(0xFF1E2D4D)
 
 // ─── Background & Surface (Light Theme) ───
-val LightBackground = Color(0xFFF5F7FA)
+val LightBackground = Color(0xFFF2F4F8)
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFE8EDF5)
+val LightSurfaceVariant = Color(0xFFE5E9F0)
 val LightCard = Color(0xFFFFFFFF)
 
 // ─── Text ───
-val TextWhite = Color(0xFFF0F4F8)
-val TextGray = Color(0xFFB0BEC5)
-val TextDarkGray = Color(0xFF607D8B)
-val TextDark = Color(0xFF1A2744)
-val TextMuted = Color(0xFF78909C)
+val TextWhite = Color(0xFFFFFFFF)
+val TextGray = Color(0xFF717D96)
+val TextDarkGray = Color(0xFF4A5568)
+val TextDark = Color(0xFF12161F)
+val TextMuted = Color(0xFFA0AEC0)
 
 // ─── Status ───
 val Success = Color(0xFF4CAF50)

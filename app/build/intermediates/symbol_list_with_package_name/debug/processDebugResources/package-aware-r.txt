@@ -688,6 +688,9 @@ drawable ic_call_decline_low
 drawable ic_launcher_foreground
 drawable ic_splash
 drawable icon_background
+drawable img_hero_student
+drawable img_mini_games_board
+drawable img_stories_books
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low

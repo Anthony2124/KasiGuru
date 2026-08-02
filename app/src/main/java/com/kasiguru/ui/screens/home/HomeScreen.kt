@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,8 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,19 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.KasiGuruCard
-import com.kasiguru.ui.components.KasiGuruProgressBar
-import com.kasiguru.ui.components.StreakCounter
-import com.kasiguru.ui.components.XpBadge
-import com.kasiguru.ui.screens.profile.profileIcons
+import com.kasiguru.R
 import com.kasiguru.ui.theme.*
-import com.kasiguru.util.calculateLevelProgress
-import com.kasiguru.util.getLevelTitle
-import com.kasiguru.util.toXpString
 
 @Composable
 fun HomeScreen(
@@ -41,6 +37,7 @@ fun HomeScreen(
     onNavigateToAchievements: () -> Unit,
     onNavigateToCultural: () -> Unit = {},
     onNavigateToFlashcards: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -62,257 +59,467 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Top Header
+        // ─── 1. Top Header: Avatar, Greeting & Bell ───
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Profile Avatar (Clickable)
-                Box(
+                // Avatar with outer ring
+                Surface(
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryDark)
-                        .clickable(onClick = onNavigateToProfile),
-                    contentAlignment = Alignment.Center
+                        .size(54.dp)
+                        .clip(CircleShape),
+                    color = Color(0xFF4FA0FF),
+                    shape = CircleShape
                 ) {
-                    val selectedIcon = profileIcons.getOrElse(progress.profileIconId) { Icons.Default.Person }
-                    Icon(
-                        imageVector = selectedIcon,
-                        contentDescription = "Profile",
-                        tint = PrimaryLight,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(3.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE2F1FF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "👨‍🎓",
+                            fontSize = 28.sp
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.width(16.dp))
 
                 Column {
                     Text(
-                        text = "Magandang aldaw, 👋",
+                        text = "Magandang Aldew,",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextGray
+                        color = TextSubtleGray,
+                        fontSize = 14.sp
                     )
                     Text(
-                        text = progress.userName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            StreakCounter(streak = progress.currentStreak)
-        }
-
-        // Level & XP Card
-        KasiGuruCard(
-            gradientColors = listOf(PrimaryDark, DarkCard),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Level ${progress.level}: ${getLevelTitle(progress.level)}",
+                        text = if (progress.userName.contains("Learner")) "Adrian Miras Pogi" else progress.userName,
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextWhite,
-                        fontWeight = FontWeight.Bold
+                        color = TextHeadingBlack,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Total XP: ${progress.totalXp.toXpString()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextGray
-                    )
-                }
-                XpBadge(xp = progress.totalXp, animate = true)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            KasiGuruProgressBar(
-                progress = calculateLevelProgress(progress.totalXp),
-                showLabel = true,
-                gradientColors = listOf(Secondary, SecondaryLight),
-                backgroundColor = DarkSurfaceVariant
-            )
-        }
-
-        // Quick Daily Review Banner
-        KasiGuruCard(
-            gradientColors = listOf(SecondaryDark, DarkCard),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onNavigateToFlashcards() }
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "⚡ Daily Review Deck",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextWhite,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "10 flashcards ready for spaced repetition recall",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextGray
-                    )
-                }
-                Button(
-                    onClick = onNavigateToFlashcards,
-                    colors = ButtonDefaults.buttonColors(containerColor = Secondary),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Start Review")
                 }
             }
-        }
 
-        // Action Grid
-        Text(
-            text = "Your Learning Journey",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            ActionCard(
-                title = "Vocabulary",
-                subtitle = "${progress.wordsLearned} learned",
-                icon = Icons.AutoMirrored.Filled.MenuBook,
-                gradient = listOf(Primary, PrimaryContainer),
-                onClick = onNavigateToVocabulary,
-                modifier = Modifier.weight(1f)
-            )
-            ActionCard(
-                title = "Stories",
-                subtitle = "${progress.storiesCompleted} read",
-                icon = Icons.Filled.AutoStories,
-                gradient = listOf(Accent, AccentContainer),
-                onClick = onNavigateToStories,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            ActionCard(
-                title = "Mini-Games",
-                subtitle = "${progress.gamesPlayed} played",
-                icon = Icons.Filled.Gamepad,
-                gradient = listOf(Secondary, SecondaryContainer),
-                onClick = onNavigateToGames,
-                modifier = Modifier.weight(1f)
-            )
-            ActionCard(
-                title = "Achievements",
-                subtitle = "View awards",
-                icon = Icons.Filled.EmojiEvents,
-                gradient = listOf(Warning, DarkSurface),
-                onClick = onNavigateToAchievements,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            ActionCard(
-                title = "Heritage",
-                subtitle = "Language Context",
-                icon = Icons.Filled.Info,
-                gradient = listOf(PrimaryDark, DarkSurface),
-                onClick = onNavigateToCultural,
-                modifier = Modifier.weight(1f)
-            )
-            ActionCard(
-                title = "Help & About",
-                subtitle = "App Info & FAQ",
-                icon = Icons.Filled.Help,
-                gradient = listOf(DarkSurfaceVariant, DarkCard),
-                onClick = onNavigateToAbout,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun ActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    gradient: List<Color>,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.aspectRatio(1f),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.linearGradient(gradient))
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
+            // Circular Notification Bell Button
+            Surface(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable { onNavigateToSettings() },
+                shape = CircleShape,
+                color = Color.White,
+                shadowElevation = 2.dp
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = TextWhite,
+                        imageVector = Icons.Default.NotificationsNone,
+                        contentDescription = "Notifications",
+                        tint = TextHeadingBlack,
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextWhite,
-                        fontWeight = FontWeight.Bold
+            }
+        }
+
+        // ─── 2. Hero Banner Card ("Kasiguranin basics") ───
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(210.dp)
+                .clickable { onNavigateToFlashcards() },
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(HeroCardStart, HeroCardEnd)
+                        )
                     )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextWhite.copy(alpha = 0.8f)
+            ) {
+                // Student Writing Illustration (10.png)
+                Image(
+                    painter = painterResource(id = R.drawable.img_hero_student),
+                    contentDescription = "Kasiguranin basics student",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.CenterEnd)
+                        .padding(top = 8.dp)
+                )
+
+                // Text Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.65f)
+                        .padding(start = 24.dp, top = 20.dp, bottom = 20.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Kasiguranin\nbasics",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack,
+                            lineHeight = 36.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Let's learn today!",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextHeadingBlack.copy(alpha = 0.75f)
+                        )
+                    }
+
+                    // Continue Lesson Pill Button
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.clickable { onNavigateToFlashcards() }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Continue your lesson",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextHeadingBlack
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = TextHeadingBlack,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ─── 3. Learning Categories Section ───
+        Text(
+            text = "Learning Categories",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextHeadingBlack
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(310.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Left Column: Vocabulary Tall Card (Orange)
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable { onNavigateToVocabulary() },
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(VocabCardStart, VocabCardEnd)
+                            )
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Badge Pill
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.White.copy(alpha = 0.35f)
+                        ) {
+                            Text(
+                                text = "Vocabulary",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                        }
+
+                        // Big 500+ Hero Stat
+                        Column {
+                            Text(
+                                text = "500+",
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextHeadingBlack
+                            )
+                            Text(
+                                text = "Kasiguranin\nWords &\nPhrases",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack,
+                                lineHeight = 18.sp
+                            )
+                        }
+
+                        // Progress Bar & Count
+                        Column {
+                            LinearProgressIndicator(
+                                progress = { (progress.wordsLearned.toFloat() / 487f).coerceIn(0.1f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(CircleShape),
+                                color = Color.White,
+                                trackColor = Color.White.copy(alpha = 0.3f)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "${progress.wordsLearned} over 487 words learned",
+                                fontSize = 10.sp,
+                                color = TextHeadingBlack.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Right Column: Stories (Blue) & Mini Games (Pink)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Stories Card (Sky Blue)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1.1f)
+                        .clickable { onNavigateToStories() },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(StoriesCardStart, StoriesCardEnd)
+                                )
+                            )
+                    ) {
+                        // Stack of Books Illustration (12.png)
+                        Image(
+                            painter = painterResource(id = R.drawable.img_stories_books),
+                            contentDescription = "Stories books",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxHeight(0.85f)
+                                .align(Alignment.BottomEnd)
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White.copy(alpha = 0.35f)
+                            ) {
+                                Text(
+                                    text = "Stories",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextHeadingBlack
+                                )
+                            }
+
+                            Text(
+                                text = "1 out of 4 Stories Unlocked",
+                                fontSize = 10.sp,
+                                color = TextHeadingBlack.copy(alpha = 0.75f)
+                            )
+
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White.copy(alpha = 0.45f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text("Read", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
+                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Mini Games Card (Pink)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.9f)
+                        .clickable { onNavigateToGames() },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(MiniGamesCardStart, MiniGamesCardEnd)
+                                )
+                            )
+                    ) {
+                        // Gameboard Graphic (11.png)
+                        Image(
+                            painter = painterResource(id = R.drawable.img_mini_games_board),
+                            contentDescription = "Mini games board",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxHeight(0.9f)
+                                .align(Alignment.BottomEnd)
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White.copy(alpha = 0.35f)
+                            ) {
+                                Text(
+                                    text = "Mini Games",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextHeadingBlack
+                                )
+                            }
+
+                            Text(
+                                text = "Play and Earn XP",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextHeadingBlack.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ─── 4. Daily Quests Section (Teal) ───
+        Text(
+            text = "Daily Quests",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextHeadingBlack
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .clickable { onNavigateToAchievements() },
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(QuestsCardStart, QuestsCardEnd)
+                        )
                     )
+                    .padding(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White.copy(alpha = 0.35f)
+                    ) {
+                        Text(
+                            text = "Progress",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Daily Goal: 10 Words/Day",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                            Text(
+                                text = "Current Streak: ${progress.currentStreak} Days 🔥",
+                                fontSize = 12.sp,
+                                color = TextHeadingBlack.copy(alpha = 0.8f)
+                            )
+                        }
+
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White,
+                            shadowElevation = 2.dp
+                        ) {
+                            Text(
+                                text = "🏆 ${progress.totalXp} XP",
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -1,18 +1,30 @@
 [
     {
-        "merged": "com.kasiguru.app-debug-4:/drawable_ic_splash.xml.flat",
-        "source": "com.kasiguru.app-main-6:/drawable/ic_splash.xml"
+        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\drawable_ic_splash.xml.flat",
+        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\drawable\\ic_splash.xml"
     },
     {
-        "merged": "com.kasiguru.app-debug-4:/xml_backup_rules.xml.flat",
-        "source": "com.kasiguru.app-main-6:/xml/backup_rules.xml"
+        "merged": "com.kasiguru.app-debug-4:/drawable_img_hero_student.png.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/img_hero_student.png"
     },
     {
-        "merged": "com.kasiguru.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.kasiguru.app-main-6:/drawable/ic_launcher_foreground.xml"
+        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\drawable\\ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.kasiguru.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.kasiguru.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\xml_backup_rules.xml.flat",
+        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\xml\\backup_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_img_mini_games_board.png.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/img_mini_games_board.png"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_img_stories_books.png.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/img_stories_books.png"
     }
 ]

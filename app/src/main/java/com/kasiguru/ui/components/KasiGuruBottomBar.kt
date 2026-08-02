@@ -40,52 +40,53 @@ fun KasiGuruBottomBar(
         BottomNavItem(Screen.Home.route, "Home", Icons.Filled.Home),
         BottomNavItem(Screen.VocabularyList.route, "Learn", Icons.AutoMirrored.Filled.MenuBook),
         BottomNavItem(Screen.FlashcardDeck.route, "Review", Icons.Filled.Repeat),
-        BottomNavItem(Screen.GameHub.route, "Practice", Icons.Filled.Gamepad),
+        BottomNavItem(Screen.GameHub.route, "Practice", Icons.Filled.GridView),
         BottomNavItem(Screen.Achievements.route, "Profile", Icons.Filled.Person)
     )
 
-    Surface(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .shadow(16.dp, shape = RoundedCornerShape(28.dp)),
-        shape = RoundedCornerShape(28.dp),
-        color = DarkSurface,
-        border = CardDefaults.outlinedCardBorder()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+                .height(68.dp)
+                .shadow(20.dp, shape = RoundedCornerShape(34.dp)),
+            shape = RoundedCornerShape(34.dp),
+            color = FloatingNavBackground
         ) {
-            navItems.forEach { item ->
-                val isSelected = currentRoute == item.route
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                navItems.forEach { item ->
+                    val isSelected = currentRoute == item.route
 
-                val iconColor by animateColorAsState(
-                    targetValue = if (isSelected) Secondary else TextGray,
-                    animationSpec = spring(stiffness = Spring.StiffnessLow),
-                    label = "IconColor"
-                )
+                    val iconColor by animateColorAsState(
+                        targetValue = if (isSelected) FloatingNavBackground else Color(0xFF94A3B8),
+                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                        label = "IconColor"
+                    )
 
-                val backgroundColor by animateColorAsState(
-                    targetValue = if (isSelected) SecondaryContainer.copy(alpha = 0.25f) else Color.Transparent,
-                    animationSpec = spring(stiffness = Spring.StiffnessLow),
-                    label = "BgColor"
-                )
+                    val backgroundColor by animateColorAsState(
+                        targetValue = if (isSelected) FloatingNavActive else Color.Transparent,
+                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                        label = "BgColor"
+                    )
 
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(backgroundColor)
-                        .clickable { onNavigateToRoute(item.route) }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(backgroundColor)
+                            .clickable { onNavigateToRoute(item.route) },
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = item.icon,
@@ -93,14 +94,6 @@ fun KasiGuruBottomBar(
                             tint = iconColor,
                             modifier = Modifier.size(24.dp)
                         )
-                        if (isSelected) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = TextWhite
-                            )
-                        }
                     }
                 }
             }

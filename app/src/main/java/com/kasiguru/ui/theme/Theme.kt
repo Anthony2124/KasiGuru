@@ -11,6 +11,32 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+private val LightColorScheme = lightColorScheme(
+    primary = Primary,
+    onPrimary = TextWhite,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = PrimaryDark,
+    secondary = Secondary,
+    onSecondary = TextDark,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = SecondaryDark,
+    tertiary = Accent,
+    onTertiary = TextWhite,
+    tertiaryContainer = AccentContainer,
+    onTertiaryContainer = TextDark,
+    background = LightThemeBackground,
+    onBackground = TextHeadingBlack,
+    surface = LightSurfaceCard,
+    onSurface = TextHeadingBlack,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = TextSubtleGray,
+    error = Error,
+    onError = TextWhite,
+    errorContainer = ErrorLight,
+    onErrorContainer = TextDark,
+    outline = TextSubtleGray
+)
+
 private val DarkColorScheme = darkColorScheme(
     primary = Primary,
     onPrimary = TextWhite,
@@ -37,45 +63,19 @@ private val DarkColorScheme = darkColorScheme(
     outline = TextDarkGray
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Primary,
-    onPrimary = TextWhite,
-    primaryContainer = PrimaryContainer,
-    onPrimaryContainer = PrimaryDark,
-    secondary = Secondary,
-    onSecondary = TextDark,
-    secondaryContainer = SecondaryContainer,
-    onSecondaryContainer = SecondaryDark,
-    tertiary = Accent,
-    onTertiary = TextWhite,
-    tertiaryContainer = AccentContainer,
-    onTertiaryContainer = TextDark,
-    background = LightBackground,
-    onBackground = TextDark,
-    surface = LightSurface,
-    onSurface = TextDark,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = TextDarkGray,
-    error = Error,
-    onError = TextWhite,
-    errorContainer = ErrorLight,
-    onErrorContainer = TextDark,
-    outline = TextMuted
-)
-
 @Composable
 fun KasiGuruTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = android.graphics.Color.TRANSPARENT
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

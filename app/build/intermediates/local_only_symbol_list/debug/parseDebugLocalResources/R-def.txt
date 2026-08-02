@@ -3,6 +3,9 @@ local
 color ic_launcher_background
 drawable ic_launcher_foreground
 drawable ic_splash
+drawable img_hero_student
+drawable img_mini_games_board
+drawable img_stories_books
 mipmap ic_launcher
 string app_name
 style Theme.KasiGuru
