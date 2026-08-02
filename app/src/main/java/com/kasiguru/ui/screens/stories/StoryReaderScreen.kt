@@ -6,22 +6,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.data.local.entity.StoryPage
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
@@ -48,10 +47,22 @@ fun StoryReaderScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.story?.title ?: "") },
+                title = {
+                    Text(
+                        uiState.story?.title ?: "",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -72,7 +83,7 @@ fun StoryReaderScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Accent)
+                CircularProgressIndicator(color = StoriesCardStart)
             }
             return@Scaffold
         }
@@ -97,24 +108,30 @@ fun StoryReaderScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Illustration Placeholder
+                // Illustration Placeholder Box
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(DarkSurfaceVariant),
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(StoriesCardStart, StoriesCardEnd)
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = targetPage.illustrationDesc,
-                        color = TextGray,
+                        color = TextHeadingBlack,
+                        fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(20.dp)
                     )
                 }
 
@@ -143,11 +160,12 @@ fun StoryReaderScreen(
                                 Text(
                                     text = word,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = TextWhite,
+                                    color = TextHeadingBlack,
                                     fontWeight = FontWeight.Bold
                                 )
                             },
-                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = Primary.copy(alpha = 0.8f))
+                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = HeroCardStart),
+                            shape = RoundedCornerShape(14.dp)
                         )
                     }
                 }
@@ -163,13 +181,18 @@ fun StoryReaderScreen(
 
                 // Audio Button
                 Button(
-                    onClick = { /* TODO: Play Audio */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                    onClick = { /* Play Audio */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = StoriesCardStart),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.Filled.VolumeUp, contentDescription = "Play Audio")
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_volume_high),
+                        contentDescription = "Play Audio",
+                        tint = TextHeadingBlack,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Pakinggan (Listen)")
+                    Text("Pakinggan (Listen)", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -180,12 +203,14 @@ fun StoryReaderScreen(
                 Text(
                     text = "Tagalog",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextDarkGray
+                    color = TextSubtleGray
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = targetPage.tagalog,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
 
@@ -195,13 +220,14 @@ fun StoryReaderScreen(
                 Text(
                     text = "English",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextDarkGray
+                    color = TextSubtleGray
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = targetPage.english,
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
-                    color = TextGray,
+                    color = TextSubtleGray,
                     textAlign = TextAlign.Center
                 )
             }
@@ -227,7 +253,7 @@ fun StoryBottomBar(
             KasiGuruProgressBar(
                 progress = currentPage.toFloat() / totalPages.toFloat(),
                 height = 4.dp,
-                gradientColors = listOf(Accent, AccentContainer),
+                gradientColors = listOf(StoriesCardStart, StoriesCardEnd),
                 animated = true
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -240,29 +266,45 @@ fun StoryBottomBar(
                     onClick = onPrevious,
                     enabled = currentPage > 1
                 ) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Previous")
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        contentDescription = "Previous",
+                        tint = if (currentPage > 1) TextHeadingBlack else TextSubtleGray,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Back")
+                    Text("Back", color = if (currentPage > 1) TextHeadingBlack else TextSubtleGray)
                 }
 
                 Text(
                     text = "$currentPage / $totalPages",
                     style = MaterialTheme.typography.labelLarge,
-                    color = TextDarkGray
+                    color = TextSubtleGray,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Button(
                     onClick = onNext,
-                    colors = ButtonDefaults.buttonColors(containerColor = Accent)
+                    colors = ButtonDefaults.buttonColors(containerColor = StoriesCardStart)
                 ) {
                     if (currentPage == totalPages) {
-                        Text("Finish")
+                        Text("Finish", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Filled.Check, contentDescription = "Finish")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_tick_circle),
+                            contentDescription = "Finish",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(18.dp)
+                        )
                     } else {
-                        Text("Next")
+                        Text("Next", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Filled.ArrowForward, contentDescription = "Next")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_right),
+                            contentDescription = "Next",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }

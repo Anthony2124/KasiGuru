@@ -6,19 +6,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
@@ -34,21 +35,34 @@ fun FlashcardDeckScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Daily Review Deck") },
+                title = {
+                    Text(
+                        "Daily Review Deck",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Secondary)
+                CircularProgressIndicator(color = HeroCardStart)
             }
             return@Scaffold
         }
@@ -61,37 +75,43 @@ fun FlashcardDeckScreen(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                Surface(
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier.padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("🎉", fontSize = 64.sp)
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_cup_outline),
+                            contentDescription = "Complete",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(64.dp)
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             "Daily Deck Complete!",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextWhite
+                            color = TextHeadingBlack
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "You reviewed ${uiState.cards.size} Kasiguranin flashcards today. Keep up your daily streak!",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextGray,
+                            color = TextSubtleGray,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
                             onClick = onNavigateBack,
-                            colors = ButtonDefaults.buttonColors(containerColor = Secondary),
-                            shape = RoundedCornerShape(16.dp)
+                            colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
+                            shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text("Return to Dashboard")
+                            Text("Return to Dashboard", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -117,7 +137,8 @@ fun FlashcardDeckScreen(
         ) {
             KasiGuruProgressBar(
                 progress = (uiState.currentIndex + 1).toFloat() / uiState.cards.size,
-                showLabel = true
+                showLabel = true,
+                gradientColors = listOf(HeroCardStart, HeroCardEnd)
             )
 
             // Flashcard
@@ -130,44 +151,64 @@ fun FlashcardDeckScreen(
                         rotationY = rotation
                         cameraDistance = 12f * density
                     },
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(
+                            brush = if (rotation <= 90f) {
+                                Brush.linearGradient(listOf(HeroCardStart, HeroCardEnd))
+                            } else {
+                                Brush.linearGradient(listOf(VocabCardStart, VocabCardEnd))
+                            }
+                        )
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (rotation <= 90f) {
                         // Front Side: Kasiguranin Word
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = currentCard.category.uppercase(),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White.copy(alpha = 0.4f)
+                            ) {
+                                Text(
+                                    text = currentCard.category.uppercase(),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TextHeadingBlack,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
                                 text = currentCard.kasiguranin,
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextWhite
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                                color = TextHeadingBlack,
+                                fontSize = 32.sp
                             )
                             if (currentCard.ipaNotation.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = "[${currentCard.ipaNotation}]",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextGray
+                                    color = TextHeadingBlack.copy(alpha = 0.8f)
                                 )
                             }
                             Spacer(modifier = Modifier.height(24.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.RotateRight, contentDescription = null, tint = TextGray)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Tap card to flip", style = MaterialTheme.typography.labelSmall, color = TextGray)
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_repeat_outline),
+                                    contentDescription = null,
+                                    tint = TextHeadingBlack,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Tap card to flip", style = MaterialTheme.typography.labelSmall, color = TextHeadingBlack.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
                             }
                         }
                     } else {
@@ -176,39 +217,46 @@ fun FlashcardDeckScreen(
                             modifier = Modifier.graphicsLayer { rotationY = 180f },
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "TRANSLATION",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Secondary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White.copy(alpha = 0.4f)
+                            ) {
+                                Text(
+                                    text = "TRANSLATION",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TextHeadingBlack,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = currentCard.tagalog,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = TextWhite
+                                color = TextHeadingBlack
                             )
                             Text(
                                 text = "(${currentCard.english})",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextGray
+                                color = TextHeadingBlack.copy(alpha = 0.8f)
                             )
 
                             if (currentCard.exampleSentence.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(16.dp))
-                                HorizontalDivider(color = DarkSurfaceVariant)
+                                HorizontalDivider(color = TextHeadingBlack.copy(alpha = 0.2f))
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = "\"${currentCard.exampleSentence}\"",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextWhite,
+                                    color = TextHeadingBlack,
+                                    fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
                                     text = currentCard.exampleTranslation,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TextGray,
+                                    color = TextHeadingBlack.copy(alpha = 0.75f),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -229,9 +277,9 @@ fun FlashcardDeckScreen(
                     },
                     modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Error),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Hard")
+                    Text("Hard", fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = {
@@ -240,9 +288,9 @@ fun FlashcardDeckScreen(
                     },
                     modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Warning),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Good")
+                    Text("Good", fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = {
@@ -251,9 +299,9 @@ fun FlashcardDeckScreen(
                     },
                     modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Success),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Easy")
+                    Text("Easy", fontWeight = FontWeight.Bold)
                 }
             }
         }

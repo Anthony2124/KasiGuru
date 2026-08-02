@@ -7,19 +7,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 data class FaqItem(
@@ -54,107 +52,173 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About & Help") },
+                title = {
+                    Text(
+                        "About & Help",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // App Branding Header
-            Card(
+            // App Branding Banner
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(HeroCardStart, HeroCardEnd)
+                            )
+                        )
+                        .padding(24.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        color = Primary.copy(alpha = 0.2f)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("🌾", fontSize = 40.sp)
+                        Surface(
+                            modifier = Modifier.size(72.dp),
+                            shape = CircleShape,
+                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_book_outline),
+                                    contentDescription = "Logo",
+                                    tint = TextHeadingBlack,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("KasiGuru", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
+                        Text("Version 2.0.0 (Build 2026)", style = MaterialTheme.typography.bodySmall, color = TextHeadingBlack.copy(alpha = 0.8f))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Kasiguranin Language Preservation & Learning Tool",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextHeadingBlack.copy(alpha = 0.75f)
+                        )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("KasiGuru", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TextWhite)
-                    Text("Version 2.0.0 (Build 2026)", style = MaterialTheme.typography.bodySmall, color = TextGray)
+                }
+            }
+
+            // FAQ Section Header
+            Text(
+                text = "Frequently Asked Questions",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextHeadingBlack,
+                fontWeight = FontWeight.Bold
+            )
+
+            faqs.forEach { faq ->
+                FaqCard(item = faq)
+            }
+
+            // Privacy & Terms
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_info_circle),
+                            contentDescription = null,
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Privacy Guidelines", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Empowering indigenous language preservation through gamified learning.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextGray,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        lineHeight = 20.sp
+                        "KasiGuru values your privacy. All user progress, learned vocabulary, and game scores remain 100% offline on your device. No personal data is transmitted without explicit user consent.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSubtleGray,
+                        lineHeight = 18.sp
                     )
                 }
             }
+        }
+    }
+}
 
-            // FAQ Section
-            Text("Frequently Asked Questions", style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Bold)
+@Composable
+fun FaqCard(item: FaqItem) {
+    var isExpanded by remember { mutableStateOf(false) }
 
-            faqs.forEach { faq ->
-                var expanded by remember { mutableStateOf(false) }
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                    modifier = Modifier.clickable { expanded = !expanded }
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(faq.question, color = TextWhite, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                            Icon(
-                                if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
-                                tint = Secondary
-                            )
-                        }
-                        if (expanded) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(faq.answer, style = MaterialTheme.typography.bodyMedium, color = TextGray, lineHeight = 20.sp)
-                        }
-                    }
-                }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { isExpanded = !isExpanded },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = item.question,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextHeadingBlack,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    painter = painterResource(id = if (isExpanded) R.drawable.ic_arrow_left else R.drawable.ic_arrow_right),
+                    contentDescription = null,
+                    tint = TextSubtleGray,
+                    modifier = Modifier.size(18.dp)
+                )
             }
 
-            // Privacy & Legal
-            Text("Privacy & Legal", style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Bold)
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.PrivacyTip, contentDescription = null, tint = Success)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Privacy Policy & Terms", color = TextWhite, fontWeight = FontWeight.Bold)
-                            Text("KasiGuru respects your privacy. No personal data is sold.", style = MaterialTheme.typography.bodySmall, color = TextGray)
-                        }
-                    }
-                }
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = item.answer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSubtleGray,
+                    lineHeight = 20.sp
+                )
             }
         }
     }

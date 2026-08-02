@@ -8,9 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,16 +15,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.kasiguru.R
 import com.kasiguru.ui.navigation.Screen
 import com.kasiguru.ui.theme.*
 
 data class BottomNavItem(
     val route: String,
     val title: String,
-    val icon: ImageVector
+    val iconRes: Int
 )
 
 @Composable
@@ -37,11 +34,11 @@ fun KasiGuruBottomBar(
     modifier: Modifier = Modifier
 ) {
     val navItems = listOf(
-        BottomNavItem(Screen.Home.route, "Home", Icons.Filled.Home),
-        BottomNavItem(Screen.VocabularyList.route, "Learn", Icons.AutoMirrored.Filled.MenuBook),
-        BottomNavItem(Screen.FlashcardDeck.route, "Review", Icons.Filled.Repeat),
-        BottomNavItem(Screen.GameHub.route, "Practice", Icons.Filled.GridView),
-        BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
+        BottomNavItem(Screen.Home.route, "Home", R.drawable.ic_home_outline),
+        BottomNavItem(Screen.VocabularyList.route, "Learn", R.drawable.ic_book_outline),
+        BottomNavItem(Screen.FlashcardDeck.route, "Review", R.drawable.ic_repeat_outline),
+        BottomNavItem(Screen.GameHub.route, "Practice", R.drawable.ic_grid_outline),
+        BottomNavItem(Screen.Profile.route, "Profile", R.drawable.ic_profile_outline)
     )
 
     Box(
@@ -69,13 +66,13 @@ fun KasiGuruBottomBar(
                     val isSelected = currentRoute == item.route
 
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) FloatingNavBackground else Color(0xFF94A3B8),
+                        targetValue = if (isSelected) FloatingNavBackground else TextSubtleGray,
                         animationSpec = spring(stiffness = Spring.StiffnessLow),
                         label = "IconColor"
                     )
 
                     val backgroundColor by animateColorAsState(
-                        targetValue = if (isSelected) FloatingNavActive else Color.Transparent,
+                        targetValue = if (isSelected) FloatingNavActive else androidx.compose.ui.graphics.Color.Transparent,
                         animationSpec = spring(stiffness = Spring.StiffnessLow),
                         label = "BgColor"
                     )
@@ -89,7 +86,7 @@ fun KasiGuruBottomBar(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = item.icon,
+                            painter = painterResource(id = item.iconRes),
                             contentDescription = item.title,
                             tint = iconColor,
                             modifier = Modifier.size(24.dp)

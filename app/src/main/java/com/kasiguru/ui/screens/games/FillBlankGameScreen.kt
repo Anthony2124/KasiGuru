@@ -4,10 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,13 +11,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
+import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
 
@@ -36,18 +36,34 @@ fun FillBlankGameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Fill in the Blank") },
+                title = {
+                    Text(
+                        "Fill in the Blank",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Primary)
+                CircularProgressIndicator(color = QuestsCardEnd)
             }
             return@Scaffold
         }
@@ -63,128 +79,148 @@ fun FillBlankGameScreen(
             return@Scaffold
         }
 
+        val questionNumber = uiState.currentQuestionIndex + 1
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Progress Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Question ${uiState.currentQuestionIndex + 1} of 5",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = TextGray
+            // Header Progress
+            Column {
+                KasiGuruProgressBar(
+                    progress = questionNumber.toFloat() / 5f,
+                    gradientColors = listOf(QuestsCardStart, QuestsCardEnd)
                 )
-                Text(
-                    text = "Score: ${uiState.score}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Primary
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            KasiGuruProgressBar(
-                progress = (uiState.currentQuestionIndex.toFloat() / 5f),
-                gradientColors = listOf(Primary, PrimaryLight),
-                height = 8.dp
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // The Sentence
-            Text(
-                text = "Complete the sentence:",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextDarkGray
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            val sentence = uiState.sentenceTemplate
-            val parts = sentence.split("____")
-            
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = DarkSurfaceVariant,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        if (parts.isNotEmpty()) {
-                            append(parts[0])
-                            withStyle(SpanStyle(color = Primary, fontWeight = FontWeight.Bold)) {
-                                append(uiState.selectedOption ?: "_______")
-                            }
-                            if (parts.size > 1) {
-                                append(parts[1])
-                            }
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(32.dp)
-                )
-            }
-            
-            Text(
-                text = "Root verb: ${uiState.currentVerb?.rootForm} (${uiState.currentVerb?.english})",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextGray,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Options Grid
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                uiState.options.chunked(2).forEach { rowOptions ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Question $questionNumber/5",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = QuestsCardStart
                     ) {
-                        rowOptions.forEach { option ->
-                            val isSelected = option == uiState.selectedOption
-                            val isCorrectAnswer = option == uiState.correctAnswer
-                            
-                            val backgroundColor = when {
-                                !isSelected && uiState.selectedOption != null && isCorrectAnswer -> Success.copy(alpha = 0.2f)
-                                isSelected && uiState.isCorrect == true -> Success
-                                isSelected && uiState.isCorrect == false -> Error
-                                else -> MaterialTheme.colorScheme.surface
-                            }
+                        Text(
+                            text = "Score: ${uiState.score}",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
+                        )
+                    }
+                }
+            }
 
-                            Card(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .clickable(enabled = uiState.selectedOption == null) {
-                                        viewModel.selectOption(option)
-                                    },
-                                colors = CardDefaults.cardColors(containerColor = backgroundColor),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(vertical = 20.dp, horizontal = 12.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = option,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = if (isSelected || (uiState.selectedOption != null && isCorrectAnswer)) TextWhite else MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.SemiBold,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
+            // Sentence Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Complete the Sentence:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSubtleGray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val rawTemplate = uiState.sentenceTemplate
+                    val parts = rawTemplate.split("___")
+                    val filledText = buildAnnotatedString {
+                        append(parts.getOrElse(0) { "" })
+                        withStyle(style = SpanStyle(color = TextHeadingBlack, fontWeight = FontWeight.Bold)) {
+                            append(uiState.selectedOption ?: " _____ ")
+                        }
+                        append(parts.getOrElse(1) { "" })
+                    }
+
+                    Text(
+                        text = filledText,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextHeadingBlack,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 32.sp
+                        )
+                    )
+
+                    if (uiState.currentVerb != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "(${uiState.currentVerb?.english})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSubtleGray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+            // Option Buttons
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                uiState.options.forEach { option ->
+                    val isSelected = uiState.selectedOption == option
+                    val isCorrect = isSelected && option == uiState.correctAnswer
+                    val isWrong = isSelected && option != uiState.correctAnswer
+
+                    val optionBgColor = when {
+                        isCorrect -> QuestsCardStart
+                        isWrong -> Error.copy(alpha = 0.2f)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = uiState.selectedOption == null) {
+                                viewModel.selectOption(option)
+                            },
+                        shape = RoundedCornerShape(20.dp),
+                        color = optionBgColor,
+                        shadowElevation = 1.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(18.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                            if (isCorrect) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_tick_circle),
+                                    contentDescription = "Correct",
+                                    tint = Success,
+                                    modifier = Modifier.size(22.dp)
+                                )
                             }
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

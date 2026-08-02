@@ -7,9 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,9 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +40,24 @@ fun GameHubScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mini-Games") },
+                title = {
+                    Text(
+                        "Mini-Games Hub",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -49,7 +66,7 @@ fun GameHubScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Secondary)
+                CircularProgressIndicator(color = MiniGamesCardEnd)
             }
             return@Scaffold
         }
@@ -57,6 +74,7 @@ fun GameHubScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -65,9 +83,9 @@ fun GameHubScreen(
                 GameCard(
                     title = "Word Match",
                     description = "Match Kasiguranin words to Tagalog or English.",
-                    icon = "🧩",
+                    iconRes = R.drawable.ic_grid_outline,
                     highScore = uiState.highScores["word_match"] ?: 0,
-                    gradient = listOf(Secondary, SecondaryContainer),
+                    gradient = listOf(VocabCardStart, VocabCardEnd),
                     onClick = onNavigateToWordMatch
                 )
             }
@@ -76,9 +94,9 @@ fun GameHubScreen(
                 GameCard(
                     title = "Aspect Builder",
                     description = "Conjugate root verbs into correct aspectual forms.",
-                    icon = "🌱",
+                    iconRes = R.drawable.ic_flash_outline,
                     highScore = uiState.highScores["aspect_builder"] ?: 0,
-                    gradient = listOf(PrimaryLight, PrimaryContainer),
+                    gradient = listOf(HeroCardStart, HeroCardEnd),
                     onClick = onNavigateToAspectBuilder
                 )
             }
@@ -87,9 +105,9 @@ fun GameHubScreen(
                 GameCard(
                     title = "Sentence Order",
                     description = "Arrange words into predicate-initial Kasiguranin syntax.",
-                    icon = "🔤",
+                    iconRes = R.drawable.ic_document_outline,
                     highScore = uiState.highScores["sentence_order"] ?: 0,
-                    gradient = listOf(Accent, AccentContainer),
+                    gradient = listOf(StoriesCardStart, StoriesCardEnd),
                     onClick = onNavigateToSentenceOrder
                 )
             }
@@ -98,9 +116,9 @@ fun GameHubScreen(
                 GameCard(
                     title = "Fill in the Blank",
                     description = "Complete sentences with the correct verb aspect.",
-                    icon = "✍️",
+                    iconRes = R.drawable.ic_edit_outline,
                     highScore = uiState.highScores["fill_blank"] ?: 0,
-                    gradient = listOf(Primary, PrimaryContainer),
+                    gradient = listOf(QuestsCardStart, QuestsCardEnd),
                     onClick = onNavigateToFillBlank
                 )
             }
@@ -109,9 +127,9 @@ fun GameHubScreen(
                 GameCard(
                     title = "Audio Quiz",
                     description = "Listen to pronunciation and select the correct word.",
-                    icon = "🎧",
+                    iconRes = R.drawable.ic_volume_high,
                     highScore = uiState.highScores["audio_quiz"] ?: 0,
-                    gradient = listOf(SecondaryDark, Secondary),
+                    gradient = listOf(MiniGamesCardStart, MiniGamesCardEnd),
                     onClick = onNavigateToAudioQuiz
                 )
             }
@@ -119,10 +137,10 @@ fun GameHubScreen(
             if (uiState.recentScores.isNotEmpty()) {
                 item {
                     Text(
-                        text = "Recent Scores",
+                        text = "Recent Activity",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = TextHeadingBlack,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
@@ -151,7 +169,7 @@ fun GameHubScreen(
 fun GameCard(
     title: String,
     description: String,
-    icon: String,
+    iconRes: Int,
     highScore: Int,
     gradient: List<Color>,
     onClick: () -> Unit
@@ -160,39 +178,46 @@ fun GameCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Brush.linearGradient(gradient))
-                .padding(16.dp),
+                .padding(20.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f)),
+                    .background(Color.White.copy(alpha = 0.35f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = icon, style = MaterialTheme.typography.displayMedium)
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = TextHeadingBlack,
+                    modifier = Modifier.size(28.dp)
+                )
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    color = TextWhite,
-                    fontWeight = FontWeight.Bold
+                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextWhite.copy(alpha = 0.9f)
+                    color = TextHeadingBlack.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -200,15 +225,16 @@ fun GameCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.EmojiEvents,
+                        painter = painterResource(id = R.drawable.ic_cup_outline),
                         contentDescription = "High Score",
-                        tint = XpGold,
+                        tint = TextHeadingBlack,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "High Score: $highScore",
+                        text = "Best Score: $highScore",
                         style = MaterialTheme.typography.labelMedium,
-                        color = XpGold
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextHeadingBlack
                     )
                 }
             }
@@ -221,9 +247,10 @@ fun GameCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.PlayArrow,
+                    painter = painterResource(id = R.drawable.ic_play_outline),
                     contentDescription = "Play",
-                    tint = gradient.first()
+                    tint = TextHeadingBlack,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -232,34 +259,42 @@ fun GameCard(
 
 @Composable
 fun ScoreRow(gameName: String, score: Int, total: Int, xp: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(DarkSurfaceVariant)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
     ) {
-        Text(
-            text = gameName,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$score/$total",
-                style = MaterialTheme.typography.labelLarge,
-                color = Success
+                text = gameName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextHeadingBlack
             )
-            Text(
-                text = "+$xp XP",
-                style = MaterialTheme.typography.labelMedium,
-                color = XpGold
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$score/$total",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Success,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "+$xp XP",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

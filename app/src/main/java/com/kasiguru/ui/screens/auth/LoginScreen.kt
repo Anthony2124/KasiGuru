@@ -5,23 +5,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,18 +42,14 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(DarkBackground, GradientOceanEnd)
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 32.dp)
+                .padding(horizontal = 28.dp)
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -65,102 +57,115 @@ fun LoginScreen(
             Text(
                 text = "KasiGuru",
                 style = MaterialTheme.typography.displaySmall,
-                color = PrimaryLight,
-                fontWeight = FontWeight.ExtraBold
+                color = TextHeadingBlack,
+                fontWeight = FontWeight.Black,
+                fontSize = 36.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Sign in to continue your journey",
+                text = "Sign in to continue your learning journey",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextGray,
+                color = TextSubtleGray,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
-            // Username Field
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Username") },
-                leadingIcon = {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = TextMuted)
-                },
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Primary,
-                    unfocusedIndicatorColor = TextMuted,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite,
-                    focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
-                    focusedLabelColor = PrimaryLight,
-                    unfocusedLabelColor = TextMuted
-                ),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    // Username Field
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username") },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_profile_outline),
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TextHeadingBlack,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedLabelColor = TextHeadingBlack,
+                            unfocusedLabelColor = TextSubtleGray
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-            // Password Field
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                leadingIcon = {
-                    Icon(Icons.Default.Lock, contentDescription = null, tint = TextMuted)
-                },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            tint = TextMuted
+                    // Password Field
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_lock_outline),
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_info_circle),
+                                    contentDescription = if (passwordVisible) "Hide" else "Show",
+                                    tint = TextSubtleGray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TextHeadingBlack,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedLabelColor = TextHeadingBlack,
+                            unfocusedLabelColor = TextSubtleGray
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Forgot Password
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                        Text(
+                            text = "Forgot Password?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextHeadingBlack,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { showForgotDialog = true }
                         )
                     }
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Primary,
-                    unfocusedIndicatorColor = TextMuted,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite,
-                    focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
-                    focusedLabelColor = PrimaryLight,
-                    unfocusedLabelColor = TextMuted
-                ),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Forgot Password
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                Text(
-                    text = "Forgot Password?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = PrimaryLight,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { showForgotDialog = true }
-                )
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Error message
             AnimatedVisibility(visible = uiState.error != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Error.copy(alpha = 0.15f)),
-                    shape = RoundedCornerShape(10.dp)
+                    colors = CardDefaults.cardColors(containerColor = Error.copy(alpha = 0.1f)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = uiState.error ?: "",
-                        color = ErrorLight,
+                        color = Error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(12.dp),
                         textAlign = TextAlign.Center
@@ -176,21 +181,21 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
+                shape = RoundedCornerShape(20.dp),
                 enabled = username.isNotBlank() && password.isNotBlank() && !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = TextWhite,
+                        color = TextHeadingBlack,
                         strokeWidth = 2.dp
                     )
                 } else {
                     Text(
                         text = "Sign In",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextWhite,
+                        color = TextHeadingBlack,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -203,12 +208,12 @@ fun LoginScreen(
                 Text(
                     text = "Don't have an account? ",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextGray
+                    color = TextSubtleGray
                 )
                 Text(
                     text = "Register",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Secondary,
+                    color = TextHeadingBlack,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onNavigateToRegister() }
                 )
@@ -220,15 +225,16 @@ fun LoginScreen(
     if (showForgotDialog) {
         AlertDialog(
             onDismissRequest = { showForgotDialog = false },
-            containerColor = DarkCard,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(24.dp),
             title = {
-                Text("Forgot Password", color = TextWhite, fontWeight = FontWeight.Bold)
+                Text("Forgot Password", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
             },
             text = {
                 Text(
                     "This is an offline app. Your password is stored locally on your device. " +
                     "If you've forgotten it, please register a new account.",
-                    color = TextGray,
+                    color = TextSubtleGray,
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -237,12 +243,12 @@ fun LoginScreen(
                     showForgotDialog = false
                     onNavigateToRegister()
                 }) {
-                    Text("Register New Account", color = Secondary)
+                    Text("Register New Account", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showForgotDialog = false }) {
-                    Text("Cancel", color = TextGray)
+                    Text("Cancel", color = TextSubtleGray)
                 }
             }
         )

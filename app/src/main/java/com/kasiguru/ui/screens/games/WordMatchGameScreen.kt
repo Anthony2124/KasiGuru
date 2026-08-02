@@ -5,10 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -17,10 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
+import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
 
@@ -35,18 +35,34 @@ fun WordMatchGameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Word Match") },
+                title = {
+                    Text(
+                        "Word Match",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Secondary)
+                CircularProgressIndicator(color = VocabCardEnd)
             }
             return@Scaffold
         }
@@ -62,178 +78,125 @@ fun WordMatchGameScreen(
             return@Scaffold
         }
 
+        val roundNum = uiState.currentQuestionIndex + 1
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Progress Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Question ${uiState.currentQuestionIndex + 1} of 5",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = TextGray
+            // Header Progress
+            Column {
+                KasiGuruProgressBar(
+                    progress = roundNum.toFloat() / 5f,
+                    gradientColors = listOf(VocabCardStart, VocabCardEnd)
                 )
-                Text(
-                    text = "Score: ${uiState.score}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Secondary
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            KasiGuruProgressBar(
-                progress = (uiState.currentQuestionIndex.toFloat() / 5f),
-                gradientColors = listOf(Secondary, SecondaryLight),
-                height = 8.dp
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // The Word to Match
-            Text(
-                text = "What is the Tagalog meaning of:",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextDarkGray
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = PrimaryContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = uiState.currentWord?.kasiguranin ?: "",
-                    style = MaterialTheme.typography.displayMedium,
-                    color = PrimaryDark,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(32.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Options
-            uiState.options.forEach { option ->
-                val isSelected = option == uiState.selectedOption
-                val isCorrectAnswer = option == uiState.currentWord?.tagalog
-                
-                val backgroundColor = when {
-                    !isSelected && uiState.selectedOption != null && isCorrectAnswer -> Success.copy(alpha = 0.2f)
-                    isSelected && uiState.isCorrect == true -> Success
-                    isSelected && uiState.isCorrect == false -> Error
-                    else -> MaterialTheme.colorScheme.surface
-                }
-
-                val contentColor = when {
-                    isSelected -> TextWhite
-                    !isSelected && uiState.selectedOption != null && isCorrectAnswer -> Success
-                    else -> MaterialTheme.colorScheme.onSurface
-                }
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(enabled = uiState.selectedOption == null) {
-                            viewModel.selectOption(option)
-                        },
-                    colors = CardDefaults.cardColors(containerColor = backgroundColor),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "Round $roundNum/5",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = VocabCardStart
                     ) {
                         Text(
-                            text = option,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = contentColor,
-                            fontWeight = FontWeight.SemiBold
+                            text = "Score: ${uiState.score}",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
                         )
-                        if (isSelected) {
-                            Icon(
-                                imageVector = if (uiState.isCorrect == true) Icons.Filled.CheckCircle else Icons.Filled.Close,
-                                contentDescription = null,
-                                tint = TextWhite
+                    }
+                }
+            }
+
+            // Prompt Word Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Match Kasiguranin Word:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSubtleGray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = uiState.currentWord?.kasiguranin ?: "",
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Black,
+                        color = TextHeadingBlack,
+                        fontSize = 32.sp
+                    )
+                }
+            }
+
+            // Options List
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                uiState.options.forEach { option ->
+                    val isSelected = uiState.selectedOption == option
+                    val isCorrect = isSelected && (option == uiState.currentWord?.english || option == uiState.currentWord?.tagalog)
+                    val isWrong = isSelected && !isCorrect
+
+                    val optionBgColor = when {
+                        isCorrect -> QuestsCardStart
+                        isWrong -> Error.copy(alpha = 0.2f)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = uiState.selectedOption == null) {
+                                viewModel.selectOption(option)
+                            },
+                        shape = RoundedCornerShape(20.dp),
+                        color = optionBgColor,
+                        shadowElevation = 1.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(18.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
                             )
-                        } else if (uiState.selectedOption != null && isCorrectAnswer) {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                tint = Success
-                            )
+                            if (isCorrect) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_tick_circle),
+                                    contentDescription = "Correct",
+                                    tint = Success,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun GameOverView(
-    score: Int,
-    total: Int,
-    xpEarned: Int,
-    onFinish: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = if (score == total) "Perfect!" else "Good Job!",
-            style = MaterialTheme.typography.displayMedium,
-            color = if (score == total) XpGold else Primary,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "You scored $score out of $total",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = XpGold.copy(alpha = 0.2f)
-        ) {
-            Row(
-                modifier = Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(text = "⭐", style = MaterialTheme.typography.displayMedium)
-                Column {
-                    Text(text = "XP Earned", style = MaterialTheme.typography.labelLarge, color = TextGray)
-                    Text(text = "+$xpEarned", style = MaterialTheme.typography.headlineMedium, color = XpGold, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(48.dp))
-        Button(
-            onClick = onFinish,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Primary)
-        ) {
-            Text("Back to Games", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

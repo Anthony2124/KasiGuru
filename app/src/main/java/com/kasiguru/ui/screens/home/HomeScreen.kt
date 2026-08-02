@@ -8,9 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -72,14 +69,15 @@ fun HomeScreen(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.clickable { onNavigateToProfile() }
             ) {
                 // Avatar with outer ring
                 Surface(
                     modifier = Modifier
                         .size(54.dp)
                         .clip(CircleShape),
-                    color = Color(0xFF4FA0FF),
+                    color = HeroCardStart,
                     shape = CircleShape
                 ) {
                     Box(
@@ -87,12 +85,14 @@ fun HomeScreen(
                             .fillMaxSize()
                             .padding(3.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE2F1FF)),
+                            .background(HeroCardEnd),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "👨‍🎓",
-                            fontSize = 28.sp
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_profile_outline),
+                            contentDescription = "Profile",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
@@ -126,10 +126,10 @@ fun HomeScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Default.NotificationsNone,
+                        painter = painterResource(id = R.drawable.ic_notification_outline),
                         contentDescription = "Notifications",
                         tint = TextHeadingBlack,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
@@ -153,7 +153,7 @@ fun HomeScreen(
                         )
                     )
             ) {
-                // Student Writing Illustration (10.png)
+                // Student Writing Illustration
                 Image(
                     painter = painterResource(id = R.drawable.img_hero_student),
                     contentDescription = "Kasiguranin basics student",
@@ -207,7 +207,7 @@ fun HomeScreen(
                                 color = TextHeadingBlack
                             )
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                painter = painterResource(id = R.drawable.ic_arrow_right),
                                 contentDescription = null,
                                 tint = TextHeadingBlack,
                                 modifier = Modifier.size(14.dp)
@@ -333,7 +333,7 @@ fun HomeScreen(
                                 )
                             )
                     ) {
-                        // Stack of Books Illustration (12.png)
+                        // Stack of Books Illustration
                         Image(
                             painter = painterResource(id = R.drawable.img_stories_books),
                             contentDescription = "Stories books",
@@ -378,7 +378,7 @@ fun HomeScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Text("Read", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
-                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
+                                    Icon(painter = painterResource(id = R.drawable.ic_arrow_right), contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
                                 }
                             }
                         }
@@ -403,7 +403,7 @@ fun HomeScreen(
                                 )
                             )
                     ) {
-                        // Gameboard Graphic (11.png)
+                        // Gameboard Graphic
                         Image(
                             painter = painterResource(id = R.drawable.img_mini_games_board),
                             contentDescription = "Mini games board",
@@ -499,11 +499,22 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack
                             )
-                            Text(
-                                text = "Current Streak: ${progress.currentStreak} Days 🔥",
-                                fontSize = 12.sp,
-                                color = TextHeadingBlack.copy(alpha = 0.8f)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_flash_outline),
+                                    contentDescription = "Streak",
+                                    tint = TextHeadingBlack,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Current Streak: ${progress.currentStreak} Days",
+                                    fontSize = 12.sp,
+                                    color = TextHeadingBlack.copy(alpha = 0.8f)
+                                )
+                            }
                         }
 
                         Surface(
@@ -511,13 +522,24 @@ fun HomeScreen(
                             color = Color.White,
                             shadowElevation = 2.dp
                         ) {
-                            Text(
-                                text = "🏆 ${progress.totalXp} XP",
+                            Row(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_cup_outline),
+                                    contentDescription = "XP",
+                                    tint = TextHeadingBlack,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "${progress.totalXp} XP",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextHeadingBlack
+                                )
+                            }
                         }
                     }
                 }

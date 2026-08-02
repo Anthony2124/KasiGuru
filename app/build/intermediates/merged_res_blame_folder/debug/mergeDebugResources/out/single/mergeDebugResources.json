@@ -1,30 +1,130 @@
 [
     {
-        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\drawable_ic_splash.xml.flat",
-        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\drawable\\ic_splash.xml"
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_star_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_star_outline.xml"
     },
     {
-        "merged": "com.kasiguru.app-debug-4:/drawable_img_hero_student.png.flat",
-        "source": "com.kasiguru.app-main-6:/drawable/img_hero_student.png"
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_document_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_document_outline.xml"
     },
     {
-        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\drawable_ic_launcher_foreground.xml.flat",
-        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\drawable\\ic_launcher_foreground.xml"
+        "merged": "com.kasiguru.app-debug-4:/xml_backup_rules.xml.flat",
+        "source": "com.kasiguru.app-main-6:/xml/backup_rules.xml"
     },
     {
-        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\xml_backup_rules.xml.flat",
-        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\xml\\backup_rules.xml"
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_notification_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_notification_outline.xml"
     },
     {
-        "merged": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-debug-4:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "C:\\Users\\U S E R - P C\\.gradle\\daemon\\8.14.5\\com.kasiguru.app-main-6:\\mipmap-anydpi-v26\\ic_launcher.xml"
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_tick_circle.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_tick_circle.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_cup_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_cup_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_profile_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_profile_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_edit_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_edit_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_game_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_game_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_info_circle.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_info_circle.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_play_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_play_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_book_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_book_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_splash.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_splash.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_logout_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_logout_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_lock_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_lock_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_home_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_home_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_search_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_search_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_arrow_left.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_arrow_left.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_medal_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_medal_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_global_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_global_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_arrow_right.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_arrow_right.xml"
     },
     {
         "merged": "com.kasiguru.app-debug-4:/drawable_img_mini_games_board.png.flat",
         "source": "com.kasiguru.app-main-6:/drawable/img_mini_games_board.png"
     },
     {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_setting_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_setting_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_grid_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_grid_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.kasiguru.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_volume_high.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_volume_high.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_img_hero_student.png.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/img_hero_student.png"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_calendar_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_calendar_outline.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_repeat_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_repeat_outline.xml"
+    },
+    {
         "merged": "com.kasiguru.app-debug-4:/drawable_img_stories_books.png.flat",
         "source": "com.kasiguru.app-main-6:/drawable/img_stories_books.png"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_flash_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_flash_outline.xml"
     }
 ]

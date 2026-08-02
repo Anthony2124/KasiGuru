@@ -7,10 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.data.local.entity.StoryEntity
-import com.kasiguru.ui.components.KasiGuruCard
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
 
@@ -40,7 +38,24 @@ fun StoryListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Kasiguranin Stories") },
+                title = {
+                    Text(
+                        "Kasiguranin Stories",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -49,7 +64,7 @@ fun StoryListScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Accent)
+                CircularProgressIndicator(color = StoriesCardEnd)
             }
             return@Scaffold
         }
@@ -57,6 +72,7 @@ fun StoryListScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -88,34 +104,36 @@ fun StoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !isLocked, onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isLocked) DarkSurfaceVariant else MaterialTheme.colorScheme.surface
+            containerColor = if (isLocked) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isLocked) 0.dp else 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isLocked) 0.dp else 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(18.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon
+            // Icon Badge
             Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(20.dp))
                     .background(
                         brush = if (isLocked) {
-                            Brush.linearGradient(listOf(Color.Gray, Color.DarkGray))
+                            Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)))
                         } else {
-                            Brush.linearGradient(listOf(Accent, AccentContainer))
+                            Brush.linearGradient(listOf(StoriesCardStart, StoriesCardEnd))
                         }
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = story.iconEmoji,
-                    style = MaterialTheme.typography.displayMedium
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_document_outline),
+                    contentDescription = null,
+                    tint = TextHeadingBlack,
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
@@ -129,29 +147,30 @@ fun StoryCard(
                     Text(
                         text = story.title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = if (isLocked) TextGray else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
+                        color = if (isLocked) TextSubtleGray else TextHeadingBlack,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
                     if (story.isCompleted) {
                         Icon(
-                            imageVector = Icons.Filled.Check,
+                            painter = painterResource(id = R.drawable.ic_tick_circle),
                             contentDescription = "Completed",
                             tint = Success,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
                 Text(
                     text = story.titleKasiguranin,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Accent,
+                    color = TextHeadingBlack,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = story.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextGray,
+                    color = TextSubtleGray,
                     maxLines = 2
                 )
                 
@@ -160,10 +179,10 @@ fun StoryCard(
                 if (isLocked) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Lock,
+                            painter = painterResource(id = R.drawable.ic_lock_outline),
                             contentDescription = "Locked",
                             tint = Warning,
                             modifier = Modifier.size(16.dp)
@@ -171,30 +190,33 @@ fun StoryCard(
                         Text(
                             text = "Unlocks at ${story.requiredXp} XP",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Warning
+                            color = Warning,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     KasiGuruProgressBar(
                         progress = (currentXp.toFloat() / story.requiredXp.toFloat()).coerceIn(0f, 1f),
                         height = 6.dp,
+                        gradientColors = listOf(StoriesCardStart, StoriesCardEnd),
                         animated = false
                     )
                 } else {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.PlayArrow,
+                            painter = painterResource(id = R.drawable.ic_play_outline),
                             contentDescription = "Read",
-                            tint = Accent,
+                            tint = TextHeadingBlack,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = if (story.currentPage > 0 && !story.isCompleted) "Continue" else "Read Story",
                             style = MaterialTheme.typography.labelMedium,
-                            color = Accent
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
                         )
                     }
                 }

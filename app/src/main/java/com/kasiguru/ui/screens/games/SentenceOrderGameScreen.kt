@@ -1,19 +1,24 @@
 package com.kasiguru.ui.screens.games
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
+import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
 
@@ -28,21 +33,34 @@ fun SentenceOrderGameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sentence Order") },
+                title = {
+                    Text(
+                        "Sentence Order",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "Back",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (uiState.questions.isEmpty() && !uiState.isGameFinished) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Secondary)
+                CircularProgressIndicator(color = StoriesCardStart)
             }
             return@Scaffold
         }
@@ -51,7 +69,7 @@ fun SentenceOrderGameScreen(
             GameOverView(
                 score = uiState.score,
                 total = uiState.questions.size,
-                xpEarned = uiState.score,
+                xpEarned = uiState.score * 10,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -59,130 +77,160 @@ fun SentenceOrderGameScreen(
         }
 
         val question = uiState.questions.getOrNull(uiState.currentQuestionIndex) ?: return@Scaffold
+        val qIndex = uiState.currentQuestionIndex + 1
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+            // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = (uiState.currentQuestionIndex + 1).toFloat() / uiState.questions.size,
-                    showLabel = false
+                    progress = qIndex.toFloat() / uiState.questions.size.toFloat(),
+                    gradientColors = listOf(StoriesCardStart, StoriesCardEnd)
                 )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Card(
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Text(
+                        text = "Sentence $qIndex/${uiState.questions.size}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = StoriesCardStart
                     ) {
                         Text(
-                            text = "Translate to Kasiguranin:",
+                            text = "Score: ${uiState.score}",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            color = TextGray
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "\"${question.englishSentence}\"",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = TextWhite,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Your Answer:",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Answer Slot Area
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 72.dp)
-                        .background(DarkSurfaceVariant, shape = RoundedCornerShape(16.dp))
-                        .padding(12.dp)
-                ) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        uiState.constructedWords.forEach { word ->
-                            SuggestionChip(
-                                onClick = { viewModel.deselectWord(word) },
-                                label = { Text(text = word, fontWeight = FontWeight.Bold) },
-                                colors = SuggestionChipDefaults.suggestionChipColors(containerColor = Primary)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Available Words:",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Word Pool
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    uiState.availableWords.forEach { word ->
-                        FilterChip(
-                            selected = false,
-                            onClick = { viewModel.selectWord(word) },
-                            label = { Text(text = word) }
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
                         )
                     }
                 }
             }
 
-            // Bottom Check / Next Button
-            if (uiState.isCorrect == null) {
-                Button(
-                    onClick = { viewModel.checkAnswer() },
-                    enabled = uiState.constructedWords.isNotEmpty(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Secondary)
-                ) {
-                    Text("Check Answer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                Button(
-                    onClick = { viewModel.nextQuestion() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (uiState.isCorrect == true) Success else Error
-                    )
+            // Target English Meaning
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (uiState.isCorrect == true) "Correct! Next →" else "Incorrect! Next →",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        text = "Arrange words to mean:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSubtleGray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "\"${question.englishSentence}\"",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack,
+                        textAlign = TextAlign.Center
                     )
                 }
+            }
+
+            // Selected Words Slot Box
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = StoriesCardStart.copy(alpha = 0.3f)
+            ) {
+                Box(
+                    modifier = Modifier.padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (uiState.constructedWords.isEmpty()) {
+                        Text(
+                            text = "Tap word blocks below in predicate-initial order",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSubtleGray
+                        )
+                    } else {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.constructedWords.forEach { word ->
+                                FilterChip(
+                                    selected = true,
+                                    onClick = { viewModel.deselectWord(word) },
+                                    label = { Text(word, fontWeight = FontWeight.Bold) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = TextHeadingBlack,
+                                        selectedLabelColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Available Word Bank
+            Column {
+                Text(
+                    text = "Word Bank",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSubtleGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    uiState.availableWords.forEach { word ->
+                        FilterChip(
+                            selected = false,
+                            onClick = { viewModel.selectWord(word) },
+                            label = { Text(word, fontWeight = FontWeight.SemiBold) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = HeroCardStart,
+                                labelColor = TextHeadingBlack
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                }
+            }
+
+            // Check Answer Button
+            Button(
+                onClick = { viewModel.checkAnswer() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = StoriesCardStart),
+                shape = RoundedCornerShape(20.dp),
+                enabled = uiState.constructedWords.isNotEmpty()
+            ) {
+                Text(
+                    text = "Check Sentence Order",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
