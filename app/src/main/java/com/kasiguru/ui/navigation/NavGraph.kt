@@ -42,8 +42,32 @@ fun KasiGuruNavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val showBottomBar = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.VocabularyList.route,
+        Screen.FlashcardDeck.route,
+        Screen.GameHub.route,
+        Screen.Profile.route
+    )
+
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0)
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+        bottomBar = {
+            if (showBottomBar) {
+                KasiGuruBottomBar(
+                    currentRoute = currentRoute,
+                    onNavigateToRoute = { route ->
+                        if (currentRoute != route) {
+                            navController.navigate(route) {
+                                popUpTo(Screen.Home.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,

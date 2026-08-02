@@ -41,7 +41,7 @@ fun KasiGuruBottomBar(
         BottomNavItem(Screen.VocabularyList.route, "Learn", Icons.AutoMirrored.Filled.MenuBook),
         BottomNavItem(Screen.FlashcardDeck.route, "Review", Icons.Filled.Repeat),
         BottomNavItem(Screen.GameHub.route, "Practice", Icons.Filled.GridView),
-        BottomNavItem(Screen.Achievements.route, "Profile", Icons.Filled.Person)
+        BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
     )
 
     Box(
