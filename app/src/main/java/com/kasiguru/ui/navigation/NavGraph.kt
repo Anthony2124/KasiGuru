@@ -1,10 +1,16 @@
 package com.kasiguru.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -12,14 +18,12 @@ import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
+import com.kasiguru.ui.screens.auth.RegisterScreen
+import com.kasiguru.ui.screens.auth.SplashViewModel
+import com.kasiguru.ui.screens.auth.WelcomeScreen
 import com.kasiguru.ui.screens.cultural.CulturalScreen
 import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
-import com.kasiguru.ui.screens.games.AspectBuilderGameScreen
-import com.kasiguru.ui.screens.games.AudioQuizGameScreen
-import com.kasiguru.ui.screens.games.FillBlankGameScreen
-import com.kasiguru.ui.screens.games.GameHubScreen
-import com.kasiguru.ui.screens.games.SentenceOrderGameScreen
-import com.kasiguru.ui.screens.games.WordMatchGameScreen
+import com.kasiguru.ui.screens.games.*
 import com.kasiguru.ui.screens.home.HomeScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
 import com.kasiguru.ui.screens.profile.EditProfileScreen
@@ -28,12 +32,6 @@ import com.kasiguru.ui.screens.settings.SettingsScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.screens.auth.RegisterScreen
-import com.kasiguru.ui.screens.auth.SplashViewModel
-import com.kasiguru.ui.screens.auth.WelcomeScreen
 
 @Composable
 fun KasiGuruNavGraph() {
@@ -50,7 +48,8 @@ fun KasiGuruNavGraph() {
     )
 
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+        contentWindowInsets = WindowInsets(0),
+        containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 KasiGuruBottomBar(

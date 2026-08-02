@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.navigation.Screen
@@ -46,15 +47,21 @@ fun KasiGuruBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .background(Color.Transparent)
+            .padding(start = 24.dp, end = 24.dp, bottom = 20.dp, top = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .shadow(20.dp, shape = RoundedCornerShape(34.dp)),
-            shape = RoundedCornerShape(34.dp),
+                .height(66.dp)
+                .shadow(
+                    elevation = 14.dp,
+                    shape = RoundedCornerShape(33.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.25f),
+                    spotColor = Color.Black.copy(alpha = 0.25f)
+                ),
+            shape = RoundedCornerShape(33.dp),
             color = FloatingNavBackground
         ) {
             Row(
@@ -74,14 +81,14 @@ fun KasiGuruBottomBar(
                     )
 
                     val backgroundColor by animateColorAsState(
-                        targetValue = if (isSelected) FloatingNavActive else androidx.compose.ui.graphics.Color.Transparent,
+                        targetValue = if (isSelected) FloatingNavActive else Color.Transparent,
                         animationSpec = spring(stiffness = Spring.StiffnessLow),
                         label = "BgColor"
                     )
 
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(50.dp)
                             .clip(CircleShape)
                             .background(backgroundColor)
                             .clickable { onNavigateToRoute(item.route) },
