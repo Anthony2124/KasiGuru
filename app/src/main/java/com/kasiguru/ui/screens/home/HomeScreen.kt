@@ -8,6 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -89,7 +95,7 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_profile_outline),
+                            imageVector = Icons.Rounded.Person,
                             contentDescription = "Profile",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(28.dp)
@@ -126,7 +132,7 @@ fun HomeScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_notification_outline),
+                        imageVector = Icons.Rounded.Notifications,
                         contentDescription = "Notifications",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(22.dp)
@@ -207,7 +213,7 @@ fun HomeScreen(
                                 color = TextHeadingBlack
                             )
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_arrow_right),
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                                 contentDescription = null,
                                 tint = TextHeadingBlack,
                                 modifier = Modifier.size(14.dp)
@@ -378,7 +384,7 @@ fun HomeScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Text("Read", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
-                                    Icon(painter = painterResource(id = R.drawable.ic_arrow_right), contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
+                                    Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
                                 }
                             }
                         }
@@ -504,7 +510,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_flash_outline),
+                                    imageVector = Icons.Rounded.Whatshot,
                                     contentDescription = "Streak",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(14.dp)
@@ -528,7 +534,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_cup_outline),
+                                    imageVector = Icons.Rounded.EmojiEvents,
                                     contentDescription = "XP",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(16.dp)
