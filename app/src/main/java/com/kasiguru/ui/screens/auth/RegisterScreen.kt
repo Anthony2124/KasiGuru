@@ -7,19 +7,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,12 +30,9 @@ fun RegisterScreen(
     onNavigateBack: () -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var fullName by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
 
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -61,7 +59,7 @@ fun RegisterScreen(
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "Back",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(24.dp)
@@ -73,7 +71,7 @@ fun RegisterScreen(
 
             // Header
             Text(
-                text = "Create Account",
+                text = "Welcome Learner!",
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextHeadingBlack,
                 fontWeight = FontWeight.Black,
@@ -81,7 +79,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Start your Kasiguranin learning journey today",
+                text = "Enter your details to set up your learner profile",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSubtleGray,
                 textAlign = TextAlign.Center
@@ -96,76 +94,82 @@ fun RegisterScreen(
                 shadowElevation = 2.dp
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    // Username Field
+                    // Full Name Field
                     OutlinedTextField(
-                        value = username,
-                        onValueChange = { username = it },
-                        label = { Text("Username") },
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Full Name") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_profile_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = authTextFieldColors(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TextHeadingBlack,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedLabelColor = TextHeadingBlack,
+                            unfocusedLabelColor = TextSubtleGray
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Email Field
+                    // Age Field
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email (optional)") },
-                        leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_document_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = authTextFieldColors(),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Password Field
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_lock_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_info_circle), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                        value = age,
+                        onValueChange = { newValue ->
+                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                                age = newValue
                             }
                         },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        label = { Text("Age (optional)") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarToday,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = authTextFieldColors(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TextHeadingBlack,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedLabelColor = TextHeadingBlack,
+                            unfocusedLabelColor = TextSubtleGray
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Confirm Password Field
+                    // Address Field
                     OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
-                        label = { Text("Confirm Password") },
+                        value = address,
+                        onValueChange = { address = it },
+                        label = { Text("Address / Location (optional)") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_lock_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.LocationOn,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         },
-                        trailingIcon = {
-                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                Icon(painter = painterResource(id = R.drawable.ic_info_circle), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
-                            }
-                        },
-                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        colors = authTextFieldColors(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TextHeadingBlack,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedLabelColor = TextHeadingBlack,
+                            unfocusedLabelColor = TextSubtleGray
+                        ),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
@@ -197,10 +201,9 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     viewModel.registerUser(
-                        username = username,
-                        password = password,
-                        confirmPassword = confirmPassword,
-                        email = email
+                        fullName = fullName,
+                        ageStr = age,
+                        address = address
                     )
                 },
                 modifier = Modifier
@@ -208,7 +211,7 @@ fun RegisterScreen(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
                 shape = RoundedCornerShape(20.dp),
-                enabled = username.isNotBlank() && password.isNotBlank() && !uiState.isLoading
+                enabled = fullName.isNotBlank() && !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
@@ -218,7 +221,7 @@ fun RegisterScreen(
                     )
                 } else {
                     Text(
-                        text = "Create Account",
+                        text = "Start Learning",
                         style = MaterialTheme.typography.titleMedium,
                         color = TextHeadingBlack,
                         fontWeight = FontWeight.Bold
@@ -229,7 +232,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(horizontalArrangement = Arrangement.Center) {
-                Text("Already have an account? ", color = TextSubtleGray, style = MaterialTheme.typography.bodyMedium)
+                Text("Already have a profile? ", color = TextSubtleGray, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = "Sign In",
                     color = TextHeadingBlack,
@@ -239,52 +242,5 @@ fun RegisterScreen(
                 )
             }
         }
-
-        val showOtpDialog by viewModel.showOtpDialog.collectAsState()
-        if (showOtpDialog) {
-            var otpInput by remember { mutableStateOf("") }
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissOtpDialog() },
-                containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(24.dp),
-                title = { Text("Verify Email", color = TextHeadingBlack, fontWeight = FontWeight.Bold) },
-                text = {
-                    Column {
-                        Text("We've sent a 6-digit verification code to your email. Please enter it below:", color = TextSubtleGray)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = otpInput,
-                            onValueChange = { if (it.length <= 6) otpInput = it },
-                            colors = authTextFieldColors(),
-                            shape = RoundedCornerShape(16.dp),
-                            singleLine = true
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { viewModel.verifyOtp(otpInput) },
-                        colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Verify", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.dismissOtpDialog() }) {
-                        Text("Cancel", color = TextSubtleGray)
-                    }
-                }
-            )
-        }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = TextHeadingBlack,
-    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-    focusedLabelColor = TextHeadingBlack,
-    unfocusedLabelColor = TextSubtleGray
-)

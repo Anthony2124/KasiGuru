@@ -435,85 +435,85 @@ public final class DaggerKasiGuruApp_HiltComponents_SingletonC {
 
     @IdentifierNameString
     private static final class LazyClassKeyProvider {
-      static String com_kasiguru_ui_screens_auth_SplashViewModel = "com.kasiguru.ui.screens.auth.SplashViewModel";
-
-      static String com_kasiguru_ui_screens_flashcards_FlashcardViewModel = "com.kasiguru.ui.screens.flashcards.FlashcardViewModel";
-
-      static String com_kasiguru_ui_screens_games_AspectBuilderViewModel = "com.kasiguru.ui.screens.games.AspectBuilderViewModel";
-
-      static String com_kasiguru_ui_screens_home_HomeViewModel = "com.kasiguru.ui.screens.home.HomeViewModel";
-
-      static String com_kasiguru_ui_screens_auth_RegisterViewModel = "com.kasiguru.ui.screens.auth.RegisterViewModel";
-
-      static String com_kasiguru_ui_screens_games_AudioQuizViewModel = "com.kasiguru.ui.screens.games.AudioQuizViewModel";
-
-      static String com_kasiguru_ui_screens_profile_ProfileViewModel = "com.kasiguru.ui.screens.profile.ProfileViewModel";
-
-      static String com_kasiguru_ui_screens_games_SentenceOrderViewModel = "com.kasiguru.ui.screens.games.SentenceOrderViewModel";
-
       static String com_kasiguru_ui_screens_auth_LoginViewModel = "com.kasiguru.ui.screens.auth.LoginViewModel";
-
-      static String com_kasiguru_ui_screens_games_WordMatchViewModel = "com.kasiguru.ui.screens.games.WordMatchViewModel";
-
-      static String com_kasiguru_ui_screens_games_FillBlankViewModel = "com.kasiguru.ui.screens.games.FillBlankViewModel";
-
-      static String com_kasiguru_ui_screens_vocabulary_VocabularyViewModel = "com.kasiguru.ui.screens.vocabulary.VocabularyViewModel";
-
-      static String com_kasiguru_ui_screens_achievements_AchievementsViewModel = "com.kasiguru.ui.screens.achievements.AchievementsViewModel";
-
-      static String com_kasiguru_ui_screens_games_GamesViewModel = "com.kasiguru.ui.screens.games.GamesViewModel";
-
-      static String com_kasiguru_ui_screens_stories_StoryReaderViewModel = "com.kasiguru.ui.screens.stories.StoryReaderViewModel";
 
       static String com_kasiguru_ui_screens_stories_StoriesViewModel = "com.kasiguru.ui.screens.stories.StoriesViewModel";
 
-      @KeepFieldType
-      SplashViewModel com_kasiguru_ui_screens_auth_SplashViewModel2;
+      static String com_kasiguru_ui_screens_games_AudioQuizViewModel = "com.kasiguru.ui.screens.games.AudioQuizViewModel";
 
-      @KeepFieldType
-      FlashcardViewModel com_kasiguru_ui_screens_flashcards_FlashcardViewModel2;
+      static String com_kasiguru_ui_screens_auth_RegisterViewModel = "com.kasiguru.ui.screens.auth.RegisterViewModel";
 
-      @KeepFieldType
-      AspectBuilderViewModel com_kasiguru_ui_screens_games_AspectBuilderViewModel2;
+      static String com_kasiguru_ui_screens_games_AspectBuilderViewModel = "com.kasiguru.ui.screens.games.AspectBuilderViewModel";
 
-      @KeepFieldType
-      HomeViewModel com_kasiguru_ui_screens_home_HomeViewModel2;
+      static String com_kasiguru_ui_screens_profile_ProfileViewModel = "com.kasiguru.ui.screens.profile.ProfileViewModel";
 
-      @KeepFieldType
-      RegisterViewModel com_kasiguru_ui_screens_auth_RegisterViewModel2;
+      static String com_kasiguru_ui_screens_games_FillBlankViewModel = "com.kasiguru.ui.screens.games.FillBlankViewModel";
 
-      @KeepFieldType
-      AudioQuizViewModel com_kasiguru_ui_screens_games_AudioQuizViewModel2;
+      static String com_kasiguru_ui_screens_games_GamesViewModel = "com.kasiguru.ui.screens.games.GamesViewModel";
 
-      @KeepFieldType
-      ProfileViewModel com_kasiguru_ui_screens_profile_ProfileViewModel2;
+      static String com_kasiguru_ui_screens_achievements_AchievementsViewModel = "com.kasiguru.ui.screens.achievements.AchievementsViewModel";
 
-      @KeepFieldType
-      SentenceOrderViewModel com_kasiguru_ui_screens_games_SentenceOrderViewModel2;
+      static String com_kasiguru_ui_screens_auth_SplashViewModel = "com.kasiguru.ui.screens.auth.SplashViewModel";
+
+      static String com_kasiguru_ui_screens_games_SentenceOrderViewModel = "com.kasiguru.ui.screens.games.SentenceOrderViewModel";
+
+      static String com_kasiguru_ui_screens_stories_StoryReaderViewModel = "com.kasiguru.ui.screens.stories.StoryReaderViewModel";
+
+      static String com_kasiguru_ui_screens_vocabulary_VocabularyViewModel = "com.kasiguru.ui.screens.vocabulary.VocabularyViewModel";
+
+      static String com_kasiguru_ui_screens_flashcards_FlashcardViewModel = "com.kasiguru.ui.screens.flashcards.FlashcardViewModel";
+
+      static String com_kasiguru_ui_screens_games_WordMatchViewModel = "com.kasiguru.ui.screens.games.WordMatchViewModel";
+
+      static String com_kasiguru_ui_screens_home_HomeViewModel = "com.kasiguru.ui.screens.home.HomeViewModel";
 
       @KeepFieldType
       LoginViewModel com_kasiguru_ui_screens_auth_LoginViewModel2;
 
       @KeepFieldType
-      WordMatchViewModel com_kasiguru_ui_screens_games_WordMatchViewModel2;
+      StoriesViewModel com_kasiguru_ui_screens_stories_StoriesViewModel2;
+
+      @KeepFieldType
+      AudioQuizViewModel com_kasiguru_ui_screens_games_AudioQuizViewModel2;
+
+      @KeepFieldType
+      RegisterViewModel com_kasiguru_ui_screens_auth_RegisterViewModel2;
+
+      @KeepFieldType
+      AspectBuilderViewModel com_kasiguru_ui_screens_games_AspectBuilderViewModel2;
+
+      @KeepFieldType
+      ProfileViewModel com_kasiguru_ui_screens_profile_ProfileViewModel2;
 
       @KeepFieldType
       FillBlankViewModel com_kasiguru_ui_screens_games_FillBlankViewModel2;
 
       @KeepFieldType
-      VocabularyViewModel com_kasiguru_ui_screens_vocabulary_VocabularyViewModel2;
+      GamesViewModel com_kasiguru_ui_screens_games_GamesViewModel2;
 
       @KeepFieldType
       AchievementsViewModel com_kasiguru_ui_screens_achievements_AchievementsViewModel2;
 
       @KeepFieldType
-      GamesViewModel com_kasiguru_ui_screens_games_GamesViewModel2;
+      SplashViewModel com_kasiguru_ui_screens_auth_SplashViewModel2;
+
+      @KeepFieldType
+      SentenceOrderViewModel com_kasiguru_ui_screens_games_SentenceOrderViewModel2;
 
       @KeepFieldType
       StoryReaderViewModel com_kasiguru_ui_screens_stories_StoryReaderViewModel2;
 
       @KeepFieldType
-      StoriesViewModel com_kasiguru_ui_screens_stories_StoriesViewModel2;
+      VocabularyViewModel com_kasiguru_ui_screens_vocabulary_VocabularyViewModel2;
+
+      @KeepFieldType
+      FlashcardViewModel com_kasiguru_ui_screens_flashcards_FlashcardViewModel2;
+
+      @KeepFieldType
+      WordMatchViewModel com_kasiguru_ui_screens_games_WordMatchViewModel2;
+
+      @KeepFieldType
+      HomeViewModel com_kasiguru_ui_screens_home_HomeViewModel2;
     }
   }
 
@@ -601,85 +601,85 @@ public final class DaggerKasiGuruApp_HiltComponents_SingletonC {
 
     @IdentifierNameString
     private static final class LazyClassKeyProvider {
-      static String com_kasiguru_ui_screens_games_FillBlankViewModel = "com.kasiguru.ui.screens.games.FillBlankViewModel";
-
-      static String com_kasiguru_ui_screens_stories_StoriesViewModel = "com.kasiguru.ui.screens.stories.StoriesViewModel";
-
-      static String com_kasiguru_ui_screens_auth_SplashViewModel = "com.kasiguru.ui.screens.auth.SplashViewModel";
-
-      static String com_kasiguru_ui_screens_games_AudioQuizViewModel = "com.kasiguru.ui.screens.games.AudioQuizViewModel";
-
-      static String com_kasiguru_ui_screens_flashcards_FlashcardViewModel = "com.kasiguru.ui.screens.flashcards.FlashcardViewModel";
-
-      static String com_kasiguru_ui_screens_home_HomeViewModel = "com.kasiguru.ui.screens.home.HomeViewModel";
-
-      static String com_kasiguru_ui_screens_games_WordMatchViewModel = "com.kasiguru.ui.screens.games.WordMatchViewModel";
+      static String com_kasiguru_ui_screens_stories_StoryReaderViewModel = "com.kasiguru.ui.screens.stories.StoryReaderViewModel";
 
       static String com_kasiguru_ui_screens_vocabulary_VocabularyViewModel = "com.kasiguru.ui.screens.vocabulary.VocabularyViewModel";
 
-      static String com_kasiguru_ui_screens_games_GamesViewModel = "com.kasiguru.ui.screens.games.GamesViewModel";
+      static String com_kasiguru_ui_screens_auth_RegisterViewModel = "com.kasiguru.ui.screens.auth.RegisterViewModel";
 
-      static String com_kasiguru_ui_screens_achievements_AchievementsViewModel = "com.kasiguru.ui.screens.achievements.AchievementsViewModel";
+      static String com_kasiguru_ui_screens_games_GamesViewModel = "com.kasiguru.ui.screens.games.GamesViewModel";
 
       static String com_kasiguru_ui_screens_profile_ProfileViewModel = "com.kasiguru.ui.screens.profile.ProfileViewModel";
 
-      static String com_kasiguru_ui_screens_auth_RegisterViewModel = "com.kasiguru.ui.screens.auth.RegisterViewModel";
+      static String com_kasiguru_ui_screens_auth_LoginViewModel = "com.kasiguru.ui.screens.auth.LoginViewModel";
 
-      static String com_kasiguru_ui_screens_games_SentenceOrderViewModel = "com.kasiguru.ui.screens.games.SentenceOrderViewModel";
+      static String com_kasiguru_ui_screens_games_WordMatchViewModel = "com.kasiguru.ui.screens.games.WordMatchViewModel";
+
+      static String com_kasiguru_ui_screens_auth_SplashViewModel = "com.kasiguru.ui.screens.auth.SplashViewModel";
+
+      static String com_kasiguru_ui_screens_home_HomeViewModel = "com.kasiguru.ui.screens.home.HomeViewModel";
+
+      static String com_kasiguru_ui_screens_stories_StoriesViewModel = "com.kasiguru.ui.screens.stories.StoriesViewModel";
+
+      static String com_kasiguru_ui_screens_games_AudioQuizViewModel = "com.kasiguru.ui.screens.games.AudioQuizViewModel";
+
+      static String com_kasiguru_ui_screens_games_FillBlankViewModel = "com.kasiguru.ui.screens.games.FillBlankViewModel";
 
       static String com_kasiguru_ui_screens_games_AspectBuilderViewModel = "com.kasiguru.ui.screens.games.AspectBuilderViewModel";
 
-      static String com_kasiguru_ui_screens_auth_LoginViewModel = "com.kasiguru.ui.screens.auth.LoginViewModel";
+      static String com_kasiguru_ui_screens_games_SentenceOrderViewModel = "com.kasiguru.ui.screens.games.SentenceOrderViewModel";
 
-      static String com_kasiguru_ui_screens_stories_StoryReaderViewModel = "com.kasiguru.ui.screens.stories.StoryReaderViewModel";
+      static String com_kasiguru_ui_screens_flashcards_FlashcardViewModel = "com.kasiguru.ui.screens.flashcards.FlashcardViewModel";
 
-      @KeepFieldType
-      FillBlankViewModel com_kasiguru_ui_screens_games_FillBlankViewModel2;
-
-      @KeepFieldType
-      StoriesViewModel com_kasiguru_ui_screens_stories_StoriesViewModel2;
+      static String com_kasiguru_ui_screens_achievements_AchievementsViewModel = "com.kasiguru.ui.screens.achievements.AchievementsViewModel";
 
       @KeepFieldType
-      SplashViewModel com_kasiguru_ui_screens_auth_SplashViewModel2;
-
-      @KeepFieldType
-      AudioQuizViewModel com_kasiguru_ui_screens_games_AudioQuizViewModel2;
-
-      @KeepFieldType
-      FlashcardViewModel com_kasiguru_ui_screens_flashcards_FlashcardViewModel2;
-
-      @KeepFieldType
-      HomeViewModel com_kasiguru_ui_screens_home_HomeViewModel2;
-
-      @KeepFieldType
-      WordMatchViewModel com_kasiguru_ui_screens_games_WordMatchViewModel2;
+      StoryReaderViewModel com_kasiguru_ui_screens_stories_StoryReaderViewModel2;
 
       @KeepFieldType
       VocabularyViewModel com_kasiguru_ui_screens_vocabulary_VocabularyViewModel2;
 
       @KeepFieldType
-      GamesViewModel com_kasiguru_ui_screens_games_GamesViewModel2;
+      RegisterViewModel com_kasiguru_ui_screens_auth_RegisterViewModel2;
 
       @KeepFieldType
-      AchievementsViewModel com_kasiguru_ui_screens_achievements_AchievementsViewModel2;
+      GamesViewModel com_kasiguru_ui_screens_games_GamesViewModel2;
 
       @KeepFieldType
       ProfileViewModel com_kasiguru_ui_screens_profile_ProfileViewModel2;
 
       @KeepFieldType
-      RegisterViewModel com_kasiguru_ui_screens_auth_RegisterViewModel2;
+      LoginViewModel com_kasiguru_ui_screens_auth_LoginViewModel2;
 
       @KeepFieldType
-      SentenceOrderViewModel com_kasiguru_ui_screens_games_SentenceOrderViewModel2;
+      WordMatchViewModel com_kasiguru_ui_screens_games_WordMatchViewModel2;
+
+      @KeepFieldType
+      SplashViewModel com_kasiguru_ui_screens_auth_SplashViewModel2;
+
+      @KeepFieldType
+      HomeViewModel com_kasiguru_ui_screens_home_HomeViewModel2;
+
+      @KeepFieldType
+      StoriesViewModel com_kasiguru_ui_screens_stories_StoriesViewModel2;
+
+      @KeepFieldType
+      AudioQuizViewModel com_kasiguru_ui_screens_games_AudioQuizViewModel2;
+
+      @KeepFieldType
+      FillBlankViewModel com_kasiguru_ui_screens_games_FillBlankViewModel2;
 
       @KeepFieldType
       AspectBuilderViewModel com_kasiguru_ui_screens_games_AspectBuilderViewModel2;
 
       @KeepFieldType
-      LoginViewModel com_kasiguru_ui_screens_auth_LoginViewModel2;
+      SentenceOrderViewModel com_kasiguru_ui_screens_games_SentenceOrderViewModel2;
 
       @KeepFieldType
-      StoryReaderViewModel com_kasiguru_ui_screens_stories_StoryReaderViewModel2;
+      FlashcardViewModel com_kasiguru_ui_screens_flashcards_FlashcardViewModel2;
+
+      @KeepFieldType
+      AchievementsViewModel com_kasiguru_ui_screens_achievements_AchievementsViewModel2;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

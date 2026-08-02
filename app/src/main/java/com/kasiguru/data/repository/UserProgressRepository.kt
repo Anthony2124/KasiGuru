@@ -35,6 +35,17 @@ class UserProgressRepository @Inject constructor(
             UserProgressEntity(userName = username, password = password, email = email)
         )
 
+    suspend fun registerSimpleUser(fullName: String, age: Int?, address: String) {
+        val current = userProgressDao.getUserProgressOnce()
+        val updated = (current ?: UserProgressEntity()).copy(
+            userName = fullName,
+            fullName = fullName,
+            age = age,
+            address = address
+        )
+        userProgressDao.insertOrUpdate(updated)
+    }
+
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int) =
         userProgressDao.updateProfileDetails(fullName, age, address, iconId)
 
