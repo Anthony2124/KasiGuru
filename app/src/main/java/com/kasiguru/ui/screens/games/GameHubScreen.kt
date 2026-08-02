@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,12 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
+import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +54,7 @@ fun GameHubScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -62,7 +65,8 @@ fun GameHubScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -83,7 +87,7 @@ fun GameHubScreen(
                 GameCard(
                     title = "Word Match",
                     description = "Match Kasiguranin words to Tagalog or English.",
-                    iconRes = R.drawable.ic_grid_outline,
+                    icon = Icons.Rounded.GridView,
                     highScore = uiState.highScores["word_match"] ?: 0,
                     gradient = listOf(VocabCardStart, VocabCardEnd),
                     onClick = onNavigateToWordMatch
@@ -94,7 +98,7 @@ fun GameHubScreen(
                 GameCard(
                     title = "Aspect Builder",
                     description = "Conjugate root verbs into correct aspectual forms.",
-                    iconRes = R.drawable.ic_flash_outline,
+                    icon = Icons.Rounded.Bolt,
                     highScore = uiState.highScores["aspect_builder"] ?: 0,
                     gradient = listOf(HeroCardStart, HeroCardEnd),
                     onClick = onNavigateToAspectBuilder
@@ -105,7 +109,7 @@ fun GameHubScreen(
                 GameCard(
                     title = "Sentence Order",
                     description = "Arrange words into predicate-initial Kasiguranin syntax.",
-                    iconRes = R.drawable.ic_document_outline,
+                    icon = Icons.Rounded.Description,
                     highScore = uiState.highScores["sentence_order"] ?: 0,
                     gradient = listOf(StoriesCardStart, StoriesCardEnd),
                     onClick = onNavigateToSentenceOrder
@@ -116,7 +120,7 @@ fun GameHubScreen(
                 GameCard(
                     title = "Fill in the Blank",
                     description = "Complete sentences with the correct verb aspect.",
-                    iconRes = R.drawable.ic_edit_outline,
+                    icon = Icons.Rounded.Edit,
                     highScore = uiState.highScores["fill_blank"] ?: 0,
                     gradient = listOf(QuestsCardStart, QuestsCardEnd),
                     onClick = onNavigateToFillBlank
@@ -127,7 +131,7 @@ fun GameHubScreen(
                 GameCard(
                     title = "Audio Quiz",
                     description = "Listen to pronunciation and select the correct word.",
-                    iconRes = R.drawable.ic_volume_high,
+                    icon = Icons.Rounded.VolumeUp,
                     highScore = uiState.highScores["audio_quiz"] ?: 0,
                     gradient = listOf(MiniGamesCardStart, MiniGamesCardEnd),
                     onClick = onNavigateToAudioQuiz
@@ -149,15 +153,13 @@ fun GameHubScreen(
                     ScoreRow(
                         gameName = when (score.gameType) {
                             "word_match" -> "Word Match"
-                            "aspect_builder" -> "Aspect Builder"
-                            "sentence_order" -> "Sentence Order"
                             "fill_blank" -> "Fill in the Blank"
                             "audio_quiz" -> "Audio Quiz"
+                            "aspect_builder" -> "Aspect Builder"
+                            "sentence_order" -> "Sentence Order"
                             else -> score.gameType
                         },
-                        score = score.score,
-                        total = score.totalQuestions,
-                        xp = score.xpEarned
+                        score = score
                     )
                 }
             }
@@ -166,10 +168,10 @@ fun GameHubScreen(
 }
 
 @Composable
-fun GameCard(
+private fun GameCard(
     title: String,
     description: String,
-    iconRes: Int,
+    icon: ImageVector,
     highScore: Int,
     gradient: List<Color>,
     onClick: () -> Unit
@@ -198,7 +200,7 @@ fun GameCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = iconRes),
+                    imageVector = icon,
                     contentDescription = null,
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(28.dp)
@@ -225,7 +227,7 @@ fun GameCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_cup_outline),
+                        imageVector = Icons.Rounded.EmojiEvents,
                         contentDescription = "High Score",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(16.dp)
@@ -247,10 +249,10 @@ fun GameCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_play_outline),
+                    imageVector = Icons.Rounded.PlayArrow,
                     contentDescription = "Play",
                     tint = TextHeadingBlack,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -258,7 +260,10 @@ fun GameCard(
 }
 
 @Composable
-fun ScoreRow(gameName: String, score: Int, total: Int, xp: Int) {
+private fun ScoreRow(
+    gameName: String,
+    score: GameScoreEntity
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -268,31 +273,34 @@ fun ScoreRow(gameName: String, score: Int, total: Int, xp: Int) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = gameName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextHeadingBlack
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column {
                 Text(
-                    text = "$score/$total",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Success,
-                    fontWeight = FontWeight.Bold
+                    text = gameName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextHeadingBlack
                 )
                 Text(
-                    text = "+$xp XP",
+                    text = "${score.score}/${score.totalQuestions} Correct • +${score.xpEarned} XP",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSubtleGray
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = QuestsCardStart
+            ) {
+                Text(
+                    text = "${(score.score.toFloat() / score.totalQuestions * 100).toInt()}%",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextHeadingBlack,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = TextHeadingBlack
                 )
             }
         }

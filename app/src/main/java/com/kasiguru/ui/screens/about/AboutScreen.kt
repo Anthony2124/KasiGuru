@@ -7,17 +7,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 data class FaqItem(
@@ -63,7 +66,7 @@ fun AboutScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -80,15 +83,15 @@ fun AboutScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
+                .padding(padding)
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // App Branding Banner
+            // Hero Branding Banner Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 2.dp
             ) {
@@ -109,75 +112,56 @@ fun AboutScreen(
                         Surface(
                             modifier = Modifier.size(72.dp),
                             shape = CircleShape,
-                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)
+                            color = androidx.compose.ui.graphics.Color.White
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_book_outline),
-                                    contentDescription = "Logo",
+                                    imageVector = Icons.AutoMirrored.Rounded.MenuBook,
+                                    contentDescription = "KasiGuru Logo",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(36.dp)
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("KasiGuru", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
-                        Text("Version 2.0.0 (Build 2026)", style = MaterialTheme.typography.bodySmall, color = TextHeadingBlack.copy(alpha = 0.8f))
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
                         Text(
-                            "Kasiguranin Language Preservation & Learning Tool",
+                            text = "KasiGuru Preservations",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "Preserving Casiguran, Aurora's Heritage",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextHeadingBlack.copy(alpha = 0.75f)
+                            color = TextHeadingBlack.copy(alpha = 0.8f)
                         )
                     }
                 }
             }
 
-            // FAQ Section Header
             Text(
                 text = "Frequently Asked Questions",
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 color = TextHeadingBlack,
-                fontWeight = FontWeight.Bold
+                modifier = Modifier.padding(top = 8.dp)
             )
 
+            // FAQ Items List
             faqs.forEach { faq ->
-                FaqCard(item = faq)
-            }
-
-            // Privacy & Terms
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_info_circle),
-                            contentDescription = null,
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Privacy Guidelines", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "KasiGuru values your privacy. All user progress, learned vocabulary, and game scores remain 100% offline on your device. No personal data is transmitted without explicit user consent.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSubtleGray,
-                        lineHeight = 18.sp
-                    )
-                }
+                FaqCard(faq = faq)
             }
         }
     }
 }
 
 @Composable
-fun FaqCard(item: FaqItem) {
+private fun FaqCard(faq: FaqItem) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Surface(
@@ -186,7 +170,7 @@ fun FaqCard(item: FaqItem) {
             .clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Row(
@@ -195,29 +179,30 @@ fun FaqCard(item: FaqItem) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = item.question,
+                    text = faq.question,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = TextHeadingBlack,
                     modifier = Modifier.weight(1f)
                 )
+
                 Icon(
-                    painter = painterResource(id = if (isExpanded) R.drawable.ic_arrow_left else R.drawable.ic_arrow_right),
+                    imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
                     contentDescription = null,
                     tint = TextSubtleGray,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
             if (isExpanded) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = item.answer,
+                    text = faq.answer,
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSubtleGray,
-                    lineHeight = 20.sp
+                    lineHeight = 22.sp
                 )
             }
         }

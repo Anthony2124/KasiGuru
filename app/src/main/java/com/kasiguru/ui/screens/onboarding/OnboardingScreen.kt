@@ -8,22 +8,27 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
+import kotlinx.coroutines.launch
 
 data class OnboardingPage(
-    val iconRes: Int,
+    val icon: ImageVector,
     val title: String,
     val subtitle: String,
     val description: String,
@@ -37,21 +42,21 @@ fun OnboardingScreen(
 ) {
     val pages = listOf(
         OnboardingPage(
-            iconRes = R.drawable.ic_book_outline,
+            icon = Icons.AutoMirrored.Rounded.MenuBook,
             title = "Welcome to KasiGuru",
             subtitle = "Preserving the Kasiguranin Language",
             description = "Discover the unique Northern Agta language spoken in Casiguran, Aurora. Learn authentic vocabulary, grammar, and stories.",
             accentColor = HeroCardStart
         ),
         OnboardingPage(
-            iconRes = R.drawable.ic_game_outline,
+            icon = Icons.Rounded.SportsEsports,
             title = "Learn Through Play",
             subtitle = "Interactive Mini-Games & Stories",
             description = "Master verb aspects, word order, and vocabulary through fun challenges, games, and interactive storybooks.",
             accentColor = MiniGamesCardStart
         ),
         OnboardingPage(
-            iconRes = R.drawable.ic_volume_high,
+            icon = Icons.Rounded.VolumeUp,
             title = "Authentic Phonetics",
             subtitle = "IPA Notation & Audio Practice",
             description = "Practice glottal stops, vowel length, and accurate pronunciation with audio controls and IPA phonetics.",
@@ -60,35 +65,38 @@ fun OnboardingScreen(
     )
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    var selectedGoal by remember { mutableIntStateOf(10) }
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Bar (Skip Button)
-            Row(
+            // Skip button
+            Box(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                contentAlignment = Alignment.TopEnd
             ) {
                 TextButton(onClick = onFinishOnboarding) {
                     Text("Skip", color = TextSubtleGray, fontWeight = FontWeight.Bold)
                 }
             }
 
-            // Pager Content
+            // Pager content
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
-            ) { page ->
-                val item = pages[page]
+            ) { pageIndex ->
+                val page = pages[pageIndex]
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -97,37 +105,36 @@ fun OnboardingScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Surface(
-                        modifier = Modifier.size(120.dp),
+                        modifier = Modifier.size(130.dp),
                         shape = CircleShape,
-                        color = item.accentColor
+                        color = page.accentColor
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                painter = painterResource(id = item.iconRes),
+                                imageVector = page.icon,
                                 contentDescription = null,
                                 tint = TextHeadingBlack,
-                                modifier = Modifier.size(56.dp)
+                                modifier = Modifier.size(64.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(36.dp))
 
                     Text(
-                        text = item.title,
+                        text = page.title,
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Black,
                         color = TextHeadingBlack,
-                        textAlign = TextAlign.Center,
-                        fontSize = 28.sp
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = item.subtitle,
+                        text = page.subtitle,
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextHeadingBlack,
+                        color = page.accentColor,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
@@ -135,78 +142,65 @@ fun OnboardingScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = item.description,
+                        text = page.description,
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSubtleGray,
                         textAlign = TextAlign.Center,
                         lineHeight = 24.sp
                     )
-
-                    if (page == pages.size - 1) {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = "Set your daily goal:",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = TextHeadingBlack,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            listOf(5, 10, 15).forEach { goal ->
-                                FilterChip(
-                                    selected = selectedGoal == goal,
-                                    onClick = { selectedGoal = goal },
-                                    label = { Text("$goal words/day", fontWeight = FontWeight.Medium) },
-                                    leadingIcon = if (selectedGoal == goal) {
-                                        { Icon(painter = painterResource(id = R.drawable.ic_tick_circle), contentDescription = null, modifier = Modifier.size(16.dp), tint = TextHeadingBlack) }
-                                    } else null,
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = HeroCardStart,
-                                        selectedLabelColor = TextHeadingBlack
-                                    ),
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
-            // Pager Indicator & Next/Get Started Button
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Bottom controls: Indicators & Next/Start
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                // Page Indicator Dots
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     repeat(pages.size) { index ->
                         Box(
                             modifier = Modifier
                                 .height(8.dp)
                                 .width(if (pagerState.currentPage == index) 24.dp else 8.dp)
                                 .clip(CircleShape)
-                                .background(if (pagerState.currentPage == index) TextHeadingBlack else TextSubtleGray.copy(alpha = 0.3f))
+                                .background(
+                                    if (pagerState.currentPage == index) TextHeadingBlack
+                                    else TextSubtleGray.copy(alpha = 0.3f)
+                                )
                         )
                     }
                 }
 
+                // Next/Get Started Button
                 Button(
-                    onClick = onFinishOnboarding,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    onClick = {
+                        if (pagerState.currentPage < pages.size - 1) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        } else {
+                            onFinishOnboarding()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
                     shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = pages[pagerState.currentPage].accentColor)
+                    modifier = Modifier.height(50.dp)
                 ) {
                     Text(
-                        text = if (pagerState.currentPage == pages.size - 1) "Start Learning Kasiguranin 🚀" else "Continue",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        text = if (pagerState.currentPage == pages.size - 1) "Get Started" else "Next",
+                        color = TextHeadingBlack,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        tint = TextHeadingBlack,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

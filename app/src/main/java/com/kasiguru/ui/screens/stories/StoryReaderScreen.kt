@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,7 +62,7 @@ fun StoryReaderScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -291,7 +295,7 @@ fun StoryBottomBar(
                         Text("Finish", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_tick_circle),
+                            imageVector = Icons.Rounded.CheckCircle,
                             contentDescription = "Finish",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(18.dp)
@@ -300,7 +304,7 @@ fun StoryBottomBar(
                         Text("Next", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_right),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                             contentDescription = "Next",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(18.dp)

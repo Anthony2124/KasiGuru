@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,11 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.ui.components.AnimatedBadge
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
@@ -44,7 +44,7 @@ fun AchievementsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -69,12 +69,11 @@ fun AchievementsScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
+                .padding(16.dp)
         ) {
-            // Summary Header Card
+            // Header Summary Banner
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 2.dp
@@ -87,47 +86,54 @@ fun AchievementsScreen(
                                 colors = listOf(QuestsCardStart, QuestsCardEnd)
                             )
                         )
-                        .padding(24.dp)
+                        .padding(20.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
-                            style = MaterialTheme.typography.displayMedium,
-                            color = TextHeadingBlack,
-                            fontWeight = FontWeight.Black
-                        )
-                        Text(
-                            text = "Badges Unlocked",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextHeadingBlack.copy(alpha = 0.8f),
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Unlocked Badges",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = TextHeadingBlack,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextHeadingBlack,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         KasiGuruProgressBar(
-                            progress = if (uiState.achievements.isEmpty()) 0f else uiState.unlockedCount.toFloat() / uiState.achievements.size,
+                            progress = if (uiState.achievements.isNotEmpty()) {
+                                uiState.unlockedCount.toFloat() / uiState.achievements.size
+                            } else 0f,
                             gradientColors = listOf(TextHeadingBlack, TextHeadingBlack)
                         )
                     }
                 }
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Badges Grid
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(16.dp),
+                columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(uiState.achievements, key = { it.id }) { achievement ->
+                items(uiState.achievements) { achievement ->
                     AnimatedBadge(
                         emoji = achievement.iconEmoji,
                         name = achievement.name,
-                        isUnlocked = achievement.isUnlocked,
-                        animateUnlock = true
+                        isUnlocked = achievement.isUnlocked
                     )
                 }
             }

@@ -9,18 +9,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +47,6 @@ fun EditProfileScreen(
     var fullName by remember { mutableStateOf(progress.fullName) }
     var age by remember { mutableStateOf(progress.age?.toString() ?: "") }
     var address by remember { mutableStateOf(progress.address) }
-    var selectedIconId by remember { mutableStateOf(progress.profileIconId) }
 
     Scaffold(
         topBar = {
@@ -60,8 +62,8 @@ fun EditProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
-                            contentDescription = "Cancel",
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
                         )
@@ -82,50 +84,33 @@ fun EditProfileScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Select Avatar Accent",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextHeadingBlack,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            val avatarColors = listOf(HeroCardStart, VocabCardStart, StoriesCardStart, MiniGamesCardStart, QuestsCardStart)
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Avatar Header
+            Surface(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape),
+                color = HeroCardStart
             ) {
-                avatarColors.forEachIndexed { index, color ->
-                    val isSelected = index == selectedIconId
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) TextHeadingBlack else Color.Transparent,
-                                shape = CircleShape
-                            )
-                            .clickable { selectedIconId = index },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_profile_outline),
-                            contentDescription = "Avatar $index",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(HeroCardEnd),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Person,
+                        contentDescription = "Avatar",
+                        tint = TextHeadingBlack,
+                        modifier = Modifier.size(52.dp)
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Form Card
+            // Form Inputs Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -134,7 +119,7 @@ fun EditProfileScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "User Details",
+                        text = "Edit Information",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack
@@ -146,20 +131,23 @@ fun EditProfileScreen(
                         onValueChange = { fullName = it },
                         label = { Text("Full Name") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_profile_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = TextHeadingBlack,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedLabelColor = TextHeadingBlack,
-                            unfocusedLabelColor = TextSubtleGray
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                         ),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = age,
@@ -170,58 +158,57 @@ fun EditProfileScreen(
                         },
                         label = { Text("Age") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_calendar_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarToday,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = TextHeadingBlack,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedLabelColor = TextHeadingBlack,
-                            unfocusedLabelColor = TextSubtleGray
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                         ),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
                         label = { Text("Address") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.ic_global_outline), contentDescription = null, tint = TextSubtleGray, modifier = Modifier.size(20.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.LocationOn,
+                                contentDescription = null,
+                                tint = TextSubtleGray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = TextHeadingBlack,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedLabelColor = TextHeadingBlack,
-                            unfocusedLabelColor = TextSubtleGray
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                         ),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AnimatedVisibility(visible = uiState.error != null) {
-                Text(
-                    text = uiState.error ?: "",
-                    color = Error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
+            Spacer(modifier = Modifier.height(28.dp))
 
             Button(
                 onClick = {
+                    val parsedAge = age.trim().toIntOrNull()
                     viewModel.updateProfile(
                         fullName = fullName.trim(),
-                        age = age.toIntOrNull(),
+                        age = parsedAge,
                         address = address.trim(),
-                        iconId = selectedIconId
+                        iconId = 1
                     )
                     onNavigateBack()
                 },
@@ -229,19 +216,14 @@ fun EditProfileScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                shape = RoundedCornerShape(20.dp),
-                enabled = !uiState.isSaving
+                shape = RoundedCornerShape(20.dp)
             ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(color = TextHeadingBlack, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(
-                        text = "Save Changes",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = "Save Changes",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

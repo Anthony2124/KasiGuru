@@ -9,19 +9,22 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.theme.*
 
@@ -32,6 +35,19 @@ fun VocabularyScreen(
     viewModel: VocabularyViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+
+    val displayedVocabulary = remember(searchQuery, uiState.filteredVocabulary) {
+        if (searchQuery.isBlank()) {
+            uiState.filteredVocabulary
+        } else {
+            uiState.filteredVocabulary.filter {
+                it.kasiguranin.contains(searchQuery, ignoreCase = true) ||
+                        it.tagalog.contains(searchQuery, ignoreCase = true) ||
+                        it.english.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -47,7 +63,7 @@ fun VocabularyScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -58,22 +74,40 @@ fun VocabularyScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = VocabCardEnd)
-            }
-            return@Scaffold
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
-            // Categories Row
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search Kasiguranin, Tagalog, or English...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search",
+                        tint = TextSubtleGray
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = TextHeadingBlack,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                singleLine = true
+            )
+
+            // Category Chips Row
             val allCategories = listOf("All") + uiState.categories
             LazyRow(
                 modifier = Modifier
@@ -103,7 +137,7 @@ fun VocabularyScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.filteredVocabulary, key = { it.id }) { vocab ->
+                items(displayedVocabulary, key = { it.id }) { vocab ->
                     VocabularyCard(
                         vocab = vocab,
                         onMarkLearned = { viewModel.markWordAsLearned(vocab.id) }
@@ -121,65 +155,76 @@ fun VocabularyCard(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { isExpanded = !isExpanded },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (vocab.isLearned) QuestsCardStart.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp)
-        ) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = vocab.kasiguranin,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 19.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = vocab.kasiguranin,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
+                        )
+                        if (vocab.category.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = VocabCardStart.copy(alpha = 0.5f)
+                            ) {
+                                Text(
+                                    text = vocab.category,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextHeadingBlack
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${vocab.english} / ${vocab.tagalog}",
+                        text = "English: ${vocab.english}",
                         style = MaterialTheme.typography.bodyMedium,
+                        color = TextHeadingBlack
+                    )
+                    Text(
+                        text = "Tagalog: ${vocab.tagalog}",
+                        style = MaterialTheme.typography.bodySmall,
                         color = TextSubtleGray
                     )
                 }
-                
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    IconButton(
-                        onClick = { /* Play Audio */ },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(HeroCardStart.copy(alpha = 0.5f))
-                    ) {
+                    IconButton(onClick = { /* Play audio simulation */ }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_volume_high),
-                            contentDescription = "Play Pronunciation",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(20.dp)
+                            imageVector = Icons.Rounded.VolumeUp,
+                            contentDescription = "Listen",
+                            tint = VocabCardEnd,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    
-                    IconButton(
-                        onClick = onMarkLearned,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+
+                    IconButton(onClick = onMarkLearned) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_tick_circle),
+                            imageVector = Icons.Rounded.CheckCircle,
                             contentDescription = "Mark as Learned",
                             tint = if (vocab.isLearned) Success else TextSubtleGray,
                             modifier = Modifier.size(22.dp)
@@ -249,13 +294,15 @@ fun VocabularyCard(
                             text = "\"${vocab.exampleSentence}\"",
                             style = MaterialTheme.typography.bodyMedium,
                             fontStyle = FontStyle.Italic,
-                            color = TextHeadingBlack
-                        )
-                        Text(
-                            text = vocab.exampleTranslation,
-                            style = MaterialTheme.typography.bodySmall,
                             color = TextSubtleGray
                         )
+                        if (vocab.exampleTranslation.isNotEmpty()) {
+                            Text(
+                                text = "(${vocab.exampleTranslation})",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSubtleGray
+                            )
+                        }
                     }
                 }
             }
@@ -264,7 +311,8 @@ fun VocabularyCard(
 }
 
 @Composable
-private fun AspectRow(label: String, form: String) {
+private fun AspectRow(label: String, value: String) {
+    if (value.isBlank()) return
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -272,6 +320,6 @@ private fun AspectRow(label: String, form: String) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = TextSubtleGray)
-        Text(text = form, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = TextHeadingBlack)
+        Text(text = value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
     }
 }

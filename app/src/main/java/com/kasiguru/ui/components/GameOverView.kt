@@ -2,14 +2,14 @@ package com.kasiguru.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @Composable
@@ -37,7 +37,7 @@ fun GameOverView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_cup_outline),
+                    imageVector = Icons.Rounded.EmojiEvents,
                     contentDescription = "Complete",
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(64.dp)

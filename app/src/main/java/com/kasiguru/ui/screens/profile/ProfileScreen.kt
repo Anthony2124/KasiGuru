@@ -6,6 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,12 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.ui.theme.*
 
@@ -56,7 +58,7 @@ fun ProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -66,7 +68,7 @@ fun ProfileScreen(
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_setting_outline),
+                            imageVector = Icons.Rounded.Settings,
                             contentDescription = "Settings",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
@@ -74,7 +76,7 @@ fun ProfileScreen(
                     }
                     IconButton(onClick = onNavigateToEditProfile) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_edit_outline),
+                            imageVector = Icons.Rounded.Edit,
                             contentDescription = "Edit Profile",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
@@ -112,7 +114,7 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_profile_outline),
+                        imageVector = Icons.Rounded.Person,
                         contentDescription = "Profile Avatar",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(56.dp)
@@ -154,19 +156,19 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(14.dp))
                     
                     ProfileInfoRow(
-                        iconRes = R.drawable.ic_document_outline,
+                        icon = Icons.Rounded.Email,
                         label = "Email",
                         value = if (progress.email.isNotEmpty()) progress.email else "kasiguranin.learner@gmail.com"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ProfileInfoRow(
-                        iconRes = R.drawable.ic_calendar_outline,
+                        icon = Icons.Rounded.CalendarToday,
                         label = "Age",
                         value = if (progress.age != null) "${progress.age} years old" else "Not set"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ProfileInfoRow(
-                        iconRes = R.drawable.ic_global_outline,
+                        icon = Icons.Rounded.LocationOn,
                         label = "Address",
                         value = if (progress.address.isNotEmpty()) progress.address else "Casiguran, Aurora"
                     )
@@ -186,7 +188,7 @@ fun ProfileScreen(
                     value = "${progress.level}",
                     subtitle = "Explorer",
                     bgColor = StoriesCardStart,
-                    iconRes = R.drawable.ic_medal_outline
+                    icon = Icons.Rounded.WorkspacePremium
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
@@ -194,7 +196,7 @@ fun ProfileScreen(
                     value = "${progress.totalXp}",
                     subtitle = "Points Earned",
                     bgColor = VocabCardStart,
-                    iconRes = R.drawable.ic_cup_outline
+                    icon = Icons.Rounded.EmojiEvents
                 )
             }
 
@@ -227,7 +229,7 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileInfoRow(iconRes: Int, label: String, value: String) {
+private fun ProfileInfoRow(icon: ImageVector, label: String, value: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -240,7 +242,7 @@ private fun ProfileInfoRow(iconRes: Int, label: String, value: String) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(id = iconRes),
+                imageVector = icon,
                 contentDescription = null,
                 tint = TextHeadingBlack,
                 modifier = Modifier.size(18.dp)
@@ -260,7 +262,7 @@ private fun StatCard(
     value: String,
     subtitle: String,
     bgColor: androidx.compose.ui.graphics.Color,
-    iconRes: Int
+    icon: ImageVector
 ) {
     Surface(
         modifier = modifier,
@@ -280,7 +282,7 @@ private fun StatCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = iconRes),
+                    imageVector = icon,
                     contentDescription = null,
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(20.dp)
