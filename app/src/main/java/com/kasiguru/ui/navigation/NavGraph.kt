@@ -31,7 +31,6 @@ import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.screens.auth.LoginScreen
 import com.kasiguru.ui.screens.auth.RegisterScreen
 import com.kasiguru.ui.screens.auth.SplashViewModel
 import com.kasiguru.ui.screens.auth.WelcomeScreen
@@ -88,32 +87,19 @@ fun KasiGuruNavGraph() {
                 }
             }
 
-            // Auth Flow
+            // Auth Flow: Welcome -> Register -> Home
             composable(Screen.Welcome.route) {
                 WelcomeScreen(
-                    onNavigateToLogin = { navController.navigate(Screen.Login.route) }
-                )
-            }
-            
-            composable(Screen.Login.route) {
-                LoginScreen(
-                    onLoginSuccess = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
-                        }
-                    },
-                    onNavigateToRegister = {
-                        navController.navigate(Screen.Register.route)
-                    }
+                    onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                 )
             }
 
             composable(Screen.Register.route) {
                 RegisterScreen(
                     onRegisterSuccess = {
-                        navController.navigate(Screen.Login.route) {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Register.route) { inclusive = true }
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
                     onNavigateBack = { navController.popBackStack() }

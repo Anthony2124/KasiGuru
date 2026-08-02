@@ -15,9 +15,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
+import com.kasiguru.ui.components.StreakDialog
 import com.kasiguru.ui.theme.*
 
 @Composable
@@ -47,6 +46,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    var showStreakDialog by remember { mutableStateOf(false) }
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -57,6 +57,14 @@ fun HomeScreen(
 
     val progress = uiState.userProgress ?: return
 
+    if (showStreakDialog) {
+        StreakDialog(
+            currentStreak = progress.currentStreak,
+            longestStreak = progress.longestStreak,
+            onDismiss = { showStreakDialog = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -65,7 +73,7 @@ fun HomeScreen(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // ─── 1. Top Header: Avatar, Greeting & Bell ───
+        // ─── 1. Top Header: Avatar, Greeting, Streak Flame & Bell ───
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -111,7 +119,7 @@ fun HomeScreen(
                         fontSize = 14.sp
                     )
                     Text(
-                        text = if (progress.userName.contains("Learner")) "Adrian Miras Pogi" else progress.userName,
+                        text = if (progress.fullName.isNotEmpty()) progress.fullName else progress.userName,
                         style = MaterialTheme.typography.titleLarge,
                         color = TextHeadingBlack,
                         fontWeight = FontWeight.Bold,
@@ -120,23 +128,55 @@ fun HomeScreen(
                 }
             }
 
-            // Circular Notification Bell Button
-            Surface(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable { onNavigateToSettings() },
-                shape = CircleShape,
-                color = Color.White,
-                shadowElevation = 2.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Rounded.Notifications,
-                        contentDescription = "Notifications",
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(22.dp)
-                    )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Streak Flame Badge Button
+                Surface(
+                    modifier = Modifier
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .clickable { showStreakDialog = true },
+                    shape = RoundedCornerShape(24.dp),
+                    color = VocabCardStart,
+                    shadowElevation = 2.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Whatshot,
+                            contentDescription = "Streak",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "${progress.currentStreak}",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 15.sp,
+                            color = TextHeadingBlack
+                        )
+                    }
+                }
+
+                // Circular Notification Bell Button
+                Surface(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { onNavigateToSettings() },
+                    shape = CircleShape,
+                    color = Color.White,
+                    shadowElevation = 2.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Notifications,
+                            contentDescription = "Notifications",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         }
@@ -506,6 +546,7 @@ fun HomeScreen(
                                 color = TextHeadingBlack
                             )
                             Row(
+                                modifier = Modifier.clickable { showStreakDialog = true },
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
@@ -516,9 +557,10 @@ fun HomeScreen(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Text(
-                                    text = "Current Streak: ${progress.currentStreak} Days",
+                                    text = "Current Streak: ${progress.currentStreak} Days 🔥",
                                     fontSize = 12.sp,
-                                    color = TextHeadingBlack.copy(alpha = 0.8f)
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextHeadingBlack.copy(alpha = 0.9f)
                                 )
                             }
                         }

@@ -2,7 +2,6 @@ package com.kasiguru.ui.screens.auth
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,21 +54,9 @@ fun RegisterScreen(
                 .padding(horizontal = 28.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Back button
-            Box(modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
             // Header
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "Welcome Learner!",
                 style = MaterialTheme.typography.headlineLarge,
@@ -79,7 +66,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Enter your details to set up your learner profile",
+                text = "Enter your details to create your profile and start learning",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSubtleGray,
                 textAlign = TextAlign.Center
@@ -195,7 +182,7 @@ fun RegisterScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Register Button
             Button(
@@ -221,25 +208,12 @@ fun RegisterScreen(
                     )
                 } else {
                     Text(
-                        text = "Start Learning",
+                        text = "Start Learning Now",
                         style = MaterialTheme.typography.titleMedium,
                         color = TextHeadingBlack,
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Row(horizontalArrangement = Arrangement.Center) {
-                Text("Already have a profile? ", color = TextSubtleGray, style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = "Sign In",
-                    color = TextHeadingBlack,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable { onNavigateBack() }
-                )
             }
         }
     }

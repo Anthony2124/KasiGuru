@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,7 +19,7 @@ import com.kasiguru.ui.theme.*
 
 @Composable
 fun WelcomeScreen(
-    onNavigateToLogin: () -> Unit
+    onNavigateToRegister: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -81,7 +80,7 @@ fun WelcomeScreen(
             Spacer(modifier = Modifier.height(64.dp))
             
             Button(
-                onClick = onNavigateToLogin,
+                onClick = onNavigateToRegister,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
