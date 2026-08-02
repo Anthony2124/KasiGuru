@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Splash icon — same as launcher but centered for splash use -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54 m-20,0"/>
+    <!-- Letter K -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,25 L35,83 L45,83 L45,58 L65,83 L77,83 L54,54 L75,25 L63,25 L45,50 L45,25 Z"/>
+    <!-- Gold dot -->
+    <path
+        android:fillColor="#F0A500"
+        android:pathData="M68,72 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0"/>
+</vector>

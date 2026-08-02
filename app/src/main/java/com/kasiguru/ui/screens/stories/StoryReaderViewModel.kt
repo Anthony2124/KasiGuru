@@ -1,0 +1,124 @@
+package com.kasiguru.ui.screens.stories
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.local.entity.StoryEntity
+import com.kasiguru.data.local.entity.StoryPage
+import com.kasiguru.data.repository.StoryRepository
+import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.util.Constants
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+import javax.inject.Inject
+
+@HiltViewModel
+class StoryReaderViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val storyRepository: StoryRepository,
+    private val userProgressRepository: UserProgressRepository
+) : ViewModel() {
+
+    private val storyId: Int = checkNotNull(savedStateHandle["storyId"])
+
+    private val _uiState = MutableStateFlow(StoryReaderUiState())
+    val uiState: StateFlow<StoryReaderUiState> = _uiState.asStateFlow()
+
+    init {
+        loadStory()
+    }
+
+    private fun loadStory() {
+        viewModelScope.launch {
+            val story = storyRepository.getStoryById(storyId)
+            if (story != null) {
+                val pages = parsePages(story.pagesJson)
+                _uiState.value = _uiState.value.copy(
+                    story = story,
+                    pages = pages,
+                    currentPageIndex = if (story.isCompleted) 0 else story.currentPage,
+                    isLoading = false
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(error = "Story not found", isLoading = false)
+            }
+        }
+    }
+
+    private fun parsePages(jsonStr: String): List<StoryPage> {
+        if (jsonStr.isBlank() || jsonStr == "[]") return emptyList()
+        return try {
+            val array = JSONArray(jsonStr)
+            List(array.length()) { i ->
+                val obj = array.getJSONObject(i)
+                StoryPage(
+                    pageNumber = obj.optInt("pageNumber", i + 1),
+                    kasiguranin = obj.optString("kasiguranin", ""),
+                    tagalog = obj.optString("tagalog", ""),
+                    english = obj.optString("english", ""),
+                    audioFileName = obj.optString("audioFileName", ""),
+                    illustrationDesc = obj.optString("illustrationDesc", "")
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun nextPage() {
+        val state = _uiState.value
+        if (state.currentPageIndex < state.pages.size - 1) {
+            val newIndex = state.currentPageIndex + 1
+            _uiState.value = state.copy(currentPageIndex = newIndex)
+            
+            // Award XP for reading a page
+            viewModelScope.launch {
+                userProgressRepository.addXp(Constants.XP_PER_STORY_PAGE)
+                if (!state.story!!.isCompleted) {
+                    storyRepository.updateCurrentPage(storyId, newIndex)
+                }
+            }
+        } else {
+            completeStory()
+        }
+    }
+
+    fun previousPage() {
+        val state = _uiState.value
+        if (state.currentPageIndex > 0) {
+            val newIndex = state.currentPageIndex - 1
+            _uiState.value = state.copy(currentPageIndex = newIndex)
+            
+            viewModelScope.launch {
+                if (!state.story!!.isCompleted) {
+                    storyRepository.updateCurrentPage(storyId, newIndex)
+                }
+            }
+        }
+    }
+
+    private fun completeStory() {
+        viewModelScope.launch {
+            val story = _uiState.value.story ?: return@launch
+            if (!story.isCompleted) {
+                storyRepository.markAsCompleted(storyId)
+                userProgressRepository.addXp(Constants.XP_PER_STORY_COMPLETE)
+                userProgressRepository.incrementStoriesCompleted()
+            }
+            _uiState.value = _uiState.value.copy(isFinished = true)
+        }
+    }
+}
+
+data class StoryReaderUiState(
+    val story: StoryEntity? = null,
+    val pages: List<StoryPage> = emptyList(),
+    val currentPageIndex: Int = 0,
+    val isLoading: Boolean = true,
+    val error: String? = null,
+    val isFinished: Boolean = false
+)

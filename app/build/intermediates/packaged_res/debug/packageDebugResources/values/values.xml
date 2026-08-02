@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#0D7377</color>
+    <string name="app_name">KasiGuru</string>
+    <style name="Theme.KasiGuru" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.KasiGuru.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0D7377</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.KasiGuru</item>
+    </style>
+</resources>
