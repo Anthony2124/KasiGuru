@@ -37,6 +37,7 @@ object DatabaseModule {
             KasiGuruDatabase::class.java,
             "kasiguru_database"
         )
+        .fallbackToDestructiveMigration()
         .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
@@ -44,7 +45,6 @@ object DatabaseModule {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
                     storyDaoProvider.get().insertAll(DatabaseSeeder.getInitialStories())
-                    userProgressDaoProvider.get().insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
                     achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
                 }
             }

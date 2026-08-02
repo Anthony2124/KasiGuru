@@ -27,6 +27,17 @@ class UserProgressRepository @Inject constructor(
     suspend fun initializeProgress(progress: UserProgressEntity) =
         userProgressDao.insertOrUpdate(progress)
 
+    suspend fun loginUser(username: String, password: String): UserProgressEntity? =
+        userProgressDao.getUserByCredentials(username, password)
+
+    suspend fun registerUser(username: String, password: String, email: String) =
+        userProgressDao.insertOrUpdate(
+            UserProgressEntity(userName = username, password = password, email = email)
+        )
+
+    suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int) =
+        userProgressDao.updateProfileDetails(fullName, age, address, iconId)
+
     suspend fun addXp(xp: Int) {
         userProgressDao.addXp(xp)
         // Recalculate level

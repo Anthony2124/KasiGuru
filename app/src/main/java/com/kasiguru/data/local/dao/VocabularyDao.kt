@@ -31,6 +31,9 @@ interface VocabularyDao {
     @Query("SELECT COUNT(*) FROM vocabulary")
     fun getTotalCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM vocabulary")
+    suspend fun getTotalCountDirect(): Int
+
     @Query("SELECT DISTINCT category FROM vocabulary ORDER BY category")
     fun getCategories(): Flow<List<String>>
 

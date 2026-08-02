@@ -34,6 +34,12 @@ class VocabularyRepository @Inject constructor(
     fun getTotalCount(): Flow<Int> =
         vocabularyDao.getTotalCount()
 
+    suspend fun getTotalCountDirect(): Int =
+        vocabularyDao.getTotalCountDirect()
+
+    suspend fun insertAll(words: List<VocabularyEntity>) =
+        vocabularyDao.insertAll(words)
+
     fun getCategories(): Flow<List<String>> =
         vocabularyDao.getCategories()
 

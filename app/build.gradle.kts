@@ -52,6 +52,16 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE"
+        }
+    }
 }
 
 dependencies {
@@ -108,6 +118,10 @@ dependencies {
 
     // Accompanist (system UI controller)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
+
+    // JavaMail API for OTP Emails
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

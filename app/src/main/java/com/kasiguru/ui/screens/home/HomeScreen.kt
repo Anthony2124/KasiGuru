@@ -27,6 +27,7 @@ import com.kasiguru.ui.components.KasiGuruCard
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.StreakCounter
 import com.kasiguru.ui.components.XpBadge
+import com.kasiguru.ui.screens.profile.profileIcons
 import com.kasiguru.ui.theme.*
 import com.kasiguru.util.calculateLevelProgress
 import com.kasiguru.util.getLevelTitle
@@ -40,7 +41,7 @@ fun HomeScreen(
     onNavigateToAchievements: () -> Unit,
     onNavigateToCultural: () -> Unit = {},
     onNavigateToFlashcards: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -61,6 +62,8 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -70,26 +73,46 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Magandang aldaw, ${progress.userName}! 👋",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Let's learn Kasiguranin today",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextGray
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Profile Avatar (Clickable)
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryDark)
+                        .clickable(onClick = onNavigateToProfile),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val selectedIcon = profileIcons.getOrElse(progress.profileIconId) { Icons.Default.Person }
+                    Icon(
+                        imageVector = selectedIcon,
+                        contentDescription = "Profile",
+                        tint = PrimaryLight,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = "Magandang aldaw, 👋",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextGray
+                    )
+                    Text(
+                        text = progress.userName,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onNavigateToSettings) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TextWhite)
-                }
-                StreakCounter(streak = progress.currentStreak)
-            }
+            StreakCounter(streak = progress.currentStreak)
         }
 
         // Level & XP Card

@@ -15,6 +15,7 @@ import androidx.sqlite.db.SupportSQLiteStatement;
 import com.kasiguru.data.local.entity.UserProgressEntity;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
@@ -50,13 +51,15 @@ public final class UserProgressDao_Impl implements UserProgressDao {
 
   private final SharedSQLiteStatement __preparedStmtOfUpdateUserName;
 
+  private final SharedSQLiteStatement __preparedStmtOfUpdateProfileDetails;
+
   public UserProgressDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfUserProgressEntity = new EntityInsertionAdapter<UserProgressEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `user_progress` (`id`,`userName`,`totalXp`,`level`,`currentStreak`,`longestStreak`,`lastActiveDate`,`wordsLearned`,`storiesCompleted`,`gamesPlayed`,`totalCorrectAnswers`,`totalQuestionsAnswered`,`lessonsCompleted`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `user_progress` (`id`,`userName`,`password`,`email`,`fullName`,`age`,`address`,`profileIconId`,`totalXp`,`level`,`currentStreak`,`longestStreak`,`lastActiveDate`,`wordsLearned`,`storiesCompleted`,`gamesPlayed`,`totalCorrectAnswers`,`totalQuestionsAnswered`,`lessonsCompleted`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -64,17 +67,27 @@ public final class UserProgressDao_Impl implements UserProgressDao {
           @NonNull final UserProgressEntity entity) {
         statement.bindLong(1, entity.getId());
         statement.bindString(2, entity.getUserName());
-        statement.bindLong(3, entity.getTotalXp());
-        statement.bindLong(4, entity.getLevel());
-        statement.bindLong(5, entity.getCurrentStreak());
-        statement.bindLong(6, entity.getLongestStreak());
-        statement.bindString(7, entity.getLastActiveDate());
-        statement.bindLong(8, entity.getWordsLearned());
-        statement.bindLong(9, entity.getStoriesCompleted());
-        statement.bindLong(10, entity.getGamesPlayed());
-        statement.bindLong(11, entity.getTotalCorrectAnswers());
-        statement.bindLong(12, entity.getTotalQuestionsAnswered());
-        statement.bindLong(13, entity.getLessonsCompleted());
+        statement.bindString(3, entity.getPassword());
+        statement.bindString(4, entity.getEmail());
+        statement.bindString(5, entity.getFullName());
+        if (entity.getAge() == null) {
+          statement.bindNull(6);
+        } else {
+          statement.bindLong(6, entity.getAge());
+        }
+        statement.bindString(7, entity.getAddress());
+        statement.bindLong(8, entity.getProfileIconId());
+        statement.bindLong(9, entity.getTotalXp());
+        statement.bindLong(10, entity.getLevel());
+        statement.bindLong(11, entity.getCurrentStreak());
+        statement.bindLong(12, entity.getLongestStreak());
+        statement.bindString(13, entity.getLastActiveDate());
+        statement.bindLong(14, entity.getWordsLearned());
+        statement.bindLong(15, entity.getStoriesCompleted());
+        statement.bindLong(16, entity.getGamesPlayed());
+        statement.bindLong(17, entity.getTotalCorrectAnswers());
+        statement.bindLong(18, entity.getTotalQuestionsAnswered());
+        statement.bindLong(19, entity.getLessonsCompleted());
       }
     };
     this.__preparedStmtOfAddXp = new SharedSQLiteStatement(__db) {
@@ -138,6 +151,14 @@ public final class UserProgressDao_Impl implements UserProgressDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE user_progress SET userName = ? WHERE id = 1";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUpdateProfileDetails = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE user_progress SET fullName = ?, age = ?, address = ?, profileIconId = ? WHERE id = 1";
         return _query;
       }
     };
@@ -367,6 +388,42 @@ public final class UserProgressDao_Impl implements UserProgressDao {
   }
 
   @Override
+  public Object updateProfileDetails(final String fullName, final Integer age, final String address,
+      final int iconId, final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateProfileDetails.acquire();
+        int _argIndex = 1;
+        _stmt.bindString(_argIndex, fullName);
+        _argIndex = 2;
+        if (age == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindLong(_argIndex, age);
+        }
+        _argIndex = 3;
+        _stmt.bindString(_argIndex, address);
+        _argIndex = 4;
+        _stmt.bindLong(_argIndex, iconId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateProfileDetails.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Flow<UserProgressEntity> getUserProgress() {
     final String _sql = "SELECT * FROM user_progress WHERE id = 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -378,6 +435,12 @@ public final class UserProgressDao_Impl implements UserProgressDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfUserName = CursorUtil.getColumnIndexOrThrow(_cursor, "userName");
+          final int _cursorIndexOfPassword = CursorUtil.getColumnIndexOrThrow(_cursor, "password");
+          final int _cursorIndexOfEmail = CursorUtil.getColumnIndexOrThrow(_cursor, "email");
+          final int _cursorIndexOfFullName = CursorUtil.getColumnIndexOrThrow(_cursor, "fullName");
+          final int _cursorIndexOfAge = CursorUtil.getColumnIndexOrThrow(_cursor, "age");
+          final int _cursorIndexOfAddress = CursorUtil.getColumnIndexOrThrow(_cursor, "address");
+          final int _cursorIndexOfProfileIconId = CursorUtil.getColumnIndexOrThrow(_cursor, "profileIconId");
           final int _cursorIndexOfTotalXp = CursorUtil.getColumnIndexOrThrow(_cursor, "totalXp");
           final int _cursorIndexOfLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "level");
           final int _cursorIndexOfCurrentStreak = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStreak");
@@ -395,6 +458,22 @@ public final class UserProgressDao_Impl implements UserProgressDao {
             _tmpId = _cursor.getInt(_cursorIndexOfId);
             final String _tmpUserName;
             _tmpUserName = _cursor.getString(_cursorIndexOfUserName);
+            final String _tmpPassword;
+            _tmpPassword = _cursor.getString(_cursorIndexOfPassword);
+            final String _tmpEmail;
+            _tmpEmail = _cursor.getString(_cursorIndexOfEmail);
+            final String _tmpFullName;
+            _tmpFullName = _cursor.getString(_cursorIndexOfFullName);
+            final Integer _tmpAge;
+            if (_cursor.isNull(_cursorIndexOfAge)) {
+              _tmpAge = null;
+            } else {
+              _tmpAge = _cursor.getInt(_cursorIndexOfAge);
+            }
+            final String _tmpAddress;
+            _tmpAddress = _cursor.getString(_cursorIndexOfAddress);
+            final int _tmpProfileIconId;
+            _tmpProfileIconId = _cursor.getInt(_cursorIndexOfProfileIconId);
             final int _tmpTotalXp;
             _tmpTotalXp = _cursor.getInt(_cursorIndexOfTotalXp);
             final int _tmpLevel;
@@ -417,7 +496,7 @@ public final class UserProgressDao_Impl implements UserProgressDao {
             _tmpTotalQuestionsAnswered = _cursor.getInt(_cursorIndexOfTotalQuestionsAnswered);
             final int _tmpLessonsCompleted;
             _tmpLessonsCompleted = _cursor.getInt(_cursorIndexOfLessonsCompleted);
-            _result = new UserProgressEntity(_tmpId,_tmpUserName,_tmpTotalXp,_tmpLevel,_tmpCurrentStreak,_tmpLongestStreak,_tmpLastActiveDate,_tmpWordsLearned,_tmpStoriesCompleted,_tmpGamesPlayed,_tmpTotalCorrectAnswers,_tmpTotalQuestionsAnswered,_tmpLessonsCompleted);
+            _result = new UserProgressEntity(_tmpId,_tmpUserName,_tmpPassword,_tmpEmail,_tmpFullName,_tmpAge,_tmpAddress,_tmpProfileIconId,_tmpTotalXp,_tmpLevel,_tmpCurrentStreak,_tmpLongestStreak,_tmpLastActiveDate,_tmpWordsLearned,_tmpStoriesCompleted,_tmpGamesPlayed,_tmpTotalCorrectAnswers,_tmpTotalQuestionsAnswered,_tmpLessonsCompleted);
           } else {
             _result = null;
           }
@@ -447,6 +526,12 @@ public final class UserProgressDao_Impl implements UserProgressDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfUserName = CursorUtil.getColumnIndexOrThrow(_cursor, "userName");
+          final int _cursorIndexOfPassword = CursorUtil.getColumnIndexOrThrow(_cursor, "password");
+          final int _cursorIndexOfEmail = CursorUtil.getColumnIndexOrThrow(_cursor, "email");
+          final int _cursorIndexOfFullName = CursorUtil.getColumnIndexOrThrow(_cursor, "fullName");
+          final int _cursorIndexOfAge = CursorUtil.getColumnIndexOrThrow(_cursor, "age");
+          final int _cursorIndexOfAddress = CursorUtil.getColumnIndexOrThrow(_cursor, "address");
+          final int _cursorIndexOfProfileIconId = CursorUtil.getColumnIndexOrThrow(_cursor, "profileIconId");
           final int _cursorIndexOfTotalXp = CursorUtil.getColumnIndexOrThrow(_cursor, "totalXp");
           final int _cursorIndexOfLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "level");
           final int _cursorIndexOfCurrentStreak = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStreak");
@@ -464,6 +549,22 @@ public final class UserProgressDao_Impl implements UserProgressDao {
             _tmpId = _cursor.getInt(_cursorIndexOfId);
             final String _tmpUserName;
             _tmpUserName = _cursor.getString(_cursorIndexOfUserName);
+            final String _tmpPassword;
+            _tmpPassword = _cursor.getString(_cursorIndexOfPassword);
+            final String _tmpEmail;
+            _tmpEmail = _cursor.getString(_cursorIndexOfEmail);
+            final String _tmpFullName;
+            _tmpFullName = _cursor.getString(_cursorIndexOfFullName);
+            final Integer _tmpAge;
+            if (_cursor.isNull(_cursorIndexOfAge)) {
+              _tmpAge = null;
+            } else {
+              _tmpAge = _cursor.getInt(_cursorIndexOfAge);
+            }
+            final String _tmpAddress;
+            _tmpAddress = _cursor.getString(_cursorIndexOfAddress);
+            final int _tmpProfileIconId;
+            _tmpProfileIconId = _cursor.getInt(_cursorIndexOfProfileIconId);
             final int _tmpTotalXp;
             _tmpTotalXp = _cursor.getInt(_cursorIndexOfTotalXp);
             final int _tmpLevel;
@@ -486,7 +587,99 @@ public final class UserProgressDao_Impl implements UserProgressDao {
             _tmpTotalQuestionsAnswered = _cursor.getInt(_cursorIndexOfTotalQuestionsAnswered);
             final int _tmpLessonsCompleted;
             _tmpLessonsCompleted = _cursor.getInt(_cursorIndexOfLessonsCompleted);
-            _result = new UserProgressEntity(_tmpId,_tmpUserName,_tmpTotalXp,_tmpLevel,_tmpCurrentStreak,_tmpLongestStreak,_tmpLastActiveDate,_tmpWordsLearned,_tmpStoriesCompleted,_tmpGamesPlayed,_tmpTotalCorrectAnswers,_tmpTotalQuestionsAnswered,_tmpLessonsCompleted);
+            _result = new UserProgressEntity(_tmpId,_tmpUserName,_tmpPassword,_tmpEmail,_tmpFullName,_tmpAge,_tmpAddress,_tmpProfileIconId,_tmpTotalXp,_tmpLevel,_tmpCurrentStreak,_tmpLongestStreak,_tmpLastActiveDate,_tmpWordsLearned,_tmpStoriesCompleted,_tmpGamesPlayed,_tmpTotalCorrectAnswers,_tmpTotalQuestionsAnswered,_tmpLessonsCompleted);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getUserByCredentials(final String username, final String password,
+      final Continuation<? super UserProgressEntity> $completion) {
+    final String _sql = "SELECT * FROM user_progress WHERE userName = ? AND password = ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, username);
+    _argIndex = 2;
+    _statement.bindString(_argIndex, password);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<UserProgressEntity>() {
+      @Override
+      @Nullable
+      public UserProgressEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfUserName = CursorUtil.getColumnIndexOrThrow(_cursor, "userName");
+          final int _cursorIndexOfPassword = CursorUtil.getColumnIndexOrThrow(_cursor, "password");
+          final int _cursorIndexOfEmail = CursorUtil.getColumnIndexOrThrow(_cursor, "email");
+          final int _cursorIndexOfFullName = CursorUtil.getColumnIndexOrThrow(_cursor, "fullName");
+          final int _cursorIndexOfAge = CursorUtil.getColumnIndexOrThrow(_cursor, "age");
+          final int _cursorIndexOfAddress = CursorUtil.getColumnIndexOrThrow(_cursor, "address");
+          final int _cursorIndexOfProfileIconId = CursorUtil.getColumnIndexOrThrow(_cursor, "profileIconId");
+          final int _cursorIndexOfTotalXp = CursorUtil.getColumnIndexOrThrow(_cursor, "totalXp");
+          final int _cursorIndexOfLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "level");
+          final int _cursorIndexOfCurrentStreak = CursorUtil.getColumnIndexOrThrow(_cursor, "currentStreak");
+          final int _cursorIndexOfLongestStreak = CursorUtil.getColumnIndexOrThrow(_cursor, "longestStreak");
+          final int _cursorIndexOfLastActiveDate = CursorUtil.getColumnIndexOrThrow(_cursor, "lastActiveDate");
+          final int _cursorIndexOfWordsLearned = CursorUtil.getColumnIndexOrThrow(_cursor, "wordsLearned");
+          final int _cursorIndexOfStoriesCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "storiesCompleted");
+          final int _cursorIndexOfGamesPlayed = CursorUtil.getColumnIndexOrThrow(_cursor, "gamesPlayed");
+          final int _cursorIndexOfTotalCorrectAnswers = CursorUtil.getColumnIndexOrThrow(_cursor, "totalCorrectAnswers");
+          final int _cursorIndexOfTotalQuestionsAnswered = CursorUtil.getColumnIndexOrThrow(_cursor, "totalQuestionsAnswered");
+          final int _cursorIndexOfLessonsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "lessonsCompleted");
+          final UserProgressEntity _result;
+          if (_cursor.moveToFirst()) {
+            final int _tmpId;
+            _tmpId = _cursor.getInt(_cursorIndexOfId);
+            final String _tmpUserName;
+            _tmpUserName = _cursor.getString(_cursorIndexOfUserName);
+            final String _tmpPassword;
+            _tmpPassword = _cursor.getString(_cursorIndexOfPassword);
+            final String _tmpEmail;
+            _tmpEmail = _cursor.getString(_cursorIndexOfEmail);
+            final String _tmpFullName;
+            _tmpFullName = _cursor.getString(_cursorIndexOfFullName);
+            final Integer _tmpAge;
+            if (_cursor.isNull(_cursorIndexOfAge)) {
+              _tmpAge = null;
+            } else {
+              _tmpAge = _cursor.getInt(_cursorIndexOfAge);
+            }
+            final String _tmpAddress;
+            _tmpAddress = _cursor.getString(_cursorIndexOfAddress);
+            final int _tmpProfileIconId;
+            _tmpProfileIconId = _cursor.getInt(_cursorIndexOfProfileIconId);
+            final int _tmpTotalXp;
+            _tmpTotalXp = _cursor.getInt(_cursorIndexOfTotalXp);
+            final int _tmpLevel;
+            _tmpLevel = _cursor.getInt(_cursorIndexOfLevel);
+            final int _tmpCurrentStreak;
+            _tmpCurrentStreak = _cursor.getInt(_cursorIndexOfCurrentStreak);
+            final int _tmpLongestStreak;
+            _tmpLongestStreak = _cursor.getInt(_cursorIndexOfLongestStreak);
+            final String _tmpLastActiveDate;
+            _tmpLastActiveDate = _cursor.getString(_cursorIndexOfLastActiveDate);
+            final int _tmpWordsLearned;
+            _tmpWordsLearned = _cursor.getInt(_cursorIndexOfWordsLearned);
+            final int _tmpStoriesCompleted;
+            _tmpStoriesCompleted = _cursor.getInt(_cursorIndexOfStoriesCompleted);
+            final int _tmpGamesPlayed;
+            _tmpGamesPlayed = _cursor.getInt(_cursorIndexOfGamesPlayed);
+            final int _tmpTotalCorrectAnswers;
+            _tmpTotalCorrectAnswers = _cursor.getInt(_cursorIndexOfTotalCorrectAnswers);
+            final int _tmpTotalQuestionsAnswered;
+            _tmpTotalQuestionsAnswered = _cursor.getInt(_cursorIndexOfTotalQuestionsAnswered);
+            final int _tmpLessonsCompleted;
+            _tmpLessonsCompleted = _cursor.getInt(_cursorIndexOfLessonsCompleted);
+            _result = new UserProgressEntity(_tmpId,_tmpUserName,_tmpPassword,_tmpEmail,_tmpFullName,_tmpAge,_tmpAddress,_tmpProfileIconId,_tmpTotalXp,_tmpLevel,_tmpCurrentStreak,_tmpLongestStreak,_tmpLastActiveDate,_tmpWordsLearned,_tmpStoriesCompleted,_tmpGamesPlayed,_tmpTotalCorrectAnswers,_tmpTotalQuestionsAnswered,_tmpLessonsCompleted);
           } else {
             _result = null;
           }

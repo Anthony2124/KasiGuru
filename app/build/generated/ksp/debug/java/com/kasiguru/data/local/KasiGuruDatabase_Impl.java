@@ -53,17 +53,17 @@ public final class KasiGuruDatabase_Impl extends KasiGuruDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(5) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `vocabulary` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kasiguranin` TEXT NOT NULL, `tagalog` TEXT NOT NULL, `english` TEXT NOT NULL, `rootForm` TEXT NOT NULL, `neutralForm` TEXT NOT NULL, `imperfectiveForm` TEXT NOT NULL, `perfectiveForm` TEXT NOT NULL, `contemplativeForm` TEXT NOT NULL, `category` TEXT NOT NULL, `audioFileName` TEXT NOT NULL, `exampleSentence` TEXT NOT NULL, `exampleTranslation` TEXT NOT NULL, `phoneticGlottal` INTEGER NOT NULL, `phoneticVowelLength` INTEGER NOT NULL, `ipaNotation` TEXT NOT NULL, `isLearned` INTEGER NOT NULL, `timesReviewed` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `stories` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `titleKasiguranin` TEXT NOT NULL, `description` TEXT NOT NULL, `category` TEXT NOT NULL, `iconEmoji` TEXT NOT NULL, `pagesJson` TEXT NOT NULL, `totalPages` INTEGER NOT NULL, `requiredXp` INTEGER NOT NULL, `isUnlocked` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `currentPage` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `user_progress` (`id` INTEGER NOT NULL, `userName` TEXT NOT NULL, `totalXp` INTEGER NOT NULL, `level` INTEGER NOT NULL, `currentStreak` INTEGER NOT NULL, `longestStreak` INTEGER NOT NULL, `lastActiveDate` TEXT NOT NULL, `wordsLearned` INTEGER NOT NULL, `storiesCompleted` INTEGER NOT NULL, `gamesPlayed` INTEGER NOT NULL, `totalCorrectAnswers` INTEGER NOT NULL, `totalQuestionsAnswered` INTEGER NOT NULL, `lessonsCompleted` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `user_progress` (`id` INTEGER NOT NULL, `userName` TEXT NOT NULL, `password` TEXT NOT NULL, `email` TEXT NOT NULL, `fullName` TEXT NOT NULL, `age` INTEGER, `address` TEXT NOT NULL, `profileIconId` INTEGER NOT NULL, `totalXp` INTEGER NOT NULL, `level` INTEGER NOT NULL, `currentStreak` INTEGER NOT NULL, `longestStreak` INTEGER NOT NULL, `lastActiveDate` TEXT NOT NULL, `wordsLearned` INTEGER NOT NULL, `storiesCompleted` INTEGER NOT NULL, `gamesPlayed` INTEGER NOT NULL, `totalCorrectAnswers` INTEGER NOT NULL, `totalQuestionsAnswered` INTEGER NOT NULL, `lessonsCompleted` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `achievements` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `iconEmoji` TEXT NOT NULL, `category` TEXT NOT NULL, `requiredValue` INTEGER NOT NULL, `currentValue` INTEGER NOT NULL, `isUnlocked` INTEGER NOT NULL, `unlockedDate` TEXT, `xpReward` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `game_scores` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gameType` TEXT NOT NULL, `score` INTEGER NOT NULL, `totalQuestions` INTEGER NOT NULL, `xpEarned` INTEGER NOT NULL, `playedAt` TEXT NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `sync_queue` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `payloadType` TEXT NOT NULL, `payloadRef` TEXT NOT NULL, `payloadData` TEXT NOT NULL, `status` TEXT NOT NULL, `queuedAt` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '85b207c99e770b0a547d67cdca391606')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a03140861dab78f220479fd547e2505d')");
       }
 
       @Override
@@ -167,9 +167,15 @@ public final class KasiGuruDatabase_Impl extends KasiGuruDatabase {
                   + " Expected:\n" + _infoStories + "\n"
                   + " Found:\n" + _existingStories);
         }
-        final HashMap<String, TableInfo.Column> _columnsUserProgress = new HashMap<String, TableInfo.Column>(13);
+        final HashMap<String, TableInfo.Column> _columnsUserProgress = new HashMap<String, TableInfo.Column>(19);
         _columnsUserProgress.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProgress.put("userName", new TableInfo.Column("userName", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("password", new TableInfo.Column("password", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("email", new TableInfo.Column("email", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("fullName", new TableInfo.Column("fullName", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("age", new TableInfo.Column("age", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("address", new TableInfo.Column("address", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProgress.put("profileIconId", new TableInfo.Column("profileIconId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProgress.put("totalXp", new TableInfo.Column("totalXp", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProgress.put("level", new TableInfo.Column("level", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProgress.put("currentStreak", new TableInfo.Column("currentStreak", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -244,7 +250,7 @@ public final class KasiGuruDatabase_Impl extends KasiGuruDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "85b207c99e770b0a547d67cdca391606", "e3c7e6addf67a094162f6d6b29783654");
+    }, "a03140861dab78f220479fd547e2505d", "e3d1e21d2cbd6164b41a95e13ddd69ec");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

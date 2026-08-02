@@ -3,6 +3,9 @@ package com.kasiguru;
 import com.kasiguru.di.AppModule;
 import com.kasiguru.di.DatabaseModule;
 import com.kasiguru.ui.screens.achievements.AchievementsViewModel_HiltModules;
+import com.kasiguru.ui.screens.auth.LoginViewModel_HiltModules;
+import com.kasiguru.ui.screens.auth.RegisterViewModel_HiltModules;
+import com.kasiguru.ui.screens.auth.SplashViewModel_HiltModules;
 import com.kasiguru.ui.screens.flashcards.FlashcardViewModel_HiltModules;
 import com.kasiguru.ui.screens.games.AspectBuilderViewModel_HiltModules;
 import com.kasiguru.ui.screens.games.AudioQuizViewModel_HiltModules;
@@ -11,6 +14,7 @@ import com.kasiguru.ui.screens.games.GamesViewModel_HiltModules;
 import com.kasiguru.ui.screens.games.SentenceOrderViewModel_HiltModules;
 import com.kasiguru.ui.screens.games.WordMatchViewModel_HiltModules;
 import com.kasiguru.ui.screens.home.HomeViewModel_HiltModules;
+import com.kasiguru.ui.screens.profile.ProfileViewModel_HiltModules;
 import com.kasiguru.ui.screens.stories.StoriesViewModel_HiltModules;
 import com.kasiguru.ui.screens.stories.StoryReaderViewModel_HiltModules;
 import com.kasiguru.ui.screens.vocabulary.VocabularyViewModel_HiltModules;
@@ -177,7 +181,11 @@ public final class KasiGuruApp_HiltComponents {
           HomeViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
+          LoginViewModel_HiltModules.KeyModule.class,
+          ProfileViewModel_HiltModules.KeyModule.class,
+          RegisterViewModel_HiltModules.KeyModule.class,
           SentenceOrderViewModel_HiltModules.KeyModule.class,
+          SplashViewModel_HiltModules.KeyModule.class,
           StoriesViewModel_HiltModules.KeyModule.class,
           StoryReaderViewModel_HiltModules.KeyModule.class,
           VocabularyViewModel_HiltModules.KeyModule.class,
@@ -225,7 +233,11 @@ public final class KasiGuruApp_HiltComponents {
           GamesViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
+          LoginViewModel_HiltModules.BindsModule.class,
+          ProfileViewModel_HiltModules.BindsModule.class,
+          RegisterViewModel_HiltModules.BindsModule.class,
           SentenceOrderViewModel_HiltModules.BindsModule.class,
+          SplashViewModel_HiltModules.BindsModule.class,
           StoriesViewModel_HiltModules.BindsModule.class,
           StoryReaderViewModel_HiltModules.BindsModule.class,
           VocabularyViewModel_HiltModules.BindsModule.class,

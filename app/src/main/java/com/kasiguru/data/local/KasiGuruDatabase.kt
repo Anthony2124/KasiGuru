@@ -15,7 +15,7 @@ import com.kasiguru.data.local.entity.*
         GameScoreEntity::class,
         SyncQueueEntity::class
     ],
-    version = 2,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

@@ -12,6 +12,12 @@ data class UserProgressEntity(
     @PrimaryKey
     val id: Int = 1,
     val userName: String = "Learner",
+    val password: String = "",
+    val email: String = "",
+    val fullName: String = "",
+    val age: Int? = null,
+    val address: String = "",
+    val profileIconId: Int = 1,
     val totalXp: Int = 0,
     val level: Int = 1,
     val currentStreak: Int = 0,

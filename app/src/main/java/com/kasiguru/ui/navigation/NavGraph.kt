@@ -22,10 +22,19 @@ import com.kasiguru.ui.screens.games.SentenceOrderGameScreen
 import com.kasiguru.ui.screens.games.WordMatchGameScreen
 import com.kasiguru.ui.screens.home.HomeScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
+import com.kasiguru.ui.screens.profile.EditProfileScreen
+import com.kasiguru.ui.screens.profile.ProfileScreen
 import com.kasiguru.ui.screens.settings.SettingsScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.screens.auth.LoginScreen
+import com.kasiguru.ui.screens.auth.RegisterScreen
+import com.kasiguru.ui.screens.auth.SplashViewModel
+import com.kasiguru.ui.screens.auth.WelcomeScreen
 
 @Composable
 fun KasiGuruNavGraph() {
@@ -33,37 +42,60 @@ fun KasiGuruNavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute in listOf(
-        Screen.Home.route,
-        Screen.VocabularyList.route,
-        Screen.FlashcardDeck.route,
-        Screen.GameHub.route,
-        Screen.Achievements.route
-    )
-
     Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                KasiGuruBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigateToRoute = { route ->
-                        if (currentRoute != route) {
-                            navController.navigate(route) {
-                                popUpTo(Screen.Home.route) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                )
-            }
-        }
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0)
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Splash Screen for routing
+            composable(Screen.Splash.route) {
+                val viewModel: SplashViewModel = hiltViewModel()
+                val startDestination by viewModel.startDestination.collectAsState()
+                
+                LaunchedEffect(startDestination) {
+                    if (startDestination != null) {
+                        navController.navigate(startDestination!!) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            // Auth Flow
+            composable(Screen.Welcome.route) {
+                WelcomeScreen(
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+                )
+            }
+            
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToRegister = {
+                        navController.navigate(Screen.Register.route)
+                    }
+                )
+            }
+
+            composable(Screen.Register.route) {
+                RegisterScreen(
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Register.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
             // Onboarding Carousel
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
@@ -84,8 +116,23 @@ fun KasiGuruNavGraph() {
                     onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
                     onNavigateToFlashcards = { navController.navigate(Screen.FlashcardDeck.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                )
+            }
+
+            // Profile
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
+            }
+            
+            composable(Screen.EditProfile.route) {
+                EditProfileScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
