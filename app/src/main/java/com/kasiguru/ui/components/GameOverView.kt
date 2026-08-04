@@ -2,12 +2,13 @@ package com.kasiguru.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.*
@@ -20,16 +21,20 @@ fun GameOverView(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
+        ConfettiView()
+
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 2.dp,
+            shadowElevation = 4.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -37,7 +42,7 @@ fun GameOverView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.EmojiEvents,
+                    painter = painterResource(id = Iconsax.Cup),
                     contentDescription = "Complete",
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(64.dp)
@@ -64,7 +69,10 @@ fun GameOverView(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    onClick = onFinish,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onFinish()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
                     shape = RoundedCornerShape(20.dp)
                 ) {

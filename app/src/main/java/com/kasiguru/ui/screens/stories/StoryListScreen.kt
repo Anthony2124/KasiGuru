@@ -7,11 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,12 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +48,7 @@ fun StoryListScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -142,7 +139,9 @@ private fun StoryCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (story.isUnlocked) Icons.AutoMirrored.Rounded.MenuBook else Icons.Rounded.Lock,
+                        painter = painterResource(
+                            id = if (story.isUnlocked) Iconsax.Book else Iconsax.Lock
+                        ),
                         contentDescription = null,
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(24.dp)
@@ -214,7 +213,7 @@ private fun StoryCard(
                                     color = TextHeadingBlack
                                 )
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                    painter = painterResource(id = Iconsax.ArrowRight),
                                     contentDescription = null,
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(14.dp)

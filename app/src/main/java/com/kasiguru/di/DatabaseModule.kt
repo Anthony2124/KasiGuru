@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.DatabaseSeeder
+import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.dao.*
 import dagger.Module
 import dagger.Provides
@@ -30,7 +30,9 @@ object DatabaseModule {
         vocabularyDaoProvider: Provider<VocabularyDao>,
         storyDaoProvider: Provider<StoryDao>,
         userProgressDaoProvider: Provider<UserProgressDao>,
-        achievementDaoProvider: Provider<AchievementDao>
+        achievementDaoProvider: Provider<AchievementDao>,
+        leaderboardDaoProvider: Provider<LeaderboardDao>,
+        notificationDaoProvider: Provider<NotificationDao>
     ): KasiGuruDatabase {
         return Room.databaseBuilder(
             context,
@@ -41,11 +43,29 @@ object DatabaseModule {
         .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                // Seed the database on first creation
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
                     storyDaoProvider.get().insertAll(DatabaseSeeder.getInitialStories())
                     achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
+                    leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
+                    notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
+                }
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                    val count = vocabularyDaoProvider.get().getTotalCountDirect()
+                    if (count < 400) {
+                        vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
+                    }
+                    achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
+                    if (leaderboardDaoProvider.get().getLeaderboardCount() == 0) {
+                        leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
+                    }
+                    if (notificationDaoProvider.get().getNotificationCount() == 0) {
+                        notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
+                    }
                 }
             }
         })
@@ -82,4 +102,14 @@ object DatabaseModule {
     @Singleton
     fun provideSyncQueueDao(database: KasiGuruDatabase): SyncQueueDao =
         database.syncQueueDao()
+
+    @Provides
+    @Singleton
+    fun provideLeaderboardDao(database: KasiGuruDatabase): LeaderboardDao =
+        database.leaderboardDao()
+
+    @Provides
+    @Singleton
+    fun provideNotificationDao(database: KasiGuruDatabase): NotificationDao =
+        database.notificationDao()
 }

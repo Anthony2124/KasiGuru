@@ -30,8 +30,10 @@ sealed class Screen(val route: String) {
     data object AspectBuilderGame : Screen("games/aspect_builder")
     data object SentenceOrderGame : Screen("games/sentence_order")
     data object Achievements : Screen("achievements")
-    data object Settings : Screen("settings")
     data object CulturalContext : Screen("cultural")
     data object FlashcardDeck : Screen("flashcards")
+    data object Leaderboard : Screen("leaderboard")
+    data object Notifications : Screen("notifications")
+    data object Settings : Screen("settings")
     data object About : Screen("about")
 }

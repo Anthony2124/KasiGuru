@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.kasiguru.ui.navigation.KasiGuruNavGraph
 import com.kasiguru.ui.theme.KasiGuruTheme
+import com.kasiguru.util.worker.StreakReminderWorker
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -16,6 +17,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
+        // Schedule daily background streak reminder notification
+        StreakReminderWorker.scheduleDailyReminder(applicationContext)
+
         setContent {
             KasiGuruTheme {
                 KasiGuruNavGraph()

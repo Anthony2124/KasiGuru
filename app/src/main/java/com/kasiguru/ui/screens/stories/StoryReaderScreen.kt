@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,10 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.data.local.entity.StoryPage
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.kasiguru.data.local.entity.VocabularyEntity
@@ -62,7 +58,7 @@ fun StoryReaderScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -190,7 +186,7 @@ fun StoryReaderScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_volume_high),
+                        painter = painterResource(id = Iconsax.VolumeHigh),
                         contentDescription = "Play Audio",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(20.dp)
@@ -271,7 +267,7 @@ fun StoryBottomBar(
                     enabled = currentPage > 1
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        painter = painterResource(id = Iconsax.ArrowLeft),
                         contentDescription = "Previous",
                         tint = if (currentPage > 1) TextHeadingBlack else TextSubtleGray,
                         modifier = Modifier.size(18.dp)
@@ -295,7 +291,7 @@ fun StoryBottomBar(
                         Text("Finish", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = Icons.Rounded.CheckCircle,
+                            painter = painterResource(id = Iconsax.TickCircle),
                             contentDescription = "Finish",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(18.dp)
@@ -304,7 +300,7 @@ fun StoryBottomBar(
                         Text("Next", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            painter = painterResource(id = Iconsax.ArrowRight),
                             contentDescription = "Next",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(18.dp)

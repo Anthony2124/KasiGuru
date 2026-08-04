@@ -8,27 +8,23 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.SportsEsports
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 import kotlinx.coroutines.launch
 
 data class OnboardingPage(
-    val icon: ImageVector,
+    val iconRes: Int,
     val title: String,
     val subtitle: String,
     val description: String,
@@ -42,21 +38,21 @@ fun OnboardingScreen(
 ) {
     val pages = listOf(
         OnboardingPage(
-            icon = Icons.AutoMirrored.Rounded.MenuBook,
+            iconRes = Iconsax.Book,
             title = "Welcome to KasiGuru",
             subtitle = "Preserving the Kasiguranin Language",
             description = "Discover the unique Northern Agta language spoken in Casiguran, Aurora. Learn authentic vocabulary, grammar, and stories.",
             accentColor = HeroCardStart
         ),
         OnboardingPage(
-            icon = Icons.Rounded.SportsEsports,
+            iconRes = Iconsax.Game,
             title = "Learn Through Play",
             subtitle = "Interactive Mini-Games & Stories",
             description = "Master verb aspects, word order, and vocabulary through fun challenges, games, and interactive storybooks.",
             accentColor = MiniGamesCardStart
         ),
         OnboardingPage(
-            icon = Icons.Rounded.VolumeUp,
+            iconRes = Iconsax.VolumeHigh,
             title = "Authentic Phonetics",
             subtitle = "IPA Notation & Audio Practice",
             description = "Practice glottal stops, vowel length, and accurate pronunciation with audio controls and IPA phonetics.",
@@ -111,7 +107,7 @@ fun OnboardingScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = page.icon,
+                                painter = painterResource(id = page.iconRes),
                                 contentDescription = null,
                                 tint = TextHeadingBlack,
                                 modifier = Modifier.size(64.dp)
@@ -197,7 +193,7 @@ fun OnboardingScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                        painter = painterResource(id = Iconsax.ArrowRight),
                         contentDescription = null,
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(16.dp)

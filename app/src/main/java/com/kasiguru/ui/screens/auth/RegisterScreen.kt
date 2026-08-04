@@ -6,11 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.CalendarToday
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Person
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -88,7 +84,7 @@ fun RegisterScreen(
                         label = { Text("Full Name") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.Person,
+                                painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -118,7 +114,7 @@ fun RegisterScreen(
                         label = { Text("Age (optional)") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.CalendarToday,
+                                painter = painterResource(id = Iconsax.Calendar),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -144,7 +140,7 @@ fun RegisterScreen(
                         label = { Text("Address / Location (optional)") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.LocationOn,
+                                painter = painterResource(id = Iconsax.Location),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)

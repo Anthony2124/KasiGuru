@@ -6,23 +6,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AccountBalance
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.HistoryEdu
-import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +38,7 @@ fun CulturalScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -117,28 +112,28 @@ fun CulturalScreen(
             HeritageInfoCard(
                 title = "Geographic Location",
                 description = "Casiguran is a coastal municipality situated in the northern part of Aurora province, Luzon. It is bounded by the Sierra Madre mountain range to the west and the Pacific Ocean to the east.",
-                icon = Icons.Rounded.LocationOn,
+                iconRes = Iconsax.Location,
                 cardBg = HeroCardStart
             )
 
             HeritageInfoCard(
                 title = "Language Family & Contact",
                 description = "Kasiguranin belongs to the Northern Luzon sub-branch of Malayo-Polynesian languages. It exhibits extensive historical contact with Casiguran Dumagat Agta, resulting in unique lexical and phonetic borrowings.",
-                icon = Icons.Rounded.Groups,
+                iconRes = Iconsax.People,
                 cardBg = VocabCardStart
             )
 
             HeritageInfoCard(
                 title = "Linguistic Grammar Features",
                 description = "Kasiguranin features a rich aspectual verb system (neutral, imperfective, perfective, contemplative), unique glottal stops ʔ, long vowels ː, and predicate-initial word order.",
-                icon = Icons.Rounded.HistoryEdu,
+                iconRes = Iconsax.Teacher,
                 cardBg = QuestsCardStart
             )
 
             HeritageInfoCard(
                 title = "Preservation Efforts",
                 description = "Documented by UP Diliman linguistics research ('A Grammatical Sketch of Kasiguranin', 2016). KasiGuru serves to keep the language alive for future generations.",
-                icon = Icons.Rounded.AccountBalance,
+                iconRes = Iconsax.Courthouse,
                 cardBg = MiniGamesCardStart
             )
         }
@@ -149,7 +144,7 @@ fun CulturalScreen(
 private fun HeritageInfoCard(
     title: String,
     description: String,
-    icon: ImageVector,
+    iconRes: Int,
     cardBg: androidx.compose.ui.graphics.Color
 ) {
     Surface(
@@ -171,7 +166,7 @@ private fun HeritageInfoCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(id = iconRes),
                     contentDescription = null,
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(24.dp)

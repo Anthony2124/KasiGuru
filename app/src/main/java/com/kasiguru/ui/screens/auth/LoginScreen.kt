@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,7 +84,7 @@ fun LoginScreen(
                         label = { Text("Username") },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_profile_outline),
+                                painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -111,7 +110,7 @@ fun LoginScreen(
                         label = { Text("Password") },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_lock_outline),
+                                painter = painterResource(id = Iconsax.Lock),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -120,7 +119,7 @@ fun LoginScreen(
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_info_circle),
+                                    painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = if (passwordVisible) "Hide" else "Show",
                                     tint = TextSubtleGray,
                                     modifier = Modifier.size(20.dp)

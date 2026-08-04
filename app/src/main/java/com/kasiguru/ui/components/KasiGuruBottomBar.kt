@@ -3,18 +3,22 @@ package com.kasiguru.ui.components
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -25,7 +29,8 @@ import com.kasiguru.ui.theme.*
 data class BottomNavItem(
     val route: String,
     val title: String,
-    @DrawableRes val iconRes: Int
+    @DrawableRes val iconOutline: Int,
+    @DrawableRes val iconBold: Int
 )
 
 @Composable
@@ -35,68 +40,82 @@ fun KasiGuruBottomBar(
     modifier: Modifier = Modifier
 ) {
     val navItems = listOf(
-        BottomNavItem(Screen.Home.route, "Home", Iconsax.Home),
-        BottomNavItem(Screen.VocabularyList.route, "Learn", Iconsax.Book),
-        BottomNavItem(Screen.FlashcardDeck.route, "Review", Iconsax.Repeat),
-        BottomNavItem(Screen.GameHub.route, "Practice", Iconsax.Grid),
-        BottomNavItem(Screen.Profile.route, "Profile", Iconsax.Profile)
+        BottomNavItem(Screen.Home.route, "Home", Iconsax.HomeOutline, Iconsax.HomeBold),
+        BottomNavItem(Screen.VocabularyList.route, "Learn", Iconsax.BookOutline, Iconsax.BookBold),
+        BottomNavItem(Screen.FlashcardDeck.route, "Review", Iconsax.RepeatOutline, Iconsax.RepeatBold),
+        BottomNavItem(Screen.GameHub.route, "Practice", Iconsax.Element4Outline, Iconsax.Element4Bold),
+        BottomNavItem(Screen.Profile.route, "Profile", Iconsax.ProfileOutline, Iconsax.ProfileBold)
     )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.Transparent)
-            .padding(start = 24.dp, end = 24.dp, bottom = 20.dp, top = 8.dp),
+            .padding(bottom = 28.dp, top = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(66.dp)
+                .width(292.dp)
+                .height(56.dp)
                 .shadow(
-                    elevation = 14.dp,
-                    shape = RoundedCornerShape(33.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.25f),
-                    spotColor = Color.Black.copy(alpha = 0.25f)
+                    elevation = 16.dp,
+                    shape = CircleShape,
+                    ambientColor = Color.Black.copy(alpha = 0.45f),
+                    spotColor = Color.Black.copy(alpha = 0.55f)
                 ),
-            shape = RoundedCornerShape(33.dp),
-            color = FloatingNavBackground
+            shape = CircleShape,
+            color = Color(0xFF0D101A)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 2.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 navItems.forEach { item ->
                     val isSelected = currentRoute == item.route
 
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) FloatingNavBackground else TextSubtleGray,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                        targetValue = if (isSelected) Color(0xFF0D101A) else Color(0xFFF4F4F4),
+                        animationSpec = tween(durationMillis = 220),
                         label = "IconColor"
                     )
 
                     val backgroundColor by animateColorAsState(
-                        targetValue = if (isSelected) FloatingNavActive else Color.Transparent,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                        targetValue = if (isSelected) Color(0xFFF4F4F4) else Color.Transparent,
+                        animationSpec = tween(durationMillis = 220),
                         label = "BgColor"
+                    )
+
+                    val itemScale by animateFloatAsState(
+                        targetValue = if (isSelected) 1.0f else 0.88f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "ItemScale"
                     )
 
                     Box(
                         modifier = Modifier
-                            .size(50.dp)
+                            .size(52.dp)
+                            .scale(itemScale)
                             .clip(CircleShape)
                             .background(backgroundColor)
-                            .clickable { onNavigateToRoute(item.route) },
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onNavigateToRoute(item.route) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = item.iconRes),
+                            painter = painterResource(
+                                id = if (isSelected) item.iconBold else item.iconOutline
+                            ),
                             contentDescription = item.title,
                             tint = iconColor,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

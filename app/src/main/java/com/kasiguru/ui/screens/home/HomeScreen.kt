@@ -8,12 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,16 +23,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
 import com.kasiguru.ui.components.StreakDialog
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToStories: () -> Unit,
     onNavigateToVocabulary: () -> Unit,
     onNavigateToGames: () -> Unit,
-    onNavigateToAchievements: () -> Unit,
+    onNavigateToAchievements: () -> Unit = {},
+    onNavigateToLeaderboard: () -> Unit = {},
     onNavigateToCultural: () -> Unit = {},
     onNavigateToFlashcards: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -70,10 +67,10 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // ─── 1. Top Header: Avatar, Greeting, Streak Flame & Bell ───
+        // ─── 1. Top Header Bar ───
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,7 +83,6 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.clickable { onNavigateToProfile() }
             ) {
-                // Avatar with outer ring
                 Surface(
                     modifier = Modifier
                         .size(54.dp)
@@ -103,7 +99,7 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Person,
+                            painter = painterResource(id = Iconsax.Profile),
                             contentDescription = "Profile",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(28.dp)
@@ -145,7 +141,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Whatshot,
+                            painter = painterResource(id = Iconsax.Flash),
                             contentDescription = "Streak",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(20.dp)
@@ -159,19 +155,39 @@ fun HomeScreen(
                     }
                 }
 
+                // Badges Button
+                Surface(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { onNavigateToAchievements() },
+                    shape = CircleShape,
+                    color = HeroCardStart,
+                    shadowElevation = 2.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.MedalStar),
+                            contentDescription = "Badges",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
                 // Circular Notification Bell Button
                 Surface(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .clickable { onNavigateToSettings() },
+                        .clickable { onNavigateToNotifications() },
                     shape = CircleShape,
                     color = Color.White,
                     shadowElevation = 2.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Rounded.Notifications,
+                            painter = painterResource(id = Iconsax.Notification),
                             contentDescription = "Notifications",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
@@ -181,7 +197,7 @@ fun HomeScreen(
             }
         }
 
-        // ─── 2. Hero Banner Card ("Kasiguranin basics") ───
+        // ─── 2. Hero Banner Card ───
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -199,64 +215,72 @@ fun HomeScreen(
                         )
                     )
             ) {
-                // Student Writing Illustration
                 Image(
                     painter = painterResource(id = R.drawable.img_hero_student),
                     contentDescription = "Kasiguranin basics student",
-                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .fillMaxHeight()
                         .align(Alignment.CenterEnd)
-                        .padding(top = 8.dp)
+                        .fillMaxHeight()
+                        .width(180.dp)
+                        .padding(top = 10.dp, end = 10.dp)
                 )
 
-                // Text Content
                 Column(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.65f)
-                        .padding(start = 24.dp, top = 20.dp, bottom = 20.dp),
+                        .fillMaxSize()
+                        .padding(24.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White.copy(alpha = 0.4f)
+                    ) {
                         Text(
-                            text = "Kasiguranin\nbasics",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack,
-                            lineHeight = 36.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Let's learn today!",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextHeadingBlack.copy(alpha = 0.75f)
+                            text = "GET STARTED",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
                         )
                     }
 
-                    // Continue Lesson Pill Button
+                    Column {
+                        Text(
+                            text = "Kasiguranin basics",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Learn essential phrases\n& words",
+                            fontSize = 14.sp,
+                            color = TextHeadingBlack.copy(alpha = 0.8f),
+                            lineHeight = 18.sp
+                        )
+                    }
+
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.clickable { onNavigateToFlashcards() }
+                        shape = CircleShape,
+                        color = Color.White,
+                        shadowElevation = 2.dp
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Continue your lesson",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                text = "Start Learning",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack
                             )
                             Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                painter = painterResource(id = Iconsax.ArrowRight),
                                 contentDescription = null,
                                 tint = TextHeadingBlack,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
@@ -264,14 +288,7 @@ fun HomeScreen(
             }
         }
 
-        // ─── 3. Learning Categories Section ───
-        Text(
-            text = "Learning Categories",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextHeadingBlack
-        )
-
+        // ─── 3. Bento Grid Section (Vocabulary + Stories + Mini Games) ───
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -301,7 +318,6 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Badge Pill
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = Color.White.copy(alpha = 0.35f)
@@ -315,7 +331,6 @@ fun HomeScreen(
                             )
                         }
 
-                        // Big 500+ Hero Stat
                         Column {
                             Text(
                                 text = "500+",
@@ -332,7 +347,6 @@ fun HomeScreen(
                             )
                         }
 
-                        // Progress Bar & Count
                         Column {
                             LinearProgressIndicator(
                                 progress = { (progress.wordsLearned.toFloat() / 487f).coerceIn(0.1f, 1f) },
@@ -379,14 +393,13 @@ fun HomeScreen(
                                 )
                             )
                     ) {
-                        // Stack of Books Illustration
                         Image(
                             painter = painterResource(id = R.drawable.img_stories_books),
-                            contentDescription = "Stories books",
-                            contentScale = ContentScale.Fit,
+                            contentDescription = null,
                             modifier = Modifier
-                                .fillMaxHeight(0.85f)
                                 .align(Alignment.BottomEnd)
+                                .size(90.dp)
+                                .padding(end = 6.dp, bottom = 6.dp)
                         )
 
                         Column(
@@ -409,24 +422,11 @@ fun HomeScreen(
                             }
 
                             Text(
-                                text = "1 out of 4 Stories Unlocked",
-                                fontSize = 10.sp,
-                                color = TextHeadingBlack.copy(alpha = 0.75f)
+                                text = "Cultural Stories",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
                             )
-
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = Color.White.copy(alpha = 0.45f)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text("Read", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
-                                    Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = TextHeadingBlack, modifier = Modifier.size(10.dp))
-                                }
-                            }
                         }
                     }
                 }
@@ -449,14 +449,13 @@ fun HomeScreen(
                                 )
                             )
                     ) {
-                        // Gameboard Graphic
                         Image(
                             painter = painterResource(id = R.drawable.img_mini_games_board),
-                            contentDescription = "Mini games board",
-                            contentScale = ContentScale.Fit,
+                            contentDescription = null,
                             modifier = Modifier
-                                .fillMaxHeight(0.9f)
                                 .align(Alignment.BottomEnd)
+                                .size(80.dp)
+                                .padding(end = 4.dp, bottom = 4.dp)
                         )
 
                         Column(
@@ -490,7 +489,76 @@ fun HomeScreen(
             }
         }
 
-        // ─── 4. Daily Quests Section (Teal) ───
+        // ─── 4. Leaderboard Banner Card ───
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(115.dp)
+                .clickable { onNavigateToLeaderboard() },
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(HeroCardStart, HeroCardEnd)
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.4f)
+                        ) {
+                            Text(
+                                text = "LEADERBOARD 🏆",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextHeadingBlack
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "See Global Rankings",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
+                        Text(
+                            text = "Compete & climb the ranks!",
+                            fontSize = 12.sp,
+                            color = TextHeadingBlack.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = TextHeadingBlack,
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.MedalStar),
+                                contentDescription = "Leaderboard",
+                                tint = HeroCardStart,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ─── 5. Daily Quests Section ───
         Text(
             text = "Daily Quests",
             fontSize = 20.sp,
@@ -551,7 +619,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Whatshot,
+                                    painter = painterResource(id = Iconsax.Flash),
                                     contentDescription = "Streak",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(14.dp)
@@ -576,7 +644,7 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.EmojiEvents,
+                                    painter = painterResource(id = Iconsax.Cup),
                                     contentDescription = "XP",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(16.dp)

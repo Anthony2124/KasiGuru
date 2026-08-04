@@ -7,25 +7,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
+import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.util.gamification.GamificationEngine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +39,31 @@ fun GameHubScreen(
     viewModel: GamesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedGameRulesType by remember { mutableStateOf<String?>(null) }
+    val haptic = LocalHapticFeedback.current
+
+    val userLevel = uiState.userProgress?.level ?: 1
+    val totalXp = uiState.userProgress?.totalXp ?: 0
+    val levelInfo = remember(totalXp) { GamificationEngine.getLevelInfo(totalXp) }
+    val xpProgress = remember(totalXp) { GamificationEngine.getXpProgressInLevel(totalXp) }
+
+    // Selected Rules Dialog
+    selectedGameRulesType?.let { gameType ->
+        GameRulesDialog(
+            gameType = gameType,
+            userLevel = userLevel,
+            onStartGame = {
+                when (gameType) {
+                    "word_match" -> onNavigateToWordMatch()
+                    "fill_blank" -> onNavigateToFillBlank()
+                    "audio_quiz" -> onNavigateToAudioQuiz()
+                    "aspect_builder" -> onNavigateToAspectBuilder()
+                    "sentence_order" -> onNavigateToSentenceOrder()
+                }
+            },
+            onDismiss = { selectedGameRulesType = null }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -54,7 +79,7 @@ fun GameHubScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -80,64 +105,173 @@ fun GameHubScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 110.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // ─── 1. Level Status Card ───
             item {
-                GameCard(
-                    title = "Word Match",
-                    description = "Match Kasiguranin words to Tagalog or English.",
-                    icon = Icons.Rounded.GridView,
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(26.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Brush.linearGradient(listOf(HeroCardStart, HeroCardEnd)))
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(levelInfo.iconEmoji, fontSize = 32.sp)
+                                    Column {
+                                        Text(
+                                            text = "Level ${levelInfo.level}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = TextHeadingBlack
+                                        )
+                                        Text(
+                                            text = levelInfo.title,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextHeadingBlack.copy(alpha = 0.85f),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = Color.White.copy(alpha = 0.5f)
+                                ) {
+                                    Text(
+                                        text = "$totalXp XP",
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Black,
+                                        color = TextHeadingBlack
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            KasiGuruProgressBar(
+                                progress = xpProgress,
+                                height = 6.dp,
+                                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
+                                animated = true
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ─── 2. Games List ───
+            item {
+                Text(
+                    text = "Select a Mini-Game",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextHeadingBlack
+                )
+            }
+
+            // Game 1: Word Match
+            item {
+                GameCardWithLock(
+                    title = "Word Match Blitz",
+                    description = "Match Kasiguranin terms to Tagalog or English.",
+                    iconRes = Iconsax.Element4Outline,
                     highScore = uiState.highScores["word_match"] ?: 0,
+                    minLevelReq = 1,
+                    userLevel = userLevel,
                     gradient = listOf(VocabCardStart, VocabCardEnd),
-                    onClick = onNavigateToWordMatch
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedGameRulesType = "word_match"
+                    }
                 )
             }
 
+            // Game 2: Fill in the Blank
             item {
-                GameCard(
-                    title = "Aspect Builder",
-                    description = "Conjugate root verbs into correct aspectual forms.",
-                    icon = Icons.Rounded.Bolt,
-                    highScore = uiState.highScores["aspect_builder"] ?: 0,
-                    gradient = listOf(HeroCardStart, HeroCardEnd),
-                    onClick = onNavigateToAspectBuilder
-                )
-            }
-
-            item {
-                GameCard(
-                    title = "Sentence Order",
-                    description = "Arrange words into predicate-initial Kasiguranin syntax.",
-                    icon = Icons.Rounded.Description,
-                    highScore = uiState.highScores["sentence_order"] ?: 0,
-                    gradient = listOf(StoriesCardStart, StoriesCardEnd),
-                    onClick = onNavigateToSentenceOrder
-                )
-            }
-
-            item {
-                GameCard(
+                GameCardWithLock(
                     title = "Fill in the Blank",
                     description = "Complete sentences with the correct verb aspect.",
-                    icon = Icons.Rounded.Edit,
+                    iconRes = Iconsax.Edit,
                     highScore = uiState.highScores["fill_blank"] ?: 0,
+                    minLevelReq = 2,
+                    userLevel = userLevel,
                     gradient = listOf(QuestsCardStart, QuestsCardEnd),
-                    onClick = onNavigateToFillBlank
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedGameRulesType = "fill_blank"
+                    }
                 )
             }
 
+            // Game 3: Audio Quiz
             item {
-                GameCard(
-                    title = "Audio Quiz",
+                GameCardWithLock(
+                    title = "Audio Listening Quiz",
                     description = "Listen to pronunciation and select the correct word.",
-                    icon = Icons.Rounded.VolumeUp,
+                    iconRes = Iconsax.VolumeHigh,
                     highScore = uiState.highScores["audio_quiz"] ?: 0,
+                    minLevelReq = 3,
+                    userLevel = userLevel,
                     gradient = listOf(MiniGamesCardStart, MiniGamesCardEnd),
-                    onClick = onNavigateToAudioQuiz
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedGameRulesType = "audio_quiz"
+                    }
                 )
             }
 
+            // Game 4: Aspect Builder
+            item {
+                GameCardWithLock(
+                    title = "Verb Aspect Builder",
+                    description = "Conjugate root verbs into correct aspectual forms.",
+                    iconRes = Iconsax.Flash,
+                    highScore = uiState.highScores["aspect_builder"] ?: 0,
+                    minLevelReq = 4,
+                    userLevel = userLevel,
+                    gradient = listOf(HeroCardStart, HeroCardEnd),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedGameRulesType = "aspect_builder"
+                    }
+                )
+            }
+
+            // Game 5: Sentence Order
+            item {
+                GameCardWithLock(
+                    title = "Sentence Construction",
+                    description = "Arrange words into predicate-initial Kasiguranin syntax.",
+                    iconRes = Iconsax.Document,
+                    highScore = uiState.highScores["sentence_order"] ?: 0,
+                    minLevelReq = 5,
+                    userLevel = userLevel,
+                    gradient = listOf(StoriesCardStart, StoriesCardEnd),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedGameRulesType = "sentence_order"
+                    }
+                )
+            }
+
+            // ─── 3. Recent Scores Activity ───
             if (uiState.recentScores.isNotEmpty()) {
                 item {
                     Text(
@@ -152,11 +286,11 @@ fun GameHubScreen(
                 items(uiState.recentScores) { score ->
                     ScoreRow(
                         gameName = when (score.gameType) {
-                            "word_match" -> "Word Match"
+                            "word_match" -> "Word Match Blitz"
                             "fill_blank" -> "Fill in the Blank"
                             "audio_quiz" -> "Audio Quiz"
                             "aspect_builder" -> "Aspect Builder"
-                            "sentence_order" -> "Sentence Order"
+                            "sentence_order" -> "Sentence Construction"
                             else -> score.gameType
                         },
                         score = score
@@ -168,14 +302,18 @@ fun GameHubScreen(
 }
 
 @Composable
-private fun GameCard(
+private fun GameCardWithLock(
     title: String,
     description: String,
-    icon: ImageVector,
+    iconRes: Int,
     highScore: Int,
+    minLevelReq: Int,
+    userLevel: Int,
     gradient: List<Color>,
     onClick: () -> Unit
 ) {
+    val isUnlocked = userLevel >= minLevelReq
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,34 +325,58 @@ private fun GameCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.linearGradient(gradient))
+                .background(
+                    brush = if (isUnlocked) Brush.linearGradient(gradient)
+                    else Brush.linearGradient(listOf(Color(0xFFE0E0E0), Color(0xFFCCCCCC)))
+                )
                 .padding(20.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(54.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.35f)),
+                    .background(if (isUnlocked) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.6f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(id = iconRes),
                     contentDescription = null,
                     tint = TextHeadingBlack,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextHeadingBlack,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextHeadingBlack,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
+                    )
+                    if (!isUnlocked) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.error
+                        ) {
+                            Text(
+                                text = "Lv. $minLevelReq",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = description,
@@ -222,21 +384,31 @@ private fun GameCard(
                     color = TextHeadingBlack.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.EmojiEvents,
-                        contentDescription = "High Score",
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(16.dp)
-                    )
+
+                if (isUnlocked) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.Cup),
+                            contentDescription = "High Score",
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Best Score: $highScore",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextHeadingBlack
+                        )
+                    }
+                } else {
                     Text(
-                        text = "Best Score: $highScore",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextHeadingBlack
+                        text = "🔒 Unlocks at Level $minLevelReq",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -249,10 +421,10 @@ private fun GameCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    contentDescription = "Play",
+                    painter = painterResource(id = if (isUnlocked) Iconsax.Play else Iconsax.Lock),
+                    contentDescription = if (isUnlocked) "Play" else "Locked",
                     tint = TextHeadingBlack,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Represents a Kasiguranin vocabulary word with its translations
- * and four aspectual verb forms (neutral, imperfective, perfective, contemplative).
+ * Represents a Kasiguranin vocabulary word with its translations,
+ * four aspectual verb forms, and SuperMemo-2 (SM-2) Spaced Repetition parameters.
  */
 @Entity(tableName = "vocabulary")
 data class VocabularyEntity(
@@ -27,5 +27,9 @@ data class VocabularyEntity(
     val phoneticVowelLength: Boolean = false,
     val ipaNotation: String = "",
     val isLearned: Boolean = false,
-    val timesReviewed: Int = 0
+    val timesReviewed: Int = 0,
+    // SuperMemo-2 (SM-2) SRS Fields
+    val easinessFactor: Double = 2.5,
+    val intervalDays: Int = 0,
+    val nextReviewDate: String = "" // ISO format yyyy-MM-dd
 )

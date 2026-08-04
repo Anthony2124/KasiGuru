@@ -1,16 +1,16 @@
 package com.kasiguru.ui.navigation
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -23,6 +23,8 @@ import com.kasiguru.ui.screens.auth.SplashViewModel
 import com.kasiguru.ui.screens.auth.WelcomeScreen
 import com.kasiguru.ui.screens.cultural.CulturalScreen
 import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
+import com.kasiguru.ui.screens.leaderboard.LeaderboardScreen
+import com.kasiguru.ui.screens.notifications.NotificationInboxScreen
 import com.kasiguru.ui.screens.games.*
 import com.kasiguru.ui.screens.home.HomeScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
@@ -31,6 +33,7 @@ import com.kasiguru.ui.screens.profile.ProfileScreen
 import com.kasiguru.ui.screens.settings.SettingsScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
+import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
 
 @Composable
@@ -47,30 +50,13 @@ fun KasiGuruNavGraph() {
         Screen.Profile.route
     )
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        containerColor = Color.Transparent,
-        bottomBar = {
-            if (showBottomBar) {
-                KasiGuruBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigateToRoute = { route ->
-                        if (currentRoute != route) {
-                            navController.navigate(route) {
-                                popUpTo(Screen.Home.route) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             // Splash Screen for routing
             composable(Screen.Splash.route) {
@@ -123,8 +109,11 @@ fun KasiGuruNavGraph() {
                     onNavigateToVocabulary = { navController.navigate(Screen.VocabularyList.route) },
                     onNavigateToGames = { navController.navigate(Screen.GameHub.route) },
                     onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
+                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
                     onNavigateToFlashcards = { navController.navigate(Screen.FlashcardDeck.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) }
                 )
@@ -135,7 +124,8 @@ fun KasiGuruNavGraph() {
                 ProfileScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) }
                 )
             }
             
@@ -148,6 +138,20 @@ fun KasiGuruNavGraph() {
             // Learn (Vocabulary & Dictionary)
             composable(Screen.VocabularyList.route) {
                 VocabularyScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToCategory = { category ->
+                        navController.navigate(Screen.VocabularyCategory.createRoute(category))
+                    }
+                )
+            }
+            
+            composable(
+                route = Screen.VocabularyCategory.route,
+                arguments = listOf(navArgument("category") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val categoryName = backStackEntry.arguments?.getString("category") ?: "All"
+                CategoryDetailScreen(
+                    categoryName = categoryName,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -211,9 +215,34 @@ fun KasiGuruNavGraph() {
             composable(Screen.CulturalContext.route) {
                 CulturalScreen(onNavigateBack = { navController.popBackStack() })
             }
+            composable(Screen.Leaderboard.route) {
+                LeaderboardScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Screen.Notifications.route) {
+                NotificationInboxScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToRoute = { route -> navController.navigate(route) }
+                )
+            }
             composable(Screen.About.route) {
                 AboutScreen(onNavigateBack = { navController.popBackStack() })
             }
+        }
+
+        if (showBottomBar) {
+            KasiGuruBottomBar(
+                currentRoute = currentRoute,
+                onNavigateToRoute = { route ->
+                    if (currentRoute != route) {
+                        navController.navigate(route) {
+                            popUpTo(Screen.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }

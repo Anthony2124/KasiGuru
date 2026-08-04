@@ -22,6 +22,9 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE isLearned = 0 ORDER BY RANDOM() LIMIT :count")
     suspend fun getUnlearnedWords(count: Int): List<VocabularyEntity>
 
+    @Query("SELECT * FROM vocabulary WHERE nextReviewDate <= :todayDate OR nextReviewDate = '' ORDER BY nextReviewDate ASC, RANDOM() LIMIT :limit")
+    suspend fun getDueReviewWords(todayDate: String, limit: Int = 10): List<VocabularyEntity>
+
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 
@@ -42,6 +45,9 @@ interface VocabularyDao {
 
     @Query("UPDATE vocabulary SET isLearned = 1, timesReviewed = timesReviewed + 1 WHERE id = :id")
     suspend fun markAsLearned(id: Int)
+
+    @Query("UPDATE vocabulary SET isLearned = 0 WHERE id = :id")
+    suspend fun unmarkAsLearned(id: Int)
 
     @Query("UPDATE vocabulary SET timesReviewed = timesReviewed + 1 WHERE id = :id")
     suspend fun incrementReviewCount(id: Int)

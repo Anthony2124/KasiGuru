@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.games
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.GameScoreEntity
+import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,11 @@ class GamesViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             launch {
+                userProgressRepository.getUserProgress().collect { progress ->
+                    _uiState.value = _uiState.value.copy(userProgress = progress)
+                }
+            }
+            launch {
                 gameRepository.getRecentScores(5).collect { scores ->
                     _uiState.value = _uiState.value.copy(
                         recentScores = scores,
@@ -39,12 +45,16 @@ class GamesViewModel @Inject constructor(
                 val wmHigh = gameRepository.getHighScore("word_match")
                 val fbHigh = gameRepository.getHighScore("fill_blank")
                 val aqHigh = gameRepository.getHighScore("audio_quiz")
+                val abHigh = gameRepository.getHighScore("aspect_builder")
+                val soHigh = gameRepository.getHighScore("sentence_order")
                 
                 _uiState.value = _uiState.value.copy(
                     highScores = mapOf(
                         "word_match" to (wmHigh?.score ?: 0),
                         "fill_blank" to (fbHigh?.score ?: 0),
-                        "audio_quiz" to (aqHigh?.score ?: 0)
+                        "audio_quiz" to (aqHigh?.score ?: 0),
+                        "aspect_builder" to (abHigh?.score ?: 0),
+                        "sentence_order" to (soHigh?.score ?: 0)
                     )
                 )
             }
@@ -53,6 +63,7 @@ class GamesViewModel @Inject constructor(
 }
 
 data class GamesUiState(
+    val userProgress: UserProgressEntity? = null,
     val recentScores: List<GameScoreEntity> = emptyList(),
     val highScores: Map<String, Int> = emptyMap(),
     val isLoading: Boolean = true
