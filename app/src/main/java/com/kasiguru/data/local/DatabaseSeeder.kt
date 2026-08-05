@@ -6,7 +6,7 @@ import com.kasiguru.util.Constants
 /**
  * Complete Kasiguranin Linguistic Corpus DatabaseSeeder.
  * Extracted directly from UP Thesis: A Grammatical Sketch of Kasiguranin (Supnet, 2016).
- * Contains 395 vocabulary entries.
+ * Contains 394 vocabulary entries.
  */
 object DatabaseSeeder {
 
@@ -16,7 +16,7 @@ object DatabaseSeeder {
             tagalog = "daras",
             english = "adze",
             rootForm = "apak",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈɁaː.pak"
@@ -44,7 +44,7 @@ object DatabaseSeeder {
             tagalog = "hayop",
             english = "animal",
             rootForm = "hayop",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             phoneticVowelLength = true,
             ipaNotation = "ˈhaː.jɔp"
         ),
@@ -80,7 +80,7 @@ object DatabaseSeeder {
             tagalog = "kili-kili",
             english = "armpit",
             rootForm = "kilikile",
-            category = "Body Parts & Health",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "ki.li.ki.ˈlɛɁ"
         ),
@@ -98,7 +98,7 @@ object DatabaseSeeder {
             tagalog = "gising",
             english = "awake",
             rootForm = "lukag",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "lʊ.ˈkag"
         ),
         VocabularyEntity(
@@ -106,7 +106,7 @@ object DatabaseSeeder {
             tagalog = "likod",
             english = "back",
             rootForm = "adëg",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂa.ˈdəg"
         ),
@@ -115,7 +115,7 @@ object DatabaseSeeder {
             tagalog = "masama",
             english = "bad",
             rootForm = "madukës",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.du.ˈkəs"
         ),
@@ -140,7 +140,7 @@ object DatabaseSeeder {
             tagalog = "balat ng kahoy",
             english = "bark",
             rootForm = "kulet",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "kʊ.ˈlet naŋ ka.ˈjɔɁ"
         ),
@@ -158,7 +158,7 @@ object DatabaseSeeder {
             tagalog = "bigote",
             english = "mustache",
             rootForm = "umeng",
-            category = "Body Parts & Health",
+            category = "Greetings & Essentials",
             ipaNotation = "bal.ˈbas"
         ),
         VocabularyEntity(
@@ -174,7 +174,7 @@ object DatabaseSeeder {
             tagalog = "tiyan",
             english = "belly",
             rootForm = "tiyan",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "ti.ˈjan"
         ),
         VocabularyEntity(
@@ -226,7 +226,7 @@ object DatabaseSeeder {
             tagalog = "talim",
             english = "blade/sharpness",
             rootForm = "tadëm",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ta.ˈdəm"
         ),
@@ -235,7 +235,7 @@ object DatabaseSeeder {
             tagalog = "bulag",
             english = "blind",
             rootForm = "burëk",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "bʊ.ˈrək"
         ),
@@ -244,7 +244,7 @@ object DatabaseSeeder {
             tagalog = "dugo",
             english = "blood",
             rootForm = "digi",
-            category = "Occupations & Tools",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "di.ˈgiɁ"
         ),
@@ -270,7 +270,7 @@ object DatabaseSeeder {
             tagalog = "utak",
             english = "brain",
             rootForm = "utëk",
-            category = "Nature & Environment",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈtək"
         ),
@@ -279,7 +279,7 @@ object DatabaseSeeder {
             tagalog = "sanga",
             english = "branch",
             rootForm = "sanga",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             phoneticGlottal = true,
             ipaNotation = "sa.ˈŋaɁ"
         ),
@@ -288,7 +288,7 @@ object DatabaseSeeder {
             tagalog = "suso",
             english = "breast",
             rootForm = "suso",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "sʊ.ˈsɔɁ"
         ),
@@ -297,7 +297,7 @@ object DatabaseSeeder {
             tagalog = "maliwanag",
             english = "bright",
             rootForm = "mademlag",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "ma.ˈdɛm.lag"
         ),
         VocabularyEntity(
@@ -305,7 +305,7 @@ object DatabaseSeeder {
             tagalog = "bayaw",
             english = "brother-in-law",
             rootForm = "bayaw",
-            category = "Family & People",
+            category = "Greetings & Essentials",
             ipaNotation = "ba.ˈjaw"
         ),
         VocabularyEntity(
@@ -330,7 +330,7 @@ object DatabaseSeeder {
             tagalog = "puwit, puwitan",
             english = "buttocks",
             rootForm = "bule",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "bʊ.ˈleɁ"
         ),
@@ -339,7 +339,7 @@ object DatabaseSeeder {
             tagalog = "apprehend",
             english = "catch,",
             rootForm = "dakëp",
-            category = "Animals & Wildlife",
+            category = "Greetings & Essentials",
             ipaNotation = "da.ˈkəp"
         ),
         VocabularyEntity(
@@ -347,7 +347,7 @@ object DatabaseSeeder {
             tagalog = "uling",
             english = "charcoal",
             rootForm = "biro",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "bi.ˈrɔɁ"
         ),
@@ -356,7 +356,7 @@ object DatabaseSeeder {
             tagalog = "pisngi",
             english = "cheek",
             rootForm = "padingel",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "pa.di.ˈŋel"
         ),
         VocabularyEntity(
@@ -364,7 +364,7 @@ object DatabaseSeeder {
             tagalog = "dibdib",
             english = "chest",
             rootForm = "rakaw",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "ra.ˈkaw"
         ),
         VocabularyEntity(
@@ -372,7 +372,7 @@ object DatabaseSeeder {
             tagalog = "sisiw",
             english = "chick",
             rootForm = "sepsep",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             ipaNotation = "ˈsep.sep"
         ),
         VocabularyEntity(
@@ -380,7 +380,7 @@ object DatabaseSeeder {
             tagalog = "manok",
             english = "chicken",
             rootForm = "manok",
-            category = "Animals & Wildlife",
+            category = "Food & Dining",
             ipaNotation = "ma.ˈnɔk"
         ),
         VocabularyEntity(
@@ -388,7 +388,7 @@ object DatabaseSeeder {
             tagalog = "pinuno",
             english = "chief",
             rootForm = "pinuno",
-            category = "Greetings & Essentials",
+            category = "Family & People",
             phoneticGlottal = true,
             ipaNotation = "pi.nʊ.nʊɁ"
         ),
@@ -414,7 +414,7 @@ object DatabaseSeeder {
             tagalog = "malinis",
             english = "clean",
             rootForm = "malinis",
-            category = "House & Daily Life",
+            category = "Colors & Shapes",
             phoneticVowelLength = true,
             ipaNotation = "ma.ˈliː.nis"
         ),
@@ -423,7 +423,7 @@ object DatabaseSeeder {
             tagalog = "ulap",
             english = "cloud",
             rootForm = "ulap",
-            category = "Nature & Environment",
+            category = "Weather & Climate",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈɁʊː.lap"
@@ -477,7 +477,7 @@ object DatabaseSeeder {
             tagalog = "bangkay",
             english = "corpse",
             rootForm = "bangkay",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "baŋ.ˈkaj"
         ),
         VocabularyEntity(
@@ -485,7 +485,7 @@ object DatabaseSeeder {
             tagalog = "pinsan",
             english = "cousin",
             rootForm = "pensan",
-            category = "Greetings & Essentials",
+            category = "Family & People",
             ipaNotation = "ˈpɛn.san"
         ),
         VocabularyEntity(
@@ -502,7 +502,7 @@ object DatabaseSeeder {
             tagalog = "uwak",
             english = "crow",
             rootForm = "wakwak",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             ipaNotation = "wak.ˈwak"
         ),
         VocabularyEntity(
@@ -518,7 +518,7 @@ object DatabaseSeeder {
             tagalog = "madilim",
             english = "dark",
             rootForm = "madeklëm",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.dik.ˈləm"
         ),
@@ -527,7 +527,7 @@ object DatabaseSeeder {
             tagalog = "(12",
             english = "day",
             rootForm = "or",
-            category = "Nature & Environment",
+            category = "Numbers & Time",
             phoneticGlottal = true,
             ipaNotation = "ˈɁal.dɛw"
         ),
@@ -536,7 +536,7 @@ object DatabaseSeeder {
             tagalog = "umaga",
             english = "daytime",
             rootForm = "umaga",
-            category = "Nature & Environment",
+            category = "Numbers & Time",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "Ɂʊ.ˈmaː.ga"
@@ -546,7 +546,7 @@ object DatabaseSeeder {
             tagalog = "utang",
             english = "debt",
             rootForm = "utang",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈtaŋ"
         ),
@@ -555,7 +555,7 @@ object DatabaseSeeder {
             tagalog = "malalim",
             english = "deep",
             rootForm = "madisalad",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticVowelLength = true,
             ipaNotation = "maː.di.ˈsaː.lad"
         ),
@@ -564,7 +564,7 @@ object DatabaseSeeder {
             tagalog = "usa",
             english = "deer",
             rootForm = "ogsa",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             phoneticGlottal = true,
             ipaNotation = "ˈɁɔg.saɁ"
         ),
@@ -581,7 +581,7 @@ object DatabaseSeeder {
             tagalog = "hamog",
             english = "dew",
             rootForm = "hamog",
-            category = "Greetings & Essentials",
+            category = "Weather & Climate",
             ipaNotation = "ha.ˈmɔg"
         ),
         VocabularyEntity(
@@ -589,7 +589,7 @@ object DatabaseSeeder {
             tagalog = "marumi",
             english = "dirty",
             rootForm = "malëgga/marupet",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.ləg.ˈgaɁ"
         ),
@@ -644,7 +644,7 @@ object DatabaseSeeder {
             tagalog = "mapurol",
             english = "dull",
             rootForm = "mangudël",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.ŋʊ.ˈdəl"
         ),
@@ -653,7 +653,7 @@ object DatabaseSeeder {
             tagalog = "pipi",
             english = "deaf",
             rootForm = "bulol",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "bʊ.ˈlɔl"
         ),
         VocabularyEntity(
@@ -693,18 +693,11 @@ object DatabaseSeeder {
             ipaNotation = "tʊ.ˈleɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "(freshwater)",
-            tagalog = "igat",
-            english = "eel",
-            rootForm = "freshwater",
-            category = "Greetings & Essentials"
-        ),
-        VocabularyEntity(
             kasiguranin = "bunay",
             tagalog = "itlog",
             english = "egg",
             rootForm = "bunay",
-            category = "Food & Dining",
+            category = "Greetings & Essentials",
             ipaNotation = "bʊ.ˈnaj"
         ),
         VocabularyEntity(
@@ -729,7 +722,7 @@ object DatabaseSeeder {
             tagalog = "siko",
             english = "elbow",
             rootForm = "siko",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "si.ˈkɔɁ"
         ),
@@ -747,7 +740,7 @@ object DatabaseSeeder {
             tagalog = "latug",
             english = "erection",
             rootForm = "ëttog",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂət.ˈtɔg"
         ),
@@ -782,7 +775,7 @@ object DatabaseSeeder {
             tagalog = "kilay",
             english = "eyebrow",
             rootForm = "kiray",
-            category = "Body Parts & Health",
+            category = "Greetings & Essentials",
             ipaNotation = "ki.ˈraj"
         ),
         VocabularyEntity(
@@ -809,7 +802,7 @@ object DatabaseSeeder {
             tagalog = "mabilis",
             english = "fast",
             rootForm = "hagut",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "ma.bi.ˈlis"
         ),
         VocabularyEntity(
@@ -852,7 +845,7 @@ object DatabaseSeeder {
             tagalog = "palaypay",
             english = "fin",
             rootForm = "palekpek",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             ipaNotation = "pa.lɛk.ˈpɛk"
         ),
         VocabularyEntity(
@@ -860,7 +853,7 @@ object DatabaseSeeder {
             tagalog = "daliri",
             english = "finger",
             rootForm = "guramët",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "gʊ.ra.ˈmət"
         ),
@@ -913,7 +906,7 @@ object DatabaseSeeder {
             tagalog = "utot",
             english = "flatulence",
             rootForm = "ëttot",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂət.ˈtɔt"
         ),
@@ -922,7 +915,7 @@ object DatabaseSeeder {
             tagalog = "baha",
             english = "flood",
             rootForm = "baha",
-            category = "Weather & Climate",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "ba.ˈhaɁ"
         ),
@@ -974,7 +967,7 @@ object DatabaseSeeder {
             tagalog = "mabaho",
             english = "foul-smelling",
             rootForm = "mabuyok",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             ipaNotation = "ma.bʊ.ˈjɔk"
         ),
         VocabularyEntity(
@@ -991,7 +984,7 @@ object DatabaseSeeder {
             tagalog = "mabango",
             english = "fragrant",
             rootForm = "masrob",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             ipaNotation = "mas.ˈrɔb"
         ),
         VocabularyEntity(
@@ -1015,7 +1008,7 @@ object DatabaseSeeder {
             tagalog = "puno",
             english = "full",
             rootForm = "putat",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             ipaNotation = "pʊ.ˈtat"
         ),
         VocabularyEntity(
@@ -1031,7 +1024,7 @@ object DatabaseSeeder {
             tagalog = "halamanan",
             english = "garden",
             rootForm = "pagmulaan",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "pag.mʊ.la.ˈɁan"
         ),
@@ -1049,7 +1042,7 @@ object DatabaseSeeder {
             tagalog = "luya",
             english = "ginger",
             rootForm = "laya",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             phoneticGlottal = true,
             ipaNotation = "la.ˈjaɁ"
         ),
@@ -1058,7 +1051,7 @@ object DatabaseSeeder {
             tagalog = "bathala",
             english = "god",
             rootForm = "diyos",
-            category = "House & Daily Life",
+            category = "Greetings & Essentials",
             ipaNotation = "ˈʤɔs"
         ),
         VocabularyEntity(
@@ -1066,7 +1059,7 @@ object DatabaseSeeder {
             tagalog = "ginto",
             english = "gold",
             rootForm = "ginto",
-            category = "House & Daily Life",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "gin.ˈtɔɁ"
         ),
@@ -1095,7 +1088,7 @@ object DatabaseSeeder {
             tagalog = "damo",
             english = "grass",
             rootForm = "lamon",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             ipaNotation = "la.ˈmɔn"
         ),
         VocabularyEntity(
@@ -1103,7 +1096,7 @@ object DatabaseSeeder {
             tagalog = "puting buhok",
             english = "gray",
             rootForm = "uban",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈban"
         ),
@@ -1112,7 +1105,7 @@ object DatabaseSeeder {
             tagalog = "laman-loob",
             english = "guts",
             rootForm = "bituka",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "bi.tʊ.ˈkaɁ"
         ),
@@ -1138,7 +1131,7 @@ object DatabaseSeeder {
             tagalog = "matigas",
             english = "hard",
             rootForm = "maktog",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "ˈmak.tɔg"
         ),
         VocabularyEntity(
@@ -1155,7 +1148,7 @@ object DatabaseSeeder {
             tagalog = "malusog",
             english = "healthy",
             rootForm = "matabi",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "ma.ta.ˈbiɁ"
         ),
@@ -1218,7 +1211,7 @@ object DatabaseSeeder {
             tagalog = "gutom",
             english = "hungry",
             rootForm = "alëp",
-            category = "Greetings & Essentials",
+            category = "Emotions & Feelings",
             phoneticGlottal = true,
             ipaNotation = "Ɂa.ˈləp"
         ),
@@ -1227,7 +1220,7 @@ object DatabaseSeeder {
             tagalog = "larawan",
             english = "image",
             rootForm = "letratu",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "lɛ.ˈtraː.tuɁ"
@@ -1264,7 +1257,7 @@ object DatabaseSeeder {
             tagalog = "panga",
             english = "jaw",
             rootForm = "panga",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "pa.ˈŋa"
         ),
         VocabularyEntity(
@@ -1305,7 +1298,7 @@ object DatabaseSeeder {
             tagalog = "tulo",
             english = "leak,",
             rootForm = "turog",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "tʊ.ˈrɔg"
         ),
         VocabularyEntity(
@@ -1322,7 +1315,7 @@ object DatabaseSeeder {
             tagalog = "binti",
             english = "leg",
             rootForm = "binti",
-            category = "Body Parts & Health",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "bin.ˈtiɁ"
         ),
@@ -1386,7 +1379,7 @@ object DatabaseSeeder {
             tagalog = "maluwang",
             english = "loose",
             rootForm = "malawa",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.la.ˈwaɁ"
         ),
@@ -1395,7 +1388,7 @@ object DatabaseSeeder {
             tagalog = "kuto",
             english = "louse",
             rootForm = "kuto",
-            category = "Animals & Wildlife",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "kʊ.ˈtɔɁ"
         ),
@@ -1475,7 +1468,7 @@ object DatabaseSeeder {
             tagalog = "gatas",
             english = "milk",
             rootForm = "gatas",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             phoneticVowelLength = true,
             ipaNotation = "ˈgaː.tas"
         ),
@@ -1484,14 +1477,14 @@ object DatabaseSeeder {
             tagalog = "buwan",
             english = "moon",
             rootForm = "bulan",
-            category = "Nature & Environment"
+            category = "Numbers & Time"
         ),
         VocabularyEntity(
             kasiguranin = "lamok",
             tagalog = "lamok",
             english = "mosquito",
             rootForm = "lamok",
-            category = "Animals & Wildlife",
+            category = "Greetings & Essentials",
             ipaNotation = "la.ˈmɔk"
         ),
         VocabularyEntity(
@@ -1499,7 +1492,7 @@ object DatabaseSeeder {
             tagalog = "lumot",
             english = "moss",
             rootForm = "lumot",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             ipaNotation = "lʊ.ˈmɔt"
         ),
         VocabularyEntity(
@@ -1524,7 +1517,7 @@ object DatabaseSeeder {
             tagalog = "putik",
             english = "mud",
             rootForm = "putik",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             phoneticVowelLength = true,
             ipaNotation = "ˈpʊː.tik"
         ),
@@ -1542,7 +1535,7 @@ object DatabaseSeeder {
             tagalog = "pangalan",
             english = "name",
             rootForm = "ngaran",
-            category = "Greetings & Essentials",
+            category = "Family & People",
             ipaNotation = "ŋa.ˈran"
         ),
         VocabularyEntity(
@@ -1550,7 +1543,7 @@ object DatabaseSeeder {
             tagalog = "batok",
             english = "nape",
             rootForm = "tngngd",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             phoneticGlottal = true,
             ipaNotation = "təŋ.ˈŋəd"
         ),
@@ -1568,7 +1561,7 @@ object DatabaseSeeder {
             tagalog = "pusod",
             english = "navel",
             rootForm = "pusëd",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "pʊ.ˈsəd"
         ),
@@ -1587,7 +1580,7 @@ object DatabaseSeeder {
             tagalog = "leeg",
             english = "neck",
             rootForm = "alleg",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂal.ˈlɛg"
         ),
@@ -1612,7 +1605,7 @@ object DatabaseSeeder {
             tagalog = "pugad",
             english = "nest",
             rootForm = "lubun",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈlʊː.bʊn"
@@ -1622,7 +1615,7 @@ object DatabaseSeeder {
             tagalog = "lambat",
             english = "net",
             rootForm = "rambat",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "ram.ˈbat"
         ),
         VocabularyEntity(
@@ -1639,7 +1632,7 @@ object DatabaseSeeder {
             tagalog = "gabi",
             english = "night",
             rootForm = "gibi",
-            category = "Nature & Environment",
+            category = "Numbers & Time",
             phoneticGlottal = true,
             ipaNotation = "gi.ˈbiɁ"
         ),
@@ -1656,7 +1649,7 @@ object DatabaseSeeder {
             tagalog = "di ko alam",
             english = "i don't know",
             rootForm = "wala",
-            category = "Numbers & Time",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "wa.ˈlaɁ"
         ),
@@ -1683,14 +1676,14 @@ object DatabaseSeeder {
             tagalog = "ngayon",
             english = "now",
             rootForm = "ngayon",
-            category = "Greetings & Essentials"
+            category = "Numbers & Time"
         ),
         VocabularyEntity(
             kasiguranin = "pugita",
             tagalog = "pugita",
             english = "octopus",
             rootForm = "pugita",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             phoneticGlottal = true,
             ipaNotation = "pʊ.gi.ˈtaɁ"
         ),
@@ -1717,7 +1710,7 @@ object DatabaseSeeder {
             tagalog = "minsan",
             english = "once",
             rootForm = "mensan",
-            category = "Greetings & Essentials",
+            category = "Numbers & Time",
             ipaNotation = "ˈmɛn.san"
         ),
         VocabularyEntity(
@@ -1734,7 +1727,7 @@ object DatabaseSeeder {
             tagalog = "ulila",
             english = "orphan",
             rootForm = "ulila",
-            category = "Greetings & Essentials",
+            category = "Family & People",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "Ɂʊ.ˈliː.laɁ"
@@ -1753,7 +1746,7 @@ object DatabaseSeeder {
             tagalog = "bangka",
             english = "boat",
             rootForm = "abeng",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             phoneticGlottal = true,
             ipaNotation = "Ɂa.ˈbɛŋ"
         ),
@@ -1779,7 +1772,7 @@ object DatabaseSeeder {
             tagalog = "sagwan",
             english = "paddle",
             rootForm = "sagwan",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "sag. ˈwan"
         ),
         VocabularyEntity(
@@ -1822,7 +1815,7 @@ object DatabaseSeeder {
             tagalog = "baboy",
             english = "pig",
             rootForm = "babuy",
-            category = "Animals & Wildlife",
+            category = "Food & Dining",
             ipaNotation = "ba.ˈbʊj"
         ),
         VocabularyEntity(
@@ -1830,7 +1823,7 @@ object DatabaseSeeder {
             tagalog = "unan",
             english = "pillow",
             rootForm = "punganan",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "pʊ.ŋa.ˈnan"
         ),
         VocabularyEntity(
@@ -1838,7 +1831,7 @@ object DatabaseSeeder {
             tagalog = "halaman",
             english = "plant",
             rootForm = "halaman",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticVowelLength = true,
             ipaNotation = "ha.ˈlaː.man"
         ),
@@ -1854,7 +1847,7 @@ object DatabaseSeeder {
             tagalog = "nana",
             english = "pus",
             rootForm = "nana",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "na.ˈnaɁ"
         ),
@@ -1880,7 +1873,7 @@ object DatabaseSeeder {
             tagalog = "tadyang",
             english = "rib",
             rootForm = "takgeng",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "ˈtak.gɛŋ"
         ),
         VocabularyEntity(
@@ -1923,7 +1916,7 @@ object DatabaseSeeder {
             tagalog = "daan",
             english = "road",
             rootForm = "dalan",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "da.ˈlan"
         ),
         VocabularyEntity(
@@ -1940,7 +1933,7 @@ object DatabaseSeeder {
             tagalog = "ugat",
             english = "root",
             rootForm = "ugat",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈgat"
         ),
@@ -1957,7 +1950,7 @@ object DatabaseSeeder {
             tagalog = "marupok",
             english = "fragile",
             rootForm = "gabuk",
-            category = "Numbers & Time",
+            category = "Colors & Shapes",
             ipaNotation = "ga.ˈbʊk"
         ),
         VocabularyEntity(
@@ -1965,7 +1958,7 @@ object DatabaseSeeder {
             tagalog = "magaspang",
             english = "rough",
             rootForm = "masapgët",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma. ˈsap.gət"
         ),
@@ -2017,7 +2010,7 @@ object DatabaseSeeder {
             tagalog = "buto",
             english = "seed",
             rootForm = "bukël",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -2025,7 +2018,7 @@ object DatabaseSeeder {
             tagalog = "kasama",
             english = "companion",
             rootForm = "kaguman",
-            category = "Greetings & Essentials",
+            category = "Family & People",
             phoneticVowelLength = true,
             ipaNotation = "ˈkaː.gʊ.man"
         ),
@@ -2043,7 +2036,7 @@ object DatabaseSeeder {
             tagalog = "anino",
             english = "shadow",
             rootForm = "aninu",
-            category = "Weather & Climate",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "Ɂa.ˈnɛː.nɔɁ"
@@ -2053,7 +2046,7 @@ object DatabaseSeeder {
             tagalog = "mababaw",
             english = "shallow",
             rootForm = "madidëbbaw",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "maː.di.dəb.ˈbaw"
@@ -2079,7 +2072,7 @@ object DatabaseSeeder {
             tagalog = "balikat",
             english = "shoulder",
             rootForm = "abaga",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂa.ba.ˈgaɁ"
         ),
@@ -2124,7 +2117,7 @@ object DatabaseSeeder {
             tagalog = "(person)",
             english = "skin",
             rootForm = "balat",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "kʊ.ˈlet"
         ),
         VocabularyEntity(
@@ -2142,7 +2135,7 @@ object DatabaseSeeder {
             tagalog = "inaantok",
             english = "sleepy",
             rootForm = "magtongka",
-            category = "House & Daily Life",
+            category = "Family & People",
             phoneticGlottal = true,
             ipaNotation = "mag.ˈtɔŋ.kaɁ"
         ),
@@ -2151,7 +2144,7 @@ object DatabaseSeeder {
             tagalog = "mabagal",
             english = "slow",
             rootForm = "mabagal",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticVowelLength = true,
             ipaNotation = "ma.ˈbaː.gal"
         ),
@@ -2177,7 +2170,7 @@ object DatabaseSeeder {
             tagalog = "makinis",
             english = "smooth",
             rootForm = "makinis",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticVowelLength = true,
             ipaNotation = "ma.ˈkiː.nis"
         ),
@@ -2204,7 +2197,7 @@ object DatabaseSeeder {
             tagalog = "malambot",
             english = "soft",
             rootForm = "malammen",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "ma.lam.ˈmɛn"
         ),
         VocabularyEntity(
@@ -2249,7 +2242,7 @@ object DatabaseSeeder {
             tagalog = "paniki",
             english = "bat",
             rootForm = "kulapnët",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             ipaNotation = "ku.lap.ˈnɛt"
         ),
         VocabularyEntity(
@@ -2265,7 +2258,7 @@ object DatabaseSeeder {
             tagalog = "laway",
             english = "saliva",
             rootForm = "laway",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticVowelLength = true,
             ipaNotation = "ˈlaː.waj"
         ),
@@ -2274,7 +2267,7 @@ object DatabaseSeeder {
             tagalog = "pusit",
             english = "squid",
             rootForm = "pusit",
-            category = "Greetings & Essentials",
+            category = "Animals & Wildlife",
             ipaNotation = "pʊ.ˈsit"
         ),
         VocabularyEntity(
@@ -2292,7 +2285,7 @@ object DatabaseSeeder {
             tagalog = "tayo",
             english = "stand",
             rootForm = "taknëg",
-            category = "House & Daily Life",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "tak.ˈnəg"
         ),
@@ -2319,7 +2312,7 @@ object DatabaseSeeder {
             tagalog = "tiyan",
             english = "stomach",
             rootForm = "tiyan",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "ʧan"
         ),
         VocabularyEntity(
@@ -2345,7 +2338,7 @@ object DatabaseSeeder {
             tagalog = "tuwid,",
             english = "straight",
             rootForm = "matuwid",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "di.ˈrɛt.sɔ"
         ),
         VocabularyEntity(
@@ -2362,7 +2355,7 @@ object DatabaseSeeder {
             tagalog = "malakas",
             english = "strong",
             rootForm = "mabigsëk",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.big.ˈsək"
         ),
@@ -2380,7 +2373,7 @@ object DatabaseSeeder {
             tagalog = "tubo",
             english = "sugarcane",
             rootForm = "talad",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             ipaNotation = "ta.ˈlad"
         ),
         VocabularyEntity(
@@ -2388,7 +2381,7 @@ object DatabaseSeeder {
             tagalog = "araw",
             english = "sun",
             rootForm = "aldew",
-            category = "Nature & Environment",
+            category = "Numbers & Time",
             phoneticGlottal = true,
             ipaNotation = "ˈɁal.dɛw"
         ),
@@ -2406,7 +2399,7 @@ object DatabaseSeeder {
             tagalog = "maga",
             english = "swollen",
             rootForm = "baga",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "ba.ˈgaɁ"
         ),
@@ -2432,7 +2425,7 @@ object DatabaseSeeder {
             tagalog = "iyak",
             english = "cry",
             rootForm = "sanget",
-            category = "Body Parts & Health",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈlʊː.haɁ"
@@ -2452,7 +2445,7 @@ object DatabaseSeeder {
             tagalog = "makapal",
             english = "thick",
             rootForm = "mabagël",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             phoneticGlottal = true,
             ipaNotation = "ma.ba.ˈgəl"
         ),
@@ -2487,7 +2480,7 @@ object DatabaseSeeder {
             tagalog = "uhaw",
             english = "thirsty",
             rootForm = "uwaw",
-            category = "Greetings & Essentials",
+            category = "Food & Dining",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈwaw"
         ),
@@ -2505,7 +2498,7 @@ object DatabaseSeeder {
             tagalog = "lalamunan",
             english = "throat",
             rootForm = "bukraw",
-            category = "Greetings & Essentials",
+            category = "Numbers & Time",
             ipaNotation = "bʊk.ˈraw"
         ),
         VocabularyEntity(
@@ -2513,7 +2506,7 @@ object DatabaseSeeder {
             tagalog = "kulog",
             english = "thunder",
             rootForm = "këddur",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "kad.ˈdʊr"
         ),
         VocabularyEntity(
@@ -2521,7 +2514,7 @@ object DatabaseSeeder {
             tagalog = "masikip",
             english = "tight",
             rootForm = "masikip",
-            category = "Greetings & Essentials",
+            category = "Colors & Shapes",
             ipaNotation = "ma.si.ˈkip"
         ),
         VocabularyEntity(
@@ -2590,7 +2583,7 @@ object DatabaseSeeder {
             tagalog = "ihip",
             english = "blow",
             rootForm = "sabyog",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "sab.ˈjɔg"
         ),
         VocabularyEntity(
@@ -2598,7 +2591,7 @@ object DatabaseSeeder {
             tagalog = "kulo",
             english = "boil",
             rootForm = "labbut",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "ləb.ˈbʊt"
         ),
         VocabularyEntity(
@@ -2631,7 +2624,7 @@ object DatabaseSeeder {
             tagalog = "sunog",
             english = "burn",
             rootForm = "tutod",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "tʊ.ˈtɔd"
         ),
         VocabularyEntity(
@@ -2647,7 +2640,7 @@ object DatabaseSeeder {
             tagalog = "libing",
             english = "bury the dead",
             rootForm = "lëbbëng",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "ləb.ˈbəng"
         ),
@@ -2699,7 +2692,7 @@ object DatabaseSeeder {
             tagalog = "ubo",
             english = "cough",
             rootForm = " ikkër",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂik.ˈkər"
         ),
@@ -2726,7 +2719,7 @@ object DatabaseSeeder {
             tagalog = "sayaw",
             english = "dance",
             rootForm = "sayaw",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "sa.ˈjaw"
         ),
         VocabularyEntity(
@@ -2742,7 +2735,7 @@ object DatabaseSeeder {
             tagalog = "gawa",
             english = "do",
             rootForm = "gamet",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "ga.ˈmɛt"
         ),
         VocabularyEntity(
@@ -2767,7 +2760,7 @@ object DatabaseSeeder {
             tagalog = "lunod",
             english = "drown",
             rootForm = "limës",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "li.ˈməs"
         ),
@@ -2784,7 +2777,7 @@ object DatabaseSeeder {
             tagalog = "hulog",
             english = "fall",
             rootForm = "tapduk",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             ipaNotation = "tap.ˈdʊk"
         ),
         VocabularyEntity(
@@ -2819,7 +2812,7 @@ object DatabaseSeeder {
             tagalog = "lutang",
             english = "float",
             rootForm = "latak",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "la.ˈtak"
         ),
         VocabularyEntity(
@@ -2837,7 +2830,7 @@ object DatabaseSeeder {
             tagalog = "lipad",
             english = "fly",
             rootForm = "egbër",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "ˈɁɛg.bər"
         ),
@@ -2863,7 +2856,7 @@ object DatabaseSeeder {
             tagalog = "punta",
             english = "go",
             rootForm = "angay",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂa.ˈŋaj"
         ),
@@ -2968,7 +2961,7 @@ object DatabaseSeeder {
             tagalog = "laro",
             english = "play",
             rootForm = "usek",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈsɛk"
         ),
@@ -3001,7 +2994,7 @@ object DatabaseSeeder {
             tagalog = "away",
             english = "fight",
             rootForm = "dima",
-            category = "Occupations & Tools",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "di.ˈmaɁ"
         ),
@@ -3019,7 +3012,7 @@ object DatabaseSeeder {
             tagalog = "balik",
             english = "return",
             rootForm = "sole",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈsɔː.lɛɁ"
@@ -3037,7 +3030,7 @@ object DatabaseSeeder {
             tagalog = "takbo",
             english = "run",
             rootForm = "ginan",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             ipaNotation = "gi.ˈnan"
         ),
         VocabularyEntity(
@@ -3071,7 +3064,7 @@ object DatabaseSeeder {
             tagalog = "tahi",
             english = "sew",
             rootForm = "darop",
-            category = "Greetings & Essentials",
+            category = "Occupations & Tools",
             ipaNotation = "da.ˈrɔp"
         ),
         VocabularyEntity(
@@ -3097,7 +3090,7 @@ object DatabaseSeeder {
             tagalog = "ambon",
             english = "shower",
             rootForm = "puropor",
-            category = "Greetings & Essentials",
+            category = "Weather & Climate",
             phoneticVowelLength = true,
             ipaNotation = "pʊ.ˈrɔː.pɔr"
         ),
@@ -3106,7 +3099,7 @@ object DatabaseSeeder {
             tagalog = "lubog",
             english = "sink",
             rootForm = "sarëm",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈsaː.rəm"
@@ -3116,7 +3109,7 @@ object DatabaseSeeder {
             tagalog = "upo",
             english = "sit",
             rootForm = "etnod",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂɛt.ˈnɔd"
         ),
@@ -3185,7 +3178,7 @@ object DatabaseSeeder {
             tagalog = "lunok",
             english = "swallow",
             rootForm = "tël-lën",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "təl.ˈlən"
         ),
@@ -3203,7 +3196,7 @@ object DatabaseSeeder {
             tagalog = "suka",
             english = "vommit",
             rootForm = "ota",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             phoneticVowelLength = true,
             ipaNotation = "ˈɁɔː.taɁ"
@@ -3213,7 +3206,7 @@ object DatabaseSeeder {
             tagalog = "hugas",
             english = "wash",
             rootForm = "rempës",
-            category = "House & Daily Life",
+            category = "Greetings & Essentials",
             phoneticGlottal = true,
             ipaNotation = "ˈrɛm.pəs"
         ),
@@ -3239,7 +3232,7 @@ object DatabaseSeeder {
             tagalog = "ngipin",
             english = "tooth",
             rootForm = "ngipën",
-            category = "Greetings & Essentials",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "ŋi.ˈpən"
         ),
@@ -3248,7 +3241,7 @@ object DatabaseSeeder {
             tagalog = "sulo",
             english = "torch,",
             rootForm = "sulo",
-            category = "Greetings & Essentials",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈŋɔt"
         ),
@@ -3313,7 +3306,7 @@ object DatabaseSeeder {
             tagalog = "ihi",
             english = "urine",
             rootForm = "esbu",
-            category = "House & Daily Life",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "ˈɁɛs.bʊ"
         ),
@@ -3322,7 +3315,7 @@ object DatabaseSeeder {
             tagalog = "ari ng babae",
             english = "vagina",
             rootForm = "ubët",
-            category = "House & Daily Life",
+            category = "Body Parts & Health",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈbət"
         ),
@@ -3357,7 +3350,7 @@ object DatabaseSeeder {
             tagalog = "kalabaw",
             english = "water buffalo",
             rootForm = "dappog",
-            category = "Nature & Environment",
+            category = "Animals & Wildlife",
             ipaNotation = "dap.ˈpɔg"
         ),
         VocabularyEntity(
@@ -3393,7 +3386,7 @@ object DatabaseSeeder {
             tagalog = "gulong",
             english = "wheel",
             rootForm = "gulong",
-            category = "House & Daily Life",
+            category = "Body Parts & Health",
             ipaNotation = "gu.ˈlɔŋ"
         ),
         VocabularyEntity(
@@ -3427,7 +3420,7 @@ object DatabaseSeeder {
             tagalog = "hangin",
             english = "wind",
             rootForm = "parës",
-            category = "Nature & Environment",
+            category = "Weather & Climate",
             phoneticGlottal = true,
             ipaNotation = "pa.ˈrəs"
         ),
@@ -3454,7 +3447,7 @@ object DatabaseSeeder {
             tagalog = "hikab",
             english = "yawn",
             rootForm = "uwab",
-            category = "Emotions & Feelings",
+            category = "House & Daily Life",
             phoneticGlottal = true,
             ipaNotation = "Ɂʊ.ˈwab"
         )
