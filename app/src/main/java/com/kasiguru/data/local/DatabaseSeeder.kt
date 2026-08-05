@@ -6,7 +6,7 @@ import com.kasiguru.util.Constants
 /**
  * Complete Kasiguranin Linguistic Corpus DatabaseSeeder.
  * Extracted directly from UP Thesis: A Grammatical Sketch of Kasiguranin (Supnet, 2016).
- * Contains 487 vocabulary entries and 0 authentic sentences.
+ * Contains 395 vocabulary entries.
  */
 object DatabaseSeeder {
 
@@ -16,150 +16,115 @@ object DatabaseSeeder {
             tagalog = "daras",
             english = "adze",
             rootForm = "apak",
-            category = "Occupations & Tools",
-            ipaNotation = "ˈɁaː.pak",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁaː.pak"
         ),
         VocabularyEntity(
             kasiguranin = "buhay",
             tagalog = "buhay",
             english = "alive",
             rootForm = "buhay",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "bʊ.ˈhaj"
-        ),
-        VocabularyEntity(
-            kasiguranin = "‘ttanan11",
-            tagalog = "lahat",
-            english = "all",
-            rootForm = "ttanan11",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂət.ta.ˈnan",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "at",
-            tagalog = "at",
-            english = "and",
-            rootForm = "at",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂat",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "kanga",
             tagalog = "galit",
             english = "anger",
             rootForm = "kanga",
-            category = "Emotions & Feelings",
-            ipaNotation = "ˈkaː.ŋaɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkaː.ŋaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "hayop",
             tagalog = "hayop",
             english = "animal",
             rootForm = "hayop",
-            category = "Animals & Wildlife",
-            ipaNotation = "ˈhaː.jɔp",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈhaː.jɔp"
         ),
         VocabularyEntity(
             kasiguranin = "bukong bokong",
             tagalog = "bukung-bukong",
             english = "ankle",
             rootForm = "bukong",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.kɔŋ.ˈbɔː.kɔŋ",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "bʊ.kɔŋ.ˈbɔː.kɔŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "sing’t",
+            kasiguranin = "singët",
             tagalog = "langgam",
             english = "ant",
-            rootForm = "singt",
-            category = "Animals & Wildlife",
-            ipaNotation = "si.ˈŋət",
-            phoneticGlottal = true
+            rootForm = "singët",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "si.ˈŋət"
         ),
         VocabularyEntity(
             kasiguranin = "braso",
             tagalog = "bisig",
             english = "arm",
             rootForm = "braso",
-            category = "Body Parts & Health",
-            ipaNotation = "ˈbraː.sɔ",
-            phoneticVowelLength = true
+            category = "Body Parts",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈbraː.sɔ"
         ),
         VocabularyEntity(
             kasiguranin = "kili-kile",
             tagalog = "kili-kili",
             english = "armpit",
             rootForm = "kilikile",
-            category = "Body Parts & Health",
-            ipaNotation = "ki.li.ki.ˈlɛɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "b’ttek",
-            tagalog = "palaso",
-            english = "arrow",
-            rootForm = "bttek",
-            category = "Occupations & Tools",
-            ipaNotation = "bət.ˈtɛk",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "ki.li.ki.ˈlɛɁ"
         ),
         VocabularyEntity(
             kasiguranin = "abo",
             tagalog = "abo",
             english = "ashes",
             rootForm = "abo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈbɔ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "sa",
-            tagalog = "sa",
-            english = "at",
-            rootForm = "sa",
-            category = "Greetings & Essentials",
-            ipaNotation = "sa"
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈbɔ"
         ),
         VocabularyEntity(
             kasiguranin = "lukag",
             tagalog = "gising",
             english = "awake",
             rootForm = "lukag",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "lʊ.ˈkag"
         ),
         VocabularyEntity(
-            kasiguranin = "ad’g",
+            kasiguranin = "adëg",
             tagalog = "likod",
             english = "back",
-            rootForm = "adg",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂa.ˈdəg",
-            phoneticGlottal = true
+            rootForm = "adëg",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈdəg"
         ),
         VocabularyEntity(
-            kasiguranin = "maduk’s",
+            kasiguranin = "madukës",
             tagalog = "masama",
             english = "bad",
-            rootForm = "maduks",
-            category = "Emotions & Feelings",
-            ipaNotation = "ma.du.ˈkəs",
-            phoneticGlottal = true
+            rootForm = "madukës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.du.ˈkəs"
         ),
         VocabularyEntity(
             kasiguranin = "pokpok",
             tagalog = "kalbo",
             english = "bald",
             rootForm = "pokpok",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ˈpɔk.pɔk"
         ),
         VocabularyEntity(
@@ -167,33 +132,33 @@ object DatabaseSeeder {
             tagalog = "kawayan",
             english = "bamboo",
             rootForm = "kawayan",
-            category = "Nature & Environment",
+            category = "General",
             ipaNotation = "ka.wa.ˈjan"
         ),
         VocabularyEntity(
-            kasiguranin = "balat ng kahoy kulet ng kayo",
-            tagalog = "(tree)",
+            kasiguranin = "kulet ng kayo",
+            tagalog = "balat ng kahoy",
             english = "bark",
-            rootForm = "balat",
+            rootForm = "kulet",
             category = "General",
-            ipaNotation = "kʊ.ˈlet naŋ ka.ˈjɔɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "kʊ.ˈlet naŋ ka.ˈjɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "tiis tiis",
             tagalog = "suffer",
             english = "bear,",
             rootForm = "tiis",
-            category = "Body Parts & Health",
-            ipaNotation = "ti.ˈɁis",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "ti.ˈɁis"
         ),
         VocabularyEntity(
-            kasiguranin = "balbas",
-            tagalog = "balbas",
-            english = "beard",
-            rootForm = "balbas",
-            category = "Body Parts & Health",
+            kasiguranin = "umeng",
+            tagalog = "bigote",
+            english = "mustache",
+            rootForm = "umeng",
+            category = "Body Parts",
             ipaNotation = "bal.ˈbas"
         ),
         VocabularyEntity(
@@ -201,7 +166,7 @@ object DatabaseSeeder {
             tagalog = "maganda",
             english = "beautiful",
             rootForm = "maganda",
-            category = "Emotions & Feelings",
+            category = "General",
             ipaNotation = "ma.ˈgan.da"
         ),
         VocabularyEntity(
@@ -209,145 +174,130 @@ object DatabaseSeeder {
             tagalog = "tiyan",
             english = "belly",
             rootForm = "tiyan",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "ti.ˈjan"
         ),
         VocabularyEntity(
-            kasiguranin = "dikk’l",
+            kasiguranin = "dikkël",
             tagalog = "Malaki",
             english = "big",
-            rootForm = "dikkl",
-            category = "Greetings & Essentials",
-            ipaNotation = "dik.ˈkəl",
-            phoneticGlottal = true
+            rootForm = "dikkël",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "dik.ˈkəl"
         ),
         VocabularyEntity(
             kasiguranin = "apdu",
             tagalog = "apdu",
             english = "bile",
             rootForm = "apdu",
-            category = "Body Parts & Health",
-            ipaNotation = "ˈɁap.dʊ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁap.dʊ"
         ),
         VocabularyEntity(
             kasiguranin = "ibon",
             tagalog = "ibon",
             english = "bird",
             rootForm = "ibon",
-            category = "Animals & Wildlife",
-            ipaNotation = "ˈɁiː.bɔn",
+            category = "Animals",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁiː.bɔn"
         ),
         VocabularyEntity(
             kasiguranin = "mapet",
             tagalog = "mapait",
             english = "bitter",
             rootForm = "mapet",
-            category = "Food & Dining",
+            category = "Food & Drink",
             ipaNotation = "ma.ˈpɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "maitim mangitet",
-            tagalog = "itim,",
+            kasiguranin = "mangitet",
+            tagalog = "maitim",
             english = "black",
-            rootForm = "maitim",
-            category = "Colors & Shapes",
+            rootForm = "mangitet",
+            category = "General",
             ipaNotation = "ma.ŋi.ˈtɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "their symbol for schwa or mid central vowel.",
-            tagalog = "is",
-            english = "The apostrophe",
-            rootForm = "their",
-            category = "Greetings & Essentials",
-            ipaNotation = "’"
+            kasiguranin = "tadëm",
+            tagalog = "talim",
+            english = "blade/sharpness",
+            rootForm = "tadëm",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ta.ˈdəm"
         ),
         VocabularyEntity(
-            kasiguranin = "talim tad’m",
-            tagalog = "sharpness",
-            english = "blade/",
-            rootForm = "talim",
-            category = "Occupations & Tools",
-            ipaNotation = "ta.ˈdəm",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "bur’k",
+            kasiguranin = "burëk",
             tagalog = "bulag",
             english = "blind",
-            rootForm = "burk",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈrək",
-            phoneticGlottal = true
+            rootForm = "burëk",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.ˈrək"
         ),
         VocabularyEntity(
             kasiguranin = "digi",
             tagalog = "dugo",
             english = "blood",
             rootForm = "digi",
-            category = "Body Parts & Health",
-            ipaNotation = "di.ˈgiɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "di.ˈgiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "b’ggi",
+            kasiguranin = "bëggi",
             tagalog = "katawan",
             english = "body",
-            rootForm = "bggi",
-            category = "Body Parts & Health",
-            ipaNotation = "bəg.ˈgiɁ",
-            phoneticGlottal = true
+            rootForm = "bëggi",
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "bəg.ˈgiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "(also, seed) tulang",
-            tagalog = "buto",
-            english = "bone",
-            rootForm = "also",
+            kasiguranin = "tulang",
+            tagalog = "tinik",
+            english = "fishbone",
+            rootForm = "",
             category = "Numbers",
             ipaNotation = "tʊ.ˈlaŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "m.,",
-            tagalog = "(young",
-            english = "boy",
-            rootForm = "m",
-            category = "Family & People"
-        ),
-        VocabularyEntity(
-            kasiguranin = "ut’k",
+            kasiguranin = "utëk",
             tagalog = "utak",
             english = "brain",
-            rootForm = "utk",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂʊ.ˈtək",
-            phoneticGlottal = true
+            rootForm = "utëk",
+            category = "Nature & Environment",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈtək"
         ),
         VocabularyEntity(
             kasiguranin = "sanga",
             tagalog = "sanga",
             english = "branch",
             rootForm = "sanga",
-            category = "Nature & Environment",
-            ipaNotation = "sa.ˈŋaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "sa.ˈŋaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "suso",
             tagalog = "suso",
             english = "breast",
             rootForm = "suso",
-            category = "Body Parts & Health",
-            ipaNotation = "sʊ.ˈsɔɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "sʊ.ˈsɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "mademlag",
             tagalog = "maliwanag",
             english = "bright",
             rootForm = "mademlag",
-            category = "Emotions & Feelings",
+            category = "General",
             ipaNotation = "ma.ˈdɛm.lag"
         ),
         VocabularyEntity(
@@ -359,54 +309,54 @@ object DatabaseSeeder {
             ipaNotation = "ba.ˈjaw"
         ),
         VocabularyEntity(
-            kasiguranin = "bigkis b’db’d",
-            tagalog = "belt",
-            english = "bundle,",
-            rootForm = "bigkis",
-            category = "Greetings & Essentials",
-            ipaNotation = "bəd.ˈbəd",
-            phoneticGlottal = true
+            kasiguranin = "bëdbëd",
+            tagalog = "bigkis",
+            english = "bundle",
+            rootForm = "bëdbëd",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bəd.ˈbəd"
         ),
         VocabularyEntity(
             kasiguranin = "paruparo",
             tagalog = "paruparo",
             english = "butterfly",
             rootForm = "paruparo",
-            category = "Animals & Wildlife",
+            category = "Animals",
             ipaNotation = "pa.rʊ.pa.ˈrɔ"
         ),
         VocabularyEntity(
-            kasiguranin = "puwitan bule",
-            tagalog = "puwit,",
+            kasiguranin = "bule",
+            tagalog = "puwit, puwitan",
             english = "buttocks",
-            rootForm = "puwitan",
-            category = "Body Parts & Health",
-            ipaNotation = "bʊ.ˈleɁ",
-            phoneticGlottal = true
+            rootForm = "bule",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.ˈleɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "dakip dakəp",
+            kasiguranin = "dakëp",
             tagalog = "apprehend",
             english = "catch,",
-            rootForm = "dakip",
-            category = "Greetings & Essentials",
+            rootForm = "dakëp",
+            category = "Animals",
             ipaNotation = "da.ˈkəp"
         ),
         VocabularyEntity(
-            kasiguranin = "biro (niyog)",
+            kasiguranin = "biro",
             tagalog = "uling",
             english = "charcoal",
             rootForm = "biro",
             category = "General",
-            ipaNotation = "bi.ˈrɔɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "bi.ˈrɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "padingel",
             tagalog = "pisngi",
             english = "cheek",
             rootForm = "padingel",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "pa.di.ˈŋel"
         ),
         VocabularyEntity(
@@ -414,7 +364,7 @@ object DatabaseSeeder {
             tagalog = "dibdib",
             english = "chest",
             rootForm = "rakaw",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "ra.ˈkaw"
         ),
         VocabularyEntity(
@@ -422,7 +372,7 @@ object DatabaseSeeder {
             tagalog = "sisiw",
             english = "chick",
             rootForm = "sepsep",
-            category = "Animals & Wildlife",
+            category = "General",
             ipaNotation = "ˈsep.sep"
         ),
         VocabularyEntity(
@@ -430,7 +380,7 @@ object DatabaseSeeder {
             tagalog = "manok",
             english = "chicken",
             rootForm = "manok",
-            category = "Animals & Wildlife",
+            category = "Animals",
             ipaNotation = "ma.ˈnɔk"
         ),
         VocabularyEntity(
@@ -438,9 +388,9 @@ object DatabaseSeeder {
             tagalog = "pinuno",
             english = "chief",
             rootForm = "pinuno",
-            category = "Family & People",
-            ipaNotation = "pi.nʊ.nʊɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pi.nʊ.nʊɁ"
         ),
         VocabularyEntity(
             kasiguranin = "anak anak",
@@ -448,15 +398,15 @@ object DatabaseSeeder {
             english = "child",
             rootForm = "anak",
             category = "Family & People",
-            ipaNotation = "Ɂa.ˈnak",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈnak"
         ),
         VocabularyEntity(
             kasiguranin = "timed",
             tagalog = "baba",
             english = "chin",
             rootForm = "timed",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "ti.ˈmed"
         ),
         VocabularyEntity(
@@ -464,78 +414,70 @@ object DatabaseSeeder {
             tagalog = "malinis",
             english = "clean",
             rootForm = "malinis",
-            category = "Emotions & Feelings",
-            ipaNotation = "ma.ˈliː.nis",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈliː.nis"
         ),
         VocabularyEntity(
             kasiguranin = "ulap",
             tagalog = "ulap",
             english = "cloud",
             rootForm = "ulap",
-            category = "Weather & Climate",
-            ipaNotation = "ˈɁʊː.lap",
+            category = "Nature & Environment",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁʊː.lap"
         ),
         VocabularyEntity(
-            kasiguranin = "ip’s",
+            kasiguranin = "ipës",
             tagalog = "ipis",
             english = "cockroach",
-            rootForm = "ips",
-            category = "Animals & Wildlife",
-            ipaNotation = "Ɂi.ˈpəs",
-            phoneticGlottal = true
+            rootForm = "ipës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂi.ˈpəs"
         ),
         VocabularyEntity(
             kasiguranin = "niyog",
             tagalog = "niyog",
             english = "coconut",
             rootForm = "niyog",
-            category = "Food & Dining",
+            category = "Food & Drink",
             ipaNotation = "ni.ˈjɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "kudkuran korkoran",
-            tagalog = "grater",
+            kasiguranin = "korkoran",
+            tagalog = "kudkuran",
             english = "coconut",
-            rootForm = "kudkuran",
-            category = "Food & Dining",
-            ipaNotation = "kɔr.ˈkɔː.ran",
-            phoneticVowelLength = true
+            rootForm = "korkoran",
+            category = "Food & Drink",
+            phoneticVowelLength = true,
+            ipaNotation = "kɔr.ˈkɔː.ran"
         ),
         VocabularyEntity(
             kasiguranin = "gata gata",
             tagalog = "milk",
             english = "coconut",
             rootForm = "gata",
-            category = "Food & Dining",
-            ipaNotation = "ga.ˈtaɁ",
-            phoneticGlottal = true
+            category = "Food & Drink",
+            phoneticGlottal = true,
+            ipaNotation = "ga.ˈtaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "malamig malamig",
-            tagalog = "(objects)",
+            kasiguranin = "madëgnen",
+            tagalog = "maginaw",
             english = "cold",
-            rootForm = "malamig",
+            rootForm = "madëgnen",
             category = "General",
-            ipaNotation = "ma.la.ˈmig"
-        ),
-        VocabularyEntity(
-            kasiguranin = "maginaw mad’gnen",
-            tagalog = "(weather)",
-            english = "cold",
-            rootForm = "maginaw",
-            category = "General",
-            ipaNotation = "ma.dəg.ˈnɛn",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ma.dəg.ˈnɛn"
         ),
         VocabularyEntity(
             kasiguranin = "bangkay",
             tagalog = "bangkay",
             english = "corpse",
             rootForm = "bangkay",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "baŋ.ˈkaj"
         ),
         VocabularyEntity(
@@ -543,7 +485,7 @@ object DatabaseSeeder {
             tagalog = "pinsan",
             english = "cousin",
             rootForm = "pensan",
-            category = "Family & People",
+            category = "General",
             ipaNotation = "ˈpɛn.san"
         ),
         VocabularyEntity(
@@ -551,16 +493,16 @@ object DatabaseSeeder {
             tagalog = "buwaya",
             english = "crocodile",
             rootForm = "buwaya",
-            category = "Animals & Wildlife",
-            ipaNotation = "bʊ.wa.ˈyaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.wa.ˈyaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "wakwak",
             tagalog = "uwak",
             english = "crow",
             rootForm = "wakwak",
-            category = "Animals & Wildlife",
+            category = "General",
             ipaNotation = "wak.ˈwak"
         ),
         VocabularyEntity(
@@ -568,17 +510,17 @@ object DatabaseSeeder {
             tagalog = "hair",
             english = "curly",
             rootForm = "kulot",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "kʊ.ˈlɔt"
         ),
         VocabularyEntity(
-            kasiguranin = "madilim madikl’m",
-            tagalog = "dim",
-            english = "dark,",
-            rootForm = "madilim",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.dik.ˈləm",
-            phoneticGlottal = true
+            kasiguranin = "madeklëm",
+            tagalog = "madilim",
+            english = "dark",
+            rootForm = "madeklëm",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.dik.ˈləm"
         ),
         VocabularyEntity(
             kasiguranin = "or 24 hrs) araw (also, sun) aldew",
@@ -586,36 +528,27 @@ object DatabaseSeeder {
             english = "day",
             rootForm = "or",
             category = "Nature & Environment",
-            ipaNotation = "ˈɁal.dɛw",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁal.dɛw"
         ),
         VocabularyEntity(
             kasiguranin = "umaga",
             tagalog = "umaga",
             english = "daytime",
             rootForm = "umaga",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂʊ.ˈmaː.ga",
+            category = "Nature & Environment",
             phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "tul’ng",
-            tagalog = "bingi",
-            english = "deaf",
-            rootForm = "tulng",
-            category = "Greetings & Essentials",
-            ipaNotation = "tʊ.ˈləŋ",
-            phoneticGlottal = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂʊ.ˈmaː.ga"
         ),
         VocabularyEntity(
             kasiguranin = "utang",
             tagalog = "utang",
             english = "debt",
             rootForm = "utang",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈtaŋ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈtaŋ"
         ),
         VocabularyEntity(
             kasiguranin = "madisalad (hukay)",
@@ -623,24 +556,24 @@ object DatabaseSeeder {
             english = "deep",
             rootForm = "madisalad",
             category = "General",
-            ipaNotation = "maː.di.ˈsaː.lad",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "maː.di.ˈsaː.lad"
         ),
         VocabularyEntity(
             kasiguranin = "ogsa",
             tagalog = "usa",
             english = "deer",
             rootForm = "ogsa",
-            category = "Animals & Wildlife",
-            ipaNotation = "ˈɁɔg.saɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁɔg.saɁ"
         ),
         VocabularyEntity(
             kasiguranin = "tibag",
             tagalog = "giba",
             english = "demolish",
             rootForm = "tibag",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ti.ˈbag"
         ),
         VocabularyEntity(
@@ -648,54 +581,54 @@ object DatabaseSeeder {
             tagalog = "hamog",
             english = "dew",
             rootForm = "hamog",
-            category = "Weather & Climate",
+            category = "General",
             ipaNotation = "ha.ˈmɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "mal’gga",
+            kasiguranin = "malëgga/marupet",
             tagalog = "marumi",
             english = "dirty",
-            rootForm = "malgga",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ləg.ˈgaɁ",
-            phoneticGlottal = true
+            rootForm = "malëgga/marupet",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.ləg.ˈgaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "aso",
             tagalog = "aso",
             english = "dog",
             rootForm = "aso",
-            category = "Animals & Wildlife",
-            ipaNotation = "Ɂa.ˈsɔɁ",
-            phoneticGlottal = true
+            category = "Animals",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈsɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "pinto",
             tagalog = "pinto",
             english = "door",
             rootForm = "pinto",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈpin.tɔɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈpin.tɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "padid’bba",
-            tagalog = "pababa",
+            kasiguranin = "didëbba",
+            tagalog = "baba",
             english = "downward",
-            rootForm = "padidbba",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.di.dəb.ˈbaɁ",
-            phoneticGlottal = true
+            rootForm = "didëbba",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pa.di.dəb.ˈbaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "tagin’p",
+            kasiguranin = "taginëp",
             tagalog = "panaginip",
             english = "dream",
-            rootForm = "taginp",
-            category = "Greetings & Essentials",
-            ipaNotation = "ta.ˈgiː.nəp",
+            rootForm = "taginëp",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ta.ˈgiː.nəp"
         ),
         VocabularyEntity(
             kasiguranin = "tuyo tuyo",
@@ -703,23 +636,23 @@ object DatabaseSeeder {
             english = "dry",
             rootForm = "tuyo",
             category = "General",
-            ipaNotation = "tʊ.ˈyɔɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "tʊ.ˈyɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "mapurol mangud’l",
-            tagalog = "(knife)",
+            kasiguranin = "mangudël",
+            tagalog = "mapurol",
             english = "dull",
-            rootForm = "mapurol",
+            rootForm = "mangudël",
             category = "General",
-            ipaNotation = "ma.ŋʊ.ˈdəl",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ma.ŋʊ.ˈdəl"
         ),
         VocabularyEntity(
-            kasiguranin = "pipi bulol",
-            tagalog = "(mute)",
-            english = "dumb",
-            rootForm = "pipi",
+            kasiguranin = "bulol",
+            tagalog = "pipi",
+            english = "deaf",
+            rootForm = "bulol",
             category = "General",
             ipaNotation = "bʊ.ˈlɔl"
         ),
@@ -728,36 +661,36 @@ object DatabaseSeeder {
             tagalog = "alikabok",
             english = "dust",
             rootForm = "alikabok",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.li.ka.ˈbɔk",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.li.ka.ˈbɔk"
         ),
         VocabularyEntity(
-            kasiguranin = "b’ng-b’ng",
+            kasiguranin = "bëng-bëng",
             tagalog = "tainga",
             english = "ear",
             rootForm = "bngbng",
-            category = "Body Parts & Health",
-            ipaNotation = "bəŋ.ˈbəŋ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "bəŋ.ˈbəŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "lupa luta",
-            tagalog = "(soil)",
+            kasiguranin = "luta",
+            tagalog = "lupa",
             english = "earth",
-            rootForm = "lupa",
+            rootForm = "luta",
             category = "Nature & Environment",
-            ipaNotation = "lʊ.ˈtaɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "lʊ.ˈtaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "tule (solid)",
+            kasiguranin = "tule",
             tagalog = "tutuli",
             english = "earwax",
             rootForm = "tule",
             category = "Body Parts",
-            ipaNotation = "tʊ.ˈleɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "tʊ.ˈleɁ"
         ),
         VocabularyEntity(
             kasiguranin = "(freshwater)",
@@ -771,7 +704,7 @@ object DatabaseSeeder {
             tagalog = "itlog",
             english = "egg",
             rootForm = "bunay",
-            category = "Food & Dining",
+            category = "Food & Drink",
             ipaNotation = "bʊ.ˈnaj"
         ),
         VocabularyEntity(
@@ -779,7 +712,7 @@ object DatabaseSeeder {
             tagalog = "talong",
             english = "eggplant",
             rootForm = "talung",
-            category = "Animals & Wildlife",
+            category = "Food & Drink",
             ipaNotation = "ta.ˈluŋ"
         ),
         VocabularyEntity(
@@ -787,61 +720,61 @@ object DatabaseSeeder {
             tagalog = "walo",
             english = "eight",
             rootForm = "walo",
-            category = "Numbers & Time",
-            ipaNotation = "wa.ˈlɔɁ",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "wa.ˈlɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "siko",
             tagalog = "siko",
             english = "elbow",
             rootForm = "siko",
-            category = "Body Parts & Health",
-            ipaNotation = "si.ˈkɔɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "si.ˈkɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "coal baga baga",
             tagalog = "hot",
             english = "ember,",
             rootForm = "coal",
-            category = "Greetings & Essentials",
-            ipaNotation = "baː.ˈga",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "baː.ˈga"
         ),
         VocabularyEntity(
-            kasiguranin = "‘ttog",
+            kasiguranin = "ëttog",
             tagalog = "latug",
             english = "erection",
-            rootForm = "ttog",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂət.ˈtɔg",
-            phoneticGlottal = true
+            rootForm = "ëttog",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂət.ˈtɔg"
         ),
         VocabularyEntity(
             kasiguranin = "gibi",
             tagalog = "gabi",
             english = "evening",
             rootForm = "gibi",
-            category = "Numbers & Time",
-            ipaNotation = "gi.ˈbiɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "gi.ˈbiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "‘ttay",
+            kasiguranin = "ëttay",
             tagalog = "dumi",
             english = "excrement",
-            rootForm = "ttay",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂət.ˈtay",
-            phoneticGlottal = true
+            rootForm = "ëttay",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂət.ˈtay"
         ),
         VocabularyEntity(
             kasiguranin = "mata",
             tagalog = "mata",
             english = "eye",
             rootForm = "mata",
-            category = "Body Parts & Health",
+            category = "Body Parts",
             ipaNotation = "ma.ˈta"
         ),
         VocabularyEntity(
@@ -849,7 +782,7 @@ object DatabaseSeeder {
             tagalog = "kilay",
             english = "eyebrow",
             rootForm = "kiray",
-            category = "Body Parts & Health",
+            category = "Body Parts",
             ipaNotation = "ki.ˈraj"
         ),
         VocabularyEntity(
@@ -857,36 +790,36 @@ object DatabaseSeeder {
             tagalog = "mukha",
             english = "face",
             rootForm = "rupa",
-            category = "Body Parts & Health",
-            ipaNotation = "rʊ.ˈpaɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "rʊ.ˈpaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "adayo",
             tagalog = "malayo",
             english = "far",
             rootForm = "adayo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈdaː.jɔ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂa.ˈdaː.jɔ"
         ),
         VocabularyEntity(
-            kasiguranin = "mabilis",
+            kasiguranin = "hagut",
             tagalog = "mabilis",
             english = "fast",
-            rootForm = "mabilis",
-            category = "Greetings & Essentials",
+            rootForm = "hagut",
+            category = "General",
             ipaNotation = "ma.bi.ˈlis"
         ),
         VocabularyEntity(
-            kasiguranin = "taba tabi",
-            tagalog = "(substance)",
+            kasiguranin = "tabi",
+            tagalog = "taba",
             english = "fat",
-            rootForm = "taba",
+            rootForm = "tabi",
             category = "General",
-            ipaNotation = "ta.ˈbiɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ta.ˈbiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "tatay",
@@ -894,22 +827,15 @@ object DatabaseSeeder {
             english = "father",
             rootForm = "tatay",
             category = "Family & People",
-            ipaNotation = "ˈtaː.taj",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "balahibo (fur,",
-            tagalog = "(large)",
-            english = "feather",
-            rootForm = "balahibo",
-            category = "Daily Activities"
+            phoneticVowelLength = true,
+            ipaNotation = "ˈtaː.taj"
         ),
         VocabularyEntity(
             kasiguranin = "kudal",
             tagalog = "bakod",
             english = "fence",
             rootForm = "kudal",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "kʊ.ˈdal"
         ),
         VocabularyEntity(
@@ -917,147 +843,130 @@ object DatabaseSeeder {
             tagalog = "kaunti",
             english = "few",
             rootForm = "sabaddit",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsaː.bad.dit",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.bad.dit"
         ),
         VocabularyEntity(
             kasiguranin = "palekpek",
             tagalog = "palaypay",
             english = "fin",
             rootForm = "palekpek",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "pa.lɛk.ˈpɛk"
         ),
         VocabularyEntity(
-            kasiguranin = "guram’t",
+            kasiguranin = "guramët",
             tagalog = "daliri",
             english = "finger",
-            rootForm = "guramt",
-            category = "Body Parts & Health",
-            ipaNotation = "gʊ.ra.ˈmət",
-            phoneticGlottal = true
+            rootForm = "guramët",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "gʊ.ra.ˈmət"
         ),
         VocabularyEntity(
             kasiguranin = "kuko",
             tagalog = "kuko",
             english = "fingernail",
             rootForm = "kuko",
-            category = "Body Parts & Health",
-            ipaNotation = "kʊ.ˈkɔɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "kʊ.ˈkɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "apoy",
             tagalog = "apoy",
             english = "fire",
             rootForm = "apoy",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈpɔj",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈpɔj"
         ),
         VocabularyEntity(
             kasiguranin = "damo",
             tagalog = "una",
             english = "first",
             rootForm = "damo",
-            category = "Greetings & Essentials",
-            ipaNotation = "da.ˈmɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "damong anak",
-            tagalog = "panganay",
-            english = "firstborn",
-            rootForm = "damong",
-            category = "Greetings & Essentials",
-            ipaNotation = "da.ˈmɔŋ Ɂa.ˈnak",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "da.ˈmɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "sida",
             tagalog = "isda",
             english = "fish",
             rootForm = "sida",
-            category = "Animals & Wildlife",
-            ipaNotation = "si.ˈdaɁ",
-            phoneticGlottal = true
+            category = "Food & Drink",
+            phoneticGlottal = true,
+            ipaNotation = "si.ˈdaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "lima",
             tagalog = "lima",
             english = "five",
             rootForm = "lima",
-            category = "Numbers & Time",
+            category = "Numbers",
             ipaNotation = "li.ˈmaʔ"
         ),
         VocabularyEntity(
-            kasiguranin = "‘ttot",
+            kasiguranin = "ëttot",
             tagalog = "utot",
             english = "flatulence",
-            rootForm = "ttot",
-            category = "Colors & Shapes",
-            ipaNotation = "Ɂət.ˈtɔt",
-            phoneticGlottal = true
+            rootForm = "ëttot",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂət.ˈtɔt"
         ),
         VocabularyEntity(
             kasiguranin = "baha",
             tagalog = "baha",
             english = "flood",
             rootForm = "baha",
-            category = "Greetings & Essentials",
-            ipaNotation = "ba.ˈhaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ba.ˈhaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "bulaklak",
             tagalog = "bulaklak",
             english = "flower",
             rootForm = "bulaklak",
-            category = "Greetings & Essentials",
+            category = "Nature & Environment",
             ipaNotation = "bʊ.lak.ˈlak"
-        ),
-        VocabularyEntity(
-            kasiguranin = "insect) langaw (small) langaw",
-            tagalog = "(the",
-            english = "fly",
-            rootForm = "insect",
-            category = "Animals",
-            ipaNotation = "la.ˈŋaw"
         ),
         VocabularyEntity(
             kasiguranin = "bula",
             tagalog = "bula",
             english = "foam",
             rootForm = "bula",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈlaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.ˈlaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "alapok",
             tagalog = "ulop",
             english = "fog",
             rootForm = "alapok",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.la.ˈpɔk",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.la.ˈpɔk"
         ),
         VocabularyEntity(
-            kasiguranin = "b’sset",
+            kasiguranin = "bësset",
             tagalog = "paa",
             english = "foot",
-            rootForm = "bsset",
-            category = "Body Parts & Health",
-            ipaNotation = "bəs.ˈsɛt",
-            phoneticGlottal = true
+            rootForm = "bësset",
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "bəs.ˈsɛt"
         ),
         VocabularyEntity(
             kasiguranin = "muding",
             tagalog = "noo",
             english = "forehead",
             rootForm = "muding",
-            category = "Body Parts & Health",
+            category = "Body Parts",
             ipaNotation = "mʊ.ˈdiŋ"
         ),
         VocabularyEntity(
@@ -1065,7 +974,7 @@ object DatabaseSeeder {
             tagalog = "mabaho",
             english = "foul-smelling",
             rootForm = "mabuyok",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ma.bʊ.ˈjɔk"
         ),
         VocabularyEntity(
@@ -1073,16 +982,16 @@ object DatabaseSeeder {
             tagalog = "apat",
             english = "four",
             rootForm = "appat",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂəp.ˈpat",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂəp.ˈpat"
         ),
         VocabularyEntity(
             kasiguranin = "masrob",
             tagalog = "mabango",
             english = "fragrant",
             rootForm = "masrob",
-            category = "Animals & Wildlife",
+            category = "General",
             ipaNotation = "mas.ˈrɔb"
         ),
         VocabularyEntity(
@@ -1090,22 +999,22 @@ object DatabaseSeeder {
             tagalog = "palaka",
             english = "frog",
             rootForm = "tukak",
-            category = "Animals & Wildlife",
+            category = "Animals",
             ipaNotation = "tu.ˈkak"
         ),
         VocabularyEntity(
-            kasiguranin = "eating) busog bassog",
-            tagalog = "(after",
-            english = "full",
-            rootForm = "eating",
+            kasiguranin = "bassog",
+            tagalog = "busog",
+            english = "full after eating",
+            rootForm = "bassog",
             category = "General",
             ipaNotation = "bəs.ˈsɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "empty) puno putat",
-            tagalog = "(not",
+            kasiguranin = "putat",
+            tagalog = "puno",
             english = "full",
-            rootForm = "empty",
+            rootForm = "putat",
             category = "General",
             ipaNotation = "pʊ.ˈtat"
         ),
@@ -1114,7 +1023,7 @@ object DatabaseSeeder {
             tagalog = "balahibo",
             english = "fur",
             rootForm = "dutdut",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "dʊt.ˈdʊt"
         ),
         VocabularyEntity(
@@ -1122,43 +1031,34 @@ object DatabaseSeeder {
             tagalog = "halamanan",
             english = "garden",
             rootForm = "pagmulaan",
-            category = "Greetings & Essentials",
-            ipaNotation = "pag.mʊ.la.ˈɁan",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pag.mʊ.la.ˈɁan"
         ),
         VocabularyEntity(
             kasiguranin = "asang",
             tagalog = "hasang",
             english = "gills",
             rootForm = "asang",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈsaŋ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈsaŋ"
         ),
         VocabularyEntity(
             kasiguranin = "laya",
             tagalog = "luya",
             english = "ginger",
             rootForm = "laya",
-            category = "Greetings & Essentials",
-            ipaNotation = "la.ˈjaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "babae anak na babbi",
-            tagalog = "batang",
-            english = "girl",
-            rootForm = "babae",
-            category = "Family & People",
-            ipaNotation = "Ɂa.ˈnak na bəb.ˈbiɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "la.ˈjaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "diyos",
             tagalog = "bathala",
             english = "god",
             rootForm = "diyos",
-            category = "Greetings & Essentials",
+            category = "Daily Activities",
             ipaNotation = "ˈʤɔs"
         ),
         VocabularyEntity(
@@ -1166,62 +1066,62 @@ object DatabaseSeeder {
             tagalog = "ginto",
             english = "gold",
             rootForm = "ginto",
-            category = "Greetings & Essentials",
-            ipaNotation = "gin.ˈtɔɁ",
-            phoneticGlottal = true
+            category = "Daily Activities",
+            phoneticGlottal = true,
+            ipaNotation = "gin.ˈtɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "maigi",
             tagalog = "mabuti",
             english = "good",
             rootForm = "maigi",
-            category = "Emotions & Feelings",
-            ipaNotation = "ma.ˈɁiː.giɁ",
+            category = "Daily Activities",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈɁiː.giɁ"
         ),
         VocabularyEntity(
             kasiguranin = "kaku na",
             tagalog = "paalam",
             english = "goodbye",
             rootForm = "kaku",
-            category = "Emotions & Feelings",
-            ipaNotation = "ˈkaː.ku ˈnaɁ",
+            category = "Daily Activities",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkaː.ku ˈnaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "lamon",
             tagalog = "damo",
             english = "grass",
             rootForm = "lamon",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "la.ˈmɔn"
         ),
         VocabularyEntity(
-            kasiguranin = "uban uban",
-            tagalog = "hair",
+            kasiguranin = "uban",
+            tagalog = "puting buhok",
             english = "gray",
             rootForm = "uban",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈban",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈban"
         ),
         VocabularyEntity(
             kasiguranin = "bituka",
             tagalog = "laman-loob",
             english = "guts",
             rootForm = "bituka",
-            category = "Greetings & Essentials",
-            ipaNotation = "bi.tʊ.ˈkaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bi.tʊ.ˈkaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "buhok",
             tagalog = "buhok",
             english = "hair",
             rootForm = "buhok",
-            category = "Body Parts & Health",
+            category = "Body Parts",
             ipaNotation = "bʊ.ˈhɔk"
         ),
         VocabularyEntity(
@@ -1229,103 +1129,70 @@ object DatabaseSeeder {
             tagalog = "kamay",
             english = "hand",
             rootForm = "lima",
-            category = "Body Parts & Health",
-            ipaNotation = "li.ˈmaɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "li.ˈmaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "maktog",
             tagalog = "matigas",
             english = "hard",
             rootForm = "maktog",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈmak.tɔg"
-        ),
-        VocabularyEntity(
-            kasiguranin = "(he, she) siya",
-            tagalog = "siya",
-            english = "he",
-            rootForm = "he",
             category = "General",
-            ipaNotation = "si.ˈja"
+            ipaNotation = "ˈmak.tɔg"
         ),
         VocabularyEntity(
             kasiguranin = "ulo",
             tagalog = "ulo",
             english = "head",
             rootForm = "ulo",
-            category = "Body Parts & Health",
-            ipaNotation = "u.ˈlɔɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "u.ˈlɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "matabi",
             tagalog = "malusog",
             english = "healthy",
             rootForm = "matabi",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ta.ˈbiɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.ta.ˈbiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "puso",
             tagalog = "puso",
             english = "heart",
             rootForm = "puso",
-            category = "Body Parts & Health",
-            ipaNotation = "pʊ.ˈsɔɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "pʊ.ˈsɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "mad’gga",
-            tagalog = "mabigat",
-            english = "heavy",
-            rootForm = "madgga",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.dəg.ˈgaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "dito",
-            tagalog = "dito",
-            english = "here",
-            rootForm = "dito",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈdiː.tɔ",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "taog tonok",
-            tagalog = "tide",
+            kasiguranin = "tonok",
+            tagalog = "taib",
             english = "high",
             rootForm = "taog",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈtɔː.nɔk",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "in",
-            tagalog = "(esp.",
-            english = "hole",
-            rootForm = "in",
-            category = "Greetings & Essentials"
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈtɔː.nɔk"
         ),
         VocabularyEntity(
             kasiguranin = "mainit",
             tagalog = "mainit",
             english = "hot",
             rootForm = "mainit",
-            category = "Weather & Climate",
-            ipaNotation = "ma.ˈɁiː.nit",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈɁiː.nit"
         ),
         VocabularyEntity(
             kasiguranin = "balay",
             tagalog = "bahay",
             english = "house",
             rootForm = "balay",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ba.ˈlaj"
         ),
         VocabularyEntity(
@@ -1333,99 +1200,71 @@ object DatabaseSeeder {
             tagalog = "paano",
             english = "how",
             rootForm = "paanu",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.ˈɁa.nʊ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ilan sangan",
-            tagalog = "many?",
-            english = "how",
-            rootForm = "ilan",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsaː.ŋan",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "magkano t’gsangan",
-            tagalog = "much?",
-            english = "how",
-            rootForm = "magkano",
-            category = "Greetings & Essentials",
-            ipaNotation = "təg.ˈsaː.ŋan",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "pa.ˈɁa.nʊ"
         ),
         VocabularyEntity(
-            kasiguranin = "al’p",
+            kasiguranin = "sangan",
+            tagalog = "ilan",
+            english = "how much",
+            rootForm = "sangan",
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.ŋan"
+        ),
+        VocabularyEntity(
+            kasiguranin = "alëp",
             tagalog = "gutom",
             english = "hungry",
-            rootForm = "alp",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈləp",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(spouse) kabingang l’l’kke",
-            tagalog = "asawa",
-            english = "husband",
-            rootForm = "spouse",
-            category = "Family & People",
-            ipaNotation = "ka.bi.ˈŋaŋ lə.lək.ˈkɛɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ako",
-            tagalog = "ako",
-            english = "I",
-            rootForm = "ako",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈkɔ",
-            phoneticGlottal = true
+            rootForm = "alëp",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈləp"
         ),
         VocabularyEntity(
             kasiguranin = "letratu",
             tagalog = "larawan",
             english = "image",
             rootForm = "letratu",
-            category = "Greetings & Essentials",
-            ipaNotation = "lɛ.ˈtraː.tuɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "lɛ.ˈtraː.tuɁ"
         ),
         VocabularyEntity(
             kasiguranin = "bituka",
             tagalog = "bituka",
             english = "intestines",
             rootForm = "bituka",
-            category = "Body Parts & Health",
-            ipaNotation = "bi.tʊ.ˈkaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bi.tʊ.ˈkaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "isla",
             tagalog = "pulo",
             english = "island",
             rootForm = "isla",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂis.ˈlaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂis.ˈlaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "kat’l",
+            kasiguranin = "katël",
             tagalog = "kati",
             english = "itch",
-            rootForm = "katl",
-            category = "Greetings & Essentials",
-            ipaNotation = "ka.ˈtəl",
-            phoneticGlottal = true
+            rootForm = "katël",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ka.ˈtəl"
         ),
         VocabularyEntity(
             kasiguranin = "panga",
             tagalog = "panga",
             english = "jaw",
             rootForm = "panga",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "pa.ˈŋa"
         ),
         VocabularyEntity(
@@ -1433,25 +1272,16 @@ object DatabaseSeeder {
             tagalog = "halik",
             english = "kiss",
             rootForm = "ammo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂəm.ˈmɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "‘ttod",
-            tagalog = "tuhod",
-            english = "knee",
-            rootForm = "ttod",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂət.ˈtɔd",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂəm.ˈmɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "dimodyan",
             tagalog = "huli",
             english = "last",
             rootForm = "dimodyan",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "di.ˈmɔ.ʤan"
         ),
         VocabularyEntity(
@@ -1459,17 +1289,8 @@ object DatabaseSeeder {
             tagalog = "bunso",
             english = "lastborn",
             rootForm = "dipos",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "di.ˈpɔs"
-        ),
-        VocabularyEntity(
-            kasiguranin = "mamaya",
-            tagalog = "mamaya",
-            english = "later",
-            rootForm = "mamaya",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈmaː.ma.ja",
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "duun",
@@ -1480,11 +1301,11 @@ object DatabaseSeeder {
             ipaNotation = "dʊ.ˈʊn"
         ),
         VocabularyEntity(
-            kasiguranin = "rain tulu turog",
-            tagalog = "drip,",
+            kasiguranin = "turog",
+            tagalog = "tulo",
             english = "leak,",
-            rootForm = "rain",
-            category = "Greetings & Essentials",
+            rootForm = "turog",
+            category = "General",
             ipaNotation = "tʊ.ˈrɔg"
         ),
         VocabularyEntity(
@@ -1493,17 +1314,17 @@ object DatabaseSeeder {
             english = "left",
             rootForm = "kaliwa",
             category = "General",
-            ipaNotation = "ka.ri.ˈwɛɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ka.ri.ˈwɛɁ"
         ),
         VocabularyEntity(
             kasiguranin = "binti",
             tagalog = "binti",
             english = "leg",
             rootForm = "binti",
-            category = "Body Parts & Health",
-            ipaNotation = "bin.ˈtiɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "bin.ˈtiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "kasinungalingan kabulean",
@@ -1511,25 +1332,25 @@ object DatabaseSeeder {
             english = "lie",
             rootForm = "kasinungalingan",
             category = "General",
-            ipaNotation = "kaː.bʊ. ˈlɛː. Ɂan",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "kaː.bʊ. ˈlɛː. Ɂan"
         ),
         VocabularyEntity(
             kasiguranin = "malagen",
             tagalog = "magaan",
             english = "light",
             rootForm = "malagen",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈlaː.gɛn",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈlaː.gɛn"
         ),
         VocabularyEntity(
-            kasiguranin = "kidlat",
+            kasiguranin = "sëllet",
             tagalog = "kidlat",
             english = "lightning",
-            rootForm = "kidlat",
-            category = "Weather & Climate",
+            rootForm = "sëllet",
+            category = "General",
             ipaNotation = "kid.ˈlat"
         ),
         VocabularyEntity(
@@ -1537,74 +1358,74 @@ object DatabaseSeeder {
             tagalog = "labi",
             english = "lip",
             rootForm = "labi",
-            category = "Body Parts & Health",
-            ipaNotation = "ˈlaː.biɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlaː.biɁ"
         ),
         VocabularyEntity(
             kasiguranin = "agtay",
             tagalog = "atay",
             english = "liver",
             rootForm = "agtay",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂag.ˈtaj",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂag.ˈtaj"
         ),
         VocabularyEntity(
             kasiguranin = "atakdug",
             tagalog = "mahaba",
             english = "long",
             rootForm = "atakdug",
-            category = "Colors & Shapes",
-            ipaNotation = "Ɂa.ˈtak.dʊg",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈtak.dʊg"
         ),
         VocabularyEntity(
             kasiguranin = "malawa",
             tagalog = "maluwang",
             english = "loose",
             rootForm = "malawa",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.la.ˈwaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.la.ˈwaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "kuto",
             tagalog = "kuto",
             english = "louse",
             rootForm = "kuto",
-            category = "Greetings & Essentials",
-            ipaNotation = "kʊ.ˈtɔɁ",
-            phoneticGlottal = true
+            category = "Animals",
+            phoneticGlottal = true,
+            ipaNotation = "kʊ.ˈtɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "gayuma amaya",
             tagalog = "charm",
             english = "love",
             rootForm = "gayuma",
-            category = "Emotions & Feelings",
-            ipaNotation = "Ɂa.ma.ˈyaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ma.ˈyaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "baga",
             tagalog = "baga",
             english = "lungs",
             rootForm = "baga",
-            category = "Body Parts & Health",
-            ipaNotation = "ˈbaː.gaɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈbaː.gaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "lalaki lalakke",
-            tagalog = "(male)",
+            kasiguranin = "lalakke",
+            tagalog = "lalake",
             english = "man",
-            rootForm = "lalaki",
+            rootForm = "lalakke",
             category = "Family & People",
-            ipaNotation = "lə.lək.ˈkɛɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "lə.lək.ˈkɛɁ"
         ),
         VocabularyEntity(
             kasiguranin = "gulpi",
@@ -1612,32 +1433,24 @@ object DatabaseSeeder {
             english = "many",
             rootForm = "gulpi",
             category = "Family & People",
-            ipaNotation = "gʊl.ˈpiɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "gʊl.ˈpiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "floor) banig ab’k",
-            tagalog = "(for",
+            kasiguranin = "abëk",
+            tagalog = "banig",
             english = "mat",
-            rootForm = "floor",
+            rootForm = "abëk",
             category = "General",
-            ipaNotation = "Ɂa.ˈbək",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "karne karne",
-            tagalog = "(flesh)",
-            english = "meat",
-            rootForm = "karne",
-            category = "Food & Drink",
-            ipaNotation = "kar.ˈnɛ"
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈbək"
         ),
         VocabularyEntity(
             kasiguranin = "gamot",
             tagalog = "gamot",
             english = "medicine",
             rootForm = "gamot",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ga.ˈmɔt"
         ),
         VocabularyEntity(
@@ -1645,40 +1458,40 @@ object DatabaseSeeder {
             tagalog = "tunaw",
             english = "melt",
             rootForm = "tunaw",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "tʊ.ˈnaw"
         ),
         VocabularyEntity(
-            kasiguranin = "dit’ngnga",
+            kasiguranin = "ditëngnga",
             tagalog = "gitna",
             english = "middle",
-            rootForm = "ditngnga",
-            category = "Greetings & Essentials",
-            ipaNotation = "di.ˈtəŋ.ŋa",
-            phoneticGlottal = true
+            rootForm = "ditëngnga",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "di.ˈtəŋ.ŋa"
         ),
         VocabularyEntity(
             kasiguranin = "gatas",
             tagalog = "gatas",
             english = "milk",
             rootForm = "gatas",
-            category = "Food & Dining",
-            ipaNotation = "ˈgaː.tas",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈgaː.tas"
         ),
         VocabularyEntity(
-            kasiguranin = "(also",
+            kasiguranin = "bulan",
             tagalog = "buwan",
             english = "moon",
-            rootForm = "also",
-            category = "Weather & Climate"
+            rootForm = "bulan",
+            category = "General"
         ),
         VocabularyEntity(
             kasiguranin = "lamok",
             tagalog = "lamok",
             english = "mosquito",
             rootForm = "lamok",
-            category = "Animals & Wildlife",
+            category = "Animals",
             ipaNotation = "la.ˈmɔk"
         ),
         VocabularyEntity(
@@ -1686,17 +1499,8 @@ object DatabaseSeeder {
             tagalog = "lumot",
             english = "moss",
             rootForm = "lumot",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "lʊ.ˈmɔt"
-        ),
-        VocabularyEntity(
-            kasiguranin = "nanay",
-            tagalog = "nanay",
-            english = "mother",
-            rootForm = "nanay",
-            category = "Family & People",
-            ipaNotation = "ˈnaː.naj",
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "buked",
@@ -1711,88 +1515,88 @@ object DatabaseSeeder {
             tagalog = "bibig",
             english = "mouth",
             rootForm = "nguso",
-            category = "Body Parts & Health",
-            ipaNotation = "ŋʊ.ˈsɔɁ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "ŋʊ.ˈsɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "putik",
             tagalog = "putik",
             english = "mud",
             rootForm = "putik",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈpʊː.tik",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈpʊː.tik"
         ),
         VocabularyEntity(
             kasiguranin = "kuko",
             tagalog = "kuko",
             english = "nail",
             rootForm = "kuko",
-            category = "Body Parts & Health",
-            ipaNotation = "kʊ.ˈkɔɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "kʊ.ˈkɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "ngaran",
             tagalog = "pangalan",
             english = "name",
             rootForm = "ngaran",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ŋa.ˈran"
         ),
         VocabularyEntity(
-            kasiguranin = "t’ngng’d",
+            kasiguranin = "tëngngëd",
             tagalog = "batok",
             english = "nape",
             rootForm = "tngngd",
-            category = "Greetings & Essentials",
-            ipaNotation = "təŋ.ˈŋəd",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "təŋ.ˈŋəd"
         ),
         VocabularyEntity(
             kasiguranin = "makitid",
             tagalog = "makitid",
             english = "narrow",
             rootForm = "makitid",
-            category = "Occupations & Tools",
-            ipaNotation = "ma.ˈkiː.tid",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈkiː.tid"
         ),
         VocabularyEntity(
-            kasiguranin = "pus’d",
+            kasiguranin = "pusëd",
             tagalog = "pusod",
             english = "navel",
-            rootForm = "pusd",
-            category = "Greetings & Essentials",
-            ipaNotation = "pʊ.ˈsəd",
-            phoneticGlottal = true
+            rootForm = "pusëd",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pʊ.ˈsəd"
         ),
         VocabularyEntity(
             kasiguranin = "adene",
             tagalog = "malapit",
             english = "near",
             rootForm = "adene",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂa.ˈdɛː.nɛ",
+            category = "Body Parts",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂa.ˈdɛː.nɛ"
         ),
         VocabularyEntity(
             kasiguranin = "alleg",
             tagalog = "leeg",
             english = "neck",
             rootForm = "alleg",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂal.ˈlɛg",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂal.ˈlɛg"
         ),
         VocabularyEntity(
             kasiguranin = "kuwentas",
             tagalog = "kuwintas",
             english = "necklace",
             rootForm = "kuwentas",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "kʊ.ˈwɛn.tas"
         ),
         VocabularyEntity(
@@ -1800,24 +1604,24 @@ object DatabaseSeeder {
             tagalog = "karayom",
             english = "needle",
             rootForm = "digum",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "di.ˈgʊm"
         ),
         VocabularyEntity(
-            kasiguranin = "bird’s) pugad lubun",
-            tagalog = "(as",
+            kasiguranin = "lubun",
+            tagalog = "pugad",
             english = "nest",
-            rootForm = "birds",
+            rootForm = "lubun",
             category = "General",
-            ipaNotation = "ˈlʊː.bʊn",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlʊː.bʊn"
         ),
         VocabularyEntity(
-            kasiguranin = "lambat rambat",
-            tagalog = "(fishing)",
+            kasiguranin = "rambat",
+            tagalog = "lambat",
             english = "net",
-            rootForm = "lambat",
+            rootForm = "rambat",
             category = "General",
             ipaNotation = "ram.ˈbat"
         ),
@@ -1826,86 +1630,76 @@ object DatabaseSeeder {
             tagalog = "bago",
             english = "new",
             rootForm = "bigu",
-            category = "Greetings & Essentials",
-            ipaNotation = "bi.ˈgʊɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bi.ˈgʊɁ"
         ),
         VocabularyEntity(
             kasiguranin = "gibi",
             tagalog = "gabi",
             english = "night",
             rootForm = "gibi",
-            category = "Numbers & Time",
-            ipaNotation = "gi.ˈbiɁ",
-            phoneticGlottal = true
+            category = "Nature & Environment",
+            phoneticGlottal = true,
+            ipaNotation = "gi.ˈbiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "syam",
             tagalog = "siyam",
             english = "nine",
             rootForm = "syam",
-            category = "Numbers & Time",
+            category = "Numbers",
             ipaNotation = "ʃam"
         ),
         VocabularyEntity(
-            kasiguranin = "wala",
-            tagalog = "wala",
-            english = "none",
+            kasiguranin = "ahëy",
+            tagalog = "di ko alam",
+            english = "i don't know",
             rootForm = "wala",
-            category = "Numbers & Time",
-            ipaNotation = "wa.ˈlaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "amihan amihan",
-            tagalog = "wind",
-            english = "northeast",
-            rootForm = "amihan",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈmiː.han",
+            category = "Numbers",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "wa.ˈlaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "addung",
             tagalog = "ilong",
             english = "nose",
             rootForm = "addung",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂad.ˈdʊŋ",
-            phoneticGlottal = true
+            category = "Body Parts",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂad.ˈdʊŋ"
         ),
         VocabularyEntity(
             kasiguranin = "hindi",
             tagalog = "hindi",
             english = "not",
             rootForm = "hindi",
-            category = "Greetings & Essentials",
-            ipaNotation = "hin.ˈdiɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "hin.ˈdiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "ngayon",
             tagalog = "ngayon",
             english = "now",
             rootForm = "ngayon",
-            category = "Greetings & Essentials"
+            category = "General"
         ),
         VocabularyEntity(
             kasiguranin = "pugita",
             tagalog = "pugita",
             english = "octopus",
             rootForm = "pugita",
-            category = "Greetings & Essentials",
-            ipaNotation = "pʊ.gi.ˈtaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pʊ.gi.ˈtaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "madalas",
             tagalog = "madalas",
             english = "often",
             rootForm = "madalas",
-            category = "Numbers & Time",
+            category = "Numbers",
             ipaNotation = "ma.da.ˈlas"
         ),
         VocabularyEntity(
@@ -1913,17 +1707,17 @@ object DatabaseSeeder {
             tagalog = "luma",
             english = "old",
             rootForm = "luma",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈlʊː.maɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlʊː.maɁ"
         ),
         VocabularyEntity(
             kasiguranin = "mensan",
             tagalog = "minsan",
             english = "once",
             rootForm = "mensan",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ˈmɛn.san"
         ),
         VocabularyEntity(
@@ -1931,77 +1725,58 @@ object DatabaseSeeder {
             tagalog = "isa",
             english = "one",
             rootForm = "essa",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂɛs.ˈsaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "isang daan esang daan",
-            tagalog = "hundred",
-            english = "one",
-            rootForm = "isang",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂɛ.ˈsaŋ da.ˈɁan",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "isang libo esang libo",
-            tagalog = "thousand",
-            english = "one",
-            rootForm = "isang",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂɛ.ˈsaŋ ˈliː.bɔ",
+            category = "Numbers",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "Ɂɛs.ˈsaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "ulila",
             tagalog = "ulila",
             english = "orphan",
             rootForm = "ulila",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈliː.laɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂʊ.ˈliː.laɁ"
         ),
         VocabularyEntity(
             kasiguranin = "iba iba",
             tagalog = "different",
             english = "other,",
             rootForm = "iba",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈba",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂi.ˈba"
         ),
         VocabularyEntity(
-            kasiguranin = "bangka abeng",
-            tagalog = "canoe",
-            english = "outrigger",
-            rootForm = "bangka",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈbɛŋ",
-            phoneticGlottal = true
+            kasiguranin = "abeng",
+            tagalog = "bangka",
+            english = "boat",
+            rootForm = "abeng",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈbɛŋ"
         ),
         VocabularyEntity(
             kasiguranin = "katig pakaway",
             tagalog = "float",
             english = "outrigger",
             rootForm = "katig",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "pa.ka.ˈwaj"
         ),
         VocabularyEntity(
-            kasiguranin = "(far) doon duun",
-            tagalog = "there",
-            english = "over",
-            rootForm = "far",
+            kasiguranin = "duun",
+            tagalog = "doon",
+            english = "over there",
+            rootForm = "duun",
             category = "General",
-            ipaNotation = "dʊ.ˈɁʊn",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "dʊ.ˈɁʊn"
         ),
         VocabularyEntity(
-            kasiguranin = "sagwan sagwan",
-            tagalog = "(canoe)",
+            kasiguranin = "sagwan",
+            tagalog = "sagwan",
             english = "paddle",
             rootForm = "sagwan",
             category = "General",
@@ -2012,7 +1787,7 @@ object DatabaseSeeder {
             tagalog = "sakit",
             english = "pain",
             rootForm = "saket",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "sa.ˈkɛt"
         ),
         VocabularyEntity(
@@ -2021,33 +1796,33 @@ object DatabaseSeeder {
             english = "palm",
             rootForm = "palad",
             category = "General",
-            ipaNotation = "ˈpaː.lad",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈpaː.lad"
         ),
         VocabularyEntity(
-            kasiguranin = "ng lalaki buto",
-            tagalog = "ari",
+            kasiguranin = "buto/bungaw",
+            tagalog = "ari ng lalake",
             english = "penis",
-            rootForm = "ng",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈtɔɁ",
-            phoneticGlottal = true
+            rootForm = "buto/bungaw",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.ˈtɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "(also human) tolay",
+            kasiguranin = "tolay",
             tagalog = "tao",
             english = "person",
-            rootForm = "also",
+            rootForm = "tolay",
             category = "Family & People",
-            ipaNotation = "ˈtɔː.laj",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈtɔː.laj"
         ),
         VocabularyEntity(
             kasiguranin = "babuy",
             tagalog = "baboy",
             english = "pig",
             rootForm = "babuy",
-            category = "Animals & Wildlife",
+            category = "Animals",
             ipaNotation = "ba.ˈbʊj"
         ),
         VocabularyEntity(
@@ -2055,7 +1830,7 @@ object DatabaseSeeder {
             tagalog = "unan",
             english = "pillow",
             rootForm = "punganan",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "pʊ.ŋa.ˈnan"
         ),
         VocabularyEntity(
@@ -2063,50 +1838,41 @@ object DatabaseSeeder {
             tagalog = "halaman",
             english = "plant",
             rootForm = "halaman",
-            category = "Animals & Wildlife",
-            ipaNotation = "ha.ˈlaː.man",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ha.ˈlaː.man"
         ),
         VocabularyEntity(
             kasiguranin = "hand",
             tagalog = "with",
             english = "press",
             rootForm = "hand",
-            category = "Greetings & Essentials"
-        ),
-        VocabularyEntity(
-            kasiguranin = "tusok tusok",
-            tagalog = "pierce",
-            english = "prick,",
-            rootForm = "tusok",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈtʊː.sɔk",
-            phoneticVowelLength = true
+            category = "General"
         ),
         VocabularyEntity(
             kasiguranin = "nana",
             tagalog = "nana",
             english = "pus",
             rootForm = "nana",
-            category = "Greetings & Essentials",
-            ipaNotation = "na.ˈnaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "na.ˈnaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "kuy’ng",
+            kasiguranin = "kuyëng",
             tagalog = "daga",
             english = "rat",
-            rootForm = "kuyng",
-            category = "Animals & Wildlife",
-            ipaNotation = "kʊ.ˈjəŋ",
-            phoneticGlottal = true
+            rootForm = "kuyëng",
+            category = "Animals",
+            phoneticGlottal = true,
+            ipaNotation = "kʊ.ˈjəŋ"
         ),
         VocabularyEntity(
             kasiguranin = "madideg",
             tagalog = "pula",
             english = "red",
             rootForm = "madideg",
-            category = "Colors & Shapes",
+            category = "General",
             ipaNotation = "ma.di.ˈdɛg"
         ),
         VocabularyEntity(
@@ -2114,7 +1880,7 @@ object DatabaseSeeder {
             tagalog = "tadyang",
             english = "rib",
             rootForm = "takgeng",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "ˈtak.gɛŋ"
         ),
         VocabularyEntity(
@@ -2123,9 +1889,9 @@ object DatabaseSeeder {
             english = "right",
             rootForm = "tama",
             category = "General",
-            ipaNotation = "ˈtaː.maɁ",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈtaː.maɁ"
         ),
         VocabularyEntity(
             kasiguranin = "kanan kanan",
@@ -2133,15 +1899,15 @@ object DatabaseSeeder {
             english = "right",
             rootForm = "kanan",
             category = "General",
-            ipaNotation = "ˈkaː.nan",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkaː.nan"
         ),
         VocabularyEntity(
             kasiguranin = "banlaw",
             tagalog = "banlaw",
             english = "rinse",
             rootForm = "banlaw",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ban.ˈlaw"
         ),
         VocabularyEntity(
@@ -2157,192 +1923,147 @@ object DatabaseSeeder {
             tagalog = "daan",
             english = "road",
             rootForm = "dalan",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "da.ˈlan"
         ),
         VocabularyEntity(
-            kasiguranin = "boulder) bato bato",
-            tagalog = "(or",
-            english = "rock",
-            rootForm = "boulder",
-            category = "General",
-            ipaNotation = "ba.ˈtɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "at’p",
+            kasiguranin = "atëp",
             tagalog = "bubong",
             english = "roof",
             rootForm = "atp",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈtəp",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈtəp"
         ),
         VocabularyEntity(
             kasiguranin = "ugat",
             tagalog = "ugat",
             english = "root",
             rootForm = "ugat",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈgat",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈgat"
         ),
         VocabularyEntity(
-            kasiguranin = "lubid",
-            tagalog = "lubid",
-            english = "rope",
-            rootForm = "lubid",
-            category = "Greetings & Essentials",
+            kasiguranin = "igut",
+            tagalog = "tali",
+            english = "tiie",
+            rootForm = "igut",
+            category = "General",
             ipaNotation = "lʊ.ˈbid"
         ),
         VocabularyEntity(
-            kasiguranin = "fruit) sira buyok",
-            tagalog = "(as",
-            english = "rotten",
-            rootForm = "fruit",
-            category = "Numbers",
-            ipaNotation = "bʊ.ˈjɔk"
-        ),
-        VocabularyEntity(
-            kasiguranin = "bulok gabuk",
-            tagalog = "(log)",
-            english = "rotten",
-            rootForm = "bulok",
+            kasiguranin = "gabuk",
+            tagalog = "marupok",
+            english = "fragile",
+            rootForm = "gabuk",
             category = "Numbers",
             ipaNotation = "ga.ˈbʊk"
         ),
         VocabularyEntity(
-            kasiguranin = "masapg’t",
+            kasiguranin = "masapgët",
             tagalog = "magaspang",
             english = "rough",
-            rootForm = "masapgt",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma. ˈsap.gət",
-            phoneticGlottal = true
+            rootForm = "masapgët",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma. ˈsap.gət"
         ),
         VocabularyEntity(
             kasiguranin = "asen",
             tagalog = "asin",
             english = "salt",
             rootForm = "asen",
-            category = "Food & Dining",
-            ipaNotation = "Ɂa.ˈsɛn",
-            phoneticGlottal = true
+            category = "Food & Drink",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈsɛn"
         ),
         VocabularyEntity(
             kasiguranin = "maasen",
             tagalog = "maalat",
             english = "salty",
             rootForm = "maasen",
-            category = "Food & Dining",
-            ipaNotation = "maː.ˈsɛn",
-            phoneticVowelLength = true
+            category = "Food & Drink",
+            phoneticVowelLength = true,
+            ipaNotation = "maː.ˈsɛn"
         ),
         VocabularyEntity(
             kasiguranin = "pareho",
             tagalog = "tulad",
             english = "same",
             rootForm = "pareho",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.ˈrɛː.hɔ",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "pa.ˈrɛː.hɔ"
         ),
         VocabularyEntity(
             kasiguranin = "baybay",
             tagalog = "buhangin",
             english = "sand",
             rootForm = "baybay",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "baj.ˈbaj"
         ),
         VocabularyEntity(
-            kasiguranin = "dagat diget",
-            tagalog = "(ocean)",
+            kasiguranin = "diget",
+            tagalog = "dagat",
             english = "sea",
             rootForm = "dagat",
             category = "Nature & Environment",
             ipaNotation = "di.ˈgɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "ikaduwa",
-            tagalog = "ikalawa",
-            english = "second",
-            rootForm = "ikaduwa",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ka.ˈdʊː.waɁ",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(also, bone) buk’l",
+            kasiguranin = "bukël",
             tagalog = "buto",
             english = "seed",
-            rootForm = "also",
+            rootForm = "bukël",
             category = "General",
             phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "kaguman",
-            tagalog = "katulong",
-            english = "servant",
+            tagalog = "kasama",
+            english = "companion",
             rootForm = "kaguman",
-            category = "Animals & Wildlife",
-            ipaNotation = "ˈkaː.gʊ.man",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkaː.gʊ.man"
         ),
         VocabularyEntity(
             kasiguranin = "pitu",
             tagalog = "pito",
             english = "seven",
             rootForm = "pitu",
-            category = "Numbers & Time",
-            ipaNotation = "pi.ˈtʊɁ",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "pi.ˈtʊɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "aneno",
+            kasiguranin = "aninu",
             tagalog = "anino",
             english = "shadow",
-            rootForm = "aneno",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈnɛː.nɔɁ",
+            rootForm = "aninu",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂa.ˈnɛː.nɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "madid’bbaw (hukay)",
+            kasiguranin = "madidëbbaw",
             tagalog = "mababaw",
             english = "shallow",
-            rootForm = "madidbbaw",
+            rootForm = "madidëbbaw",
             category = "General",
-            ipaNotation = "maː.di.dəb.ˈbaw",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "maː.di.dəb.ˈbaw"
         ),
         VocabularyEntity(
-            kasiguranin = "iyo",
-            tagalog = "pating",
-            english = "shark",
-            rootForm = "iyo",
-            category = "Animals & Wildlife",
-            ipaNotation = "Ɂi.ˈyɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "matalim matad’m",
-            tagalog = "(knife)",
-            english = "sharp",
-            rootForm = "matalim",
-            category = "General",
-            ipaNotation = "ma.ta.ˈdəm",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "digdig ng diget",
-            tagalog = "tabing-dagat",
-            english = "shore",
+            kasiguranin = "digdig",
+            tagalog = "gilid",
+            english = "side",
             rootForm = "digdig",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "dig.ˈdig ng di.ˈgɛt"
         ),
         VocabularyEntity(
@@ -2350,7 +2071,7 @@ object DatabaseSeeder {
             tagalog = "maliit",
             english = "short",
             rootForm = "baddit",
-            category = "Colors & Shapes",
+            category = "General",
             ipaNotation = "bad.ˈdit"
         ),
         VocabularyEntity(
@@ -2358,54 +2079,45 @@ object DatabaseSeeder {
             tagalog = "balikat",
             english = "shoulder",
             rootForm = "abaga",
-            category = "Body Parts & Health",
-            ipaNotation = "Ɂa.ba.ˈgaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ba.ˈgaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "udeng (river)",
+            kasiguranin = "udeng",
             tagalog = "hipon",
             english = "shrimp",
             rootForm = "udeng",
             category = "General",
-            ipaNotation = "Ɂʊ.ˈdɛŋ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈdɛŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "kapatid kapatiyaka",
-            tagalog = "(m/f)",
+            kasiguranin = "kapatiyaka",
+            tagalog = "kapatid",
             english = "sibling",
-            rootForm = "kapatid",
+            rootForm = "kapatiyaka",
             category = "Family & People",
-            ipaNotation = "ka.pa.ʧa.ˈkaɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ka.pa.ʧa.ˈkaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "pase",
             tagalog = "paso",
             english = "singe",
             rootForm = "pase",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.ˈsɛɁ",
-            phoneticGlottal = true
+            category = "Daily Activities",
+            phoneticGlottal = true,
+            ipaNotation = "pa.ˈsɛɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "hipag",
-            tagalog = "hipag",
-            english = "sister-in-law",
-            rootForm = "hipag",
-            category = "Family & People",
-            ipaNotation = "ˈhiː.pag",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "‘nn’m",
+            kasiguranin = "ënnëm",
             tagalog = "anim",
             english = "six",
-            rootForm = "nnm",
-            category = "Numbers & Time",
-            ipaNotation = "Ɂən.ˈnəm",
-            phoneticGlottal = true
+            rootForm = "ënnëm",
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂən.ˈnəm"
         ),
         VocabularyEntity(
             kasiguranin = "balat kulet",
@@ -2416,48 +2128,39 @@ object DatabaseSeeder {
             ipaNotation = "kʊ.ˈlet"
         ),
         VocabularyEntity(
-            kasiguranin = "bungo",
-            tagalog = "bungo",
-            english = "skull",
-            rootForm = "bungo",
-            category = "Body Parts & Health",
-            ipaNotation = "bʊ.ˈŋɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "alila",
             tagalog = "alipin",
             english = "slave",
             rootForm = "alila",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈliː.laɁ",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂa.ˈliː.laɁ"
         ),
         VocabularyEntity(
             kasiguranin = "magtongka",
             tagalog = "inaantok",
             english = "sleepy",
             rootForm = "magtongka",
-            category = "Greetings & Essentials",
-            ipaNotation = "mag.ˈtɔŋ.kaɁ",
-            phoneticGlottal = true
+            category = "Daily Activities",
+            phoneticGlottal = true,
+            ipaNotation = "mag.ˈtɔŋ.kaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "mabagal",
             tagalog = "mabagal",
             english = "slow",
             rootForm = "mabagal",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈbaː.gal",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈbaː.gal"
         ),
         VocabularyEntity(
             kasiguranin = "baddit",
             tagalog = "maliit",
             english = "small",
             rootForm = "baddit",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "bad.ˈdit"
         ),
         VocabularyEntity(
@@ -2465,104 +2168,87 @@ object DatabaseSeeder {
             tagalog = "usok",
             english = "smoke",
             rootForm = "asok",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈsɔk",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈsɔk"
         ),
         VocabularyEntity(
             kasiguranin = "makinis",
             tagalog = "makinis",
             english = "smooth",
             rootForm = "makinis",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈkiː.nis",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈkiː.nis"
         ),
         VocabularyEntity(
             kasiguranin = "ulag",
             tagalog = "ahas",
             english = "snake",
             rootForm = "ulag",
-            category = "Animals & Wildlife",
-            ipaNotation = "Ɂʊ.ˈlag",
-            phoneticGlottal = true
+            category = "Animals",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈlag"
         ),
         VocabularyEntity(
             kasiguranin = "abben",
             tagalog = "bahing",
             english = "sneeze",
             rootForm = "abben",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂəb.ˈbɛn",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂəb.ˈbɛn"
         ),
         VocabularyEntity(
             kasiguranin = "malammen",
             tagalog = "malambot",
             english = "soft",
             rootForm = "malammen",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ma.lam.ˈmɛn"
-        ),
-        VocabularyEntity(
-            kasiguranin = "talampakan",
-            tagalog = "talampakan",
-            english = "sole",
-            rootForm = "talampakan",
-            category = "Body Parts & Health",
-            ipaNotation = "ta.lam.ˈpaː.kan",
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "sangan",
             tagalog = "ilan",
             english = "some",
             rootForm = "sangan",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsaː.ŋan",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.ŋan"
         ),
         VocabularyEntity(
             kasiguranin = "kaluluwa",
             tagalog = "kaluluwa",
             english = "soul",
             rootForm = "kaluluwa",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈkaː.lu.lu.wa",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkaː.lu.lu.wa"
         ),
         VocabularyEntity(
-            kasiguranin = "malas’m",
+            kasiguranin = "malasëm",
             tagalog = "maasim",
             english = "sour",
-            rootForm = "malasm",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈlaː.səm",
+            rootForm = "malasëm",
+            category = "Food & Drink",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈlaː.səm"
         ),
         VocabularyEntity(
-            kasiguranin = "habagat abagat",
-            tagalog = "wind",
-            english = "southwest",
-            rootForm = "habagat",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ba.ˈgat",
-            phoneticGlottal = true
+            kasiguranin = "abagat",
+            tagalog = "habagat",
+            english = "southwest monsoon",
+            rootForm = "abagat",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ba.ˈgat"
         ),
         VocabularyEntity(
-            kasiguranin = "sibat",
-            tagalog = "sibat",
-            english = "spear",
-            rootForm = "sibat",
-            category = "Body Parts & Health",
-            ipaNotation = "si.ˈbat"
-        ),
-        VocabularyEntity(
-            kasiguranin = "bats paniki kulapnet (bahay)",
-            tagalog = "of",
-            english = "species",
-            rootForm = "bats",
+            kasiguranin = "kulapnët",
+            tagalog = "paniki",
+            english = "bat",
+            rootForm = "kulapnët",
             category = "General",
             ipaNotation = "ku.lap.ˈnɛt"
         ),
@@ -2571,24 +2257,24 @@ object DatabaseSeeder {
             tagalog = "gagamba",
             english = "spider",
             rootForm = "gagamba",
-            category = "Animals & Wildlife",
+            category = "General",
             ipaNotation = "ga.ˈgam.ba"
         ),
         VocabularyEntity(
             kasiguranin = "laway",
             tagalog = "laway",
-            english = "spittle(saliva)",
+            english = "saliva",
             rootForm = "laway",
             category = "General",
-            ipaNotation = "ˈlaː.waj",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlaː.waj"
         ),
         VocabularyEntity(
             kasiguranin = "pusit",
             tagalog = "pusit",
             english = "squid",
             rootForm = "pusit",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "pʊ.ˈsit"
         ),
         VocabularyEntity(
@@ -2596,29 +2282,29 @@ object DatabaseSeeder {
             tagalog = "hagdan",
             english = "stairs",
             rootForm = "agdenan",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂag.ˈdɛː.nan",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂag.ˈdɛː.nan"
         ),
         VocabularyEntity(
-            kasiguranin = "stature tindig takn’g",
-            tagalog = "up,",
+            kasiguranin = "taknëg",
+            tagalog = "tayo",
             english = "stand",
-            rootForm = "stature",
-            category = "Greetings & Essentials",
-            ipaNotation = "tak.ˈnəg",
-            phoneticGlottal = true
+            rootForm = "taknëg",
+            category = "Daily Activities",
+            phoneticGlottal = true,
+            ipaNotation = "tak.ˈnəg"
         ),
         VocabularyEntity(
             kasiguranin = "bitoin",
             tagalog = "bituin",
             english = "star",
             rootForm = "bitoin",
-            category = "Weather & Climate",
-            ipaNotation = "bi.ˈtɔː.Ɂin",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "bi.ˈtɔː.Ɂin"
         ),
         VocabularyEntity(
             kasiguranin = "wood) patpat patpat",
@@ -2633,7 +2319,7 @@ object DatabaseSeeder {
             tagalog = "tiyan",
             english = "stomach",
             rootForm = "tiyan",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "ʧan"
         ),
         VocabularyEntity(
@@ -2641,9 +2327,9 @@ object DatabaseSeeder {
             tagalog = "bato",
             english = "stone",
             rootForm = "bato",
-            category = "Numbers & Time",
-            ipaNotation = "ba.ˈtɔɁ",
-            phoneticGlottal = true
+            category = "Nature & Environment",
+            phoneticGlottal = true,
+            ipaNotation = "ba.ˈtɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "kamalig kamalig",
@@ -2651,15 +2337,15 @@ object DatabaseSeeder {
             english = "storehouse",
             rootForm = "kamalig",
             category = "General",
-            ipaNotation = "ka.ˈmaː.lig",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ka.ˈmaː.lig"
         ),
         VocabularyEntity(
             kasiguranin = "matuwid diretso",
             tagalog = "tuwid,",
             english = "straight",
             rootForm = "matuwid",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "di.ˈrɛt.sɔ"
         ),
         VocabularyEntity(
@@ -2667,78 +2353,78 @@ object DatabaseSeeder {
             tagalog = "unat",
             english = "stretch",
             rootForm = "annat",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂən.ˈnat",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂən.ˈnat"
         ),
         VocabularyEntity(
-            kasiguranin = "mabigs’k",
+            kasiguranin = "mabigsëk",
             tagalog = "malakas",
             english = "strong",
-            rootForm = "mabigsk",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.big.ˈsək",
-            phoneticGlottal = true
+            rootForm = "mabigsëk",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.big.ˈsək"
         ),
         VocabularyEntity(
-            kasiguranin = "s’ps’p",
+            kasiguranin = "sëpsëp",
             tagalog = "sipsip",
             english = "suck",
-            rootForm = "spsp",
-            category = "Greetings & Essentials",
-            ipaNotation = "səp.ˈsəp",
-            phoneticGlottal = true
+            rootForm = "sëpsëp",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "səp.ˈsəp"
         ),
         VocabularyEntity(
             kasiguranin = "talad",
             tagalog = "tubo",
             english = "sugarcane",
             rootForm = "talad",
-            category = "Food & Dining",
+            category = "General",
             ipaNotation = "ta.ˈlad"
         ),
         VocabularyEntity(
-            kasiguranin = "(also, day) aldew",
+            kasiguranin = "aldew",
             tagalog = "araw",
             english = "sun",
-            rootForm = "also",
+            rootForm = "aldew",
             category = "Nature & Environment",
-            ipaNotation = "ˈɁal.dɛw",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁal.dɛw"
         ),
         VocabularyEntity(
             kasiguranin = "matam-is",
             tagalog = "matamis",
             english = "sweet",
             rootForm = "matamis",
-            category = "Food & Dining",
-            ipaNotation = "ma.ˈtam.Ɂis",
-            phoneticGlottal = true
+            category = "Food & Drink",
+            phoneticGlottal = true,
+            ipaNotation = "ma.ˈtam.Ɂis"
         ),
         VocabularyEntity(
             kasiguranin = "baga",
             tagalog = "maga",
             english = "swollen",
             rootForm = "baga",
-            category = "Greetings & Essentials",
-            ipaNotation = "ba.ˈgaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ba.ˈgaɁ"
         ),
         VocabularyEntity(
             kasiguranin = "ipos",
             tagalog = "buntot",
             english = "tail",
             rootForm = "ipos",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈpɔs",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂi.ˈpɔs"
         ),
         VocabularyEntity(
             kasiguranin = "malangkaw",
             tagalog = "matangkad",
             english = "tall",
             rootForm = "malangkaw",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ma.laŋ.ˈkaw"
         ),
         VocabularyEntity(
@@ -2747,181 +2433,87 @@ object DatabaseSeeder {
             english = "tear",
             rootForm = "crying",
             category = "Body Parts",
-            ipaNotation = "ˈlʊː.haɁ",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlʊː.haɁ"
         ),
         VocabularyEntity(
             kasiguranin = "sapulo",
             tagalog = "sampu",
             english = "ten",
             rootForm = "sapulo",
-            category = "Numbers & Time",
-            ipaNotation = "ˈsaː.pʊ.lɔɁ",
+            category = "Numbers",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.pʊ.lɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "anay",
-            tagalog = "anay",
-            english = "termites",
-            rootForm = "anay",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈnaj",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "bungaw",
-            tagalog = "bayag",
-            english = "testicle",
-            rootForm = "bungaw",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈŋaw"
-        ),
-        VocabularyEntity(
-            kasiguranin = "salamat salamat",
-            tagalog = "you",
-            english = "thank",
-            rootForm = "salamat",
-            category = "Greetings & Essentials",
-            ipaNotation = "sa.ˈlaː.mat",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "iyon iyon",
-            tagalog = "(far)",
-            english = "that",
-            rootForm = "iyon",
-            category = "General",
-            ipaNotation = "Ɂi.ˈjɔn",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "iyan iyan",
-            tagalog = "(near)",
-            english = "that",
-            rootForm = "iyan",
-            category = "General",
-            ipaNotation = "Ɂi.ˈjan",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "diyan diyan",
-            tagalog = "(near)",
-            english = "there",
-            rootForm = "diyan",
-            category = "General",
-            ipaNotation = "ʤan"
-        ),
-        VocabularyEntity(
-            kasiguranin = "sila",
-            tagalog = "sila",
-            english = "they",
-            rootForm = "sila",
-            category = "Greetings & Essentials",
-            ipaNotation = "si.ˈla"
-        ),
-        VocabularyEntity(
-            kasiguranin = "mabag’l",
+            kasiguranin = "mabagël",
             tagalog = "makapal",
             english = "thick",
-            rootForm = "mabagl",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ba.ˈgəl",
-            phoneticGlottal = true
+            rootForm = "mabagël",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.ba.ˈgəl"
         ),
         VocabularyEntity(
             kasiguranin = "lape",
             tagalog = "hita",
             english = "thigh",
             rootForm = "lape",
-            category = "Body Parts & Health",
-            ipaNotation = "la.ˈpɛɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "la.ˈpɛɁ"
         ),
         VocabularyEntity(
             kasiguranin = "malapes",
             tagalog = "manipis",
             english = "thin",
             rootForm = "malapes",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈlaː.pɛs",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ma.ˈlaː.pɛs"
         ),
         VocabularyEntity(
-            kasiguranin = "payat maniwang",
-            tagalog = "(human)",
+            kasiguranin = "maniwang",
+            tagalog = "payat",
             english = "thin",
             rootForm = "payat",
             category = "General",
             ipaNotation = "ma.ni.ˈwaŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "ikatallo",
-            tagalog = "ikatlo",
-            english = "third",
-            rootForm = "ikatallo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ka.təl.ˈloɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "uwaw",
             tagalog = "uhaw",
             english = "thirsty",
             rootForm = "uwaw",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈwaw",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈwaw"
         ),
         VocabularyEntity(
-            kasiguranin = "ito",
-            tagalog = "ito",
-            english = "this",
-            rootForm = "ito",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈtɔ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(also,",
-            tagalog = "tinik",
-            english = "thorn",
-            rootForm = "also",
-            category = "Greetings & Essentials"
-        ),
-        VocabularyEntity(
-            kasiguranin = "ikaw",
-            tagalog = "ika",
-            english = "thou/you",
-            rootForm = "ikaw",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈkaw",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "t’llo",
+            kasiguranin = "tëllo",
             tagalog = "tatlo",
             english = "three",
             rootForm = "tllo",
-            category = "Numbers & Time",
-            ipaNotation = "təl.ˈlɔɁ",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "təl.ˈlɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "bukraw",
             tagalog = "lalamunan",
             english = "throat",
             rootForm = "bukraw",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "bʊk.ˈraw"
         ),
         VocabularyEntity(
-            kasiguranin = "kaddur",
+            kasiguranin = "këddur",
             tagalog = "kulog",
             english = "thunder",
-            rootForm = "kaddur",
-            category = "Weather & Climate",
+            rootForm = "këddur",
+            category = "General",
             ipaNotation = "kad.ˈdʊr"
         ),
         VocabularyEntity(
@@ -2929,270 +2521,236 @@ object DatabaseSeeder {
             tagalog = "masikip",
             english = "tight",
             rootForm = "masikip",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "ma.si.ˈkip"
         ),
         VocabularyEntity(
-            kasiguranin = "tanong pakeligip",
-            tagalog = "ask",
-            english = "to",
-            rootForm = "tanong",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.ˈkɛː.li.gip",
-            phoneticVowelLength = true
+            kasiguranin = "pakeligip",
+            tagalog = "tanong",
+            english = "ask",
+            rootForm = "pakeligip",
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "pa.ˈkɛː.li.gip"
         ),
         VocabularyEntity(
-            kasiguranin = "gising lukag",
-            tagalog = "awake",
-            english = "to",
-            rootForm = "gising",
-            category = "Greetings & Essentials",
+            kasiguranin = "lukag",
+            tagalog = "gising",
+            english = "wake",
+            rootForm = "lukag",
+            category = "General",
             ipaNotation = "lʊ.ˈkag"
         ),
         VocabularyEntity(
-            kasiguranin = "angry galit kanga",
-            tagalog = "be",
-            english = "to",
-            rootForm = "angry",
-            category = "Greetings & Essentials",
+            kasiguranin = "kanga",
+            tagalog = "galit",
+            english = "angry",
+            rootForm = "kanga",
+            category = "General",
             ipaNotation = "ˈka.ŋa"
         ),
         VocabularyEntity(
-            kasiguranin = "(child) anak enak",
-            tagalog = "bear",
-            english = "to",
-            rootForm = "child",
+            kasiguranin = "enak",
+            tagalog = "anak",
+            english = "child",
+            rootForm = "enak",
             category = "General",
-            ipaNotation = "ˈɁɛ.nak",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁɛ.nak"
         ),
         VocabularyEntity(
-            kasiguranin = "(strike) palo yabat",
-            tagalog = "beat",
-            english = "to",
-            rootForm = "strike",
+            kasiguranin = "yabat",
+            tagalog = "palo",
+            english = "strike",
+            rootForm = "yabat",
             category = "General",
-            ipaNotation = "ˈjaː.bat",
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈjaː.bat"
         ),
         VocabularyEntity(
-            kasiguranin = "dighay t’ggeb",
-            tagalog = "belch",
-            english = "to",
+            kasiguranin = "tëggeb",
+            tagalog = "dighay",
+            english = "burp",
             rootForm = "dighay",
-            category = "Greetings & Essentials",
-            ipaNotation = "təg.ˈgɛb",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "təg.ˈgɛb"
         ),
         VocabularyEntity(
-            kasiguranin = "kagat k’tteb",
-            tagalog = "bite",
-            english = "to",
-            rootForm = "kagat",
-            category = "Greetings & Essentials",
-            ipaNotation = "kət.ˈtɛb",
-            phoneticGlottal = true
+            kasiguranin = "këtteb",
+            tagalog = "kagat",
+            english = "bite",
+            rootForm = "kattëb",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "kət.ˈtɛb"
         ),
         VocabularyEntity(
-            kasiguranin = "(wind) ihip sabyog",
-            tagalog = "blow",
-            english = "to",
-            rootForm = "wind",
+            kasiguranin = "sabyog",
+            tagalog = "ihip",
+            english = "blow",
+            rootForm = "sabyog",
             category = "General",
             ipaNotation = "sab.ˈjɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "(intrans.) kulo labbut",
-            tagalog = "boil",
-            english = "to",
-            rootForm = "intrans",
+            kasiguranin = "labbut",
+            tagalog = "kulo",
+            english = "boil",
+            rootForm = "labbut",
             category = "General",
             ipaNotation = "ləb.ˈbʊt"
         ),
         VocabularyEntity(
-            kasiguranin = "(as stick) bali putel",
-            tagalog = "break",
-            english = "to",
-            rootForm = "as",
+            kasiguranin = "putel",
+            tagalog = "putol",
+            english = "break",
+            rootForm = "putel",
             category = "General",
             ipaNotation = "pʊ.ˈtɛl"
         ),
         VocabularyEntity(
-            kasiguranin = "hinga ang’s",
-            tagalog = "breathe",
-            english = "to",
-            rootForm = "hinga",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈŋəs",
-            phoneticGlottal = true
+            kasiguranin = "angës",
+            tagalog = "hinga",
+            english = "breath",
+            rootForm = "angës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈŋəs"
         ),
         VocabularyEntity(
-            kasiguranin = "dala tawed",
-            tagalog = "bring",
-            english = "to",
-            rootForm = "dala",
-            category = "Greetings & Essentials",
+            kasiguranin = "tawed",
+            tagalog = "dala",
+            english = "bring",
+            rootForm = "tawed",
+            category = "General",
             ipaNotation = "ta.ˈwɛd"
         ),
         VocabularyEntity(
-            kasiguranin = "(by itself) sunog tutod",
-            tagalog = "burn",
-            english = "to",
-            rootForm = "by",
+            kasiguranin = "tutod",
+            tagalog = "sunog",
+            english = "burn",
+            rootForm = "tutod",
             category = "General",
             ipaNotation = "tʊ.ˈtɔd"
         ),
         VocabularyEntity(
-            kasiguranin = "baon kotkot",
-            tagalog = "bury",
-            english = "to",
-            rootForm = "baon",
-            category = "Greetings & Essentials",
+            kasiguranin = "kotkot",
+            tagalog = "baon",
+            english = "bury",
+            rootForm = "kotkot",
+            category = "General",
             ipaNotation = "ˈkɔt.kɔt"
         ),
         VocabularyEntity(
-            kasiguranin = "(the dead) libing l’bb’ng",
-            tagalog = "bury",
-            english = "to",
-            rootForm = "the",
+            kasiguranin = "lëbbëng",
+            tagalog = "libing",
+            english = "bury the dead",
+            rootForm = "lëbbëng",
             category = "General",
-            ipaNotation = "ləb.ˈbəng",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ləb.ˈbəng"
         ),
         VocabularyEntity(
-            kasiguranin = "bili bugtong",
-            tagalog = "buy",
-            english = "to",
-            rootForm = "bili",
-            category = "Greetings & Essentials",
+            kasiguranin = "bugtong",
+            tagalog = "bili",
+            english = "buy",
+            rootForm = "bugtong",
+            category = "General",
             ipaNotation = "bʊg.ˈtɔŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "tawag dulaw",
-            tagalog = "call",
-            english = "to",
-            rootForm = "tawag",
-            category = "Greetings & Essentials",
+            kasiguranin = "dulaw",
+            tagalog = "tawag",
+            english = "called",
+            rootForm = "dulaw",
+            category = "General",
             ipaNotation = "dʊ.ˈlaw"
         ),
         VocabularyEntity(
-            kasiguranin = "dala betbet",
-            tagalog = "carry",
-            english = "to",
-            rootForm = "dala",
-            category = "Greetings & Essentials",
+            kasiguranin = "betbet",
+            tagalog = "dala",
+            english = "carry",
+            rootForm = "betbet",
+            category = "General",
             ipaNotation = "ˈbɛt.bɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "pili pile",
-            tagalog = "choose",
-            english = "to",
-            rootForm = "pili",
-            category = "Greetings & Essentials",
-            ipaNotation = "pi.ˈlɛɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "linis remp’s",
-            tagalog = "clean",
-            english = "to",
-            rootForm = "linis",
-            category = "Greetings & Essentials",
-            ipaNotation = "rɛm.ˈpəs",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "dating dem’t",
-            tagalog = "come",
-            english = "to",
-            rootForm = "dating",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈdeː.mət",
+            kasiguranin = "pile",
+            tagalog = "pili",
+            english = "choose",
+            rootForm = "pile",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "pi.ˈlɛɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "ubo ikk’r",
-            tagalog = "cough",
-            english = "to",
-            rootForm = "ubo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂik.ˈkər",
-            phoneticGlottal = true
+            kasiguranin = "demët",
+            tagalog = "dating",
+            english = "come",
+            rootForm = "demët",
+            category = "General",
+            phoneticGlottal = true,
+            phoneticVowelLength = true,
+            ipaNotation = "ˈdeː.mət"
         ),
         VocabularyEntity(
-            kasiguranin = "bilang bilang",
-            tagalog = "count",
-            english = "to",
+            kasiguranin = "ikkër",
+            tagalog = "ubo",
+            english = "cough",
+            rootForm = " ikkër",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂik.ˈkər"
+        ),
+        VocabularyEntity(
+            kasiguranin = "bilang",
+            tagalog = "bilang",
+            english = "count",
             rootForm = "bilang",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈbiː.laŋ",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈbiː.laŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "putol k’ttol",
-            tagalog = "cut",
-            english = "to",
-            rootForm = "putol",
-            category = "Greetings & Essentials",
-            ipaNotation = "kət.ˈtɔl",
-            phoneticGlottal = true
+            kasiguranin = "këttol",
+            tagalog = "putol",
+            english = "cut",
+            rootForm = "këttol",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "kət.ˈtɔl"
         ),
         VocabularyEntity(
-            kasiguranin = "sayaw sayaw",
-            tagalog = "dance",
-            english = "to",
+            kasiguranin = "sayaw",
+            tagalog = "sayaw",
+            english = "dance",
             rootForm = "sayaw",
-            category = "Greetings & Essentials",
+            category = "General",
             ipaNotation = "sa.ˈjaw"
         ),
         VocabularyEntity(
-            kasiguranin = "dumi, bawas, tae ‘ttay",
-            tagalog = "defecate",
-            english = "to",
-            rootForm = "dumi",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂət.ˈtaj",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "nais gustu",
-            tagalog = "desire",
-            english = "to",
-            rootForm = "nais",
-            category = "Greetings & Essentials",
+            kasiguranin = "gustu",
+            tagalog = "gusto",
+            english = "want",
+            rootForm = "gustu",
+            category = "General",
             ipaNotation = "gʊs.ˈtʊ"
         ),
         VocabularyEntity(
-            kasiguranin = "patay patay",
-            tagalog = "die",
-            english = "to",
-            rootForm = "patay",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.ˈtaj"
-        ),
-        VocabularyEntity(
-            kasiguranin = "hukay kotkot",
-            tagalog = "dig",
-            english = "to",
-            rootForm = "hukay",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈkɔt.kɔt"
-        ),
-        VocabularyEntity(
-            kasiguranin = "gawa gamet",
-            tagalog = "do",
-            english = "to",
-            rootForm = "gawa",
-            category = "Greetings & Essentials",
+            kasiguranin = "gamet",
+            tagalog = "gawa",
+            english = "do",
+            rootForm = "gamet",
+            category = "General",
             ipaNotation = "ga.ˈmɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "kaladkad godgod",
-            tagalog = "drag",
-            english = "to",
-            rootForm = "kaladkad",
-            category = "Greetings & Essentials",
+            kasiguranin = "godgod",
+            tagalog = "kaladkad",
+            english = "drag",
+            rootForm = "godgod",
+            category = "General",
             ipaNotation = "ˈgɔd.gɔd"
         ),
         VocabularyEntity(
@@ -3200,710 +2758,499 @@ object DatabaseSeeder {
             tagalog = "drink",
             english = "to",
             rootForm = "inom",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈnɔm",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂi.ˈnɔm"
         ),
         VocabularyEntity(
-            kasiguranin = "lunod lim’s",
-            tagalog = "drown",
-            english = "to",
-            rootForm = "lunod",
-            category = "Greetings & Essentials",
-            ipaNotation = "li.ˈməs",
-            phoneticGlottal = true
+            kasiguranin = "limës",
+            tagalog = "lunod",
+            english = "drown",
+            rootForm = "limës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "li.ˈməs"
         ),
         VocabularyEntity(
-            kasiguranin = "kain kuman",
-            tagalog = "eat",
-            english = "to",
-            rootForm = "kain",
-            category = "Greetings & Essentials",
+            kasiguranin = "kuman",
+            tagalog = "kain",
+            english = "eat",
+            rootForm = "kumain",
+            category = "General",
             ipaNotation = "kʊ.ˈman"
         ),
         VocabularyEntity(
-            kasiguranin = "(drop) hulog tapduk",
-            tagalog = "fall",
-            english = "to",
-            rootForm = "drop",
+            kasiguranin = "tapduk",
+            tagalog = "hulog",
+            english = "fall",
+            rootForm = "tapduk",
             category = "General",
             ipaNotation = "tap.ˈdʊk"
         ),
         VocabularyEntity(
-            kasiguranin = "takot anteng",
-            tagalog = "fear",
-            english = "to",
-            rootForm = "takot",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂan.ˈtɛŋ",
-            phoneticGlottal = true
+            kasiguranin = "anteng",
+            tagalog = "takot",
+            english = "scared",
+            rootForm = "anteng",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂan.ˈtɛŋ"
         ),
         VocabularyEntity(
             kasiguranin = "laban laban",
             tagalog = "fight",
             english = "to",
             rootForm = "laban",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈlaː.ban",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈlaː.ban"
         ),
         VocabularyEntity(
-            kasiguranin = "hanap aryok",
-            tagalog = "find",
-            english = "to",
-            rootForm = "hanap",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂar.ˈjɔk",
-            phoneticGlottal = true
+            kasiguranin = "aryok",
+            tagalog = "hanap",
+            english = "find",
+            rootForm = "aryok",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂar.ˈjɔk"
         ),
         VocabularyEntity(
-            kasiguranin = "lutang latak",
-            tagalog = "float",
-            english = "to",
-            rootForm = "lutang",
-            category = "Greetings & Essentials",
+            kasiguranin = "latak",
+            tagalog = "lutang",
+            english = "float",
+            rootForm = "latak",
+            category = "General",
             ipaNotation = "la.ˈtak"
         ),
         VocabularyEntity(
-            kasiguranin = "agos agus",
-            tagalog = "flow",
-            english = "to",
-            rootForm = "agos",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁaː.gʊs",
+            kasiguranin = "agus",
+            tagalog = "agos",
+            english = "flow",
+            rootForm = "agus",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁaː.gʊs"
         ),
         VocabularyEntity(
-            kasiguranin = "lipad egb’r",
-            tagalog = "fly",
-            english = "to",
-            rootForm = "lipad",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁɛg.bər",
-            phoneticGlottal = true
+            kasiguranin = "egbër",
+            tagalog = "lipad",
+            english = "fly",
+            rootForm = "egbër",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁɛg.bər"
         ),
         VocabularyEntity(
-            kasiguranin = "limot lipon",
-            tagalog = "forget",
-            english = "to",
-            rootForm = "limot",
-            category = "Greetings & Essentials",
+            kasiguranin = "lipon",
+            tagalog = "limot",
+            english = "forget",
+            rootForm = "lipon",
+            category = "General",
             ipaNotation = "li.ˈpɔn"
         ),
         VocabularyEntity(
-            kasiguranin = "bigay att’d",
-            tagalog = "give",
-            english = "to",
-            rootForm = "bigay",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈtəd",
-            phoneticGlottal = true
+            kasiguranin = "attëd",
+            tagalog = "bigay",
+            english = "give",
+            rootForm = "attëd",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈtəd"
         ),
         VocabularyEntity(
-            kasiguranin = "punta angay",
-            tagalog = "go",
-            english = "to",
-            rootForm = "punta",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈŋaj",
-            phoneticGlottal = true
+            kasiguranin = "angay",
+            tagalog = "punta",
+            english = "go",
+            rootForm = "angay",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈŋaj"
         ),
         VocabularyEntity(
-            kasiguranin = "down baba ogsad",
-            tagalog = "go",
-            english = "to",
-            rootForm = "down",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂɔg.ˈsad",
-            phoneticGlottal = true
+            kasiguranin = "ogsad",
+            tagalog = "baba",
+            english = "down",
+            rootForm = "ogsad",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂɔg.ˈsad"
         ),
         VocabularyEntity(
-            kasiguranin = "in pasok s’dd’p",
-            tagalog = "go",
-            english = "to",
-            rootForm = "in",
-            category = "Greetings & Essentials",
-            ipaNotation = "səd.ˈdəp",
-            phoneticGlottal = true
+            kasiguranin = "sëddëp",
+            tagalog = "pasok",
+            english = "in",
+            rootForm = "sëddëp",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "səd.ˈdəp"
         ),
         VocabularyEntity(
-            kasiguranin = "out labas luwas",
-            tagalog = "go",
-            english = "to",
-            rootForm = "out",
-            category = "Greetings & Essentials",
+            kasiguranin = "luwas",
+            tagalog = "labas",
+            english = "out",
+            rootForm = "luwas",
+            category = "General",
             ipaNotation = "lʊ.ˈwas"
         ),
         VocabularyEntity(
-            kasiguranin = "up akyat sangkay (bahay)",
-            tagalog = "go",
-            english = "to",
-            rootForm = "up",
+            kasiguranin = "sangkay",
+            tagalog = "akyat",
+            english = "climb",
+            rootForm = "sangkay",
             category = "General",
             ipaNotation = "saŋ.ˈkaj"
         ),
         VocabularyEntity(
-            kasiguranin = "on, hook",
-            tagalog = "hang",
-            english = "to",
-            rootForm = "on",
-            category = "Greetings & Essentials"
-        ),
-        VocabularyEntity(
-            kasiguranin = "kinig saneg",
-            tagalog = "hear",
-            english = "to",
+            kasiguranin = "saneg",
+            tagalog = "kinig",
+            english = "hear",
             rootForm = "kinig",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsaː.nɛg",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.nɛg"
         ),
         VocabularyEntity(
-            kasiguranin = "tama tama",
-            tagalog = "hit",
-            english = "to",
-            rootForm = "tama",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈtaː.maɁ",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(in hand) hawak kabit",
-            tagalog = "hold",
-            english = "to",
-            rootForm = "in",
+            kasiguranin = "kabit",
+            tagalog = "hawak",
+            english = "hold",
+            rootForm = "kabit",
             category = "General",
             ipaNotation = "ka.ˈbit"
         ),
         VocabularyEntity(
-            kasiguranin = "(game) aso aso",
-            tagalog = "hunt",
-            english = "to",
-            rootForm = "game",
+            kasiguranin = "lugso",
+            tagalog = "talon",
+            english = "jump",
+            rootForm = "lugso",
             category = "General",
-            ipaNotation = "ˈɁaː.so",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "lʊk.ˈsɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "(esp. up) talon lukso",
-            tagalog = "jump",
-            english = "to",
-            rootForm = "esp",
+            kasiguranin = "buno",
+            tagalog = "patay",
+            english = "kll",
+            rootForm = "buno",
             category = "General",
-            ipaNotation = "lʊk.ˈsɔɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "bʊ.ˈnɔɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "patay buno",
-            tagalog = "kill",
-            english = "to",
-            rootForm = "patay",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈnɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(facts) alam tukoy",
-            tagalog = "know",
-            english = "to",
-            rootForm = "facts",
+            kasiguranin = "tukoy",
+            tagalog = "alam",
+            english = "know",
+            rootForm = "tukoy",
             category = "General",
             ipaNotation = "tʊ.ˈkɔj"
         ),
         VocabularyEntity(
-            kasiguranin = "tawa tawa",
-            tagalog = "laugh",
-            english = "to",
-            rootForm = "tawa",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈtaː.wa",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(on side) higa oled",
-            tagalog = "lie",
-            english = "to",
-            rootForm = "on",
+            kasiguranin = "oled",
+            tagalog = "higa",
+            english = "lay",
+            rootForm = "oled",
             category = "General",
-            ipaNotation = "ˈɁɔː.lɛd",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁɔː.lɛd"
         ),
         VocabularyEntity(
-            kasiguranin = "buhay buhay",
-            tagalog = "live",
-            english = "to",
-            rootForm = "buhay",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈhaj"
-        ),
-        VocabularyEntity(
-            kasiguranin = "tingin ileng",
-            tagalog = "look",
-            english = "to",
-            rootForm = "tingin",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈlɛŋ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ibig gusto",
-            tagalog = "love",
-            english = "to",
-            rootForm = "ibig",
-            category = "Greetings & Essentials",
-            ipaNotation = "gʊs.ˈtʊ"
-        ),
-        VocabularyEntity(
-            kasiguranin = "ungol ungol",
-            tagalog = "moan",
-            english = "to",
-            rootForm = "ungol",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁʊː.ŋɔl",
+            kasiguranin = "ileng",
+            tagalog = "tingin",
+            english = "look",
+            rootForm = "ileng",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "Ɂi.ˈlɛŋ"
         ),
         VocabularyEntity(
-            kasiguranin = "bukas bukas",
-            tagalog = "open",
-            english = "to",
-            rootForm = "bukas",
-            category = "Greetings & Essentials",
-            ipaNotation = "bʊ.ˈkas"
+            kasiguranin = "usek",
+            tagalog = "laro",
+            english = "play",
+            rootForm = "usek",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈsɛk"
         ),
         VocabularyEntity(
-            kasiguranin = "laro usek",
-            tagalog = "play",
-            english = "to",
-            rootForm = "laro",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈsɛk",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "bayo bayo",
-            tagalog = "pound",
-            english = "to",
-            rootForm = "bayo",
-            category = "Greetings & Essentials",
-            ipaNotation = "ba.ˈjɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "hila botbot (pataas)",
-            tagalog = "pull",
-            english = "to",
-            rootForm = "hila",
+            kasiguranin = "botbot",
+            tagalog = "hila",
+            english = "pull",
+            rootForm = "botbot",
             category = "General",
             ipaNotation = "bɔt.ˈbɔt"
         ),
         VocabularyEntity(
-            kasiguranin = "tulak toglad",
-            tagalog = "push",
-            english = "to",
-            rootForm = "tulak",
-            category = "Greetings & Essentials",
+            kasiguranin = "toglad",
+            tagalog = "tulak",
+            english = "push",
+            rootForm = "toglad",
+            category = "General",
             ipaNotation = "tɔg.ˈlad"
         ),
         VocabularyEntity(
-            kasiguranin = "lagay datton",
-            tagalog = "put",
-            english = "to",
-            rootForm = "lagay",
-            category = "Greetings & Essentials",
+            kasiguranin = "datton",
+            tagalog = "lagay",
+            english = "put",
+            rootForm = "datton",
+            category = "General",
             ipaNotation = "dət.ˈtɔn"
         ),
         VocabularyEntity(
-            kasiguranin = "away dima",
-            tagalog = "quarrel",
-            english = "to",
-            rootForm = "away",
-            category = "Greetings & Essentials",
-            ipaNotation = "di.ˈmaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ulan uden",
-            tagalog = "rain",
-            english = "to",
-            rootForm = "ulan",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈdɛn",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "balik sole",
-            tagalog = "return",
-            english = "to",
-            rootForm = "balik",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsɔː.lɛɁ",
+            kasiguranin = "dima",
+            tagalog = "away",
+            english = "fight",
+            rootForm = "dima",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "di.ˈmaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "kuskos kuskus",
-            tagalog = "rub",
-            english = "to",
-            rootForm = "kuskos",
-            category = "Greetings & Essentials",
+            kasiguranin = "uden",
+            tagalog = "ulan",
+            english = "rain",
+            rootForm = "uden",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈdɛn"
+        ),
+        VocabularyEntity(
+            kasiguranin = "sole",
+            tagalog = "balik",
+            english = "return",
+            rootForm = "sole",
+            category = "General",
+            phoneticGlottal = true,
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsɔː.lɛɁ"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kuskus",
+            tagalog = "kuskos",
+            english = "rub",
+            rootForm = "kuskus",
+            category = "General",
             ipaNotation = "kʊs.ˈkʊs"
         ),
         VocabularyEntity(
-            kasiguranin = "takbo ginan",
-            tagalog = "run",
-            english = "to",
-            rootForm = "takbo",
-            category = "Greetings & Essentials",
+            kasiguranin = "ginan",
+            tagalog = "takbo",
+            english = "run",
+            rootForm = "ginan",
+            category = "General",
             ipaNotation = "gi.ˈnan"
         ),
         VocabularyEntity(
-            kasiguranin = "sabi kagi",
-            tagalog = "say",
-            english = "to",
-            rootForm = "sabi",
-            category = "Greetings & Essentials",
-            ipaNotation = "ka.ˈgiɁ",
-            phoneticGlottal = true
+            kasiguranin = "kagi",
+            tagalog = "sabi",
+            english = "say",
+            rootForm = "kagi",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ka.ˈgiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "(itch) kamot gusgus",
-            tagalog = "scratch",
-            english = "to",
-            rootForm = "itch",
+            kasiguranin = "gusgus",
+            tagalog = "kamot",
+            english = "scratch",
+            rootForm = "gusgus",
             category = "General",
             ipaNotation = "gʊs.ˈgʊs"
         ),
         VocabularyEntity(
-            kasiguranin = "kita keta",
-            tagalog = "see",
-            english = "to",
-            rootForm = "kita",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈkeː.ta",
-            phoneticVowelLength = true
+            kasiguranin = "keta",
+            tagalog = "kita",
+            english = "see",
+            rootForm = "keta",
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkeː.ta"
         ),
         VocabularyEntity(
-            kasiguranin = "bili ibugtong",
-            tagalog = "sell",
-            english = "to",
-            rootForm = "bili",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.bʊg.ˈtɔŋ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "tahi darop",
-            tagalog = "sew",
-            english = "to",
-            rootForm = "tahi",
-            category = "Greetings & Essentials",
+            kasiguranin = "darop",
+            tagalog = "tahi",
+            english = "sew",
+            rootForm = "darop",
+            category = "General",
             ipaNotation = "da.ˈrɔp"
         ),
         VocabularyEntity(
-            kasiguranin = "sigaw karyaw",
-            tagalog = "shout",
-            english = "to",
-            rootForm = "sigaw",
-            category = "Greetings & Essentials",
+            kasiguranin = "karyaw",
+            tagalog = "sigaw",
+            english = "shout",
+            rootForm = "karyaw",
+            category = "General",
             ipaNotation = "kar.ˈyaw"
         ),
         VocabularyEntity(
-            kasiguranin = "pakita ipeta",
-            tagalog = "show",
-            english = "to",
-            rootForm = "pakita",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈpɛː.ta",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ambon puropor",
-            tagalog = "shower",
-            english = "to",
-            rootForm = "ambon",
-            category = "Greetings & Essentials",
-            ipaNotation = "pʊ.ˈrɔː.pɔr",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "awit, kanta kanta",
-            tagalog = "sing",
-            english = "to",
-            rootForm = "awit",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈkan.taɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(intrans.) lubog sar’m (sun)",
-            tagalog = "sink",
-            english = "to",
-            rootForm = "intrans",
+            kasiguranin = "ipeta",
+            tagalog = "pakita",
+            english = "show",
+            rootForm = "ipeta",
             category = "General",
-            ipaNotation = "ˈsaː.rəm",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "Ɂi.ˈpɛː.ta"
         ),
         VocabularyEntity(
-            kasiguranin = "upo etnod",
-            tagalog = "sit",
-            english = "to",
-            rootForm = "upo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂɛt.ˈnɔd",
-            phoneticGlottal = true
+            kasiguranin = "puropor",
+            tagalog = "ambon",
+            english = "shower",
+            rootForm = "puropor",
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "pʊ.ˈrɔː.pɔr"
         ),
         VocabularyEntity(
-            kasiguranin = "tulog tidug",
-            tagalog = "sleep",
-            english = "to",
-            rootForm = "tulog",
-            category = "Greetings & Essentials",
+            kasiguranin = "sarëm",
+            tagalog = "lubog",
+            english = "sink",
+            rootForm = "sarëm",
+            category = "General",
+            phoneticGlottal = true,
+            phoneticVowelLength = true,
+            ipaNotation = "ˈsaː.rəm"
+        ),
+        VocabularyEntity(
+            kasiguranin = "etnod",
+            tagalog = "upo",
+            english = "sit",
+            rootForm = "etnod",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂɛt.ˈnɔd"
+        ),
+        VocabularyEntity(
+            kasiguranin = "tidug",
+            tagalog = "tulog",
+            english = "sleep",
+            rootForm = "tidug",
+            category = "General",
             ipaNotation = "ti.ˈdʊg"
         ),
         VocabularyEntity(
-            kasiguranin = "amoy arob",
-            tagalog = "smell",
-            english = "to",
-            rootForm = "amoy",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈrɔb",
-            phoneticGlottal = true
+            kasiguranin = "arob",
+            tagalog = "amoy",
+            english = "smell",
+            rootForm = "arob",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈrɔb"
         ),
         VocabularyEntity(
-            kasiguranin = "salita kagi",
-            tagalog = "speak",
-            english = "to",
-            rootForm = "salita",
-            category = "Greetings & Essentials",
-            ipaNotation = "ka.ˈgiɁ",
-            phoneticGlottal = true
+            kasiguranin = "kagi",
+            tagalog = "salita",
+            english = "speak",
+            rootForm = "kagi",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ka.ˈgiɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "dura loktab",
-            tagalog = "spit",
-            english = "to",
-            rootForm = "dura",
-            category = "Greetings & Essentials",
+            kasiguranin = "loktab",
+            tagalog = "dura",
+            english = "spit",
+            rootForm = "loktab",
+            category = "General",
             ipaNotation = "lɔk.ˈtab"
         ),
         VocabularyEntity(
-            kasiguranin = "hati p’kka",
-            tagalog = "split",
-            english = "to",
-            rootForm = "hati",
-            category = "Greetings & Essentials",
-            ipaNotation = "pək.ˈkaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "piga p’kk’l",
-            tagalog = "squeeze",
-            english = "to",
-            rootForm = "piga",
-            category = "Greetings & Essentials",
-            ipaNotation = "pək.ˈkəl",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "(or stick) saksak saksak",
-            tagalog = "stab",
-            english = "to",
-            rootForm = "or",
+            kasiguranin = "pëkka",
+            tagalog = "hati",
+            english = "split",
+            rootForm = "pëkka",
             category = "General",
-            ipaNotation = "sak.ˈsak"
+            phoneticGlottal = true,
+            ipaNotation = "pək.ˈkaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "tayo takn’g",
-            tagalog = "stand",
-            english = "to",
-            rootForm = "tayo",
-            category = "Greetings & Essentials",
-            ipaNotation = "tak.ˈnəg",
-            phoneticGlottal = true
+            kasiguranin = "pëkkël",
+            tagalog = "piga",
+            english = "squeeze",
+            rootForm = "piga",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "pək.ˈkəl"
         ),
         VocabularyEntity(
-            kasiguranin = "nakaw takaw",
-            tagalog = "steal",
-            english = "to",
-            rootForm = "nakaw",
-            category = "Greetings & Essentials",
+            kasiguranin = "takaw",
+            tagalog = "nakaw",
+            english = "steal",
+            rootForm = "takaw",
+            category = "General",
             ipaNotation = "ta.ˈkaw"
         ),
         VocabularyEntity(
-            kasiguranin = "(as leis) tuhog turok",
-            tagalog = "string",
-            english = "to",
-            rootForm = "as",
+            kasiguranin = "tël-lën",
+            tagalog = "lunok",
+            english = "swallow",
+            rootForm = "tël-lën",
             category = "General",
-            ipaNotation = "tu.ˈrɔk"
-        ),
-        VocabularyEntity(
-            kasiguranin = "sipsip s’ps’p",
-            tagalog = "suck",
-            english = "to",
-            rootForm = "sipsip",
-            category = "Greetings & Essentials",
-            ipaNotation = "səp.ˈsəp",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "lunok t’l-l’n",
-            tagalog = "swallow",
-            english = "to",
-            rootForm = "lunok",
-            category = "Greetings & Essentials",
-            ipaNotation = "təl.ˈlən",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "pawis pawis",
-            tagalog = "sweat",
-            english = "to",
-            rootForm = "pawis",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈpaː.wis",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "maga baga",
-            tagalog = "swell",
-            english = "to",
-            rootForm = "maga",
-            category = "Greetings & Essentials",
-            ipaNotation = "ba.ˈgaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "langoy langoy",
-            tagalog = "swim",
-            english = "to",
-            rootForm = "langoy",
-            category = "Greetings & Essentials",
-            ipaNotation = "la.ˈŋɔj"
-        ),
-        VocabularyEntity(
-            kasiguranin = "isip isip",
-            tagalog = "think",
-            english = "to",
-            rootForm = "isip",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁiː.sip",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "təl.ˈlən"
         ),
         VocabularyEntity(
-            kasiguranin = "tapon ibut",
-            tagalog = "throw",
-            english = "to",
-            rootForm = "tapon",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈbʊt",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "tali igut",
-            tagalog = "tie",
-            english = "to",
-            rootForm = "tali",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂi.ˈgʊt",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "suka ota",
-            tagalog = "vomit",
-            english = "to",
-            rootForm = "suka",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁɔː.taɁ",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "lakad lakad",
-            tagalog = "walk",
-            english = "to",
-            rootForm = "lakad",
-            category = "Greetings & Essentials",
-            ipaNotation = "la.ˈkad"
-        ),
-        VocabularyEntity(
-            kasiguranin = "hugas remp’s (general)",
-            tagalog = "wash",
-            english = "to",
-            rootForm = "hugas",
+            kasiguranin = "ibut",
+            tagalog = "itapon",
+            english = "throw",
+            rootForm = "ibut",
             category = "General",
-            ipaNotation = "ˈrɛm.pəs",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "Ɂi.ˈbʊt"
         ),
         VocabularyEntity(
-            kasiguranin = "habi ladi",
-            tagalog = "weave",
-            english = "to",
-            rootForm = "habi",
-            category = "Greetings & Essentials",
-            ipaNotation = "la.ˈdiɁ",
-            phoneticGlottal = true
+            kasiguranin = "ota",
+            tagalog = "suka",
+            english = "vommit",
+            rootForm = "ota",
+            category = "General",
+            phoneticGlottal = true,
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁɔː.taɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "pahid punas",
-            tagalog = "wipe",
-            english = "to",
-            rootForm = "pahid",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈpʊː.nas",
-            phoneticVowelLength = true
+            kasiguranin = "rempës",
+            tagalog = "hugas",
+            english = "wash",
+            rootForm = "rempës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈrɛm.pəs"
         ),
         VocabularyEntity(
-            kasiguranin = "araw ngayong aldew",
-            tagalog = "ngayong",
-            english = "today",
-            rootForm = "araw",
-            category = "Numbers & Time",
-            ipaNotation = "ŋa.ˈjɔŋ ˈɁal.dɛw",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "sa paa guram’t sa basset",
-            tagalog = "daliri",
-            english = "toe",
-            rootForm = "sa",
-            category = "Body Parts & Health",
-            ipaNotation = "gʊ.ra.ˈmət sa bas.ˈsɛt",
-            phoneticGlottal = true
+            kasiguranin = "ladi",
+            tagalog = "habi",
+            english = "weave",
+            rootForm = "ladi",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "la.ˈdiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "niilaw",
             tagalog = "bukas",
             english = "tomorrow",
             rootForm = "niilaw",
-            category = "Numbers & Time",
+            category = "General",
             ipaNotation = "ni.i.ˈlaw"
         ),
         VocabularyEntity(
-            kasiguranin = "ngipin (all teeth) ngip’n",
-            tagalog = "(front)",
+            kasiguranin = "ngipën",
+            tagalog = "ngipin",
             english = "tooth",
-            rootForm = "ngipin",
+            rootForm = "ngipën",
             category = "General",
-            ipaNotation = "ŋi.ˈpən",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "ŋi.ˈpən"
         ),
         VocabularyEntity(
-            kasiguranin = "sulo ungot",
-            tagalog = "light",
+            kasiguranin = "ungot",
+            tagalog = "sulo",
             english = "torch,",
             rootForm = "sulo",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈŋɔt",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈŋɔt"
         ),
         VocabularyEntity(
             kasiguranin = "ponan",
@@ -3911,204 +3258,142 @@ object DatabaseSeeder {
             english = "tree",
             rootForm = "ponan",
             category = "Nature & Environment",
-            ipaNotation = "ˈpɔː.nan",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "tree) puno baggi ng kayo",
-            tagalog = "(of",
-            english = "trunk",
-            rootForm = "tree",
-            category = "Daily Activities",
-            ipaNotation = "bəg.ˈgiɁ naŋ ka.ˈjɔɁ",
-            phoneticGlottal = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈpɔː.nan"
         ),
         VocabularyEntity(
             kasiguranin = "bakokol",
             tagalog = "pagong",
             english = "turtle",
             rootForm = "bakokol",
-            category = "Animals & Wildlife",
-            ipaNotation = "ba.ˈkɔː.kɔl",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kambal",
-            tagalog = "kambal",
-            english = "twins",
-            rootForm = "kambal",
-            category = "Greetings & Essentials",
-            ipaNotation = "kam.ˈbal"
+            category = "Animals",
+            phoneticVowelLength = true,
+            ipaNotation = "ba.ˈkɔː.kɔl"
         ),
         VocabularyEntity(
             kasiguranin = "duwa",
             tagalog = "dalawa",
             english = "two",
             rootForm = "duwa",
-            category = "Numbers & Time",
-            ipaNotation = "dʊ.ˈwaɁ",
-            phoneticGlottal = true
+            category = "Numbers",
+            phoneticGlottal = true,
+            ipaNotation = "dʊ.ˈwaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "maduk’s",
+            kasiguranin = "madukës",
             tagalog = "pangit",
             english = "ugly",
-            rootForm = "maduks",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.dʊ.ˈkəs",
-            phoneticGlottal = true
+            rootForm = "madukës",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.dʊ.ˈkəs"
         ),
         VocabularyEntity(
-            kasiguranin = "baro badu",
-            tagalog = "garment",
-            english = "upper",
-            rootForm = "baro",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈbaː.dʊɁ",
+            kasiguranin = "badu",
+            tagalog = "baro",
+            english = "garment",
+            rootForm = "badu",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈbaː.dʊɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "padisono",
-            tagalog = "pataas",
-            english = "upward",
-            rootForm = "padisono",
-            category = "Greetings & Essentials",
-            ipaNotation = "pa.di.ˈsɔː.nɔɁ",
+            kasiguranin = "disono",
+            tagalog = "taas",
+            english = "up",
+            rootForm = "disono",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "pa.di.ˈsɔː.nɔɁ"
         ),
         VocabularyEntity(
             kasiguranin = "esbu",
             tagalog = "ihi",
             english = "urine",
             rootForm = "esbu",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁɛs.bʊ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ˈɁɛs.bʊ"
         ),
         VocabularyEntity(
-            kasiguranin = "ub’t",
-            tagalog = "pekpek",
+            kasiguranin = "ubët",
+            tagalog = "ari ng babae",
             english = "vagina",
-            rootForm = "ubt",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈbət",
-            phoneticGlottal = true
+            rootForm = "ubët",
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈbət"
         ),
         VocabularyEntity(
             kasiguranin = "atong",
             tagalog = "gulay",
             english = "vegetables",
             rootForm = "atong",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈtɔŋ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "boses",
-            tagalog = "tinig",
-            english = "voice",
-            rootForm = "boses",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈbɔː.sɛs",
-            phoneticVowelLength = true
+            category = "Food & Drink",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈtɔŋ"
         ),
         VocabularyEntity(
             kasiguranin = "gera",
             tagalog = "digma",
             english = "war",
             rootForm = "gera",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈgɛː.ra",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "mainit",
-            tagalog = "mainit",
-            english = "warm",
-            rootForm = "mainit",
-            category = "Body Parts & Health",
-            ipaNotation = "ma.ˈɁiː.nit",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈgɛː.ra"
         ),
         VocabularyEntity(
             kasiguranin = "danom",
             tagalog = "tubig",
             english = "water",
             rootForm = "danom",
-            category = "Food & Dining",
+            category = "Nature & Environment",
             ipaNotation = "da.ˈnɔm"
         ),
         VocabularyEntity(
-            kasiguranin = "kalabaw dappog",
-            tagalog = "buffalo",
-            english = "water",
-            rootForm = "kalabaw",
-            category = "Food & Dining",
+            kasiguranin = "dappog",
+            tagalog = "kalabaw",
+            english = "water buffalo",
+            rootForm = "dappog",
+            category = "Nature & Environment",
             ipaNotation = "dap.ˈpɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "surf) alon alon",
-            tagalog = "(as",
+            kasiguranin = "alun",
+            tagalog = "alon",
             english = "wave",
-            rootForm = "surf",
+            rootForm = "alun",
             category = "General",
-            ipaNotation = "ˈɁaː.lɔn",
             phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "person,",
-            tagalog = "(1st",
-            english = "we",
-            rootForm = "person",
-            category = "Greetings & Essentials"
-        ),
-        VocabularyEntity(
-            kasiguranin = "pl.) tayo tayo",
-            tagalog = "(dual,",
-            english = "we",
-            rootForm = "pl",
-            category = "General",
-            ipaNotation = "ˈtaː.yɔ",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "mahina",
-            tagalog = "mahina",
-            english = "weak",
-            rootForm = "mahina",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈhiː.naɁ",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
+            phoneticVowelLength = true,
+            ipaNotation = "ˈɁaː.lɔn"
         ),
         VocabularyEntity(
             kasiguranin = "basa",
             tagalog = "basa",
             english = "wet",
             rootForm = "basa",
-            category = "Greetings & Essentials",
-            ipaNotation = "ba.ˈsaɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ba.ˈsaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "ano",
+            kasiguranin = "anu",
             tagalog = "ano",
             english = "what",
             rootForm = "ano",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂa.ˈnɔ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂa.ˈnɔ"
         ),
         VocabularyEntity(
             kasiguranin = "gulong",
             tagalog = "gulong",
             english = "wheel",
             rootForm = "gulong",
-            category = "Body Parts & Health",
+            category = "General",
             ipaNotation = "gu.ˈlɔŋ"
         ),
         VocabularyEntity(
@@ -4116,151 +3401,62 @@ object DatabaseSeeder {
             tagalog = "kailan",
             english = "when",
             rootForm = "kelan",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈkɛː.lan",
-            phoneticVowelLength = true
+            category = "General",
+            phoneticVowelLength = true,
+            ipaNotation = "ˈkɛː.lan"
         ),
         VocabularyEntity(
             kasiguranin = "mapudew",
             tagalog = "puti",
             english = "white",
             rootForm = "mapudew",
-            category = "Colors & Shapes",
+            category = "General",
             ipaNotation = "ma.pu.ˈdɛw"
-        ),
-        VocabularyEntity(
-            kasiguranin = "sino",
-            tagalog = "sino",
-            english = "who",
-            rootForm = "sino",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈsiː.nɔ",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "bakit",
-            tagalog = "bakit",
-            english = "why",
-            rootForm = "bakit",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈbaː.kit",
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "malawa",
             tagalog = "malawak",
             english = "wide",
             rootForm = "malawa",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.la.ˈwaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kabingang babbi",
-            tagalog = "asawa",
-            english = "wife",
-            rootForm = "kabingang",
-            category = "Family & People",
-            ipaNotation = "ka.bi.ˈŋaŋ bab.biɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "hangin par’s",
-            tagalog = "(breeze)",
-            english = "wind",
-            rootForm = "hangin",
-            category = "Nature & Environment",
-            ipaNotation = "pa.ˈrəs",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "alak",
-            tagalog = "alak",
-            english = "wine",
-            rootForm = "alak",
-            category = "Greetings & Essentials",
-            ipaNotation = "ˈɁaː.lak",
+            category = "General",
             phoneticGlottal = true,
-            phoneticVowelLength = true
+            ipaNotation = "ma.la.ˈwaɁ"
         ),
         VocabularyEntity(
-            kasiguranin = "pakpak",
-            tagalog = "pakpak",
-            english = "wing",
-            rootForm = "pakpak",
-            category = "Greetings & Essentials",
-            ipaNotation = "pak.ˈpak"
+            kasiguranin = "parës",
+            tagalog = "hangin",
+            english = "wind",
+            rootForm = "parës",
+            category = "Nature & Environment",
+            phoneticGlottal = true,
+            ipaNotation = "pa.ˈrəs"
         ),
         VocabularyEntity(
-            kasiguranin = "kindat",
-            tagalog = "kindat",
-            english = "wink",
-            rootForm = "kindat",
-            category = "Greetings & Essentials",
-            ipaNotation = "kin.ˈdat"
-        ),
-        VocabularyEntity(
-            kasiguranin = "babae babbi",
-            tagalog = "(female)",
-            english = "woman",
+            kasiguranin = "babbi",
+            tagalog = "babae",
+            english = "female",
             rootForm = "babae",
             category = "Family & People",
-            ipaNotation = "bəb.ˈbiɁ",
-            phoneticGlottal = true
+            phoneticGlottal = true,
+            ipaNotation = "bəb.ˈbiɁ"
         ),
         VocabularyEntity(
             kasiguranin = "mali",
             tagalog = "mali",
             english = "wrong",
             rootForm = "mali",
-            category = "Greetings & Essentials",
-            ipaNotation = "ma.ˈliɁ",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "ma.ˈliɁ"
         ),
         VocabularyEntity(
             kasiguranin = "uwab",
             tagalog = "hikab",
             english = "yawn",
             rootForm = "uwab",
-            category = "Greetings & Essentials",
-            ipaNotation = "Ɂʊ.ˈwab",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kayo",
-            tagalog = "kayo",
-            english = "ye",
-            rootForm = "kayo",
-            category = "Greetings & Essentials",
-            ipaNotation = "ka.ˈjɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "taon",
-            tagalog = "taon",
-            english = "year",
-            rootForm = "taon",
-            category = "Body Parts & Health",
-            ipaNotation = "ta.ˈɁɔn",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kahapon",
-            tagalog = "kahapon",
-            english = "yesterday",
-            rootForm = "kahapon",
-            category = "Numbers & Time",
-            ipaNotation = "ka.ˈhaː.pɔn",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "anuman walang anuman",
-            tagalog = "walang",
-            english = "welcome",
-            rootForm = "anuman",
-            category = "Greetings & Essentials",
-            ipaNotation = "wa.ˈlaŋ Ɂa.nu.ˈman",
-            phoneticGlottal = true
+            category = "General",
+            phoneticGlottal = true,
+            ipaNotation = "Ɂʊ.ˈwab"
         )
     )
 
