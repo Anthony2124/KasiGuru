@@ -12,12 +12,12 @@
         "source": "com.kasiguru.app-main-6:/xml/backup_rules.xml"
     },
     {
-        "merged": "com.kasiguru.app-debug-4:/drawable_ic_notification_outline.xml.flat",
-        "source": "com.kasiguru.app-main-6:/drawable/ic_notification_outline.xml"
-    },
-    {
         "merged": "com.kasiguru.app-debug-4:/drawable_ic_tick_circle.xml.flat",
         "source": "com.kasiguru.app-main-6:/drawable/ic_tick_circle.xml"
+    },
+    {
+        "merged": "com.kasiguru.app-debug-4:/drawable_ic_notification_outline.xml.flat",
+        "source": "com.kasiguru.app-main-6:/drawable/ic_notification_outline.xml"
     },
     {
         "merged": "com.kasiguru.app-debug-4:/drawable_ic_cup_outline.xml.flat",

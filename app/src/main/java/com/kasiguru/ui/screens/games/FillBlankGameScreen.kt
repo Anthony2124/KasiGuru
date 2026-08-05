@@ -20,10 +20,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +47,7 @@ fun FillBlankGameScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -209,7 +209,7 @@ fun FillBlankGameScreen(
                             )
                             if (isCorrect) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_tick_circle),
+                                    painter = painterResource(id = Iconsax.TickCircle),
                                     contentDescription = "Correct",
                                     tint = Success,
                                     modifier = Modifier.size(22.dp)

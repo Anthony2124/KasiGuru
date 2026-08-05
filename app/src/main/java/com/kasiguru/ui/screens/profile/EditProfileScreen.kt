@@ -9,22 +9,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.CalendarToday
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +59,7 @@ fun EditProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -100,7 +97,7 @@ fun EditProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Person,
+                        painter = painterResource(id = Iconsax.Profile),
                         contentDescription = "Avatar",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(52.dp)
@@ -132,7 +129,7 @@ fun EditProfileScreen(
                         label = { Text("Full Name") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.Person,
+                                painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -159,7 +156,7 @@ fun EditProfileScreen(
                         label = { Text("Age") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.CalendarToday,
+                                painter = painterResource(id = Iconsax.Calendar),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)
@@ -182,7 +179,7 @@ fun EditProfileScreen(
                         label = { Text("Address") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.LocationOn,
+                                painter = painterResource(id = Iconsax.Location),
                                 contentDescription = null,
                                 tint = TextSubtleGray,
                                 modifier = Modifier.size(20.dp)

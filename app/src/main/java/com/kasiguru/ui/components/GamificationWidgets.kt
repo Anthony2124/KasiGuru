@@ -4,16 +4,16 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 /**
  * Animated XP badge with a pulsing glow effect.
@@ -51,7 +51,7 @@ fun XpBadge(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.Star,
+                painter = painterResource(id = Iconsax.StarBold),
                 contentDescription = null,
                 tint = XpGold,
                 modifier = Modifier.size(16.dp)

@@ -1,25 +1,22 @@
 package com.kasiguru.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Sync
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,16 +28,59 @@ fun SettingsScreen(
 
     var isDarkMode by remember { mutableStateOf(false) }
     var soundEnabled by remember { mutableStateOf(true) }
-    var dailyGoal by remember { mutableIntStateOf(10) }
+    var streakReminders by remember { mutableStateOf(true) }
+    var wordOfDayReminders by remember { mutableStateOf(true) }
+    var leaderboardAlerts by remember { mutableStateOf(true) }
+    var reminderTime by remember { mutableStateOf("08:00 AM") }
+    var showTimePicker by remember { mutableStateOf(false) }
     var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf("") }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Select your preferred daily notification time:")
+                    listOf("07:00 AM", "08:00 AM", "12:00 PM", "06:00 PM", "08:00 PM", "09:00 PM").forEach { time ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    reminderTime = time
+                                    showTimePicker = false
+                                }
+                                .padding(vertical = 10.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            RadioButton(
+                                selected = (reminderTime == time),
+                                onClick = {
+                                    reminderTime = time
+                                    showTimePicker = false
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Close", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Settings & Data",
+                        "Settings & Notifications",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack
@@ -49,7 +89,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -68,9 +108,94 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Notifications Section
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Smart Notifications",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    SettingSwitchRow(
+                        title = "Streak Protection Reminders 🔥",
+                        subtitle = "Notify me before losing my streak",
+                        checked = streakReminders,
+                        iconRes = Iconsax.Flash,
+                        onCheckedChange = { streakReminders = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    SettingSwitchRow(
+                        title = "Word of the Day 🌟",
+                        subtitle = "Daily Kasiguranin phrase highlight",
+                        checked = wordOfDayReminders,
+                        iconRes = Iconsax.Book,
+                        onCheckedChange = { wordOfDayReminders = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    SettingSwitchRow(
+                        title = "Leaderboard Rank Alerts 🏆",
+                        subtitle = "Alert me when my rank changes",
+                        checked = leaderboardAlerts,
+                        iconRes = Iconsax.MedalStar,
+                        onCheckedChange = { leaderboardAlerts = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showTimePicker = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Daily Reminder Time ⏰",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextHeadingBlack
+                            )
+                            Text(
+                                text = "Scheduled at $reminderTime every day",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSubtleGray
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = HeroCardStart.copy(alpha = 0.4f)
+                        ) {
+                            Text(
+                                text = reminderTime,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                        }
+                    }
+                }
+            }
+
             // Preferences Section
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -91,7 +216,7 @@ fun SettingsScreen(
                         title = "Dark Theme",
                         subtitle = "Enable sleek dark mode",
                         checked = isDarkMode,
-                        icon = Icons.Rounded.DarkMode,
+                        iconRes = Iconsax.Moon,
                         onCheckedChange = { isDarkMode = it }
                     )
 
@@ -101,7 +226,7 @@ fun SettingsScreen(
                         title = "Audio Pronunciation",
                         subtitle = "Play Kasiguranin voice audio",
                         checked = soundEnabled,
-                        icon = Icons.Rounded.VolumeUp,
+                        iconRes = Iconsax.VolumeHigh,
                         onCheckedChange = { soundEnabled = it }
                     )
                 }
@@ -136,7 +261,7 @@ fun SettingsScreen(
                                 color = TextHeadingBlack
                             )
                             Text(
-                                text = "Save progress offline SQLite database",
+                                text = "Save progress offline Room SQLite database",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSubtleGray
                             )
@@ -163,7 +288,7 @@ fun SettingsScreen(
                                 )
                             } else {
                                 Icon(
-                                    imageVector = Icons.Rounded.Sync,
+                                    painter = painterResource(id = Iconsax.Refresh),
                                     contentDescription = null,
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(18.dp)
@@ -199,24 +324,25 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Info,
+                            painter = painterResource(id = Iconsax.InfoCircle),
                             contentDescription = null,
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
                         )
-                        Text(
-                            text = "KasiGuru v1.0.0",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
+                        Column {
+                            Text(
+                                text = "KasiGuru v2.5.0",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHeadingBlack
+                            )
+                            Text(
+                                text = "Interactive Kasiguranin Language Platform",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSubtleGray
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Developed for preserving and learning Kasiguranin, the endangered indigenous language of Casiguran, Aurora.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSubtleGray
-                    )
                 }
             }
         }
@@ -224,11 +350,11 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingSwitchRow(
+fun SettingSwitchRow(
     title: String,
     subtitle: String,
     checked: Boolean,
-    icon: ImageVector,
+    iconRes: Int,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
@@ -237,23 +363,25 @@ private fun SettingSwitchRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(HeroCardStart, shape = RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = TextHeadingBlack,
-                    modifier = Modifier.size(20.dp)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = TextHeadingBlack,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
+
             Column {
                 Text(
                     text = title,
@@ -274,9 +402,9 @@ private fun SettingSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = HeroCardStart,
+                checkedTrackColor = TextHeadingBlack,
                 uncheckedThumbColor = TextSubtleGray,
-                uncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         )
     }

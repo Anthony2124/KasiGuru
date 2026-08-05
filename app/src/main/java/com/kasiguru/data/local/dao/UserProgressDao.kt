@@ -13,6 +13,9 @@ interface UserProgressDao {
     @Query("SELECT * FROM user_progress WHERE id = 1")
     suspend fun getUserProgressOnce(): UserProgressEntity?
 
+    @Query("SELECT * FROM user_progress WHERE id = 1")
+    suspend fun getUserProgressDirect(): UserProgressEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(progress: UserProgressEntity)
 

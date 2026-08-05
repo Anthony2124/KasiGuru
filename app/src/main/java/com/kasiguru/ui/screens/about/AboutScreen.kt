@@ -7,21 +7,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 data class FaqItem(
     val question: String,
@@ -66,7 +63,7 @@ fun AboutScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -116,7 +113,7 @@ fun AboutScreen(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.MenuBook,
+                                    painter = painterResource(id = Iconsax.Book),
                                     contentDescription = "KasiGuru Logo",
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(36.dp)
@@ -187,7 +184,7 @@ private fun FaqCard(faq: FaqItem) {
                 )
 
                 Icon(
-                    imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                    painter = painterResource(id = if (isExpanded) Iconsax.ArrowUp1 else Iconsax.ArrowDown1),
                     contentDescription = null,
                     tint = TextSubtleGray,
                     modifier = Modifier.size(22.dp)

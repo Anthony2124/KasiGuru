@@ -6,8 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,16 +13,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.R
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.ui.components.ConfettiView
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
+import com.kasiguru.util.audio.AudioPlayerManager
+import com.kasiguru.util.srs.ReviewRating
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +36,15 @@ fun FlashcardDeckScreen(
     viewModel: FlashcardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val audioPlayerManager = remember { AudioPlayerManager(context) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            audioPlayerManager.stopAudio()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -48,7 +60,7 @@ fun FlashcardDeckScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -77,10 +89,12 @@ fun FlashcardDeckScreen(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
+                ConfettiView()
+
                 Surface(
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp,
+                    shadowElevation = 4.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -88,7 +102,7 @@ fun FlashcardDeckScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_cup_outline),
+                            painter = painterResource(id = Iconsax.Cup),
                             contentDescription = "Complete",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(64.dp)
@@ -102,14 +116,17 @@ fun FlashcardDeckScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "You reviewed ${uiState.cards.size} Kasiguranin flashcards today. Keep up your daily streak!",
+                            "You reviewed ${uiState.cards.size} Kasiguranin flashcards using SuperMemo-2 SRS scheduling!",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSubtleGray,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
-                            onClick = onNavigateBack,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onNavigateBack()
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
                             shape = RoundedCornerShape(20.dp)
                         ) {
@@ -133,7 +150,7 @@ fun FlashcardDeckScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 110.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -148,7 +165,10 @@ fun FlashcardDeckScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(340.dp)
-                    .clickable { isFlipped = !isFlipped }
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        isFlipped = !isFlipped
+                    }
                     .graphicsLayer {
                         rotationY = rotation
                         cameraDistance = 12f * density
@@ -186,13 +206,31 @@ fun FlashcardDeckScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.height(20.dp))
-                            Text(
-                                text = currentCard.kasiguranin,
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack,
-                                fontSize = 32.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = currentCard.kasiguranin,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Black,
+                                    color = TextHeadingBlack,
+                                    fontSize = 32.sp
+                                )
+                                IconButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        audioPlayerManager.playAudio(currentCard.kasiguranin, currentCard.audioFileName)
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.VolumeHigh),
+                                        contentDescription = "Listen",
+                                        tint = TextHeadingBlack,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                             if (currentCard.ipaNotation.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
@@ -204,7 +242,7 @@ fun FlashcardDeckScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_repeat_outline),
+                                    painter = painterResource(id = Iconsax.Repeat),
                                     contentDescription = null,
                                     tint = TextHeadingBlack,
                                     modifier = Modifier.size(16.dp)
@@ -267,43 +305,74 @@ fun FlashcardDeckScreen(
                 }
             }
 
-            // Recall Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(
-                    onClick = {
-                        isFlipped = false
-                        viewModel.rateCard(1)
-                    },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Error),
-                    shape = RoundedCornerShape(16.dp)
+            // SM-2 4-Rating Buttons
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Rate your recall performance (SM-2 SRS):",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSubtleGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("Hard", fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = {
-                        isFlipped = false
-                        viewModel.rateCard(2)
-                    },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Warning),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Good", fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = {
-                        isFlipped = false
-                        viewModel.rateCard(3)
-                    },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Success),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Easy", fontWeight = FontWeight.Bold)
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isFlipped = false
+                            viewModel.rateCard(ReviewRating.AGAIN)
+                        },
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Error),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Again", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            isFlipped = false
+                            viewModel.rateCard(ReviewRating.HARD)
+                        },
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Warning),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Hard", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            isFlipped = false
+                            viewModel.rateCard(ReviewRating.GOOD)
+                        },
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Good", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isFlipped = false
+                            viewModel.rateCard(ReviewRating.EASY)
+                        },
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Success),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Easy", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

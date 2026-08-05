@@ -13,9 +13,11 @@ import com.kasiguru.data.local.entity.*
         UserProgressEntity::class,
         AchievementEntity::class,
         GameScoreEntity::class,
-        SyncQueueEntity::class
+        SyncQueueEntity::class,
+        LeaderboardEntity::class,
+        NotificationEntity::class
     ],
-    version = 5,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -26,4 +28,6 @@ abstract class KasiGuruDatabase : RoomDatabase() {
     abstract fun achievementDao(): AchievementDao
     abstract fun gameScoreDao(): GameScoreDao
     abstract fun syncQueueDao(): SyncQueueDao
+    abstract fun leaderboardDao(): LeaderboardDao
+    abstract fun notificationDao(): NotificationDao
 }

@@ -2,6 +2,7 @@ package com.kasiguru.ui.screens.achievements
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,15 +28,19 @@ class AchievementsViewModel @Inject constructor(
         viewModelScope.launch {
             launch {
                 userProgressRepository.getAllAchievements().collect { achievements ->
+                    val list = if (achievements.isEmpty()) {
+                        DatabaseSeeder.getInitialAchievements()
+                    } else {
+                        achievements
+                    }
+
+                    val unlockedCount = list.count { it.isUnlocked }
+
                     _uiState.value = _uiState.value.copy(
-                        achievements = achievements,
+                        achievements = list,
+                        unlockedCount = unlockedCount,
                         isLoading = false
                     )
-                }
-            }
-            launch {
-                userProgressRepository.getUnlockedAchievementCount().collect { count ->
-                    _uiState.value = _uiState.value.copy(unlockedCount = count)
                 }
             }
         }

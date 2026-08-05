@@ -1,14 +1,12 @@
 package com.kasiguru.ui.screens.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,13 +14,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +29,7 @@ fun ProfileScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToAchievements: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -58,7 +58,7 @@ fun ProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(24.dp)
@@ -68,7 +68,7 @@ fun ProfileScreen(
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            painter = painterResource(id = Iconsax.Setting),
                             contentDescription = "Settings",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
@@ -76,7 +76,7 @@ fun ProfileScreen(
                     }
                     IconButton(onClick = onNavigateToEditProfile) {
                         Icon(
-                            imageVector = Icons.Rounded.Edit,
+                            painter = painterResource(id = Iconsax.Edit),
                             contentDescription = "Edit Profile",
                             tint = TextHeadingBlack,
                             modifier = Modifier.size(22.dp)
@@ -95,7 +95,7 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(padding)
-                .padding(24.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 110.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar Banner
@@ -114,7 +114,7 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Person,
+                        painter = painterResource(id = Iconsax.Profile),
                         contentDescription = "Profile Avatar",
                         tint = TextHeadingBlack,
                         modifier = Modifier.size(56.dp)
@@ -156,19 +156,19 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(14.dp))
                     
                     ProfileInfoRow(
-                        icon = Icons.Rounded.Email,
+                        iconRes = Iconsax.Sms,
                         label = "Email",
                         value = if (progress.email.isNotEmpty()) progress.email else "kasiguranin.learner@gmail.com"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ProfileInfoRow(
-                        icon = Icons.Rounded.CalendarToday,
+                        iconRes = Iconsax.Calendar,
                         label = "Age",
                         value = if (progress.age != null) "${progress.age} years old" else "Not set"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ProfileInfoRow(
-                        icon = Icons.Rounded.LocationOn,
+                        iconRes = Iconsax.Location,
                         label = "Address",
                         value = if (progress.address.isNotEmpty()) progress.address else "Casiguran, Aurora"
                     )
@@ -182,13 +182,14 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                val levelInfo = com.kasiguru.util.gamification.GamificationEngine.getLevelInfo(progress.totalXp)
                 StatCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Level",
-                    value = "${progress.level}",
-                    subtitle = "Explorer",
+                    modifier = Modifier.weight(1f).clickable { onNavigateToAchievements() },
+                    title = "Level ${levelInfo.level}",
+                    value = levelInfo.iconEmoji,
+                    subtitle = levelInfo.title,
                     bgColor = StoriesCardStart,
-                    icon = Icons.Rounded.WorkspacePremium
+                    iconRes = Iconsax.MedalStar
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
@@ -196,7 +197,7 @@ fun ProfileScreen(
                     value = "${progress.totalXp}",
                     subtitle = "Points Earned",
                     bgColor = VocabCardStart,
-                    icon = Icons.Rounded.EmojiEvents
+                    iconRes = Iconsax.Cup
                 )
             }
 
@@ -229,7 +230,7 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileInfoRow(icon: ImageVector, label: String, value: String) {
+private fun ProfileInfoRow(iconRes: Int, label: String, value: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -242,7 +243,7 @@ private fun ProfileInfoRow(icon: ImageVector, label: String, value: String) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(id = iconRes),
                 contentDescription = null,
                 tint = TextHeadingBlack,
                 modifier = Modifier.size(18.dp)
@@ -262,7 +263,7 @@ private fun StatCard(
     value: String,
     subtitle: String,
     bgColor: androidx.compose.ui.graphics.Color,
-    icon: ImageVector
+    iconRes: Int
 ) {
     Surface(
         modifier = modifier,
@@ -282,7 +283,7 @@ private fun StatCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(id = iconRes),
                     contentDescription = null,
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(20.dp)
