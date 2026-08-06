@@ -1,5 +1,6 @@
 package com.kasiguru.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -15,17 +16,28 @@ data class VocabularyEntity(
     val tagalog: String,
     val english: String,
     val rootForm: String,
+    @ColumnInfo(defaultValue = "")
     val neutralForm: String = "",
+    @ColumnInfo(defaultValue = "")
     val imperfectiveForm: String = "",
+    @ColumnInfo(defaultValue = "")
     val perfectiveForm: String = "",
+    @ColumnInfo(defaultValue = "")
     val contemplativeForm: String = "",
     val category: String,
+    @ColumnInfo(name = "audioResName", defaultValue = "")
     val audioFileName: String = "",
+    @ColumnInfo(defaultValue = "")
     val exampleSentence: String = "",
+    @ColumnInfo(defaultValue = "")
     val exampleTranslation: String = "",
+    @ColumnInfo(defaultValue = "0")
     val phoneticGlottal: Boolean = false,
+    @ColumnInfo(defaultValue = "0")
     val phoneticVowelLength: Boolean = false,
+    @ColumnInfo(defaultValue = "")
     val ipaNotation: String = "",
+    @ColumnInfo(defaultValue = "0")
     val isLearned: Boolean = false,
     val timesReviewed: Int = 0,
     // SuperMemo-2 (SM-2) SRS Fields

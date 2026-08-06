@@ -19,6 +19,9 @@ interface StoryDao {
     @Query("SELECT COUNT(*) FROM stories WHERE isCompleted = 1")
     fun getCompletedCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM stories")
+    suspend fun getStoryCount(): Int
+
     @Query("UPDATE stories SET isCompleted = 1, currentPage = totalPages WHERE id = :id")
     suspend fun markAsCompleted(id: Int)
 

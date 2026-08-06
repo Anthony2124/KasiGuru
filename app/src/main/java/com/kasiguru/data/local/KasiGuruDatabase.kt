@@ -17,7 +17,7 @@ import com.kasiguru.data.local.entity.*
         LeaderboardEntity::class,
         NotificationEntity::class
     ],
-    version = 12,
+    version = 14,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

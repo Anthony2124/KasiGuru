@@ -18,7 +18,9 @@ class StreakReminderWorker(
                 applicationContext,
                 KasiGuruDatabase::class.java,
                 "kasiguru_database"
-            ).fallbackToDestructiveMigration().build()
+            )
+            .fallbackToDestructiveMigration()
+            .build()
 
             val progress = db.userProgressDao().getUserProgressDirect()
             val today = LocalDate.now().toString()

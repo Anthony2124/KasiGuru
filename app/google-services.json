@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "25073459164",
+    "project_id": "kasiguru-86042",
+    "storage_bucket": "kasiguru-86042.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25073459164:android:35c53f905b48113756b919",
+        "android_client_info": {
+          "package_name": "com.kasiguru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIADrpzbQZpE4SoHRp9xKsh9A03RLZDlg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25073459164:android:35c53f905b48113756b919",
+        "android_client_info": {
+          "package_name": "com.kasiguru.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIADrpzbQZpE4SoHRp9xKsh9A03RLZDlg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

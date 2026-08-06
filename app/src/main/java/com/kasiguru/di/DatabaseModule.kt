@@ -44,27 +44,24 @@ object DatabaseModule {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                    vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
-                    storyDaoProvider.get().insertAll(DatabaseSeeder.getInitialStories())
-                    achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
-                    leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
-                    notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
-                }
-            }
-
-            override fun onOpen(db: SupportSQLiteDatabase) {
-                super.onOpen(db)
-                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                    val count = vocabularyDaoProvider.get().getTotalCountDirect()
-                    if (count < 400) {
-                        vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
-                    }
-                    achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
-                    if (leaderboardDaoProvider.get().getLeaderboardCount() == 0) {
-                        leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
-                    }
-                    if (notificationDaoProvider.get().getNotificationCount() == 0) {
-                        notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
+                    try {
+                        if (vocabularyDaoProvider.get().getTotalCountDirect() == 0) {
+                            vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
+                        }
+                        if (storyDaoProvider.get().getStoryCount() == 0) {
+                            storyDaoProvider.get().insertAll(DatabaseSeeder.getInitialStories())
+                        }
+                        if (achievementDaoProvider.get().getAchievementCount() == 0) {
+                            achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
+                        }
+                        if (leaderboardDaoProvider.get().getLeaderboardCount() == 0) {
+                            leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
+                        }
+                        if (notificationDaoProvider.get().getNotificationCount() == 0) {
+                            notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
             }

@@ -20,6 +20,9 @@ interface AchievementDao {
     @Query("SELECT COUNT(*) FROM achievements WHERE isUnlocked = 1")
     fun getUnlockedCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM achievements")
+    suspend fun getAchievementCount(): Int
+
     @Query("UPDATE achievements SET currentValue = :value WHERE id = :id")
     suspend fun updateProgress(id: String, value: Int)
 
