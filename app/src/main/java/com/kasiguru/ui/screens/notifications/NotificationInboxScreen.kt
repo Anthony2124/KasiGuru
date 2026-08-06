@@ -45,6 +45,7 @@ fun NotificationInboxScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Column {
                         Text(
@@ -192,19 +193,19 @@ fun NotificationCard(
 ) {
     val (cardBg, iconRes, iconTint) = when (notification.category.lowercase()) {
         "streak" -> Triple(
-            listOf(VocabCardStart.copy(alpha = 0.4f), VocabCardEnd.copy(alpha = 0.2f)),
+            listOf(PlayGoldStart.copy(alpha = 0.4f), PlayGoldEnd.copy(alpha = 0.2f)),
             Iconsax.Flash,
-            VocabCardEnd
+            PlayGoldEnd
         )
         "wordofday" -> Triple(
-            listOf(HeroCardStart.copy(alpha = 0.4f), HeroCardEnd.copy(alpha = 0.2f)),
+            listOf(PlayPurpleStart.copy(alpha = 0.4f), PlayPurpleEnd.copy(alpha = 0.2f)),
             Iconsax.Book,
-            HeroCardEnd
+            PlayPurpleEnd
         )
         "leaderboard" -> Triple(
-            listOf(StoriesCardStart.copy(alpha = 0.4f), StoriesCardEnd.copy(alpha = 0.2f)),
+            listOf(PlayPinkStart.copy(alpha = 0.4f), PlayPinkEnd.copy(alpha = 0.2f)),
             Iconsax.MedalStar,
-            StoriesCardEnd
+            PlayPinkEnd
         )
         else -> Triple(
             listOf(QuestsCardStart.copy(alpha = 0.4f), QuestsCardEnd.copy(alpha = 0.2f)),
@@ -238,8 +239,8 @@ fun NotificationCard(
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = notification.category,
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(22.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

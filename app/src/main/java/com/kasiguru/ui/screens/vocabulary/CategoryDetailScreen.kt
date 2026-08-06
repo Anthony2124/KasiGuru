@@ -115,6 +115,7 @@ fun CategoryDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         categoryName,
@@ -153,7 +154,7 @@ fun CategoryDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier
@@ -171,26 +172,26 @@ fun CategoryDetailScreen(
                                     modifier = Modifier
                                         .size(52.dp)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.5f)),
+                                        .background(Color.White.copy(alpha = 0.35f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = meta.iconRes),
                                         contentDescription = null,
-                                        tint = TextHeadingBlack,
+                                        tint = TextWhite,
                                         modifier = Modifier.size(26.dp)
                                     )
                                 }
 
                                 Surface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    shape = CircleShape,
+                                    color = PlayGoldStart
                                 ) {
                                     Text(
                                         text = "$learnedCount / $totalWords Learned",
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                         style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.Black,
                                         color = TextHeadingBlack
                                     )
                                 }
@@ -202,7 +203,7 @@ fun CategoryDetailScreen(
                                 text = meta.name,
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
+                                color = TextWhite
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -210,15 +211,15 @@ fun CategoryDetailScreen(
                             Text(
                                 text = meta.description,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextHeadingBlack.copy(alpha = 0.85f)
+                                color = TextWhite.copy(alpha = 0.9f)
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
                             KasiGuruProgressBar(
                                 progress = if (totalWords > 0) learnedCount.toFloat() / totalWords.toFloat() else 0f,
-                                height = 6.dp,
-                                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
+                                height = 8.dp,
+                                gradientColors = listOf(PlayGoldStart, PlayGoldEnd),
                                 animated = true
                             )
                         }

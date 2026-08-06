@@ -39,6 +39,7 @@ fun LeaderboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Leaderboard 🏆",
@@ -153,14 +154,14 @@ fun LeaderboardScreen(
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(26.dp),
+                    shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(HeroCardStart, HeroCardEnd)))
+                            .background(Brush.linearGradient(listOf(PlayPurpleStart, PlayPurpleEnd)))
                             .padding(20.dp)
                     ) {
                         Column {
@@ -168,20 +169,103 @@ fun LeaderboardScreen(
                                 text = "Kasiguranin Champions 🏆",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
+                                color = TextWhite
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Compete with fellow learners & climb the rankings!",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextHeadingBlack.copy(alpha = 0.85f)
+                                color = TextWhite.copy(alpha = 0.9f)
                             )
                         }
                     }
                 }
             }
 
-            // ─── 2. Filter Chips ───
+            // ─── 2. Gold Stat Card (Inspo Panel 6 "Ranking") ───
+            uiState.currentUserEntry?.let { userEntry ->
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(28.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 6.dp
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Brush.linearGradient(listOf(PlayGoldStart, PlayGoldEnd)))
+                                .padding(20.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = TextWhite,
+                                    shadowElevation = 4.dp,
+                                    modifier = Modifier.size(64.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = "👑", fontSize = 32.sp)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = userEntry.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Black,
+                                    color = TextHeadingBlack
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "${userEntry.totalXp}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = TextHeadingBlack
+                                        )
+                                        Text(
+                                            text = "Total XP",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextHeadingBlack.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .width(1.dp)
+                                            .height(36.dp)
+                                            .background(TextHeadingBlack.copy(alpha = 0.2f))
+                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = userEntry.levelTitle,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = TextHeadingBlack
+                                        )
+                                        Text(
+                                            text = "Rank #${uiState.currentUserRank}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextHeadingBlack.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ─── 3. Filter Chips ───
             item {
                 val filters = listOf("All-Time XP", "Weekly XP", "Streak Masters")
                 Row(
@@ -197,8 +281,8 @@ fun LeaderboardScreen(
                             },
                             label = { Text(filter, fontWeight = FontWeight.Bold) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = HeroCardStart,
-                                selectedLabelColor = TextHeadingBlack,
+                                selectedContainerColor = PlayPurpleStart,
+                                selectedLabelColor = TextWhite,
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 labelColor = TextSubtleGray
                             ),
@@ -208,14 +292,14 @@ fun LeaderboardScreen(
                 }
             }
 
-            // ─── 3. Top 3 Podium Component ───
+            // ─── 4. Top 3 Podium Component ───
             if (top3.isNotEmpty()) {
                 item {
                     Top3PodiumView(top3 = top3)
                 }
             }
 
-            // ─── 4. Ranked List Header ───
+            // ─── 5. Ranked List Header ───
             item {
                 Text(
                     text = "Top Learners (${list.size})",
@@ -225,7 +309,7 @@ fun LeaderboardScreen(
                 )
             }
 
-            // ─── 5. Rank List (#4 to #10+) ───
+            // ─── 6. Rank List (#4 to #10+) ───
             itemsIndexed(rest, key = { _, item -> item.id }) { index, learner ->
                 RankedLearnerRow(rank = index + 4, learner = learner)
             }
@@ -357,10 +441,10 @@ private fun PodiumCard(
 private fun RankedLearnerRow(rank: Int, learner: LeaderboardEntity) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = if (learner.isCurrentUser) HeroCardStart.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
-        shadowElevation = if (learner.isCurrentUser) 2.dp else 1.dp,
-        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(1.5.dp, HeroCardStart) else null
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(2.dp, PlayPurpleStart) else null
     ) {
         Row(
             modifier = Modifier

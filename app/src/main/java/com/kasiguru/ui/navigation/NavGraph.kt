@@ -91,10 +91,12 @@ fun KasiGuruNavGraph() {
                 )
             }
 
-            // Onboarding Carousel
+            // Onboarding Setup Wizard (Duolingo-style FTUE)
             composable(Screen.Onboarding.route) {
+                val viewModel: com.kasiguru.ui.screens.onboarding.OnboardingViewModel = hiltViewModel()
                 OnboardingScreen(
-                    onFinishOnboarding = {
+                    onCompleteOnboarding = { userName, avatarId, dailyGoalXp, motivation, startingLevel, titleBadge ->
+                        viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }

@@ -122,6 +122,9 @@ dependencies {
     // Accompanist (system UI controller)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
+    // WorkManager (for background streak reminders)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // JavaMail API for OTP Emails
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")

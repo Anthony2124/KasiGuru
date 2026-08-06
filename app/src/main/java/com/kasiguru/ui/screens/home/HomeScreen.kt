@@ -52,7 +52,7 @@ fun HomeScreen(
         return
     }
 
-    val progress = uiState.userProgress ?: return
+    val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
 
     if (showStreakDialog) {
         StreakDialog(
@@ -66,8 +66,9 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .verticalScroll(scrollState)
-            .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // ─── 1. Top Header Bar ───
@@ -87,7 +88,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .size(54.dp)
                         .clip(CircleShape),
-                    color = HeroCardStart,
+                    color = PlayPurpleStart,
                     shape = CircleShape
                 ) {
                     Box(
@@ -95,13 +96,13 @@ fun HomeScreen(
                             .fillMaxSize()
                             .padding(3.dp)
                             .clip(CircleShape)
-                            .background(HeroCardEnd),
+                            .background(PlayPurpleEnd),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = Iconsax.Profile),
                             contentDescription = "Profile",
-                            tint = TextHeadingBlack,
+                            tint = Color.Unspecified,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -132,7 +133,7 @@ fun HomeScreen(
                         .clip(RoundedCornerShape(24.dp))
                         .clickable { showStreakDialog = true },
                     shape = RoundedCornerShape(24.dp),
-                    color = VocabCardStart,
+                    color = PlayGoldStart,
                     shadowElevation = 2.dp
                 ) {
                     Row(
@@ -143,7 +144,7 @@ fun HomeScreen(
                         Icon(
                             painter = painterResource(id = Iconsax.Flash),
                             contentDescription = "Streak",
-                            tint = TextHeadingBlack,
+                            tint = Color.Unspecified,
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
@@ -162,14 +163,14 @@ fun HomeScreen(
                         .clip(CircleShape)
                         .clickable { onNavigateToAchievements() },
                     shape = CircleShape,
-                    color = HeroCardStart,
+                    color = PlayPurpleStart,
                     shadowElevation = 2.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             painter = painterResource(id = Iconsax.MedalStar),
                             contentDescription = "Badges",
-                            tint = TextHeadingBlack,
+                            tint = Color.Unspecified,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -189,7 +190,7 @@ fun HomeScreen(
                         Icon(
                             painter = painterResource(id = Iconsax.Notification),
                             contentDescription = "Notifications",
-                            tint = TextHeadingBlack,
+                            tint = Color.Unspecified,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -295,21 +296,22 @@ fun HomeScreen(
                 .height(310.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Left Column: Vocabulary Tall Card (Orange)
-            Card(
+            // Left Column: Vocabulary Tall Card (Play Gold)
+            Surface(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .clickable { onNavigateToVocabulary() },
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 4.dp
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
-                                colors = listOf(VocabCardStart, VocabCardEnd)
+                                colors = listOf(PlayGoldStart, PlayGoldEnd)
                             )
                         )
                         .padding(20.dp)
@@ -319,14 +321,14 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
+                            shape = CircleShape,
                             color = Color.White.copy(alpha = 0.35f)
                         ) {
                             Text(
                                 text = "Vocabulary",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Black,
                                 color = TextHeadingBlack
                             )
                         }
@@ -354,13 +356,14 @@ fun HomeScreen(
                                     .fillMaxWidth()
                                     .height(8.dp)
                                     .clip(CircleShape),
-                                color = Color.White,
+                                color = TextHeadingBlack,
                                 trackColor = Color.White.copy(alpha = 0.3f)
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = "${progress.wordsLearned} over 487 words learned",
                                 fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack.copy(alpha = 0.8f)
                             )
                         }
@@ -368,28 +371,29 @@ fun HomeScreen(
                 }
             }
 
-            // Right Column: Stories (Blue) & Mini Games (Pink)
+            // Right Column: Stories (Play Purple) & Mini Games (Play Pink)
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Stories Card (Sky Blue)
-                Card(
+                // Stories Card (Play Purple)
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1.1f)
                         .clickable { onNavigateToStories() },
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(StoriesCardStart, StoriesCardEnd)
+                                    colors = listOf(PlayPurpleStart, PlayPurpleEnd)
                                 )
                             )
                     ) {
@@ -409,43 +413,44 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(14.dp),
+                                shape = CircleShape,
                                 color = Color.White.copy(alpha = 0.35f)
                             ) {
                                 Text(
                                     text = "Stories",
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextHeadingBlack
+                                    fontWeight = FontWeight.Black,
+                                    color = TextWhite
                                 )
                             }
 
                             Text(
                                 text = "Cultural Stories",
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                                fontWeight = FontWeight.Black,
+                                color = TextWhite
                             )
                         }
                     }
                 }
 
-                // Mini Games Card (Pink)
-                Card(
+                // Mini Games Card (Play Pink)
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(0.9f)
                         .clickable { onNavigateToGames() },
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(MiniGamesCardStart, MiniGamesCardEnd)
+                                    colors = listOf(PlayPinkStart, PlayPinkEnd)
                                 )
                             )
                     ) {
@@ -495,7 +500,7 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .height(115.dp)
                 .clickable { onNavigateToLeaderboard() },
-            shape = RoundedCornerShape(26.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = Color.Transparent)
         ) {
             Box(
@@ -503,7 +508,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(HeroCardStart, HeroCardEnd)
+                            colors = listOf(PlayPurpleStart, PlayPurpleEnd)
                         )
                     )
                     .padding(20.dp)
@@ -516,14 +521,14 @@ fun HomeScreen(
                     Column {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.4f)
+                            color = TextWhite.copy(alpha = 0.3f)
                         ) {
                             Text(
                                 text = "LEADERBOARD 🏆",
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
+                                color = TextWhite
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
@@ -531,25 +536,25 @@ fun HomeScreen(
                             text = "See Global Rankings",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
+                            color = TextWhite
                         )
                         Text(
                             text = "Compete & climb the ranks!",
                             fontSize = 12.sp,
-                            color = TextHeadingBlack.copy(alpha = 0.8f)
+                            color = TextWhite.copy(alpha = 0.9f)
                         )
                     }
 
                     Surface(
                         shape = CircleShape,
-                        color = TextHeadingBlack,
+                        color = TextWhite,
                         modifier = Modifier.size(44.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 painter = painterResource(id = Iconsax.MedalStar),
                                 contentDescription = "Leaderboard",
-                                tint = HeroCardStart,
+                                tint = PlayPurpleEnd,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -579,7 +584,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(QuestsCardStart, QuestsCardEnd)
+                            colors = listOf(PlayGoldStart, PlayGoldEnd)
                         )
                     )
                     .padding(20.dp)

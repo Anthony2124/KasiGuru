@@ -68,6 +68,7 @@ fun GameHubScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Mini-Games Hub",
@@ -112,14 +113,14 @@ fun GameHubScreen(
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(26.dp),
+                    shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
+                    shadowElevation = 4.dp
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(HeroCardStart, HeroCardEnd)))
+                            .background(Brush.linearGradient(listOf(PlayPurpleStart, PlayPurpleEnd)))
                             .padding(20.dp)
                     ) {
                         Column {
@@ -138,12 +139,12 @@ fun GameHubScreen(
                                             text = "Level ${levelInfo.level}",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Black,
-                                            color = TextHeadingBlack
+                                            color = TextWhite
                                         )
                                         Text(
                                             text = levelInfo.title,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = TextHeadingBlack.copy(alpha = 0.85f),
+                                            color = TextWhite.copy(alpha = 0.9f),
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
@@ -151,14 +152,14 @@ fun GameHubScreen(
 
                                 Surface(
                                     shape = RoundedCornerShape(14.dp),
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    color = TextWhite.copy(alpha = 0.3f)
                                 ) {
                                     Text(
                                         text = "$totalXp XP",
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Black,
-                                        color = TextHeadingBlack
+                                        color = TextWhite
                                     )
                                 }
                             }
@@ -176,7 +177,7 @@ fun GameHubScreen(
                 }
             }
 
-            // ─── 2. Games List ───
+            // ─── 2. Games Section Title ───
             item {
                 Text(
                     text = "Select a Mini-Game",
@@ -186,89 +187,96 @@ fun GameHubScreen(
                 )
             }
 
-            // Game 1: Word Match
+            // ─── 2-Column Game Tile Grid ───
             item {
-                GameCardWithLock(
-                    title = "Word Match Blitz",
-                    description = "Match Kasiguranin terms to Tagalog or English.",
-                    iconRes = Iconsax.Element4Outline,
-                    highScore = uiState.highScores["word_match"] ?: 0,
-                    minLevelReq = 1,
-                    userLevel = userLevel,
-                    gradient = listOf(VocabCardStart, VocabCardEnd),
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        selectedGameRulesType = "word_match"
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Row 1: Word Match & Fill in the Blank
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Word Match",
+                            iconRes = Iconsax.Element4Outline,
+                            highScore = uiState.highScores["word_match"] ?: 0,
+                            minLevelReq = 1,
+                            userLevel = userLevel,
+                            gradient = listOf(PlayGoldStart, PlayGoldEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "word_match"
+                            }
+                        )
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Fill in Blank",
+                            iconRes = Iconsax.Edit,
+                            highScore = uiState.highScores["fill_blank"] ?: 0,
+                            minLevelReq = 2,
+                            userLevel = userLevel,
+                            gradient = listOf(PlayPinkStart, PlayPinkEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "fill_blank"
+                            }
+                        )
                     }
-                )
-            }
 
-            // Game 2: Fill in the Blank
-            item {
-                GameCardWithLock(
-                    title = "Fill in the Blank",
-                    description = "Complete sentences with the correct verb aspect.",
-                    iconRes = Iconsax.Edit,
-                    highScore = uiState.highScores["fill_blank"] ?: 0,
-                    minLevelReq = 2,
-                    userLevel = userLevel,
-                    gradient = listOf(QuestsCardStart, QuestsCardEnd),
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        selectedGameRulesType = "fill_blank"
+                    // Row 2: Audio Quiz & Aspect Builder
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Audio Quiz",
+                            iconRes = Iconsax.VolumeHigh,
+                            highScore = uiState.highScores["audio_quiz"] ?: 0,
+                            minLevelReq = 3,
+                            userLevel = userLevel,
+                            gradient = listOf(PlayPurpleStart, PlayPurpleEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "audio_quiz"
+                            }
+                        )
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Aspect Builder",
+                            iconRes = Iconsax.Flash,
+                            highScore = uiState.highScores["aspect_builder"] ?: 0,
+                            minLevelReq = 4,
+                            userLevel = userLevel,
+                            gradient = listOf(PlayGoldStart, PlayGoldEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "aspect_builder"
+                            }
+                        )
                     }
-                )
-            }
 
-            // Game 3: Audio Quiz
-            item {
-                GameCardWithLock(
-                    title = "Audio Listening Quiz",
-                    description = "Listen to pronunciation and select the correct word.",
-                    iconRes = Iconsax.VolumeHigh,
-                    highScore = uiState.highScores["audio_quiz"] ?: 0,
-                    minLevelReq = 3,
-                    userLevel = userLevel,
-                    gradient = listOf(MiniGamesCardStart, MiniGamesCardEnd),
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        selectedGameRulesType = "audio_quiz"
+                    // Row 3: Sentence Construction
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Sentence Order",
+                            iconRes = Iconsax.Document,
+                            highScore = uiState.highScores["sentence_order"] ?: 0,
+                            minLevelReq = 5,
+                            userLevel = userLevel,
+                            gradient = listOf(PlayPinkStart, PlayPinkEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "sentence_order"
+                            }
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
                     }
-                )
-            }
-
-            // Game 4: Aspect Builder
-            item {
-                GameCardWithLock(
-                    title = "Verb Aspect Builder",
-                    description = "Conjugate root verbs into correct aspectual forms.",
-                    iconRes = Iconsax.Flash,
-                    highScore = uiState.highScores["aspect_builder"] ?: 0,
-                    minLevelReq = 4,
-                    userLevel = userLevel,
-                    gradient = listOf(HeroCardStart, HeroCardEnd),
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        selectedGameRulesType = "aspect_builder"
-                    }
-                )
-            }
-
-            // Game 5: Sentence Order
-            item {
-                GameCardWithLock(
-                    title = "Sentence Construction",
-                    description = "Arrange words into predicate-initial Kasiguranin syntax.",
-                    iconRes = Iconsax.Document,
-                    highScore = uiState.highScores["sentence_order"] ?: 0,
-                    minLevelReq = 5,
-                    userLevel = userLevel,
-                    gradient = listOf(StoriesCardStart, StoriesCardEnd),
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        selectedGameRulesType = "sentence_order"
-                    }
-                )
+                }
             }
 
             // ─── 3. Recent Scores Activity ───
@@ -426,6 +434,97 @@ private fun GameCardWithLock(
                     tint = TextHeadingBlack,
                     modifier = Modifier.size(20.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameTileCardWithLock(
+    modifier: Modifier = Modifier,
+    title: String,
+    iconRes: Int,
+    highScore: Int,
+    minLevelReq: Int,
+    userLevel: Int,
+    gradient: List<Color>,
+    onClick: () -> Unit
+) {
+    val isUnlocked = userLevel >= minLevelReq
+
+    Surface(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(26.dp),
+        shadowElevation = 4.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(brush = Brush.linearGradient(gradient))
+                .padding(14.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(if (isUnlocked) Color.White.copy(alpha = 0.35f) else PlayGoldStart),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isUnlocked) iconRes else Iconsax.Lock),
+                        contentDescription = null,
+                        tint = TextHeadingBlack,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextWhite,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 15.sp,
+                    maxLines = 1
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (isUnlocked) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.4f)
+                    ) {
+                        Text(
+                            text = "Best: $highScore",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextWhite
+                        )
+                    }
+                } else {
+                    Surface(
+                        shape = CircleShape,
+                        color = PlayGoldStart
+                    ) {
+                        Text(
+                            text = "Lv. $minLevelReq",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
+                    }
+                }
             }
         }
     }

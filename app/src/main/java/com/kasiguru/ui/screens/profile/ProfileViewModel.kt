@@ -32,11 +32,22 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadProfile() {
         viewModelScope.launch {
+            val currentOnce = userProgressRepository.getUserProgressOnce()
+            val initialProgress = currentOnce ?: UserProgressEntity().also { defaultProgress ->
+                userProgressRepository.initializeProgress(defaultProgress)
+            }
+            _uiState.value = _uiState.value.copy(
+                userProgress = initialProgress,
+                isLoading = false
+            )
+
             userProgressRepository.getUserProgress().collect { progress ->
-                _uiState.value = _uiState.value.copy(
-                    userProgress = progress,
-                    isLoading = false
-                )
+                if (progress != null) {
+                    _uiState.value = _uiState.value.copy(
+                        userProgress = progress,
+                        isLoading = false
+                    )
+                }
             }
         }
     }

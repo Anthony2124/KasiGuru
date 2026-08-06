@@ -164,3 +164,42 @@ fun AnimatedBadge(
         )
     }
 }
+
+/**
+ * Translucent rounded pill stat chip (Play theme design system).
+ */
+@Composable
+fun PlayStatChip(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: Int? = null,
+    backgroundColor: androidx.compose.ui.graphics.Color = PlayChipTranslucent,
+    contentColor: androidx.compose.ui.graphics.Color = TextDark
+) {
+    Surface(
+        modifier = modifier,
+        shape = androidx.compose.foundation.shape.CircleShape,
+        color = backgroundColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (icon != null) {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                color = contentColor
+            )
+        }
+    }
+}
+

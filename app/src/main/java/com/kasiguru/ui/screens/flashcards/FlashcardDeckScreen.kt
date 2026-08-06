@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,6 +50,7 @@ fun FlashcardDeckScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Daily Review Deck",
@@ -157,7 +159,7 @@ fun FlashcardDeckScreen(
             KasiGuruProgressBar(
                 progress = (uiState.currentIndex + 1).toFloat() / uiState.cards.size,
                 showLabel = true,
-                gradientColors = listOf(HeroCardStart, HeroCardEnd)
+                gradientColors = listOf(PlayPurpleStart, PlayPurpleEnd)
             )
 
             // Flashcard
@@ -175,16 +177,16 @@ fun FlashcardDeckScreen(
                     },
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = if (rotation <= 90f) {
-                                Brush.linearGradient(listOf(HeroCardStart, HeroCardEnd))
+                                Brush.linearGradient(listOf(PlayPurpleStart, PlayPurpleEnd))
                             } else {
-                                Brush.linearGradient(listOf(VocabCardStart, VocabCardEnd))
+                                Brush.linearGradient(listOf(PlayGoldStart, PlayGoldEnd))
                             }
                         )
                         .padding(24.dp),
@@ -195,14 +197,14 @@ fun FlashcardDeckScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
-                                color = Color.White.copy(alpha = 0.4f)
+                                color = Color.White.copy(alpha = 0.25f)
                             ) {
                                 Text(
                                     text = currentCard.category.uppercase(),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = TextHeadingBlack,
-                                    fontWeight = FontWeight.Bold
+                                    color = TextWhite,
+                                    fontWeight = FontWeight.Black
                                 )
                             }
                             Spacer(modifier = Modifier.height(20.dp))
@@ -214,21 +216,25 @@ fun FlashcardDeckScreen(
                                     text = currentCard.kasiguranin,
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Black,
-                                    color = TextHeadingBlack,
+                                    color = TextWhite,
                                     fontSize = 32.sp
                                 )
-                                IconButton(
-                                    onClick = {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = PlayGoldStart,
+                                    modifier = Modifier.clickable {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         audioPlayerManager.playAudio(currentCard.kasiguranin, currentCard.audioFileName)
                                     }
                                 ) {
-                                    Icon(
-                                        painter = painterResource(id = Iconsax.VolumeHigh),
-                                        contentDescription = "Listen",
-                                        tint = TextHeadingBlack,
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                    Box(modifier = Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.VolumeHigh),
+                                            contentDescription = "Listen",
+                                            tint = TextHeadingBlack,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
                                 }
                             }
                             if (currentCard.ipaNotation.isNotEmpty()) {
@@ -236,7 +242,7 @@ fun FlashcardDeckScreen(
                                 Text(
                                     text = "[${currentCard.ipaNotation}]",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextHeadingBlack.copy(alpha = 0.8f)
+                                    color = TextWhite.copy(alpha = 0.85f)
                                 )
                             }
                             Spacer(modifier = Modifier.height(24.dp))
@@ -244,11 +250,11 @@ fun FlashcardDeckScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.Repeat),
                                     contentDescription = null,
-                                    tint = TextHeadingBlack,
+                                    tint = TextWhite.copy(alpha = 0.85f),
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Tap card to flip", style = MaterialTheme.typography.labelSmall, color = TextHeadingBlack.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                                Text("Tap card to flip", style = MaterialTheme.typography.labelSmall, color = TextWhite.copy(alpha = 0.85f), fontWeight = FontWeight.Medium)
                             }
                         }
                     } else {

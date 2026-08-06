@@ -38,6 +38,15 @@ class HomeViewModel @Inject constructor(
 
     private fun loadProgress() {
         viewModelScope.launch {
+            val currentOnce = userProgressRepository.getUserProgressOnce()
+            val initialProgress = currentOnce ?: UserProgressEntity().also { defaultProgress ->
+                userProgressRepository.initializeProgress(defaultProgress)
+            }
+            _uiState.value = _uiState.value.copy(
+                userProgress = initialProgress,
+                isLoading = false
+            )
+
             userProgressRepository.getUserProgress().collect { progress ->
                 if (progress != null) {
                     _uiState.value = _uiState.value.copy(

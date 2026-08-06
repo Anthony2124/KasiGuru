@@ -49,6 +49,9 @@ class UserProgressRepository @Inject constructor(
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int) =
         userProgressDao.updateProfileDetails(fullName, age, address, iconId)
 
+    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String) =
+        userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
+
     suspend fun addXp(xp: Int) {
         userProgressDao.addXp(xp)
         // Recalculate level

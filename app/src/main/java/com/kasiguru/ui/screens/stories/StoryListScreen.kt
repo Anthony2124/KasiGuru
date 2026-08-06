@@ -37,11 +37,12 @@ fun StoryListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Kasiguranin Stories",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = TextHeadingBlack
                     )
                 },
@@ -64,7 +65,7 @@ fun StoryListScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = StoriesCardEnd)
+                CircularProgressIndicator(color = PlayPurpleStart)
             }
             return@Scaffold
         }
@@ -72,8 +73,8 @@ fun StoryListScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+                .padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(uiState.stories, key = { it.id }) { story ->
@@ -99,42 +100,42 @@ private fun StoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = story.isUnlocked, onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
+                    .height(135.dp)
                     .background(
                         brush = Brush.linearGradient(
-                            colors = if (story.isUnlocked) listOf(StoriesCardStart, StoriesCardEnd)
-                            else listOf(Color.LightGray, Color.Gray)
+                            colors = if (story.isUnlocked) listOf(PlayPurpleStart, PlayPurpleEnd)
+                            else listOf(PlayPurpleStart.copy(alpha = 0.5f), PlayPurpleEnd.copy(alpha = 0.5f))
                         )
                     )
                     .padding(16.dp)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White.copy(alpha = 0.4f),
+                    shape = CircleShape,
+                    color = PlayGoldStart,
                     modifier = Modifier.align(Alignment.TopStart)
                 ) {
                     Text(
                         text = story.category.uppercase(),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = TextHeadingBlack
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(46.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
+                        .background(Color.White.copy(alpha = 0.35f))
                         .align(Alignment.Center),
                     contentAlignment = Alignment.Center
                 ) {
@@ -143,7 +144,7 @@ private fun StoryCard(
                             id = if (story.isUnlocked) Iconsax.Book else Iconsax.Lock
                         ),
                         contentDescription = null,
-                        tint = TextHeadingBlack,
+                        tint = TextWhite,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -153,7 +154,7 @@ private fun StoryCard(
                 Text(
                     text = story.titleKasiguranin,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     color = TextHeadingBlack
                 )
                 Text(
@@ -162,12 +163,12 @@ private fun StoryCard(
                     color = TextSubtleGray
                 )
                 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 
                 Text(
                     text = story.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextHeadingBlack.copy(alpha = 0.8f),
+                    color = TextHeadingBlack.copy(alpha = 0.85f),
                     maxLines = 2
                 )
 
@@ -178,38 +179,33 @@ private fun StoryCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Surface(
+                        shape = CircleShape,
+                        color = PlayGoldStart.copy(alpha = 0.25f)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = QuestsCardStart
-                        ) {
-                            Text(
-                                text = "${story.totalPages} Pages",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
-                            )
-                        }
+                        Text(
+                            text = "${story.totalPages} Pages",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
                     }
 
                     if (story.isUnlocked) {
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = StoriesCardStart
+                            shape = CircleShape,
+                            color = PlayGoldStart
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
                                     text = "Read Story",
                                     style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.Black,
                                     color = TextHeadingBlack
                                 )
                                 Icon(
@@ -224,6 +220,7 @@ private fun StoryCard(
                         Text(
                             text = "Locked",
                             style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
                             color = TextSubtleGray
                         )
                     }

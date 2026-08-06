@@ -42,11 +42,12 @@ fun ProfileScreen(
         return
     }
 
-    val progress = uiState.userProgress ?: return
+    val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
 
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "My Profile",
@@ -103,20 +104,20 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(CircleShape),
-                color = HeroCardStart
+                color = PlayPurpleStart
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(4.dp)
                         .clip(CircleShape)
-                        .background(HeroCardEnd),
+                        .background(PlayPurpleEnd),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.Profile),
                         contentDescription = "Profile Avatar",
-                        tint = TextHeadingBlack,
+                        tint = TextWhite,
                         modifier = Modifier.size(56.dp)
                     )
                 }
@@ -188,7 +189,7 @@ fun ProfileScreen(
                     title = "Level ${levelInfo.level}",
                     value = levelInfo.iconEmoji,
                     subtitle = levelInfo.title,
-                    bgColor = StoriesCardStart,
+                    bgColor = PlayPurpleStart,
                     iconRes = Iconsax.MedalStar
                 )
                 StatCard(
@@ -196,7 +197,7 @@ fun ProfileScreen(
                     title = "Total XP",
                     value = "${progress.totalXp}",
                     subtitle = "Points Earned",
-                    bgColor = VocabCardStart,
+                    bgColor = PlayGoldStart,
                     iconRes = Iconsax.Cup
                 )
             }

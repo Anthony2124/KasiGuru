@@ -64,7 +64,7 @@ fun KasiGuruBottomBar(
                     spotColor = Color.Black.copy(alpha = 0.55f)
                 ),
             shape = CircleShape,
-            color = Color(0xFF0D101A)
+            color = PlayNavDark
         ) {
             Row(
                 modifier = Modifier
@@ -77,19 +77,19 @@ fun KasiGuruBottomBar(
                     val isSelected = currentRoute == item.route
 
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) Color(0xFF0D101A) else Color(0xFFF4F4F4),
+                        targetValue = if (isSelected) TextDark else Color.White.copy(alpha = 0.85f),
                         animationSpec = tween(durationMillis = 220),
                         label = "IconColor"
                     )
 
                     val backgroundColor by animateColorAsState(
-                        targetValue = if (isSelected) Color(0xFFF4F4F4) else Color.Transparent,
+                        targetValue = if (isSelected) PlayGoldStart else Color.Transparent,
                         animationSpec = tween(durationMillis = 220),
                         label = "BgColor"
                     )
 
                     val itemScale by animateFloatAsState(
-                        targetValue = if (isSelected) 1.0f else 0.88f,
+                        targetValue = if (isSelected) 1.05f else 0.88f,
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
                             stiffness = Spring.StiffnessLow
@@ -99,7 +99,7 @@ fun KasiGuruBottomBar(
 
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(48.dp)
                             .scale(itemScale)
                             .clip(CircleShape)
                             .background(backgroundColor)
@@ -115,7 +115,7 @@ fun KasiGuruBottomBar(
                             ),
                             contentDescription = item.title,
                             tint = iconColor,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }

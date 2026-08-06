@@ -28,5 +28,8 @@ data class UserProgressEntity(
     val gamesPlayed: Int = 0,
     val totalCorrectAnswers: Int = 0,
     val totalQuestionsAnswered: Int = 0,
-    val lessonsCompleted: Int = 0
+    val lessonsCompleted: Int = 0,
+    val isOnboardingCompleted: Boolean = false,
+    val dailyGoalXp: Int = 100,
+    val titleBadge: String = "Kasiguranin Apprentice"
 )

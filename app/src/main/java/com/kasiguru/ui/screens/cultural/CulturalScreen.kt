@@ -27,6 +27,7 @@ fun CulturalScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Kasiguranin Heritage",
@@ -65,28 +66,28 @@ fun CulturalScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 4.dp
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             brush = Brush.linearGradient(
-                                colors = listOf(StoriesCardStart, StoriesCardEnd)
+                                colors = listOf(PlayPurpleStart, PlayPurpleEnd)
                             )
                         )
                         .padding(24.dp)
                 ) {
                     Column {
                         Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)
+                            shape = CircleShape,
+                            color = PlayGoldStart
                         ) {
                             Text(
                                 text = "Casiguran, Aurora",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Black,
                                 color = TextHeadingBlack
                             )
                         }
@@ -95,13 +96,13 @@ fun CulturalScreen(
                             text = "The Kasiguranin People & Language",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
+                            color = TextWhite
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Explore the unique Agta-Dumagat contact history, linguistic affixes, and coastal heritage of northern Aurora.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextHeadingBlack.copy(alpha = 0.85f),
+                            color = TextWhite.copy(alpha = 0.9f),
                             lineHeight = 22.sp
                         )
                     }
@@ -113,28 +114,28 @@ fun CulturalScreen(
                 title = "Geographic Location",
                 description = "Casiguran is a coastal municipality situated in the northern part of Aurora province, Luzon. It is bounded by the Sierra Madre mountain range to the west and the Pacific Ocean to the east.",
                 iconRes = Iconsax.Location,
-                cardBg = HeroCardStart
+                cardBg = PlayPurpleStart
             )
 
             HeritageInfoCard(
                 title = "Language Family & Contact",
                 description = "Kasiguranin belongs to the Northern Luzon sub-branch of Malayo-Polynesian languages. It exhibits extensive historical contact with Casiguran Dumagat Agta, resulting in unique lexical and phonetic borrowings.",
                 iconRes = Iconsax.People,
-                cardBg = VocabCardStart
+                cardBg = PlayGoldStart
             )
 
             HeritageInfoCard(
                 title = "Linguistic Grammar Features",
                 description = "Kasiguranin features a rich aspectual verb system (neutral, imperfective, perfective, contemplative), unique glottal stops ʔ, long vowels ː, and predicate-initial word order.",
                 iconRes = Iconsax.Teacher,
-                cardBg = QuestsCardStart
+                cardBg = PlayPurpleStart
             )
 
             HeritageInfoCard(
                 title = "Preservation Efforts",
                 description = "Documented by UP Diliman linguistics research ('A Grammatical Sketch of Kasiguranin', 2016). KasiGuru serves to keep the language alive for future generations.",
                 iconRes = Iconsax.Courthouse,
-                cardBg = MiniGamesCardStart
+                cardBg = PlayPinkStart
             )
         }
     }

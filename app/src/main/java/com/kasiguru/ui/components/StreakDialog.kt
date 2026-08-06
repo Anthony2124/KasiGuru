@@ -46,7 +46,7 @@ fun StreakDialog(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(VocabCardStart),
+                        .background(PlayGoldStart),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -104,8 +104,8 @@ fun StreakDialog(
                                     .clip(CircleShape)
                                     .background(
                                         when {
-                                            isActiveStreak -> VocabCardStart
-                                            dayNumber == todayDayOfWeek -> HeroCardStart
+                                            isActiveStreak -> PlayGoldStart
+                                            dayNumber == todayDayOfWeek -> PlayPurpleStart
                                             else -> MaterialTheme.colorScheme.surfaceVariant
                                         }
                                     ),
@@ -135,32 +135,35 @@ fun StreakDialog(
 
                 // Longest Streak Info Pill
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = StoriesCardStart.copy(alpha = 0.5f)
+                    shape = CircleShape,
+                    color = PlayPurpleStart.copy(alpha = 0.2f)
                 ) {
-                    Text(
-                        text = "🏆 Personal Best: $longestStreak Days",
+                    Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Longest Streak: $longestStreak Days 🏆",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                    shape = RoundedCornerShape(20.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = PlayGoldStart)
                 ) {
                     Text(
                         text = "Keep It Up!",
                         color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         fontSize = 16.sp
                     )
                 }

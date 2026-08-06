@@ -48,4 +48,7 @@ interface UserProgressDao {
 
     @Query("UPDATE user_progress SET fullName = :fullName, age = :age, address = :address, profileIconId = :iconId WHERE id = 1")
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int)
+
+    @Query("UPDATE user_progress SET isOnboardingCompleted = 1, userName = :userName, profileIconId = :avatarId, dailyGoalXp = :dailyGoalXp, titleBadge = :titleBadge, totalXp = totalXp + 50, currentStreak = CASE WHEN currentStreak < 1 THEN 1 ELSE currentStreak END, longestStreak = CASE WHEN longestStreak < 1 THEN 1 ELSE longestStreak END WHERE id = 1")
+    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String)
 }

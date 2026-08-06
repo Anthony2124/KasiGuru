@@ -49,6 +49,7 @@ fun AchievementsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Badges & Achievements",
@@ -133,6 +134,12 @@ fun AchievementsScreen(
                 }
             }
 
+            // Weekly Mission Strip (Inspo Panel 3)
+            com.kasiguru.ui.components.WeeklyMissionStrip(
+                currentStreak = uiState.unlockedCount,
+                onCheckInClick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Category Filter Chips
@@ -150,8 +157,8 @@ fun AchievementsScreen(
                         },
                         label = { Text(cat, fontWeight = FontWeight.Medium) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = HeroCardStart,
-                            selectedLabelColor = TextHeadingBlack,
+                            selectedContainerColor = PlayPurpleStart,
+                            selectedLabelColor = TextWhite,
                             containerColor = MaterialTheme.colorScheme.surface,
                             labelColor = TextSubtleGray
                         ),

@@ -22,8 +22,8 @@ class SplashViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val progress = userProgressRepository.getUserProgressOnce()
-            if (progress == null) {
-                _startDestination.value = Screen.Welcome.route
+            if (progress == null || !progress.isOnboardingCompleted) {
+                _startDestination.value = Screen.Onboarding.route
             } else {
                 _startDestination.value = Screen.Home.route
             }
