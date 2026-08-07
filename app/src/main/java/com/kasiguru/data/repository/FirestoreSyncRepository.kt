@@ -5,6 +5,9 @@ import com.kasiguru.data.local.dao.ConjugationDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.ConjugationEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,6 +18,7 @@ class FirestoreSyncRepository @Inject constructor(
     private val conjugationDao: ConjugationDao
 ) {
     private val vocabCollection = firestore.collection("vocabulary")
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     /**
      * Listens to real-time changes in Firestore "vocabulary" collection
@@ -47,9 +51,11 @@ class FirestoreSyncRepository @Inject constructor(
                 )
 
                 // Async Room insert/upsert
-                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                scope.launch {
                     try {
-                        val vocabId = vocabularyDao.insertVocabulary(vocabEntity).toInt()
+                        vocabularyDao.insert(vocabEntity)
+                        val fetchedWord = vocabularyDao.getVocabularyById(vocabEntity.id)
+                        val vocabId = fetchedWord?.id ?: vocabEntity.id
 
                         // Parse nested conjugations array if present
                         val conjugationsRaw = data["conjugations"] as? List<Map<String, Any>>

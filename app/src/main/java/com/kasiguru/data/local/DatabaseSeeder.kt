@@ -3827,6 +3827,201 @@ object DatabaseSeeder {
         ),
         com.kasiguru.data.local.entity.NotificationEntity(
             id = 4,
+        AchievementEntity(
+            id = Constants.Achievements.FIRST_WORD,
+            name = "Unáng Salitâ",
+            description = "Learn your first Kasiguranin word",
+            iconEmoji = "🌟",
+            category = "Progress",
+            requiredValue = 1,
+            xpReward = 20
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.TEN_WORDS,
+            name = "Sampûng Salitâ",
+            description = "Learn 10 Kasiguranin words",
+            iconEmoji = "📖",
+            category = "Progress",
+            requiredValue = 10,
+            xpReward = 50
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.FIFTY_WORDS,
+            name = "Limampûng Salitâ",
+            description = "Learn 50 Kasiguranin words",
+            iconEmoji = "🎓",
+            category = "Progress",
+            requiredValue = 50,
+            xpReward = 200
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.FIRST_STORY,
+            name = "Mambábasa",
+            description = "Complete your first story",
+            iconEmoji = "📕",
+            category = "Progress",
+            requiredValue = 1,
+            xpReward = 50
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.FIRST_GAME,
+            name = "Mánlalaro",
+            description = "Play your first mini-game",
+            iconEmoji = "🎮",
+            category = "Progress",
+            requiredValue = 1,
+            xpReward = 25
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.PERFECT_GAME,
+            name = "Perpekto!",
+            description = "Get a perfect score in any mini-game",
+            iconEmoji = "⭐",
+            category = "Games",
+            requiredValue = 1,
+            xpReward = 100
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.THREE_DAY_STREAK,
+            name = "Tatlong Aldaw",
+            description = "Maintain a 3-day learning streak",
+            iconEmoji = "🔥",
+            category = "Streaks",
+            requiredValue = 3,
+            xpReward = 50
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.SEVEN_DAY_STREAK,
+            name = "Isáng Linggo",
+            description = "Maintain a 7-day learning streak",
+            iconEmoji = "💪",
+            category = "Streaks",
+            requiredValue = 7,
+            xpReward = 150
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.LEVEL_FIVE,
+            name = "Sumusulong",
+            description = "Reach Level 5",
+            iconEmoji = "🏅",
+            category = "Progress",
+            requiredValue = 5,
+            xpReward = 100
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.LEVEL_TEN,
+            name = "Mæstro",
+            description = "Reach Level 10 — Master of Kasiguranin!",
+            iconEmoji = "👑",
+            category = "Progress",
+            requiredValue = 10,
+            xpReward = 500
+        )
+    )
+
+    fun getInitialUserProgress(): UserProgressEntity = UserProgressEntity(
+        id = 1,
+        userName = "Learner",
+        totalXp = 0,
+        level = 1,
+        currentStreak = 0,
+        longestStreak = 0,
+        lastActiveDate = "",
+        wordsLearned = 0,
+        storiesCompleted = 0,
+        gamesPlayed = 0,
+        totalCorrectAnswers = 0,
+        totalQuestionsAnswered = 0,
+        lessonsCompleted = 0
+    )
+
+    fun getInitialLeaderboard(): List<com.kasiguru.data.local.entity.LeaderboardEntity> = listOf(
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 101,
+            name = "Ligaya Santos",
+            totalXp = 850,
+            currentStreak = 14,
+            avatarIconId = 2,
+            levelTitle = "Grammar Specialist",
+            isCurrentUser = false
+        ),
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 102,
+            name = "Juan dela Cruz",
+            totalXp = 620,
+            currentStreak = 9,
+            avatarIconId = 3,
+            levelTitle = "Linguistic Scholar",
+            isCurrentUser = false
+        ),
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 103,
+            name = "Marco Ramirez",
+            totalXp = 490,
+            currentStreak = 7,
+            avatarIconId = 4,
+            levelTitle = "Vocab Apprentice",
+            isCurrentUser = false
+        ),
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 104,
+            name = "Elena Alonzo",
+            totalXp = 380,
+            currentStreak = 5,
+            avatarIconId = 1,
+            levelTitle = "Vocab Apprentice",
+            isCurrentUser = false
+        ),
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 105,
+            name = "Bayani Pascual",
+            totalXp = 210,
+            currentStreak = 4,
+            avatarIconId = 5,
+            levelTitle = "Novice Explorer",
+            isCurrentUser = false
+        ),
+        com.kasiguru.data.local.entity.LeaderboardEntity(
+            id = 106,
+            name = "Marisol Reyes",
+            totalXp = 140,
+            currentStreak = 2,
+            avatarIconId = 2,
+            levelTitle = "Novice Explorer",
+            isCurrentUser = false
+        )
+    )
+
+    fun getInitialNotifications(): List<com.kasiguru.data.local.entity.NotificationEntity> = listOf(
+        com.kasiguru.data.local.entity.NotificationEntity(
+            id = 1,
+            title = "🔥 Keep Your 5-Day Streak Alive!",
+            message = "You are only 3 words away from reaching your daily learning goal today.",
+            timestamp = "10 mins ago",
+            category = "Streak",
+            isRead = false,
+            deepLinkRoute = "vocabulary"
+        ),
+        com.kasiguru.data.local.entity.NotificationEntity(
+            id = 2,
+            title = "🌟 Word of the Day: Magandang Aldew",
+            message = "Kasiguranin greeting for 'Good Day / Good Morning'. Learn its audio & usage!",
+            timestamp = "2 hours ago",
+            category = "WordOfDay",
+            isRead = false,
+            deepLinkRoute = "vocabulary"
+        ),
+        com.kasiguru.data.local.entity.NotificationEntity(
+            id = 3,
+            title = "🏆 Leaderboard Rank #2 Reclaimed!",
+            message = "You climbed to Rank #2 on the Global Leaderboard with 850 total XP!",
+            timestamp = "Yesterday",
+            category = "Leaderboard",
+            isRead = true,
+            deepLinkRoute = "leaderboard"
+        ),
+        com.kasiguru.data.local.entity.NotificationEntity(
+            id = 4,
             title = "🎓 Badge Unlocked: Linguistic Scholar!",
             message = "Congratulations! You reached Level 3 & unlocked the Linguistic Scholar badge.",
             timestamp = "2 days ago",
@@ -3834,7 +4029,9 @@ object DatabaseSeeder {
             isRead = true,
             deepLinkRoute = "achievements"
         )
-,
+    )
+
+    fun getInitialVocabulary(): List<VocabularyEntity> = listOf(
         VocabularyEntity(
             kasiguranin = "anak",
             tagalog = "anak",

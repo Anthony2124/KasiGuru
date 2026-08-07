@@ -28,6 +28,7 @@ import com.kasiguru.ui.screens.notifications.NotificationInboxScreen
 import com.kasiguru.ui.screens.games.*
 import com.kasiguru.ui.screens.home.HomeScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
+import com.kasiguru.ui.screens.contribute.SubmitWordScreen
 import com.kasiguru.ui.screens.profile.EditProfileScreen
 import com.kasiguru.ui.screens.profile.ProfileScreen
 import com.kasiguru.ui.screens.settings.SettingsScreen
