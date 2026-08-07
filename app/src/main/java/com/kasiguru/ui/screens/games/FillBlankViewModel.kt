@@ -15,7 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -43,7 +43,7 @@ class FillBlankViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = FillBlankUiState(isLoading = true)
-            val list = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
+            val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
             val verbsWithAspects = list.filter { 
                 it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.exampleSentence.isNotBlank() 
             }

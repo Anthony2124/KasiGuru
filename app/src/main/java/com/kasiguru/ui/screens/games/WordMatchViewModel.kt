@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -44,7 +45,7 @@ class WordMatchViewModel @Inject constructor(
             _uiState.value = WordMatchUiState(isLoading = true)
             var words = vocabularyRepository.getRandomWords(totalInitialQuestions)
             if (words.isEmpty()) {
-                val all = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
+                val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
                 words = all.shuffled().take(totalInitialQuestions)
             }
 

@@ -12,7 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -58,7 +58,7 @@ class AspectBuilderViewModel @Inject constructor(
 
     private fun loadQuestions() {
         viewModelScope.launch {
-            val list = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
+            val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
             val questions = generateAspectQuestions(list)
             questionQueue.clear()
             questionQueue.addAll(questions)
