@@ -1,10 +1,12 @@
 package com.kasiguru.ui.screens.games
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
@@ -24,15 +26,18 @@ import javax.inject.Inject
 class FillBlankViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
-    private val gameRepository: GameRepository
+    private val gameRepository: GameRepository,
+    private val gameLevelRepository: GameLevelRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private val _uiState = MutableStateFlow(FillBlankUiState())
     val uiState: StateFlow<FillBlankUiState> = _uiState.asStateFlow()
 
-    private val totalInitialQuestions = 5
+    private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
-    private val requeuedVerbIds = mutableSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
 
@@ -43,6 +48,12 @@ class FillBlankViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = FillBlankUiState(isLoading = true)
+            
+            val levelInfo = gameLevelRepository.getLevel("fill_blank", levelNumber)
+            if (levelInfo != null) {
+                totalInitialQuestions = levelInfo.questionsCount
+            }
+            
             val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
             val verbsWithAspects = list.filter { 
                 it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.exampleSentence.isNotBlank() 
@@ -56,7 +67,6 @@ class FillBlankViewModel @Inject constructor(
 
             questionQueue.clear()
             questionQueue.addAll(pool.shuffled().take(totalInitialQuestions))
-            requeuedVerbIds.clear()
             earnedXpTotal = 0
 
             loadNextQuestion()
@@ -85,11 +95,37 @@ class FillBlankViewModel @Inject constructor(
             targetVerb.exampleSentence.replace(correctAnswer, "____", ignoreCase = true)
         } else {
             when (correctAnswer) {
-                targetVerb.neutralForm -> "Karon na, ____ tam!"
-                targetVerb.imperfectiveForm -> "Ngayon, siya ay ____."
-                targetVerb.perfectiveForm -> "Kagibi, ____ na siya."
-                targetVerb.contemplativeForm -> "Niilaw, ____ akú."
-                else -> "____ ang anák."
+                targetVerb.neutralForm -> listOf(
+                    "Karon na, ____ tam!",
+                    "Gusto ko ____.",
+                    "Kailangan tam ____.",
+                    "Dapat kang ____."
+                ).random()
+                targetVerb.imperfectiveForm -> listOf(
+                    "Ngayon, siya ay ____.",
+                    "Habang maaga, kami ay ____.",
+                    "Palagi siyang ____.",
+                    "Bakit ka ____?"
+                ).random()
+                targetVerb.perfectiveForm -> listOf(
+                    "Kagibi, ____ na siya.",
+                    "Sino ang ____ kahapon?",
+                    "Kanina, ____ ako.",
+                    "Nang makita ko siya, ____ na siya."
+                ).random()
+                targetVerb.contemplativeForm -> listOf(
+                    "Niilaw, ____ akú.",
+                    "Mamaya, ____ tayo.",
+                    "Sa susunod na linggo, ____ siya.",
+                    "Sigurado akong ____ sila bukas."
+                ).random()
+                else -> listOf(
+                    "____ ang anák.",
+                    "Maganda ang ____.",
+                    "Gusto ko ng ____.",
+                    "Nasaan ang ____?",
+                    "Malaki ang ____."
+                ).random()
             }
         }
 
@@ -106,7 +142,8 @@ class FillBlankViewModel @Inject constructor(
                 options = options,
                 selectedOption = null,
                 isCorrect = null,
-                correctAnswer = correctAnswer
+                correctAnswer = correctAnswer,
+                totalQuestions = totalInitialQuestions
             )
         }
     }
@@ -118,7 +155,6 @@ class FillBlankViewModel @Inject constructor(
         val targetVerb = state.currentVerb ?: return
         val isCorrect = option == state.correctAnswer
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
-        val isRequeued = requeuedVerbIds.contains(targetVerb.id)
 
         val rating: ReviewRating
         val questionXp: Int
@@ -126,19 +162,12 @@ class FillBlankViewModel @Inject constructor(
         if (isCorrect) {
             rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
             questionXp = when {
-                isRequeued -> 0
                 rating == ReviewRating.HARD -> 5
                 else -> Constants.XP_PER_GAME_CORRECT
             }
         } else {
             rating = ReviewRating.AGAIN
             questionXp = 0
-
-            if (!isRequeued) {
-                requeuedVerbIds.add(targetVerb.id)
-                val insertIndex = (state.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
-                questionQueue.add(insertIndex, targetVerb)
-            }
         }
 
         earnedXpTotal += questionXp
@@ -161,22 +190,31 @@ class FillBlankViewModel @Inject constructor(
 
     private fun endGame() {
         val state = _uiState.value
-        val isPerfect = state.score >= totalInitialQuestions && requeuedVerbIds.isEmpty()
+        val isPerfect = state.score >= totalInitialQuestions
         val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
                 gameType = "fill_blank",
                 score = state.score,
-                totalQuestions = questionQueue.size,
+                totalQuestions = totalInitialQuestions,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
             gameRepository.saveScore(scoreEntity)
+            
+            val successRate = state.score.toFloat() / totalInitialQuestions
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            gameLevelRepository.saveLevelResult("fill_blank", levelNumber, starsEarned)
 
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
-            userProgressRepository.updateGameStats(state.score, questionQueue.size)
+            userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
             
             if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
@@ -184,7 +222,9 @@ class FillBlankViewModel @Inject constructor(
 
             _uiState.value = state.copy(
                 isGameOver = true,
-                finalXp = xpEarned
+                finalXp = xpEarned,
+                starsEarned = starsEarned,
+                totalQuestions = totalInitialQuestions
             )
         }
     }
@@ -201,5 +241,7 @@ data class FillBlankUiState(
     val isCorrect: Boolean? = null,
     val score: Int = 0,
     val isGameOver: Boolean = false,
-    val finalXp: Int = 0
+    val finalXp: Int = 0,
+    val starsEarned: Int = 0,
+    val totalQuestions: Int = 5
 )

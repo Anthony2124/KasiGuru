@@ -68,8 +68,9 @@ fun AudioQuizGameScreen(
         if (uiState.isGameOver) {
             GameOverView(
                 score = uiState.score,
-                total = 5,
+                total = uiState.totalQuestions,
                 xpEarned = uiState.finalXp,
+                starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -88,7 +89,7 @@ fun AudioQuizGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = questionNum.toFloat() / 5f,
+                    progress = questionNum.toFloat() / uiState.totalQuestions.toFloat(),
                     gradientColors = listOf(MiniGamesCardStart, MiniGamesCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -98,7 +99,7 @@ fun AudioQuizGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Question $questionNum/5",
+                        text = "Question $questionNum/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack

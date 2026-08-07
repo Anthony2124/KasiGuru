@@ -31,11 +31,7 @@ import com.kasiguru.util.gamification.GamificationEngine
 @Composable
 fun GameHubScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToWordMatch: () -> Unit,
-    onNavigateToFillBlank: () -> Unit,
-    onNavigateToAudioQuiz: () -> Unit,
-    onNavigateToAspectBuilder: () -> Unit = {},
-    onNavigateToSentenceOrder: () -> Unit = {},
+    onNavigateToLevelSelection: (String) -> Unit,
     viewModel: GamesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -51,15 +47,10 @@ fun GameHubScreen(
     selectedGameRulesType?.let { gameType ->
         GameRulesDialog(
             gameType = gameType,
-            userLevel = userLevel,
+            totalStars = uiState.totalStars,
             onStartGame = {
-                when (gameType) {
-                    "word_match" -> onNavigateToWordMatch()
-                    "fill_blank" -> onNavigateToFillBlank()
-                    "audio_quiz" -> onNavigateToAudioQuiz()
-                    "aspect_builder" -> onNavigateToAspectBuilder()
-                    "sentence_order" -> onNavigateToSentenceOrder()
-                }
+                onNavigateToLevelSelection(gameType)
+                selectedGameRulesType = null
             },
             onDismiss = { selectedGameRulesType = null }
         )
@@ -200,8 +191,8 @@ fun GameHubScreen(
                             title = "Word Match",
                             iconRes = Iconsax.Element4Outline,
                             highScore = uiState.highScores["word_match"] ?: 0,
-                            minLevelReq = 1,
-                            userLevel = userLevel,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_MATCH,
+                            totalStars = uiState.totalStars,
                             gradient = listOf(PlayGoldStart, PlayGoldEnd),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -213,8 +204,8 @@ fun GameHubScreen(
                             title = "Fill in Blank",
                             iconRes = Iconsax.Edit,
                             highScore = uiState.highScores["fill_blank"] ?: 0,
-                            minLevelReq = 2,
-                            userLevel = userLevel,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.FILL_BLANK,
+                            totalStars = uiState.totalStars,
                             gradient = listOf(PlayPinkStart, PlayPinkEnd),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -233,8 +224,8 @@ fun GameHubScreen(
                             title = "Audio Quiz",
                             iconRes = Iconsax.VolumeHigh,
                             highScore = uiState.highScores["audio_quiz"] ?: 0,
-                            minLevelReq = 3,
-                            userLevel = userLevel,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.AUDIO_QUIZ,
+                            totalStars = uiState.totalStars,
                             gradient = listOf(PlayPurpleStart, PlayPurpleEnd),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -246,8 +237,8 @@ fun GameHubScreen(
                             title = "Aspect Builder",
                             iconRes = Iconsax.Flash,
                             highScore = uiState.highScores["aspect_builder"] ?: 0,
-                            minLevelReq = 4,
-                            userLevel = userLevel,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER,
+                            totalStars = uiState.totalStars,
                             gradient = listOf(PlayGoldStart, PlayGoldEnd),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -266,8 +257,8 @@ fun GameHubScreen(
                             title = "Sentence Order",
                             iconRes = Iconsax.Document,
                             highScore = uiState.highScores["sentence_order"] ?: 0,
-                            minLevelReq = 5,
-                            userLevel = userLevel,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER,
+                            totalStars = uiState.totalStars,
                             gradient = listOf(PlayPinkStart, PlayPinkEnd),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -445,12 +436,12 @@ private fun GameTileCardWithLock(
     title: String,
     iconRes: Int,
     highScore: Int,
-    minLevelReq: Int,
-    userLevel: Int,
+    unlockStars: Int,
+    totalStars: Int,
     gradient: List<Color>,
     onClick: () -> Unit
 ) {
-    val isUnlocked = userLevel >= minLevelReq
+    val isUnlocked = totalStars >= unlockStars
 
     Surface(
         modifier = modifier
@@ -517,7 +508,7 @@ private fun GameTileCardWithLock(
                         color = PlayGoldStart
                     ) {
                         Text(
-                            text = "Lv. $minLevelReq",
+                            text = "$unlockStars ⭐",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,

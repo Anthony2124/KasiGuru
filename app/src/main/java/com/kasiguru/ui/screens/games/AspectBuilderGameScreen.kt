@@ -66,8 +66,9 @@ fun AspectBuilderGameScreen(
         if (uiState.isGameOver) {
             GameOverView(
                 score = uiState.score,
-                total = uiState.questions.size,
+                total = uiState.totalQuestions,
                 xpEarned = uiState.xpEarned,
+                starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -87,7 +88,7 @@ fun AspectBuilderGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = qIndex.toFloat() / uiState.questions.size.toFloat(),
+                    progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
                     gradientColors = listOf(HeroCardStart, HeroCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -97,7 +98,7 @@ fun AspectBuilderGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Question $qIndex/${uiState.questions.size}",
+                        text = "Question $qIndex/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack

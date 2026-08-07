@@ -24,11 +24,24 @@ sealed class Screen(val route: String) {
         fun createRoute(category: String) = "vocabulary/category/$category"
     }
     data object GameHub : Screen("games")
-    data object WordMatchGame : Screen("games/word_match")
-    data object FillBlankGame : Screen("games/fill_blank")
-    data object AudioQuizGame : Screen("games/audio_quiz")
-    data object AspectBuilderGame : Screen("games/aspect_builder")
-    data object SentenceOrderGame : Screen("games/sentence_order")
+    data object LevelSelection : Screen("games/levels/{gameType}") {
+        fun createRoute(gameType: String) = "games/levels/$gameType"
+    }
+    data object WordMatchGame : Screen("games/word_match/{level}") {
+        fun createRoute(level: Int) = "games/word_match/$level"
+    }
+    data object FillBlankGame : Screen("games/fill_blank/{level}") {
+        fun createRoute(level: Int) = "games/fill_blank/$level"
+    }
+    data object AudioQuizGame : Screen("games/audio_quiz/{level}") {
+        fun createRoute(level: Int) = "games/audio_quiz/$level"
+    }
+    data object AspectBuilderGame : Screen("games/aspect_builder/{level}") {
+        fun createRoute(level: Int) = "games/aspect_builder/$level"
+    }
+    data object SentenceOrderGame : Screen("games/sentence_order/{level}") {
+        fun createRoute(level: Int) = "games/sentence_order/$level"
+    }
     data object Achievements : Screen("achievements")
     data object CulturalContext : Screen("cultural")
     data object FlashcardDeck : Screen("flashcards")

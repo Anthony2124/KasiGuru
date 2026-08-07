@@ -6,7 +6,7 @@ package com.kasiguru.util
 object Constants {
 
     // Gamification
-    const val XP_PER_WORD_LEARNED = 10
+    const val XP_PER_WORD_LEARNED = 100
     const val XP_PER_STORY_PAGE = 15
     const val XP_PER_STORY_COMPLETE = 50
     const val XP_PER_GAME_CORRECT = 20
@@ -74,6 +74,15 @@ object Constants {
         const val WORD_MATCH = "word_match"
         const val ASPECT_BUILDER = "aspect_builder"
         const val SENTENCE_ORDER = "sentence_order"
+    }
+
+    // Mini-Game Unlock Requirements (Total Stars)
+    object GameUnlockStars {
+        const val WORD_MATCH = 0
+        const val FILL_BLANK = 45
+        const val AUDIO_QUIZ = 90
+        const val ASPECT_BUILDER = 135
+        const val SENTENCE_ORDER = 180
     }
 
     // DataStore keys

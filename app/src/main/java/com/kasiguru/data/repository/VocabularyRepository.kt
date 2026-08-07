@@ -81,12 +81,25 @@ class VocabularyRepository @Inject constructor(
     }
 
     /**
-     * Replaces raw markAsLearned with an SM-2 review (Rating = GOOD).
-     * Requires multiple spaced reviews to achieve isLearned = true.
+     * Manually mark a word as learned from the dictionary.
+     * Bypasses the multiple spaced reviews requirement for instant UI feedback.
      */
     suspend fun markAsLearned(id: Int) {
         val word = vocabularyDao.getVocabularyById(id) ?: return
-        processWordReview(word, ReviewRating.GOOD)
+        if (word.isLearned) return
+        
+        val sm2Result = Sm2Algorithm.calculateNextReview(word, ReviewRating.GOOD)
+        val updatedWord = word.copy(
+            easinessFactor = sm2Result.easinessFactor,
+            intervalDays = sm2Result.intervalDays,
+            nextReviewDate = sm2Result.nextReviewDate,
+            timesReviewed = maxOf(2, sm2Result.timesReviewed), // Ensure SM-2 treats it as learned
+            isLearned = true
+        )
+        vocabularyDao.updateVocabulary(updatedWord)
+        
+        userProgressRepository.incrementWordsLearned()
+        userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
     }
 
     suspend fun unmarkAsLearned(id: Int) {

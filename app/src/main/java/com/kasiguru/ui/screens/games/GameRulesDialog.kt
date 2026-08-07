@@ -27,7 +27,7 @@ data class GameRuleInfo(
     val title: String,
     val description: String,
     val iconRes: Int,
-    val minLevel: Int,
+    val unlockStars: Int,
     val rules: List<String>,
     val gradient: List<Color>
 )
@@ -39,7 +39,7 @@ object GameRulesRegistry {
             title = "Word Match Blitz",
             description = "Test your vocabulary speed by matching Kasiguranin terms to English or Tagalog.",
             iconRes = Iconsax.Element4Outline,
-            minLevel = 1,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_MATCH,
             rules = listOf(
                 "Match 5 Kasiguranin words to their correct translation.",
                 "Consecutive correct matches build a Combo Multiplier (x2, x3 XP!).",
@@ -52,7 +52,7 @@ object GameRulesRegistry {
             title = "Fill in the Blank",
             description = "Complete authentic Kasiguranin sentences with the missing verb or noun.",
             iconRes = Iconsax.Edit,
-            minLevel = 2,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.FILL_BLANK,
             rules = listOf(
                 "Read the sentence context carefully.",
                 "Select the correct inflected word from 4 choices.",
@@ -65,7 +65,7 @@ object GameRulesRegistry {
             title = "Audio Listening Quiz",
             description = "Listen to authentic Kasiguranin pronunciation and identify the spoken word.",
             iconRes = Iconsax.VolumeHigh,
-            minLevel = 3,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.AUDIO_QUIZ,
             rules = listOf(
                 "Tap the speaker button to hear native Kasiguranin audio.",
                 "Select the matching word from 4 choices.",
@@ -78,7 +78,7 @@ object GameRulesRegistry {
             title = "Verb Aspect Builder",
             description = "Conjugate Kasiguranin root verbs into Neutral, Imperfective, Perfective, or Contemplative aspects.",
             iconRes = Iconsax.Flash,
-            minLevel = 4,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER,
             rules = listOf(
                 "Given a root verb and target aspect (e.g. Past/Perfective).",
                 "Assemble or select the correct verb inflection.",
@@ -91,7 +91,7 @@ object GameRulesRegistry {
             title = "Sentence Construction",
             description = "Arrange scrambled words into natural Kasiguranin predicate-initial syntax.",
             iconRes = Iconsax.Document,
-            minLevel = 5,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER,
             rules = listOf(
                 "Kasiguranin uses Predicate-Initial word order.",
                 "Tap word blocks in order to construct authentic sentences.",
@@ -105,12 +105,12 @@ object GameRulesRegistry {
 @Composable
 fun GameRulesDialog(
     gameType: String,
-    userLevel: Int,
+    totalStars: Int,
     onStartGame: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val ruleInfo = GameRulesRegistry.games[gameType] ?: return
-    val isUnlocked = userLevel >= ruleInfo.minLevel
+    val isUnlocked = totalStars >= ruleInfo.unlockStars
     val haptic = LocalHapticFeedback.current
 
     Dialog(onDismissRequest = onDismiss) {
@@ -159,7 +159,7 @@ fun GameRulesDialog(
                                 color = Color.White.copy(alpha = 0.5f)
                             ) {
                                 Text(
-                                    text = if (isUnlocked) "UNLOCKED (Req. Lv. ${ruleInfo.minLevel})" else "LOCKED (Req. Lv. ${ruleInfo.minLevel})",
+                                    text = if (isUnlocked) "UNLOCKED (Req. ${ruleInfo.unlockStars} ⭐)" else "LOCKED (Req. ${ruleInfo.unlockStars} ⭐)",
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
@@ -226,7 +226,7 @@ fun GameRulesDialog(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "🔒 Reach Level ${ruleInfo.minLevel} to unlock this mini-game!",
+                                text = "🔒 Earn ${ruleInfo.unlockStars} Total Stars to unlock this mini-game!",
                                 modifier = Modifier.padding(12.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,

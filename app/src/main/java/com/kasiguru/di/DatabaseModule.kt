@@ -32,7 +32,8 @@ object DatabaseModule {
         userProgressDaoProvider: Provider<UserProgressDao>,
         achievementDaoProvider: Provider<AchievementDao>,
         leaderboardDaoProvider: Provider<LeaderboardDao>,
-        notificationDaoProvider: Provider<NotificationDao>
+        notificationDaoProvider: Provider<NotificationDao>,
+        gameLevelDaoProvider: Provider<GameLevelDao>
     ): KasiGuruDatabase {
         return Room.databaseBuilder(
             context,
@@ -59,6 +60,9 @@ object DatabaseModule {
                         }
                         if (notificationDaoProvider.get().getNotificationCount() == 0) {
                             notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
+                        }
+                        if (gameLevelDaoProvider.get().getLevelCount() == 0) {
+                            gameLevelDaoProvider.get().insertAll(DatabaseSeeder.getInitialGameLevels())
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -109,4 +113,9 @@ object DatabaseModule {
     @Singleton
     fun provideNotificationDao(database: KasiGuruDatabase): NotificationDao =
         database.notificationDao()
+
+    @Provides
+    @Singleton
+    fun provideGameLevelDao(database: KasiGuruDatabase): GameLevelDao =
+        database.gameLevelDao()
 }

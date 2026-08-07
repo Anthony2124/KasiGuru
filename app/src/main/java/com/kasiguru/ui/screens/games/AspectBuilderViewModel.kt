@@ -1,8 +1,10 @@
 package com.kasiguru.ui.screens.games
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
@@ -34,21 +36,26 @@ data class AspectBuilderUiState(
     val score: Int = 0,
     val xpEarned: Int = 0,
     val isGameOver: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val starsEarned: Int = 0,
+    val totalQuestions: Int = 5
 )
 
 @HiltViewModel
 class AspectBuilderViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
-    private val gameRepository: GameRepository
+    private val gameRepository: GameRepository,
+    private val gameLevelRepository: GameLevelRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private val _uiState = MutableStateFlow(AspectBuilderUiState())
     val uiState: StateFlow<AspectBuilderUiState> = _uiState.asStateFlow()
 
     private val questionQueue = mutableListOf<AspectQuestion>()
-    private val requeuedVerbIds = mutableSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private var totalInitialQuestions = 5
 
@@ -58,31 +65,36 @@ class AspectBuilderViewModel @Inject constructor(
 
     private fun loadQuestions() {
         viewModelScope.launch {
+            val levelInfo = gameLevelRepository.getLevel("aspect_builder", levelNumber)
+            if (levelInfo != null) {
+                totalInitialQuestions = levelInfo.questionsCount
+            }
+
             val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
-            val questions = generateAspectQuestions(list)
+            val questions = generateAspectQuestions(list, totalInitialQuestions)
             questionQueue.clear()
             questionQueue.addAll(questions)
-            requeuedVerbIds.clear()
             totalInitialQuestions = questions.size
 
             questionStartTimeMs = System.currentTimeMillis()
             _uiState.update {
                 it.copy(
                     questions = questionQueue.toList(),
-                    isLoading = false
+                    isLoading = false,
+                    totalQuestions = totalInitialQuestions
                 )
             }
         }
     }
 
-    private suspend fun generateAspectQuestions(vocabList: List<VocabularyEntity>): List<AspectQuestion> {
+    private suspend fun generateAspectQuestions(vocabList: List<VocabularyEntity>, questionCount: Int): List<AspectQuestion> {
         val aspectList = listOf("Neutral", "Imperfective", "Perfective", "Contemplative")
         val result = mutableListOf<AspectQuestion>()
 
         val verbList = vocabList.filter { it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() }
         val pool = if (verbList.isNotEmpty()) verbList else vocabList
 
-        for (vocab in pool.shuffled().take(5)) {
+        for (vocab in pool.shuffled().take(questionCount)) {
             val aspect = aspectList.random()
             val correct = when (aspect) {
                 "Neutral" -> vocab.neutralForm.ifEmpty { vocab.kasiguranin }
@@ -118,7 +130,6 @@ class AspectBuilderViewModel @Inject constructor(
 
         val correct = answer == currentQ.correctAnswer
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
-        val isRequeued = requeuedVerbIds.contains(currentQ.targetVocab.id)
 
         val rating: ReviewRating
         val questionXp: Int
@@ -126,19 +137,12 @@ class AspectBuilderViewModel @Inject constructor(
         if (correct) {
             rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
             questionXp = when {
-                isRequeued -> 0
                 rating == ReviewRating.HARD -> 5
                 else -> Constants.XP_PER_GAME_CORRECT
             }
         } else {
             rating = ReviewRating.AGAIN
             questionXp = 0
-
-            if (!isRequeued) {
-                requeuedVerbIds.add(currentQ.targetVocab.id)
-                val insertIndex = (state.currentIndex + 3).coerceAtMost(questionQueue.size)
-                questionQueue.add(insertIndex, currentQ)
-            }
         }
 
         val newScore = if (correct) state.score + 1 else state.score
@@ -163,24 +167,33 @@ class AspectBuilderViewModel @Inject constructor(
         val state = _uiState.value
         if (state.currentIndex + 1 >= questionQueue.size) {
             viewModelScope.launch {
-                val isPerfect = state.score >= totalInitialQuestions && requeuedVerbIds.isEmpty()
+                val isPerfect = state.score >= totalInitialQuestions
                 val finalXp = state.xpEarned + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
+
+                val successRate = state.score.toFloat() / totalInitialQuestions
+                val starsEarned = when {
+                    successRate >= 1.0f -> 3
+                    successRate >= 0.7f -> 2
+                    successRate >= 0.4f -> 1
+                    else -> 0
+                }
+                gameLevelRepository.saveLevelResult("aspect_builder", levelNumber, starsEarned)
 
                 gameRepository.saveGameScore(
                     gameType = "aspect_builder",
                     score = state.score,
-                    totalQuestions = questionQueue.size,
+                    totalQuestions = totalInitialQuestions,
                     xpEarned = finalXp
                 )
                 userProgressRepository.addXp(finalXp)
                 userProgressRepository.incrementGamesPlayed()
-                userProgressRepository.updateGameStats(state.score, questionQueue.size)
+                userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
 
                 if (isPerfect) {
                     userProgressRepository.checkPerfectGameAchievement()
                 }
 
-                _uiState.update { it.copy(isGameOver = true, xpEarned = finalXp) }
+                _uiState.update { it.copy(isGameOver = true, xpEarned = finalXp, starsEarned = starsEarned, totalQuestions = totalInitialQuestions) }
             }
         } else {
             questionStartTimeMs = System.currentTimeMillis()

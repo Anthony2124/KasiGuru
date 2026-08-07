@@ -1,7 +1,9 @@
 package com.kasiguru.ui.screens.games
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
@@ -29,21 +31,26 @@ data class SentenceOrderUiState(
     val constructedWords: List<String> = emptyList(),
     val isCorrect: Boolean? = null,
     val score: Int = 0,
-    val isGameFinished: Boolean = false
+    val isGameFinished: Boolean = false,
+    val starsEarned: Int = 0,
+    val totalQuestions: Int = 5
 )
 
 @HiltViewModel
 class SentenceOrderViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
-    private val gameRepository: GameRepository
+    private val gameRepository: GameRepository,
+    private val gameLevelRepository: GameLevelRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private val _uiState = MutableStateFlow(SentenceOrderUiState())
     val uiState: StateFlow<SentenceOrderUiState> = _uiState.asStateFlow()
 
     private val questionQueue = mutableListOf<SentenceQuestion>()
-    private val requeuedIndices = mutableSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
 
     init {
@@ -52,6 +59,12 @@ class SentenceOrderViewModel @Inject constructor(
 
     private fun loadQuestions() {
         viewModelScope.launch {
+            var questionsCount = 5
+            val levelInfo = gameLevelRepository.getLevel("sentence_order", levelNumber)
+            if (levelInfo != null) {
+                questionsCount = levelInfo.questionsCount
+            }
+
             val sampleSentences = listOf(
                 SentenceQuestion(
                     englishSentence = "Good day to you all!",
@@ -128,11 +141,10 @@ class SentenceOrderViewModel @Inject constructor(
                     correctKasiguraninWords = listOf("Ang", "sida", "me", "ay", "manok."),
                     shuffledWords = listOf("Ang", "sida", "me", "ay", "manok.").shuffled()
                 )
-            ).shuffled().take(5)
+            ).shuffled().take(questionsCount)
 
             questionQueue.clear()
             questionQueue.addAll(sampleSentences)
-            requeuedIndices.clear()
             questionStartTimeMs = System.currentTimeMillis()
 
             _uiState.update {
@@ -140,7 +152,8 @@ class SentenceOrderViewModel @Inject constructor(
                     questions = questionQueue.toList(),
                     availableWords = questionQueue.firstOrNull()?.shuffledWords ?: emptyList(),
                     constructedWords = emptyList(),
-                    isCorrect = null
+                    isCorrect = null,
+                    totalQuestions = questionsCount
                 )
             }
         }
@@ -190,15 +203,8 @@ class SentenceOrderViewModel @Inject constructor(
             ReviewRating.AGAIN
         }
 
-        if (!isCorrect) {
-            val insertIndex = (currentState.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
-            questionQueue.add(insertIndex, currentQuestion)
-            requeuedIndices.add(currentState.currentQuestionIndex)
-        }
-
         val questionXp = if (isCorrect) {
-            if (requeuedIndices.contains(currentState.currentQuestionIndex)) 0
-            else if (rating == ReviewRating.HARD) 10
+            if (rating == ReviewRating.HARD) 10
             else 20
         } else 0
 
@@ -245,17 +251,27 @@ class SentenceOrderViewModel @Inject constructor(
             }
         } else {
             viewModelScope.launch {
+                val totalQs = questionQueue.size
+                val successRate = currentState.score.toFloat() / totalQs.coerceAtLeast(1)
+                val starsEarned = when {
+                    successRate >= 1.0f -> 3
+                    successRate >= 0.7f -> 2
+                    successRate >= 0.4f -> 1
+                    else -> 0
+                }
+                gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
+
                 gameRepository.saveGameScore(
                     gameType = Constants.Games.SENTENCE_ORDER,
                     score = currentState.score,
-                    totalQuestions = questionQueue.size,
+                    totalQuestions = totalQs,
                     xpEarned = currentState.score
                 )
                 userProgressRepository.addXp(currentState.score)
                 userProgressRepository.incrementGamesPlayed()
-                userProgressRepository.updateGameStats(currentState.score, questionQueue.size)
+                userProgressRepository.updateGameStats(currentState.score, totalQs)
+                _uiState.update { it.copy(isGameFinished = true, starsEarned = starsEarned, totalQuestions = totalQs) }
             }
-            _uiState.update { it.copy(isGameFinished = true) }
         }
     }
 

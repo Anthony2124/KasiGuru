@@ -226,7 +226,7 @@ fun WordVerificationDialog(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "🎉 CORRECT! +10 XP",
+                                    text = "🎉 CORRECT! +100 XP",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Black,
                                     color = Success

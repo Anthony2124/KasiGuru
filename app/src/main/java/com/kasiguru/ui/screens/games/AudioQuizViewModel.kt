@@ -1,9 +1,11 @@
 package com.kasiguru.ui.screens.games
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
@@ -24,15 +26,18 @@ import javax.inject.Inject
 class AudioQuizViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
-    private val gameRepository: GameRepository
+    private val gameRepository: GameRepository,
+    private val gameLevelRepository: GameLevelRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private val _uiState = MutableStateFlow(AudioQuizUiState())
     val uiState: StateFlow<AudioQuizUiState> = _uiState.asStateFlow()
 
-    private val totalInitialQuestions = 5
+    private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
-    private val requeuedWordIds = mutableSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
 
@@ -43,6 +48,12 @@ class AudioQuizViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = AudioQuizUiState(isLoading = true)
+
+            val levelInfo = gameLevelRepository.getLevel("audio_quiz", levelNumber)
+            if (levelInfo != null) {
+                totalInitialQuestions = levelInfo.questionsCount
+            }
+
             var words = vocabularyRepository.getRandomWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -51,7 +62,6 @@ class AudioQuizViewModel @Inject constructor(
 
             questionQueue.clear()
             questionQueue.addAll(words)
-            requeuedWordIds.clear()
             earnedXpTotal = 0
 
             if (questionQueue.isEmpty()) {
@@ -85,7 +95,8 @@ class AudioQuizViewModel @Inject constructor(
                 options = allOptions,
                 selectedOption = null,
                 isCorrect = null,
-                isPlayingAudio = true
+                isPlayingAudio = true,
+                totalQuestions = totalInitialQuestions
             )
             
             delay(1500)
@@ -108,7 +119,6 @@ class AudioQuizViewModel @Inject constructor(
         val targetWord = state.currentWord ?: return
         val isCorrect = option == targetWord.kasiguranin
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
-        val isRequeued = requeuedWordIds.contains(targetWord.id)
 
         val rating: ReviewRating
         val questionXp: Int
@@ -116,19 +126,12 @@ class AudioQuizViewModel @Inject constructor(
         if (isCorrect) {
             rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
             questionXp = when {
-                isRequeued -> 0
                 rating == ReviewRating.HARD -> 5
                 else -> Constants.XP_PER_GAME_CORRECT
             }
         } else {
             rating = ReviewRating.AGAIN
             questionXp = 0
-
-            if (!isRequeued) {
-                requeuedWordIds.add(targetWord.id)
-                val insertIndex = (state.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
-                questionQueue.add(insertIndex, targetWord)
-            }
         }
 
         earnedXpTotal += questionXp
@@ -151,28 +154,42 @@ class AudioQuizViewModel @Inject constructor(
 
     private fun endGame() {
         val state = _uiState.value
-        val isPerfect = state.score >= totalInitialQuestions && requeuedWordIds.isEmpty()
+        val isPerfect = state.score >= totalInitialQuestions
         val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
                 gameType = "audio_quiz",
                 score = state.score,
-                totalQuestions = questionQueue.size,
+                totalQuestions = totalInitialQuestions,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
             gameRepository.saveScore(scoreEntity)
 
+            val successRate = state.score.toFloat() / totalInitialQuestions
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            gameLevelRepository.saveLevelResult("audio_quiz", levelNumber, starsEarned)
+
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
-            userProgressRepository.updateGameStats(state.score, questionQueue.size)
+            userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
             
             if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
 
-            _uiState.value = state.copy(isGameOver = true, finalXp = xpEarned)
+            _uiState.value = state.copy(
+                isGameOver = true,
+                finalXp = xpEarned,
+                starsEarned = starsEarned,
+                totalQuestions = totalInitialQuestions
+            )
         }
     }
 }
@@ -187,5 +204,7 @@ data class AudioQuizUiState(
     val score: Int = 0,
     val isPlayingAudio: Boolean = false,
     val isGameOver: Boolean = false,
-    val finalXp: Int = 0
+    val finalXp: Int = 0,
+    val starsEarned: Int = 0,
+    val totalQuestions: Int = 5
 )

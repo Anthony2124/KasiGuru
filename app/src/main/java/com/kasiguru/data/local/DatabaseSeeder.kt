@@ -10,6 +10,36 @@ import com.kasiguru.util.Constants
  */
 object DatabaseSeeder {
 
+    fun getInitialGameLevels(): List<GameLevelEntity> {
+        val levels = mutableListOf<GameLevelEntity>()
+        val gameTypes = listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+        
+        for (game in gameTypes) {
+            for (levelNum in 1..30) {
+                val difficulty = when (levelNum) {
+                    in 1..10 -> "Easy"
+                    in 11..20 -> "Medium"
+                    else -> "Hard"
+                }
+                val questionsCount = when (difficulty) {
+                    "Easy" -> 5
+                    "Medium" -> 10
+                    else -> 15
+                }
+                levels.add(
+                    GameLevelEntity(
+                        gameType = game,
+                        levelNumber = levelNum,
+                        difficulty = difficulty,
+                        isUnlocked = levelNum == 1, // Only level 1 is unlocked initially
+                        questionsCount = questionsCount
+                    )
+                )
+            }
+        }
+        return levels
+    }
+
     fun getInitialVocabulary(): List<VocabularyEntity> = listOf(
         VocabularyEntity(
             kasiguranin = "apak",

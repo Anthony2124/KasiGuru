@@ -71,8 +71,9 @@ fun FillBlankGameScreen(
         if (uiState.isGameOver) {
             GameOverView(
                 score = uiState.score,
-                total = 5,
+                total = uiState.totalQuestions,
                 xpEarned = uiState.finalXp,
+                starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -91,7 +92,7 @@ fun FillBlankGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = questionNumber.toFloat() / 5f,
+                    progress = questionNumber.toFloat() / uiState.totalQuestions.toFloat(),
                     gradientColors = listOf(QuestsCardStart, QuestsCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -101,7 +102,7 @@ fun FillBlankGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Question $questionNumber/5",
+                        text = "Question $questionNumber/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack

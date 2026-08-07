@@ -68,8 +68,9 @@ fun SentenceOrderGameScreen(
         if (uiState.isGameFinished) {
             GameOverView(
                 score = uiState.score,
-                total = uiState.questions.size,
+                total = uiState.totalQuestions,
                 xpEarned = uiState.score * 10,
+                starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -89,7 +90,7 @@ fun SentenceOrderGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = qIndex.toFloat() / uiState.questions.size.toFloat(),
+                    progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
                     gradientColors = listOf(StoriesCardStart, StoriesCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -99,7 +100,7 @@ fun SentenceOrderGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Sentence $qIndex/${uiState.questions.size}",
+                        text = "Sentence $qIndex/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack

@@ -70,8 +70,9 @@ fun WordMatchGameScreen(
         if (uiState.isGameOver) {
             GameOverView(
                 score = uiState.score,
-                total = 5,
+                total = uiState.totalQuestions,
                 xpEarned = uiState.finalXp,
+                starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
             )
@@ -90,7 +91,7 @@ fun WordMatchGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = roundNum.toFloat() / 5f,
+                    progress = roundNum.toFloat() / uiState.totalQuestions.toFloat(),
                     gradientColors = listOf(VocabCardStart, VocabCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -100,7 +101,7 @@ fun WordMatchGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Round $roundNum/5",
+                        text = "Round $roundNum/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack

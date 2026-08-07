@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class GamesViewModel @Inject constructor(
     private val gameRepository: GameRepository,
+    private val gameLevelRepository: GameLevelRepository,
     private val userProgressRepository: UserProgressRepository
 ) : ViewModel() {
 
@@ -28,6 +30,11 @@ class GamesViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
+            launch {
+                gameLevelRepository.getTotalStarsFlow().collect { stars ->
+                    _uiState.value = _uiState.value.copy(totalStars = stars)
+                }
+            }
             launch {
                 userProgressRepository.getUserProgress().collect { progress ->
                     val accuracy = userProgressRepository.getRollingAccuracyRate()
@@ -71,5 +78,6 @@ data class GamesUiState(
     val accuracyRate: Float = 1.0f,
     val recentScores: List<GameScoreEntity> = emptyList(),
     val highScores: Map<String, Int> = emptyMap(),
+    val totalStars: Int = 0,
     val isLoading: Boolean = true
 )

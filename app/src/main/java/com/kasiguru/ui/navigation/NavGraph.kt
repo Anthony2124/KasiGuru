@@ -173,30 +173,61 @@ fun KasiGuruNavGraph() {
                 )
             }
 
-            // Practice (Games Hub & Mini-Games)
             composable(Screen.GameHub.route) {
                 GameHubScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToWordMatch = { navController.navigate(Screen.WordMatchGame.route) },
-                    onNavigateToFillBlank = { navController.navigate(Screen.FillBlankGame.route) },
-                    onNavigateToAudioQuiz = { navController.navigate(Screen.AudioQuizGame.route) },
-                    onNavigateToAspectBuilder = { navController.navigate(Screen.AspectBuilderGame.route) },
-                    onNavigateToSentenceOrder = { navController.navigate(Screen.SentenceOrderGame.route) }
+                    onNavigateToLevelSelection = { gameType -> 
+                        navController.navigate(Screen.LevelSelection.createRoute(gameType)) 
+                    }
                 )
             }
-            composable(Screen.WordMatchGame.route) {
+            
+            composable(
+                route = Screen.LevelSelection.route,
+                arguments = listOf(navArgument("gameType") { type = NavType.StringType })
+            ) {
+                LevelSelectionScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToGame = { gameType, level ->
+                        when (gameType) {
+                            "word_match" -> navController.navigate(Screen.WordMatchGame.createRoute(level))
+                            "fill_blank" -> navController.navigate(Screen.FillBlankGame.createRoute(level))
+                            "audio_quiz" -> navController.navigate(Screen.AudioQuizGame.createRoute(level))
+                            "aspect_builder" -> navController.navigate(Screen.AspectBuilderGame.createRoute(level))
+                            "sentence_order" -> navController.navigate(Screen.SentenceOrderGame.createRoute(level))
+                        }
+                    }
+                )
+            }
+            
+            composable(
+                route = Screen.WordMatchGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
                 WordMatchGameScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable(Screen.FillBlankGame.route) {
+            composable(
+                route = Screen.FillBlankGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
                 FillBlankGameScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable(Screen.AudioQuizGame.route) {
+            composable(
+                route = Screen.AudioQuizGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
                 AudioQuizGameScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable(Screen.AspectBuilderGame.route) {
+            composable(
+                route = Screen.AspectBuilderGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
                 AspectBuilderGameScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable(Screen.SentenceOrderGame.route) {
+            composable(
+                route = Screen.SentenceOrderGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
                 SentenceOrderGameScreen(onNavigateBack = { navController.popBackStack() })
             }
 
