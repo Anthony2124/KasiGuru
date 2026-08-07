@@ -1,4 +1,4 @@
-﻿package com.kasiguru.data.local
+package com.kasiguru.data.local
 
 import com.kasiguru.data.local.entity.*
 import com.kasiguru.util.Constants
@@ -3475,6 +3475,18 @@ object DatabaseSeeder {
             {"pageNumber":3,"kasiguranin":"Sumásayaw ing mga tao ha kalye habang tumútugtog ing banda ng musika.","tagalog":"Sumasayaw ang mga tao sa kalye habang tumutugtog ang banda ng musika.","english":"People dance in the streets while the music band plays.","illustrationDesc":"Colorful street dancing with traditional Filipino costumes and a marching band"},
             {"pageNumber":4,"kasiguranin":"Ing pistá ay panahon ng pasasalamat at pagkakaisá ng buóng komunidad.","tagalog":"Ang pista ay panahon ng pasasalamat at pagkakaisa ng buong komunidad.","english":"The fiesta is a time of thanksgiving and unity for the whole community.","illustrationDesc":"The whole community gathered together, fireworks in the night sky over Casiguran bay"},
             {"pageNumber":5,"kasiguranin":"Sa ganitong paraan, nananatili ing tradisyon at wika ng Casiguran sa pusó ng bawat tao.","tagalog":"Sa ganitong paraan, nananatili ang tradisyon at wika ng Casiguran sa puso ng bawat tao.","english":"In this way, the traditions and language of Casiguran live on in every person's heart.","illustrationDesc":"A family walking home from the fiesta under a starlit sky, the mountains silhouetted behind them"}
+        val story4Pages = """[
+            {"pageNumber":1,"kasiguranin":"Noong unang panahon, wala pang lupa kundi ang langit, ang dagat, at ang isáng dakilang ibon.","tagalog":"Noong unang panahon, wala pang lupa kundi ang langit, ang dagat, at ang isang dakilang ibon.","english":"Long ago, there was no land, only the sky, the sea, and a great bird.","illustrationDesc":"A magnificent Philippine eagle flying over an endless blue ocean"},
+            {"pageNumber":2,"kasiguranin":"Tinuktok ng ibon ing isáng malakíng kawayan na lumálutang ha alon.","tagalog":"Tinuktok ng ibon ang isang malaking kawayan na lumalutang sa alon.","english":"The bird pecked at a large bamboo stalk floating on the waves.","illustrationDesc":"A giant golden bamboo stalk floating in ocean waves"},
+            {"pageNumber":3,"kasiguranin":"Nabayák ing kawayan at lumabás si Malakas at si Maganda.","tagalog":"Nabiak ang kawayan at lumabas si Malakas at si Maganda.","english":"The bamboo split open, and out stepped Malakas (The Strong) and Maganda (The Beautiful).","illustrationDesc":"A strong man and beautiful woman stepping out from split bamboo"},
+            {"pageNumber":4,"kasiguranin":"Silá ing naging unang ninuno ng mga Pilipino na namuhay nang may kapayapaan.","tagalog":"Sila ang naging unang ninuno ng mga Pilipino na namuhay nang may kapayapaan.","english":"They became the first ancestors of the Filipino people, living in peace.","illustrationDesc":"Malakas and Maganda walking along lush green Philippine island hills"}
+        ]"""
+
+        val story5Pages = """[
+            {"pageNumber":1,"kasiguranin":"May isáng batang babae na ang pangalan ay Si Pinang na napakatamád at laging nagdadahilan.","tagalog":"May isang batang babae na ang pangalan ay Si Pinang na napakatamad at laging nagdadahilan.","english":"There was a young girl named Pinang who was very lazy and always made excuses.","illustrationDesc":"A young girl sitting comfortably while her mother cooks"},
+            {"pageNumber":2,"kasiguranin":"'Nasaan ing sandok?' tanong ng ina. 'Hindi ko makita!' sagot ni Pinang.","tagalog":"'Nasaan ang sandok?' tanong ng ina. 'Hindi ko makita!' sagot ni Pinang.","english":"'Where is the ladle?' asked mother. 'I cannot see it!' replied Pinang.","illustrationDesc":"Pinang looking around carelessly in the kitchen"},
+            {"pageNumber":3,"kasiguranin":"Sabi ng ina, 'Sana magkaroon ka ng maraming matá para makita mo ing lahat!'","tagalog":"Sabi ng ina, 'Sana magkaroon ka ng maraming mata para makita mo ang lahat!'","english":"Said mother, 'I wish you had many eyes so you could see everything!'","illustrationDesc":"Mother looking worried while speaking to Pinang"},
+            {"pageNumber":4,"kasiguranin":"Nawala si Pinang, at sa halamanan ay tumubo ing prutas na may maraming matá — ing Pinya.","tagalog":"Nawala si Pinang, at sa halamanan ay tumubo ang prutas na may maraming mata — ang Pinya.","english":"Pinang vanished, and in the garden grew a fruit with a hundred eyes — the Pineapple.","illustrationDesc":"A golden pineapple growing in a garden under bright sunlight"}
         ]"""
 
         return listOf(
@@ -3492,6 +3504,30 @@ object DatabaseSeeder {
             ),
             StoryEntity(
                 id = 2,
+                title = "Malakas and Maganda",
+                titleKasiguranin = "Si Malakas at si Maganda",
+                description = "The ancient Philippine creation legend of the first man and woman born from bamboo.",
+                category = "Folklore",
+                iconEmoji = "🎋",
+                pagesJson = story4Pages,
+                totalPages = 4,
+                requiredXp = 0,
+                isUnlocked = true
+            ),
+            StoryEntity(
+                id = 3,
+                title = "Legend of the Pineapple",
+                titleKasiguranin = "Alamat ng Pinya (Si Pinang)",
+                description = "The classic Philippine moral folk story of young Pinang learning mindfulness.",
+                category = "Moral Tale",
+                iconEmoji = "🍍",
+                pagesJson = story5Pages,
+                totalPages = 4,
+                requiredXp = 50,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 4,
                 title = "The Wise Fisherman",
                 titleKasiguranin = "Ing Marunong na Mangingisdâ",
                 description = "Old Mang Tasyo shares his wisdom about the sea with the youth of Casiguran.",
@@ -3503,7 +3539,7 @@ object DatabaseSeeder {
                 isUnlocked = false
             ),
             StoryEntity(
-                id = 3,
+                id = 5,
                 title = "The Town Fiesta",
                 titleKasiguranin = "Ing Pistá ng Bayan",
                 description = "Experience the joy and traditions of Casiguran's annual fiesta celebration.",
@@ -3511,7 +3547,7 @@ object DatabaseSeeder {
                 iconEmoji = "🎉",
                 pagesJson = story3Pages,
                 totalPages = 5,
-                requiredXp = 250,
+                requiredXp = 200,
                 isUnlocked = false
             )
         )
