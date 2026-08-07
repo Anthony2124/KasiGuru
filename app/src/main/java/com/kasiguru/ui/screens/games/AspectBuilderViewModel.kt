@@ -58,7 +58,7 @@ class AspectBuilderViewModel @Inject constructor(
 
     private fun loadQuestions() {
         viewModelScope.launch {
-            val list = vocabularyRepository.getAllVocabulary().first()
+            val list = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
             val questions = generateAspectQuestions(list)
             questionQueue.clear()
             questionQueue.addAll(questions)

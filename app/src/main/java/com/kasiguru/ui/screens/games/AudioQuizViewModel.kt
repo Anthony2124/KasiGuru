@@ -42,7 +42,12 @@ class AudioQuizViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = AudioQuizUiState(isLoading = true)
-            val words = vocabularyRepository.getRandomWords(totalInitialQuestions)
+            var words = vocabularyRepository.getRandomWords(totalInitialQuestions)
+            if (words.isEmpty()) {
+                val all = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
+                words = all.shuffled().take(totalInitialQuestions)
+            }
+
             questionQueue.clear()
             questionQueue.addAll(words)
             requeuedWordIds.clear()

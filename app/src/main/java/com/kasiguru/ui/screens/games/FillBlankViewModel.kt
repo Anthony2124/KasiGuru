@@ -43,16 +43,19 @@ class FillBlankViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = FillBlankUiState(isLoading = true)
-            val list = vocabularyRepository.getAllVocabulary().first()
-            val verbsWithAspects = list.filter { it.neutralForm.isNotBlank() && it.perfectiveForm.isNotBlank() }
+            val list = vocabularyRepository.getAllVocabulary().filter { it.isNotEmpty() }.first()
+            val verbsWithAspects = list.filter { 
+                it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.exampleSentence.isNotBlank() 
+            }
+            val pool = if (verbsWithAspects.isNotEmpty()) verbsWithAspects else list
             
-            if (verbsWithAspects.isEmpty()) {
+            if (pool.isEmpty()) {
                 _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
                 return@launch
             }
 
             questionQueue.clear()
-            questionQueue.addAll(verbsWithAspects.shuffled().take(totalInitialQuestions))
+            questionQueue.addAll(pool.shuffled().take(totalInitialQuestions))
             requeuedVerbIds.clear()
             earnedXpTotal = 0
 
@@ -68,18 +71,14 @@ class FillBlankViewModel @Inject constructor(
         }
 
         val targetVerb = questionQueue[state.currentQuestionIndex]
-        val aspects = listOf(
+        val rawAspects = listOf(
             targetVerb.neutralForm,
             targetVerb.imperfectiveForm,
             targetVerb.perfectiveForm,
             targetVerb.contemplativeForm
         ).filter { it.isNotBlank() }
 
-        if (aspects.isEmpty()) {
-            _uiState.value = _uiState.value.copy(currentQuestionIndex = state.currentQuestionIndex + 1)
-            loadNextQuestion()
-            return
-        }
+        val aspects = if (rawAspects.isNotEmpty()) rawAspects else listOf(targetVerb.kasiguranin)
 
         val correctAnswer = aspects.random()
         val sentenceContext = if (targetVerb.exampleSentence.contains(correctAnswer, ignoreCase = true)) {
