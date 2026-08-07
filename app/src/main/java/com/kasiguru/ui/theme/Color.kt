@@ -1,5 +1,7 @@
 package com.kasiguru.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -31,8 +33,17 @@ val AccentContainer = Color(0xFFFFD0D0)
 val LightThemeBackground = Color(0xFFF6F7FB)
 val LightSurfaceCard = Color(0xFFFFFFFF)
 val LightSurfaceVariant = Color(0xFFEFF2F8)
-val TextHeadingBlack = Color(0xFF12161F)
-val TextSubtleGray = Color(0xFF6B7280)
+
+val StaticTextHeadingBlack = Color(0xFF12161F)
+val StaticTextSubtleGray = Color(0xFF6B7280)
+
+val TextHeadingBlack: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.onBackground
+
+val TextSubtleGray: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 // ─── STRICT 3 SIGNATURE PLAY GRADIENT PAIRS ───
 val PlayPurpleStart = Color(0xFF7B6EF6)

@@ -25,16 +25,16 @@ private val LightColorScheme = lightColorScheme(
     tertiaryContainer = AccentContainer,
     onTertiaryContainer = TextDark,
     background = LightThemeBackground,
-    onBackground = TextHeadingBlack,
+    onBackground = StaticTextHeadingBlack,
     surface = LightSurfaceCard,
-    onSurface = TextHeadingBlack,
+    onSurface = StaticTextHeadingBlack,
     surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = TextSubtleGray,
+    onSurfaceVariant = StaticTextSubtleGray,
     error = Error,
     onError = TextWhite,
     errorContainer = ErrorLight,
     onErrorContainer = TextDark,
-    outline = TextSubtleGray
+    outline = StaticTextSubtleGray
 )
 
 private val DarkColorScheme = darkColorScheme(
