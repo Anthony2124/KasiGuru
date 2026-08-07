@@ -55,7 +55,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = DarkSurface,
     onSurface = TextWhite,
     surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = TextGray,
+    onSurfaceVariant = TextLightGray,
     error = Error,
     onError = TextWhite,
     errorContainer = ErrorLight,
@@ -65,7 +65,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun KasiGuruTheme(
-    darkTheme: Boolean = false,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

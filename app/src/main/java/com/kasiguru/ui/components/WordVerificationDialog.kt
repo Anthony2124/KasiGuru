@@ -273,12 +273,15 @@ fun WordVerificationDialog(
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
-                                Button(
+                                 Button(
                                     onClick = onDismiss,
-                                    colors = ButtonDefaults.buttonColors(containerColor = TextHeadingBlack),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
-                                    Text("Try Again Later", color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text("Try Again Later", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

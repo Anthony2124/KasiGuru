@@ -64,7 +64,8 @@ fun KasiGuruBottomBar(
                     spotColor = Color.Black.copy(alpha = 0.55f)
                 ),
             shape = CircleShape,
-            color = PlayNavDark
+            color = PlayNavDark,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
         ) {
             Row(
                 modifier = Modifier
