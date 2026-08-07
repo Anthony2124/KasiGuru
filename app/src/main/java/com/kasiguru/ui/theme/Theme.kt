@@ -68,7 +68,7 @@ fun KasiGuruTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = LightColorScheme
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {

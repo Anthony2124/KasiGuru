@@ -15,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import kotlinx.coroutines.launch
@@ -22,15 +23,17 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
 
-    var isDarkMode by remember { mutableStateOf(false) }
-    var soundEnabled by remember { mutableStateOf(true) }
-    var streakReminders by remember { mutableStateOf(true) }
-    var wordOfDayReminders by remember { mutableStateOf(true) }
-    var leaderboardAlerts by remember { mutableStateOf(true) }
+    val isDarkMode by viewModel.isDarkMode.collectAsState()
+    val soundEnabled by viewModel.soundEnabled.collectAsState()
+    val streakReminders by viewModel.streakReminders.collectAsState()
+    val wordOfDayReminders by viewModel.wordOfDayReminders.collectAsState()
+    val leaderboardAlerts by viewModel.leaderboardAlerts.collectAsState()
+
     var reminderTime by remember { mutableStateOf("08:00 AM") }
     var showTimePicker by remember { mutableStateOf(false) }
     var isSyncing by remember { mutableStateOf(false) }
@@ -132,7 +135,7 @@ fun SettingsScreen(
                         subtitle = "Notify me before losing my streak",
                         checked = streakReminders,
                         iconRes = Iconsax.Flash,
-                        onCheckedChange = { streakReminders = it }
+                        onCheckedChange = { viewModel.toggleStreakReminders(it) }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -142,7 +145,7 @@ fun SettingsScreen(
                         subtitle = "Daily Kasiguranin phrase highlight",
                         checked = wordOfDayReminders,
                         iconRes = Iconsax.Book,
-                        onCheckedChange = { wordOfDayReminders = it }
+                        onCheckedChange = { viewModel.toggleWordOfDayReminders(it) }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -152,7 +155,7 @@ fun SettingsScreen(
                         subtitle = "Alert me when my rank changes",
                         checked = leaderboardAlerts,
                         iconRes = Iconsax.MedalStar,
-                        onCheckedChange = { leaderboardAlerts = it }
+                        onCheckedChange = { viewModel.toggleLeaderboardAlerts(it) }
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -217,7 +220,7 @@ fun SettingsScreen(
                         subtitle = "Enable sleek dark mode",
                         checked = isDarkMode,
                         iconRes = Iconsax.Moon,
-                        onCheckedChange = { isDarkMode = it }
+                        onCheckedChange = { viewModel.toggleDarkMode(it) }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -227,7 +230,7 @@ fun SettingsScreen(
                         subtitle = "Play Kasiguranin voice audio",
                         checked = soundEnabled,
                         iconRes = Iconsax.VolumeHigh,
-                        onCheckedChange = { soundEnabled = it }
+                        onCheckedChange = { viewModel.toggleSoundEnabled(it) }
                     )
                 }
             }
