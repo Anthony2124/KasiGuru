@@ -10,6 +10,8 @@ plugins {
 android {
     namespace = "com.kasiguru"
     compileSdk = 34
+    buildToolsVersion = "34.0.0"
+
 
     defaultConfig {
         applicationId = "com.kasiguru"
