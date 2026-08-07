@@ -3,11 +3,15 @@ package com.kasiguru.ui.screens.games
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
+import com.kasiguru.util.srs.ReviewRating
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,11 +34,17 @@ data class SentenceOrderUiState(
 
 @HiltViewModel
 class SentenceOrderViewModel @Inject constructor(
+    private val vocabularyRepository: VocabularyRepository,
+    private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SentenceOrderUiState())
     val uiState: StateFlow<SentenceOrderUiState> = _uiState.asStateFlow()
+
+    private val questionQueue = mutableListOf<SentenceQuestion>()
+    private val requeuedIndices = mutableSetOf<Int>()
+    private var questionStartTimeMs: Long = 0L
 
     init {
         loadQuestions()
@@ -118,12 +128,17 @@ class SentenceOrderViewModel @Inject constructor(
                     correctKasiguraninWords = listOf("Ang", "sida", "me", "ay", "manok."),
                     shuffledWords = listOf("Ang", "sida", "me", "ay", "manok.").shuffled()
                 )
-            )
+            ).shuffled().take(5)
+
+            questionQueue.clear()
+            questionQueue.addAll(sampleSentences)
+            requeuedIndices.clear()
+            questionStartTimeMs = System.currentTimeMillis()
 
             _uiState.update {
                 it.copy(
-                    questions = sampleSentences,
-                    availableWords = sampleSentences.firstOrNull()?.shuffledWords ?: emptyList(),
+                    questions = questionQueue.toList(),
+                    availableWords = questionQueue.firstOrNull()?.shuffledWords ?: emptyList(),
                     constructedWords = emptyList(),
                     isCorrect = null
                 )
@@ -161,29 +176,54 @@ class SentenceOrderViewModel @Inject constructor(
 
     fun checkAnswer() {
         val currentState = _uiState.value
-        val currentQuestion = currentState.questions.getOrNull(currentState.currentQuestionIndex) ?: return
+        val currentQuestion = questionQueue.getOrNull(currentState.currentQuestionIndex) ?: return
+        if (currentState.isCorrect != null) return
 
         val userSentence = currentState.constructedWords.joinToString(" ")
         val correctSentence = currentQuestion.correctKasiguraninWords.joinToString(" ")
         val isCorrect = userSentence.trim() == correctSentence.trim()
+        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val newScore = if (isCorrect) currentState.score + 20 else currentState.score
+        val rating = if (isCorrect) {
+            if (responseTimeMs < 2000) ReviewRating.HARD else ReviewRating.GOOD
+        } else {
+            ReviewRating.AGAIN
+        }
+
+        if (!isCorrect) {
+            val insertIndex = (currentState.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
+            questionQueue.add(insertIndex, currentQuestion)
+            requeuedIndices.add(currentState.currentQuestionIndex)
+        }
+
+        val questionXp = if (isCorrect) {
+            if (requeuedIndices.contains(currentState.currentQuestionIndex)) 0
+            else if (rating == ReviewRating.HARD) 10
+            else 20
+        } else 0
+
+        val newScore = currentState.score + questionXp
 
         _uiState.update {
             it.copy(
                 isCorrect = isCorrect,
-                score = newScore
+                score = newScore,
+                questions = questionQueue.toList()
             )
         }
 
-        if (isCorrect) {
-            viewModelScope.launch {
-                gameRepository.saveGameScore(
-                    gameType = Constants.Games.SENTENCE_ORDER,
-                    score = newScore,
-                    totalQuestions = currentState.questions.size,
-                    xpEarned = newScore
-                )
+        viewModelScope.launch {
+            // Match sentence tokens to vocabulary entities and trigger SM-2 update
+            val allVocab = vocabularyRepository.getAllVocabulary().first()
+            for (rawToken in currentQuestion.correctKasiguraninWords) {
+                val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "")
+                val matched = allVocab.firstOrNull {
+                    it.kasiguranin.equals(cleanToken, ignoreCase = true) ||
+                            it.neutralForm.equals(cleanToken, ignoreCase = true)
+                }
+                if (matched != null) {
+                    vocabularyRepository.processWordReview(matched, rating)
+                }
             }
         }
     }
@@ -192,8 +232,9 @@ class SentenceOrderViewModel @Inject constructor(
         val currentState = _uiState.value
         val nextIndex = currentState.currentQuestionIndex + 1
 
-        if (nextIndex < currentState.questions.size) {
-            val nextQuestion = currentState.questions[nextIndex]
+        if (nextIndex < questionQueue.size) {
+            val nextQuestion = questionQueue[nextIndex]
+            questionStartTimeMs = System.currentTimeMillis()
             _uiState.update {
                 it.copy(
                     currentQuestionIndex = nextIndex,
@@ -203,6 +244,17 @@ class SentenceOrderViewModel @Inject constructor(
                 )
             }
         } else {
+            viewModelScope.launch {
+                gameRepository.saveGameScore(
+                    gameType = Constants.Games.SENTENCE_ORDER,
+                    score = currentState.score,
+                    totalQuestions = questionQueue.size,
+                    xpEarned = currentState.score
+                )
+                userProgressRepository.addXp(currentState.score)
+                userProgressRepository.incrementGamesPlayed()
+                userProgressRepository.updateGameStats(currentState.score, questionQueue.size)
+            }
             _uiState.update { it.copy(isGameFinished = true) }
         }
     }

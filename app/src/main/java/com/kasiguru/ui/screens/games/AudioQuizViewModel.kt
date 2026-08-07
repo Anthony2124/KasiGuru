@@ -8,6 +8,7 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
+import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -28,8 +29,11 @@ class AudioQuizViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AudioQuizUiState())
     val uiState: StateFlow<AudioQuizUiState> = _uiState.asStateFlow()
 
-    private val totalQuestions = 5
-    private var currentWords: List<VocabularyEntity> = emptyList()
+    private val totalInitialQuestions = 5
+    private val questionQueue = mutableListOf<VocabularyEntity>()
+    private val requeuedWordIds = mutableSetOf<Int>()
+    private var questionStartTimeMs: Long = 0L
+    private var earnedXpTotal = 0
 
     init {
         startGame()
@@ -38,10 +42,13 @@ class AudioQuizViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = AudioQuizUiState(isLoading = true)
-            // For MVP, randomly select words. In prod, only select words with actual audio files.
-            currentWords = vocabularyRepository.getRandomWords(totalQuestions)
-            
-            if (currentWords.isEmpty()) {
+            val words = vocabularyRepository.getRandomWords(totalInitialQuestions)
+            questionQueue.clear()
+            questionQueue.addAll(words)
+            requeuedWordIds.clear()
+            earnedXpTotal = 0
+
+            if (questionQueue.isEmpty()) {
                 _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
                 return@launch
             }
@@ -52,19 +59,19 @@ class AudioQuizViewModel @Inject constructor(
 
     private fun loadNextQuestion() {
         val state = _uiState.value
-        if (state.currentQuestionIndex >= totalQuestions || state.currentQuestionIndex >= currentWords.size) {
+        if (state.currentQuestionIndex >= questionQueue.size) {
             endGame()
             return
         }
 
-        val targetWord = currentWords[state.currentQuestionIndex]
+        val targetWord = questionQueue[state.currentQuestionIndex]
         
         viewModelScope.launch {
-            val wrongOptions = vocabularyRepository.getRandomWords(10)
-                .filter { it.id != targetWord.id && it.kasiguranin.isNotBlank() }
-                .take(3)
+            val distractorEntities = vocabularyRepository.getDistractorsForWord(targetWord, 3)
+            val wrongOptions = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
 
-            val allOptions = (wrongOptions.map { it.kasiguranin } + targetWord.kasiguranin).distinct().shuffled()
+            val allOptions = (wrongOptions + targetWord.kasiguranin).distinct().shuffled()
+            questionStartTimeMs = System.currentTimeMillis()
 
             _uiState.value = state.copy(
                 isLoading = false,
@@ -72,10 +79,9 @@ class AudioQuizViewModel @Inject constructor(
                 options = allOptions,
                 selectedOption = null,
                 isCorrect = null,
-                isPlayingAudio = true // Simulating auto-play on load
+                isPlayingAudio = true
             )
             
-            // Simulate audio playback finishing
             delay(1500)
             _uiState.value = _uiState.value.copy(isPlayingAudio = false)
         }
@@ -84,7 +90,6 @@ class AudioQuizViewModel @Inject constructor(
     fun playAudio() {
         _uiState.value = _uiState.value.copy(isPlayingAudio = true)
         viewModelScope.launch {
-            // Actual ExoPlayer playback would happen here
             delay(1500)
             _uiState.value = _uiState.value.copy(isPlayingAudio = false)
         }
@@ -96,6 +101,31 @@ class AudioQuizViewModel @Inject constructor(
 
         val targetWord = state.currentWord ?: return
         val isCorrect = option == targetWord.kasiguranin
+        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
+        val isRequeued = requeuedWordIds.contains(targetWord.id)
+
+        val rating: ReviewRating
+        val questionXp: Int
+
+        if (isCorrect) {
+            rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
+            questionXp = when {
+                isRequeued -> 0
+                rating == ReviewRating.HARD -> 5
+                else -> Constants.XP_PER_GAME_CORRECT
+            }
+        } else {
+            rating = ReviewRating.AGAIN
+            questionXp = 0
+
+            if (!isRequeued) {
+                requeuedWordIds.add(targetWord.id)
+                val insertIndex = (state.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
+                questionQueue.add(insertIndex, targetWord)
+            }
+        }
+
+        earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
         _uiState.value = state.copy(
@@ -105,6 +135,8 @@ class AudioQuizViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
+            vocabularyRepository.processWordReview(targetWord, rating)
+
             delay(1500)
             _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
             loadNextQuestion()
@@ -113,14 +145,14 @@ class AudioQuizViewModel @Inject constructor(
 
     private fun endGame() {
         val state = _uiState.value
-        val xpEarned = state.score * Constants.XP_PER_GAME_CORRECT + 
-                if (state.score == totalQuestions) Constants.XP_BONUS_PERFECT_GAME else 0
+        val isPerfect = state.score >= totalInitialQuestions && requeuedWordIds.isEmpty()
+        val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
                 gameType = "audio_quiz",
                 score = state.score,
-                totalQuestions = totalQuestions,
+                totalQuestions = questionQueue.size,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
@@ -128,9 +160,9 @@ class AudioQuizViewModel @Inject constructor(
 
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
-            userProgressRepository.updateGameStats(state.score, totalQuestions)
+            userProgressRepository.updateGameStats(state.score, questionQueue.size)
             
-            if (state.score == totalQuestions) {
+            if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
 

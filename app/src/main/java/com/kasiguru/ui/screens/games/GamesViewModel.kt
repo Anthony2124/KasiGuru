@@ -30,7 +30,11 @@ class GamesViewModel @Inject constructor(
         viewModelScope.launch {
             launch {
                 userProgressRepository.getUserProgress().collect { progress ->
-                    _uiState.value = _uiState.value.copy(userProgress = progress)
+                    val accuracy = userProgressRepository.getRollingAccuracyRate()
+                    _uiState.value = _uiState.value.copy(
+                        userProgress = progress,
+                        accuracyRate = accuracy
+                    )
                 }
             }
             launch {
@@ -64,6 +68,7 @@ class GamesViewModel @Inject constructor(
 
 data class GamesUiState(
     val userProgress: UserProgressEntity? = null,
+    val accuracyRate: Float = 1.0f,
     val recentScores: List<GameScoreEntity> = emptyList(),
     val highScores: Map<String, Int> = emptyMap(),
     val isLoading: Boolean = true

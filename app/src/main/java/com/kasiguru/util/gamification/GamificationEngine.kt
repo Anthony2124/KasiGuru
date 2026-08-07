@@ -80,7 +80,7 @@ object GamificationEngine {
         return (progress.toFloat() / range.toFloat()).coerceIn(0.0f, 1.0f)
     }
 
-    fun isGameUnlocked(gameType: String, userLevel: Int): Boolean {
+    fun isGameUnlocked(gameType: String, userLevel: Int, accuracyRate: Float = 1.0f): Boolean {
         val minReq = when (gameType) {
             "word_match" -> 1
             "fill_blank" -> 2
@@ -89,7 +89,8 @@ object GamificationEngine {
             "sentence_order" -> 5
             else -> 1
         }
-        return userLevel >= minReq
+        if (minReq <= 1) return userLevel >= minReq
+        return userLevel >= minReq && accuracyRate >= 0.70f
     }
 
     fun getRequiredLevelForGame(gameType: String): Int {

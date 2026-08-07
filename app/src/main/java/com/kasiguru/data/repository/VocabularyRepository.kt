@@ -3,10 +3,13 @@ package com.kasiguru.data.repository
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.util.Constants
+import com.kasiguru.util.srs.ReviewRating
+import com.kasiguru.util.srs.Sm2Algorithm
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 @Singleton
 class VocabularyRepository @Inject constructor(
@@ -55,16 +58,87 @@ class VocabularyRepository @Inject constructor(
     fun getCategories(): Flow<List<String>> =
         vocabularyDao.getCategories()
 
+    /**
+     * Processes a spaced repetition review for a word using SM-2.
+     * Updates SM-2 fields and increments user progress stats if learned threshold is passed.
+     */
+    suspend fun processWordReview(word: VocabularyEntity, rating: ReviewRating): VocabularyEntity {
+        val sm2Result = Sm2Algorithm.calculateNextReview(word, rating)
+        val updatedWord = word.copy(
+            easinessFactor = sm2Result.easinessFactor,
+            intervalDays = sm2Result.intervalDays,
+            nextReviewDate = sm2Result.nextReviewDate,
+            timesReviewed = sm2Result.timesReviewed,
+            isLearned = sm2Result.isLearned
+        )
+        vocabularyDao.updateVocabulary(updatedWord)
+
+        if (!word.isLearned && sm2Result.isLearned) {
+            userProgressRepository.incrementWordsLearned()
+            userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
+        }
+        return updatedWord
+    }
+
+    /**
+     * Replaces raw markAsLearned with an SM-2 review (Rating = GOOD).
+     * Requires multiple spaced reviews to achieve isLearned = true.
+     */
     suspend fun markAsLearned(id: Int) {
-        vocabularyDao.markAsLearned(id)
-        userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
-        userProgressRepository.incrementWordsLearned()
+        val word = vocabularyDao.getVocabularyById(id) ?: return
+        processWordReview(word, ReviewRating.GOOD)
     }
 
     suspend fun unmarkAsLearned(id: Int) {
-        vocabularyDao.unmarkAsLearned(id)
+        val word = vocabularyDao.getVocabularyById(id) ?: return
+        val resetWord = word.copy(
+            isLearned = false,
+            timesReviewed = 0,
+            intervalDays = 0,
+            nextReviewDate = ""
+        )
+        vocabularyDao.updateVocabulary(resetWord)
     }
 
     suspend fun incrementReviewCount(id: Int) =
         vocabularyDao.incrementReviewCount(id)
+
+    /**
+     * Fetches confusable distractors preferred in priority order:
+     * 1. Same category
+     * 2. Similar length / starting letter
+     * 3. Fallback random
+     */
+    suspend fun getDistractorsForWord(targetWord: VocabularyEntity, count: Int = 3): List<VocabularyEntity> {
+        val categoryWords = vocabularyDao.getRandomWords(40)
+            .filter { it.id != targetWord.id && it.category.equals(targetWord.category, ignoreCase = true) }
+
+        if (categoryWords.size >= count) {
+            return categoryWords.shuffled().take(count)
+        }
+
+        val result = categoryWords.toMutableList()
+        val allOtherWords = vocabularyDao.getRandomWords(50)
+            .filter { it.id != targetWord.id && it.id !in result.map { r -> r.id } }
+
+        val similarWords = allOtherWords.filter {
+            abs(it.kasiguranin.length - targetWord.kasiguranin.length) <= 2 ||
+                    it.kasiguranin.firstOrNull()?.lowercaseChar() == targetWord.kasiguranin.firstOrNull()?.lowercaseChar()
+        }.shuffled()
+
+        for (word in similarWords) {
+            if (result.size >= count) break
+            result.add(word)
+        }
+
+        if (result.size < count) {
+            val remaining = allOtherWords.filter { it.id !in result.map { r -> r.id } }.shuffled()
+            for (word in remaining) {
+                if (result.size >= count) break
+                result.add(word)
+            }
+        }
+
+        return result.take(count)
+    }
 }

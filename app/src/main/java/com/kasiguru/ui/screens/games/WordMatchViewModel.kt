@@ -8,6 +8,7 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
+import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -28,8 +29,11 @@ class WordMatchViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WordMatchUiState())
     val uiState: StateFlow<WordMatchUiState> = _uiState.asStateFlow()
 
-    private val totalQuestions = 5
-    private var currentWords: List<VocabularyEntity> = emptyList()
+    private val totalInitialQuestions = 5
+    private val questionQueue = mutableListOf<VocabularyEntity>()
+    private val requeuedWordIds = mutableSetOf<Int>()
+    private var questionStartTimeMs: Long = 0L
+    private var earnedXpTotal = 0
 
     init {
         startGame()
@@ -38,10 +42,13 @@ class WordMatchViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = WordMatchUiState(isLoading = true)
-            // Get random words for the game
-            currentWords = vocabularyRepository.getRandomWords(totalQuestions)
+            val words = vocabularyRepository.getRandomWords(totalInitialQuestions)
+            questionQueue.clear()
+            questionQueue.addAll(words)
+            requeuedWordIds.clear()
+            earnedXpTotal = 0
             
-            if (currentWords.isEmpty()) {
+            if (questionQueue.isEmpty()) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isGameOver = true
@@ -55,20 +62,19 @@ class WordMatchViewModel @Inject constructor(
 
     private fun loadNextQuestion() {
         val state = _uiState.value
-        if (state.currentQuestionIndex >= totalQuestions || state.currentQuestionIndex >= currentWords.size) {
+        if (state.currentQuestionIndex >= questionQueue.size) {
             endGame()
             return
         }
 
-        val targetWord = currentWords[state.currentQuestionIndex]
+        val targetWord = questionQueue[state.currentQuestionIndex]
         
-        // Generate options (1 correct, 3 wrong)
         viewModelScope.launch {
-            val wrongOptions = vocabularyRepository.getRandomWords(10)
-                .filter { it.id != targetWord.id && it.tagalog.isNotBlank() }
-                .take(3)
+            val wrongEntities = vocabularyRepository.getDistractorsForWord(targetWord, 3)
+            val wrongOptions = wrongEntities.map { it.tagalog }.filter { it.isNotBlank() }
 
-            val allOptions = (wrongOptions.map { it.tagalog } + targetWord.tagalog).distinct().shuffled()
+            val allOptions = (wrongOptions + targetWord.tagalog).distinct().shuffled()
+            questionStartTimeMs = System.currentTimeMillis()
 
             _uiState.value = state.copy(
                 isLoading = false,
@@ -82,11 +88,36 @@ class WordMatchViewModel @Inject constructor(
 
     fun selectOption(option: String) {
         val state = _uiState.value
-        if (state.selectedOption != null) return // Already answered
+        if (state.selectedOption != null) return
 
         val targetWord = state.currentWord ?: return
         val isCorrect = option == targetWord.tagalog
-        
+        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
+        val isRequeued = requeuedWordIds.contains(targetWord.id)
+
+        val rating: ReviewRating
+        val questionXp: Int
+
+        if (isCorrect) {
+            rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
+            questionXp = when {
+                isRequeued -> 0
+                rating == ReviewRating.HARD -> 5
+                else -> Constants.XP_PER_GAME_CORRECT
+            }
+        } else {
+            rating = ReviewRating.AGAIN
+            questionXp = 0
+
+            // Requeue missed word 2 positions later in session
+            if (!isRequeued) {
+                requeuedWordIds.add(targetWord.id)
+                val insertIndex = (state.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
+                questionQueue.add(insertIndex, targetWord)
+            }
+        }
+
+        earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
         _uiState.value = state.copy(
@@ -95,8 +126,9 @@ class WordMatchViewModel @Inject constructor(
             score = newScore
         )
 
-        // Wait a moment then load next question
         viewModelScope.launch {
+            vocabularyRepository.processWordReview(targetWord, rating)
+
             delay(1500)
             _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
             loadNextQuestion()
@@ -105,26 +137,24 @@ class WordMatchViewModel @Inject constructor(
 
     private fun endGame() {
         val state = _uiState.value
-        val xpEarned = state.score * Constants.XP_PER_GAME_CORRECT + 
-                if (state.score == totalQuestions) Constants.XP_BONUS_PERFECT_GAME else 0
+        val isPerfect = state.score >= totalInitialQuestions && requeuedWordIds.isEmpty()
+        val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
 
         viewModelScope.launch {
-            // Save Score
             val scoreEntity = GameScoreEntity(
                 gameType = "word_match",
                 score = state.score,
-                totalQuestions = totalQuestions,
+                totalQuestions = questionQueue.size,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
             gameRepository.saveScore(scoreEntity)
 
-            // Update Progress
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
-            userProgressRepository.updateGameStats(state.score, totalQuestions)
+            userProgressRepository.updateGameStats(state.score, questionQueue.size)
             
-            if (state.score == totalQuestions) {
+            if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
 

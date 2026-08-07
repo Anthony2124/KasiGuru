@@ -8,12 +8,14 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
+import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -28,8 +30,11 @@ class FillBlankViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FillBlankUiState())
     val uiState: StateFlow<FillBlankUiState> = _uiState.asStateFlow()
 
-    private val totalQuestions = 5
-    private var currentVerbs: List<VocabularyEntity> = emptyList()
+    private val totalInitialQuestions = 5
+    private val questionQueue = mutableListOf<VocabularyEntity>()
+    private val requeuedVerbIds = mutableSetOf<Int>()
+    private var questionStartTimeMs: Long = 0L
+    private var earnedXpTotal = 0
 
     init {
         startGame()
@@ -38,27 +43,31 @@ class FillBlankViewModel @Inject constructor(
     private fun startGame() {
         viewModelScope.launch {
             _uiState.value = FillBlankUiState(isLoading = true)
-            // Query all vocabulary from the repository and filter for verbs with full aspect forms
-            vocabularyRepository.getAllVocabulary().collect { list ->
-                val verbsWithAspects = list.filter { it.neutralForm.isNotBlank() && it.perfectiveForm.isNotBlank() }
-                if (verbsWithAspects.isEmpty()) {
-                    _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
-                    return@collect
-                }
-                currentVerbs = verbsWithAspects.shuffled().take(totalQuestions)
-                loadNextQuestion()
+            val list = vocabularyRepository.getAllVocabulary().first()
+            val verbsWithAspects = list.filter { it.neutralForm.isNotBlank() && it.perfectiveForm.isNotBlank() }
+            
+            if (verbsWithAspects.isEmpty()) {
+                _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
+                return@launch
             }
+
+            questionQueue.clear()
+            questionQueue.addAll(verbsWithAspects.shuffled().take(totalInitialQuestions))
+            requeuedVerbIds.clear()
+            earnedXpTotal = 0
+
+            loadNextQuestion()
         }
     }
 
     private fun loadNextQuestion() {
         val state = _uiState.value
-        if (state.currentQuestionIndex >= totalQuestions || state.currentQuestionIndex >= currentVerbs.size) {
+        if (state.currentQuestionIndex >= questionQueue.size) {
             endGame()
             return
         }
 
-        val targetVerb = currentVerbs[state.currentQuestionIndex]
+        val targetVerb = questionQueue[state.currentQuestionIndex]
         val aspects = listOf(
             targetVerb.neutralForm,
             targetVerb.imperfectiveForm,
@@ -85,22 +94,55 @@ class FillBlankViewModel @Inject constructor(
             }
         }
 
-        _uiState.value = state.copy(
-            isLoading = false,
-            currentVerb = targetVerb,
-            sentenceTemplate = sentenceContext,
-            options = (aspects + listOf("magluto", "tumáknəg", "namúgtong")).distinct().take(4).shuffled(),
-            selectedOption = null,
-            isCorrect = null,
-            correctAnswer = correctAnswer
-        )
+        viewModelScope.launch {
+            val distractorEntities = vocabularyRepository.getDistractorsForWord(targetVerb, 3)
+            val distractors = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
+            val options = (aspects + distractors).distinct().take(4).shuffled()
+            questionStartTimeMs = System.currentTimeMillis()
+
+            _uiState.value = state.copy(
+                isLoading = false,
+                currentVerb = targetVerb,
+                sentenceTemplate = sentenceContext,
+                options = options,
+                selectedOption = null,
+                isCorrect = null,
+                correctAnswer = correctAnswer
+            )
+        }
     }
 
     fun selectOption(option: String) {
         val state = _uiState.value
         if (state.selectedOption != null) return
 
+        val targetVerb = state.currentVerb ?: return
         val isCorrect = option == state.correctAnswer
+        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
+        val isRequeued = requeuedVerbIds.contains(targetVerb.id)
+
+        val rating: ReviewRating
+        val questionXp: Int
+
+        if (isCorrect) {
+            rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
+            questionXp = when {
+                isRequeued -> 0
+                rating == ReviewRating.HARD -> 5
+                else -> Constants.XP_PER_GAME_CORRECT
+            }
+        } else {
+            rating = ReviewRating.AGAIN
+            questionXp = 0
+
+            if (!isRequeued) {
+                requeuedVerbIds.add(targetVerb.id)
+                val insertIndex = (state.currentQuestionIndex + 3).coerceAtMost(questionQueue.size)
+                questionQueue.add(insertIndex, targetVerb)
+            }
+        }
+
+        earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
         _uiState.value = state.copy(
@@ -110,6 +152,8 @@ class FillBlankViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
+            vocabularyRepository.processWordReview(targetVerb, rating)
+
             delay(1500)
             _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
             loadNextQuestion()
@@ -118,14 +162,14 @@ class FillBlankViewModel @Inject constructor(
 
     private fun endGame() {
         val state = _uiState.value
-        val xpEarned = state.score * Constants.XP_PER_GAME_CORRECT + 
-                if (state.score == totalQuestions) Constants.XP_BONUS_PERFECT_GAME else 0
+        val isPerfect = state.score >= totalInitialQuestions && requeuedVerbIds.isEmpty()
+        val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
                 gameType = "fill_blank",
                 score = state.score,
-                totalQuestions = totalQuestions,
+                totalQuestions = questionQueue.size,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
@@ -133,9 +177,9 @@ class FillBlankViewModel @Inject constructor(
 
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
-            userProgressRepository.updateGameStats(state.score, totalQuestions)
+            userProgressRepository.updateGameStats(state.score, questionQueue.size)
             
-            if (state.score == totalQuestions) {
+            if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
 

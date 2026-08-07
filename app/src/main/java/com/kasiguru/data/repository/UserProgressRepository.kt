@@ -85,6 +85,12 @@ class UserProgressRepository @Inject constructor(
     suspend fun updateGameStats(correct: Int, total: Int) =
         userProgressDao.updateGameStats(correct, total)
 
+    suspend fun getRollingAccuracyRate(): Float {
+        val progress = userProgressDao.getUserProgressOnce() ?: return 1.0f
+        if (progress.totalQuestionsAnswered < 10) return 1.0f // Grace period for new users
+        return (progress.totalCorrectAnswers.toFloat() / progress.totalQuestionsAnswered.toFloat()).coerceIn(0.0f, 1.0f)
+    }
+
     suspend fun updateStreak() {
         val progress = userProgressDao.getUserProgressOnce() ?: return
         val today = LocalDate.now().toIsoString()
