@@ -3834,5 +3834,188 @@ object DatabaseSeeder {
             isRead = true,
             deepLinkRoute = "achievements"
         )
+,
+        VocabularyEntity(
+            kasiguranin = "anak",
+            tagalog = "anak",
+            english = "anak",
+            rootForm = "anak",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "ano",
+            tagalog = "ano",
+            english = "ano",
+            rootForm = "ano",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "anuman",
+            tagalog = "anuman",
+            english = "anuman",
+            rootForm = "anuman",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "balat",
+            tagalog = "balat",
+            english = "balat",
+            rootForm = "balat",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "balbas",
+            tagalog = "balbas",
+            english = "balbas",
+            rootForm = "balbas",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "bëttek",
+            tagalog = "bëttek",
+            english = "bëttek",
+            rootForm = "bëttek",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "bukong",
+            tagalog = "bukong",
+            english = "bukong",
+            rootForm = "bukong",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "gata",
+            tagalog = "gata",
+            english = "gata",
+            rootForm = "gata",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "gayuma",
+            tagalog = "gayuma",
+            english = "gayuma",
+            rootForm = "gayuma",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "iba",
+            tagalog = "iba",
+            english = "iba",
+            rootForm = "iba",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "inom",
+            tagalog = "inom",
+            english = "inom",
+            rootForm = "inom",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kaku",
+            tagalog = "kaku",
+            english = "kaku",
+            rootForm = "kaku",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kanan",
+            tagalog = "kanan",
+            english = "kanan",
+            rootForm = "kanan",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kapatiya",
+            tagalog = "kapatiya",
+            english = "kapatiya",
+            rootForm = "kapatiya",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "katig",
+            tagalog = "katig",
+            english = "katig",
+            rootForm = "katig",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "këttëb",
+            tagalog = "këttëb",
+            english = "këttëb",
+            rootForm = "këttëb",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kilikile",
+            tagalog = "kilikile",
+            english = "kilikile",
+            rootForm = "kilikile",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kulet",
+            tagalog = "kulet",
+            english = "kulet",
+            rootForm = "kulet",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "kulot",
+            tagalog = "kulot",
+            english = "kulot",
+            rootForm = "kulot",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "madisalad",
+            tagalog = "madisalad",
+            english = "madisalad",
+            rootForm = "madisalad",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "malëgga",
+            tagalog = "malëgga",
+            english = "malëgga",
+            rootForm = "malëgga",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "patpat",
+            tagalog = "patpat",
+            english = "patpat",
+            rootForm = "patpat",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "tama",
+            tagalog = "tama",
+            english = "tama",
+            rootForm = "tama",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "tiis",
+            tagalog = "tiis",
+            english = "tiis",
+            rootForm = "tiis",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "tuyo",
+            tagalog = "tuyo",
+            english = "tuyo",
+            rootForm = "tuyo",
+            category = "Greetings & Essentials"
+        ),
+        VocabularyEntity(
+            kasiguranin = "wala",
+            tagalog = "wala",
+            english = "wala",
+            rootForm = "wala",
+            category = "Greetings & Essentials"
+        )
     )
 }

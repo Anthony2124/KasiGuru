@@ -117,7 +117,8 @@ fun KasiGuruNavGraph() {
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) }
                 )
             }
 
@@ -259,6 +260,10 @@ fun KasiGuruNavGraph() {
             }
             composable(Screen.About.route) {
                 AboutScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(Screen.SubmitWord.route) {
+                SubmitWordScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
 
