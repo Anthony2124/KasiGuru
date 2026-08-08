@@ -339,13 +339,19 @@ function handleSqlFile(file) {
   reader.onload = async (e) => {
     try {
       const text = e.target.result;
-      const insertRegex = /INSERT INTO vocabulary \([^)]+\)\s+VALUES \('([^']+)', (?:NULL|'([^']*)'), (?:NULL|'([^']*)'), (?:NULL|'([^']*)'), (?:NULL|'([^']*)'), (?:NULL|'([^']*)'), (?:NULL|'([^']*)'), (?:NULL|'([^']*)')\);/g;
+      // Match the pattern: INSERT INTO vocabulary (...) VALUES ('word', NULL, 'english', ... );
+      // Allowing for optional created_at at the end and flexible whitespace.
+      const insertRegex = /INSERT INTO vocabulary[^(]*\([^)]+\)\s*VALUES\s*\(\s*'([^']+)'\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')(?:\s*,\s*\d+)?\s*\);/g;
 
       const entries = [];
       let match;
 
       while ((match = insertRegex.exec(text)) !== null) {
-        const clean = (val) => (!val || val === 'nan' || val === 'NULL' ? null : val.trim());
+        const clean = (val) => {
+          if (!val || val === 'nan' || val === 'NULL' || val === "''") return null;
+          if (val.startsWith("'") && val.endsWith("'")) return val.slice(1, -1).trim() || null;
+          return val.trim();
+        };
 
         entries.push({
           kasiguranin: match[1].trim(),
