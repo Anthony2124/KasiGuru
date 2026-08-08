@@ -18,12 +18,12 @@ import {
 
 // Firebase Configuration (Matching Mobile App Firebase Instance)
 const firebaseConfig = {
-  apiKey: "AIzaSyKasiGuruDefaultKeyWebPortalApp",
-  authDomain: "kasiguru.firebaseapp.com",
-  projectId: "kasiguru",
-  storageBucket: "kasiguru.appspot.com",
-  messagingSenderId: "100000000000",
-  appId: "1:100000000000:web:kasiguruappstore12345"
+  apiKey: "AIzaSyBIADrpzbQZpE4SoHRp9xKsh9A03RLZDlg",
+  authDomain: "kasiguru-86042.firebaseapp.com",
+  projectId: "kasiguru-86042",
+  storageBucket: "kasiguru-86042.firebasestorage.app",
+  messagingSenderId: "25073459164",
+  appId: "1:25073459164:web:95c6e2ed2d6b89af56b919"
 };
 
 const app = initializeApp(firebaseConfig);
