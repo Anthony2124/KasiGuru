@@ -36,10 +36,11 @@ class FirestoreSyncManager @Inject constructor(
 
         val cloudWords = snapshot.toObjects(VocabularyEntity::class.java)
         for (cloudWord in cloudWords) {
-            val localWord = vocabularyDao.getVocabularyById(cloudWord.id)
+            val localWord = vocabularyDao.getVocabularyByWord(cloudWord.kasiguranin)
             val wordToSave = if (localWord != null) {
-                // Preserve local progress fields
+                // Preserve local ID & learning progress fields
                 cloudWord.copy(
+                    id = localWord.id,
                     isLearned = localWord.isLearned,
                     timesReviewed = localWord.timesReviewed,
                     easinessFactor = localWord.easinessFactor,
@@ -47,7 +48,7 @@ class FirestoreSyncManager @Inject constructor(
                     nextReviewDate = localWord.nextReviewDate
                 )
             } else {
-                cloudWord
+                cloudWord.copy(id = 0)
             }
             vocabularyDao.insert(wordToSave)
         }

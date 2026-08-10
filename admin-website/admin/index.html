@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>KasiGuru — Admin Sign In</title>
+  <script src="js/iconsax.js?v=2026_bulk_standalone"></script>
+  <link rel="stylesheet" href="css/styles.css?v=2026_pure_bulk_svg">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 440px;
+      animation: fadeSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 40px 36px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .login-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .login-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 900;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .login-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 24px 0;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-icon-wrap {
+      position: relative;
+    }
+
+    .input-icon-wrap iconsax-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .input-icon-wrap .form-control {
+      padding-left: 44px;
+    }
+
+    #login-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      font-size: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #login-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    #login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .error-banner {
+      background: rgba(255, 118, 117, 0.12);
+      border: 1px solid rgba(255, 118, 117, 0.3);
+      border-radius: 14px;
+      padding: 12px 16px;
+      color: #FF7675;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .login-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .lock-icon-wrapper {
+      width: 60px;
+      height: 60px;
+      border-radius: 20px;
+      background: var(--grad-purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(123, 110, 246, 0.4);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <!-- Logo Row -->
+      <div class="login-logo-row">
+        <div class="lock-icon-wrapper">
+          <iconsax-icon name="security-safe" type="bulk" size="28" color="#FFFFFF"></iconsax-icon>
+        </div>
+        <div>
+          <div class="logo-badge" style="display:inline-block; margin-bottom:4px;">KasiGuru</div>
+          <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Administrator Portal</div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="login-header">
+        <h1>Welcome back 👋</h1>
+        <p>Sign in with your admin credentials to access the dashboard.</p>
+      </div>
+
+      <div class="login-divider"></div>
+
+      <!-- Error Banner -->
+      <div id="login-error" class="error-banner" role="alert">
+        <iconsax-icon name="info-circle" type="bulk" size="18" color="#FF7675"></iconsax-icon>
+        <span id="login-error-text"></span>
+      </div>
+
+      <!-- Login Form -->
+      <div class="form-group">
+        <label for="admin-email">Email Address</label>
+        <div class="input-icon-wrap">
+          <iconsax-icon name="sms" type="bulk" size="18" color="var(--text-muted)"></iconsax-icon>
+          <input
+            type="email"
+            id="admin-email"
+            class="form-control"
+            placeholder="admin@kasiguru.app"
+            autocomplete="email"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="admin-password">Password</label>
+        <div class="input-icon-wrap">
+          <iconsax-icon name="lock-1" type="bulk" size="18" color="var(--text-muted)"></iconsax-icon>
+          <input
+            type="password"
+            id="admin-password"
+            class="form-control"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+      </div>
+
+      <button id="login-btn" class="btn btn-primary" onclick="window.signInAdmin()">
+        <iconsax-icon name="login" type="bulk" size="18" color="#FFFFFF"></iconsax-icon>
+        Sign In to Admin Panel
+      </button>
+
+      <!-- Footer note -->
+      <div class="login-footer">
+        🔒 This portal is for authorized administrators only.<br>
+        Unauthorized access attempts are logged.
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+
+  <script>
+    // Patch error banner to use span text
+    const origSignIn = null;
+    document.addEventListener('DOMContentLoaded', () => {
+      const errEl = document.getElementById('login-error');
+      const errText = document.getElementById('login-error-text');
+      // Patch: auth.js sets errEl.textContent, we forward to span
+      const observer = new MutationObserver(() => {
+        if (errEl.textContent && errEl.textContent.trim()) {
+          errText.textContent = errEl.textContent;
+          errEl.textContent = '';
+          errEl.style.display = 'flex';
+        }
+      });
+      // auth.js sets style.display directly via errEl.style.display = 'flex'
+      // So we just let it work as-is, errEl itself is the banner container.
+    });
+  </script>
+</body>
+</html>

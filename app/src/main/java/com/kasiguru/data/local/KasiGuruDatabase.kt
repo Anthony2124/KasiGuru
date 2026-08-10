@@ -9,6 +9,7 @@ import com.kasiguru.data.local.entity.*
 @Database(
     entities = [
         VocabularyEntity::class,
+        ConjugationEntity::class,
         StoryEntity::class,
         UserProgressEntity::class,
         AchievementEntity::class,
@@ -18,12 +19,13 @@ import com.kasiguru.data.local.entity.*
         NotificationEntity::class,
         GameLevelEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class KasiGuruDatabase : RoomDatabase() {
     abstract fun vocabularyDao(): VocabularyDao
+    abstract fun conjugationDao(): ConjugationDao
     abstract fun storyDao(): StoryDao
     abstract fun userProgressDao(): UserProgressDao
     abstract fun achievementDao(): AchievementDao

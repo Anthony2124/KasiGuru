@@ -16,6 +16,12 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE id = :id")
     suspend fun getVocabularyById(id: Int): VocabularyEntity?
 
+    @Query("SELECT * FROM vocabulary WHERE LOWER(kasiguranin) = LOWER(:word) LIMIT 1")
+    suspend fun getVocabularyByWord(word: String): VocabularyEntity?
+
+    @Query("DELETE FROM vocabulary WHERE id NOT IN (SELECT MIN(id) FROM vocabulary GROUP BY LOWER(kasiguranin))")
+    suspend fun deleteDuplicateWords()
+
     @Query("SELECT * FROM vocabulary WHERE isLearned = 1 ORDER BY kasiguranin")
     fun getLearnedVocabulary(): Flow<List<VocabularyEntity>>
 

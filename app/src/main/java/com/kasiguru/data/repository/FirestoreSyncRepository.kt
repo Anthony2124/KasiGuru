@@ -40,21 +40,28 @@ class FirestoreSyncRepository @Inject constructor(
                 val ipaNotation = (data["ipaNotation"] ?: data["ipa"] ?: "").toString().trim()
                 val exampleSentence = (data["sampleSentence"] ?: data["sample_sentence"] ?: "").toString().trim()
 
-                val vocabEntity = VocabularyEntity(
-                    kasiguranin = word,
-                    tagalog = if (tagalog == "nan") "" else tagalog,
-                    english = if (english == "nan") "" else english,
-                    rootForm = if (rootForm == "nan") word else rootForm,
-                    category = if (category == "nan") "General" else category,
-                    ipaNotation = if (ipaNotation == "nan") "" else ipaNotation,
-                    exampleSentence = if (exampleSentence == "nan") "" else exampleSentence
-                )
-
-                // Async Room insert/upsert
+                // Async Room insert/upsert (Deduplicated by word text)
                 scope.launch {
                     try {
+                        val existing = vocabularyDao.getVocabularyByWord(word)
+                        val vocabEntity = VocabularyEntity(
+                            id = existing?.id ?: 0,
+                            kasiguranin = word,
+                            tagalog = if (tagalog == "nan") "" else tagalog,
+                            english = if (english == "nan") "" else english,
+                            rootForm = if (rootForm == "nan") word else rootForm,
+                            category = if (category == "nan") "General" else category,
+                            ipaNotation = if (ipaNotation == "nan") "" else ipaNotation,
+                            exampleSentence = if (exampleSentence == "nan") "" else exampleSentence,
+                            isLearned = existing?.isLearned ?: false,
+                            timesReviewed = existing?.timesReviewed ?: 0,
+                            easinessFactor = existing?.easinessFactor ?: 2.5,
+                            intervalDays = existing?.intervalDays ?: 0,
+                            nextReviewDate = existing?.nextReviewDate ?: ""
+                        )
+
                         vocabularyDao.insert(vocabEntity)
-                        val fetchedWord = vocabularyDao.getVocabularyById(vocabEntity.id)
+                        val fetchedWord = vocabularyDao.getVocabularyByWord(word)
                         val vocabId = fetchedWord?.id ?: vocabEntity.id
 
                         // Parse nested conjugations array if present

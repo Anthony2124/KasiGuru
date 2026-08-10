@@ -81,6 +81,11 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideConjugationDao(database: KasiGuruDatabase): ConjugationDao =
+        database.conjugationDao()
+
+    @Provides
+    @Singleton
     fun provideStoryDao(database: KasiGuruDatabase): StoryDao =
         database.storyDao()
 
