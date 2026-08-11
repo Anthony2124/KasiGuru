@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.games
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
@@ -143,7 +144,8 @@ class SentenceOrderViewModel @Inject constructor(
                 )
             )
 
-            val allVocab = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
+            val allVocabRaw = vocabularyRepository.getAllVocabulary().first()
+            val allVocab = if (allVocabRaw.isNotEmpty()) allVocabRaw else emptyList<VocabularyEntity>()
             val vocabMap = allVocab.associateBy { it.kasiguranin.lowercase() }
             val vocabNeutralMap = allVocab.associateBy { it.neutralForm.lowercase() }
 
