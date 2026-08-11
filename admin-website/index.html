@@ -369,6 +369,55 @@
     </div>
   </div>
 
+  <!-- Modal: Edit Vocabulary Word -->
+  <div id="edit-vocab-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="edit" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> Edit Kasiguranin Entry</h3>
+        <button class="close-btn" onclick="closeModal('edit-vocab-modal')">&times;</button>
+      </div>
+      <form id="edit-vocab-form">
+        <input type="hidden" id="edit-input-id">
+        <div class="form-group">
+          <label>Kasiguranin Word *</label>
+          <input type="text" id="edit-input-kasiguranin" class="form-control" required placeholder="e.g. apak">
+        </div>
+        <div class="form-group">
+          <label>Tagalog Translation</label>
+          <input type="text" id="edit-input-tagalog" class="form-control" placeholder="e.g. daras">
+        </div>
+        <div class="form-group">
+          <label>English Definition</label>
+          <input type="text" id="edit-input-english" class="form-control" placeholder="e.g. adze">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="edit-input-category" class="form-control">
+            <option value="Greetings & Essentials">Greetings & Essentials</option>
+            <option value="Body Parts & Health">Body Parts & Health</option>
+            <option value="Animals & Wildlife">Animals & Wildlife</option>
+            <option value="Food & Dining">Food & Dining</option>
+            <option value="Numbers & Time">Numbers & Time</option>
+            <option value="Weather & Climate">Weather & Climate</option>
+            <option value="Nature & Environment">Nature & Environment</option>
+            <option value="Family & People">Family & People</option>
+            <option value="Emotions & Feelings">Emotions & Feelings</option>
+            <option value="Colors & Shapes">Colors & Shapes</option>
+            <option value="Occupations & Tools">Occupations & Tools</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phonetic / IPA Notation</label>
+          <input type="text" id="edit-input-ipa" class="form-control" placeholder="e.g. ˈɁaː.pak">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Update Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

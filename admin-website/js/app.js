@@ -275,7 +275,10 @@ function renderVocabularyTable() {
       <td><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></td>
       <td>${conjugationsBadge}</td>
       <td>
-        <button class="btn btn-danger btn-sm delete-vocab-btn" data-id="${item.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary btn-sm edit-vocab-btn" data-id="${item.id}"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
+          <button class="btn btn-danger btn-sm delete-vocab-btn" data-id="${item.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -283,6 +286,10 @@ function renderVocabularyTable() {
 
   tbody.querySelectorAll('.delete-vocab-btn').forEach(btn => {
     btn.addEventListener('click', () => deleteVocabWord(btn.getAttribute('data-id')));
+  });
+
+  tbody.querySelectorAll('.edit-vocab-btn').forEach(btn => {
+    btn.addEventListener('click', () => openEditVocabModal(btn.getAttribute('data-id')));
   });
 }
 
@@ -301,6 +308,21 @@ async function deleteVocabWord(id) {
   } catch (e) {
     alert("Error deleting word: " + e.message);
   }
+}
+
+// Open Edit Modal and Pre-fill Fields
+function openEditVocabModal(id) {
+  const item = vocabulary.find(v => v.id === id);
+  if (!item) return;
+
+  document.getElementById('edit-input-id').value = id;
+  document.getElementById('edit-input-kasiguranin').value = item.kasiguranin || '';
+  document.getElementById('edit-input-tagalog').value = item.tagalog || '';
+  document.getElementById('edit-input-english').value = item.english || '';
+  document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
+  document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
+
+  openModal('edit-vocab-modal');
 }
 
 // Bulk SQL Migration File Importer (.sql)
@@ -544,6 +566,37 @@ function initFormListeners() {
         alert(`Successfully added "${word}" to dictionary!`);
       } catch (err) {
         alert("Error adding word to Firestore: " + err.message);
+      }
+    });
+  }
+
+  const editVocabForm = document.getElementById('edit-vocab-form');
+  if (editVocabForm) {
+    editVocabForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-input-id').value;
+      const word = document.getElementById('edit-input-kasiguranin').value.trim();
+      const tagalog = document.getElementById('edit-input-tagalog').value.trim();
+      const english = document.getElementById('edit-input-english').value.trim();
+      const category = document.getElementById('edit-input-category').value;
+      const ipa = document.getElementById('edit-input-ipa').value.trim();
+
+      if (!word) return alert("Please enter the Kasiguranin word.");
+
+      try {
+        await updateDoc(doc(db, "vocabulary", id), {
+          kasiguranin: word,
+          tagalog: tagalog || null,
+          english: english || null,
+          category: category,
+          ipaNotation: ipa || null,
+          updatedAt: Date.now()
+        });
+        editVocabForm.reset();
+        closeModal('edit-vocab-modal');
+        alert(`Successfully updated "${word}"!`);
+      } catch (error) {
+        alert("Error updating word: " + error.message);
       }
     });
   }
