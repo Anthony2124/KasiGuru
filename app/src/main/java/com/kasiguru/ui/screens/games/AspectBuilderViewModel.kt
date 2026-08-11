@@ -91,10 +91,13 @@ class AspectBuilderViewModel @Inject constructor(
         val aspectList = listOf("Neutral", "Imperfective", "Perfective", "Contemplative")
         val result = mutableListOf<AspectQuestion>()
 
-        val verbList = vocabList.filter { it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() }
-        val pool = if (verbList.isNotEmpty()) verbList else vocabList
+        val verbs = vocabList.filter {
+            it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.imperfectiveForm.isNotBlank() || it.contemplativeForm.isNotBlank()
+        }.sortedBy { it.timesReviewed }
 
-        for (vocab in pool.shuffled().take(questionCount)) {
+        if (verbs.isEmpty()) return emptyList()
+
+        for (vocab in verbs.take(questionCount)) {
             val aspect = aspectList.random()
             val correct = when (aspect) {
                 "Neutral" -> vocab.neutralForm.ifEmpty { vocab.kasiguranin }

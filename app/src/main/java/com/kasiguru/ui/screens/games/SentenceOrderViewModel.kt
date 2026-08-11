@@ -65,7 +65,7 @@ class SentenceOrderViewModel @Inject constructor(
                 questionsCount = levelInfo.questionsCount
             }
 
-            val sampleSentences = listOf(
+            val rawSentences = listOf(
                 SentenceQuestion(
                     englishSentence = "Good day to you all!",
                     correctKasiguraninWords = listOf("Magandang", "aldaw", "ha", "iyo", "'ttanan!"),
@@ -140,8 +140,25 @@ class SentenceOrderViewModel @Inject constructor(
                     englishSentence = "Our viand is chicken.",
                     correctKasiguraninWords = listOf("Ang", "sida", "me", "ay", "manok."),
                     shuffledWords = listOf("Ang", "sida", "me", "ay", "manok.").shuffled()
-                )
-            ).shuffled().take(questionsCount)
+            )
+
+            val allVocab = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
+            val sampleSentences = rawSentences.sortedBy { sentence ->
+                var totalReviews = 0
+                var matchedWords = 0
+                for (rawToken in sentence.correctKasiguraninWords) {
+                    val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "")
+                    val matched = allVocab.firstOrNull {
+                        it.kasiguranin.equals(cleanToken, ignoreCase = true) ||
+                                it.neutralForm.equals(cleanToken, ignoreCase = true)
+                    }
+                    if (matched != null) {
+                        totalReviews += matched.timesReviewed
+                        matchedWords++
+                    }
+                }
+                if (matchedWords > 0) totalReviews / matchedWords else 0
+            }.take(questionsCount).shuffled()
 
             questionQueue.clear()
             questionQueue.addAll(sampleSentences)

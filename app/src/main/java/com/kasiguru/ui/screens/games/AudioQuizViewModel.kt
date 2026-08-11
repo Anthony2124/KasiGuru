@@ -54,10 +54,10 @@ class AudioQuizViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
 
-            var words = vocabularyRepository.getRandomWords(totalInitialQuestions)
+            var words = vocabularyRepository.getFreshWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
-                words = all.shuffled().take(totalInitialQuestions)
+                words = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()
             }
 
             questionQueue.clear()

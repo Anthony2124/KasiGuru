@@ -66,7 +66,7 @@ class FillBlankViewModel @Inject constructor(
             }
 
             questionQueue.clear()
-            questionQueue.addAll(pool.shuffled().take(totalInitialQuestions))
+            questionQueue.addAll(pool.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled())
             earnedXpTotal = 0
 
             loadNextQuestion()

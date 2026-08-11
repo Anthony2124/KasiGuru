@@ -31,6 +31,9 @@ class VocabularyRepository @Inject constructor(
     suspend fun getRandomWords(count: Int): List<VocabularyEntity> =
         vocabularyDao.getRandomWords(count)
 
+    suspend fun getFreshWords(count: Int): List<VocabularyEntity> =
+        vocabularyDao.getFreshWords(count)
+
     suspend fun getUnlearnedWords(count: Int): List<VocabularyEntity> =
         vocabularyDao.getUnlearnedWords(count)
 

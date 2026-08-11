@@ -34,6 +34,9 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 
+    @Query("SELECT * FROM vocabulary ORDER BY timesReviewed ASC, RANDOM() LIMIT :count")
+    suspend fun getFreshWords(count: Int): List<VocabularyEntity>
+
     @Query("SELECT COUNT(*) FROM vocabulary WHERE isLearned = 1")
     fun getLearnedCount(): Flow<Int>
 
