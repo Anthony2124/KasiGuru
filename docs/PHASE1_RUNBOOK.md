@@ -69,6 +69,14 @@ firebase deploy --only firestore:rules,storage:rules,functions
 > Rules alone work on the free plan, but the scheduled backup and the
 > `bootstrapAdmin` function do not.
 
+> **On the free (Spark) plan?** You can still grant the admin claim without
+> deploying functions:
+> 1. Firebase console → Project settings → Service accounts →
+>    **Generate new private key** (keep the JSON out of the repo).
+> 2. `cd functions && node set_admin_claim.js YOUR_ADMIN_EMAIL ../path/to/key.json`
+> 3. Sign out/in of the admin portal. Revisit the Blaze upgrade later for the
+>    functions + scheduled backups.
+
 ---
 
 ## 3. Grant your account the admin claim

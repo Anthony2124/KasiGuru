@@ -1,10 +1,13 @@
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Default: deny all. Firebase Storage is not used yet; when APK/audio
-    // hosting is added, scope public reads to the specific release assets.
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
-  }
-}
+// RESERVED — Firebase Storage is not enabled on kasiguru-86042, so this file
+// is not referenced from firebase.json. When Storage is initialized (for APK
+// or audio hosting), re-add it to firebase.json and deploy.
+//
+// rules_version = '2';
+// service firebase.storage {
+//   match /b/{bucket}/o {
+//     // Default: deny all. Scope public reads to the specific release assets.
+//     match /{allPaths=**} {
+//       allow read, write: if false;
+//     }
+//   }
+// }

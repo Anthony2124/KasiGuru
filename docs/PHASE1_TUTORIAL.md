@@ -109,9 +109,13 @@ The scheduled backup and the `bootstrapAdmin` function need the paid plan.
 > nightly export of a small database this is typically well under a dollar a
 > month. You can delete the backup bucket later if you want to stop paying.
 >
-> **If you do not want Blaze:** rules + Vercel + CI still work. Only the
-> admin-claim function and scheduled backups need it — tell me and I'll add a
-> one-off Admin SDK script you can run locally instead.
+> **If you do not want Blaze (or it's pending):** rules + Vercel + CI still
+> work, and you can grant the admin claim right away with a one-off script:
+> 1. Firebase console → Project settings → Service accounts →
+>    **Generate new private key** (keep the JSON out of the repo).
+> 2. `cd functions && node set_admin_claim.js YOUR_ADMIN_EMAIL ../path/to/key.json`
+> 3. Sign out/in of the admin portal. Only the Cloud Functions and scheduled
+>    backups still require the Blaze upgrade.
 
 ---
 
