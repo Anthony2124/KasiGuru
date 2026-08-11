@@ -105,45 +105,30 @@ project is unchanged.
 
 ## 5. Backups (Spark-friendly — no Blaze required)
 
-Firestore exports work on the free plan; only the *scheduling* needs a paid
-service. So we schedule the export from your own machine with Task Scheduler.
+Firestore's GCS export API requires billing, so `backup_firestore.js` instead
+reads every collection with the Admin SDK and writes timestamped JSON locally.
+It also captures `word_submissions`, which the export API cannot read without
+admin access. No bucket, no IAM, no billing.
 
-1. Create the bucket (default name: `kasiguru-86042-backups`):
-
-```bash
-gsutil mb -l asia-east1 gs://kasiguru-86042-backups
-```
-
-2. Add a lifecycle rule to expire exports after 30 days (control cost):
-   Cloud Storage console → bucket → **Lifecycle** → Add rule →
-   *Delete object* when *Age* ≥ 30 days.
-
-3. Grant the **service account from step 3** the permissions to export:
-   - **Cloud Datastore Import Export Admin** (project level, IAM)
-   - **Storage Object Admin** on the bucket
-
-4. Test one export:
+1. Test one backup:
 
 ```bash
 cd functions
 node backup_firestore.js C:\KasiGuru\firebase-service-account.json
 ```
 
-   Then check the bucket — a folder with the timestamp should appear.
-5. Schedule it nightly with **Task Scheduler**:
+   Expected: `Backup complete -> C:\KasiGuru\KasiGuruBackups\<timestamp>` with a
+   JSON file per collection + `manifest.json`.
+2. Schedule it nightly with **Task Scheduler**:
    - Task Scheduler → Create Task → Triggers → Daily (e.g. 02:00).
    - Action: Program `node`, Arguments
      `backup_firestore.js C:\KasiGuru\firebase-service-account.json`,
      Start in `C:\KasiGuru\KasiGuru-main\functions`.
    - Run whether user is logged on or not (store the account password).
-
-Manual one-off (same effect):
-
-```bash
-gcloud firestore export gs://kasiguru-86042-backups/manual-$(date +%F)
-```
-
-> Test restore once on a scratch project before you ever need it.
+3. Keep the backup folder **private** (it contains user submissions) and sync it
+   to Google Drive / OneDrive / another machine for off-site redundancy.
+4. Restore (emergency): `node restore_firestore.js <key.json> <backup-dir>` —
+   test once on a scratch project before relying on it.
 
 ---
 

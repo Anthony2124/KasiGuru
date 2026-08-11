@@ -1,71 +1,79 @@
 /**
- * Firestore backup export that works on the FREE (Spark) plan.
+ * Local JSON backup of Firestore — works on the FREE (Spark) plan.
  *
- * Runs from your machine (or any machine with Node) using a service-account
- * key — no Blaze plan, no Cloud Functions, no Secret Manager required.
+ * Uses the Admin SDK (service-account key) to read every collection and write
+ * a timestamped folder of JSON files. No billing, no Cloud Functions, no GCS.
+ * (Firestore's built-in GCS export requires billing; this does not.)
  *
  * Usage:
- *   node backup_firestore.js <path-to-service-account.json> [bucket-name]
+ *   node backup_firestore.js <service-account.json> [output-dir]
  *
- *   bucket-name defaults to kasiguru-86042-backups (or $env:BACKUP_BUCKET).
+ *   output-dir defaults to C:\KasiGuru\KasiGuruBackups (outside the repo).
+ *   Each run creates <output-dir>/<timestamp>/<collection>.json + manifest.json.
  *
- * Prerequisites (one-time):
- *   1. Create the GCS bucket, e.g. kasiguru-86042-backups
- *      (gsutil mb -l asia-east1 gs://kasiguru-86042-backups)
- *   2. Grant the service account:
- *        - role "Cloud Datastore Import Export Admin" (project level)
- *        - role "Storage Object Admin" on the bucket
- *   3. Schedule it (Windows): Task Scheduler -> create task -> daily ->
- *      program: node, arguments: backup_firestore.js <key.json>, start in:
- *      C:\KasiGuru\KasiGuru-main\functions
+ * Restore with: node restore_firestore.js <service-account.json> <backup-dir>
  *
- * The service-account JSON must NOT be committed to the repo.
+ * The service-account JSON and the backup folders contain sensitive data —
+ * keep them out of the repo and consider syncing the backup folder to
+ * Google Drive / OneDrive / another machine for off-site redundancy.
  */
 
+const admin = require('firebase-admin');
 const fs = require('fs');
-const { GoogleAuth } = require('google-auth-library');
+const path = require('path');
+const { serialize, readAllDocs } = require('./firestore_backup_util');
 
 const keyFile = process.argv[2];
-const bucket = process.argv[3] || process.env.BACKUP_BUCKET || 'kasiguru-86042-backups';
+const outDir =
+  process.argv[3] || path.join(__dirname, '..', '..', 'KasiGuruBackups');
 
-if (!keyFile) {
-  console.error('Usage: node backup_firestore.js <path-to-service-account.json> [bucket-name]');
+if (!keyFile || !fs.existsSync(keyFile)) {
+  console.error('Usage: node backup_firestore.js <path-to-service-account.json> [output-dir]');
   process.exit(1);
 }
 
+admin.initializeApp({
+  credential: admin.credential.cert(path.resolve(keyFile))
+});
+
+const projectId = require(keyFile).project_id;
+
 (async () => {
-  const key = JSON.parse(fs.readFileSync(keyFile, 'utf8'));
-  const projectId = key.project_id;
-  if (!projectId) {
-    console.error('Failed: service-account file has no project_id');
-    process.exit(1);
+  const db = admin.firestore();
+  const collections = await db.listCollections();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const runDir = path.join(outDir, stamp);
+  fs.mkdirSync(runDir, { recursive: true });
+
+  const manifest = {
+    projectId,
+    createdAt: new Date().toISOString(),
+    collections: {}
+  };
+
+  for (const col of collections) {
+    const docs = await readAllDocs(col);
+    const payload = {
+      collection: col.id,
+      count: docs.length,
+      documents: docs.map((d) => ({ id: d.id, data: serialize(d.data) }))
+    };
+    fs.writeFileSync(
+      path.join(runDir, col.id + '.json'),
+      JSON.stringify(payload, null, 2)
+    );
+    manifest.collections[col.id] = docs.length;
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outputUriPrefix = `gs://${bucket}/${timestamp}`;
+  fs.writeFileSync(
+    path.join(runDir, 'manifest.json'),
+    JSON.stringify(manifest, null, 2)
+  );
 
-  const auth = new GoogleAuth({
-    keyFile,
-    scopes: ['https://www.googleapis.com/auth/datastore']
-  });
-  const client = await auth.getClient();
-
-  const res = await client.request({
-    url: `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default):exportDocuments`,
-    method: 'POST',
-    data: {
-      outputUriPrefix,
-      collectionIds: [] // export all collections
-    }
-  });
-
-  console.log(`Export started for ${projectId} -> ${outputUriPrefix}`);
-  console.log(`Operation: ${res.data.name}`);
-  console.log('Check completion: gcloud firestore operations describe ' + res.data.name);
+  console.log('Backup complete ->', runDir);
+  console.log('Collections:', JSON.stringify(manifest.collections));
+  console.log('WARNING: keep this folder private (contains user-submitted data).');
 })().catch((err) => {
-  console.error('Export failed:', err.message);
-  if (err.response && err.response.data && err.response.data.error) {
-    console.error(JSON.stringify(err.response.data.error));
-  }
+  console.error('Backup failed:', err.message);
   process.exit(1);
 });

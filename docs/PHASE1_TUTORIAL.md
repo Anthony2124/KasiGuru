@@ -238,61 +238,31 @@ Then, recommended cleanup:
 
 ## Step 11 — Set up backups (free-plan friendly)
 
-Firestore exports work on the free plan — only *automatic scheduling* normally
-needs a paid service, so we schedule the export from your machine with Windows
-Task Scheduler instead.
+> Note: Firestore's built-in GCS export requires **billing** — even on the free
+> plan. Instead, `backup_firestore.js` reads the database with the Admin SDK
+> (which can also read `word_submissions`, unlike the export API) and writes
+> timestamped JSON files locally. No billing, no bucket, no IAM setup needed.
 
-### 11a. Create the bucket
-
-Console (no gcloud needed):
-1. Google Cloud console → **Cloud Storage** → **Buckets** → **Create**.
-2. Name: `kasiguru-86042-backups`. Region: `asia-east1` (or any). Click create.
-
-Or with gcloud:
-
-```powershell
-gcloud auth login
-gsutil mb -l asia-east1 gs://kasiguru-86042-backups
-```
-
-### 11b. Expire backups after 30 days (control cost)
-
-Console: open the bucket → **Lifecycle** → **Add rule** → *Delete object* when
-*Age* ≥ 30 days → Create.
-
-### 11c. Grant your service account permission to export
-
-Use the **same service-account key from Step 8** (e.g.
-`C:\KasiGuru\firebase-service-account.json`). Grant it:
-
-- **Datastore Import Export Admin** (project-level):
-  Google Cloud console → **IAM & Admin** → **Grant access** → principal
-  the service account email from the key (ends in `@kasiguru-86042.iam.gserviceaccount.com`) → role
-  *Cloud Datastore Import Export Admin*.
-- **Storage Object Admin** on the bucket:
-  bucket → **Permissions** → **Grant access** → same principal → role
-  *Storage Object Admin*.
-
-Or with gcloud:
-
-```powershell
-$SA = "SERVICE-ACCOUNT-EMAIL-FROM-THE-KEY"
-gcloud projects add-iam-policy-binding kasiguru-86042 `
-  --member="serviceAccount:$SA" --role="roles/datastore.importExportAdmin"
-gsutil iam ch "serviceAccount:$SA:objectAdmin" gs://kasiguru-86042-backups
-```
-
-### 11d. Verify the first export
+### 11a. Run one backup
 
 ```powershell
 cd C:\KasiGuru\KasiGuru-main\functions
 node backup_firestore.js C:\KasiGuru\firebase-service-account.json
 ```
 
-Then check the bucket — you should see a folder per export containing
-`all_namespaces` / `all_groups` and metadata files.
+Expected:
 
-### 11e. Schedule it nightly (Windows Task Scheduler)
+```text
+Backup complete -> C:\KasiGuru\KasiGuruBackups\<timestamp>
+Collections: {"stories":3,"vocabulary":429,"word_submissions":5}
+```
+
+Each run creates `C:\KasiGuru\KasiGuruBackups\<timestamp>\` with one JSON per
+collection plus `manifest.json`. **Keep this folder private** — it contains
+user-submitted data — and consider syncing it to Google Drive / OneDrive /
+another machine for off-site redundancy.
+
+### 11b. Schedule it nightly (Windows Task Scheduler)
 
 1. Open **Task Scheduler** → **Create Task**.
 2. **Triggers** → New → Daily, start time 02:00.
@@ -302,8 +272,16 @@ Then check the bucket — you should see a folder per export containing
 4. **Conditions** → uncheck "Start the task only if the computer is on AC power".
 5. **Settings** → check "Run task as soon as possible after a scheduled start is missed".
 
-> **Custom bucket name?** Pass it as a second argument:
-> `node backup_firestore.js C:\KasiGuru\firebase-service-account.json my-bucket`
+> **Custom output folder?** Pass it as a second argument:
+> `node backup_firestore.js C:\KasiGuru\firebase-service-account.json D:\backups`
+
+### 11c. Restore (emergency only — test once on a scratch project first)
+
+```powershell
+node restore_firestore.js C:\KasiGuru\firebase-service-account.json C:\KasiGuru\KasiGuruBackups\<timestamp>
+```
+
+Documents with the same ID are overwritten.
 
 ---
 
