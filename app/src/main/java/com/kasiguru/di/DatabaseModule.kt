@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.KasiGuruDatabase
+import com.kasiguru.data.local.KasiGuruMigrations
 import com.kasiguru.data.local.dao.*
 import dagger.Module
 import dagger.Provides
@@ -40,7 +41,7 @@ object DatabaseModule {
             KasiGuruDatabase::class.java,
             "kasiguru_database"
         )
-        .fallbackToDestructiveMigration()
+        .addMigrations(*KasiGuruMigrations.ALL)
         .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
@@ -70,7 +71,7 @@ object DatabaseModule {
                 }
             }
         })
-        .fallbackToDestructiveMigration()
+        .addMigrations(*KasiGuruMigrations.ALL)
         .build()
     }
 

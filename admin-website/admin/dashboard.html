@@ -31,6 +31,11 @@
       pointer-events: none;
     }
 
+    /* Access denied overlay — hidden until the admin claim check fails */
+    #access-denied-screen.hidden {
+      display: none !important;
+    }
+
     .spinner {
       width: 48px;
       height: 48px;
@@ -86,6 +91,18 @@
     <div class="logo-badge" style="font-size:1.2rem; padding:10px 20px;">KasiGuru</div>
     <div class="spinner"></div>
     <p style="color:var(--text-muted); font-size:0.9rem;">Verifying admin session...</p>
+  </div>
+
+  <!-- Access Denied Screen (signed in, but no admin custom claim) -->
+  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--bg-dark); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;">
+    <div class="logo-badge" style="font-size:1.2rem; padding:10px 20px;">KasiGuru</div>
+    <h2 style="color:#fff; margin:0;">Access Denied</h2>
+    <p style="color:var(--text-muted); max-width:420px; margin:0;">
+      Your account is signed in but does not have administrator access.
+      Please contact the project owner to be granted the admin role.
+    </p>
+    <p id="access-denied-email-display" style="color:var(--play-gold-start); font-weight:700; margin:0;"></p>
+    <button class="btn btn-danger" onclick="window.adminSignOut()">Sign Out</button>
   </div>
 
   <!-- Floating Pill Header Navigation -->

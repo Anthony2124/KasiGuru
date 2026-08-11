@@ -18,6 +18,8 @@ let unsubscribeFns = [];
 
 // ── Auth Guard ──────────────────────────────────────────────────────────────
 // If the user is not authenticated, redirect to login page immediately.
+// If the user is authenticated but lacks the `admin` custom claim, deny access.
+// The claim is set with the bootstrapAdmin Cloud Function (see /functions).
 onAuthStateChanged(auth, (user) => {
   const loadingScreen = document.getElementById('auth-loading-screen');
 
@@ -27,18 +29,42 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
 
-  // Logged in — show the dashboard
-  if (loadingScreen) {
-    loadingScreen.classList.add('hidden');
-    setTimeout(() => loadingScreen.remove(), 500);
-  }
+  // Verify the admin custom claim (enforced server-side by Firestore rules too).
+  user.getIdTokenResult().then((idTokenResult) => {
+    if (idTokenResult.claims && idTokenResult.claims.admin === true) {
+      // Admin — show the dashboard
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => loadingScreen.remove(), 500);
+      }
 
-  // Display admin email
-  const emailDisplay = document.getElementById('admin-email-display');
-  if (emailDisplay) emailDisplay.textContent = user.email;
+      // Display admin email
+      const emailDisplay = document.getElementById('admin-email-display');
+      if (emailDisplay) emailDisplay.textContent = user.email;
 
-  // Initialize dashboard
-  init();
+      // Initialize dashboard
+      init();
+    } else {
+      // Signed in but not an admin — show access denied, then sign out.
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => loadingScreen.remove(), 500);
+      }
+      const denied = document.getElementById('access-denied-screen');
+      if (denied) denied.classList.remove('hidden');
+      const deniedEmail = document.getElementById('access-denied-email-display');
+      if (deniedEmail) deniedEmail.textContent = user.email;
+      setTimeout(() => window.adminSignOut(), 4000);
+    }
+  }).catch((err) => {
+    console.error('Failed to read admin claim:', err);
+    if (loadingScreen) {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => loadingScreen.remove(), 500);
+    }
+    const denied = document.getElementById('access-denied-screen');
+    if (denied) denied.classList.remove('hidden');
+  });
 });
 
 // Sign out function (called from dashboard.html Sign Out button)

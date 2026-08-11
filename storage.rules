@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default: deny all. Firebase Storage is not used yet; when APK/audio
+    // hosting is added, scope public reads to the specific release assets.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

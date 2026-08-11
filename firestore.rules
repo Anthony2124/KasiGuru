@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin role is enforced by a Firebase custom claim (`admin == true`).
+    // Claims are set via the bootstrapAdmin Cloud Function (see /functions).
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Allowed fields and size limits for community word submissions.
+    // The Android app writes these anonymously (the app has no auth), so
+    // create is open to everyone but every field is validated.
+    function isValidSubmission() {
+      let data = request.resource.data;
+      let allowedKeys = data.keys().hasOnly([
+        'id', 'kasiguranin', 'tagalog', 'english', 'rootForm', 'category',
+        'ipaNotation', 'exampleSentence', 'contributorName', 'status', 'submittedAt'
+      ]);
+      return allowedKeys
+        && data.kasiguranin is string
+        && data.kasiguranin.size() >= 1
+        && data.kasiguranin.size() <= 80
+        && data.tagalog is string && data.tagalog.size() <= 300
+        && data.english is string && data.english.size() <= 300
+        && data.rootForm is string && data.rootForm.size() <= 80
+        && data.category is string && data.category.size() <= 60
+        && data.ipaNotation is string && data.ipaNotation.size() <= 120
+        && data.exampleSentence is string && data.exampleSentence.size() <= 500
+        && data.contributorName is string && data.contributorName.size() <= 60
+        && data.status == 'pending'
+        && data.submittedAt is int
+        && (!('id' in data) || data.id == request.resource.id);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Master dictionary: public read (app + admin), admin-only writes.
+    // Seeding is intentionally admin-only; clients must NOT push seed data.
+    // ---------------------------------------------------------------------------
+    match /vocabulary/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Stories: public read, admin-only writes.
+    match /stories/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // App releases: public read (download page + in-app update), admin-only writes.
+    match /app_releases/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Community submissions: anonymous create (validated), admin-only everything else.
+    // Anonymous delete/update is denied so pending queue items cannot be tampered with.
+    match /word_submissions/{docId} {
+      allow create: if isValidSubmission();
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Admin audit log: admins append and read; no update/delete (append-only).
+    match /admin_audit_log/{docId} {
+      allow create, read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Per-user cloud data (future: cross-device progress sync).
+    // Owner-only access; nothing else may read other users' documents.
+    match /users/{userId}/{document=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Deny everything else by default (explicit allow rules only).
+  }
+}

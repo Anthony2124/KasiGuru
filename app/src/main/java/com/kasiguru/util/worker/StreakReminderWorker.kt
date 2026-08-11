@@ -3,6 +3,7 @@ package com.kasiguru.util.worker
 import android.content.Context
 import androidx.work.*
 import com.kasiguru.data.local.KasiGuruDatabase
+import com.kasiguru.data.local.KasiGuruMigrations
 import com.kasiguru.util.notification.KasiGuruNotificationManager
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
@@ -19,7 +20,7 @@ class StreakReminderWorker(
                 KasiGuruDatabase::class.java,
                 "kasiguru_database"
             )
-            .fallbackToDestructiveMigration()
+            .addMigrations(*KasiGuruMigrations.ALL)
             .build()
 
             val progress = db.userProgressDao().getUserProgressDirect()
