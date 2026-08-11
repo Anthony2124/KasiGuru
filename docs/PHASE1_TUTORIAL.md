@@ -97,62 +97,42 @@ cd ..
 
 ---
 
-## Step 5 — Enable the Blaze plan (required for functions + backups)
+## Step 5 — (Skipped) No Blaze plan needed
 
-The scheduled backup and the `bootstrapAdmin` function need the paid plan.
+KasiGuru stays on the free (Spark) plan. Rules deploy, the admin claim, CI, and
+backups all work without Blaze:
 
-1. Open the Firebase console → your project `kasiguru-86042` →
-   **Upgrade** (top-left) → **Blaze (pay-as-you-go)**.
-2. Confirm the billing account.
+- Step 7 deploys **rules only**.
+- Step 8 grants the admin claim with the local `set_admin_claim.js` script.
+- Step 11 schedules backups from your machine via Task Scheduler.
 
-> Costs: Cloud Functions and Firestore exports are billed per use. With one
-> nightly export of a small database this is typically well under a dollar a
-> month. You can delete the backup bucket later if you want to stop paying.
->
-> **If you do not want Blaze (or it's pending):** rules + Vercel + CI still
-> work, and you can grant the admin claim right away with a one-off script:
-> 1. Firebase console → Project settings → Service accounts →
->    **Generate new private key** (keep the JSON out of the repo).
-> 2. `cd functions && node set_admin_claim.js YOUR_ADMIN_EMAIL ../path/to/key.json`
-> 3. Sign out/in of the admin portal. Only the Cloud Functions and scheduled
->    backups still require the Blaze upgrade.
+The Cloud Functions in `functions/index.js` are kept as future reference;
+nothing in Phase 1 depends on them.
 
 ---
 
-## Step 6 — Set the bootstrap secret
+## Step 6 — (Skipped) No bootstrap secret needed
 
-This secret protects the "grant admin" function so strangers can't call it.
-
-```powershell
-cd C:\KasiGuru\KasiGuru-main\functions
-firebase functions:secrets:set BOOTSTRAP_ADMIN_SECRET
-```
-
-Type a long random value (e.g. 32+ characters) and press Enter. Store it
-somewhere safe — you need it again in Step 8.
-
-> **If it errors with "billing" or "secret manager":** you're still on the free
-> plan — go back to Step 5.
+The secret only protected the Cloud Function version of the admin claim. Since
+claims are granted with the local `set_admin_claim.js` script, there is nothing
+to create here.
 
 ---
 
-## Step 7 — Deploy rules and functions
+## Step 7 — Deploy rules
 
 From `C:\KasiGuru\KasiGuru-main` (the project root — `.firebaserc` already
 points at `kasiguru-86042`):
 
 ```powershell
-firebase deploy --only firestore:rules,storage:rules,functions
+firebase deploy --only firestore:rules
 ```
 
-> **Expected output:** three sections — `firestore`, `storage`, `functions` —
-> each ending with `✔  Deploy complete!`. The functions take the longest
-> (build + upload).
+> **Expected output:** one `firestore` section ending with `✔  Deploy complete!`.
 >
 > **Common errors:**
 > - `HTTP Error: 403, The caller does not have permission` → `firebase login`
 >   as the project owner, or `firebase use kasiguru-86042`.
-> - `billing account required` → do Step 5 first.
 > - Rules syntax error → the rules file is validated before upload; if you see
 >   a line number, it's a typo in `firestore.rules` — fix and re-run.
 
@@ -167,31 +147,24 @@ the guard working correctly — this step fixes it).
 1. Make sure your email exists as a Firebase Auth user:
    Firebase console → **Authentication** → **Users**. If missing, **Add user**
    with your email (the one you log into the admin portal with).
-2. Call the bootstrap function. On Windows use `Invoke-RestMethod`
-   (`curl` in PowerShell is an alias for something else):
+2. Generate a service-account key:
+   Firebase console → Project settings → **Service accounts** →
+   **Generate new private key**. Save the JSON **outside the repo**
+   (e.g. `C:\KasiGuru\firebase-service-account.json`).
+3. Run the claim script (works on the free plan — no Blaze):
 
 ```powershell
-$body = @{
-  data = @{
-    email           = "YOUR_ADMIN_EMAIL"
-    bootstrapSecret = "THE_SECRET_FROM_STEP_6"
-  }
-} | ConvertTo-Json -Depth 3
-
-Invoke-RestMethod -Method Post `
-  -Uri "https://us-central1-kasiguru-86042.cloudfunctions.net/bootstrapAdmin" `
-  -ContentType "application/json" `
-  -Body $body
+cd C:\KasiGuru\KasiGuru-main\functions
+node set_admin_claim.js YOUR_ADMIN_EMAIL C:\KasiGuru\firebase-service-account.json
 ```
 
-> **Expected:** `ok True` (PowerShell prints the response object).
-> **If `permission-denied`:** wrong secret. **If `not-found`:** the email isn't a
-> Firebase Auth user yet.
+> **Expected:** `Admin claim set for YOUR_ADMIN_EMAIL.`
+> **If `auth/user-not-found`:** add the user in Authentication → Users first.
 
-3. Sign out of the admin portal and sign back in — custom claims only appear in
+4. Sign out of the admin portal and sign back in — custom claims only appear in
    the token after a fresh sign-in.
-4. Open the dashboard. It should load normally.
-5. Test the denial path: in a private/incognito window, register a throwaway
+5. Open the dashboard. It should load normally.
+6. Test the denial path: in a private/incognito window, register a throwaway
    account, open the admin portal → you should see **Access Denied** and be
    signed out after a few seconds.
 
@@ -263,7 +236,11 @@ Then, recommended cleanup:
 
 ---
 
-## Step 11 — Set up nightly backups
+## Step 11 — Set up backups (free-plan friendly)
+
+Firestore exports work on the free plan — only *automatic scheduling* normally
+needs a paid service, so we schedule the export from your machine with Windows
+Task Scheduler instead.
 
 ### 11a. Create the bucket
 
@@ -283,13 +260,14 @@ gsutil mb -l asia-east1 gs://kasiguru-86042-backups
 Console: open the bucket → **Lifecycle** → **Add rule** → *Delete object* when
 *Age* ≥ 30 days → Create.
 
-### 11c. Grant the function permission to export
+### 11c. Grant your service account permission to export
 
-The function runs as `kasiguru-86042@appspot.gserviceaccount.com`. Grant it:
+Use the **same service-account key from Step 8** (e.g.
+`C:\KasiGuru\firebase-service-account.json`). Grant it:
 
 - **Datastore Import Export Admin** (project-level):
   Google Cloud console → **IAM & Admin** → **Grant access** → principal
-  `kasiguru-86042@appspot.gserviceaccount.com` → role
+  the service account email from the key (ends in `@kasiguru-86042.iam.gserviceaccount.com`) → role
   *Cloud Datastore Import Export Admin*.
 - **Storage Object Admin** on the bucket:
   bucket → **Permissions** → **Grant access** → same principal → role
@@ -298,28 +276,34 @@ The function runs as `kasiguru-86042@appspot.gserviceaccount.com`. Grant it:
 Or with gcloud:
 
 ```powershell
+$SA = "SERVICE-ACCOUNT-EMAIL-FROM-THE-KEY"
 gcloud projects add-iam-policy-binding kasiguru-86042 `
-  --member="serviceAccount:kasiguru-86042@appspot.gserviceaccount.com" `
-  --role="roles/datastore.importExportAdmin"
-gsutil iam ch serviceAccount:kasiguru-86042@appspot.gserviceaccount.com:objectAdmin `
-  gs://kasiguru-86042-backups
+  --member="serviceAccount:$SA" --role="roles/datastore.importExportAdmin"
+gsutil iam ch "serviceAccount:$SA:objectAdmin" gs://kasiguru-86042-backups
 ```
 
 ### 11d. Verify the first export
 
-The function runs nightly at 02:00 Asia/Shanghai. To test immediately, either
-wait for the schedule or run a manual export (works on any plan):
-
 ```powershell
-gcloud firestore export gs://kasiguru-86042-backups/manual-test
+cd C:\KasiGuru\KasiGuru-main\functions
+node backup_firestore.js C:\KasiGuru\firebase-service-account.json
 ```
 
 Then check the bucket — you should see a folder per export containing
 `all_namespaces` / `all_groups` and metadata files.
 
-> **Custom bucket name?** Set the `BACKUP_BUCKET` environment variable on the
-> `scheduledFirestoreBackup` function in the Firebase console
-> (Functions → the function → Edit → Runtime environment variables).
+### 11e. Schedule it nightly (Windows Task Scheduler)
+
+1. Open **Task Scheduler** → **Create Task**.
+2. **Triggers** → New → Daily, start time 02:00.
+3. **Actions** → New → Program/script: `node`
+   - Arguments: `backup_firestore.js C:\KasiGuru\firebase-service-account.json`
+   - Start in: `C:\KasiGuru\KasiGuru-main\functions`
+4. **Conditions** → uncheck "Start the task only if the computer is on AC power".
+5. **Settings** → check "Run task as soon as possible after a scheduled start is missed".
+
+> **Custom bucket name?** Pass it as a second argument:
+> `node backup_firestore.js C:\KasiGuru\firebase-service-account.json my-bucket`
 
 ---
 
@@ -365,7 +349,7 @@ one and confirm your XP/streak/progress survived.
 
 - [ ] Gmail app password revoked
 - [ ] `firebase deploy` succeeded (rules + storage + functions)
-- [ ] `bootstrapAdmin` returned `ok True` for your email
+- [ ] `set_admin_claim.js` printed "Admin claim set" for your email
 - [ ] Admin portal opens; throwaway account gets "Access Denied"
 - [ ] Root domain shows "Restricted Area"
 - [ ] Anonymous submission create = 200; anonymous delete = 403
@@ -381,9 +365,7 @@ one and confirm your XP/streak/progress survived.
 |---|---|
 | `firebase` not recognized | `npm install -g firebase-tools`, reopen terminal |
 | Deploy 403 | `firebase login` as owner; `firebase use kasiguru-86042` |
-| "Billing account required" | Upgrade to Blaze (Step 5) |
-| `bootstrapAdmin` returns `permission-denied` | Wrong `bootstrapSecret`; re-run Step 6/8 |
-| `bootstrapAdmin` returns `not-found` | Add your email in Firebase Auth → Users first |
+| `set_admin_claim.js` says user not found | Add your email in Firebase Auth → Users first |
 | Admin panel shows Access Denied for you | Claim not set, or token stale → sign out/in; re-run Step 8 |
 | `vercel` not recognized | `npm install -g vercel`, then `vercel login` |
 | Backup function fails with permission error | Complete Step 11c roles |
