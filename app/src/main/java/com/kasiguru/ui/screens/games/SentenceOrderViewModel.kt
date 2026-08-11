@@ -140,6 +140,7 @@ class SentenceOrderViewModel @Inject constructor(
                     englishSentence = "Our viand is chicken.",
                     correctKasiguraninWords = listOf("Ang", "sida", "me", "ay", "manok."),
                     shuffledWords = listOf("Ang", "sida", "me", "ay", "manok.").shuffled()
+                )
             )
 
             val allVocab = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
