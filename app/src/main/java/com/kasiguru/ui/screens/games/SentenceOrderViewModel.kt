@@ -144,22 +144,24 @@ class SentenceOrderViewModel @Inject constructor(
             )
 
             val allVocab = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
-            val sampleSentences = rawSentences.sortedBy { sentence ->
+            val vocabMap = allVocab.associateBy { it.kasiguranin.lowercase() }
+            val vocabNeutralMap = allVocab.associateBy { it.neutralForm.lowercase() }
+
+            fun sentenceScore(sentence: SentenceQuestion): Int {
                 var totalReviews = 0
                 var matchedWords = 0
                 for (rawToken in sentence.correctKasiguraninWords) {
-                    val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "")
-                    val matched = allVocab.firstOrNull {
-                        it.kasiguranin.equals(cleanToken, ignoreCase = true) ||
-                                it.neutralForm.equals(cleanToken, ignoreCase = true)
-                    }
+                    val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "").lowercase()
+                    val matched = vocabMap[cleanToken] ?: vocabNeutralMap[cleanToken]
                     if (matched != null) {
                         totalReviews += matched.timesReviewed
                         matchedWords++
                     }
                 }
-                if (matchedWords > 0) totalReviews / matchedWords else 0
-            }.take(questionsCount).shuffled()
+                return if (matchedWords > 0) totalReviews / matchedWords else 0
+            }
+
+            val sampleSentences = rawSentences.sortedBy { sentenceScore(it) }.take(questionsCount).shuffled()
 
             questionQueue.clear()
             questionQueue.addAll(sampleSentences)
