@@ -5,10 +5,16 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import com.kasiguru.data.repository.ProgressSyncManager
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 @HiltAndroidApp
 class KasiGuruApp : Application() {
+
+    // Constructed on startup so cross-device progress sync starts with auth.
+    @Inject
+    lateinit var progressSyncManager: ProgressSyncManager
 
     override fun onCreate() {
         super.onCreate()

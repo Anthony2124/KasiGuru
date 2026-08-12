@@ -31,5 +31,7 @@ data class UserProgressEntity(
     val lessonsCompleted: Int = 0,
     val isOnboardingCompleted: Boolean = false,
     val dailyGoalXp: Int = 100,
-    val titleBadge: String = "Kasiguranin Apprentice"
+    val titleBadge: String = "Kasiguranin Apprentice",
+    /** Last-modified marker for cross-device sync (Phase 6). */
+    val updatedAt: Long = 0
 )
