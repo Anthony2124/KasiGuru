@@ -386,20 +386,12 @@ function renderVocabularyTable() {
       <td>${conjugationsBadge}</td>
       <td>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-primary btn-sm edit-vocab-btn" data-id="${item.id}"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
-          <button class="btn btn-danger btn-sm delete-vocab-btn" data-id="${item.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
+          <button class="btn btn-primary btn-sm" onclick="window.openEditVocabModal('${item.id}')"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="window.deleteVocabWord('${item.id}')"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
         </div>
       </td>
     `;
     tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('.delete-vocab-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteVocabWord(btn.getAttribute('data-id')));
-  });
-
-  tbody.querySelectorAll('.edit-vocab-btn').forEach(btn => {
-    btn.addEventListener('click', () => openEditVocabModal(btn.getAttribute('data-id')));
   });
 }
 
@@ -411,19 +403,22 @@ function renderVocabularyError(message) {
 }
 
 // ── Delete Vocabulary Word ──────────────────────────────────────────────────
-async function deleteVocabWord(id) {
+window.deleteVocabWord = async function(id) {
   if (!confirm("Are you sure you want to delete this word from the master dictionary?")) return;
   try {
     await deleteDoc(doc(db, "vocabulary", id));
   } catch (e) {
     alert("Error deleting word: " + e.message);
   }
-}
+};
 
 // ── Edit Vocabulary Word ────────────────────────────────────────────────────
-function openEditVocabModal(id) {
+window.openEditVocabModal = function(id) {
   const item = vocabulary.find(v => v.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Edit: item not found for id', id);
+    return;
+  }
 
   document.getElementById('edit-input-id').value = id;
   document.getElementById('edit-input-kasiguranin').value = item.kasiguranin || '';
@@ -432,8 +427,8 @@ function openEditVocabModal(id) {
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
 
-  openModal('edit-vocab-modal');
-}
+  window.openModal('edit-vocab-modal');
+};
 
 // ── SQL Importer ────────────────────────────────────────────────────────────
 function initSqlImporter() {
