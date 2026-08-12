@@ -297,8 +297,9 @@ Firestore rules on `main`.
    **New repository secret**.
 3. Name: `FIREBASE_SERVICE_ACCOUNT`. Paste the entire JSON contents.
 4. Give that service account permission to deploy rules: Google Cloud console →
-   **IAM & Admin** → find the service account → edit → add role
-   *Firebase Rules Admin* (or *Firestore Admin*).
+   **IAM & Admin** → find the service account → edit → add these two roles:
+   - **Firebase Rules Admin** (deploys rules)
+   - **Service Usage Viewer** (lets firebase-tools check enabled APIs)
 5. Push a commit to `main` and watch the **Actions** tab — the
    `firebase-rules` job should deploy rules automatically.
 

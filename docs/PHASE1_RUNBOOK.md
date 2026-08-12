@@ -141,8 +141,9 @@ Firestore rules on `main`.
    Project settings → Service accounts → Generate new private key.
 2. Add it as a repository secret named **`FIREBASE_SERVICE_ACCOUNT`**
    (Settings → Secrets and variables → Actions).
-3. Give that service account the **Firebase Rules Admin** role
-   (or Firestore Admin) so the deploy job can update rules.
+3. Give that service account two roles so the deploy job can update rules:
+   **Firebase Rules Admin** and **Service Usage Viewer**
+   (IAM & Admin → edit the service account → add both roles).
 
 ---
 
