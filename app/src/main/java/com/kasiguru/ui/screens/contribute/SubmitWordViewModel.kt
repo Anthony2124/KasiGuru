@@ -70,6 +70,16 @@ class SubmitWordViewModel @Inject constructor(
 
     fun submitWord() {
         val state = _uiState.value
+        // Client-side rate limit: one submission per cooldown window.
+        // (True server-side rate limiting needs Cloud Functions / the Blaze plan.)
+        val now = System.currentTimeMillis()
+        if (state.isLoading) return
+        if (now - lastSubmittedAt < SUBMISSION_COOLDOWN_MS) {
+            _uiState.value = state.copy(
+                errorMessage = "Please wait a moment before submitting another word."
+            )
+            return
+        }
         if (state.kasiguranin.isBlank()) {
             _uiState.value = state.copy(errorMessage = "Please enter the Kasiguranin word")
             return
@@ -98,6 +108,7 @@ class SubmitWordViewModel @Inject constructor(
             val result = submissionRepository.submitWord(submission)
             result.fold(
                 onSuccess = {
+                    lastSubmittedAt = System.currentTimeMillis()
                     _uiState.value = SubmitWordUiState(isSuccess = true)
                 },
                 onFailure = { error ->
@@ -113,4 +124,10 @@ class SubmitWordViewModel @Inject constructor(
     fun resetSuccess() {
         _uiState.value = SubmitWordUiState()
     }
+
+    companion object {
+        private const val SUBMISSION_COOLDOWN_MS = 30_000L
+    }
+
+    private var lastSubmittedAt: Long = 0L
 }

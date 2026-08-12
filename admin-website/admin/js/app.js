@@ -320,6 +320,7 @@ async function approveSubmission(id) {
       reviewedAt: Date.now()
     });
 
+    await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
     alert(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`);
   } catch (error) {
     console.error("Error approving submission:", error);
@@ -335,6 +336,8 @@ async function rejectSubmission(id) {
       status: "rejected",
       reviewedAt: Date.now()
     });
+    const sub = submissions.find(s => s.id === id);
+    await logAudit("submission.reject", { submissionId: id, word: sub ? sub.kasiguranin : "" });
   } catch (error) {
     console.error("Error rejecting submission:", error);
   }
@@ -407,6 +410,7 @@ window.deleteVocabWord = async function(id) {
   if (!confirm("Are you sure you want to delete this word from the master dictionary?")) return;
   try {
     await deleteDoc(doc(db, "vocabulary", id));
+    await logAudit("vocabulary.delete", { id });
   } catch (e) {
     alert("Error deleting word: " + e.message);
   }
@@ -638,6 +642,7 @@ function initFormListeners() {
           ipaNotation: ipa || null,
           createdAt: Date.now()
         });
+        await logAudit("vocabulary.create", { word });
         addVocabForm.reset();
         closeModal('add-vocab-modal');
         alert(`Successfully added "${word}" to dictionary!`);
@@ -669,6 +674,7 @@ function initFormListeners() {
           ipaNotation: ipa || null,
           updatedAt: Date.now()
         });
+        await logAudit("vocabulary.update", { id, word });
         editVocabForm.reset();
         closeModal('edit-vocab-modal');
         alert(`Successfully updated "${word}"!`);
@@ -699,6 +705,7 @@ function initFormListeners() {
           releaseNotes: notes,
           releasedAt: Date.now()
         });
+        await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url });
         releaseForm.reset();
         alert(`Successfully published KasiGuru v${name} APK release!`);
       } catch (err) {
@@ -733,3 +740,19 @@ window.openModal = function(id) {
 window.closeModal = function(id) {
   document.getElementById(id)?.classList.remove('active');
 };
+
+// ── Admin Audit Log ─────────────────────────────────────────────────────────
+// Append-only record of admin actions (rules: admins create/read, never update/delete).
+async function logAudit(action, details = {}) {
+  try {
+    const actor = (auth.currentUser && auth.currentUser.email) || "unknown";
+    await addDoc(collection(db, "admin_audit_log"), {
+      actor,
+      action,
+      details,
+      timestamp: Date.now()
+    });
+  } catch (e) {
+    console.warn("Audit log write failed:", e);
+  }
+}

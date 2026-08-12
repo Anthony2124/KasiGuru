@@ -21,16 +21,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderQR(url) {
   const canvas = document.getElementById('qr-canvas');
-  if (canvas && window.QRCode && url && url !== '#') {
-    try {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      QRCode.toCanvas(canvas, url, { width: 180, margin: 1 }, (err) => {
-        if (err) console.warn('QR generation error:', err);
-      });
-    } catch (e) {
-      console.warn('QR render error:', e);
+  if (!canvas || !window.qrcode || !url || url === '#') return;
+  try {
+    const ctx = canvas.getContext('2d');
+    const size = Math.min(canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const qr = qrcode(0, 'M'); // type 0 = auto-size, medium error correction
+    qr.addData(url);
+    qr.make();
+
+    const count = qr.getModuleCount();
+    const cell = Math.floor(size / (count + 2)); // 1-module quiet zone
+    const qrSize = cell * count;
+    const offsetX = Math.floor((canvas.width - qrSize) / 2);
+    const offsetY = Math.floor((canvas.height - qrSize) / 2);
+
+    ctx.fillStyle = '#000000';
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        if (qr.isDark(row, col)) {
+          ctx.fillRect(offsetX + col * cell, offsetY + row * cell, cell, cell);
+        }
+      }
     }
+  } catch (e) {
+    console.warn('QR render error:', e);
   }
 }
 
