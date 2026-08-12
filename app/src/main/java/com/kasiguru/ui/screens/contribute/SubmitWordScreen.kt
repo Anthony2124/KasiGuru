@@ -373,6 +373,52 @@ fun SubmitWordScreen(
                                 }
                             }
 
+                            // Part of Speech Dropdown
+                            var expandedPartOfSpeechDropdown by remember { mutableStateOf(false) }
+                            ExposedDropdownMenuBox(
+                                expanded = expandedPartOfSpeechDropdown,
+                                onExpandedChange = { expandedPartOfSpeechDropdown = !expandedPartOfSpeechDropdown },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedTextField(
+                                    value = uiState.partOfSpeech.ifEmpty { "(Select Part of Speech)" },
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Part of Speech") },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.HashtagDown),
+                                            contentDescription = null,
+                                            tint = Color(0xFF168070),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPartOfSpeechDropdown) },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFF168070),
+                                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    )
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expandedPartOfSpeechDropdown,
+                                    onDismissRequest = { expandedPartOfSpeechDropdown = false }
+                                ) {
+                                    viewModel.partsOfSpeech.forEach { pos ->
+                                        DropdownMenuItem(
+                                            text = { Text(pos, fontWeight = FontWeight.Medium) },
+                                            onClick = {
+                                                viewModel.onPartOfSpeechChanged(pos)
+                                                expandedPartOfSpeechDropdown = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
                             // Root Word
                             OutlinedTextField(
                                 value = uiState.rootForm,

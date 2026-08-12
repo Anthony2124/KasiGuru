@@ -18,6 +18,7 @@ data class SubmitWordUiState(
     val english: String = "",
     val rootForm: String = "",
     val category: String = "Greetings & Essentials",
+    val partOfSpeech: String = "",
     val ipaNotation: String = "",
     val exampleSentence: String = "",
     val pastTense: String = "",
@@ -38,6 +39,7 @@ class SubmitWordViewModel @Inject constructor(
     val uiState: StateFlow<SubmitWordUiState> = _uiState.asStateFlow()
 
     val categories = Constants.VocabCategories.ALL
+    val partsOfSpeech = listOf("Noun", "Verb", "Adjective", "Adverb", "Pronoun", "Preposition", "Conjunction / Connector", "Interjection", "Marker & Particle")
 
     fun onKasiguraninChanged(value: String) {
         _uiState.value = _uiState.value.copy(kasiguranin = value, errorMessage = null)
@@ -57,6 +59,10 @@ class SubmitWordViewModel @Inject constructor(
 
     fun onCategoryChanged(value: String) {
         _uiState.value = _uiState.value.copy(category = value)
+    }
+
+    fun onPartOfSpeechChanged(value: String) {
+        _uiState.value = _uiState.value.copy(partOfSpeech = value)
     }
 
     fun onIpaNotationChanged(value: String) {
@@ -113,6 +119,7 @@ class SubmitWordViewModel @Inject constructor(
                 english = state.english.trim(),
                 rootForm = state.rootForm.trim(),
                 category = state.category,
+                partOfSpeech = state.partOfSpeech,
                 ipaNotation = state.ipaNotation.trim(),
                 exampleSentence = state.exampleSentence.trim(),
                 pastTense = state.pastTense.trim(),

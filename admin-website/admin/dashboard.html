@@ -245,13 +245,14 @@
                 <th>Tagalog Translation</th>
                 <th>English Translation</th>
                 <th>Category</th>
+                <th>Part of Speech</th>
                 <th>Contributor</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="submissions-tbody">
-              <tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading submissions queue...</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading submissions queue...</td></tr>
             </tbody>
           </table>
         </div>
@@ -321,12 +322,13 @@
                 <th>Tagalog</th>
                 <th>English</th>
                 <th>Category</th>
+                <th>Part of Speech</th>
                 <th>Conjugations / IPA</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="vocabulary-tbody">
-              <tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading master dictionary...</td></tr>
+              <tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading master dictionary...</td></tr>
             </tbody>
           </table>
         </div>
@@ -399,18 +401,28 @@
         <div class="form-group">
           <label>Category</label>
           <select id="input-category" class="form-control">
-            <option value="Greetings &amp; Essentials">Greetings &amp; Essentials</option>
-            <option value="House &amp; Daily Life">House &amp; Daily Life</option>
-            <option value="Body Parts &amp; Health">Body Parts &amp; Health</option>
-            <option value="Animals &amp; Wildlife">Animals &amp; Wildlife</option>
-            <option value="Food &amp; Dining">Food &amp; Dining</option>
-            <option value="Numbers &amp; Time">Numbers &amp; Time</option>
-            <option value="Weather &amp; Climate">Weather &amp; Climate</option>
-            <option value="Nature &amp; Environment">Nature &amp; Environment</option>
-            <option value="Family &amp; People">Family &amp; People</option>
-            <option value="Emotions &amp; Feelings">Emotions &amp; Feelings</option>
-            <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
-            <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
+            <option value="Greetings & Essentials">Greetings & Essentials</option>
+            <option value="Family & People">Family & People</option>
+            <option value="Numbers & Colors">Numbers & Colors</option>
+            <option value="Food & Dining">Food & Dining</option>
+            <option value="Nature & Weather">Nature & Weather</option>
+            <option value="Actions (Verbs)">Actions (Verbs)</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Part of Speech</label>
+          <select id="input-part-of-speech" class="form-control">
+            <option value="">(Select Part of Speech)</option>
+            <option value="Noun">Noun</option>
+            <option value="Verb">Verb</option>
+            <option value="Adjective">Adjective</option>
+            <option value="Adverb">Adverb</option>
+            <option value="Pronoun">Pronoun</option>
+            <option value="Preposition">Preposition</option>
+            <option value="Conjunction / Connector">Conjunction / Connector</option>
+            <option value="Interjection">Interjection</option>
+            <option value="Marker & Particle">Marker & Particle</option>
           </select>
         </div>
         <div class="form-group">
@@ -461,18 +473,28 @@
         <div class="form-group">
           <label>Category</label>
           <select id="edit-input-category" class="form-control">
-            <option value="Greetings &amp; Essentials">Greetings &amp; Essentials</option>
-            <option value="House &amp; Daily Life">House &amp; Daily Life</option>
-            <option value="Body Parts &amp; Health">Body Parts &amp; Health</option>
-            <option value="Animals &amp; Wildlife">Animals &amp; Wildlife</option>
-            <option value="Food &amp; Dining">Food &amp; Dining</option>
-            <option value="Numbers &amp; Time">Numbers &amp; Time</option>
-            <option value="Weather &amp; Climate">Weather &amp; Climate</option>
-            <option value="Nature &amp; Environment">Nature &amp; Environment</option>
-            <option value="Family &amp; People">Family &amp; People</option>
-            <option value="Emotions &amp; Feelings">Emotions &amp; Feelings</option>
-            <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
-            <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
+            <option value="Greetings & Essentials">Greetings & Essentials</option>
+            <option value="Family & People">Family & People</option>
+            <option value="Numbers & Colors">Numbers & Colors</option>
+            <option value="Food & Dining">Food & Dining</option>
+            <option value="Nature & Weather">Nature & Weather</option>
+            <option value="Actions (Verbs)">Actions (Verbs)</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Part of Speech</label>
+          <select id="edit-input-part-of-speech" class="form-control">
+            <option value="">(Select Part of Speech)</option>
+            <option value="Noun">Noun</option>
+            <option value="Verb">Verb</option>
+            <option value="Adjective">Adjective</option>
+            <option value="Adverb">Adverb</option>
+            <option value="Pronoun">Pronoun</option>
+            <option value="Preposition">Preposition</option>
+            <option value="Conjunction / Connector">Conjunction / Connector</option>
+            <option value="Interjection">Interjection</option>
+            <option value="Marker & Particle">Marker & Particle</option>
           </select>
         </div>
         <div class="form-group">

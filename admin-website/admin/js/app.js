@@ -251,7 +251,7 @@ function renderSubmissionsTable() {
   if (submissions.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+        <td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
           <iconsax-icon name="clock" type="bulk" size="32" color="var(--play-gold-start)"></iconsax-icon>
           <div style="margin-top:8px;">No pending word submissions in queue.</div>
         </td>
@@ -268,6 +268,7 @@ function renderSubmissionsTable() {
       <td>${escapeHtml(sub.tagalog || '-')}</td>
       <td>${escapeHtml(sub.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
+      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
       <td><small>${escapeHtml(sub.contributorName || 'Anonymous')}</small></td>
       <td><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
       <td>
@@ -293,7 +294,7 @@ function renderSubmissionsTable() {
 function renderSubmissionsError(message) {
   const tbody = document.getElementById('submissions-tbody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
   }
 }
 
@@ -310,6 +311,7 @@ async function approveSubmission(id) {
       english: (sub.english || "").trim(),
       rootForm: (sub.rootForm || sub.kasiguranin).trim(),
       category: sub.category || "General",
+      partOfSpeech: sub.partOfSpeech || null,
       ipaNotation: (sub.ipaNotation || "").trim(),
       perfectiveForm: (sub.pastTense || "").trim(),
       imperfectiveForm: (sub.presentTense || "").trim(),
@@ -389,6 +391,7 @@ function renderVocabularyTable() {
       <td>${escapeHtml(item.tagalog || '-')}</td>
       <td>${escapeHtml(item.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></td>
+      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
       <td>${conjugationsBadge}</td>
       <td>
         <div style="display:flex; gap:8px;">
@@ -404,7 +407,7 @@ function renderVocabularyTable() {
 function renderVocabularyError(message) {
   const tbody = document.getElementById('vocabulary-tbody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
   }
 }
 
@@ -432,6 +435,7 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-tagalog').value = item.tagalog || '';
   document.getElementById('edit-input-english').value = item.english || '';
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
+  document.getElementById('edit-input-part-of-speech').value = item.partOfSpeech || '';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
   document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
   document.getElementById('edit-input-imperfective').value = item.imperfectiveForm || '';
@@ -630,6 +634,7 @@ function initFormListeners() {
       const tagalog = document.getElementById('input-tagalog').value.trim();
       const english = document.getElementById('input-english').value.trim();
       const category = document.getElementById('input-category').value;
+      const partOfSpeech = document.getElementById('input-part-of-speech').value;
       const ipa = document.getElementById('input-ipa').value.trim();
       const perfective = document.getElementById('input-perfective').value.trim();
       const imperfective = document.getElementById('input-imperfective').value.trim();
@@ -648,6 +653,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
+          partOfSpeech: partOfSpeech || null,
           ipaNotation: ipa || null,
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,
@@ -673,6 +679,7 @@ function initFormListeners() {
       const tagalog = document.getElementById('edit-input-tagalog').value.trim();
       const english = document.getElementById('edit-input-english').value.trim();
       const category = document.getElementById('edit-input-category').value;
+      const partOfSpeech = document.getElementById('edit-input-part-of-speech').value;
       const ipa = document.getElementById('edit-input-ipa').value.trim();
       const perfective = document.getElementById('edit-input-perfective').value.trim();
       const imperfective = document.getElementById('edit-input-imperfective').value.trim();
@@ -686,6 +693,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
+          partOfSpeech: partOfSpeech || null,
           ipaNotation: ipa || null,
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,

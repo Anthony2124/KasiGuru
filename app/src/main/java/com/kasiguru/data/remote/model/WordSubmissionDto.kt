@@ -10,6 +10,7 @@ data class WordSubmissionDto(
     val english: String = "",
     val rootForm: String = "",
     val category: String = "Greetings & Essentials",
+    val partOfSpeech: String = "",
     val ipaNotation: String = "",
     val exampleSentence: String = "",
     val pastTense: String = "",
