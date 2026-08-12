@@ -2,6 +2,7 @@ package com.kasiguru.ui.components
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,8 +77,14 @@ fun AppUpdateBanner(
                 Button(
                     onClick = {
                         val targetUrl = release.apkUrl.ifBlank { "https://kasiguru.web.app/download.html" }
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl))
-                        context.startActivity(intent)
+                        val uri = Uri.parse(targetUrl)
+                        // Only allow http/https update links (defense against
+                        // javascript:/intent:/etc. URLs in release metadata).
+                        if (uri.scheme == "https" || uri.scheme == "http") {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        } else {
+                            Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: ${uri.scheme}")
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.tertiary

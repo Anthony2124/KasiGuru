@@ -1,13 +1,17 @@
 package com.kasiguru.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Represents a Kasiguranin digital story.
  * Pages are stored as JSON for flexibility.
  */
-@Entity(tableName = "stories")
+@Entity(
+    tableName = "stories",
+    indices = [Index(value = ["requiredXp"], name = "index_stories_requiredXp")]
+)
 data class StoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

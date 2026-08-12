@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.remote.model.WordSubmissionDto
 import com.kasiguru.data.repository.SubmissionRepository
+import com.kasiguru.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,19 +37,7 @@ class SubmitWordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SubmitWordUiState())
     val uiState: StateFlow<SubmitWordUiState> = _uiState.asStateFlow()
 
-    val categories = listOf(
-        "Greetings & Essentials",
-        "Body Parts & Health",
-        "Animals & Wildlife",
-        "Food & Dining",
-        "Numbers & Time",
-        "Weather & Climate",
-        "Nature & Environment",
-        "Family & People",
-        "Emotions & Feelings",
-        "Colors & Shapes",
-        "Occupations & Tools"
-    )
+    val categories = Constants.VocabCategories.ALL
 
     fun onKasiguraninChanged(value: String) {
         _uiState.value = _uiState.value.copy(kasiguranin = value, errorMessage = null)
@@ -96,6 +85,16 @@ class SubmitWordViewModel @Inject constructor(
 
     fun submitWord() {
         val state = _uiState.value
+        // Client-side rate limit: one submission per cooldown window.
+        // (True server-side rate limiting needs Cloud Functions / the Blaze plan.)
+        val now = System.currentTimeMillis()
+        if (state.isLoading) return
+        if (now - lastSubmittedAt < SUBMISSION_COOLDOWN_MS) {
+            _uiState.value = state.copy(
+                errorMessage = "Please wait a moment before submitting another word."
+            )
+            return
+        }
         if (state.kasiguranin.isBlank()) {
             _uiState.value = state.copy(errorMessage = "Please enter the Kasiguranin word")
             return
@@ -127,6 +126,7 @@ class SubmitWordViewModel @Inject constructor(
             val result = submissionRepository.submitWord(submission)
             result.fold(
                 onSuccess = {
+                    lastSubmittedAt = System.currentTimeMillis()
                     _uiState.value = SubmitWordUiState(isSuccess = true)
                 },
                 onFailure = { error ->
@@ -142,4 +142,10 @@ class SubmitWordViewModel @Inject constructor(
     fun resetSuccess() {
         _uiState.value = SubmitWordUiState()
     }
+
+    companion object {
+        private const val SUBMISSION_COOLDOWN_MS = 30_000L
+    }
+
+    private var lastSubmittedAt: Long = 0L
 }

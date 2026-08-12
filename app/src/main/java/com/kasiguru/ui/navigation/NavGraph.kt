@@ -38,7 +38,7 @@ import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
 
 @Composable
-fun KasiGuruNavGraph() {
+fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -68,6 +68,11 @@ fun KasiGuruNavGraph() {
                     if (startDestination != null) {
                         navController.navigate(startDestination!!) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                        // Notification deep link (Phase 5): open the target screen
+                        // after routing (invalid routes are ignored safely).
+                        if (!initialDeepLink.isNullOrBlank()) {
+                            runCatching { navController.navigate(initialDeepLink) }
                         }
                     }
                 }
