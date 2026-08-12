@@ -32,6 +32,21 @@ if (!keyFile || !fs.existsSync(keyFile)) {
   process.exit(1);
 }
 
+// With KASIGURU_BACKUP_DAILY=1, skip if a backup already exists for today
+// (used by the logon-triggered startup task so it is effectively daily).
+if (process.env.KASIGURU_BACKUP_DAILY === '1') {
+  const todayPrefix = new Date().toISOString().slice(0, 10);
+  if (fs.existsSync(outDir)) {
+    const existing = fs
+      .readdirSync(outDir)
+      .filter((n) => n.startsWith(todayPrefix));
+    if (existing.length > 0) {
+      console.log(`Backup already exists for ${todayPrefix} — skipping.`);
+      process.exit(0);
+    }
+  }
+}
+
 admin.initializeApp({
   credential: admin.credential.cert(path.resolve(keyFile))
 });
