@@ -2,6 +2,7 @@ package com.kasiguru.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Log
 import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.entity.UserProgressEntity
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +59,8 @@ class ProgressSyncManager @Inject constructor(
             progressDoc(uid).get().await()
         }.getOrNull()?.data?.let { toEntity(it) }
 
-        val local = userProgressDao.getUserProgressOnce() ?: return
+        val local = userProgressDao.getUserProgressOnce()
+        if (local == null) return
         val merged = if (remote != null) mergeProgress(local, remote) else local
         if (merged != local) {
             userProgressDao.insertOrUpdate(merged)
@@ -83,7 +85,13 @@ class ProgressSyncManager @Inject constructor(
             progressDoc(uid).set(toMap(progress)).await()
         }.onSuccess {
             lastUploaded = key
+        }.onFailure { e ->
+            Log.w(TAG, "upload FAILED", e)
         }
+    }
+
+    private companion object {
+        const val TAG = "ProgressSync"
     }
 
     private fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
