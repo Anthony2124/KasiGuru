@@ -56,7 +56,25 @@ class KasiGuruMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val auth = FirebaseAuth.getInstance()
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            saveToken(uid, token)
+            return
+        }
+        // Anonymous sign-in may still be in flight; save once it completes.
+        auth.addAuthStateListener(object : FirebaseAuth.AuthStateListener {
+            override fun onAuthStateChanged(auth: FirebaseAuth) {
+                val resolvedUid = auth.currentUser?.uid
+                if (resolvedUid != null) {
+                    saveToken(resolvedUid, token)
+                    auth.removeAuthStateListener(this)
+                }
+            }
+        })
+    }
+
+    private fun saveToken(uid: String, token: String) {
         try {
             FirebaseFirestore.getInstance()
                 .collection("device_tokens")
