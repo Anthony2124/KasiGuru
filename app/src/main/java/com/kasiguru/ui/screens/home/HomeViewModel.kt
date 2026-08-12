@@ -2,8 +2,11 @@ package com.kasiguru.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.BuildConfig
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.data.remote.model.AppReleaseDto
+import com.kasiguru.data.repository.AppUpdateRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
-    private val vocabularyRepository: VocabularyRepository
+    private val vocabularyRepository: VocabularyRepository,
+    private val appUpdateRepository: AppUpdateRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -26,6 +30,24 @@ class HomeViewModel @Inject constructor(
         checkAndSeedVocabulary()
         loadProgress()
         updateDailyStreak()
+        checkForUpdate()
+    }
+
+    /**
+     * Fetches the latest published release and exposes it only when it is newer
+     * than the installed build (BuildConfig.VERSION_CODE, not a hardcoded value).
+     */
+    private fun checkForUpdate() {
+        viewModelScope.launch {
+            val latest = appUpdateRepository.getLatestRelease().getOrNull()
+            if (latest != null && latest.versionCode > BuildConfig.VERSION_CODE) {
+                _uiState.value = _uiState.value.copy(updateRelease = latest)
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _uiState.value = _uiState.value.copy(updateRelease = null)
     }
 
     private fun checkAndSeedVocabulary() {
@@ -68,5 +90,6 @@ class HomeViewModel @Inject constructor(
 data class HomeUiState(
     val userProgress: UserProgressEntity? = null,
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val updateRelease: AppReleaseDto? = null
 )

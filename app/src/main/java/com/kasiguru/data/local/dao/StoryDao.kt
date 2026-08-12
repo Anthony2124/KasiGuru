@@ -10,6 +10,9 @@ interface StoryDao {
     @Query("SELECT * FROM stories ORDER BY requiredXp ASC")
     fun getAllStories(): Flow<List<StoryEntity>>
 
+    @Query("SELECT * FROM stories")
+    suspend fun getAllStoriesOnce(): List<StoryEntity>
+
     @Query("SELECT * FROM stories WHERE isUnlocked = 1 ORDER BY id")
     fun getUnlockedStories(): Flow<List<StoryEntity>>
 

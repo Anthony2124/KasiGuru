@@ -22,7 +22,7 @@ service cloud.firestore {
       let data = request.resource.data;
       let allowedKeys = data.keys().hasOnly([
         'id', 'kasiguranin', 'tagalog', 'english', 'rootForm', 'category',
-        'ipaNotation', 'exampleSentence', 'contributorName', 'status', 'submittedAt'
+        'ipaNotation', 'exampleSentence', 'contributorName', 'status', 'submittedAt', 'uid'
       ]);
       return allowedKeys
         && data.kasiguranin is string
@@ -37,6 +37,7 @@ service cloud.firestore {
         && data.contributorName is string && data.contributorName.size() <= 60
         && data.status == 'pending'
         && data.submittedAt is int
+        && data.uid is string && data.uid.size() <= 128
         && (!('id' in data) || data.id == request.resource.id);
     }
 

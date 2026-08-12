@@ -14,5 +14,6 @@ data class WordSubmissionDto(
     val exampleSentence: String = "",
     val contributorName: String = "Anonymous",
     val status: String = "pending", // "pending", "approved", "rejected"
-    val submittedAt: Long = System.currentTimeMillis()
+    val submittedAt: Long = System.currentTimeMillis(),
+    val uid: String = "" // Firebase Auth uid of the submitter ("" if anonymous sign-in hasn't completed)
 )

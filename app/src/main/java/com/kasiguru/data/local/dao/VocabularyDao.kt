@@ -10,6 +10,9 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY category, kasiguranin")
     fun getAllVocabulary(): Flow<List<VocabularyEntity>>
 
+    @Query("SELECT * FROM vocabulary")
+    suspend fun getAllVocabularyOnce(): List<VocabularyEntity>
+
     @Query("SELECT * FROM vocabulary WHERE category = :category ORDER BY kasiguranin")
     fun getVocabularyByCategory(category: String): Flow<List<VocabularyEntity>>
 

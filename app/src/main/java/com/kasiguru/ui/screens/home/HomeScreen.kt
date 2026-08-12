@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
+import com.kasiguru.ui.components.AppUpdateBanner
 import com.kasiguru.ui.components.StreakDialog
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -54,6 +55,14 @@ fun HomeScreen(
     }
 
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
+
+    // ─── Update banner (shown when a newer release is published) ───
+    uiState.updateRelease?.let { release ->
+        AppUpdateBanner(
+            release = release,
+            onDismiss = viewModel::dismissUpdate
+        )
+    }
 
     if (showStreakDialog) {
         StreakDialog(

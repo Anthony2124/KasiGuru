@@ -2,7 +2,6 @@ package com.kasiguru.data.remote
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.dao.StoryDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.StoryEntity
@@ -28,16 +27,16 @@ class FirestoreSyncManager @Inject constructor(
 
     private suspend fun syncVocabulary() {
         val snapshot = firestore.collection("vocabulary").get().await()
-        if (snapshot.isEmpty) {
-            // First time setup: push local seed data to Firestore
-            pushVocabularySeedData()
-            return
-        }
+        // Seeding is admin-only (Firestore rules deny client writes).
+        if (snapshot.isEmpty) return
 
         val cloudWords = snapshot.toObjects(VocabularyEntity::class.java)
-        for (cloudWord in cloudWords) {
-            val localWord = vocabularyDao.getVocabularyByWord(cloudWord.kasiguranin)
-            val wordToSave = if (localWord != null) {
+        val localByWord = vocabularyDao.getAllVocabularyOnce()
+            .associateBy { it.kasiguranin.lowercase() }
+
+        val wordsToSave = cloudWords.map { cloudWord ->
+            val localWord = localByWord[cloudWord.kasiguranin.lowercase()]
+            if (localWord != null) {
                 // Preserve local ID & learning progress fields
                 cloudWord.copy(
                     id = localWord.id,
@@ -50,21 +49,25 @@ class FirestoreSyncManager @Inject constructor(
             } else {
                 cloudWord.copy(id = 0)
             }
-            vocabularyDao.insert(wordToSave)
         }
+
+        if (wordsToSave.isNotEmpty()) {
+            vocabularyDao.insertAll(wordsToSave)
+        }
+        // Deduplicate any legacy duplicates (kept after sync, not on every app start).
+        vocabularyDao.deleteDuplicateWords()
     }
 
     private suspend fun syncStories() {
         val snapshot = firestore.collection("stories").get().await()
-        if (snapshot.isEmpty) {
-            pushStoriesSeedData()
-            return
-        }
+        if (snapshot.isEmpty) return
 
         val cloudStories = snapshot.toObjects(StoryEntity::class.java)
-        for (cloudStory in cloudStories) {
-            val localStory = storyDao.getStoryById(cloudStory.id)
-            val storyToSave = if (localStory != null) {
+        val localById = storyDao.getAllStoriesOnce().associateBy { it.id }
+
+        val storiesToSave = cloudStories.map { cloudStory ->
+            val localStory = localById[cloudStory.id]
+            if (localStory != null) {
                 // Preserve local progress fields
                 cloudStory.copy(
                     isUnlocked = localStory.isUnlocked,
@@ -74,25 +77,10 @@ class FirestoreSyncManager @Inject constructor(
             } else {
                 cloudStory
             }
-            storyDao.insert(storyToSave)
         }
-    }
 
-    private suspend fun pushVocabularySeedData() {
-        val batch = firestore.batch()
-        DatabaseSeeder.getInitialVocabulary().forEach { word ->
-            val docRef = firestore.collection("vocabulary").document(word.id.toString())
-            batch.set(docRef, word)
+        if (storiesToSave.isNotEmpty()) {
+            storyDao.insertAll(storiesToSave)
         }
-        batch.commit().await()
-    }
-
-    private suspend fun pushStoriesSeedData() {
-        val batch = firestore.batch()
-        DatabaseSeeder.getInitialStories().forEach { story ->
-            val docRef = firestore.collection("stories").document(story.id.toString())
-            batch.set(docRef, story)
-        }
-        batch.commit().await()
     }
 }
