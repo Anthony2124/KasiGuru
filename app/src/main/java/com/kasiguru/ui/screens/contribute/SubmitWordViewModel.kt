@@ -19,6 +19,9 @@ data class SubmitWordUiState(
     val category: String = "Greetings & Essentials",
     val ipaNotation: String = "",
     val exampleSentence: String = "",
+    val pastTense: String = "",
+    val presentTense: String = "",
+    val futureTense: String = "",
     val contributorName: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -75,6 +78,18 @@ class SubmitWordViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(exampleSentence = value)
     }
 
+    fun onPastTenseChanged(value: String) {
+        _uiState.value = _uiState.value.copy(pastTense = value)
+    }
+
+    fun onPresentTenseChanged(value: String) {
+        _uiState.value = _uiState.value.copy(presentTense = value)
+    }
+
+    fun onFutureTenseChanged(value: String) {
+        _uiState.value = _uiState.value.copy(futureTense = value)
+    }
+
     fun onContributorNameChanged(value: String) {
         _uiState.value = _uiState.value.copy(contributorName = value)
     }
@@ -101,6 +116,9 @@ class SubmitWordViewModel @Inject constructor(
                 category = state.category,
                 ipaNotation = state.ipaNotation.trim(),
                 exampleSentence = state.exampleSentence.trim(),
+                pastTense = state.pastTense.trim(),
+                presentTense = state.presentTense.trim(),
+                futureTense = state.futureTense.trim(),
                 contributorName = if (state.contributorName.isBlank()) "Anonymous Contributor" else state.contributorName.trim(),
                 status = "pending",
                 submittedAt = System.currentTimeMillis()

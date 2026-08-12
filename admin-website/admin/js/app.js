@@ -311,6 +311,9 @@ async function approveSubmission(id) {
       rootForm: (sub.rootForm || sub.kasiguranin).trim(),
       category: sub.category || "General",
       ipaNotation: (sub.ipaNotation || "").trim(),
+      perfectiveForm: (sub.pastTense || "").trim(),
+      imperfectiveForm: (sub.presentTense || "").trim(),
+      contemplativeForm: (sub.futureTense || "").trim(),
       verifiedByAdmin: true,
       approvedAt: Date.now()
     });
@@ -426,6 +429,9 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-english').value = item.english || '';
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
+  document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
+  document.getElementById('edit-input-imperfective').value = item.imperfectiveForm || '';
+  document.getElementById('edit-input-contemplative').value = item.contemplativeForm || '';
 
   window.openModal('edit-vocab-modal');
 };
@@ -621,6 +627,9 @@ function initFormListeners() {
       const english = document.getElementById('input-english').value.trim();
       const category = document.getElementById('input-category').value;
       const ipa = document.getElementById('input-ipa').value.trim();
+      const perfective = document.getElementById('input-perfective').value.trim();
+      const imperfective = document.getElementById('input-imperfective').value.trim();
+      const contemplative = document.getElementById('input-contemplative').value.trim();
 
       if (!word) return alert("Please enter the Kasiguranin word.");
 
@@ -636,6 +645,9 @@ function initFormListeners() {
           english: english || null,
           category: category,
           ipaNotation: ipa || null,
+          perfectiveForm: perfective || null,
+          imperfectiveForm: imperfective || null,
+          contemplativeForm: contemplative || null,
           createdAt: Date.now()
         });
         addVocabForm.reset();
@@ -657,6 +669,9 @@ function initFormListeners() {
       const english = document.getElementById('edit-input-english').value.trim();
       const category = document.getElementById('edit-input-category').value;
       const ipa = document.getElementById('edit-input-ipa').value.trim();
+      const perfective = document.getElementById('edit-input-perfective').value.trim();
+      const imperfective = document.getElementById('edit-input-imperfective').value.trim();
+      const contemplative = document.getElementById('edit-input-contemplative').value.trim();
 
       if (!word) return alert("Please enter the Kasiguranin word.");
 
@@ -667,6 +682,9 @@ function initFormListeners() {
           english: english || null,
           category: category,
           ipaNotation: ipa || null,
+          perfectiveForm: perfective || null,
+          imperfectiveForm: imperfective || null,
+          contemplativeForm: contemplative || null,
           updatedAt: Date.now()
         });
         editVocabForm.reset();

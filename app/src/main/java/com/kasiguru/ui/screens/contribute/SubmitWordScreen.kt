@@ -421,7 +421,7 @@ fun SubmitWordScreen(
                         }
                     }
 
-                    // Section 3: Contributor Credit Card
+                    // Section 3: Verb Tenses (Optional)
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(20.dp),
@@ -433,7 +433,72 @@ fun SubmitWordScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Text(
-                                text = "3. Contributor Credit",
+                                text = "3. Verb Tenses (Optional)",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF0F172A)
+                            )
+
+                            // Past Tense
+                            OutlinedTextField(
+                                value = uiState.pastTense,
+                                onValueChange = { viewModel.onPastTenseChanged(it) },
+                                label = { Text("Past Tense") },
+                                placeholder = { Text("e.g. naglakaw") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF168070),
+                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                )
+                            )
+
+                            // Present Tense
+                            OutlinedTextField(
+                                value = uiState.presentTense,
+                                onValueChange = { viewModel.onPresentTenseChanged(it) },
+                                label = { Text("Present Tense") },
+                                placeholder = { Text("e.g. nagalakaw") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF168070),
+                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                )
+                            )
+
+                            // Future Tense
+                            OutlinedTextField(
+                                value = uiState.futureTense,
+                                onValueChange = { viewModel.onFutureTenseChanged(it) },
+                                label = { Text("Future Tense") },
+                                placeholder = { Text("e.g. magalakaw") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF168070),
+                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                )
+                            )
+                        }
+                    }
+
+                    // Section 4: Contributor Credit Card
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, cardBorderColor),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text(
+                                text = "4. Contributor Credit",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
                                 color = Color(0xFF0F172A)
