@@ -91,12 +91,20 @@ Verify:
 The repo now serves a neutral placeholder at the site root instead of the
 unauthenticated admin panel.
 
-1. Redeploy the **`kasi-guru`** (root) Vercel project so the placeholder goes live.
-2. Confirm the root domain no longer exposes any admin UI (dashboard, imports,
-   releases, etc.).
-3. Recommended: in Vercel, redirect the root domain to the **`admin`** project URL,
-   then delete the root project once nothing links to it. Update the TODO comment
-   in `admin-website/index.html` when you do.
+Deploy all three portals with one command (no Vercel team/payment needed —
+deploys run from your own account via the CLI):
+
+```powershell
+.\scripts\deploy_web.ps1
+```
+
+The script deploys `admin-website/`, `admin-website/admin/`, and
+`admin-website/download/` to the `kasi-guru`, `admin`, and `download` projects,
+aliasing to the canonical URLs. Authentication is via `vercel login`,
+`$env:VERCEL_TOKEN`, or a private token file at `C:\KasiGuru\.vercel_token`.
+
+After deploying, confirm the root domains show the "Restricted Area" placeholder
+and expose no admin UI.
 
 The **`admin`** project now enforces the admin claim client-side; the **`download`**
 project is unchanged.
