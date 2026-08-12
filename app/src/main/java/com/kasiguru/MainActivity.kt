@@ -40,6 +40,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Deep link target from a notification tap (Phase 5).
+        val deepLinkRoute = intent?.getStringExtra("deep_link_route")
+
         // Android 13+: request notification permission so streak reminders work.
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -61,7 +64,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isDarkMode by userPreferencesRepository.isDarkMode.collectAsState(initial = false)
             KasiGuruTheme(darkTheme = isDarkMode) {
-                KasiGuruNavGraph()
+                KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
             }
         }
     }

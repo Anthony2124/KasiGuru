@@ -81,6 +81,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    // FCM device tokens (Phase 5): each user manages only their own token doc.
+    match /device_tokens/{userId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Deny everything else by default (explicit allow rules only).
   }
 }

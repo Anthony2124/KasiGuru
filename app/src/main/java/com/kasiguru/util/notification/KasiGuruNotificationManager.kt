@@ -53,4 +53,42 @@ object KasiGuruNotificationManager {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
+
+    /**
+     * Posts an FCM notification whose tap opens the app at the deep-link route
+     * (Phase 5). Uses a unique id per message so pushes don't overwrite each other.
+     */
+    fun sendNotification(
+        context: Context,
+        title: String,
+        message: String,
+        deepLinkRoute: String = ""
+    ) {
+        createNotificationChannel(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("deep_link_route", deepLinkRoute)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val uniqueId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        notificationManager.notify(uniqueId, builder.build())
+    }
 }
