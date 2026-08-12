@@ -2,13 +2,22 @@ package com.kasiguru.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Represents a Kasiguranin vocabulary word with its translations,
  * four aspectual verb forms, and SuperMemo-2 (SM-2) Spaced Repetition parameters.
  */
-@Entity(tableName = "vocabulary")
+@Entity(
+    tableName = "vocabulary",
+    indices = [
+        Index(value = ["category"], name = "index_vocabulary_category"),
+        Index(value = ["isLearned"], name = "index_vocabulary_isLearned"),
+        Index(value = ["nextReviewDate"], name = "index_vocabulary_nextReviewDate"),
+        Index(value = ["timesReviewed"], name = "index_vocabulary_timesReviewed")
+    ]
+)
 data class VocabularyEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

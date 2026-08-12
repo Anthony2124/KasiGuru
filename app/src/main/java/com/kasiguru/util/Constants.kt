@@ -52,6 +52,21 @@ object Constants {
         const val BODY = "Body"
         const val ANIMALS = "Animals"
         const val DAILY = "Daily Activities"
+
+        // Single source of truth for the category dropdowns (Submit Word screen).
+        val ALL = listOf(
+            "Greetings & Essentials",
+            "Body Parts & Health",
+            "Animals & Wildlife",
+            "Food & Dining",
+            "Numbers & Time",
+            "Weather & Climate",
+            "Nature & Environment",
+            "Family & People",
+            "Emotions & Feelings",
+            "Colors & Shapes",
+            "Occupations & Tools"
+        )
     }
 
     // Achievement IDs

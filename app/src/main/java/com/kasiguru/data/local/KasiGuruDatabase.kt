@@ -19,7 +19,7 @@ import com.kasiguru.data.local.entity.*
         NotificationEntity::class,
         GameLevelEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.remote.model.WordSubmissionDto
 import com.kasiguru.data.repository.SubmissionRepository
+import com.kasiguru.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,19 +34,7 @@ class SubmitWordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SubmitWordUiState())
     val uiState: StateFlow<SubmitWordUiState> = _uiState.asStateFlow()
 
-    val categories = listOf(
-        "Greetings & Essentials",
-        "Body Parts & Health",
-        "Animals & Wildlife",
-        "Food & Dining",
-        "Numbers & Time",
-        "Weather & Climate",
-        "Nature & Environment",
-        "Family & People",
-        "Emotions & Feelings",
-        "Colors & Shapes",
-        "Occupations & Tools"
-    )
+    val categories = Constants.VocabCategories.ALL
 
     fun onKasiguraninChanged(value: String) {
         _uiState.value = _uiState.value.copy(kasiguranin = value, errorMessage = null)

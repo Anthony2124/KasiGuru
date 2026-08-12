@@ -1,5 +1,7 @@
 package com.kasiguru.util.gamification
 
+import com.kasiguru.util.Constants
+
 data class LevelInfo(
     val level: Int,
     val title: String,
@@ -21,48 +23,40 @@ data class BadgeInfo(
 
 object GamificationEngine {
 
-    val LEVELS = listOf(
-        LevelInfo(
-            level = 1,
-            title = "Novice Explorer",
-            minXp = 0,
-            maxXp = 99,
-            iconEmoji = "🌱",
-            unlockedGameTypes = listOf("word_match")
-        ),
-        LevelInfo(
-            level = 2,
-            title = "Vocab Apprentice",
-            minXp = 100,
-            maxXp = 249,
-            iconEmoji = "📚",
-            unlockedGameTypes = listOf("word_match", "fill_blank")
-        ),
-        LevelInfo(
-            level = 3,
-            title = "Linguistic Scholar",
-            minXp = 250,
-            maxXp = 499,
-            iconEmoji = "🎧",
-            unlockedGameTypes = listOf("word_match", "fill_blank", "audio_quiz")
-        ),
-        LevelInfo(
-            level = 4,
-            title = "Grammar Specialist",
-            minXp = 500,
-            maxXp = 999,
-            iconEmoji = "⚡",
-            unlockedGameTypes = listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder")
-        ),
-        LevelInfo(
-            level = 5,
-            title = "Kasiguranin Legend",
-            minXp = 1000,
-            maxXp = Int.MAX_VALUE,
-            iconEmoji = "👑",
-            unlockedGameTypes = listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
-        )
+    // Titles, icons, and game unlocks for the five display ranks (1-5).
+    // XP boundaries are derived from Constants.LEVEL_THRESHOLDS (the single
+    // source of truth) so the level shown in the UI always agrees with the
+    // stored user level and achievements. Ranks cap at 5 ("Kasiguranin Legend"),
+    // even though the stored level can reach 10.
+    private val LEVEL_TITLES = listOf(
+        "Novice Explorer",
+        "Vocab Apprentice",
+        "Linguistic Scholar",
+        "Grammar Specialist",
+        "Kasiguranin Legend"
     )
+
+    private val LEVEL_ICONS = listOf("🌱", "📚", "🎧", "⚡", "👑")
+
+    private val LEVEL_GAME_UNLOCKS = listOf(
+        listOf("word_match"),
+        listOf("word_match", "fill_blank"),
+        listOf("word_match", "fill_blank", "audio_quiz"),
+        listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder"),
+        listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+    )
+
+    val LEVELS: List<LevelInfo> =
+        Constants.LEVEL_THRESHOLDS.take(5).mapIndexed { i, minXp ->
+            LevelInfo(
+                level = i + 1,
+                title = LEVEL_TITLES[i],
+                minXp = minXp,
+                maxXp = if (i == 4) Int.MAX_VALUE else Constants.LEVEL_THRESHOLDS[i + 1] - 1,
+                iconEmoji = LEVEL_ICONS[i],
+                unlockedGameTypes = LEVEL_GAME_UNLOCKS[i]
+            )
+        }
 
     fun getLevelInfo(totalXp: Int): LevelInfo {
         return LEVELS.lastOrNull { totalXp >= it.minXp } ?: LEVELS.first()

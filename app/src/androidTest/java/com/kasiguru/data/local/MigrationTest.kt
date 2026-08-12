@@ -30,7 +30,7 @@ class MigrationTest {
     fun migrateAllVersionsFromEmpty() {
         // Start from an empty v1 database and validate every step to v17.
         helper.createDatabase(testDbName, 1).close()
-        helper.runMigrationsAndValidate(testDbName, 17, true, *KasiGuruMigrations.ALL)
+        helper.runMigrationsAndValidate(testDbName, 18, true, *KasiGuruMigrations.ALL)
     }
 
     @Test
@@ -48,7 +48,7 @@ class MigrationTest {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(testDbName, 17, true, *KasiGuruMigrations.ALL)
+        val db = helper.runMigrationsAndValidate(testDbName, 18, true, *KasiGuruMigrations.ALL)
         db.query("SELECT kasiguranin, easinessFactor, intervalDays FROM vocabulary WHERE id = 1").use { cursor ->
             check(cursor.moveToFirst()) { "seeded row was lost during migration" }
             check(cursor.getString(0) == "abben") { "kasiguranin mismatch" }

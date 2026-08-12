@@ -39,7 +39,8 @@ object KasiGuruMigrations {
         MIGRATION_13_14,
         MIGRATION_14_15,
         MIGRATION_15_16,
-        MIGRATION_16_17
+        MIGRATION_16_17,
+        MIGRATION_17_18
         )
     }
 
@@ -346,6 +347,19 @@ object KasiGuruMigrations {
                 "CREATE INDEX IF NOT EXISTS `index_conjugations_vocabulary_id` " +
                     "ON `conjugations` (`vocabulary_id`)"
             )
+        }
+    }
+
+    // -- v17 -> v18 -----------------------------------------------------------
+    // Performance indexes on hot query columns (Phase 3). Index-only change:
+    // no columns added/removed, so the migration just creates the indexes.
+    private val MIGRATION_17_18 = object : Migration(17, 18) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_vocabulary_category` ON `vocabulary` (`category`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_vocabulary_isLearned` ON `vocabulary` (`isLearned`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_vocabulary_nextReviewDate` ON `vocabulary` (`nextReviewDate`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_vocabulary_timesReviewed` ON `vocabulary` (`timesReviewed`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_stories_requiredXp` ON `stories` (`requiredXp`)")
         }
     }
 }
