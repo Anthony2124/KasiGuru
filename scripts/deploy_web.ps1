@@ -15,7 +15,10 @@
 #   admin-website/admin/     -> admin project       (login + dashboard)
 #   admin-website/download/  -> download project    (public APK page)
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
+# Prevent native stderr (e.g. the vercel CLI banner) from becoming terminating
+# errors when output is piped/redirected (PowerShell 7.3+).
+$PSNativeCommandUseErrorActionPreference = $false
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
 if (-not (Get-Command vercel -ErrorAction SilentlyContinue)) {
