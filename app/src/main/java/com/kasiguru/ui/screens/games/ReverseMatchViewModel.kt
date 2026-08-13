@@ -23,8 +23,13 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+/**
+ * Reverse Match: the learner sees the Tagalog meaning and must pick the
+ * Kasiguranin word — the opposite direction of Word Match, which forces
+ * recall of the language itself rather than recognition of its meaning.
+ */
 @HiltViewModel
-class FillBlankViewModel @Inject constructor(
+class ReverseMatchViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
@@ -34,8 +39,8 @@ class FillBlankViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
-    private val _uiState = MutableStateFlow(FillBlankUiState())
-    val uiState: StateFlow<FillBlankUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ReverseMatchUiState())
+    val uiState: StateFlow<ReverseMatchUiState> = _uiState.asStateFlow()
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
@@ -48,27 +53,30 @@ class FillBlankViewModel @Inject constructor(
 
     private fun startGame() {
         viewModelScope.launch {
-            _uiState.value = FillBlankUiState(isLoading = true)
-            
-            val levelInfo = gameLevelRepository.getLevel("fill_blank", levelNumber)
+            _uiState.value = ReverseMatchUiState(isLoading = true)
+
+            val levelInfo = gameLevelRepository.getLevel("reverse_match", levelNumber)
             if (levelInfo != null) {
                 totalInitialQuestions = levelInfo.questionsCount
             }
-            
-            val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
-            val verbsWithAspects = list.filter { 
-                it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.exampleSentence.isNotBlank() 
-            }
-            val pool = if (verbsWithAspects.isNotEmpty()) verbsWithAspects else list
-            
-            if (pool.isEmpty()) {
-                _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
-                return@launch
+
+            var words = vocabularyRepository.getFreshWords(totalInitialQuestions)
+            if (words.isEmpty()) {
+                val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
+                words = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()
             }
 
             questionQueue.clear()
-            questionQueue.addAll(pool.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled())
+            questionQueue.addAll(words)
             earnedXpTotal = 0
+
+            if (questionQueue.isEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isGameOver = true
+                )
+                return@launch
+            }
 
             loadNextQuestion()
         }
@@ -81,69 +89,21 @@ class FillBlankViewModel @Inject constructor(
             return
         }
 
-        val targetVerb = questionQueue[state.currentQuestionIndex]
-        val rawAspects = listOf(
-            targetVerb.neutralForm,
-            targetVerb.imperfectiveForm,
-            targetVerb.perfectiveForm,
-            targetVerb.contemplativeForm
-        ).filter { it.isNotBlank() }
-
-        val aspects = if (rawAspects.isNotEmpty()) rawAspects else listOf(targetVerb.kasiguranin)
-
-        val correctAnswer = aspects.random()
-        val sentenceContext = if (targetVerb.exampleSentence.contains(correctAnswer, ignoreCase = true)) {
-            targetVerb.exampleSentence.replace(correctAnswer, "____", ignoreCase = true)
-        } else {
-            when (correctAnswer) {
-                targetVerb.neutralForm -> listOf(
-                    "Karon na, ____ tam!",
-                    "Gusto ko ____.",
-                    "Kailangan tam ____.",
-                    "Dapat kang ____."
-                ).random()
-                targetVerb.imperfectiveForm -> listOf(
-                    "Ngayon, siya ay ____.",
-                    "Habang maaga, kami ay ____.",
-                    "Palagi siyang ____.",
-                    "Bakit ka ____?"
-                ).random()
-                targetVerb.perfectiveForm -> listOf(
-                    "Kagibi, ____ na siya.",
-                    "Sino ang ____ kahapon?",
-                    "Kanina, ____ ako.",
-                    "Nang makita ko siya, ____ na siya."
-                ).random()
-                targetVerb.contemplativeForm -> listOf(
-                    "Niilaw, ____ akú.",
-                    "Mamaya, ____ tayo.",
-                    "Sa susunod na linggo, ____ siya.",
-                    "Sigurado akong ____ sila bukas."
-                ).random()
-                else -> listOf(
-                    "____ ang anák.",
-                    "Maganda ang ____.",
-                    "Gusto ko ng ____.",
-                    "Nasaan ang ____?",
-                    "Malaki ang ____."
-                ).random()
-            }
-        }
+        val targetWord = questionQueue[state.currentQuestionIndex]
 
         viewModelScope.launch {
-            val distractorEntities = vocabularyRepository.getDistractorsForWord(targetVerb, 3)
-            val distractors = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
-            val options = (aspects + distractors).distinct().take(4).shuffled()
+            val wrongEntities = vocabularyRepository.getDistractorsForWord(targetWord, 3)
+            val wrongOptions = wrongEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
+
+            val allOptions = (wrongOptions + targetWord.kasiguranin).distinct().shuffled()
             questionStartTimeMs = System.currentTimeMillis()
 
             _uiState.value = state.copy(
                 isLoading = false,
-                currentVerb = targetVerb,
-                sentenceTemplate = sentenceContext,
-                options = options,
+                currentWord = targetWord,
+                options = allOptions,
                 selectedOption = null,
                 isCorrect = null,
-                correctAnswer = correctAnswer,
                 totalQuestions = totalInitialQuestions
             )
         }
@@ -153,8 +113,8 @@ class FillBlankViewModel @Inject constructor(
         val state = _uiState.value
         if (state.selectedOption != null) return
 
-        val targetVerb = state.currentVerb ?: return
-        val isCorrect = option == state.correctAnswer
+        val targetWord = state.currentWord ?: return
+        val isCorrect = option == targetWord.kasiguranin
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
         val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
@@ -174,7 +134,7 @@ class FillBlankViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            vocabularyRepository.processWordReview(targetVerb, rating)
+            vocabularyRepository.processWordReview(targetWord, rating)
 
             delay(if (isCorrect) 1500 else 2600)
             _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
@@ -189,14 +149,14 @@ class FillBlankViewModel @Inject constructor(
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
-                gameType = "fill_blank",
+                gameType = "reverse_match",
                 score = state.score,
                 totalQuestions = totalInitialQuestions,
                 xpEarned = xpEarned,
                 playedAt = LocalDateTime.now().toIsoString()
             )
             gameRepository.saveScore(scoreEntity)
-            
+
             val successRate = state.score.toFloat() / totalInitialQuestions
             val starsEarned = when {
                 successRate >= 1.0f -> 3
@@ -204,12 +164,12 @@ class FillBlankViewModel @Inject constructor(
                 successRate >= 0.4f -> 1
                 else -> 0
             }
-            gameLevelRepository.saveLevelResult("fill_blank", levelNumber, starsEarned)
+            gameLevelRepository.saveLevelResult("reverse_match", levelNumber, starsEarned)
 
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
             userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
-            
+
             if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
@@ -224,12 +184,10 @@ class FillBlankViewModel @Inject constructor(
     }
 }
 
-data class FillBlankUiState(
+data class ReverseMatchUiState(
     val isLoading: Boolean = true,
     val currentQuestionIndex: Int = 0,
-    val currentVerb: VocabularyEntity? = null,
-    val sentenceTemplate: String = "",
-    val correctAnswer: String = "",
+    val currentWord: VocabularyEntity? = null,
     val options: List<String> = emptyList(),
     val selectedOption: String? = null,
     val isCorrect: Boolean? = null,

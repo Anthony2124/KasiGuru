@@ -153,13 +153,14 @@ fun WordMatchGameScreen(
             // Options List
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 uiState.options.forEach { option ->
+                    val isAnswered = uiState.selectedOption != null
                     val isSelected = uiState.selectedOption == option
-                    val isCorrect = isSelected && (option == uiState.currentWord?.english || option == uiState.currentWord?.tagalog)
-                    val isWrong = isSelected && !isCorrect
+                    val isTheAnswer = option == uiState.currentWord?.tagalog
+                    val isChosenWrong = isSelected && !isTheAnswer
 
                     val optionBgColor = when {
-                        isCorrect -> QuestsCardStart
-                        isWrong -> Error.copy(alpha = 0.2f)
+                        isAnswered && isTheAnswer -> QuestsCardStart
+                        isChosenWrong -> Error.copy(alpha = 0.2f)
                         else -> MaterialTheme.colorScheme.surface
                     }
 
@@ -184,7 +185,7 @@ fun WordMatchGameScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack
                             )
-                            if (isCorrect) {
+                            if (isAnswered && isTheAnswer) {
                                 Icon(
                                     painter = painterResource(id = Iconsax.TickCircle),
                                     contentDescription = "Correct",
@@ -195,6 +196,18 @@ fun WordMatchGameScreen(
                         }
                     }
                 }
+            }
+
+            // Teaching moment: reveal the correct answer after a mistake
+            if (uiState.selectedOption != null && uiState.isCorrect == false) {
+                Text(
+                    text = "Correct answer: ${uiState.currentWord?.tagalog ?: ""}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Success,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

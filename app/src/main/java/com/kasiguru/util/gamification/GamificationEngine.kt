@@ -40,10 +40,10 @@ object GamificationEngine {
 
     private val LEVEL_GAME_UNLOCKS = listOf(
         listOf("word_match"),
-        listOf("word_match", "fill_blank"),
-        listOf("word_match", "fill_blank", "audio_quiz"),
-        listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder"),
-        listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+        listOf("word_match", "reverse_match", "fill_blank"),
+        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz"),
+        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder"),
+        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
     )
 
     val LEVELS: List<LevelInfo> =
@@ -77,6 +77,7 @@ object GamificationEngine {
     fun isGameUnlocked(gameType: String, userLevel: Int, accuracyRate: Float = 1.0f): Boolean {
         val minReq = when (gameType) {
             "word_match" -> 1
+            "reverse_match" -> 2
             "fill_blank" -> 2
             "audio_quiz" -> 3
             "aspect_builder" -> 4
@@ -90,6 +91,7 @@ object GamificationEngine {
     fun getRequiredLevelForGame(gameType: String): Int {
         return when (gameType) {
             "word_match" -> 1
+            "reverse_match" -> 2
             "fill_blank" -> 2
             "audio_quiz" -> 3
             "aspect_builder" -> 4

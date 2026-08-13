@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.games
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,9 +26,9 @@ import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AspectBuilderGameScreen(
+fun ReverseMatchGameScreen(
     onNavigateBack: () -> Unit,
-    viewModel: AspectBuilderViewModel = hiltViewModel()
+    viewModel: ReverseMatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -34,7 +37,7 @@ fun AspectBuilderGameScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Aspect Builder",
+                        "Reverse Match",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack
@@ -59,45 +62,7 @@ fun AspectBuilderGameScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = HeroCardStart)
-            }
-            return@Scaffold
-        }
-
-        if (uiState.isUnavailable) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.Flash),
-                    contentDescription = null,
-                    tint = HeroCardStart,
-                    modifier = Modifier.size(56.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Aspect Builder is coming soon",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "We are documenting the verb aspect forms with our language experts. Check back after the next dictionary update!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onNavigateBack) {
-                    Text("Back to Games")
-                }
+                CircularProgressIndicator(color = VocabCardEnd)
             }
             return@Scaffold
         }
@@ -106,7 +71,7 @@ fun AspectBuilderGameScreen(
             GameOverView(
                 score = uiState.score,
                 total = uiState.totalQuestions,
-                xpEarned = uiState.xpEarned,
+                xpEarned = uiState.finalXp,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
                 modifier = Modifier.padding(padding)
@@ -114,8 +79,7 @@ fun AspectBuilderGameScreen(
             return@Scaffold
         }
 
-        val question = uiState.questions.getOrNull(uiState.currentIndex) ?: return@Scaffold
-        val qIndex = uiState.currentIndex + 1
+        val roundNum = uiState.currentQuestionIndex + 1
 
         Column(
             modifier = Modifier
@@ -127,8 +91,8 @@ fun AspectBuilderGameScreen(
             // Header Progress
             Column {
                 KasiGuruProgressBar(
-                    progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
-                    gradientColors = listOf(HeroCardStart, HeroCardEnd)
+                    progress = roundNum.toFloat() / uiState.totalQuestions.toFloat(),
+                    gradientColors = listOf(VocabCardStart, VocabCardEnd)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
@@ -137,14 +101,14 @@ fun AspectBuilderGameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Question $qIndex/${uiState.totalQuestions}",
+                        text = "Round $roundNum/${uiState.totalQuestions}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextHeadingBlack
                     )
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = HeroCardStart
+                        color = VocabCardStart
                     ) {
                         Text(
                             text = "Score: ${uiState.score}",
@@ -157,7 +121,7 @@ fun AspectBuilderGameScreen(
                 }
             }
 
-            // Prompt Card
+            // Prompt Card: Tagalog meaning, English hint
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,35 +131,39 @@ fun AspectBuilderGameScreen(
                 shadowElevation = 2.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Root Verb: ${question.rootWord.uppercase()}",
+                        text = "Match the Tagalog Word:",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextSubtleGray
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Form required: ${question.targetAspect}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        text = uiState.currentWord?.tagalog ?: "",
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Black,
+                        color = TextHeadingBlack,
+                        fontSize = 32.sp
                     )
-                    Text(
-                        text = "Meaning: \"${question.translation}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSubtleGray
-                    )
+                    if (!uiState.currentWord?.english.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "(${uiState.currentWord?.english})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSubtleGray
+                        )
+                    }
                 }
             }
 
-            // Option Cards
+            // Options List (Kasiguranin words)
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                question.options.forEach { option ->
-                    val isAnswered = uiState.selectedAnswer != null
-                    val isSelected = uiState.selectedAnswer == option
-                    val isTheAnswer = option == question.correctAnswer
+                uiState.options.forEach { option ->
+                    val isAnswered = uiState.selectedOption != null
+                    val isSelected = uiState.selectedOption == option
+                    val isTheAnswer = option == uiState.currentWord?.kasiguranin
                     val isChosenWrong = isSelected && !isTheAnswer
 
                     val optionBgColor = when {
@@ -207,8 +175,8 @@ fun AspectBuilderGameScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = uiState.selectedAnswer == null) {
-                                viewModel.submitAnswer(option)
+                            .clickable(enabled = uiState.selectedOption == null) {
+                                viewModel.selectOption(option)
                             },
                         shape = RoundedCornerShape(20.dp),
                         color = optionBgColor,
@@ -239,9 +207,9 @@ fun AspectBuilderGameScreen(
             }
 
             // Teaching moment: reveal the correct answer after a mistake
-            if (uiState.selectedAnswer != null && uiState.isCorrect == false) {
+            if (uiState.selectedOption != null && uiState.isCorrect == false) {
                 Text(
-                    text = "Correct answer: ${question.correctAnswer}",
+                    text = "Correct answer: ${uiState.currentWord?.kasiguranin ?: ""}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = Success,

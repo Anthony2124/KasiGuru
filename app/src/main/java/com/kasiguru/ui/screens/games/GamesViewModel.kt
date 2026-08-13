@@ -54,6 +54,7 @@ class GamesViewModel @Inject constructor(
             }
             launch {
                 val wmHigh = gameRepository.getHighScore("word_match")
+                val rmHigh = gameRepository.getHighScore("reverse_match")
                 val fbHigh = gameRepository.getHighScore("fill_blank")
                 val aqHigh = gameRepository.getHighScore("audio_quiz")
                 val abHigh = gameRepository.getHighScore("aspect_builder")
@@ -62,6 +63,7 @@ class GamesViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     highScores = mapOf(
                         "word_match" to (wmHigh?.score ?: 0),
+                        "reverse_match" to (rmHigh?.score ?: 0),
                         "fill_blank" to (fbHigh?.score ?: 0),
                         "audio_quiz" to (aqHigh?.score ?: 0),
                         "aspect_builder" to (abHigh?.score ?: 0),

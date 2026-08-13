@@ -98,6 +98,19 @@ object GameRulesRegistry {
                 "Earn +150 XP for perfect syntax construction!"
             ),
             gradient = listOf(StoriesCardStart, StoriesCardEnd)
+        ),
+        "reverse_match" to GameRuleInfo(
+            gameType = "reverse_match",
+            title = "Reverse Match",
+            description = "See the Tagalog meaning and recall the Kasiguranin word — the reverse of Word Match.",
+            iconRes = Iconsax.RepeatOutline,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.REVERSE_MATCH,
+            rules = listOf(
+                "Read the Tagalog (or English) meaning.",
+                "Pick the matching Kasiguranin word from 4 choices.",
+                "Recall is harder than recognition — answer fast for bonus XP!"
+            ),
+            gradient = listOf(PlayPurpleStart, PlayPurpleEnd)
         )
     )
 }

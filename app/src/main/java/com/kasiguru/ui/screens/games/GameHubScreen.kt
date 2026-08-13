@@ -265,7 +265,19 @@ fun GameHubScreen(
                                 selectedGameRulesType = "sentence_order"
                             }
                         )
-                        Spacer(modifier = Modifier.weight(1f))
+                        GameTileCardWithLock(
+                            modifier = Modifier.weight(1f),
+                            title = "Reverse Match",
+                            iconRes = Iconsax.RepeatOutline,
+                            highScore = uiState.highScores["reverse_match"] ?: 0,
+                            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.REVERSE_MATCH,
+                            totalStars = uiState.totalStars,
+                            gradient = listOf(PlayPurpleStart, PlayPurpleEnd),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGameRulesType = "reverse_match"
+                            }
+                        )
                     }
                 }
             }
@@ -285,8 +297,9 @@ fun GameHubScreen(
                 items(uiState.recentScores) { score ->
                     ScoreRow(
                         gameName = when (score.gameType) {
-                            "word_match" -> "Word Match Blitz"
-                            "fill_blank" -> "Fill in the Blank"
+            "word_match" -> "Word Match Blitz"
+            "reverse_match" -> "Reverse Match"
+            "fill_blank" -> "Fill in the Blank"
                             "audio_quiz" -> "Audio Quiz"
                             "aspect_builder" -> "Aspect Builder"
                             "sentence_order" -> "Sentence Construction"

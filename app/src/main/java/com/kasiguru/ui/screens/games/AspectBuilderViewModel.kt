@@ -10,6 +10,7 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
+import com.kasiguru.util.srs.ReviewRatingMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,7 @@ data class AspectBuilderUiState(
     val score: Int = 0,
     val xpEarned: Int = 0,
     val isGameOver: Boolean = false,
+    val isUnavailable: Boolean = false,
     val isLoading: Boolean = true,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5
@@ -72,6 +74,12 @@ class AspectBuilderViewModel @Inject constructor(
 
             val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
             val questions = generateAspectQuestions(list, totalInitialQuestions)
+            if (questions.isEmpty()) {
+                // No verbs with documented aspect forms yet: show the
+                // "coming soon" state instead of an empty broken game.
+                _uiState.update { it.copy(isLoading = false, isUnavailable = true) }
+                return@launch
+            }
             questionQueue.clear()
             questionQueue.addAll(questions)
             totalInitialQuestions = questions.size
@@ -134,18 +142,11 @@ class AspectBuilderViewModel @Inject constructor(
         val correct = answer == currentQ.correctAnswer
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val rating: ReviewRating
-        val questionXp: Int
-
-        if (correct) {
-            rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
-            questionXp = when {
-                rating == ReviewRating.HARD -> 5
-                else -> Constants.XP_PER_GAME_CORRECT
-            }
+        val rating = ReviewRatingMapper.ratingForAnswer(correct, responseTimeMs)
+        val questionXp = if (correct) {
+            if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
         } else {
-            rating = ReviewRating.AGAIN
-            questionXp = 0
+            0
         }
 
         val newScore = if (correct) state.score + 1 else state.score

@@ -11,6 +11,7 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
+import com.kasiguru.util.srs.ReviewRatingMapper
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -111,18 +112,11 @@ class WordMatchViewModel @Inject constructor(
         val isCorrect = option == targetWord.tagalog
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val rating: ReviewRating
-        val questionXp: Int
-
-        if (isCorrect) {
-            rating = if (responseTimeMs < 1200) ReviewRating.HARD else ReviewRating.GOOD
-            questionXp = when {
-                rating == ReviewRating.HARD -> 5
-                else -> Constants.XP_PER_GAME_CORRECT
-            }
+        val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
+        val questionXp = if (isCorrect) {
+            if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
         } else {
-            rating = ReviewRating.AGAIN
-            questionXp = 0
+            0
         }
 
         earnedXpTotal += questionXp
@@ -137,7 +131,7 @@ class WordMatchViewModel @Inject constructor(
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
 
-            delay(1500)
+            delay(if (isCorrect) 1500 else 2600)
             _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
             loadNextQuestion()
         }

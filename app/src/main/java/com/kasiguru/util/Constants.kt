@@ -87,6 +87,7 @@ object Constants {
     // Games
     object Games {
         const val WORD_MATCH = "word_match"
+        const val REVERSE_MATCH = "reverse_match"
         const val ASPECT_BUILDER = "aspect_builder"
         const val SENTENCE_ORDER = "sentence_order"
     }
@@ -98,6 +99,7 @@ object Constants {
         const val AUDIO_QUIZ = 90
         const val ASPECT_BUILDER = 135
         const val SENTENCE_ORDER = 180
+        const val REVERSE_MATCH = 225
     }
 
     // DataStore keys

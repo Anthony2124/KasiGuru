@@ -12,7 +12,7 @@ object DatabaseSeeder {
 
     fun getInitialGameLevels(): List<GameLevelEntity> {
         val levels = mutableListOf<GameLevelEntity>()
-        val gameTypes = listOf("word_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+        val gameTypes = listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
         
         for (game in gameTypes) {
             for (levelNum in 1..30) {

@@ -27,6 +27,9 @@ sealed class Screen(val route: String) {
     data object WordMatchGame : Screen("games/word_match/{level}") {
         fun createRoute(level: Int) = "games/word_match/$level"
     }
+    data object ReverseMatchGame : Screen("games/reverse_match/{level}") {
+        fun createRoute(level: Int) = "games/reverse_match/$level"
+    }
     data object FillBlankGame : Screen("games/fill_blank/{level}") {
         fun createRoute(level: Int) = "games/fill_blank/$level"
     }

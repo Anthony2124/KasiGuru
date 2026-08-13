@@ -10,6 +10,7 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
+import com.kasiguru.util.srs.ReviewRatingMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -219,11 +220,7 @@ class SentenceOrderViewModel @Inject constructor(
         val isCorrect = userSentence.trim() == correctSentence.trim()
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val rating = if (isCorrect) {
-            if (responseTimeMs < 2000) ReviewRating.HARD else ReviewRating.GOOD
-        } else {
-            ReviewRating.AGAIN
-        }
+        val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
 
         val questionXp = if (isCorrect) {
             if (rating == ReviewRating.HARD) 10

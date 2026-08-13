@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -165,13 +166,14 @@ fun AudioQuizGameScreen(
             // Option Cards
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 uiState.options.forEach { option ->
+                    val isAnswered = uiState.selectedOption != null
                     val isSelected = uiState.selectedOption == option
-                    val isCorrect = isSelected && option == uiState.currentWord?.kasiguranin
-                    val isWrong = isSelected && !isCorrect
+                    val isTheAnswer = option == uiState.currentWord?.kasiguranin
+                    val isChosenWrong = isSelected && !isTheAnswer
 
                     val optionBgColor = when {
-                        isCorrect -> QuestsCardStart
-                        isWrong -> Error.copy(alpha = 0.2f)
+                        isAnswered && isTheAnswer -> QuestsCardStart
+                        isChosenWrong -> Error.copy(alpha = 0.2f)
                         else -> MaterialTheme.colorScheme.surface
                     }
 
@@ -196,7 +198,7 @@ fun AudioQuizGameScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack
                             )
-                            if (isCorrect) {
+                            if (isAnswered && isTheAnswer) {
                                 Icon(
                                     painter = painterResource(id = Iconsax.TickCircle),
                                     contentDescription = "Correct",
@@ -207,6 +209,18 @@ fun AudioQuizGameScreen(
                         }
                     }
                 }
+            }
+
+            // Teaching moment: reveal the correct answer after a mistake
+            if (uiState.selectedOption != null && uiState.isCorrect == false) {
+                Text(
+                    text = "Correct answer: ${uiState.currentWord?.kasiguranin ?: ""}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Success,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

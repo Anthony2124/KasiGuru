@@ -19,6 +19,13 @@ class GamificationEngineTest {
     }
 
     @Test
+    fun reverseMatchUnlocksAtLevelTwo() {
+        assertFalse(GamificationEngine.isGameUnlocked("reverse_match", userLevel = 1))
+        assertTrue(GamificationEngine.isGameUnlocked("reverse_match", userLevel = 2, accuracyRate = 0.8f))
+        assertEquals(2, GamificationEngine.getRequiredLevelForGame("reverse_match"))
+    }
+
+    @Test
     fun lockedGamesRequireLevelAndAccuracy() {
         assertFalse(GamificationEngine.isGameUnlocked("fill_blank", userLevel = 1))
         assertFalse(GamificationEngine.isGameUnlocked("fill_blank", userLevel = 2, accuracyRate = 0.5f))
