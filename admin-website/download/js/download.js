@@ -86,6 +86,10 @@ try {
     const mainBtn = document.getElementById('store-download-btn');
     if (mainBtn) mainBtn.setAttribute('href', latest.apkUrl || '#');
 
+    // Update the header "Get App" button so it downloads too
+    const navBtn = document.querySelector('.store-link-btn');
+    if (navBtn) navBtn.setAttribute('href', latest.apkUrl || '#download-section');
+
     // Update version tag text
     const tag = document.getElementById('store-version-tag');
     if (tag) {
