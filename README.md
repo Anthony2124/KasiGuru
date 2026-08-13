@@ -70,6 +70,10 @@ node set_admin_claim.js admin@example.com C:\path\to\service-account.json
 # Daily backup (runs at logon via Startup folder, once per day)
 node backup_firestore.js C:\path\to\service-account.json
 
+# Off-site mirror: KasiGuruBackups -> OneDrive\KasiGuruBackups
+# (wired into the same startup task; keeps a cloud copy of every backup)
+.\scripts\mirror_backup.cmd
+
 # Restore from a backup (emergency; test on a scratch project first)
 node restore_firestore.js C:\path\to\service-account.json C:\KasiGuru\KasiGuruBackups\<date>
 
