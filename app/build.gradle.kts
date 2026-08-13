@@ -8,6 +8,8 @@ plugins {
     id("com.google.firebase.crashlytics")
 }
 
+import java.util.Properties
+
 android {
     namespace = "com.kasiguru"
     compileSdk = 34
@@ -29,6 +31,22 @@ android {
     }
 
     buildTypes {
+        signingConfigs {
+            // Loaded from keystore.properties (gitignored; kept outside the repo).
+            // Absent on CI, so debug/lint/test builds are unaffected.
+            val keystoreProps = rootProject.file("keystore.properties")
+            if (keystoreProps.exists()) {
+                val props = Properties().apply {
+                    keystoreProps.inputStream().use { load(it) }
+                }
+                create("release") {
+                    storeFile = file(props.getProperty("storeFile"))
+                    storePassword = props.getProperty("storePassword")
+                    keyAlias = props.getProperty("keyAlias")
+                    keyPassword = props.getProperty("keyPassword")
+                }
+            }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -36,6 +54,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")
         }
         debug {
             isMinifyEnabled = false

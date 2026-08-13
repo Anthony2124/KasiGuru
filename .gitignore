@@ -16,6 +16,9 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+keystore.properties
 node_modules/
 backups/
 KasiGuruBackups/
+public/downloads/
+.firebase/
