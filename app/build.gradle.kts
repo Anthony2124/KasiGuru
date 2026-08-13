@@ -12,13 +12,13 @@ import java.util.Properties
 
 android {
     namespace = "com.kasiguru"
-    compileSdk = 34
+    compileSdk = 35
 
 
     defaultConfig {
         applicationId = "com.kasiguru"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 2
         versionName = "1.1.0"
 

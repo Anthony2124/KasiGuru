@@ -43,9 +43,6 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET userName = :name WHERE id = 1")
     suspend fun updateUserName(name: String)
 
-    @Query("SELECT * FROM user_progress WHERE userName = :username AND password = :password LIMIT 1")
-    suspend fun getUserByCredentials(username: String, password: String): UserProgressEntity?
-
     @Query("UPDATE user_progress SET fullName = :fullName, age = :age, address = :address, profileIconId = :iconId WHERE id = 1")
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int)
 

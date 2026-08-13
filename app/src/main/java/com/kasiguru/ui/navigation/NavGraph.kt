@@ -18,9 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
-import com.kasiguru.ui.screens.auth.RegisterScreen
 import com.kasiguru.ui.screens.auth.SplashViewModel
-import com.kasiguru.ui.screens.auth.WelcomeScreen
 import com.kasiguru.ui.screens.cultural.CulturalScreen
 import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
 import com.kasiguru.ui.screens.leaderboard.LeaderboardScreen
@@ -76,25 +74,6 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                         }
                     }
                 }
-            }
-
-            // Auth Flow: Welcome -> Register -> Home
-            composable(Screen.Welcome.route) {
-                WelcomeScreen(
-                    onNavigateToRegister = { navController.navigate(Screen.Register.route) }
-                )
-            }
-
-            composable(Screen.Register.route) {
-                RegisterScreen(
-                    onRegisterSuccess = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Register.route) { inclusive = true }
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
-                        }
-                    },
-                    onNavigateBack = { navController.popBackStack() }
-                )
             }
 
             // Onboarding Setup Wizard (Duolingo-style FTUE)
