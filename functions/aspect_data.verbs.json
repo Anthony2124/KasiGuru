@@ -1,0 +1,506 @@
+{
+  "yabat": {
+    "english": "strike",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "Tingël": {
+    "english": "Throw",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "tidug": {
+    "english": "sleep",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "keta": {
+    "english": "see",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "tapduk": {
+    "english": "fall",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "halaman": {
+    "english": "plant",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "abben": {
+    "english": "sneeze",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "attëd": {
+    "english": "give",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "bugtong": {
+    "english": "buy",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "kagi": {
+    "english": "say",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "pile": {
+    "english": "choose",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "labbut": {
+    "english": "boil",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "lukag": {
+    "english": "wake",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "Bagut": {
+    "english": "Pull out",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "rempës": {
+    "english": "wash",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "sangkay": {
+    "english": "climb",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "saneg": {
+    "english": "hear",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "dakëp": {
+    "english": "catch,",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "taknëg": {
+    "english": "stand",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "lugso": {
+    "english": "jump",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "Agkat": {
+    "english": "Carry",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "usek": {
+    "english": "play",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "ahëy": {
+    "english": "i don't know",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "Tarema": {
+    "english": "To cook rice",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "ibut": {
+    "english": "throw",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "takaw": {
+    "english": "steal",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "tël-lën": {
+    "english": "swallow",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "kabit": {
+    "english": "hold",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "taginëp": {
+    "english": "dream",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "sida": {
+    "english": "fish",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "ikkër": {
+    "english": "cough",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "gayuma amaya": {
+    "english": "love",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "betbet": {
+    "english": "carry",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "botbot": {
+    "english": "pull",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "këttol": {
+    "english": "cut",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "tutod": {
+    "english": "burn",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "Oray": {
+    "english": "Wait",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "karyaw": {
+    "english": "shout",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "loktab": {
+    "english": "spit",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "sayaw": {
+    "english": "dance",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "toglad": {
+    "english": "push",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "kuman": {
+    "english": "eat",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "egbër": {
+    "english": "fly",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "etnod": {
+    "english": "sit",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "bilang": {
+    "english": "count",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "ginan": {
+    "english": "run",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "tukoy": {
+    "english": "know",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "darop": {
+    "english": "sew",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "pakeligip": {
+    "english": "ask",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "sabyog": {
+    "english": "blow",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "sanget": {
+    "english": "cry",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "lipon": {
+    "english": "forget",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "këtteb": {
+    "english": "bite",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "ladi": {
+    "english": "weave",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "dima": {
+    "english": "fight",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  },
+  "gustu": {
+    "english": "want",
+    "neutral": "",
+    "imperfective": "",
+    "perfective": "",
+    "contemplative": "",
+    "alternates": [],
+    "source": ""
+  }
+}
