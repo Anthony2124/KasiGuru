@@ -42,6 +42,7 @@ object Iconsax {
     val Book: Int get() = IconSax.Bulk.Book
     val BookBoldIcon: Int get() = IconSax.Bulk.Book
     val Document: Int get() = IconSax.Bulk.Document
+    val HashtagDown: Int get() = IconSax.Bulk.HashtagDown
     val Teacher: Int get() = IconSax.Bulk.Teacher
 
     // ── Gamification / Achievements ──────────────────────────────────

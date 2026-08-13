@@ -17,8 +17,8 @@ android {
         applicationId = "com.kasiguru"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -118,18 +118,11 @@ dependencies {
     // DataStore (for preferences)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // ExoPlayer (for audio playback)
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-
     // Accompanist (system UI controller)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0")
 
     // WorkManager (for background streak reminders)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
-
-    // JavaMail API for OTP Emails
-    implementation("com.sun.mail:android-mail:1.6.7")
-    implementation("com.sun.mail:android-activation:1.6.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

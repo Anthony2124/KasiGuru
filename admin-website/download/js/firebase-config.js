@@ -6,7 +6,8 @@ import {
   collection,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -20,4 +21,4 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-export { collection, query, orderBy, onSnapshot };
+export { collection, query, orderBy, onSnapshot, getCountFromServer };

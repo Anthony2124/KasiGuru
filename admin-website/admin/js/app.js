@@ -437,6 +437,7 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-part-of-speech').value = item.partOfSpeech || '';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
+  document.getElementById('edit-input-neutral').value = item.neutralForm || '';
   document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
   document.getElementById('edit-input-imperfective').value = item.imperfectiveForm || '';
   document.getElementById('edit-input-contemplative').value = item.contemplativeForm || '';
@@ -469,7 +470,9 @@ function handleSqlFile(file) {
   reader.onload = async (e) => {
     try {
       const text = e.target.result;
-      const insertRegex = /INSERT INTO vocabulary[^(]*\([^)]+\)\s*VALUES\s*\(\s*'([^']+)'\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')(?:\s*,\s*\d+)?\s*\);/g;
+      // 8 required columns + up to 4 optional trailing aspect columns
+      // (neutral, imperfective, perfective, contemplative).
+      const insertRegex = /INSERT INTO vocabulary[^(]*\([^)]+\)\s*VALUES\s*\(\s*'([^']+)'\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')\s*,\s*(NULL|'[^']*')(?:\s*,\s*(NULL|'[^']*'))*(?:\s*,\s*\d+)?\s*\);/g;
 
       const entries = [];
       let match;
@@ -490,6 +493,10 @@ function handleSqlFile(file) {
           category: clean(match[6]) || 'General',
           audioFile: clean(match[7]),
           sampleSentence: clean(match[8]),
+          neutralForm: clean(match[9]),
+          imperfectiveForm: clean(match[10]),
+          perfectiveForm: clean(match[11]),
+          contemplativeForm: clean(match[12]),
           createdAt: Date.now()
         });
       }
@@ -636,6 +643,7 @@ function initFormListeners() {
       const category = document.getElementById('input-category').value;
       const partOfSpeech = document.getElementById('input-part-of-speech').value;
       const ipa = document.getElementById('input-ipa').value.trim();
+      const neutral = document.getElementById('input-neutral').value.trim();
       const perfective = document.getElementById('input-perfective').value.trim();
       const imperfective = document.getElementById('input-imperfective').value.trim();
       const contemplative = document.getElementById('input-contemplative').value.trim();
@@ -655,6 +663,7 @@ function initFormListeners() {
           category: category,
           partOfSpeech: partOfSpeech || null,
           ipaNotation: ipa || null,
+          neutralForm: neutral || null,
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,
           contemplativeForm: contemplative || null,
@@ -681,6 +690,7 @@ function initFormListeners() {
       const category = document.getElementById('edit-input-category').value;
       const partOfSpeech = document.getElementById('edit-input-part-of-speech').value;
       const ipa = document.getElementById('edit-input-ipa').value.trim();
+      const neutral = document.getElementById('edit-input-neutral').value.trim();
       const perfective = document.getElementById('edit-input-perfective').value.trim();
       const imperfective = document.getElementById('edit-input-imperfective').value.trim();
       const contemplative = document.getElementById('edit-input-contemplative').value.trim();
@@ -695,6 +705,7 @@ function initFormListeners() {
           category: category,
           partOfSpeech: partOfSpeech || null,
           ipaNotation: ipa || null,
+          neutralForm: neutral || null,
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,
           contemplativeForm: contemplative || null,

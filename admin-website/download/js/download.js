@@ -1,7 +1,22 @@
 // download.js — Read-only public download page logic for KasiGuru
 // IMPORTANT: This file has ZERO write operations.
 // It only reads app_releases to keep the download button and QR code up to date.
-import { db, collection, query, orderBy, onSnapshot } from './firebase-config.js';
+import { db, collection, query, orderBy, onSnapshot, getCountFromServer } from './firebase-config.js';
+
+// Live dictionary size: read-only count query, rounded down to the nearest 10.
+// Falls back to the static numbers in index.html if the query fails.
+try {
+  getCountFromServer(collection(db, 'vocabulary'))
+    .then((snap) => {
+      const total = snap.data().count || 0;
+      const rounded = Math.max(0, Math.floor(total / 10) * 10);
+      const hero = document.getElementById('word-count-hero');
+      const feat = document.getElementById('word-count-features');
+      if (hero) hero.textContent = `${rounded}+ Kasiguranin words`;
+      if (feat) feat.textContent = String(rounded);
+    })
+    .catch(() => { /* keep static fallback */ });
+} catch (e) { /* keep static fallback */ }
 
 // ── Smooth scroll for anchor links ──
 document.addEventListener('DOMContentLoaded', () => {

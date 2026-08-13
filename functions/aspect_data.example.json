@@ -1,0 +1,15 @@
+{
+  "abben": {
+    "neutral": "abben",
+    "imperfective": "magaabenën",
+    "perfective": "nagabben",
+    "contemplative": "magaabben",
+    "alternates": [
+      { "form": "inumabben", "tense": "perfective", "affixType": "Infix" },
+      { "form": "nagabben", "tense": "perfective", "affixType": "Prefix" },
+      { "form": "magaabenën", "tense": "imperfective", "affixType": "Circumfix" },
+      { "form": "magaabben", "tense": "contemplative", "affixType": "Prefix" }
+    ],
+    "source": "Supnet (2016) grammar sketch, via kasiguranin_database_schema.sql"
+  }
+}
