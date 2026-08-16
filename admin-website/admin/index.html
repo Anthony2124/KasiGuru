@@ -227,23 +227,6 @@
 
   <script type="module" src="js/auth.js"></script>
 
-  <script>
-    // Patch error banner to use span text
-    const origSignIn = null;
-    document.addEventListener('DOMContentLoaded', () => {
-      const errEl = document.getElementById('login-error');
-      const errText = document.getElementById('login-error-text');
-      // Patch: auth.js sets errEl.textContent, we forward to span
-      const observer = new MutationObserver(() => {
-        if (errEl.textContent && errEl.textContent.trim()) {
-          errText.textContent = errEl.textContent;
-          errEl.textContent = '';
-          errEl.style.display = 'flex';
-        }
-      });
-      // auth.js sets style.display directly via errEl.style.display = 'flex'
-      // So we just let it work as-is, errEl itself is the banner container.
-    });
-  </script>
+
 </body>
 </html>
