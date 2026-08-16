@@ -41,8 +41,20 @@ object KasiGuruMigrations {
         MIGRATION_15_16,
         MIGRATION_16_17,
         MIGRATION_17_18,
-        MIGRATION_18_19
+        MIGRATION_18_19,
+        MIGRATION_19_20
         )
+    }
+
+    /**
+     * Clears the locally seeded placeholder leaderboard rows ("Ligaya Santos" and
+     * friends). Rankings now come from the server-maintained leaderboard, and this
+     * table is only an offline cache of it. Touches no user progress.
+     */
+    private val MIGRATION_19_20 = object : Migration(19, 20) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DELETE FROM `leaderboard`")
+        }
     }
 
     private fun recreateTable(

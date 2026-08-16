@@ -19,8 +19,8 @@ android {
         applicationId = "com.kasiguru"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -163,4 +163,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
+
+    // Google Sign-In (account recovery across reinstalls/devices)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 }

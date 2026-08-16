@@ -56,9 +56,6 @@ object DatabaseModule {
                         if (achievementDaoProvider.get().getAchievementCount() == 0) {
                             achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
                         }
-                        if (leaderboardDaoProvider.get().getLeaderboardCount() == 0) {
-                            leaderboardDaoProvider.get().insertAll(DatabaseSeeder.getInitialLeaderboard())
-                        }
                         if (notificationDaoProvider.get().getNotificationCount() == 0) {
                             notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
                         }
@@ -71,7 +68,6 @@ object DatabaseModule {
                 }
             }
         })
-        .addMigrations(*KasiGuruMigrations.ALL)
         .build()
     }
 

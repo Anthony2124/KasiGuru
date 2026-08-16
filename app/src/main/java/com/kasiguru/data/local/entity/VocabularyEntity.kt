@@ -21,10 +21,13 @@ import androidx.room.PrimaryKey
 data class VocabularyEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val kasiguranin: String,
-    val tagalog: String,
-    val english: String,
-    val rootForm: String,
+    // Defaults on every field so Firestore can deserialize this class
+    // (toObjects needs a no-argument constructor). Room is unaffected:
+    // Kotlin defaults do not change the generated SQL schema.
+    val kasiguranin: String = "",
+    val tagalog: String = "",
+    val english: String = "",
+    val rootForm: String = "",
     @ColumnInfo(defaultValue = "")
     val neutralForm: String = "",
     @ColumnInfo(defaultValue = "")
@@ -33,7 +36,7 @@ data class VocabularyEntity(
     val perfectiveForm: String = "",
     @ColumnInfo(defaultValue = "")
     val contemplativeForm: String = "",
-    val category: String,
+    val category: String = "",
     @ColumnInfo(name = "audioResName", defaultValue = "")
     val audioFileName: String = "",
     @ColumnInfo(defaultValue = "")

@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Badge Shield Base -->
+    <path
+        android:fillColor="#8636CE"
+        android:pathData="M24,4 L38,10 V24 C38,34 24,44 24,44 C24,44 10,34 10,24 V10 Z" />
+
+    <!-- Inner Shield Accent -->
+    <path
+        android:fillColor="#9B59B6"
+        android:pathData="M24,7 L35,12 V23 C35,31 24,40 24,40 C24,40 13,31 13,23 V12 Z" />
+
+    <!-- Cute 2D Golden Crown -->
+    <path
+        android:fillColor="#FFD15C"
+        android:pathData="M16,28 L14,16 L20,21 L24,14 L28,21 L34,16 L32,28 Z" />
+
+    <!-- Crown Jewels -->
+    <path
+        android:fillColor="#FF828D"
+        android:pathData="M24,20 A1.5,1.5 0 1,1 24,19.99 Z" />
+</vector>

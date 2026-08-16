@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Cute 2D Flame Outline & Base -->
+    <path
+        android:fillColor="#FF9F1C"
+        android:pathData="M24,4 C24,4 34,14 34,26 C34,34.8 29.5,42 24,42 C18.5,42 14,34.8 14,26 C14,14 24,4 24,4 Z" />
+
+    <!-- Inner Flame Core -->
+    <path
+        android:fillColor="#FFD15C"
+        android:pathData="M24,14 C24,14 30,21 30,29 C30,34.5 27.3,38 24,38 C20.7,38 18,34.5 18,29 C18,21 24,14 24,14 Z" />
+
+    <!-- Cute 2D Mascot Eyes -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M21,27 A1.8,1.8 0 1,1 21,26.99 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M27,27 A1.8,1.8 0 1,1 27,26.99 Z" />
+
+    <!-- Cute Smile -->
+    <path
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M22.5,31 Q24,33 25.5,31" />
+</vector>

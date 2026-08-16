@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.time.DayOfWeek
@@ -46,14 +47,14 @@ fun StreakDialog(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(PlayGoldStart),
+                        .background(NudgeFlame),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = Iconsax.Flash),
+                        painter = painterResource(id = R.drawable.ic_streak_flame_2d),
                         contentDescription = "Streak Flame",
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(44.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(52.dp)
                     )
                 }
 
@@ -63,13 +64,13 @@ fun StreakDialog(
                     text = "$currentStreak Day Streak! 🔥",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Black,
-                    color = TextHeadingBlack
+                    color = NudgeFlame
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "You're on fire! Practice every day to build your Kasiguranin habit.",
+                    text = "You earned a Perfect Streak for practicing 3 days in a row!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSubtleGray,
                     textAlign = TextAlign.Center
@@ -104,8 +105,8 @@ fun StreakDialog(
                                     .clip(CircleShape)
                                     .background(
                                         when {
-                                            isActiveStreak -> PlayGoldStart
-                                            dayNumber == todayDayOfWeek -> PlayPurpleStart
+                                            isActiveStreak -> NudgeFlame
+                                            dayNumber == todayDayOfWeek -> NudgeBurple
                                             else -> MaterialTheme.colorScheme.surfaceVariant
                                         }
                                     ),
@@ -115,7 +116,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Flash),
                                         contentDescription = null,
-                                        tint = TextHeadingBlack,
+                                        tint = Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 } else if (isPastOrToday) {
@@ -136,7 +137,7 @@ fun StreakDialog(
                 // Longest Streak Info Pill
                 Surface(
                     shape = CircleShape,
-                    color = PlayPurpleStart.copy(alpha = 0.2f)
+                    color = NudgeBurple.copy(alpha = 0.15f)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -147,7 +148,7 @@ fun StreakDialog(
                             text = "Longest Streak: $longestStreak Days 🏆",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
+                            color = NudgeBurple
                         )
                     }
                 }
@@ -158,11 +159,11 @@ fun StreakDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = PlayGoldStart)
+                    colors = ButtonDefaults.buttonColors(containerColor = NudgeFlame)
                 ) {
                     Text(
                         text = "Keep It Up!",
-                        color = TextHeadingBlack,
+                        color = Color.White,
                         fontWeight = FontWeight.Black,
                         fontSize = 16.sp
                     )

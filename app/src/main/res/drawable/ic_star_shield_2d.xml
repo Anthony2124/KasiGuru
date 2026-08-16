@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Shield Circle Outer -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M24,4 A20,20 0 1,1 24,44 A20,20 0 1,1 24,4 Z" />
+
+    <!-- Inner Circle -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M24,7 A17,17 0 1,1 24,41 A17,17 0 1,1 24,7 Z" />
+
+    <!-- 2D Bold Yellow Star -->
+    <path
+        android:fillColor="#FFD15C"
+        android:pathData="M24,12 L27.5,19 L35,20 L29.5,25.5 L31,33 L24,29 L17,33 L18.5,25.5 L13,20 L20.5,19 Z" />
+</vector>

@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
+import com.kasiguru.ui.screens.auth.AccountScreen
 import com.kasiguru.ui.screens.auth.SplashViewModel
 import com.kasiguru.ui.screens.cultural.CulturalScreen
 import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
@@ -103,7 +104,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) },
-                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) }
+                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) },
+                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
                 )
             }
 
@@ -236,7 +238,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
             // Expanded Inventory Screens
             composable(Screen.Settings.route) {
-                SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+                )
+            }
+            composable(Screen.Account.route) {
+                AccountScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(Screen.CulturalContext.route) {
                 CulturalScreen(onNavigateBack = { navController.popBackStack() })

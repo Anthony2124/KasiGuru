@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.LeaderboardEntity
 import com.kasiguru.data.repository.LeaderboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,22 +28,21 @@ class LeaderboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LeaderboardUiState())
     val uiState: StateFlow<LeaderboardUiState> = _uiState.asStateFlow()
 
-    init {
-        loadData()
-    }
+    /** Collector for the active filter; replaced (not stacked) on every switch. */
+    private var filterJob: Job? = null
 
-    private fun loadData() {
-        viewModelScope.launch {
-            setFilter("All-Time XP")
-        }
+    init {
+        setFilter("All-Time XP")
     }
 
     fun setFilter(filter: String) {
-        viewModelScope.launch {
+        filterJob?.cancel()
+        filterJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(selectedFilter = filter, isLoading = true)
             
             val flow = when (filter) {
                 "Streak Masters" -> leaderboardRepository.getLeaderboardByStreak()
+                "Weekly XP" -> leaderboardRepository.getWeeklyLeaderboard()
                 else -> leaderboardRepository.getLeaderboardByXp()
             }
 

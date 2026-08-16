@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.BuildConfig
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import kotlinx.coroutines.launch
@@ -24,10 +25,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToAccount: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
 
+    val account by viewModel.account.collectAsState()
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val streakReminders by viewModel.streakReminders.collectAsState()
@@ -114,6 +117,83 @@ fun SettingsScreen(
                 .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Account Section
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Account",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHeadingBlack
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToAccount() },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (account.isRecoverable) {
+                                    Success.copy(alpha = 0.15f)
+                                } else {
+                                    Warning.copy(alpha = 0.2f)
+                                },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (account.isRecoverable) Iconsax.TickCircle else Iconsax.Lock
+                                        ),
+                                        contentDescription = null,
+                                        tint = if (account.isRecoverable) Success else Warning,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = if (account.isRecoverable) "Progress protected" else "Secure your progress",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextHeadingBlack
+                                )
+                                Text(
+                                    text = account.email
+                                        ?: if (account.isRecoverable) {
+                                            "Signed in"
+                                        } else {
+                                            "Guest — progress is only on this device"
+                                        },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSubtleGray
+                                )
+                            }
+                        }
+                        Icon(
+                            painter = painterResource(id = Iconsax.ArrowRight),
+                            contentDescription = null,
+                            tint = TextSubtleGray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
             // Notifications Section
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -256,15 +336,15 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Sync with Device",
+                                text = "Sync Now",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = TextHeadingBlack
                             )
                             Text(
-                                text = "Save progress offline Room SQLite database",
+                                text = "Merge this device with your saved cloud progress",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSubtleGray
                             )
@@ -274,9 +354,13 @@ fun SettingsScreen(
                             onClick = {
                                 isSyncing = true
                                 scope.launch {
-                                    kotlinx.coroutines.delay(1200)
+                                    val synced = viewModel.syncNow()
                                     isSyncing = false
-                                    syncMessage = "Database synchronized!"
+                                    syncMessage = if (synced) {
+                                        "Progress synced with your account."
+                                    } else {
+                                        "Not signed in yet — sync unavailable."
+                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
@@ -334,13 +418,13 @@ fun SettingsScreen(
                         )
                         Column {
                             Text(
-                                text = "KasiGuru v2.5.0",
+                                text = "KasiGuru v${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextHeadingBlack
                             )
                             Text(
-                                text = "Interactive Kasiguranin Language Platform",
+                                text = "Installed build ${BuildConfig.VERSION_CODE}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSubtleGray
                             )

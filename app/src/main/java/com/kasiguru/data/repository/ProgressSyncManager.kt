@@ -3,48 +3,79 @@ package com.kasiguru.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Log
+import com.kasiguru.data.local.dao.AchievementDao
+import com.kasiguru.data.local.dao.GameLevelDao
 import com.kasiguru.data.local.dao.UserProgressDao
+import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.UserProgressEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Cross-device progress sync (Phase 6).
+ * Cross-device progress sync.
  *
- * - On sign-in: downloads users/{uid}/progress/main, merges it with the local
- *   row (counters take the max, profile fields from the newer side), and
- *   persists the merged state.
- * - Afterwards: observes local user_progress changes (debounced) and uploads
- *   the merged state back to the cloud, so a second device can continue.
+ * - On sign-in: downloads the users/{uid}/progress documents, merges each with the
+ *   local tables (always additively — see LearningStateMerge), and persists.
+ * - Afterwards: observes the local tables (debounced) and uploads changes, so a
+ *   second device or a reinstall can continue from the same place.
  *
- * Notes:
- * - Passwords/emails are NEVER synced to the cloud.
- * - Identity is the anonymous Firebase Auth uid; real multi-device identity
- *   still requires email/password accounts (future work).
+ * Identity is the Firebase Auth uid. Linking an anonymous account to
+ * email/Google keeps that uid, so progress survives the upgrade untouched; a
+ * later sign-in on a new install re-attaches to the same documents.
+ *
+ * Passwords are never part of the cloud payload.
  */
 @Singleton
 class ProgressSyncManager @Inject constructor(
     private val userProgressDao: UserProgressDao,
-    private val firestore: FirebaseFirestore
+    private val achievementDao: AchievementDao,
+    private val gameLevelDao: GameLevelDao,
+    private val vocabularyDao: VocabularyDao,
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var lastUploaded: String? = null
 
+    private val lastUploadedLearning = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /** Uploader jobs for the signed-in uid; cancelled when the account changes. */
+    private var uploadJobs: List<Job> = emptyList()
+
+    @Volatile
+    private var activeUid: String? = null
+
+    // Declared before init: addAuthStateListener can fire synchronously.
     init {
-        FirebaseAuth.getInstance().addAuthStateListener { auth ->
-            val uid = auth.currentUser?.uid ?: return@addAuthStateListener
+        auth.addAuthStateListener { firebaseAuth ->
+            val uid = firebaseAuth.currentUser?.uid ?: return@addAuthStateListener
+            if (uid == activeUid) return@addAuthStateListener
+            // The account changed (sign-in, link, sign-out): stop uploading to the
+            // previous uid before touching local data, so nothing leaks across accounts.
+            uploadJobs.forEach { it.cancel() }
+            activeUid = uid
+            lastUploaded = null
+            lastUploadedLearning.clear()
             scope.launch {
                 syncFromCloud(uid)
-                observeAndUpload(uid)
+                syncLearningStateFromCloud(uid)
+                uploadJobs = listOf(
+                    launch { observeAndUpload(uid) },
+                    launch { observeAndUploadAchievements(uid) },
+                    launch { observeAndUploadGameLevels(uid) },
+                    launch { observeAndUploadWordStates(uid) }
+                )
             }
         }
     }
@@ -52,6 +83,10 @@ class ProgressSyncManager @Inject constructor(
     private fun progressDoc(uid: String) =
         firestore.collection("users").document(uid)
             .collection("progress").document("main")
+
+    private fun learningDoc(uid: String, name: String) =
+        firestore.collection("users").document(uid)
+            .collection("progress").document(name)
 
     /** Pulls remote progress, merges with local, persists, and reflects it back. */
     suspend fun syncFromCloud(uid: String) {
@@ -90,8 +125,201 @@ class ProgressSyncManager @Inject constructor(
         }
     }
 
+    // ── Achievements / game levels / word review state ──────────────────────
+    //
+    // Same shape as the main progress doc: pull, merge additively, persist the
+    // result locally, then push the merged view back so the other side catches up.
+
+    /** Pulls the three learning-state documents and merges them into Room. */
+    suspend fun syncLearningStateFromCloud(uid: String) {
+        mergeAchievementsFromCloud(uid)
+        mergeGameLevelsFromCloud(uid)
+        mergeWordStatesFromCloud(uid)
+    }
+
+    private suspend fun mergeAchievementsFromCloud(uid: String) {
+        val remote = readMap(uid, DOC_ACHIEVEMENTS) { value ->
+            AchievementState(
+                isUnlocked = value["isUnlocked"] as? Boolean ?: false,
+                currentValue = (value["currentValue"] as? Number)?.toInt() ?: 0,
+                unlockedDate = value["unlockedDate"] as? String
+            )
+        } ?: return
+
+        val localRows = achievementDao.getAllAchievementsOnce()
+        val local = localRows.associate { it.id to AchievementState(it.isUnlocked, it.currentValue, it.unlockedDate) }
+        val merged = mergeAchievements(local, remote)
+
+        val updated = localRows.mapNotNull { row ->
+            val state = merged[row.id] ?: return@mapNotNull null
+            val next = row.copy(
+                isUnlocked = state.isUnlocked,
+                currentValue = state.currentValue,
+                unlockedDate = state.unlockedDate
+            )
+            next.takeIf { it != row }
+        }
+        if (updated.isNotEmpty()) achievementDao.insertAll(updated)
+        uploadAchievements(uid, merged)
+    }
+
+    private suspend fun mergeGameLevelsFromCloud(uid: String) {
+        val remote = readMap(uid, DOC_GAME_LEVELS) { value ->
+            GameLevelState(
+                starsEarned = (value["starsEarned"] as? Number)?.toInt() ?: 0,
+                isUnlocked = value["isUnlocked"] as? Boolean ?: false
+            )
+        } ?: return
+
+        val localRows = gameLevelDao.getAllLevelsOnce()
+        val local = localRows.associate { levelKey(it.gameType, it.levelNumber) to GameLevelState(it.starsEarned, it.isUnlocked) }
+        val merged = mergeGameLevels(local, remote)
+
+        val updated = localRows.mapNotNull { row ->
+            val state = merged[levelKey(row.gameType, row.levelNumber)] ?: return@mapNotNull null
+            row.copy(starsEarned = state.starsEarned, isUnlocked = state.isUnlocked).takeIf { it != row }
+        }
+        if (updated.isNotEmpty()) gameLevelDao.insertAll(updated)
+        uploadGameLevels(uid, merged)
+    }
+
+    private suspend fun mergeWordStatesFromCloud(uid: String) {
+        val remote = readMap(uid, DOC_WORD_STATES) { value ->
+            WordState(
+                isLearned = value["isLearned"] as? Boolean ?: false,
+                timesReviewed = (value["timesReviewed"] as? Number)?.toInt() ?: 0,
+                easinessFactor = (value["easinessFactor"] as? Number)?.toDouble() ?: 2.5,
+                intervalDays = (value["intervalDays"] as? Number)?.toInt() ?: 0,
+                nextReviewDate = value["nextReviewDate"] as? String ?: ""
+            )
+        } ?: return
+
+        val localRows = vocabularyDao.getAllVocabularyOnce()
+        val local = localRows.associate { wordKey(it.kasiguranin) to it.toWordState() }
+        val merged = mergeWordStates(local, remote)
+
+        val updated = localRows.mapNotNull { row ->
+            val state = merged[wordKey(row.kasiguranin)] ?: return@mapNotNull null
+            row.copy(
+                isLearned = state.isLearned,
+                timesReviewed = state.timesReviewed,
+                easinessFactor = state.easinessFactor,
+                intervalDays = state.intervalDays,
+                nextReviewDate = state.nextReviewDate
+            ).takeIf { it != row }
+        }
+        if (updated.isNotEmpty()) vocabularyDao.insertAll(updated)
+        uploadWordStates(uid, merged)
+    }
+
+    private suspend fun observeAndUploadAchievements(uid: String) {
+        achievementDao.getAllAchievementsForSync()
+            .map { rows -> rows.associate { it.id to AchievementState(it.isUnlocked, it.currentValue, it.unlockedDate) } }
+            .distinctUntilChanged()
+            .debounce(DEBOUNCE_MS)
+            .collect { uploadAchievements(uid, it) }
+    }
+
+    private suspend fun observeAndUploadGameLevels(uid: String) {
+        gameLevelDao.getAllLevelsForSync()
+            .map { rows -> rows.associate { levelKey(it.gameType, it.levelNumber) to GameLevelState(it.starsEarned, it.isUnlocked) } }
+            .distinctUntilChanged()
+            .debounce(DEBOUNCE_MS)
+            .collect { uploadGameLevels(uid, it) }
+    }
+
+    private suspend fun observeAndUploadWordStates(uid: String) {
+        vocabularyDao.getAllVocabulary()
+            // Project to review state first: dictionary content updates must not
+            // trigger an upload, only actual learning progress.
+            .map { rows -> rows.associate { wordKey(it.kasiguranin) to it.toWordState() } }
+            .distinctUntilChanged()
+            .debounce(DEBOUNCE_MS)
+            .collect { uploadWordStates(uid, it) }
+    }
+
+    private suspend fun uploadAchievements(uid: String, states: Map<String, AchievementState>) {
+        val payload = states.mapValues {
+            mapOf(
+                "isUnlocked" to it.value.isUnlocked,
+                "currentValue" to it.value.currentValue,
+                "unlockedDate" to it.value.unlockedDate
+            )
+        }
+        uploadLearningDoc(uid, DOC_ACHIEVEMENTS, payload)
+    }
+
+    private suspend fun uploadGameLevels(uid: String, states: Map<String, GameLevelState>) {
+        val payload = states.mapValues {
+            mapOf("starsEarned" to it.value.starsEarned, "isUnlocked" to it.value.isUnlocked)
+        }
+        uploadLearningDoc(uid, DOC_GAME_LEVELS, payload)
+    }
+
+    private suspend fun uploadWordStates(uid: String, states: Map<String, WordState>) {
+        // Only words the user has actually touched: keeps the document small
+        // instead of mirroring the whole 400+ word dictionary per user.
+        val payload = states
+            .filterValues { it.isLearned || it.timesReviewed > 0 }
+            .mapValues {
+                mapOf(
+                    "isLearned" to it.value.isLearned,
+                    "timesReviewed" to it.value.timesReviewed,
+                    "easinessFactor" to it.value.easinessFactor,
+                    "intervalDays" to it.value.intervalDays,
+                    "nextReviewDate" to it.value.nextReviewDate
+                )
+            }
+        uploadLearningDoc(uid, DOC_WORD_STATES, payload)
+    }
+
+    private suspend fun uploadLearningDoc(uid: String, name: String, payload: Map<String, Any?>) {
+        if (payload.isEmpty()) return
+        val key = payload.toString()
+        if (lastUploadedLearning[name] == key) return
+        runCatching {
+            learningDoc(uid, name).set(mapOf("entries" to payload, "updatedAt" to System.currentTimeMillis())).await()
+        }.onSuccess {
+            lastUploadedLearning[name] = key
+        }.onFailure { e ->
+            Log.w(TAG, "upload $name FAILED", e)
+        }
+    }
+
+    /**
+     * Reads one learning-state document. Returns an empty map when the document
+     * does not exist yet, and null only when the read itself failed — the caller
+     * must not treat a failed read as "the cloud has nothing".
+     */
+    private suspend fun <T> readMap(
+        uid: String,
+        name: String,
+        parse: (Map<String, Any?>) -> T
+    ): Map<String, T>? {
+        val snapshot = runCatching { learningDoc(uid, name).get().await() }.getOrElse {
+            Log.w(TAG, "read $name FAILED", it)
+            return null
+        }
+        @Suppress("UNCHECKED_CAST")
+        val entries = snapshot.data?.get("entries") as? Map<String, Map<String, Any?>> ?: return emptyMap()
+        return entries.mapValues { parse(it.value) }
+    }
+
     private companion object {
         const val TAG = "ProgressSync"
+        const val DEBOUNCE_MS = 5_000L
+        const val DOC_ACHIEVEMENTS = "achievements"
+        const val DOC_GAME_LEVELS = "gameLevels"
+        const val DOC_WORD_STATES = "wordStates"
+
+        fun levelKey(gameType: String, levelNumber: Int) = "${gameType}_$levelNumber"
+
+        /**
+         * Words are keyed by their Kasiguranin text, not the Room row id: ids are
+         * locally auto-generated and differ between installs. This matches how
+         * FirestoreSyncManager maps dictionary content onto local rows.
+         */
+        fun wordKey(kasiguranin: String) = kasiguranin.lowercase()
     }
 
     private fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
@@ -185,3 +413,11 @@ internal fun mergeProgress(
 
 private fun pick(local: String, remote: String, remoteNewer: Boolean): String =
     if (remoteNewer) remote.ifBlank { local } else local.ifBlank { remote }
+
+private fun com.kasiguru.data.local.entity.VocabularyEntity.toWordState() = WordState(
+    isLearned = isLearned,
+    timesReviewed = timesReviewed,
+    easinessFactor = easinessFactor,
+    intervalDays = intervalDays,
+    nextReviewDate = nextReviewDate
+)

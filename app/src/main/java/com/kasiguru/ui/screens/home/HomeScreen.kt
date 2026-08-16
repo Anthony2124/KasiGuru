@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
 import com.kasiguru.ui.components.AppUpdateBanner
+import com.kasiguru.ui.components.SecureProgressBanner
 import com.kasiguru.ui.components.StreakDialog
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -41,6 +42,7 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToSubmitWord: () -> Unit = {},
+    onNavigateToAccount: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -55,14 +57,6 @@ fun HomeScreen(
     }
 
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
-
-    // ─── Update banner (shown when a newer release is published) ───
-    uiState.updateRelease?.let { release ->
-        AppUpdateBanner(
-            release = release,
-            onDismiss = viewModel::dismissUpdate
-        )
-    }
 
     if (showStreakDialog) {
         StreakDialog(
@@ -81,6 +75,22 @@ fun HomeScreen(
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // ─── Update banner (shown when a newer release is published) ───
+        uiState.updateRelease?.let { release ->
+            AppUpdateBanner(
+                release = release,
+                onDismiss = viewModel::dismissUpdate
+            )
+        }
+
+        // ─── Guest progress warning (anonymous session, real progress at risk) ───
+        if (uiState.showBackupPrompt) {
+            SecureProgressBanner(
+                onSecure = onNavigateToAccount,
+                onDismiss = viewModel::dismissBackupPrompt
+            )
+        }
+
         // ─── 1. Top Header Bar ───
         Row(
             modifier = Modifier
@@ -94,29 +104,12 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.clickable { onNavigateToProfile() }
             ) {
-                Surface(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape),
-                    color = PlayPurpleStart,
-                    shape = CircleShape
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(3.dp)
-                            .clip(CircleShape)
-                            .background(PlayPurpleEnd),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Profile),
-                            contentDescription = "Profile",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
+                com.kasiguru.ui.components.CasiguranAvatarPortrait(
+                    resident = com.kasiguru.ui.components.CasiguranResident.TEACHER,
+                    size = 54.dp,
+                    level = progress.level,
+                    onClick = { onNavigateToProfile() }
+                )
 
                 Column {
                     Text(
@@ -349,15 +342,90 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(44.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Add),
-                            contentDescription = "Add Word",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
+                    Icon(
+                        painter = painterResource(id = Iconsax.Add),
+                        contentDescription = "Add Word",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+
+        // ─── 2.5 Interactive Learning Path Map (Moodboard 1 & 5) ───
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 2.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Learning Journey Map",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextHeadingBlack
+                        )
+                        Text(
+                            text = "Level ${progress.level} • Kasiguranin Path",
+                            fontSize = 12.sp,
+                            color = TextSubtleGray
+                        )
+                    }
+                    Surface(
+                        shape = CircleShape,
+                        color = NudgeFlame.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = "🎯 Daily Goal: Active",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NudgeFlame
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Curved Node Map Checkpoints
+                com.kasiguru.ui.components.LearningPathNode(
+                    title = "Basic Greetings",
+                    categoryName = "Everyday Phrases",
+                    nodeState = com.kasiguru.ui.components.NodeState.COMPLETED,
+                    horizontalOffset = 0,
+                    onClick = { onNavigateToVocabulary() }
+                )
+                com.kasiguru.ui.components.LearningPathNode(
+                    title = "Animals & Nature",
+                    categoryName = "Vocabulary",
+                    nodeState = com.kasiguru.ui.components.NodeState.ACTIVE,
+                    horizontalOffset = 36,
+                    onClick = { onNavigateToVocabulary() }
+                )
+                com.kasiguru.ui.components.LearningPathNode(
+                    title = "Folklore Stories",
+                    categoryName = "Narrative",
+                    nodeState = com.kasiguru.ui.components.NodeState.LOCKED,
+                    horizontalOffset = -30,
+                    onClick = { onNavigateToStories() }
+                )
+                com.kasiguru.ui.components.LearningPathNode(
+                    title = "Agta Heritage",
+                    categoryName = "Culture",
+                    nodeState = com.kasiguru.ui.components.NodeState.LOCKED,
+                    horizontalOffset = 20,
+                    onClick = { onNavigateToCultural() }
+                )
             }
         }
 

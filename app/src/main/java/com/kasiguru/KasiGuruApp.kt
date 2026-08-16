@@ -18,15 +18,19 @@ class KasiGuruApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Silent anonymous sign-in gives the app a stable identity for cloud
-        // submissions and future per-user data. No UI change; degrades
-        // gracefully when offline (uid stays empty until sign-in succeeds).
-        // Requires "Anonymous" enabled in Firebase Auth sign-in methods.
+        // Only mint an anonymous identity when there is no session at all.
+        // Signing in unconditionally would replace a linked (email/Google)
+        // account with a throwaway one and strand that user's progress.
+        val existing = FirebaseAuth.getInstance().currentUser
+        if (existing != null) {
+            registerFcmToken()
+            return
+        }
         FirebaseAuth.getInstance()
             .signInAnonymously()
             .addOnSuccessListener {
-                // Register the FCM token once the anonymous identity exists
-                // (Phase 5 device registration; idempotent on every start).
+                // Register the FCM token once the identity exists
+                // (device registration; idempotent on every start).
                 registerFcmToken()
             }
             .addOnFailureListener { e ->

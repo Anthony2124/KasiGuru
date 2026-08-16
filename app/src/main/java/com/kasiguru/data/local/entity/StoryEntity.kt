@@ -15,10 +15,12 @@ import androidx.room.PrimaryKey
 data class StoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val title: String,
-    val titleKasiguranin: String,
-    val description: String,
-    val category: String,
+    // Defaults so Firestore's toObjects can construct this (needs a no-arg
+    // constructor); Room's schema is unchanged by Kotlin defaults.
+    val title: String = "",
+    val titleKasiguranin: String = "",
+    val description: String = "",
+    val category: String = "",
     val iconEmoji: String = "📖",
     val pagesJson: String = "[]",  // JSON array of StoryPage objects
     val totalPages: Int = 0,

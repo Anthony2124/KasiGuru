@@ -30,7 +30,31 @@ class FirestoreSyncManager @Inject constructor(
         // Seeding is admin-only (Firestore rules deny client writes).
         if (snapshot.isEmpty) return
 
-        val cloudWords = snapshot.toObjects(VocabularyEntity::class.java)
+        // Mapped field by field rather than via toObjects(): documents written by
+        // the admin site often omit optional fields, and reflection would leave
+        // those Kotlin non-null strings null, blowing up on the first copy().
+        val cloudWords = snapshot.documents.mapNotNull { doc ->
+            val word = doc.getString("kasiguranin")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            VocabularyEntity(
+                kasiguranin = word,
+                tagalog = doc.getString("tagalog").orEmpty(),
+                english = doc.getString("english").orEmpty(),
+                rootForm = doc.getString("rootForm").orEmpty(),
+                neutralForm = doc.getString("neutralForm").orEmpty(),
+                imperfectiveForm = doc.getString("imperfectiveForm").orEmpty(),
+                perfectiveForm = doc.getString("perfectiveForm").orEmpty(),
+                contemplativeForm = doc.getString("contemplativeForm").orEmpty(),
+                category = doc.getString("category").orEmpty().ifBlank { "Uncategorized" },
+                audioFileName = doc.getString("audioResName").orEmpty(),
+                exampleSentence = doc.getString("exampleSentence").orEmpty(),
+                exampleTranslation = doc.getString("exampleTranslation").orEmpty(),
+                phoneticGlottal = doc.getBoolean("phoneticGlottal") ?: false,
+                phoneticVowelLength = doc.getBoolean("phoneticVowelLength") ?: false,
+                ipaNotation = doc.getString("ipaNotation").orEmpty()
+            )
+        }
+        if (cloudWords.isEmpty()) return
+
         val localByWord = vocabularyDao.getAllVocabularyOnce()
             .associateBy { it.kasiguranin.lowercase() }
 
@@ -62,7 +86,22 @@ class FirestoreSyncManager @Inject constructor(
         val snapshot = firestore.collection("stories").get().await()
         if (snapshot.isEmpty) return
 
-        val cloudStories = snapshot.toObjects(StoryEntity::class.java)
+        val cloudStories = snapshot.documents.mapNotNull { doc ->
+            val title = doc.getString("title")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            StoryEntity(
+                id = (doc.getLong("id") ?: 0L).toInt(),
+                title = title,
+                titleKasiguranin = doc.getString("titleKasiguranin").orEmpty(),
+                description = doc.getString("description").orEmpty(),
+                category = doc.getString("category").orEmpty(),
+                iconEmoji = doc.getString("iconEmoji").orEmpty().ifBlank { "📖" },
+                pagesJson = doc.getString("pagesJson").orEmpty().ifBlank { "[]" },
+                totalPages = (doc.getLong("totalPages") ?: 0L).toInt(),
+                requiredXp = (doc.getLong("requiredXp") ?: 0L).toInt()
+            )
+        }
+        if (cloudStories.isEmpty()) return
+
         val localById = storyDao.getAllStoriesOnce().associateBy { it.id }
 
         val storiesToSave = cloudStories.map { cloudStory ->

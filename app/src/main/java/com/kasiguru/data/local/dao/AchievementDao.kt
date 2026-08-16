@@ -23,6 +23,12 @@ interface AchievementDao {
     @Query("SELECT COUNT(*) FROM achievements")
     suspend fun getAchievementCount(): Int
 
+    @Query("SELECT * FROM achievements")
+    suspend fun getAllAchievementsOnce(): List<AchievementEntity>
+
+    @Query("SELECT * FROM achievements")
+    fun getAllAchievementsForSync(): Flow<List<AchievementEntity>>
+
     @Query("UPDATE achievements SET currentValue = :value WHERE id = :id")
     suspend fun updateProgress(id: String, value: Int)
 

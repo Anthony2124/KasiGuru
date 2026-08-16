@@ -2,6 +2,9 @@ package com.kasiguru.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.repository.AccountState
+import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,8 +15,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val authRepository: AuthRepository,
+    private val progressSyncManager: ProgressSyncManager
 ) : ViewModel() {
+
+    val account: StateFlow<AccountState> = authRepository.accountState
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), authRepository.currentAccount())
 
     val isDarkMode: StateFlow<Boolean> = userPreferencesRepository.isDarkMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -58,5 +66,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setLeaderboardAlerts(enabled)
         }
+    }
+
+    /** Pulls the account's cloud progress and merges it into the local database. */
+    suspend fun syncNow(): Boolean {
+        val uid = authRepository.currentAccount().uid ?: return false
+        progressSyncManager.syncFromCloud(uid)
+        progressSyncManager.syncLearningStateFromCloud(uid)
+        return true
     }
 }

@@ -1,77 +1,95 @@
 package com.kasiguru.data.repository
 
-import com.kasiguru.data.local.DatabaseSeeder
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.kasiguru.data.local.dao.LeaderboardDao
 import com.kasiguru.data.local.entity.LeaderboardEntity
-import com.kasiguru.util.gamification.GamificationEngine
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Real, cross-user rankings.
+ *
+ * Reads `leaderboard_public`, which a Cloud Function maintains from each user's
+ * own progress document — clients cannot write it, so a rank always reflects
+ * what the database actually holds. Rows are cached locally so the screen still
+ * renders offline; the cache is never seeded with placeholder players.
+ */
 @Singleton
 class LeaderboardRepository @Inject constructor(
     private val leaderboardDao: LeaderboardDao,
-    private val userProgressRepository: UserProgressRepository
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) {
-    /**
-     * Get Leaderboard ranked by XP, dynamically incorporating active user progress.
-     */
-    fun getLeaderboardByXp(): Flow<List<LeaderboardEntity>> {
-        return combine(
-            leaderboardDao.getLeaderboardByXp(),
-            userProgressRepository.getUserProgress()
-        ) { rawList, userProgress ->
-            val list = if (rawList.isEmpty()) DatabaseSeeder.getInitialLeaderboard().toMutableList() else rawList.toMutableList()
+    fun getLeaderboardByXp(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_XP)
 
-            if (userProgress != null) {
-                val levelInfo = GamificationEngine.getLevelInfo(userProgress.totalXp)
-                val userEntry = LeaderboardEntity(
-                    id = 1,
-                    name = if (userProgress.fullName.isNotEmpty()) userProgress.fullName else userProgress.userName,
-                    totalXp = userProgress.totalXp,
-                    currentStreak = userProgress.currentStreak,
-                    avatarIconId = userProgress.profileIconId,
-                    levelTitle = levelInfo.title,
-                    isCurrentUser = true
-                )
+    fun getLeaderboardByStreak(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_STREAK)
 
-                // Replace or insert current user
-                list.removeAll { it.isCurrentUser || it.id == 1 }
-                list.add(userEntry)
-            }
+    /** This week's XP, reset by the weekly rollover function. */
+    fun getWeeklyLeaderboard(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_WEEKLY_XP)
 
-            list.sortedByDescending { it.totalXp }
-        }
+    private fun leaderboard(orderField: String): Flow<List<LeaderboardEntity>> = flow {
+        // Show the cached rankings immediately, then live values as they arrive.
+        emit(leaderboardDao.getLeaderboardByXp().first())
+        emitAll(remoteLeaderboard(orderField))
+    }.catch { e ->
+        Log.w(TAG, "leaderboard unavailable, serving cache", e)
+        emitAll(leaderboardDao.getLeaderboardByXp())
     }
 
-    /**
-     * Get Leaderboard ranked by Daily Streak.
-     */
-    fun getLeaderboardByStreak(): Flow<List<LeaderboardEntity>> {
-        return combine(
-            leaderboardDao.getLeaderboardByStreak(),
-            userProgressRepository.getUserProgress()
-        ) { rawList, userProgress ->
-            val list = if (rawList.isEmpty()) DatabaseSeeder.getInitialLeaderboard().toMutableList() else rawList.toMutableList()
+    private fun remoteLeaderboard(orderField: String): Flow<List<LeaderboardEntity>> = callbackFlow {
+        val registration = firestore.collection(COLLECTION)
+            .orderBy(orderField, Query.Direction.DESCENDING)
+            .limit(TOP_N)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
 
-            if (userProgress != null) {
-                val levelInfo = GamificationEngine.getLevelInfo(userProgress.totalXp)
-                val userEntry = LeaderboardEntity(
-                    id = 1,
-                    name = if (userProgress.fullName.isNotEmpty()) userProgress.fullName else userProgress.userName,
-                    totalXp = userProgress.totalXp,
-                    currentStreak = userProgress.currentStreak,
-                    avatarIconId = userProgress.profileIconId,
-                    levelTitle = levelInfo.title,
-                    isCurrentUser = true
-                )
-
-                list.removeAll { it.isCurrentUser || it.id == 1 }
-                list.add(userEntry)
+                val currentUid = auth.currentUser?.uid
+                val entries = snapshot.documents.mapIndexedNotNull { index, doc ->
+                    val name = doc.getString("displayName")?.takeIf { it.isNotBlank() } ?: return@mapIndexedNotNull null
+                    LeaderboardEntity(
+                        // Room needs a stable local id; rank position is enough for a cache.
+                        id = index + 1,
+                        name = name,
+                        totalXp = (doc.getLong(FIELD_XP) ?: 0L).toInt(),
+                        currentStreak = (doc.getLong(FIELD_STREAK) ?: 0L).toInt(),
+                        avatarIconId = (doc.getLong("profileIconId") ?: 1L).toInt(),
+                        levelTitle = doc.getString("titleBadge") ?: "Kasiguranin Apprentice",
+                        isCurrentUser = doc.id == currentUid
+                    )
+                }
+                trySend(entries)
             }
-
-            list.sortedByDescending { it.currentStreak }
+        awaitClose { registration.remove() }
+    }.map { entries ->
+        // Refresh the offline cache with the real rankings.
+        runCatching {
+            leaderboardDao.clearAll()
+            leaderboardDao.insertAll(entries)
         }
+        entries
+    }
+
+    private companion object {
+        const val TAG = "Leaderboard"
+        const val COLLECTION = "leaderboard_public"
+        const val FIELD_XP = "totalXp"
+        const val FIELD_STREAK = "currentStreak"
+        const val FIELD_WEEKLY_XP = "weeklyXp"
+        const val TOP_N = 50L
     }
 }

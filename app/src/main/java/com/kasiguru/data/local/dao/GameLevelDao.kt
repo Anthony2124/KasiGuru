@@ -31,6 +31,12 @@ interface GameLevelDao {
     @Query("SELECT COUNT(*) FROM game_levels")
     suspend fun getLevelCount(): Int
 
+    @Query("SELECT * FROM game_levels")
+    suspend fun getAllLevelsOnce(): List<GameLevelEntity>
+
+    @Query("SELECT * FROM game_levels")
+    fun getAllLevelsForSync(): Flow<List<GameLevelEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(levels: List<GameLevelEntity>)
 

@@ -619,7 +619,13 @@ function renderReleasesList() {
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
           <h3 style="font-size:1.2rem; font-weight:800; color:#fff;">v${escapeHtml(rel.versionName)} <small style="color:var(--text-muted);">(Build ${rel.versionCode})</small></h3>
-          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Released: ${new Date(rel.releasedAt).toLocaleDateString()}</p>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">
+            Released: ${new Date(rel.releasedAt).toLocaleDateString()}
+            &nbsp;·&nbsp;
+            <span style="color:${rel.forceUpdate ? '#F1C40F' : 'var(--text-muted)'}; font-weight:${rel.forceUpdate ? '700' : '400'};">
+              ${rel.forceUpdate ? 'Required update' : 'Optional update'}
+            </span>
+          </p>
           <p style="margin-top:8px; font-size:0.95rem; color:var(--text-main);">${escapeHtml(rel.releaseNotes || 'No release notes provided.')}</p>
         </div>
         <div>
@@ -729,10 +735,12 @@ function initFormListeners() {
       const name = document.getElementById('rel-name').value.trim();
       const url = document.getElementById('rel-url').value.trim();
       const notes = document.getElementById('rel-notes').value.trim();
+      const forceUpdate = document.getElementById('rel-force')?.checked || false;
 
       if (isNaN(code) || code <= 0) return alert("Please enter a valid positive integer version code (e.g. 1, 2, 3).");
       if (!name) return alert("Please enter a version name (e.g. 1.0.0).");
       if (!url.startsWith('http://') && !url.startsWith('https://')) return alert("Direct APK Download link must start with http:// or https://");
+      if (forceUpdate && !confirm(`Publish v${name} as a REQUIRED update? Every user will see a banner they cannot dismiss.`)) return;
 
       try {
         await addDoc(collection(db, "app_releases"), {
@@ -740,9 +748,10 @@ function initFormListeners() {
           versionName: name,
           apkUrl: url,
           releaseNotes: notes,
+          forceUpdate: forceUpdate,
           releasedAt: Date.now()
         });
-        await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url });
+        await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
         releaseForm.reset();
         alert(`Successfully published KasiGuru v${name} APK release!`);
       } catch (err) {

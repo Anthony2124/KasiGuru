@@ -110,3 +110,17 @@ val XpGold = Color(0xFFFFD700)
 val XpGoldDark = Color(0xFFFF9F1C)
 val StreakOrange = Color(0xFFFF9F1C)
 val LevelBlue = Color(0xFF7B6EF6)
+
+// ─── Nudge Branding & Moodboard 1-5 Tokens ───
+val NudgeBurple = Color(0xFF8636CE)
+val NudgeBink = Color(0xFFFF828D)
+val NudgeFlame = Color(0xFFF78864)
+val NudgeMint = Color(0xFFADD5D5)
+val NudgeGold = Color(0xFFFFD15C)
+val CharcoalNav = Color(0xFF15132A)
+
+// Badge Tier Metallic Tokens (Moodboards 1 & 3)
+val BadgeWood = Color(0xFFA87954)
+val BadgeEmerald = Color(0xFF2ECC71)
+val BadgeCrownPurple = Color(0xFF9B59B6)
+

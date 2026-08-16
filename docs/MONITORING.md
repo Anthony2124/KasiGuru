@@ -62,11 +62,20 @@ Until then, the Usage page is your tripwire — check it monthly.
 - **Data loss scare**: restore from `C:\KasiGuru\KasiGuruBackups\<date>` using
   `restore_firestore.js` (test on a scratch project first).
 
-## 5. Honest limits of the free plan (Phase 6 deferrals)
+## 5. Honest limits of the free plan
 
-- **Server-authoritative leaderboards + anti-cheat**: XP is client-reported;
-  a trustworthy global leaderboard needs Cloud Functions to validate/aggregate
-  scores (Blaze). Until then the app keeps its local leaderboard.
+Resolved (see `docs/ACCOUNTS_AND_SYNC.md`):
+
+- **Server-maintained leaderboard**: `leaderboard_public` is written only by the
+  `syncLeaderboardEntry` Cloud Function, from each user's own progress document.
+  XP is still computed on-device, so this is tamper-*resistant*, not anti-cheat:
+  the function clamps implausible per-write jumps but cannot verify that a quiz
+  was really answered correctly. Requires Blaze.
+- **Real multi-device identity**: accounts can be upgraded from anonymous to
+  email/password or Google without changing the uid, so progress survives a
+  reinstall or a device change.
+
+Still outstanding:
+
 - **Content delta pipeline**: needs a versioned manifest + timestamped docs.
-- **Real multi-device identity**: anonymous uids are per-install; true
-  cross-device accounts need email/password Firebase Auth (roadmap item).
+- **True anti-cheat**: would require scoring quizzes server-side.

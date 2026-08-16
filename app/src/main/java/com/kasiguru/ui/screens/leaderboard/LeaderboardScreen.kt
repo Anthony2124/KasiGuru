@@ -161,7 +161,7 @@ fun LeaderboardScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(PlayPurpleStart, PlayPurpleEnd)))
+                            .background(Brush.linearGradient(listOf(NudgeBurple, NudgeBink)))
                             .padding(20.dp)
                     ) {
                         Column {

@@ -15,6 +15,43 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // A counter that is a non-negative int within a range no real player exceeds.
+    function isSaneCounter(value, max) {
+      return value is int && value >= 0 && value <= max;
+    }
+
+    // users/{uid}/progress/main — the headline stats the leaderboard is built from.
+    function isValidMainProgress() {
+      let d = request.resource.data;
+      return isSaneCounter(d.totalXp, 100000000)
+        && isSaneCounter(d.level, 1000)
+        && isSaneCounter(d.currentStreak, 36500)
+        && isSaneCounter(d.longestStreak, 36500)
+        && isSaneCounter(d.wordsLearned, 1000000)
+        && (!('userName' in d) || d.userName is string && d.userName.size() <= 100)
+        && (!('fullName' in d) || d.fullName is string && d.fullName.size() <= 100)
+        && (!('titleBadge' in d) || d.titleBadge is string && d.titleBadge.size() <= 100);
+    }
+
+    // The achievements / gameLevels / wordStates documents: a bounded entries map.
+    function isValidLearningDoc() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['entries', 'updatedAt'])
+        && d.entries is map
+        && d.entries.size() <= 5000
+        && d.updatedAt is int;
+    }
+
+    function isValidProgressDoc(docId) {
+      return docId == 'main'
+        ? isValidMainProgress()
+        : (docId in ['achievements', 'gameLevels', 'wordStates'] && isValidLearningDoc());
+    }
+
     // Allowed fields and size limits for community word submissions.
     // The Android app writes these anonymously (the app has no auth), so
     // create is open to everyone but every field is validated.
@@ -79,10 +116,33 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Per-user cloud data (future: cross-device progress sync).
+    // Per-user cloud data (cross-device progress sync).
     // Owner-only access; nothing else may read other users' documents.
-    match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // The synced progress documents. Validated so a compromised or buggy client
+    // cannot store absurd counters (which the leaderboard function reads) or an
+    // unbounded blob. Deletes stay allowed so a user can clear their own data.
+    match /users/{userId}/progress/{docId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidProgressDoc(docId);
+    }
+
+    // Any other per-user subcollection stays owner-only (no schema assumptions).
+    match /users/{userId}/{collection}/{docId} {
+      allow read, write: if isOwner(userId) && collection != 'progress';
+    }
+
+    // Public leaderboard rows, derived from users/{uid}/progress/main by the
+    // syncLeaderboardEntry Cloud Function. Readable by signed-in clients so the
+    // app can rank real players; never client-writable, so a rank cannot be
+    // forged directly — it can only follow from the user's own progress doc.
+    // The Admin SDK bypasses these rules, so the function can still write.
+    match /leaderboard_public/{userId} {
+      allow read: if isSignedIn();
+      allow write: if false;
     }
 
     // FCM device tokens (Phase 5): each user manages only their own token doc.
