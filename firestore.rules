@@ -52,6 +52,35 @@ service cloud.firestore {
         : (docId in ['achievements', 'gameLevels', 'wordStates'] && isValidLearningDoc());
     }
 
+    // leaderboard_public/{uid} — published by the client itself (free/Spark plan:
+    // no Cloud Function to do it server-side). XP is therefore still ultimately
+    // client-trusted, but this bounds the damage: a single write can only raise
+    // totalXp by 2000 over its previous value, so a compromised/buggy client
+    // can't mint a #1 rank in one shot. Not cryptographic anti-cheat — real
+    // anti-cheat would need XP computed server-side.
+    function isValidLeaderboardEntry() {
+      let d = request.resource.data;
+      // No prior row (first publish, e.g. an existing player's first sync after
+      // this feature shipped) is exempt from the delta cap — there's nothing to
+      // diff against, and rejecting it would just hide real players forever.
+      let isFirstPublish = resource == null;
+      return d.keys().hasOnly([
+        'displayName', 'totalXp', 'level', 'currentStreak', 'profileIconId',
+        'titleBadge', 'weeklyXp', 'weekStartXp', 'weekStartDate', 'updatedAt'
+      ])
+        && d.displayName is string && d.displayName.size() <= 40
+        && isSaneCounter(d.totalXp, 100000000)
+        && isSaneCounter(d.level, 1000)
+        && isSaneCounter(d.currentStreak, 36500)
+        && isSaneCounter(d.profileIconId, 1000)
+        && d.titleBadge is string && d.titleBadge.size() <= 100
+        && isSaneCounter(d.weeklyXp, 100000000)
+        && isSaneCounter(d.weekStartXp, 100000000)
+        && d.weekStartDate is string && d.weekStartDate.size() <= 20
+        && d.updatedAt is int
+        && (isFirstPublish || (d.totalXp - resource.data.totalXp) <= 2000);
+    }
+
     // Allowed fields and size limits for community word submissions.
     // The Android app writes these anonymously (the app has no auth), so
     // create is open to everyone but every field is validated.
@@ -135,14 +164,13 @@ service cloud.firestore {
       allow read, write: if isOwner(userId) && collection != 'progress';
     }
 
-    // Public leaderboard rows, derived from users/{uid}/progress/main by the
-    // syncLeaderboardEntry Cloud Function. Readable by signed-in clients so the
-    // app can rank real players; never client-writable, so a rank cannot be
-    // forged directly — it can only follow from the user's own progress doc.
-    // The Admin SDK bypasses these rules, so the function can still write.
+    // Public leaderboard rows. Readable by any signed-in client so the app can
+    // rank real players. Writable only by the row's own owner, and only within
+    // the bounds of isValidLeaderboardEntry (see above) — free-plan tradeoff,
+    // see that function's comment.
     match /leaderboard_public/{userId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      allow write: if isOwner(userId) && isValidLeaderboardEntry();
     }
 
     // FCM device tokens (Phase 5): each user manages only their own token doc.

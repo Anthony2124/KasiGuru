@@ -66,11 +66,14 @@ Until then, the Usage page is your tripwire — check it monthly.
 
 Resolved (see `docs/ACCOUNTS_AND_SYNC.md`):
 
-- **Server-maintained leaderboard**: `leaderboard_public` is written only by the
-  `syncLeaderboardEntry` Cloud Function, from each user's own progress document.
-  XP is still computed on-device, so this is tamper-*resistant*, not anti-cheat:
-  the function clamps implausible per-write jumps but cannot verify that a quiz
-  was really answered correctly. Requires Blaze.
+- **Real leaderboard, no Blaze needed**: `leaderboard_public/{uid}` is published by
+  the client itself on every progress sync, bounded by `firestore.rules`
+  (`isValidLeaderboardEntry`: a single write can't raise `totalXp` by more than
+  2000 over the previous value). This is tamper-*resistant*, not anti-cheat — XP is
+  still computed on-device and the rules can't verify a quiz was really answered
+  correctly, only bound how much damage one write can do. A Cloud-Function-mediated
+  version (stronger, but requires Blaze) is straightforward to reintroduce later if
+  that tradeoff stops being acceptable.
 - **Real multi-device identity**: accounts can be upgraded from anonymous to
   email/password or Google without changing the uid, so progress survives a
   reinstall or a device change.

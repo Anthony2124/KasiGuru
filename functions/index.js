@@ -12,11 +12,9 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { GoogleAuth } = require('google-auth-library');
 
 initializeApp();
@@ -57,108 +55,6 @@ exports.bootstrapAdmin = onCall(
       }
       throw new HttpsError('internal', 'failed to set admin claim');
     }
-  }
-);
-
-/** Largest XP gain a single progress write may contribute to the leaderboard. */
-const MAX_XP_DELTA_PER_WRITE = 2000;
-
-/**
- * Maintains the public leaderboard from each user's own progress document.
- *
- * Clients can only write their own users/{uid}/progress/main; `leaderboard_public`
- * is closed to them (see firestore.rules), so rankings always come from data the
- * database actually holds rather than from whatever a client claims.
- *
- * Only the fields needed to render a row are copied out — never email, address,
- * age or any other profile detail.
- */
-exports.syncLeaderboardEntry = onDocumentWritten(
-  'users/{uid}/progress/main',
-  async (event) => {
-    const uid = event.params.uid;
-    const db = getFirestore();
-    const entryRef = db.collection('leaderboard_public').doc(uid);
-
-    const after = event.data?.after?.data();
-    // Progress deleted (account removal): drop the row rather than leave a ghost.
-    if (!after) {
-      await entryRef.delete().catch(() => {});
-      return;
-    }
-
-    const before = event.data?.before?.data() || {};
-    const previousXp = Number(before.totalXp) || 0;
-    const claimedXp = Number(after.totalXp) || 0;
-
-    // Reject impossible jumps instead of publishing them. The write to the user's
-    // own document still stands; only its leaderboard projection is clamped, so a
-    // sync glitch can never mint a #1 rank. Not cryptographic anti-cheat: XP is
-    // still computed on-device.
-    const existing = await entryRef.get();
-    const publishedXp = existing.exists ? Number(existing.data().totalXp) || 0 : 0;
-    const delta = claimedXp - previousXp;
-    const isFirstPublish = !existing.exists;
-    const acceptedXp =
-      isFirstPublish || delta <= MAX_XP_DELTA_PER_WRITE
-        ? claimedXp
-        : Math.max(publishedXp, previousXp);
-
-    if (!isFirstPublish && delta > MAX_XP_DELTA_PER_WRITE) {
-      console.warn(
-        `leaderboard: clamped suspicious XP jump for ${uid}: ${previousXp} -> ${claimedXp}`
-      );
-    }
-
-    const displayName =
-      (after.fullName || '').trim() || (after.userName || '').trim() || 'Learner';
-
-    await entryRef.set(
-      {
-        displayName: displayName.slice(0, 40),
-        totalXp: acceptedXp,
-        level: Number(after.level) || 1,
-        currentStreak: Number(after.currentStreak) || 0,
-        profileIconId: Number(after.profileIconId) || 1,
-        titleBadge: after.titleBadge || 'Kasiguranin Apprentice',
-        // Weekly board: accumulate the accepted gain, reset by resetWeeklyLeaderboard.
-        weeklyXp: FieldValue.increment(
-          isFirstPublish ? 0 : Math.max(0, Math.min(delta, MAX_XP_DELTA_PER_WRITE))
-        ),
-        updatedAt: Date.now()
-      },
-      { merge: true }
-    );
-  }
-);
-
-/** Starts a fresh weekly board every Monday. */
-exports.resetWeeklyLeaderboard = onSchedule(
-  {
-    schedule: 'every monday 00:05',
-    timeZone: 'Asia/Manila',
-    memory: '256MiB',
-    timeoutSeconds: 540
-  },
-  async () => {
-    const db = getFirestore();
-    const snapshot = await db.collection('leaderboard_public').get();
-
-    let batch = db.batch();
-    let pending = 0;
-    for (const doc of snapshot.docs) {
-      batch.set(doc.ref, { weeklyXp: 0 }, { merge: true });
-      pending += 1;
-      // Firestore caps a batch at 500 writes.
-      if (pending === 450) {
-        await batch.commit();
-        batch = db.batch();
-        pending = 0;
-      }
-    }
-    if (pending > 0) await batch.commit();
-
-    return { reset: snapshot.size };
   }
 );
 

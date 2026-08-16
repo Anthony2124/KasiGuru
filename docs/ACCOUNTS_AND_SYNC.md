@@ -61,22 +61,39 @@ already maps dictionary content).
 append-only, and nothing reads it cross-device; the aggregates that matter
 (`gamesPlayed`, `totalCorrectAnswers`) live in `user_progress` and do sync.
 
-## 3. Leaderboard
+## 3. Leaderboard (free/Spark plan — no Cloud Functions)
 
-`leaderboard_public/{uid}` is written **only** by the `syncLeaderboardEntry` Cloud
-Function, which triggers on writes to `users/{uid}/progress/main`. Clients can read it
-but never write it (`firestore.rules`), so a rank can only follow from the user's own
-progress document.
+There's no billing account on this project, so there's no Cloud Function available to
+aggregate rankings server-side. Instead, **the client publishes its own row**:
+`ProgressSyncManager.publishLeaderboardEntry()` writes `leaderboard_public/{uid}`
+directly after every successful progress upload, copying out just `displayName`,
+`totalXp`, `level`, `currentStreak`, `profileIconId`, `titleBadge`, `weeklyXp` — never
+email, address or age.
 
-The function copies out just `displayName`, `totalXp`, `level`, `currentStreak`,
-`profileIconId`, `titleBadge`, `weeklyXp` — never email, address or age.
+**Tamper-resistant, not anti-cheat.** XP is still computed on-device, and now the
+client publishes its own ranking row too, so the trust model is weaker than a
+Cloud-Function-mediated design would be. `firestore.rules`' `isValidLeaderboardEntry()`
+is what stands in for server validation:
 
-**Tamper-resistance, not anti-cheat.** XP is still computed on-device. The function
-clamps any single write that jumps more than `MAX_XP_DELTA_PER_WRITE` (2000) XP and
-logs it, so a sync glitch or casual edit cannot mint a #1 rank. It cannot verify that a
-quiz was genuinely answered correctly — that would require scoring server-side.
+- a user may only write `leaderboard_public/{their own uid}`
+- every field is type/size-bounded
+- a single write can raise `totalXp` by at most 2000 over the previous value (exempting
+  the very first publish, which has nothing to diff against)
 
-`resetWeeklyLeaderboard` zeroes `weeklyXp` every Monday 00:05 Asia/Manila.
+This blocks a buggy or casually-edited client from jumping to #1 in one write. It does
+**not** stop someone who calls the Firestore REST/SDK API directly with valid
+credentials and writes many small legal-looking increments — that requires XP computed
+and validated server-side (Cloud Functions, i.e. Blaze), which this project has
+deliberately opted out of. If that tradeoff ever stops being acceptable, the Blaze-based
+design (a `syncLeaderboardEntry` trigger + `resetWeeklyLeaderboard` schedule) is
+straightforward to reintroduce — see git history around the leaderboard rules/functions
+for the removed version.
+
+**Weekly XP** is tracked client-side too: each publish reads back its own previous
+`weekStartXp`/`weekStartDate`, and rolls them over to a fresh baseline (`weeklyXp` back
+to 0) whenever the current ISO calendar week no longer matches the stored one. There's
+no global scheduled reset — each user's board rolls over independently, on their own
+device's clock, the next time they sync after a new week starts.
 
 ## 4. Releases and update notifications
 
@@ -115,23 +132,29 @@ Steps that must be done in the Firebase console (they cannot be scripted from he
    `google-services.json` copied to `app/`. Until that file contains an `oauth_client`
    entry the Google button **hides itself automatically** (`rememberGoogleSignIn`
    returns null) — email/password still works.
-3. **Blaze (pay-as-you-go) billing** for Cloud Functions. Free-tier quotas cover the
-   current scale; set a budget alert (see `MONITORING.md`).
+
+Blaze billing is **not** required — the leaderboard, accounts, and progress sync all
+work on the free Spark plan (see §3 for the tradeoff that comes with that on the
+leaderboard specifically). `bootstrapAdmin` and `scheduledFirestoreBackup` in
+`functions/index.js` still need Blaze to deploy, exactly as before this change — that's
+pre-existing and unrelated; the project already runs `set_admin_claim.js` and
+`backup_firestore.js` locally instead.
 
 Then deploy:
 
 ```powershell
 firebase deploy --only firestore:rules
-firebase deploy --only functions
 
-# One-off: publish leaderboard rows for users who already had progress before the
-# trigger existed. Dry run first (no --apply), then:
+# One-off: publish leaderboard rows for users who already had progress before this
+# feature shipped, so they don't wait for their app to relaunch and sync. Dry run
+# first (no --apply), then:
 cd functions
 node backfill_leaderboard.js C:\path\to\service-account.json --apply
 ```
 
 `backfill_leaderboard.js` reads `users/{uid}/progress/main` and writes only
-`leaderboard_public/{uid}`. It never modifies or deletes progress.
+`leaderboard_public/{uid}` using the Admin SDK (bypasses rules). It never modifies or
+deletes progress.
 
 ## 6. Data safety notes
 

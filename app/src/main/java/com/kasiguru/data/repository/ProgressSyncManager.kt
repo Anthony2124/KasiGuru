@@ -120,9 +120,62 @@ class ProgressSyncManager @Inject constructor(
             progressDoc(uid).set(toMap(progress)).await()
         }.onSuccess {
             lastUploaded = key
+            publishLeaderboardEntry(uid, progress)
         }.onFailure { e ->
             Log.w(TAG, "upload FAILED", e)
         }
+    }
+
+    // ── Leaderboard (free-plan: client-published, rules-bounded) ────────────
+    //
+    // No Cloud Function is available on the Spark plan to aggregate rankings
+    // server-side, so the client publishes its own row directly. firestore.rules'
+    // isValidLeaderboardEntry() caps how much a single write can move totalXp,
+    // which blocks casual tampering (not a determined attacker calling the
+    // Firestore API directly — that needs XP computed server-side, i.e. Blaze).
+
+    private fun leaderboardDoc(uid: String) = firestore.collection("leaderboard_public").document(uid)
+
+    private suspend fun publishLeaderboardEntry(uid: String, progress: UserProgressEntity) {
+        val currentWeekId = currentIsoWeekId()
+        val existing = runCatching { leaderboardDoc(uid).get().await() }.getOrNull()
+        val storedWeekId = existing?.getString("weekStartDate")
+        val storedWeekStartXp = existing?.getLong("weekStartXp")?.toInt()
+
+        // A new calendar week (or no prior entry): this write becomes the new
+        // baseline, so weeklyXp starts back at 0 rather than carrying over.
+        val (weekStartXp, weekStartDate) =
+            if (storedWeekId == currentWeekId && storedWeekStartXp != null) {
+                storedWeekStartXp to storedWeekId
+            } else {
+                progress.totalXp to currentWeekId
+            }
+        val weeklyXp = (progress.totalXp - weekStartXp).coerceAtLeast(0)
+
+        val displayName = progress.fullName.ifBlank { progress.userName }.ifBlank { "Learner" }
+        val payload = mapOf(
+            "displayName" to displayName.take(40),
+            "totalXp" to progress.totalXp,
+            "level" to progress.level,
+            "currentStreak" to progress.currentStreak,
+            "profileIconId" to progress.profileIconId,
+            "titleBadge" to progress.titleBadge,
+            "weeklyXp" to weeklyXp,
+            "weekStartXp" to weekStartXp,
+            "weekStartDate" to weekStartDate,
+            "updatedAt" to System.currentTimeMillis()
+        )
+        runCatching { leaderboardDoc(uid).set(payload).await() }
+            .onFailure { e -> Log.w(TAG, "leaderboard publish FAILED", e) }
+    }
+
+    /** ISO calendar week id (e.g. "2026-W33"), used to roll the weekly board over. */
+    private fun currentIsoWeekId(): String {
+        val today = java.time.LocalDate.now()
+        val fields = java.time.temporal.WeekFields.ISO
+        val week = today.get(fields.weekOfWeekBasedYear())
+        val year = today.get(fields.weekBasedYear())
+        return "%d-W%02d".format(year, week)
     }
 
     // ── Achievements / game levels / word review state ──────────────────────

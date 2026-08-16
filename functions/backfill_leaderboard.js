@@ -2,10 +2,12 @@
  * One-off backfill: publishes a leaderboard row for every user who already has
  * progress saved in Firestore.
  *
- * The syncLeaderboardEntry Cloud Function only fires when a progress document is
- * written, so users who existed before it was deployed stay invisible on the
- * leaderboard until their app next syncs. This walks the existing documents once
- * and publishes them.
+ * On the free (Spark) plan there's no Cloud Function watching progress writes,
+ * so the Android app publishes its own leaderboard_public/{uid} row on every
+ * sync (see ProgressSyncManager.publishLeaderboardEntry, bounded by
+ * firestore.rules). That means existing players only show up once their app
+ * relaunches and syncs — this script (run with the Admin SDK, which bypasses
+ * rules) publishes everyone immediately instead of waiting for that.
  *
  * Read-only with respect to user data: it reads users/{uid}/progress/main and
  * writes only leaderboard_public/{uid}. No progress is modified or deleted.
@@ -32,6 +34,19 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+/** Mirrors ProgressSyncManager.currentIsoWeekId() in the Android app. */
+function currentIsoWeekId() {
+  const now = new Date();
+  // ISO week: Thursday of the current week determines the week-based year.
+  const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dayNum = (target.getUTCDay() + 6) % 7; // Monday=0..Sunday=6
+  target.setUTCDate(target.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const week =
+    1 + Math.round(((target - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${target.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
 
 async function main() {
   // collectionGroup finds every users/{uid}/progress/main without listing users.
@@ -67,13 +82,18 @@ async function main() {
       currentStreak: Number(data.currentStreak) || 0,
       profileIconId: Number(data.profileIconId) || 1,
       titleBadge: data.titleBadge || 'Kasiguranin Apprentice',
+      // Starts the weekly board at zero for this row; the app recomputes this
+      // correctly (and may reset it once more) the next time that user syncs.
+      weeklyXp: 0,
+      weekStartXp: totalXp,
+      weekStartDate: currentIsoWeekId(),
       updatedAt: Number(data.updatedAt) || Date.now()
     };
 
     console.log(`  ${uid}  ${entry.displayName}  ${entry.totalXp} XP`);
 
     if (apply) {
-      // merge keeps any weeklyXp the live trigger has already accumulated.
+      // merge keeps whatever the app itself may have already published.
       batch.set(db.collection('leaderboard_public').doc(uid), entry, { merge: true });
       pending += 1;
       if (pending === 450) {
