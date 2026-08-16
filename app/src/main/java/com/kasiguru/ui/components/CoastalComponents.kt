@@ -117,9 +117,7 @@ fun ProgressRingHeroCard(
             .clip(RoundedCornerShape(28.dp))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(Color(0xFF6C5CE7), PlayPurpleStart, Color(0xFF9B8CFA)),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.MAX_VALUE, Float.MAX_VALUE)
+                    colors = listOf(Color(0xFF6C5CE7), PlayPurpleStart, Color(0xFF9B8CFA))
                 )
             )
             .padding(20.dp)
@@ -350,7 +348,7 @@ fun CoastSectionCard(
         modifier = modifier
             .height(128.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(Brush.linearGradient(gradient, end = Offset(0f, Float.MAX_VALUE)))
+            .background(Brush.verticalGradient(gradient))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = LocalIndication.current,
