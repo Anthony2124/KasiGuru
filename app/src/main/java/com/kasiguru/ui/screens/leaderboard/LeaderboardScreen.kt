@@ -20,10 +20,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.LeaderboardEntity
+import com.kasiguru.ui.components.MascotOwlSlot
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -42,10 +44,11 @@ fun LeaderboardScreen(
                 modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
-                        "Leaderboard 🏆",
+                        "Leaderboard",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.3).sp
                     )
                 },
                 navigationIcon = {
@@ -72,7 +75,10 @@ fun LeaderboardScreen(
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, HeroCardStart)
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                    )
                 ) {
                     Row(
                         modifier = Modifier
@@ -87,15 +93,15 @@ fun LeaderboardScreen(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = HeroCardStart,
-                                modifier = Modifier.size(36.dp)
+                                color = PlayPurpleStart,
+                                modifier = Modifier.size(38.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = "#${uiState.currentUserRank}",
                                         style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Black,
-                                        color = TextHeadingBlack
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -104,28 +110,41 @@ fun LeaderboardScreen(
                                 Text(
                                     text = "Your Current Rank",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = TextSubtleGray
+                                    color = CoastMuted,
+                                    fontSize = 11.sp
                                 )
                                 Text(
                                     text = userEntry.name,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextHeadingBlack
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = CoastInk,
+                                    letterSpacing = (-0.2).sp
                                 )
                             }
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = HeroCardStart.copy(alpha = 0.3f)
+                            shape = RoundedCornerShape(999.dp),
+                            color = XpGold.copy(alpha = 0.15f)
                         ) {
-                            Text(
-                                text = "${userEntry.totalXp} XP",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.FlashBold),
+                                    contentDescription = null,
+                                    tint = XpGoldDark,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = "${userEntry.totalXp} XP",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = XpGoldDark
+                                )
+                            }
                         }
                     }
                 }
@@ -134,7 +153,7 @@ fun LeaderboardScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = HeroCardStart)
+                CircularProgressIndicator(color = PlayPurpleStart)
             }
             return@Scaffold
         }
@@ -156,40 +175,66 @@ fun LeaderboardScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 4.dp
+                    shadowElevation = 3.dp
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(NudgeBurple, NudgeBink)))
+                            .background(Brush.linearGradient(listOf(StoriesDusk, PlayPurpleStart)))
                             .padding(20.dp)
                     ) {
-                        Column {
-                            Text(
-                                text = "Kasiguranin Champions 🏆",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                color = TextWhite
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Compete with fellow learners & climb the rankings!",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextWhite.copy(alpha = 0.9f)
-                            )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Kasiguranin Champions",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White,
+                                    letterSpacing = (-0.3).sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Climb the rankings with daily learning streaks!",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    fontSize = 13.sp
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.CupBold),
+                                    contentDescription = null,
+                                    tint = XpGold,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // ─── 2. Gold Stat Card (Inspo Panel 6 "Ranking") ───
+            // ─── 2. Gold Stat Card ───
             uiState.currentUserEntry?.let { userEntry ->
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(28.dp),
                         color = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 6.dp
+                        shadowElevation = 3.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                        )
                     ) {
                         Box(
                             modifier = Modifier
@@ -201,22 +246,22 @@ fun LeaderboardScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = TextWhite,
-                                    shadowElevation = 4.dp,
-                                    modifier = Modifier.size(64.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(text = "👑", fontSize = 32.sp)
-                                    }
+                                    MascotOwlSlot(size = 44.dp)
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = userEntry.name,
                                     style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextHeadingBlack
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = CoastInk,
+                                    letterSpacing = (-0.3).sp
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Row(
@@ -228,34 +273,35 @@ fun LeaderboardScreen(
                                         Text(
                                             text = "${userEntry.totalXp}",
                                             style = MaterialTheme.typography.headlineMedium,
-                                            fontWeight = FontWeight.Black,
-                                            color = TextHeadingBlack
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = CoastInk,
+                                            letterSpacing = (-0.4).sp
                                         )
                                         Text(
                                             text = "Total XP",
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = TextHeadingBlack.copy(alpha = 0.7f)
+                                            color = CoastInk.copy(alpha = 0.7f)
                                         )
                                     }
                                     Box(
                                         modifier = Modifier
                                             .width(1.dp)
                                             .height(36.dp)
-                                            .background(TextHeadingBlack.copy(alpha = 0.2f))
+                                            .background(CoastInk.copy(alpha = 0.15f))
                                     )
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
                                             text = userEntry.levelTitle,
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Black,
-                                            color = TextHeadingBlack
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = CoastInk
                                         )
                                         Text(
                                             text = "Rank #${uiState.currentUserRank}",
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = TextHeadingBlack.copy(alpha = 0.7f)
+                                            color = CoastInk.copy(alpha = 0.7f)
                                         )
                                     }
                                 }
@@ -273,21 +319,28 @@ fun LeaderboardScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     filters.forEach { filter ->
-                        FilterChip(
-                            selected = uiState.selectedFilter == filter,
+                        val isSelected = uiState.selectedFilter == filter
+                        Surface(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 viewModel.setFilter(filter)
                             },
-                            label = { Text(filter, fontWeight = FontWeight.Bold) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = PlayPurpleStart,
-                                selectedLabelColor = TextWhite,
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                labelColor = TextSubtleGray
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        )
+                            shape = RoundedCornerShape(999.dp),
+                            color = if (isSelected) PlayPurpleStart else MaterialTheme.colorScheme.surface,
+                            shadowElevation = if (isSelected) 2.dp else 0.dp,
+                            border = if (isSelected) null else androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                            )
+                        ) {
+                            Text(
+                                text = filter,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                color = if (isSelected) Color.White else CoastMuted
+                            )
+                        }
                     }
                 }
             }
@@ -304,8 +357,9 @@ fun LeaderboardScreen(
                 Text(
                     text = "Top Learners (${list.size})",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
+                    letterSpacing = (-0.2).sp
                 )
             }
 
@@ -330,39 +384,39 @@ private fun Top3PodiumView(top3: List<LeaderboardEntity>) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Bottom
     ) {
-        // Rank 2 (Left)
+        // Rank 2 (Left - Silver)
         rank2?.let { learner ->
             PodiumCard(
                 modifier = Modifier.weight(1f),
                 rank = 2,
                 learner = learner,
-                badgeEmoji = "🥈",
-                badgeColor = Color(0xFFC0C0C0),
-                cardHeight = 160.dp
+                badgeColor = BadgeSilver,
+                badgeIcon = Iconsax.MedalStar,
+                cardHeight = 164.dp
             )
         }
 
-        // Rank 1 (Center - Tallest)
+        // Rank 1 (Center - Tallest - Gold)
         rank1?.let { learner ->
             PodiumCard(
                 modifier = Modifier.weight(1.1f),
                 rank = 1,
                 learner = learner,
-                badgeEmoji = "👑",
-                badgeColor = HeroCardStart,
-                cardHeight = 190.dp
+                badgeColor = XpGold,
+                badgeIcon = Iconsax.CupBold,
+                cardHeight = 196.dp
             )
         }
 
-        // Rank 3 (Right)
+        // Rank 3 (Right - Bronze)
         rank3?.let { learner ->
             PodiumCard(
                 modifier = Modifier.weight(1f),
                 rank = 3,
                 learner = learner,
-                badgeEmoji = "🥉",
-                badgeColor = Color(0xFFCD7F32),
-                cardHeight = 145.dp
+                badgeColor = BadgeBronze,
+                badgeIcon = Iconsax.Medal,
+                cardHeight = 148.dp
             )
         }
     }
@@ -373,16 +427,17 @@ private fun PodiumCard(
     modifier: Modifier,
     rank: Int,
     learner: LeaderboardEntity,
-    badgeEmoji: String,
     badgeColor: Color,
-    cardHeight: androidx.compose.ui.unit.Dp
+    badgeIcon: Int,
+    cardHeight: Dp
 ) {
     Surface(
         modifier = modifier.height(cardHeight),
         shape = RoundedCornerShape(24.dp),
-        color = if (learner.isCurrentUser) HeroCardStart.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
+        color = if (learner.isCurrentUser) PlayPurpleStart.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface,
         shadowElevation = if (rank == 1) 4.dp else 2.dp,
-        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(2.dp, HeroCardStart) else null
+        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(2.dp, PlayPurpleStart)
+        else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
     ) {
         Column(
             modifier = Modifier
@@ -391,46 +446,52 @@ private fun PodiumCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(contentAlignment = Alignment.TopEnd) {
-                Surface(
-                    shape = CircleShape,
-                    color = badgeColor,
-                    modifier = Modifier.size(44.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(text = badgeEmoji, fontSize = 22.sp)
-                    }
-                }
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(badgeColor.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = badgeIcon),
+                    contentDescription = "Rank $rank",
+                    tint = badgeColor,
+                    modifier = Modifier.size(22.dp)
+                )
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = learner.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
                     textAlign = TextAlign.Center,
-                    maxLines = 1
+                    maxLines = 1,
+                    fontSize = 14.sp,
+                    letterSpacing = (-0.2).sp
                 )
                 Text(
                     text = learner.levelTitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSubtleGray,
+                    color = CoastMuted,
                     fontSize = 11.sp,
                     maxLines = 1
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = badgeColor.copy(alpha = 0.25f)
+                shape = RoundedCornerShape(999.dp),
+                color = badgeColor.copy(alpha = 0.18f)
             ) {
                 Text(
                     text = "${learner.totalXp} XP",
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Black,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
+                    fontSize = 10.sp
                 )
             }
         }
@@ -443,8 +504,9 @@ private fun RankedLearnerRow(rank: Int, learner: LeaderboardEntity) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp,
-        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(2.dp, PlayPurpleStart) else null
+        shadowElevation = 1.dp,
+        border = if (learner.isCurrentUser) androidx.compose.foundation.BorderStroke(2.dp, PlayPurpleStart)
+        else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.06f))
     ) {
         Row(
             modifier = Modifier
@@ -460,52 +522,92 @@ private fun RankedLearnerRow(rank: Int, learner: LeaderboardEntity) {
                 Text(
                     text = "#$rank",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSubtleGray,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastMuted,
                     modifier = Modifier.width(28.dp)
                 )
 
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.size(42.dp)
+                    color = PlayPurpleStart.copy(alpha = 0.12f),
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = "👤", fontSize = 20.sp)
+                        Icon(
+                            painter = painterResource(id = Iconsax.Profile),
+                            contentDescription = learner.name,
+                            tint = PlayPurpleStart,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
 
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(
                             text = learner.name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
+                            fontWeight = FontWeight.ExtraBold,
+                            color = CoastInk,
+                            fontSize = 15.sp,
+                            letterSpacing = (-0.2).sp
                         )
                         if (learner.isCurrentUser) {
-                            Text("(You)", style = MaterialTheme.typography.labelSmall, color = TextSubtleGray, fontWeight = FontWeight.Bold)
+                            Text(
+                                "(You)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = PlayPurpleStart,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                         }
                     }
-                    Text(
-                        text = "${learner.levelTitle} • 🔥 ${learner.currentStreak}d streak",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSubtleGray,
-                        fontSize = 11.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = learner.levelTitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = CoastMuted,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = CoastMuted,
+                            fontSize = 11.sp
+                        )
+                        Icon(
+                            painter = painterResource(id = Iconsax.FlashBold),
+                            contentDescription = null,
+                            tint = StreakEmber,
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Text(
+                            text = "${learner.currentStreak}d streak",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StreakEmber,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
             }
 
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.background
+                shape = RoundedCornerShape(999.dp),
+                color = XpGold.copy(alpha = 0.14f)
             ) {
                 Text(
                     text = "${learner.totalXp} XP",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Black,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = XpGoldDark,
+                    fontSize = 11.sp
                 )
             }
         }

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KasiGuru — Home (redesign comp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Casiguran Coast palette */
+    --sand-bg:#FAF5EC;
+    --surface:#FFFFFF;
+    --ink:#1C2233;
+    --muted:#7A8195;
+    --line:rgba(28,34,51,.07);
+
+    --purple:#7B6EF6; --purple-2:#A78BFA;      /* identity (one accent) */
+    --gold:#FFB020;   --gold-2:#FF9E1B;         /* XP / warmth */
+    --sea:#12B3A6;    --sea-2:#0E9E97;          /* vocabulary (coastal) */
+    --coral:#FF6B6B;  --coral-2:#FF8A5B;        /* games */
+    --ember:#FF7A3C;                            /* streak */
+    --dusk:#6C5CE7;                             /* stories */
+    --sky:#3FA9F5;                              /* review */
+
+    --r-tile:20px; --r-card:26px; --r-hero:30px; --r-pill:999px;
+    --shadow-soft:0 14px 30px -12px rgba(28,34,51,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Outfit',system-ui,sans-serif;
+    background:#E9E4DA;
+    display:flex;justify-content:center;padding:26px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .phone{
+    width:390px;min-height:1180px;background:var(--sand-bg);
+    border-radius:44px;overflow:hidden;position:relative;
+    box-shadow:0 40px 90px -30px rgba(28,34,51,.5), 0 0 0 10px #14161f, 0 0 0 12px #2a2d3a;
+  }
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#14161f;border-radius:0 0 16px 16px;z-index:40}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:16px 26px 4px;font-size:13px;font-weight:700;color:var(--ink)}
+  .screen{padding:6px 20px 120px}
+
+  /* Header */
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin:10px 0 16px}
+  .greet-name{display:flex;align-items:center;gap:12px}
+  .ava{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--purple),var(--purple-2));display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-soft)}
+  .hi{font-size:13px;color:var(--muted);font-weight:600;line-height:1}
+  .nm{font-size:19px;color:var(--ink);font-weight:800;letter-spacing:-.3px;margin-top:3px}
+  .iconbtn{width:42px;height:42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative}
+  .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--coral);border:2px solid #fff}
+
+  /* Hero greeting card with mascot + progress ring */
+  .hero{position:relative;border-radius:var(--r-hero);padding:22px;color:#fff;overflow:hidden;
+    background:linear-gradient(135deg,#6C5CE7 0%, #7B6EF6 55%, #9B8CFA 100%);
+    box-shadow:0 20px 40px -16px rgba(108,92,231,.6)}
+  .hero .waves{position:absolute;inset:0;opacity:.35}
+  .hero-row{position:relative;display:flex;justify-content:space-between;align-items:center;gap:14px}
+  .hero-tag{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;background:rgba(255,255,255,.22);padding:5px 11px;border-radius:var(--r-pill);display:inline-block}
+  .hero h2{font-size:21px;font-weight:800;letter-spacing:-.4px;margin:12px 0 4px;line-height:1.15}
+  .hero p{font-size:13px;opacity:.9;font-weight:500;max-width:170px}
+  .ring{width:92px;height:92px;flex:none;position:relative}
+  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .pct b{font-size:20px;font-weight:800;line-height:1}
+  .ring .pct span{font-size:9px;font-weight:700;opacity:.85;letter-spacing:.4px}
+  .cta{margin-top:16px;position:relative;display:inline-flex;align-items:center;gap:10px;background:#fff;color:#3A2E9E;font-weight:800;font-size:14px;padding:11px 8px 11px 18px;border-radius:var(--r-pill)}
+  .cta .go{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-2));display:flex;align-items:center;justify-content:center}
+
+  /* Stat tiles 2x2 */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-tile);padding:14px;display:flex;align-items:center;gap:12px}
+  .stat .ic{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .stat .lbl{font-size:11px;color:var(--muted);font-weight:600;line-height:1}
+  .stat .val{font-size:18px;color:var(--ink);font-weight:800;margin-top:3px;line-height:1}
+  .ic.gold{background:rgba(255,176,32,.15)} .ic.ember{background:rgba(255,122,60,.14)}
+  .ic.sea{background:rgba(18,179,166,.14)} .ic.purple{background:rgba(123,110,246,.14)}
+
+  /* Section header */
+  .sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:24px 2px 12px}
+  .sec-h h3{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.3px}
+  .sec-h a{font-size:12px;font-weight:700;color:var(--purple)}
+
+  /* Section cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{position:relative;border-radius:var(--r-card);padding:16px;height:132px;overflow:hidden;color:#fff;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow-soft)}
+  .card .ttl{font-size:15px;font-weight:800;letter-spacing:-.2px}
+  .card .sub{font-size:11px;font-weight:600;opacity:.9}
+  .card .cnr{position:absolute;right:-14px;bottom:-14px;opacity:.9}
+  .card .badge{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center}
+  .c-vocab{background:linear-gradient(150deg,#12B3A6,#0E9E97)}
+  .c-games{background:linear-gradient(150deg,#FF8A5B,#FF6B6B)}
+  .c-stories{background:linear-gradient(150deg,#7B6EF6,#6C5CE7)}
+  .c-review{background:linear-gradient(150deg,#3FA9F5,#2C7BE5)}
+
+  /* Word of the day */
+  .wotd{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;display:flex;align-items:center;gap:14px}
+  .wotd .flag{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--gold-2));display:flex;align-items:center;justify-content:center;flex:none}
+  .wotd .k{font-size:11px;font-weight:800;color:var(--gold-2);letter-spacing:.5px;text-transform:uppercase}
+  .wotd .w{font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.3px;margin-top:1px}
+  .wotd .t{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
+  .wotd .play{margin-left:auto;width:40px;height:40px;border-radius:50%;background:rgba(123,110,246,.12);display:flex;align-items:center;justify-content:center;flex:none}
+
+  /* Floating bottom nav */
+  .nav{position:absolute;left:20px;right:20px;bottom:18px;height:66px;background:#181B29;border-radius:26px;display:flex;align-items:center;justify-content:space-around;padding:0 8px;box-shadow:0 20px 40px -12px rgba(24,27,41,.55)}
+  .nav a{display:flex;flex-direction:column;align-items:center;gap:4px;color:#8A90A6;font-size:10px;font-weight:700;flex:1;padding:8px 0}
+  .nav a.active{color:#fff}
+  .nav a.active .pill{background:linear-gradient(135deg,var(--gold),var(--gold-2));box-shadow:0 8px 16px -4px rgba(255,158,27,.6)}
+  .nav .pill{width:44px;height:34px;border-radius:14px;display:flex;align-items:center;justify-content:center;transition:.2s}
+  svg{display:block}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span style="display:flex;align-items:center;gap:7px">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="#1C2233"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="#1C2233" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.5C4.5 1.5 11.5 1.5 15 4.5M3.5 7C6 5 10 5 12.5 7M6 9.3c1.2-1 2.8-1 4 0"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#1C2233" stroke-width="1.4"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#1C2233"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="#1C2233"/></svg>
+      </span>
+    </div>
+    <div class="screen">
+
+      <!-- Header -->
+      <div class="topbar">
+        <div class="greet-name">
+          <div class="ava">
+            <!-- mascot: little coastal owl -->
+            <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+              <ellipse cx="24" cy="27" rx="15" ry="16" fill="#FFF3D6"/>
+              <path d="M9 20c-1-6 3-11 6-9M39 20c1-6-3-11-6-9" stroke="#FFD98A" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="18" cy="24" r="6" fill="#fff"/><circle cx="30" cy="24" r="6" fill="#fff"/>
+              <circle cx="18" cy="25" r="2.6" fill="#1C2233"/><circle cx="30" cy="25" r="2.6" fill="#1C2233"/>
+              <path d="M24 29l-2.4 3h4.8L24 29z" fill="#FF9E1B"/>
+              <path d="M17 35c3 3 11 3 14 0" stroke="#E9A94B" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div>
+            <div class="hi">Magandang aldew,</div>
+            <div class="nm">Adrian</div>
+          </div>
+        </div>
+        <div class="iconbtn">
+          <span class="dot"></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C2233" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        </div>
+      </div>
+
+      <!-- Hero greeting -->
+      <div class="hero">
+        <svg class="waves" viewBox="0 0 390 200" preserveAspectRatio="none"><path d="M0 150 Q100 120 195 150 T390 150 V200 H0Z" fill="#fff" opacity=".12"/><path d="M0 172 Q120 148 195 172 T390 168 V200 H0Z" fill="#fff" opacity=".14"/></svg>
+        <div class="hero-row">
+          <div>
+            <span class="hero-tag">Daily goal</span>
+            <h2>Keep your flame alive</h2>
+            <p>60 of 100 XP today — 2 lessons to go.</p>
+          </div>
+          <div class="ring">
+            <svg width="92" height="92" viewBox="0 0 92 92">
+              <circle cx="46" cy="46" r="38" stroke="rgba(255,255,255,.25)" stroke-width="9" fill="none"/>
+              <circle cx="46" cy="46" r="38" stroke="#FFD15C" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="238.7" stroke-dashoffset="95" transform="rotate(-90 46 46)"/>
+            </svg>
+            <div class="pct"><b>60%</b><span>DAY GOAL</span></div>
+          </div>
+        </div>
+        <div class="cta">Continue learning
+          <span class="go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </div>
+      </div>
+
+      <!-- Stat tiles -->
+      <div class="grid2">
+        <div class="stat"><div class="ic gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFB020"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 21l-5.9 3.2 1.2-6.6L2.5 9l6.6-.9z"/></svg></div><div><div class="lbl">Total XP</div><div class="val">1,240</div></div></div>
+        <div class="stat"><div class="ic ember"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FF7A3C"><path d="M12 2c1 4-2 5-2 8a2 2 0 004 0c0-1 0-2-.4-2.8C16 10 18 13 18 16a6 6 0 11-12 0c0-5 4-6 6-14z"/></svg></div><div><div class="lbl">Streak</div><div class="val">7 days</div></div></div>
+        <div class="stat"><div class="ic sea"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12B3A6" stroke-width="2" stroke-linecap="round"><path d="M4 5h11a3 3 0 013 3v11"/><path d="M4 5v14h11"/><path d="M8 9h6M8 13h4"/></svg></div><div><div class="lbl">Words learned</div><div class="val">86</div></div></div>
+        <div class="stat"><div class="ic purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B6EF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg></div><div><div class="lbl">Level</div><div class="val">Baguhan 5</div></div></div>
+      </div>
+
+      <!-- Sections -->
+      <div class="sec-h"><h3>Keep learning</h3><a>See all</a></div>
+      <div class="cards">
+        <div class="card c-vocab">
+          <div class="badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 5h11a3 3 0 013 3v11"/><path d="M4 5v14h11"/></svg></div>
+          <div><div class="ttl">Vocabulary</div><div class="sub">394 Kasiguranin words</div></div>
+          <svg class="cnr" width="80" height="80" viewBox="0 0 80 80" fill="#fff" opacity=".14"><path d="M20 60c0-20 40-20 40-40"/><circle cx="60" cy="20" r="8"/></svg>
+        </div>
+        <div class="card c-games">
+          <div class="badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 12h3M8.5 10.5v3M15 11h.01M18 13h.01"/></svg></div>
+          <div><div class="ttl">Mini-games</div><div class="sub">6 modes · earn XP</div></div>
+        </div>
+        <div class="card c-stories">
+          <div class="badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 5a3 3 0 013-3h9a1 1 0 011 1v16a1 1 0 01-1 1H7a3 3 0 01-3-3z"/><path d="M8 7h6"/></svg></div>
+          <div><div class="ttl">Stories</div><div class="sub">Folk tales & culture</div></div>
+        </div>
+        <div class="card c-review">
+          <div class="badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 019-9 9 9 0 016.4 2.6L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-9 9 9 9 0 01-6.4-2.6L3 16"/></svg></div>
+          <div><div class="ttl">Review</div><div class="sub">12 cards due today</div></div>
+        </div>
+      </div>
+
+      <!-- Word of the day -->
+      <div class="sec-h"><h3>Word of the day</h3><a>Hear it</a></div>
+      <div class="wotd">
+        <div class="flag"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M6 8l6-5 6 5M8 21h8"/></svg></div>
+        <div>
+          <div class="k">Kasiguranin</div>
+          <div class="w">singët</div>
+          <div class="t">Tagalog: langgam · English: ant</div>
+        </div>
+        <div class="play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#7B6EF6"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="nav">
+      <a class="active"><span class="pill"><svg width="20" height="20" viewBox="0 0 24 24" fill="#181B29" stroke="#181B29"><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg></span>Home</a>
+      <a><span class="pill"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A90A6" stroke-width="2" stroke-linecap="round"><path d="M4 5h11a3 3 0 013 3v11"/><path d="M4 5v14h11"/></svg></span>Learn</a>
+      <a><span class="pill"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A90A6" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 12h3M8.5 10.5v3"/></svg></span>Games</a>
+      <a><span class="pill"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A90A6" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 019-9 9 9 0 016.4 2.6L21 8"/><path d="M21 3v5h-5"/></svg></span>Review</a>
+      <a><span class="pill"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A90A6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>Profile</a>
+    </div>
+  </div>
+</body>
+</html>

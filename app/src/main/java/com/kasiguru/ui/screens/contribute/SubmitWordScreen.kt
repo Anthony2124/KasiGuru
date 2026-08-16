@@ -9,14 +9,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -25,6 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.CoastPillButton
+import com.kasiguru.ui.components.PillVariant
+import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,49 +36,41 @@ fun SubmitWordScreen(
     val uiState by viewModel.uiState.collectAsState()
     var expandedCategoryDropdown by remember { mutableStateOf(false) }
 
-    val tealGradient = Brush.horizontalGradient(
-        colors = listOf(Color(0xFF0F5257), Color(0xFF168070))
-    )
-    val lightBgColor = Color(0xFFF8FAFC)
-    val cardBorderColor = Color(0xFFE2E8F0)
-
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         text = "Contribute a Word",
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color(0xFF0F172A)
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.3).sp
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFF1F5F9))
-                    ) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
-                            tint = Color(0xFF0F172A)
+                            tint = TextHeadingBlack,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(lightBgColor)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (uiState.isSuccess) {
                 // Success Screen Card
@@ -91,55 +83,52 @@ fun SubmitWordScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(80.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFDCFCE7)),
+                            .background(Success.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = Iconsax.TickCircle),
                             contentDescription = "Success",
-                            tint = Color(0xFF16A34A),
-                            modifier = Modifier.size(56.dp)
+                            tint = Success,
+                            modifier = Modifier.size(44.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        text = "Submission Sent for Review! 🎉",
+                        text = "Submission Sent for Review!",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF0F172A),
-                        textAlign = TextAlign.Center
+                        color = CoastInk,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = (-0.3).sp
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Thank you for helping preserve the Kasiguranin heritage. Your contribution is now queued for verification by our cultural language experts!",
+                        text = "Thank you for helping preserve the Kasiguranin heritage. Your contribution is queued for verification by cultural language experts.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF64748B),
+                        color = CoastMuted,
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Button(
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    CoastPillButton(
+                        label = "Submit Another Word",
                         onClick = { viewModel.resetSuccess() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF168070))
-                    ) {
-                        Text("Submit Another Word", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.5.dp, Color(0xFFCBD5E1))
-                    ) {
-                        Text("Return to Home", fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                        variant = PillVariant.Purple
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    TextButton(onClick = onNavigateBack) {
+                        Text(
+                            "Return to Dashboard",
+                            fontWeight = FontWeight.Bold,
+                            color = CoastMuted,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             } else {
@@ -148,84 +137,102 @@ fun SubmitWordScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Hero Information Banner
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(8.dp, RoundedCornerShape(20.dp))
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(tealGradient)
-                            .padding(20.dp)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(26.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 3.dp
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(VocabSea, VocabSeaDark)
+                                    )
+                                )
+                                .padding(20.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Surface(
-                                    color = Color.White.copy(alpha = 0.2f),
-                                    shape = CircleShape
-                                ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Surface(
+                                        color = Color.White.copy(alpha = 0.22f),
+                                        shape = RoundedCornerShape(999.dp)
+                                    ) {
+                                        Text(
+                                            text = "PRESERVATION MISSION",
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Preservation Mission 🌿",
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                        text = "Help Expand Kasiguranin",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 19.sp,
                                         color = Color.White,
+                                        letterSpacing = (-0.3).sp
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Share native words, phrases, or local expressions to be verified and published to KasiGuru.",
                                         fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        lineHeight = 18.sp
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Help Expand Kasiguranin",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 20.sp,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Share native words, phrases, or local expressions to be verified and published to KasiGuru!",
-                                    fontSize = 13.sp,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    lineHeight = 18.sp
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Icon(
+                                    painter = painterResource(id = Iconsax.BookBold),
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(46.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Icon(
-                                painter = painterResource(id = Iconsax.Book),
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(54.dp)
-                            )
                         }
                     }
 
                     if (uiState.errorMessage != null) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEE2E2)),
-                            shape = RoundedCornerShape(14.dp),
+                        Surface(
+                            color = ErrorLight,
+                            shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
                                 modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.InfoCircle),
+                                    contentDescription = null,
+                                    tint = Error,
+                                    modifier = Modifier.size(18.dp)
+                                )
                                 Text(
-                                    text = "⚠️ " + uiState.errorMessage!!,
-                                    color = Color(0xFF991B1B),
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp
+                                    text = uiState.errorMessage!!,
+                                    color = Error,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp
                                 )
                             }
                         }
                     }
 
                     // Section 1: Core Translations Card
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, cardBorderColor),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(22.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -236,7 +243,8 @@ fun SubmitWordScreen(
                                 text = "1. Core Translations",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = Color(0xFF0F172A)
+                                color = CoastInk,
+                                letterSpacing = (-0.2).sp
                             )
 
                             // Kasiguranin Word Input
@@ -249,7 +257,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Book),
                                         contentDescription = null,
-                                        tint = Color(0xFF168070),
+                                        tint = VocabSea,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -257,8 +265,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
 
@@ -272,7 +280,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Global),
                                         contentDescription = null,
-                                        tint = Color(0xFF168070),
+                                        tint = VocabSea,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -280,8 +288,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
 
@@ -295,7 +303,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Global),
                                         contentDescription = null,
-                                        tint = Color(0xFF64748B),
+                                        tint = CoastMuted,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -303,18 +311,18 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
                         }
                     }
 
                     // Section 2: Category & Details Card
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, cardBorderColor),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(22.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -325,7 +333,8 @@ fun SubmitWordScreen(
                                 text = "2. Category & Usage Details",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = Color(0xFF0F172A)
+                                color = CoastInk,
+                                letterSpacing = (-0.2).sp
                             )
 
                             // Category Dropdown
@@ -343,7 +352,7 @@ fun SubmitWordScreen(
                                         Icon(
                                             painter = painterResource(id = Iconsax.Element4Outline),
                                             contentDescription = null,
-                                            tint = Color(0xFF168070),
+                                            tint = VocabSea,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     },
@@ -353,8 +362,8 @@ fun SubmitWordScreen(
                                         .fillMaxWidth(),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFF168070),
-                                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                                        focusedBorderColor = VocabSea,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                     )
                                 )
                                 ExposedDropdownMenu(
@@ -389,7 +398,7 @@ fun SubmitWordScreen(
                                         Icon(
                                             painter = painterResource(id = Iconsax.HashtagDown),
                                             contentDescription = null,
-                                            tint = Color(0xFF168070),
+                                            tint = VocabSea,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     },
@@ -399,8 +408,8 @@ fun SubmitWordScreen(
                                         .fillMaxWidth(),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFF168070),
-                                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                                        focusedBorderColor = VocabSea,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                     )
                                 )
                                 ExposedDropdownMenu(
@@ -429,7 +438,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Edit),
                                         contentDescription = null,
-                                        tint = Color(0xFF64748B),
+                                        tint = CoastMuted,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -437,8 +446,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
 
@@ -452,7 +461,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Document),
                                         contentDescription = null,
-                                        tint = Color(0xFF64748B),
+                                        tint = CoastMuted,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -460,18 +469,18 @@ fun SubmitWordScreen(
                                 maxLines = 3,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
                         }
                     }
 
                     // Section 3: Verb Tenses (Optional)
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, cardBorderColor),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(22.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -482,7 +491,8 @@ fun SubmitWordScreen(
                                 text = "3. Verb Tenses (Optional)",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = Color(0xFF0F172A)
+                                color = CoastInk,
+                                letterSpacing = (-0.2).sp
                             )
 
                             // Past Tense
@@ -495,8 +505,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
 
@@ -510,8 +520,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
 
@@ -525,18 +535,18 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
                         }
                     }
 
                     // Section 4: Contributor Credit Card
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, cardBorderColor),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(22.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -547,7 +557,8 @@ fun SubmitWordScreen(
                                 text = "4. Contributor Credit",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = Color(0xFF0F172A)
+                                color = CoastInk,
+                                letterSpacing = (-0.2).sp
                             )
 
                             OutlinedTextField(
@@ -559,7 +570,7 @@ fun SubmitWordScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Profile),
                                         contentDescription = null,
-                                        tint = Color(0xFF168070),
+                                        tint = VocabSea,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -567,8 +578,8 @@ fun SubmitWordScreen(
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF168070),
-                                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                                    focusedBorderColor = VocabSea,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             )
                         }
@@ -576,37 +587,36 @@ fun SubmitWordScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Submit Button with Gradient & Shadow
+                    // Submit Button
                     Button(
                         onClick = { viewModel.submitWord() },
                         enabled = !uiState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                            .shadow(10.dp, RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
+                            .height(54.dp),
+                        shape = RoundedCornerShape(999.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF168070),
-                            disabledContainerColor = Color(0xFF94A3B8)
+                            containerColor = PlayPurpleStart,
+                            disabledContainerColor = PlayPurpleStart.copy(alpha = 0.4f)
                         )
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(22.dp),
                                 color = Color.White
                             )
                         } else {
                             Icon(
-                                painter = painterResource(id = Iconsax.Flash),
+                                painter = painterResource(id = Iconsax.AddCircle),
                                 contentDescription = "Submit",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Submit Entry for Verification",
                                 fontWeight = FontWeight.ExtraBold,
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                                 color = Color.White
                             )
                         }

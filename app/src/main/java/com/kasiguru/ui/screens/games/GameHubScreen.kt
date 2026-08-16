@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.MascotOwlSlot
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.util.gamification.GamificationEngine
@@ -64,8 +65,9 @@ fun GameHubScreen(
                     Text(
                         "Mini-Games Hub",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.3).sp
                     )
                 },
                 navigationIcon = {
@@ -87,7 +89,7 @@ fun GameHubScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MiniGamesCardEnd)
+                CircularProgressIndicator(color = PlayPurpleStart)
             }
             return@Scaffold
         }
@@ -122,36 +124,57 @@ fun GameHubScreen(
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    Text(levelInfo.iconEmoji, fontSize = 32.sp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.22f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        MascotOwlSlot(size = 36.dp)
+                                    }
+
                                     Column {
                                         Text(
                                             text = "Level ${levelInfo.level}",
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Black,
-                                            color = TextWhite
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = TextWhite,
+                                            letterSpacing = (-0.2).sp
                                         )
                                         Text(
                                             text = levelInfo.title,
                                             style = MaterialTheme.typography.bodySmall,
                                             color = TextWhite.copy(alpha = 0.9f),
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                     }
                                 }
 
                                 Surface(
                                     shape = RoundedCornerShape(14.dp),
-                                    color = TextWhite.copy(alpha = 0.3f)
+                                    color = Color.White.copy(alpha = 0.25f)
                                 ) {
-                                    Text(
-                                        text = "$totalXp XP",
+                                    Row(
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Black,
-                                        color = TextWhite
-                                    )
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.FlashBold),
+                                            contentDescription = null,
+                                            tint = XpGold,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = "$totalXp XP",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = TextWhite
+                                        )
+                                    }
                                 }
                             }
 
@@ -160,7 +183,7 @@ fun GameHubScreen(
                             KasiGuruProgressBar(
                                 progress = xpProgress,
                                 height = 6.dp,
-                                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
+                                gradientColors = listOf(XpGold, Color.White),
                                 animated = true
                             )
                         }
@@ -170,15 +193,46 @@ fun GameHubScreen(
 
             // ─── 2. Games Section Title ───
             item {
-                Text(
-                    text = "Select a Mini-Game",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Select a Mini-Game",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.2).sp
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = PlayPurpleStart.copy(alpha = 0.12f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.StarBold),
+                                contentDescription = null,
+                                tint = XpGold,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = "${uiState.totalStars} Stars",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = PlayPurpleStart
+                            )
+                        }
+                    }
+                }
             }
 
-            // ─── 2-Column Game Tile Grid ───
+            // ─── 2-Column Game Tile Grid (Casiguran Coast Palette) ───
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Row 1: Word Match & Fill in the Blank
@@ -193,7 +247,7 @@ fun GameHubScreen(
                             highScore = uiState.highScores["word_match"] ?: 0,
                             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_MATCH,
                             totalStars = uiState.totalStars,
-                            gradient = listOf(PlayGoldStart, PlayGoldEnd),
+                            gradient = listOf(GamesCoralLight, GamesCoral),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 selectedGameRulesType = "word_match"
@@ -239,7 +293,7 @@ fun GameHubScreen(
                             highScore = uiState.highScores["aspect_builder"] ?: 0,
                             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER,
                             totalStars = uiState.totalStars,
-                            gradient = listOf(PlayGoldStart, PlayGoldEnd),
+                            gradient = listOf(XpGold, XpGoldDark),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 selectedGameRulesType = "aspect_builder"
@@ -247,7 +301,7 @@ fun GameHubScreen(
                         )
                     }
 
-                    // Row 3: Sentence Construction
+                    // Row 3: Sentence Construction & Reverse Match
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -259,7 +313,7 @@ fun GameHubScreen(
                             highScore = uiState.highScores["sentence_order"] ?: 0,
                             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER,
                             totalStars = uiState.totalStars,
-                            gradient = listOf(PlayPinkStart, PlayPinkEnd),
+                            gradient = listOf(StoriesDusk, PlayPurpleStart),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 selectedGameRulesType = "sentence_order"
@@ -272,7 +326,7 @@ fun GameHubScreen(
                             highScore = uiState.highScores["reverse_match"] ?: 0,
                             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.REVERSE_MATCH,
                             totalStars = uiState.totalStars,
-                            gradient = listOf(PlayPurpleStart, PlayPurpleEnd),
+                            gradient = listOf(VocabSea, VocabSeaDark),
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 selectedGameRulesType = "reverse_match"
@@ -287,19 +341,20 @@ fun GameHubScreen(
                 item {
                     Text(
                         text = "Recent Activity",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextHeadingBlack,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        letterSpacing = (-0.2).sp
                     )
                 }
 
                 items(uiState.recentScores) { score ->
                     ScoreRow(
                         gameName = when (score.gameType) {
-            "word_match" -> "Word Match Blitz"
-            "reverse_match" -> "Reverse Match"
-            "fill_blank" -> "Fill in the Blank"
+                            "word_match" -> "Word Match Blitz"
+                            "reverse_match" -> "Reverse Match"
+                            "fill_blank" -> "Fill in the Blank"
                             "audio_quiz" -> "Audio Quiz"
                             "aspect_builder" -> "Aspect Builder"
                             "sentence_order" -> "Sentence Construction"
@@ -308,136 +363,6 @@ fun GameHubScreen(
                         score = score
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GameCardWithLock(
-    title: String,
-    description: String,
-    iconRes: Int,
-    highScore: Int,
-    minLevelReq: Int,
-    userLevel: Int,
-    gradient: List<Color>,
-    onClick: () -> Unit
-) {
-    val isUnlocked = userLevel >= minLevelReq
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = if (isUnlocked) Brush.linearGradient(gradient)
-                    else Brush.linearGradient(listOf(Color(0xFFE0E0E0), Color(0xFFCCCCCC)))
-                )
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(if (isUnlocked) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.6f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = null,
-                    tint = TextHeadingBlack,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp
-                    )
-                    if (!isUnlocked) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.error
-                        ) {
-                            Text(
-                                text = "Lv. $minLevelReq",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 10.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextHeadingBlack.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (isUnlocked) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Cup),
-                            contentDescription = "High Score",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Best Score: $highScore",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextHeadingBlack
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "🔒 Unlocks at Level $minLevelReq",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack.copy(alpha = 0.7f)
-                    )
-                }
-            }
-            
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = if (isUnlocked) Iconsax.Play else Iconsax.Lock),
-                    contentDescription = if (isUnlocked) "Play" else "Locked",
-                    tint = TextHeadingBlack,
-                    modifier = Modifier.size(20.dp)
-                )
             }
         }
     }
@@ -461,12 +386,15 @@ private fun GameTileCardWithLock(
             .aspectRatio(1f)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(26.dp),
-        shadowElevation = 4.dp
+        shadowElevation = 3.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(brush = Brush.linearGradient(gradient))
+                .background(
+                    brush = if (isUnlocked) Brush.linearGradient(gradient)
+                    else Brush.linearGradient(listOf(Color(0xFFE2E6EE), Color(0xFFCDD3DE)))
+                )
                 .padding(14.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -476,16 +404,16 @@ private fun GameTileCardWithLock(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
-                        .background(if (isUnlocked) Color.White.copy(alpha = 0.35f) else PlayGoldStart),
+                        .background(if (isUnlocked) Color.White.copy(alpha = 0.30f) else Color.White.copy(alpha = 0.65f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = if (isUnlocked) iconRes else Iconsax.Lock),
                         contentDescription = null,
-                        tint = TextHeadingBlack,
-                        modifier = Modifier.size(26.dp)
+                        tint = if (isUnlocked) TextWhite else CoastMuted,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -494,39 +422,53 @@ private fun GameTileCardWithLock(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextWhite,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 15.sp,
-                    maxLines = 1
+                    color = if (isUnlocked) TextWhite else CoastInk,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    letterSpacing = (-0.2).sp
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 if (isUnlocked) {
                     Surface(
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.4f)
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color.White.copy(alpha = 0.28f)
                     ) {
                         Text(
                             text = "Best: $highScore",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextWhite
+                            color = TextWhite,
+                            fontSize = 10.sp
                         )
                     }
                 } else {
                     Surface(
-                        shape = CircleShape,
-                        color = PlayGoldStart
+                        shape = RoundedCornerShape(999.dp),
+                        color = PlayPurpleStart.copy(alpha = 0.15f)
                     ) {
-                        Text(
-                            text = "$unlockStars ⭐",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.StarBold),
+                                contentDescription = null,
+                                tint = XpGoldDark,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Text(
+                                text = "$unlockStars Stars",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = CoastInk,
+                                fontSize = 10.sp
+                            )
+                        }
                     }
                 }
             }
@@ -541,14 +483,17 @@ private fun ScoreRow(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -556,26 +501,29 @@ private fun ScoreRow(
                 Text(
                     text = gameName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
+                    fontSize = 15.sp,
+                    letterSpacing = (-0.2).sp
                 )
                 Text(
                     text = "${score.score}/${score.totalQuestions} Correct • +${score.xpEarned} XP",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSubtleGray
+                    color = CoastMuted,
+                    fontSize = 12.sp
                 )
             }
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = QuestsCardStart
+                color = XpGold.copy(alpha = 0.15f)
             ) {
                 Text(
                     text = "${(score.score.toFloat() / score.totalQuestions * 100).toInt()}%",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = XpGoldDark
                 )
             }
         }

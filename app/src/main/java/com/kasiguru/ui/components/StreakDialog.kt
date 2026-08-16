@@ -16,7 +16,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.kasiguru.R
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.time.DayOfWeek
@@ -36,6 +35,10 @@ fun StreakDialog(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 8.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            ),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -45,35 +48,37 @@ fun StreakDialog(
                 // Flame Icon Circle
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(76.dp)
                         .clip(CircleShape)
-                        .background(NudgeFlame),
+                        .background(StreakEmber.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_streak_flame_2d),
+                        painter = painterResource(id = Iconsax.FlashBold),
                         contentDescription = "Streak Flame",
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(52.dp)
+                        tint = StreakEmber,
+                        modifier = Modifier.size(42.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "$currentStreak Day Streak! 🔥",
+                    text = "$currentStreak Day Streak",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    color = NudgeFlame
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
+                    letterSpacing = (-0.3).sp
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "You earned a Perfect Streak for practicing 3 days in a row!",
+                    text = "Keep up your daily language momentum to build long-term retention!",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray,
-                    textAlign = TextAlign.Center
+                    color = CoastMuted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -97,7 +102,7 @@ fun StreakDialog(
                                 text = dayName,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (dayNumber == todayDayOfWeek) TextHeadingBlack else TextSubtleGray
+                                color = if (dayNumber == todayDayOfWeek) CoastInk else CoastMuted
                             )
                             Box(
                                 modifier = Modifier
@@ -105,8 +110,8 @@ fun StreakDialog(
                                     .clip(CircleShape)
                                     .background(
                                         when {
-                                            isActiveStreak -> NudgeFlame
-                                            dayNumber == todayDayOfWeek -> NudgeBurple
+                                            isActiveStreak -> StreakEmber
+                                            dayNumber == todayDayOfWeek -> PlayPurpleStart
                                             else -> MaterialTheme.colorScheme.surfaceVariant
                                         }
                                     ),
@@ -123,7 +128,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.TickSquare),
                                         contentDescription = null,
-                                        tint = TextSubtleGray,
+                                        tint = CoastMuted,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -136,38 +141,36 @@ fun StreakDialog(
 
                 // Longest Streak Info Pill
                 Surface(
-                    shape = CircleShape,
-                    color = NudgeBurple.copy(alpha = 0.15f)
+                    shape = RoundedCornerShape(999.dp),
+                    color = XpGold.copy(alpha = 0.15f)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.CupBold),
+                            contentDescription = null,
+                            tint = XpGoldDark,
+                            modifier = Modifier.size(14.dp)
+                        )
                         Text(
-                            text = "Longest Streak: $longestStreak Days 🏆",
+                            text = "Longest Streak: $longestStreak Days",
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Black,
-                            color = NudgeBurple
+                            fontWeight = FontWeight.ExtraBold,
+                            color = XpGoldDark
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
+                CoastPillButton(
+                    label = "Keep It Up!",
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = NudgeFlame)
-                ) {
-                    Text(
-                        text = "Keep It Up!",
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 16.sp
-                    )
-                }
+                    variant = PillVariant.Gold
+                )
             }
         }
     }

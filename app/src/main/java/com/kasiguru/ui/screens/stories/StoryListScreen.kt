@@ -42,8 +42,9 @@ fun StoryListScreen(
                     Text(
                         "Kasiguranin Stories",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.3).sp
                     )
                 },
                 navigationIcon = {
@@ -65,7 +66,7 @@ fun StoryListScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = PlayPurpleStart)
+                CircularProgressIndicator(color = StoriesDusk)
             }
             return@Scaffold
         }
@@ -102,32 +103,38 @@ private fun StoryCard(
             .clickable(enabled = story.isUnlocked, onClick = onClick),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+        )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(135.dp)
+                    .height(130.dp)
                     .background(
                         brush = Brush.linearGradient(
-                            colors = if (story.isUnlocked) listOf(PlayPurpleStart, PlayPurpleEnd)
-                            else listOf(PlayPurpleStart.copy(alpha = 0.5f), PlayPurpleEnd.copy(alpha = 0.5f))
+                            colors = if (story.isUnlocked) listOf(StoriesDusk, PlayPurpleStart)
+                            else listOf(Color(0xFFB0B7C3), Color(0xFF9098A5))
                         )
                     )
                     .padding(16.dp)
             ) {
                 Surface(
-                    shape = CircleShape,
-                    color = PlayGoldStart,
+                    shape = RoundedCornerShape(999.dp),
+                    color = if (story.isUnlocked) XpGold else Color.White.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.TopStart)
                 ) {
                     Text(
                         text = story.category.uppercase(),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        fontSize = 10.sp,
+                        letterSpacing = 0.4.sp
                     )
                 }
 
@@ -135,7 +142,7 @@ private fun StoryCard(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.35f))
+                        .background(Color.White.copy(alpha = 0.28f))
                         .align(Alignment.Center),
                     contentAlignment = Alignment.Center
                 ) {
@@ -144,7 +151,7 @@ private fun StoryCard(
                             id = if (story.isUnlocked) Iconsax.Book else Iconsax.Lock
                         ),
                         contentDescription = null,
-                        tint = TextWhite,
+                        tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -154,13 +161,14 @@ private fun StoryCard(
                 Text(
                     text = story.titleKasiguranin,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    color = TextHeadingBlack
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoastInk,
+                    letterSpacing = (-0.3).sp
                 )
                 Text(
                     text = story.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray
+                    color = CoastMuted
                 )
                 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -168,8 +176,9 @@ private fun StoryCard(
                 Text(
                     text = story.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextHeadingBlack.copy(alpha = 0.85f),
-                    maxLines = 2
+                    color = CoastInk.copy(alpha = 0.85f),
+                    maxLines = 2,
+                    lineHeight = 18.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -180,49 +189,56 @@ private fun StoryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
-                        shape = CircleShape,
-                        color = PlayGoldStart.copy(alpha = 0.25f)
+                        shape = RoundedCornerShape(999.dp),
+                        color = PlayPurpleStart.copy(alpha = 0.12f)
                     ) {
                         Text(
                             text = "${story.totalPages} Pages",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
+                            fontWeight = FontWeight.ExtraBold,
+                            color = PlayPurpleStart,
+                            fontSize = 11.sp
                         )
                     }
 
                     if (story.isUnlocked) {
                         Surface(
-                            shape = CircleShape,
-                            color = PlayGoldStart
+                            shape = RoundedCornerShape(999.dp),
+                            color = PlayPurpleStart
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
                                     text = "Read Story",
                                     style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextHeadingBlack
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White
                                 )
                                 Icon(
                                     painter = painterResource(id = Iconsax.ArrowRight),
                                     contentDescription = null,
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(14.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp)
                                 )
                             }
                         }
                     } else {
-                        Text(
-                            text = "Locked",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextSubtleGray
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = Color(0xFFE2E8F0)
+                        ) {
+                            Text(
+                                text = "Locked",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = CoastMuted
+                            )
+                        }
                     }
                 }
             }

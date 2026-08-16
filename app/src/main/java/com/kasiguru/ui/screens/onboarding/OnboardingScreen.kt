@@ -29,7 +29,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kasiguru.ui.components.CoastPillButton
 import com.kasiguru.ui.components.ConfettiView
+import com.kasiguru.ui.components.MascotOwlSlot
+import com.kasiguru.ui.components.OnboardingDotStepper
+import com.kasiguru.ui.components.PillVariant
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -64,27 +68,12 @@ fun OnboardingScreen(
                     .fillMaxSize()
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                // Top Progress Bar (Steps 1 to 6)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(6) { index ->
-                        val active = index + 1 <= step
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (active) PlayPurpleStart else Color.LightGray.copy(alpha = 0.3f)
-                                )
-                        )
-                    }
-                }
+                // Top stepper
+                OnboardingDotStepper(
+                    total = 6,
+                    current = step - 1,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -192,25 +181,29 @@ private fun Step1Welcome(onNext: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Brush.linearGradient(listOf(PlayPurpleStart, PlayPurpleEnd)))
+                        .background(Brush.linearGradient(listOf(Color(0xFF2D1B69), PlayPurpleStart)))
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        MascotOwlSlot(size = 96.dp)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Surface(
                             shape = CircleShape,
-                            color = PlayGoldStart
+                            color = XpGold
                         ) {
                             Text(
-                                text = "CASIGURAN, AURORA 🌊",
+                                text = "CASIGURAN, AURORA",
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
+                                color = CoastInk
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
                             text = "Magandang Aldew!",
@@ -253,21 +246,12 @@ private fun Step1Welcome(onNext: () -> Unit) {
             )
         }
 
-        Button(
+        CoastPillButton(
+            label = "Get started",
             onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayGoldStart)
-        ) {
-            Text(
-                text = "Get Started 🚀",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-        }
+            variant = PillVariant.Gold,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -355,21 +339,7 @@ private fun Step2Motivation(
             }
         }
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart)
-        ) {
-            Text(
-                text = "Continue",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextWhite
-            )
-        }
+        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -449,7 +419,7 @@ private fun Step3SkillAndWarmUp(
                         color = PlayPinkStart
                     ) {
                         Text(
-                            text = "QUICK WARM-UP QUIZ ☀️",
+                            text = "QUICK WARM-UP",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
@@ -485,7 +455,7 @@ private fun Step3SkillAndWarmUp(
                             )
                         ) {
                             Text(
-                                text = if (isCorrect) "Good Day! 🎉" else "Good Day ☀️",
+                                text = if (isCorrect) "Correct!" else "Good Day",
                                 color = TextHeadingBlack,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 13.sp
@@ -501,7 +471,7 @@ private fun Step3SkillAndWarmUp(
                             )
                         ) {
                             Text(
-                                text = "Goodbye 👋",
+                                text = "Goodbye",
                                 color = TextHeadingBlack,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
@@ -512,21 +482,7 @@ private fun Step3SkillAndWarmUp(
             }
         }
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart)
-        ) {
-            Text(
-                text = "Continue",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextWhite
-            )
-        }
+        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -632,21 +588,7 @@ private fun Step4DailyGoal(
             }
         }
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart)
-        ) {
-            Text(
-                text = "Continue",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextWhite
-            )
-        }
+        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -775,21 +717,7 @@ private fun Step5ProfileSetup(
             }
         }
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart)
-        ) {
-            Text(
-                text = "Create Profile",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextWhite
-            )
-        }
+        CoastPillButton(label = "Create profile", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -807,7 +735,7 @@ private fun Step6SummaryAndBonus(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Your Journey Begins! 🚀",
+                text = "Your journey begins",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
                 color = TextHeadingBlack,
@@ -835,7 +763,7 @@ private fun Step6SummaryAndBonus(
                             color = Color.White.copy(alpha = 0.4f)
                         ) {
                             Text(
-                                text = "WELCOME BONUS 🏆",
+                                text = "WELCOME BONUS",
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Black,
@@ -875,7 +803,7 @@ private fun Step6SummaryAndBonus(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "Your Personalized Learning Plan 📋",
+                        text = "Your personalized learning plan",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Black,
                         color = TextHeadingBlack
@@ -909,20 +837,11 @@ private fun Step6SummaryAndBonus(
             }
         }
 
-        Button(
+        CoastPillButton(
+            label = "Start learning",
             onClick = onStartJourney,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = PlayGoldStart)
-        ) {
-            Text(
-                text = "Start Learning Kasiguranin! 🌟",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-        }
+            variant = PillVariant.Gold,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

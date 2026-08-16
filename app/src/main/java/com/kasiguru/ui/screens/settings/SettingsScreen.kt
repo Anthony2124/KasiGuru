@@ -45,10 +45,10 @@ fun SettingsScreen(
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold) },
+            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold, color = CoastInk) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Select your preferred daily notification time:")
+                    Text("Select your preferred daily notification time:", color = CoastMuted)
                     listOf("07:00 AM", "08:00 AM", "12:00 PM", "06:00 PM", "08:00 PM", "09:00 PM").forEach { time ->
                         Row(
                             modifier = Modifier
@@ -61,13 +61,14 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = CoastInk)
                             RadioButton(
                                 selected = (reminderTime == time),
                                 onClick = {
                                     reminderTime = time
                                     showTimePicker = false
-                                }
+                                },
+                                colors = RadioButtonDefaults.colors(selectedColor = PlayPurpleStart)
                             )
                         }
                     }
@@ -75,7 +76,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Close", fontWeight = FontWeight.Bold)
+                    Text("Close", fontWeight = FontWeight.Bold, color = PlayPurpleStart)
                 }
             }
         )
@@ -84,12 +85,14 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(
                         "Settings & Notifications",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHeadingBlack,
+                        letterSpacing = (-0.3).sp
                     )
                 },
                 navigationIcon = {
@@ -122,14 +125,19 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Account",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        letterSpacing = (-0.2).sp
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -170,7 +178,7 @@ fun SettingsScreen(
                                     text = if (account.isRecoverable) "Progress protected" else "Secure your progress",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextHeadingBlack
+                                    color = CoastInk
                                 )
                                 Text(
                                     text = account.email
@@ -180,14 +188,14 @@ fun SettingsScreen(
                                             "Guest — progress is only on this device"
                                         },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TextSubtleGray
+                                    color = CoastMuted
                                 )
                             }
                         }
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowRight),
                             contentDescription = null,
-                            tint = TextSubtleGray,
+                            tint = CoastMuted,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -199,19 +207,24 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Smart Notifications",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        letterSpacing = (-0.2).sp
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
                     SettingSwitchRow(
-                        title = "Streak Protection Reminders 🔥",
+                        title = "Streak Protection Reminders",
                         subtitle = "Notify me before losing my streak",
                         checked = streakReminders,
                         iconRes = Iconsax.Flash,
@@ -221,7 +234,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SettingSwitchRow(
-                        title = "Word of the Day 🌟",
+                        title = "Word of the Day",
                         subtitle = "Daily Kasiguranin phrase highlight",
                         checked = wordOfDayReminders,
                         iconRes = Iconsax.Book,
@@ -231,7 +244,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SettingSwitchRow(
-                        title = "Leaderboard Rank Alerts 🏆",
+                        title = "Leaderboard Rank Alerts",
                         subtitle = "Alert me when my rank changes",
                         checked = leaderboardAlerts,
                         iconRes = Iconsax.MedalStar,
@@ -239,7 +252,7 @@ fun SettingsScreen(
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Row(
@@ -251,28 +264,28 @@ fun SettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Daily Reminder Time ⏰",
+                                text = "Daily Reminder Time",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextHeadingBlack
+                                color = CoastInk
                             )
                             Text(
                                 text = "Scheduled at $reminderTime every day",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSubtleGray
+                                color = CoastMuted
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = HeroCardStart.copy(alpha = 0.4f)
+                            shape = RoundedCornerShape(999.dp),
+                            color = PlayPurpleStart.copy(alpha = 0.12f)
                         ) {
                             Text(
                                 text = reminderTime,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                                fontWeight = FontWeight.ExtraBold,
+                                color = PlayPurpleStart
                             )
                         }
                     }
@@ -284,14 +297,19 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "App Preferences",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        letterSpacing = (-0.2).sp
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -320,14 +338,19 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Data Sync",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        letterSpacing = (-0.2).sp
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -341,12 +364,12 @@ fun SettingsScreen(
                                 text = "Sync Now",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextHeadingBlack
+                                color = CoastInk
                             )
                             Text(
                                 text = "Merge this device with your saved cloud progress",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSubtleGray
+                                color = CoastMuted
                             )
                         }
 
@@ -363,25 +386,25 @@ fun SettingsScreen(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart),
+                            shape = RoundedCornerShape(999.dp),
                             enabled = !isSyncing
                         ) {
                             if (isSyncing) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
-                                    color = TextHeadingBlack,
+                                    color = Color.White,
                                     strokeWidth = 2.dp
                                 )
                             } else {
                                 Icon(
                                     painter = painterResource(id = Iconsax.Refresh),
                                     contentDescription = null,
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sync", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
+                                Text("Sync", color = Color.White, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -403,30 +426,42 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.InfoCircle),
-                            contentDescription = null,
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(22.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = PlayPurpleStart.copy(alpha = 0.12f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.InfoCircle),
+                                    contentDescription = null,
+                                    tint = PlayPurpleStart,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                         Column {
                             Text(
                                 text = "KasiGuru v${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                                fontWeight = FontWeight.ExtraBold,
+                                color = CoastInk
                             )
                             Text(
                                 text = "Installed build ${BuildConfig.VERSION_CODE}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSubtleGray
+                                color = CoastMuted
                             )
                         }
                     }
@@ -456,14 +491,14 @@ fun SettingSwitchRow(
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = PlayPurpleStart.copy(alpha = 0.1f),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
-                        tint = TextHeadingBlack,
+                        tint = PlayPurpleStart,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -474,12 +509,12 @@ fun SettingSwitchRow(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextHeadingBlack
+                    color = CoastInk
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSubtleGray
+                    color = CoastMuted
                 )
             }
         }
@@ -489,8 +524,8 @@ fun SettingSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = TextHeadingBlack,
-                uncheckedThumbColor = TextSubtleGray,
+                checkedTrackColor = PlayPurpleStart,
+                uncheckedThumbColor = CoastMuted,
                 uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         )

@@ -1,11 +1,15 @@
 package com.kasiguru.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -15,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.util.gamification.LevelInfo
 
 @Composable
@@ -29,6 +34,10 @@ fun LevelUpDialog(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 8.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            ),
             modifier = Modifier.fillMaxWidth()
         ) {
             Box(
@@ -43,81 +52,98 @@ fun LevelUpDialog(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "🎉 LEVEL UP! 🎉",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                        color = HeroCardStart,
-                        letterSpacing = 1.5.sp
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = XpGold.copy(alpha = 0.18f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.CupBold),
+                                contentDescription = null,
+                                tint = XpGoldDark,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "LEVEL UP",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = XpGoldDark,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = newLevelInfo.iconEmoji,
-                        fontSize = 64.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(PlayPurpleStart.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MascotOwlSlot(size = 54.dp)
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
                         text = "Level ${newLevelInfo.level}",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        letterSpacing = (-0.3).sp
                     )
 
                     Text(
                         text = newLevelInfo.title,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Primary
+                        color = PlayPurpleStart
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = QuestsCardStart.copy(alpha = 0.5f)
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                     ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "NEW UNLOCKS!",
+                                text = "NEW UNLOCKS",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                                fontWeight = FontWeight.ExtraBold,
+                                color = CoastInk,
+                                letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "You unlocked new games & badges!",
+                                text = "You unlocked new mini-game modes & badges!",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextHeadingBlack,
-                                textAlign = TextAlign.Center
+                                color = CoastMuted,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 18.sp
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
-                    Button(
+                    CoastPillButton(
+                        label = "Awesome!",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onDismiss()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Awesome!",
-                            color = TextHeadingBlack,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
+                        variant = PillVariant.Purple
+                    )
                 }
             }
         }

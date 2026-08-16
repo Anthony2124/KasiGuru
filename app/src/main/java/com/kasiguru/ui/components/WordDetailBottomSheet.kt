@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -26,8 +28,8 @@ fun WordDetailBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        containerColor = DarkSurface,
-        scrimColor = DarkBackground.copy(alpha = 0.6f)
+        containerColor = MaterialTheme.colorScheme.surface,
+        scrimColor = Color.Black.copy(alpha = 0.45f)
     ) {
         Column(
             modifier = Modifier
@@ -39,18 +41,20 @@ fun WordDetailBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = vocab.kasiguranin,
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TextWhite,
-                        fontWeight = FontWeight.Bold
+                        color = CoastInk,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.4).sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${vocab.english} / ${vocab.tagalog}",
+                        text = "${vocab.english} • ${vocab.tagalog}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Secondary
+                        color = VocabSea,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
@@ -59,12 +63,13 @@ fun WordDetailBottomSheet(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Primary)
+                        .background(XpGold)
                 ) {
                     Icon(
-                        painter = painterResource(id = Iconsax.VolumeHighBold),
+                        painter = painterResource(id = Iconsax.VolumeHigh),
                         contentDescription = "Play Pronunciation",
-                        tint = TextWhite
+                        tint = CoastInk,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
@@ -74,25 +79,49 @@ fun WordDetailBottomSheet(
             // Phonetic Badges
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (vocab.phoneticGlottal) {
-                    SuggestionChip(
-                        onClick = {},
-                        label = { Text("Glottal Stop ʔ", style = MaterialTheme.typography.labelSmall) }
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = PlayPurpleStart.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = "Glottal Stop ʔ",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = PlayPurpleStart
+                        )
+                    }
                 }
                 if (vocab.phoneticVowelLength) {
-                    SuggestionChip(
-                        onClick = {},
-                        label = { Text("Long Vowel ː", style = MaterialTheme.typography.labelSmall) }
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = XpGold.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = "Long Vowel ː",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = XpGoldDark
+                        )
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = VocabSea.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = vocab.category,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = VocabSea
                     )
                 }
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text(vocab.category, style = MaterialTheme.typography.labelSmall) }
-                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = DarkSurfaceVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
             Spacer(modifier = Modifier.height(16.dp))
 
             // Verb Aspects
@@ -100,8 +129,9 @@ fun WordDetailBottomSheet(
                 Text(
                     text = "Verb Aspect Inflections",
                     style = MaterialTheme.typography.titleSmall,
-                    color = Accent,
-                    fontWeight = FontWeight.Bold
+                    color = PlayPurpleStart,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.2).sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -117,20 +147,21 @@ fun WordDetailBottomSheet(
                 Text(
                     text = "Example Sentence",
                     style = MaterialTheme.typography.titleSmall,
-                    color = PrimaryLight,
-                    fontWeight = FontWeight.Bold
+                    color = PlayPurpleStart,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.2).sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "\"${vocab.exampleSentence}\"",
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
-                    color = TextWhite
+                    color = CoastInk
                 )
                 Text(
                     text = vocab.exampleTranslation,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextGray
+                    color = CoastMuted
                 )
             }
 
@@ -148,8 +179,8 @@ private fun AspectDetailRow(label: String, value: String) {
                 .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = TextGray)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = TextWhite, fontWeight = FontWeight.SemiBold)
+            Text(text = label, style = MaterialTheme.typography.bodySmall, color = CoastMuted)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = CoastInk, fontWeight = FontWeight.SemiBold)
         }
     }
 }

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KasiGuru — Onboarding (redesign comp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand-bg:#FAF5EC;
+    --surface:#FFFFFF;
+    --ink:#1C2233;
+    --muted:#7A8195;
+    --line:rgba(28,34,51,.07);
+    --purple:#7B6EF6; --purple-2:#A78BFA;
+    --gold:#FFB020;   --gold-2:#FF9E1B;
+    --sea:#12B3A6;    --sea-2:#0E9E97;
+    --coral:#FF6B6B;  --coral-2:#FF8A5B;
+    --ember:#FF7A3C;
+    --dusk:#6C5CE7;
+    --sky:#3FA9F5;
+    --r-pill:999px;
+    --shadow-soft:0 14px 30px -12px rgba(28,34,51,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Outfit',system-ui,sans-serif;
+    background:#E9E4DA;
+    display:flex;justify-content:center;align-items:flex-start;
+    gap:32px;padding:26px;flex-wrap:wrap;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Phone shell ── */
+  .phone{
+    width:390px;height:844px;background:var(--sand-bg);
+    border-radius:44px;overflow:hidden;position:relative;flex:none;
+    box-shadow:0 40px 90px -30px rgba(28,34,51,.5), 0 0 0 10px #14161f, 0 0 0 12px #2a2d3a;
+  }
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#14161f;border-radius:0 0 16px 16px;z-index:40}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:16px 26px 4px;font-size:13px;font-weight:700;color:var(--ink);position:relative;z-index:10}
+  .statusbar.on-dark{color:#fff}
+
+  /* ── Skip ── */
+  .skip{position:absolute;top:60px;right:24px;font-size:13px;font-weight:700;color:rgba(255,255,255,.72);z-index:20;letter-spacing:.2px}
+  .skip.dark{color:var(--muted)}
+
+  /* ── Full-bleed illustration area ── */
+  .illus{position:absolute;top:0;left:0;right:0;height:490px;overflow:hidden}
+  .illus svg{width:100%;height:100%}
+
+  /* ── Bottom sheet ── */
+  .sheet{
+    position:absolute;bottom:0;left:0;right:0;height:390px;
+    background:var(--sand-bg);border-radius:36px 36px 0 0;
+    padding:28px 28px 36px;
+    display:flex;flex-direction:column;
+  }
+
+  /* ── Dots ── */
+  .dots{display:flex;gap:7px;margin-bottom:20px}
+  .dot{height:7px;border-radius:var(--r-pill);background:var(--line);}
+  .dot.active{width:28px;background:var(--purple);}
+  .dot:not(.active){width:7px;}
+
+  /* ── Copy ── */
+  .tag{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--purple);margin-bottom:8px}
+  .hed{font-size:28px;font-weight:900;color:var(--ink);letter-spacing:-.6px;line-height:1.1}
+  .sub{font-size:15px;font-weight:500;color:var(--muted);margin-top:10px;line-height:1.55;max-width:300px}
+
+  /* ── Pill button ── */
+  .btn-row{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+  .pill-btn{
+    display:inline-flex;align-items:center;gap:12px;
+    background:linear-gradient(135deg,var(--purple),var(--purple-2));
+    color:#fff;font-size:16px;font-weight:800;
+    padding:14px 18px 14px 26px;border-radius:var(--r-pill);
+    box-shadow:0 12px 28px -8px rgba(28,34,51,.38);
+    letter-spacing:-.2px;
+  }
+  .pill-btn .go{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center}
+
+  /* gold variant */
+  .pill-btn.gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    box-shadow:0 12px 28px -8px rgba(28,34,51,.38);
+  }
+  .pill-btn.gold .go{background:rgba(255,255,255,.22)}
+
+  .back-btn{width:48px;height:48px;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+
+  svg{display:block}
+
+  /* label under phones */
+  .label{text-align:center;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:#8A8378;margin-top:14px;letter-spacing:.3px}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SLIDE 1 — Welcome / language world
+     ════════════════════════════════════ -->
+<div>
+<div class="phone" id="s1">
+  <div class="notch"></div>
+  <div class="statusbar on-dark" style="position:relative;z-index:10">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:7px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#fff"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.5C4.5 1.5 11.5 1.5 15 4.5M3.5 7C6 5 10 5 12.5 7M6 9.3c1.2-1 2.8-1 4 0"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#fff" stroke-width="1.4"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#fff"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="#fff"/></svg>
+    </span>
+  </div>
+
+  <span class="skip">Skip</span>
+
+  <!-- Illustration: purple/night coastal sky + big owl mascot -->
+  <div class="illus">
+    <svg viewBox="0 0 390 490" fill="none" preserveAspectRatio="xMidYMid slice">
+      <!-- Sky gradient -->
+      <defs>
+        <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2D1B69"/><stop offset="100%" stop-color="#7B6EF6"/></linearGradient>
+        <radialGradient id="moon" cx="50%" cy="30%" r="30%"><stop offset="0%" stop-color="#FFF9ED" stop-opacity=".9"/><stop offset="100%" stop-color="#FFF9ED" stop-opacity="0"/></radialGradient>
+        <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1A0E45"/><stop offset="100%" stop-color="#0D0826"/></linearGradient>
+        <linearGradient id="water1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3B2F8A"/><stop offset="100%" stop-color="#5546B8"/></linearGradient>
+      </defs>
+      <rect width="390" height="490" fill="url(#sky1)"/>
+      <!-- Moon glow -->
+      <circle cx="195" cy="120" r="80" fill="url(#moon)"/>
+      <circle cx="195" cy="120" r="44" fill="#FFFBF0" opacity=".92"/>
+      <!-- Stars -->
+      <circle cx="60" cy="55" r="2" fill="#fff" opacity=".8"/>
+      <circle cx="320" cy="45" r="1.5" fill="#fff" opacity=".7"/>
+      <circle cx="140" cy="30" r="1.2" fill="#fff" opacity=".6"/>
+      <circle cx="270" cy="75" r="1.8" fill="#fff" opacity=".75"/>
+      <circle cx="80" cy="95" r="1" fill="#fff" opacity=".6"/>
+      <circle cx="350" cy="120" r="1.4" fill="#fff" opacity=".65"/>
+      <circle cx="40" cy="140" r="1" fill="#fff" opacity=".5"/>
+      <!-- Hills -->
+      <path d="M0 350 Q80 280 195 310 Q310 340 390 280 V490 H0Z" fill="url(#hill1)"/>
+      <!-- Water reflection -->
+      <path d="M0 420 Q100 400 195 415 Q290 430 390 405 V490 H0Z" fill="url(#water1)" opacity=".55"/>
+      <!-- Water shimmer -->
+      <path d="M60 435 Q90 432 120 435" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+      <path d="M200 428 Q240 425 280 428" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+      <path d="M150 448 Q180 445 210 448" stroke="#A78BFA" stroke-width="1.2" stroke-linecap="round" opacity=".35"/>
+      <!-- Palm silhouette left -->
+      <path d="M30 370 Q35 320 45 290" stroke="#0D0826" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="38" cy="288" rx="28" ry="10" fill="#0D0826" transform="rotate(-20 38 288)"/>
+      <ellipse cx="52" cy="282" rx="24" ry="8" fill="#0D0826" transform="rotate(15 52 282)"/>
+      <!-- Palm silhouette right -->
+      <path d="M360 390 Q355 335 345 305" stroke="#0D0826" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="352" cy="303" rx="26" ry="9" fill="#0D0826" transform="rotate(20 352 303)"/>
+      <ellipse cx="338" cy="298" rx="22" ry="8" fill="#0D0826" transform="rotate(-15 338 298)"/>
+
+      <!-- OWL MASCOT — large, centered, on the moon -->
+      <!-- Body -->
+      <ellipse cx="195" cy="250" rx="52" ry="58" fill="#FFF3D6"/>
+      <!-- Wing left -->
+      <path d="M143 240 Q120 255 128 285 Q148 270 155 255Z" fill="#E9C97A"/>
+      <!-- Wing right -->
+      <path d="M247 240 Q270 255 262 285 Q242 270 235 255Z" fill="#E9C97A"/>
+      <!-- Ear tufts -->
+      <path d="M175 200 L168 180 L182 195Z" fill="#D4A84B"/>
+      <path d="M215 200 L222 180 L208 195Z" fill="#D4A84B"/>
+      <!-- Eye rings -->
+      <circle cx="181" cy="238" r="22" fill="#fff"/>
+      <circle cx="209" cy="238" r="22" fill="#fff"/>
+      <!-- Eyes -->
+      <circle cx="181" cy="239" r="13" fill="#1C2233"/>
+      <circle cx="209" cy="239" r="13" fill="#1C2233"/>
+      <!-- Eye shine -->
+      <circle cx="186" cy="234" r="4" fill="#fff"/>
+      <circle cx="214" cy="234" r="4" fill="#fff"/>
+      <!-- Beak -->
+      <path d="M195 248 l-8 10 h16 Z" fill="#FF9E1B"/>
+      <!-- Belly pattern -->
+      <ellipse cx="195" cy="272" rx="28" ry="22" fill="#FFE4A0" opacity=".55"/>
+      <!-- Talons -->
+      <path d="M178 304 Q172 316 165 320 M178 304 Q178 318 175 324 M178 304 Q184 316 182 322" stroke="#D4A84B" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M212 304 Q218 316 225 320 M212 304 Q212 318 215 324 M212 304 Q206 316 208 322" stroke="#D4A84B" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+      <!-- Floating Kasiguranin words around owl -->
+      <rect x="44" cy="195" x="44" y="190" width="76" height="28" rx="10" fill="#7B6EF6" opacity=".85"/>
+      <text x="82" y="209" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#fff">magandang</text>
+      <rect x="270" y="210" width="68" height="28" rx="10" fill="#12B3A6" opacity=".85"/>
+      <text x="304" y="229" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#fff">aldew</text>
+      <rect x="100" y="310" width="60" height="28" rx="10" fill="#FF9E1B" opacity=".85"/>
+      <text x="130" y="329" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#fff">singët</text>
+      <rect x="240" y="295" width="76" height="28" rx="10" fill="#6C5CE7" opacity=".85"/>
+      <text x="278" y="314" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#fff">maray abot</text>
+    </svg>
+  </div>
+
+  <!-- Sheet -->
+  <div class="sheet" style="height:380px">
+    <div class="dots">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="tag">Welcome</div>
+    <div class="hed">Kasiguranin lives<br>in every word</div>
+    <div class="sub">Join a mission to keep an endangered language alive — one lesson at a time.</div>
+    <div class="btn-row" style="margin-top:auto">
+      <div></div>
+      <div class="pill-btn">
+        Get started
+        <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="label">Step 1 — Welcome</div>
+</div>
+
+<!-- ════════════════════════════════════
+     SLIDE 2 — Learn the language
+     ════════════════════════════════════ -->
+<div>
+<div class="phone" id="s2">
+  <div class="notch"></div>
+  <div class="statusbar on-dark">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:7px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#fff"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.5C4.5 1.5 11.5 1.5 15 4.5M3.5 7C6 5 10 5 12.5 7M6 9.3c1.2-1 2.8-1 4 0"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#fff" stroke-width="1.4"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#fff"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="#fff"/></svg>
+    </span>
+  </div>
+
+  <span class="skip">Skip</span>
+
+  <!-- Illustration: warm daytime coastal + vocabulary cards floating -->
+  <div class="illus">
+    <svg viewBox="0 0 390 490" fill="none" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#87CEEB"/><stop offset="60%" stop-color="#E8F4FD"/><stop offset="100%" stop-color="#FFF3D6"/></linearGradient>
+        <linearGradient id="sea2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#12B3A6"/><stop offset="100%" stop-color="#0E9E97"/></linearGradient>
+        <linearGradient id="sand2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5DFA0"/><stop offset="100%" stop-color="#E8C876"/></linearGradient>
+      </defs>
+      <rect width="390" height="490" fill="url(#sky2)"/>
+      <!-- Sun -->
+      <circle cx="310" cy="75" r="38" fill="#FFD15C" opacity=".9"/>
+      <circle cx="310" cy="75" r="48" fill="#FFD15C" opacity=".25"/>
+      <!-- Clouds -->
+      <ellipse cx="80" cy="80" rx="45" ry="18" fill="#fff" opacity=".8"/>
+      <ellipse cx="100" cy="72" rx="30" ry="16" fill="#fff" opacity=".8"/>
+      <ellipse cx="60" cy="76" rx="25" ry="13" fill="#fff" opacity=".8"/>
+      <ellipse cx="220" cy="55" rx="38" ry="15" fill="#fff" opacity=".7"/>
+      <ellipse cx="245" cy="48" rx="25" ry="13" fill="#fff" opacity=".7"/>
+      <!-- Sea -->
+      <path d="M0 310 Q100 290 195 310 Q290 330 390 305 V490 H0Z" fill="url(#sea2)"/>
+      <!-- Sea shimmer lines -->
+      <path d="M20 335 Q60 330 100 335" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".3"/>
+      <path d="M160 348 Q210 344 260 348" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".3"/>
+      <path d="M290 340 Q330 337 370 340" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".25"/>
+      <!-- Beach -->
+      <path d="M0 370 Q100 355 195 365 Q290 375 390 358 V490 H0Z" fill="url(#sand2)"/>
+      <!-- Shell details on beach -->
+      <ellipse cx="90" cy="395" rx="10" ry="5" fill="#FFB020" opacity=".4" transform="rotate(-15 90 395)"/>
+      <ellipse cx="300" cy="405" rx="8" ry="4" fill="#FF8A5B" opacity=".35" transform="rotate(10 300 405)"/>
+      <!-- Palm -->
+      <path d="M340 380 Q338 330 330 295" stroke="#8B6914" stroke-width="6" stroke-linecap="round" fill="none"/>
+      <ellipse cx="322" cy="293" rx="32" ry="11" fill="#2D7A3A" transform="rotate(-25 322 293)"/>
+      <ellipse cx="338" cy="286" rx="28" ry="10" fill="#2D7A3A" transform="rotate(20 338 286)"/>
+      <ellipse cx="308" cy="280" rx="22" ry="8" fill="#2D7A3A" transform="rotate(-5 308 280)"/>
+
+      <!-- Floating vocabulary card 1 (big) -->
+      <rect x="28" y="120" width="160" height="100" rx="20" fill="#fff" filter="url(#cs1)"/>
+      <defs><filter id="cs1"><feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#1C2233" flood-opacity=".14"/></filter></defs>
+      <rect x="28" y="120" width="160" height="100" rx="20" fill="#fff"/>
+      <rect x="28" y="120" width="160" height="38" rx="20" fill="#12B3A6"/>
+      <rect x="28" y="140" width="160" height="18" fill="#12B3A6"/>
+      <text x="108" y="143" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="800" fill="#fff" letter-spacing=".5">KASIGURANIN</text>
+      <text x="108" y="186" text-anchor="middle" font-family="Outfit,sans-serif" font-size="24" font-weight="900" fill="#1C2233">singët</text>
+      <text x="108" y="207" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="500" fill="#7A8195">ant · langgam</text>
+
+      <!-- Vocab card 2 (tilted) -->
+      <g transform="rotate(8 280 175)">
+        <rect x="210" y="140" width="140" height="90" rx="18" fill="#fff"/>
+        <rect x="210" y="140" width="140" height="34" rx="18" fill="#FF8A5B"/>
+        <rect x="210" y="156" width="140" height="18" fill="#FF8A5B"/>
+        <text x="280" y="162" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="800" fill="#fff" letter-spacing=".5">KASIGURANIN</text>
+        <text x="280" y="195" text-anchor="middle" font-family="Outfit,sans-serif" font-size="20" font-weight="900" fill="#1C2233">dagat</text>
+        <text x="280" y="215" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="500" fill="#7A8195">sea · karagatan</text>
+      </g>
+
+      <!-- Vocab card 3 (tilted left) -->
+      <g transform="rotate(-6 110 255)">
+        <rect x="45" y="235" width="130" height="85" rx="18" fill="#fff"/>
+        <rect x="45" y="235" width="130" height="32" rx="18" fill="#7B6EF6"/>
+        <rect x="45" y="249" width="130" height="18" fill="#7B6EF6"/>
+        <text x="110" y="255" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="800" fill="#fff" letter-spacing=".5">KASIGURANIN</text>
+        <text x="110" y="287" text-anchor="middle" font-family="Outfit,sans-serif" font-size="19" font-weight="900" fill="#1C2233">puso</text>
+        <text x="110" y="305" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="500" fill="#7A8195">heart · puso</text>
+      </g>
+
+      <!-- Small owl on beach watching cards -->
+      <ellipse cx="248" cy="292" rx="22" ry="24" fill="#FFF3D6"/>
+      <circle cx="240" cy="286" r="8" fill="#fff"/><circle cx="256" cy="286" r="8" fill="#fff"/>
+      <circle cx="240" cy="287" r="3.5" fill="#1C2233"/><circle cx="256" cy="287" r="3.5" fill="#1C2233"/>
+      <circle cx="242" cy="285" r="1.2" fill="#fff"/><circle cx="258" cy="285" r="1.2" fill="#fff"/>
+      <path d="M248 290 l-3.5 4.5 h7Z" fill="#FF9E1B"/>
+    </svg>
+  </div>
+
+  <div class="sheet" style="height:380px">
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="tag">Vocabulary</div>
+    <div class="hed">Real words,<br>real culture</div>
+    <div class="sub">Learn 394+ Kasiguranin words through flashcards, stories, and spaced repetition built for retention.</div>
+    <div class="btn-row">
+      <div class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A8195" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      </div>
+      <div class="pill-btn">
+        Next
+        <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="label">Step 2 — Vocabulary</div>
+</div>
+
+<!-- ════════════════════════════════════
+     SLIDE 3 — Mini-games / Play
+     ════════════════════════════════════ -->
+<div>
+<div class="phone" id="s3">
+  <div class="notch"></div>
+  <div class="statusbar on-dark">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:7px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#fff"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.5C4.5 1.5 11.5 1.5 15 4.5M3.5 7C6 5 10 5 12.5 7M6 9.3c1.2-1 2.8-1 4 0"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#fff" stroke-width="1.4"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#fff"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="#fff"/></svg>
+    </span>
+  </div>
+
+  <span class="skip">Skip</span>
+
+  <!-- Illustration: festival/game arena feel — gold/coral/purple -->
+  <div class="illus">
+    <svg viewBox="0 0 390 490" fill="none" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1A0D3C"/><stop offset="100%" stop-color="#3D1F7C"/></linearGradient>
+        <radialGradient id="glow3" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="#FFB020" stop-opacity=".3"/><stop offset="100%" stop-color="#FFB020" stop-opacity="0"/></radialGradient>
+        <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF8A5B"/><stop offset="100%" stop-color="#FF6B6B"/></linearGradient>
+        <linearGradient id="card3a" x1="135deg" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7B6EF6"/><stop offset="100%" stop-color="#A78BFA"/></linearGradient>
+        <linearGradient id="card3b" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF8A5B"/><stop offset="100%" stop-color="#FF6B6B"/></linearGradient>
+        <linearGradient id="card3c" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#12B3A6"/><stop offset="100%" stop-color="#0E9E97"/></linearGradient>
+        <linearGradient id="card3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFB020"/><stop offset="100%" stop-color="#FF9E1B"/></linearGradient>
+      </defs>
+      <rect width="390" height="490" fill="url(#bg3)"/>
+      <rect width="390" height="490" fill="url(#glow3)"/>
+      <!-- Confetti dots -->
+      <circle cx="45" cy="60" r="5" fill="#FFB020" opacity=".8"/>
+      <circle cx="340" cy="80" r="4" fill="#FF6B6B" opacity=".7"/>
+      <circle cx="80" cy="140" r="3" fill="#12B3A6" opacity=".7"/>
+      <circle cx="310" cy="155" r="5" fill="#A78BFA" opacity=".6"/>
+      <circle cx="160" cy="50" r="3.5" fill="#FF8A5B" opacity=".7"/>
+      <circle cx="230" cy="35" r="3" fill="#FFB020" opacity=".65"/>
+      <circle cx="370" cy="200" r="4" fill="#12B3A6" opacity=".6"/>
+      <circle cx="20" cy="200" r="3.5" fill="#FF6B6B" opacity=".6"/>
+      <!-- Confetti rects (rotated) -->
+      <rect x="55" y="100" width="8" height="4" rx="2" fill="#A78BFA" opacity=".7" transform="rotate(30 55 100)"/>
+      <rect x="320" y="130" width="8" height="4" rx="2" fill="#FFB020" opacity=".7" transform="rotate(-20 320 130)"/>
+      <rect x="140" y="80" width="6" height="3" rx="1.5" fill="#FF6B6B" opacity=".7" transform="rotate(45 140 80)"/>
+      <rect x="260" y="90" width="7" height="3.5" rx="1.5" fill="#12B3A6" opacity=".7" transform="rotate(-35 260 90)"/>
+
+      <!-- 6 game tiles arranged in a 2-col arc -->
+      <!-- Row 1 -->
+      <rect x="32" y="120" width="150" height="90" rx="22" fill="url(#card3a)"/>
+      <text x="107" y="162" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30">🎯</text>
+      <text x="107" y="186" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="800" fill="#fff">Matching</text>
+      <text x="107" y="202" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="600" fill="rgba(255,255,255,.75)">Match words &amp; pics</text>
+
+      <rect x="206" y="108" width="152" height="90" rx="22" fill="url(#card3b)"/>
+      <text x="282" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30">⚡</text>
+      <text x="282" y="174" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="800" fill="#fff">Speed Round</text>
+      <text x="282" y="190" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="600" fill="rgba(255,255,255,.75)">Race the clock</text>
+
+      <!-- Row 2 -->
+      <rect x="20" y="228" width="160" height="90" rx="22" fill="url(#card3c)"/>
+      <text x="100" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30">🧩</text>
+      <text x="100" y="292" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="800" fill="#fff">Word Builder</text>
+      <text x="100" y="308" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="600" fill="rgba(255,255,255,.75)">Arrange syllables</text>
+
+      <rect x="208" y="216" width="160" height="90" rx="22" fill="url(#card3d)"/>
+      <text x="288" y="256" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30">🔊</text>
+      <text x="288" y="280" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="800" fill="#1C2233">Listen &amp; Pick</text>
+      <text x="288" y="296" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="600" fill="rgba(28,34,51,.6)">Ear training</text>
+
+      <!-- Row 3 (partial, peeking) -->
+      <rect x="52" y="330" width="130" height="80" rx="20" fill="#6C5CE7" opacity=".85"/>
+      <text x="117" y="368" text-anchor="middle" font-family="Outfit,sans-serif" font-size="28">📖</text>
+      <text x="117" y="392" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="800" fill="#fff">Story Quiz</text>
+      <rect x="210" y="342" width="130" height="80" rx="20" fill="#3FA9F5" opacity=".85"/>
+      <text x="275" y="380" text-anchor="middle" font-family="Outfit,sans-serif" font-size="28">✍️</text>
+      <text x="275" y="404" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="800" fill="#fff">Fill-in</text>
+
+      <!-- XP badge floating -->
+      <rect x="148" y="84" width="94" height="34" rx="17" fill="#FFB020"/>
+      <text x="195" y="106" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="900" fill="#fff">+50 XP per win</text>
+    </svg>
+  </div>
+
+  <div class="sheet" style="height:370px">
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="tag">Mini-games</div>
+    <div class="hed">6 games,<br>zero boring drills</div>
+    <div class="sub">Play your way to fluency — matching, speed rounds, listening, and more. Earn XP every session.</div>
+    <div class="btn-row">
+      <div class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A8195" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      </div>
+      <div class="pill-btn">
+        Next
+        <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="label">Step 3 — Mini-games</div>
+</div>
+
+<!-- ════════════════════════════════════
+     SLIDE 4 — Start / goal-setting
+     ════════════════════════════════════ -->
+<div>
+<div class="phone" id="s4">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:7px">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#1C2233"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 12" fill="none" stroke="#1C2233" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.5C4.5 1.5 11.5 1.5 15 4.5M3.5 7C6 5 10 5 12.5 7M6 9.3c1.2-1 2.8-1 4 0"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#1C2233" stroke-width="1.4"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#1C2233"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="#1C2233"/></svg>
+    </span>
+  </div>
+
+  <!-- Illustration: sunrise + owl celebrating -->
+  <div class="illus">
+    <svg viewBox="0 0 390 490" fill="none" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF3D6"/><stop offset="50%" stop-color="#FFD9A0"/><stop offset="100%" stop-color="#FFAC5A"/></linearGradient>
+        <radialGradient id="sun4" cx="50%" cy="65%" r="40%"><stop offset="0%" stop-color="#FFD15C" stop-opacity="1"/><stop offset="60%" stop-color="#FFB020" stop-opacity=".5"/><stop offset="100%" stop-color="#FFB020" stop-opacity="0"/></radialGradient>
+        <linearGradient id="hill4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2D7A3A"/><stop offset="100%" stop-color="#1A4D22"/></linearGradient>
+        <linearGradient id="sea4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3FA9F5"/><stop offset="100%" stop-color="#2C7BE5"/></linearGradient>
+      </defs>
+      <rect width="390" height="490" fill="url(#sky4)"/>
+      <!-- Sun rays -->
+      <circle cx="195" cy="280" r="150" fill="url(#sun4)"/>
+      <circle cx="195" cy="280" r="60" fill="#FFD15C" opacity=".95"/>
+      <circle cx="195" cy="280" r="44" fill="#FFF0A0"/>
+      <!-- Ray lines -->
+      <line x1="195" y1="215" x2="195" y2="185" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+      <line x1="195" y1="345" x2="195" y2="375" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+      <line x1="130" y1="280" x2="100" y2="280" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+      <line x1="260" y1="280" x2="290" y2="280" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+      <line x1="149" y1="234" x2="127" y2="212" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+      <line x1="241" y1="234" x2="263" y2="212" stroke="#FFD15C" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+      <!-- Rolling hills -->
+      <path d="M0 360 Q80 310 195 340 Q310 370 390 320 V490 H0Z" fill="url(#hill4)"/>
+      <!-- Small trees -->
+      <path d="M55 335 L55 320" stroke="#1A4D22" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="55" cy="310" r="14" fill="#2D7A3A"/>
+      <path d="M330 345 L330 328" stroke="#1A4D22" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="330" cy="318" r="12" fill="#2D7A3A"/>
+      <!-- Sea strip -->
+      <path d="M0 435 Q100 420 195 432 Q290 444 390 425 V490 H0Z" fill="url(#sea4)" opacity=".7"/>
+
+      <!-- CELEBRATING OWL — big, arms up -->
+      <!-- Body -->
+      <ellipse cx="195" cy="205" rx="58" ry="64" fill="#FFF3D6"/>
+      <!-- Wings raised (celebrating) -->
+      <path d="M137 185 Q108 155 118 130 Q140 165 150 185Z" fill="#E9C97A"/>
+      <path d="M253 185 Q282 155 272 130 Q250 165 240 185Z" fill="#E9C97A"/>
+      <!-- Wing tips/feathers -->
+      <path d="M115 138 Q108 128 118 130" stroke="#D4A84B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M122 132 Q116 121 126 124" stroke="#D4A84B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M275 138 Q282 128 272 130" stroke="#D4A84B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M268 132 Q274 121 264 124" stroke="#D4A84B" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <!-- Ear tufts -->
+      <path d="M173 148 L165 125 L182 143Z" fill="#D4A84B"/>
+      <path d="M217 148 L225 125 L208 143Z" fill="#D4A84B"/>
+      <!-- Eye rings -->
+      <circle cx="179" cy="196" r="24" fill="#fff"/>
+      <circle cx="211" cy="196" r="24" fill="#fff"/>
+      <!-- Eyes (happy, slightly squinting) -->
+      <circle cx="179" cy="198" r="13" fill="#1C2233"/>
+      <circle cx="211" cy="198" r="13" fill="#1C2233"/>
+      <!-- Eye shine -->
+      <circle cx="184" cy="193" r="4.5" fill="#fff"/>
+      <circle cx="216" cy="193" r="4.5" fill="#fff"/>
+      <!-- Happy cheeks -->
+      <ellipse cx="162" cy="213" rx="11" ry="7" fill="#FFB3A0" opacity=".55"/>
+      <ellipse cx="228" cy="213" rx="11" ry="7" fill="#FFB3A0" opacity=".55"/>
+      <!-- Beak (smile) -->
+      <path d="M195 207 l-8 9 h16 Z" fill="#FF9E1B"/>
+      <path d="M187 215 Q195 222 203 215" stroke="#E8890F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Belly -->
+      <ellipse cx="195" cy="232" rx="30" ry="24" fill="#FFE4A0" opacity=".6"/>
+      <!-- Stars/sparkles around owl -->
+      <path d="M100 155 l4-10 4 10-10-4 10 4Z" fill="#FFB020" opacity=".9"/>
+      <path d="M285 148 l3-7 3 7-7-3 7 3Z" fill="#A78BFA" opacity=".9"/>
+      <path d="M150 110 l2.5-6 2.5 6-6-2.5 6 2.5Z" fill="#FF8A5B" opacity=".85"/>
+      <path d="M240 105 l2.5-6 2.5 6-6-2.5 6 2.5Z" fill="#12B3A6" opacity=".85"/>
+    </svg>
+  </div>
+
+  <!-- Daily goal picker -->
+  <div class="sheet" style="height:410px">
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot active"></div>
+    </div>
+    <div class="tag">Daily goal</div>
+    <div class="hed">How much will<br>you learn today?</div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <div style="flex:1;border:2px solid var(--line);border-radius:18px;padding:12px 8px;text-align:center;background:var(--surface)">
+        <div style="font-size:18px;font-weight:800;color:var(--ink)">5 min</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Casual</div>
+      </div>
+      <div style="flex:1;border:2.5px solid var(--purple);border-radius:18px;padding:12px 8px;text-align:center;background:rgba(123,110,246,.07)">
+        <div style="font-size:18px;font-weight:800;color:var(--purple)">10 min</div>
+        <div style="font-size:11px;color:var(--purple);font-weight:700;margin-top:2px">Regular</div>
+        <div style="font-size:9px;font-weight:800;color:var(--purple);letter-spacing:.4px;text-transform:uppercase;margin-top:4px">Recommended</div>
+      </div>
+      <div style="flex:1;border:2px solid var(--line);border-radius:18px;padding:12px 8px;text-align:center;background:var(--surface)">
+        <div style="font-size:18px;font-weight:800;color:var(--ink)">20 min</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Intense</div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <div class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A8195" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      </div>
+      <div class="pill-btn gold" style="font-size:15px">
+        Start learning!
+        <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="label">Step 4 — Start</div>
+</div>
+
+</body>
+</html>

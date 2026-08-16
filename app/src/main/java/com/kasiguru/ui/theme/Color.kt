@@ -5,18 +5,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 /**
- * KasiGuru Consolidated 3-Gradient Palette System.
- * Strictly 3 signature soft saturated gradient pairs across all cards and UI components:
- * 1. Purple: #7B6EF6 -> #A78BFA (Identity, Headers, Hero Cards)
- * 2. Gold: #FFC94A -> #FF9F1C (XP, Level, Streaks, Rewards)
- * 3. Pink: #FF9FC0 -> #FF6FA0 (Mini-Games, Badges, Features)
+ * KasiGuru "Casiguran Coast" palette — Phase 0 token foundation.
+ * Identity: Purple. Warmth: Gold. Coastal accents: Sea / Coral / Ember / Dusk / Sky.
+ * Gradient pairs: Purple (identity) · Gold (XP) · Pink (badges/mini-games).
  */
 
-// ─── Primary: Deep Ocean Teal (Legacy Defaults) ───
-val PrimaryDark = Color(0xFF0A4D4D)
-val Primary = Color(0xFF0D7377)
-val PrimaryLight = Color(0xFF14A3A8)
-val PrimaryContainer = Color(0xFF1ECECE)
+// ─── Primary: Purple Identity (remapped from legacy teal) ───
+val PrimaryDark = Color(0xFF4A3FC0)
+val Primary = Color(0xFF7B6EF6)
+val PrimaryLight = Color(0xFFA78BFA)
+val PrimaryContainer = Color(0xFFE8E5FF)
 
 // ─── Secondary: Sunset Gold ───
 val SecondaryDark = Color(0xFFB8860B)
@@ -106,10 +104,22 @@ val ErrorLight = Color(0xFFFFEBEE)
 val BadgeGold = Color(0xFFFFD700)
 val BadgeSilver = Color(0xFFC0C0C0)
 val BadgeBronze = Color(0xFFCD7F32)
-val XpGold = Color(0xFFFFD700)
-val XpGoldDark = Color(0xFFFF9F1C)
-val StreakOrange = Color(0xFFFF9F1C)
+val XpGold = Color(0xFFFFB020)
+val XpGoldDark = Color(0xFFFF9E1B)
+val StreakOrange = Color(0xFFFF7A3C)
 val LevelBlue = Color(0xFF7B6EF6)
+
+// ─── Casiguran Coast semantic tokens ───
+val VocabSea      = Color(0xFF12B3A6)   // vocabulary / coastal teal
+val VocabSeaDark  = Color(0xFF0E9E97)
+val GamesCoral    = Color(0xFFFF6B6B)   // mini-games
+val GamesCoralLight = Color(0xFFFF8A5B)
+val StoriesDusk   = Color(0xFF6C5CE7)   // stories / folklore purple
+val SkyReview     = Color(0xFF3FA9F5)   // review / spaced repetition
+val StreakEmber    = Color(0xFFFF7A3C)   // streak fire
+val SandBg        = Color(0xFFFAF5EC)   // warm sand scaffold
+val CoastInk      = Color(0xFF1C2233)   // primary text
+val CoastMuted    = Color(0xFF7A8195)   // secondary text
 
 // ─── Nudge Branding & Moodboard 1-5 Tokens ───
 val NudgeBurple = Color(0xFF8636CE)
