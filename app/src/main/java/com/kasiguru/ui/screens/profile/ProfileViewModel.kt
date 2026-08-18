@@ -52,15 +52,20 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun updateProfile(fullName: String, age: Int?, address: String, iconId: Int) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true)
-            try {
-                userProgressRepository.updateProfileDetails(fullName, age, address, iconId)
-                _uiState.value = _uiState.value.copy(isSaving = false, error = null)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isSaving = false, error = "Failed to update profile.")
-            }
+    /**
+     * Suspends until the write finishes and reports whether it succeeded, so the caller can wait for
+     * a real result before navigating away — previously the screen fired this and navigated back in
+     * the same tap, so a failure was captured in [ProfileUiState.error] but never shown to anyone.
+     */
+    suspend fun updateProfile(fullName: String, age: Int?, address: String, iconId: Int): Boolean {
+        _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+        return try {
+            userProgressRepository.updateProfileDetails(fullName, age, address, iconId)
+            _uiState.value = _uiState.value.copy(isSaving = false, error = null)
+            true
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(isSaving = false, error = "Couldn't save your changes. Check your connection and try again.")
+            false
         }
     }
 }

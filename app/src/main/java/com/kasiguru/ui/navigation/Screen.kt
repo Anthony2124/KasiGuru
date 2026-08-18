@@ -6,7 +6,15 @@ package com.kasiguru.ui.navigation
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
-    data object Home : Screen("home")
+    /** The learner's home: today's plan. Replaces the old Home dashboard. */
+    data object Learn : Screen("learn")
+    data object LessonPlayer : Screen("lesson/{unitId}/{lessonIndex}") {
+        /** Unit ids are category names and contain spaces and ampersands, so they must be encoded. */
+        fun createRoute(unitId: String, lessonIndex: Int): String {
+            val encoded = java.net.URLEncoder.encode(unitId, "UTF-8")
+            return "lesson/$encoded/$lessonIndex"
+        }
+    }
     data object Profile : Screen("profile")
     data object EditProfile : Screen("edit_profile")
     data object StoryList : Screen("stories")

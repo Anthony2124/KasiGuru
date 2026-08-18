@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * Room migrations for KasiGuruDatabase v1 -> v17.
+ * Room migrations for KasiGuruDatabase v1 -> v21.
  *
  * Generated from the exported schemas in app/schemas/com.kasiguru.data.local.KasiGuruDatabase/
  * so every create statement matches the target schema byte-for-byte (Room validates
@@ -42,7 +42,8 @@ object KasiGuruMigrations {
         MIGRATION_16_17,
         MIGRATION_17_18,
         MIGRATION_18_19,
-        MIGRATION_19_20
+        MIGRATION_19_20,
+        MIGRATION_20_21
         )
     }
 
@@ -51,6 +52,33 @@ object KasiGuruMigrations {
      * friends). Rankings now come from the server-maintained leaderboard, and this
      * table is only an offline cache of it. Touches no user progress.
      */
+    /**
+     * Adds `lesson_progress`, the store behind the new lesson system.
+     *
+     * Only the learner's progress is persisted; lesson identity is derived from the vocabulary
+     * categories at runtime, so the corpus can grow through the admin portal without another
+     * migration. Create statement matches the entity exactly, including the index, because Room
+     * validates schema identity on open.
+     */
+    private val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `lesson_progress` (" +
+                    "`unitId` TEXT NOT NULL, `lessonIndex` INTEGER NOT NULL, " +
+                    "`isComplete` INTEGER NOT NULL, `bestAccuracy` REAL NOT NULL, " +
+                    "`timesCompleted` INTEGER NOT NULL, `lastCompletedAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`unitId`, `lessonIndex`))"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_lesson_progress_isComplete` " +
+                    "ON `lesson_progress` (`isComplete`)"
+            )
+            // Daily-XP ledger, so the daily-goal ring stops being derived from a modulo of total XP.
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `dailyXpEarned` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `dailyXpDate` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
     private val MIGRATION_19_20 = object : Migration(19, 20) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("DELETE FROM `leaderboard`")

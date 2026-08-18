@@ -14,7 +14,6 @@ import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,7 +72,7 @@ class ReverseMatchViewModel @Inject constructor(
             if (questionQueue.isEmpty()) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    isGameOver = true
+                    isUnavailable = true
                 )
                 return@launch
             }
@@ -135,11 +134,12 @@ class ReverseMatchViewModel @Inject constructor(
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
-
-            delay(if (isCorrect) 1500 else 2600)
-            _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
-            loadNextQuestion()
         }
+    }
+
+    fun nextQuestion() {
+        _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
+        loadNextQuestion()
     }
 
     private fun endGame() {
@@ -186,6 +186,7 @@ class ReverseMatchViewModel @Inject constructor(
 
 data class ReverseMatchUiState(
     val isLoading: Boolean = true,
+    val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,
     val currentWord: VocabularyEntity? = null,
     val options: List<String> = emptyList(),

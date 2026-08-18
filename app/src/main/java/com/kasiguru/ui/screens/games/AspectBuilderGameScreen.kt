@@ -1,7 +1,5 @@
 package com.kasiguru.ui.screens.games
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -12,12 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameOptionRow
+import com.kasiguru.ui.components.GameOptionState
 import com.kasiguru.ui.components.GameOverView
-import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.GameUnavailableState
+import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -28,6 +29,10 @@ fun AspectBuilderGameScreen(
     viewModel: AspectBuilderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val exitGuard = rememberGameExitGuard(
+        active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
+        onExit = onNavigateBack
+    )
 
     Scaffold(
         topBar = {
@@ -41,7 +46,7 @@ fun AspectBuilderGameScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = exitGuard) {
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
@@ -59,46 +64,19 @@ fun AspectBuilderGameScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = HeroCardStart)
+                CircularProgressIndicator(color = Violet)
             }
             return@Scaffold
         }
 
         if (uiState.isUnavailable) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.Flash),
-                    contentDescription = null,
-                    tint = HeroCardStart,
-                    modifier = Modifier.size(56.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Aspect Builder is coming soon",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "We are documenting the verb aspect forms with our language experts. Check back after the next dictionary update!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onNavigateBack) {
-                    Text("Back to Games")
-                }
-            }
+            GameUnavailableState(
+                accentColor = HeroCardStart,
+                onBack = onNavigateBack,
+                modifier = Modifier.padding(padding),
+                title = "Aspect Builder is coming soon",
+                message = "We are documenting the verb aspect forms with our language experts. Check back after the next dictionary update!"
+            )
             return@Scaffold
         }
 
@@ -116,6 +94,7 @@ fun AspectBuilderGameScreen(
 
         val question = uiState.questions.getOrNull(uiState.currentIndex) ?: return@Scaffold
         val qIndex = uiState.currentIndex + 1
+        val hasAnswered = uiState.selectedAnswer != null
 
         Column(
             modifier = Modifier
@@ -124,133 +103,69 @@ fun AspectBuilderGameScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Progress
             Column {
-                KasiGuruProgressBar(
+                GameHeader(
+                    label = "Question $qIndex/${uiState.totalQuestions}",
                     progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
-                    gradientColors = listOf(HeroCardStart, HeroCardEnd)
+                    score = uiState.score,
+                    accentStart = HeroCardStart,
+                    accentEnd = HeroCardEnd
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+
+                // Prompt Card
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp
                 ) {
-                    Text(
-                        text = "Question $qIndex/${uiState.totalQuestions}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = HeroCardStart
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Score: ${uiState.score}",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
+                            text = "Root Verb: ${question.rootWord.uppercase()}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSubtleGray
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Form required: ${question.targetAspect}",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextHeadingBlack
+                        )
+                        Text(
+                            text = "Meaning: \"${question.translation}\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSubtleGray
+                        )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    question.options.forEach { option ->
+                        val state = when {
+                            !hasAnswered -> GameOptionState.Idle
+                            option == question.correctAnswer -> GameOptionState.Correct
+                            option == uiState.selectedAnswer -> GameOptionState.Wrong
+                            else -> GameOptionState.Idle
+                        }
+                        GameOptionRow(
+                            label = option,
+                            state = state,
+                            enabled = !hasAnswered,
+                            onClick = { viewModel.submitAnswer(option) }
                         )
                     }
                 }
             }
 
-            // Prompt Card
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Root Verb: ${question.rootWord.uppercase()}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSubtleGray
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Form required: ${question.targetAspect}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                    Text(
-                        text = "Meaning: \"${question.translation}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSubtleGray
-                    )
-                }
+            if (hasAnswered) {
+                GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
-
-            // Option Cards
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                question.options.forEach { option ->
-                    val isAnswered = uiState.selectedAnswer != null
-                    val isSelected = uiState.selectedAnswer == option
-                    val isTheAnswer = option == question.correctAnswer
-                    val isChosenWrong = isSelected && !isTheAnswer
-
-                    val optionBgColor = when {
-                        isAnswered && isTheAnswer -> QuestsCardStart
-                        isChosenWrong -> Error.copy(alpha = 0.2f)
-                        else -> MaterialTheme.colorScheme.surface
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = uiState.selectedAnswer == null) {
-                                viewModel.submitAnswer(option)
-                            },
-                        shape = RoundedCornerShape(20.dp),
-                        color = optionBgColor,
-                        shadowElevation = 1.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = option,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
-                            )
-                            if (isAnswered && isTheAnswer) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.TickCircle),
-                                    contentDescription = "Correct",
-                                    tint = Success,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Teaching moment: reveal the correct answer after a mistake
-            if (uiState.selectedAnswer != null && uiState.isCorrect == false) {
-                Text(
-                    text = "Correct answer: ${question.correctAnswer}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Success,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

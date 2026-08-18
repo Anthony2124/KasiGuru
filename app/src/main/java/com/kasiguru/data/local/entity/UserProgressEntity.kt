@@ -31,6 +31,14 @@ data class UserProgressEntity(
     val lessonsCompleted: Int = 0,
     val isOnboardingCompleted: Boolean = false,
     val dailyGoalXp: Int = 100,
+    /**
+     * XP earned on [dailyXpDate]. Together these form a one-day ledger so the daily-goal ring shows
+     * real progress; the previous UI faked it with `totalXp % dailyGoalXp`, which drifted from the
+     * actual goal as soon as any XP was earned outside a whole multiple.
+     */
+    val dailyXpEarned: Int = 0,
+    /** ISO date the [dailyXpEarned] counter belongs to; a different date means the counter is stale. */
+    val dailyXpDate: String = "",
     val titleBadge: String = "Kasiguranin Apprentice",
     /** Last-modified marker for cross-device sync (Phase 6). */
     val updatedAt: Long = 0

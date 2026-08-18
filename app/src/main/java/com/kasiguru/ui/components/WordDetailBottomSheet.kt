@@ -2,7 +2,6 @@ package com.kasiguru.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -58,20 +57,7 @@ fun WordDetailBottomSheet(
                     )
                 }
 
-                IconButton(
-                    onClick = { onPlayAudio(vocab.audioFileName) },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(XpGold)
-                ) {
-                    Icon(
-                        painter = painterResource(id = Iconsax.VolumeHigh),
-                        contentDescription = "Play Pronunciation",
-                        tint = CoastInk,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                AudioPlayButton(onClick = { onPlayAudio(vocab.audioFileName) })
             }
 
             Spacer(modifier = Modifier.height(16.dp))

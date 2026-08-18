@@ -20,7 +20,8 @@ data class FlashcardUiState(
     val cards: List<VocabularyEntity> = emptyList(),
     val currentIndex: Int = 0,
     val isLoading: Boolean = true,
-    val isDeckComplete: Boolean = false
+    val isDeckComplete: Boolean = false,
+    val isRating: Boolean = false
 )
 
 @HiltViewModel
@@ -52,7 +53,11 @@ class FlashcardViewModel @Inject constructor(
 
     fun rateCard(rating: ReviewRating) {
         val state = _uiState.value
+        // Guards against a second tap landing while the first rating's suspend write is still in
+        // flight — both would otherwise read the same currentIndex and double-rate one card.
+        if (state.isRating) return
         val currentCard = state.cards.getOrNull(state.currentIndex) ?: return
+        _uiState.update { it.copy(isRating = true) }
 
         viewModelScope.launch {
             // 1. Run SM-2 SRS calculation
@@ -80,9 +85,9 @@ class FlashcardViewModel @Inject constructor(
             // 4. Advance deck
             val nextIndex = state.currentIndex + 1
             if (nextIndex >= state.cards.size) {
-                _uiState.update { it.copy(isDeckComplete = true) }
+                _uiState.update { it.copy(isDeckComplete = true, isRating = false) }
             } else {
-                _uiState.update { it.copy(currentIndex = nextIndex) }
+                _uiState.update { it.copy(currentIndex = nextIndex, isRating = false) }
             }
         }
     }

@@ -2,135 +2,257 @@ package com.kasiguru.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * KasiGuru "Casiguran Coast" palette — Phase 0 token foundation.
- * Identity: Purple. Warmth: Gold. Coastal accents: Sea / Coral / Ember / Dusk / Sky.
- * Gradient pairs: Purple (identity) · Gold (XP) · Pink (badges/mini-games).
+ * KasiGuru "Clay Canopy" palette. See DESIGN.md for the full contract.
+ *
+ * Every token below is theme-reactive: it reads [LocalDarkMode] and resolves to a light or dark value,
+ * both independently measured with the WCAG relative-luminance formula (the validator lives in the
+ * scratchpad; the numbers are reproducible). A token is declared `@Composable get()` specifically so it
+ * can react to the current theme while still being referenced exactly like a constant everywhere it
+ * already is (`color = Ink`, `face = Gold`, a default parameter value) — the read just has to happen in
+ * composition, which every existing call site already is.
+ *
+ * One deliberate exception: [Gold], [Coral], [Tier variants and their Ink-pairing. These reward/callout
+ * fills keep the *same* hex value in both themes — a badge or the primary reward button should not
+ * change hue when the system theme flips. What changes instead is the ink text/icon painted on top of
+ * them: light mode's dark [Ink] cannot simply follow [Ink] into its dark-mode near-white value, or every
+ * "ink on gold" pairing would flip to unreadable near-white-on-gold. Those specific fill+ink pairings use
+ * [RewardInk] instead, a fixed dark tone that never themes. See the fill tokens' own doc comments.
  */
 
-// ─── Primary: Purple Identity (remapped from legacy teal) ───
-val PrimaryDark = Color(0xFF4A3FC0)
-val Primary = Color(0xFF7B6EF6)
-val PrimaryLight = Color(0xFFA78BFA)
-val PrimaryContainer = Color(0xFFE8E5FF)
+/** Provided by [com.kasiguru.ui.theme.KasiGuruTheme]; true when dark mode is the active preference. */
+val LocalDarkMode = compositionLocalOf { false }
 
-// ─── Secondary: Sunset Gold ───
-val SecondaryDark = Color(0xFFB8860B)
-val Secondary = Color(0xFFF0A500)
-val SecondaryLight = Color(0xFFFFCA28)
-val SecondaryContainer = Color(0xFFFFE082)
+private object Light {
+    val Ground        = Color(0xFFF1EEFF)
+    val Surface       = Color(0xFFFFFFFF)
+    val SurfaceSunken = Color(0xFFE8E4F8)
+    val TrackNeutral  = Color(0xFFE0DBF5)
+    val BorderHairline = Color(0x141F1B3A)
 
-// ─── Accent: Coral Sunset ───
-val Accent = Color(0xFFFF6B6B)
-val AccentLight = Color(0xFFFF8A8A)
-val AccentContainer = Color(0xFFFFD0D0)
+    val CanopyTop    = Color(0xFF6C5CE7)
+    val CanopyBottom = Color(0xFF4A3FC0)
+    val OnCanopyDecor = Color(0x3DFFFFFF)
+    val ChipOnCanopy  = Color(0x38FFFFFF)
 
-// ─── Scaffold & Surface ───
-val LightThemeBackground = Color(0xFFF6F7FB)
-val LightSurfaceCard = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFEFF2F8)
+    val Violet       = Color(0xFF5B4CDB)
+    val VioletDeep   = Color(0xFF4034A8)
+    val VioletTint   = Color(0xFFE7E3FF)
+    val VioletShadow = Color(0x335B4CDB)
 
-val StaticTextHeadingBlack = Color(0xFF12161F)
-val StaticTextSubtleGray = Color(0xFF6B7280)
+    val Ink   = Color(0xFF1F1B3A)
+    val Muted = Color(0xFF5E5A80)
+    val Faint = Color(0xFF8A86A6)
+
+    val GreenTint = Color(0xFFE3F5E9)
+    val RedTint   = Color(0xFFFDEAEC)
+
+    val NodeLocked    = Color(0xFFDCD8EE)
+    val NodeLockedInk = Color(0xFF8A86A6)
+    val PathTrackIdle = Color(0xFFDFDAF3)
+}
+
+private object Dark {
+    val Ground        = Color(0xFF15131F)
+    val Surface       = Color(0xFF1E1B30)
+    val SurfaceSunken = Color(0xFF282440)
+    val TrackNeutral  = Color(0xFF332E4D)
+    val BorderHairline = Color(0x1FF1EEFF)
+
+    // The canopy is already a vivid, self-contained accent surface — it does not need a dark variant.
+    val CanopyTop    = Light.CanopyTop
+    val CanopyBottom = Light.CanopyBottom
+    val OnCanopyDecor = Light.OnCanopyDecor
+    val ChipOnCanopy  = Light.ChipOnCanopy
+
+    val Violet       = Color(0xFF9C90F5)
+    val VioletDeep   = Color(0xFF6C5CE7)
+    val VioletTint   = Color(0xFF2A2660)
+    val VioletShadow = Color(0x40241C57)
+
+    val Ink   = Color(0xFFF1EEFF)
+    val Muted = Color(0xFFB7B2D6)
+    val Faint = Color(0xFF827DA0)
+
+    val GreenTint = Color(0xFF1B3324)
+    val RedTint   = Color(0xFF3A1E20)
+
+    val NodeLocked    = Color(0xFF332E4D)
+    val NodeLockedInk = Color(0xFF8983A8)
+    val PathTrackIdle = Color(0xFF3A3555)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ground and surfaces
+// ─────────────────────────────────────────────────────────────────────────────
+/** App background. Soft lavender in light mode, near-black violet in dark; white/surface cards float. */
+val Ground: Color @Composable get() = if (LocalDarkMode.current) Dark.Ground else Light.Ground
+/** Cards, rows, sheets. */
+val Surface: Color @Composable get() = if (LocalDarkMode.current) Dark.Surface else Light.Surface
+/** Recessed wells: search fields, inactive segments, progress tracks. */
+val SurfaceSunken: Color @Composable get() = if (LocalDarkMode.current) Dark.SurfaceSunken else Light.SurfaceSunken
+/** Neutral progress track on a surface. */
+val TrackNeutral: Color @Composable get() = if (LocalDarkMode.current) Dark.TrackNeutral else Light.TrackNeutral
+/** Hairline separator, used instead of a shadow wherever only a boundary is needed. */
+val BorderHairline: Color @Composable get() = if (LocalDarkMode.current) Dark.BorderHairline else Light.BorderHairline
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The canopy — the deep violet panel every screen opens with. Unchanged across themes.
+// ─────────────────────────────────────────────────────────────────────────────
+val CanopyTop    = Light.CanopyTop
+val CanopyBottom = Light.CanopyBottom
+
+/** The only colour for text on the canopy. White measures 4.86 on the top, 7.60 on the bottom. */
+val OnCanopy = Color(0xFFFFFFFF)
+/** Decoration on the canopy — dividers, wave shapes, ring tracks. Never text. */
+val OnCanopyDecor = Light.OnCanopyDecor
+/** Translucent chip fill. Legible with a white label only over the deep end of the canopy. */
+val ChipOnCanopy = Light.ChipOnCanopy
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interactive violet on light/dark surfaces
+// ─────────────────────────────────────────────────────────────────────────────
+val Violet: Color @Composable get() = if (LocalDarkMode.current) Dark.Violet else Light.Violet
+/** The clay lip beneath violet objects. */
+val VioletDeep: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletDeep else Light.VioletDeep
+/** Selected rows, soft fills. */
+val VioletTint: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletTint else Light.VioletTint
+/** Violet-tinted cast shadow, never neutral grey. */
+val VioletShadow: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletShadow else Light.VioletShadow
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ink
+// ─────────────────────────────────────────────────────────────────────────────
+val Ink: Color @Composable get() = if (LocalDarkMode.current) Dark.Ink else Light.Ink
+val Muted: Color @Composable get() = if (LocalDarkMode.current) Dark.Muted else Light.Muted
+val Faint: Color @Composable get() = if (LocalDarkMode.current) Dark.Faint else Light.Faint
+
+/**
+ * Fixed dark ink for text/icons painted on a reward or callout fill ([Gold], [Coral], the [Tier]
+ * badges). Those fills keep one hex value in both themes, so the ink on top of them must too — it
+ * cannot follow [Ink] into near-white in dark mode without breaking the exact contrast pairing this
+ * token exists to guarantee. Never use this for ordinary text on [Surface]/[Ground]; use [Ink].
+ */
+val RewardInk = Color(0xFF1F1B3A)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reward and callout fills. These carry [RewardInk]; never a foreground on light or dark.
+// Fixed across themes on purpose — see the file doc comment.
+// ─────────────────────────────────────────────────────────────────────────────
+val Coral     = Color(0xFFFF8B5E)  // RewardInk on it measures 7.14
+val CoralDeep = Color(0xFFE0651F)  // clay lip under coral
+val Gold      = Color(0xFFFFB020)  // RewardInk on it measures 9.00
+val GoldDeep  = Color(0xFFD98200)  // clay lip under gold
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Feedback. Green and red are deep enough to carry white text in both themes.
+// ─────────────────────────────────────────────────────────────────────────────
+val Green     = Color(0xFF15803D)  // white 5.02
+val GreenDeep = Color(0xFF0F5C2C)
+val GreenTint: Color @Composable get() = if (LocalDarkMode.current) Dark.GreenTint else Light.GreenTint
+val Red       = Color(0xFFDC2626)  // white 4.83
+val RedDeep   = Color(0xFFA81B1B)
+val RedTint: Color @Composable get() = if (LocalDarkMode.current) Dark.RedTint else Light.RedTint
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lesson-path node states
+// ─────────────────────────────────────────────────────────────────────────────
+val NodeLocked: Color @Composable get() = if (LocalDarkMode.current) Dark.NodeLocked else Light.NodeLocked
+val NodeLockedInk: Color @Composable get() = if (LocalDarkMode.current) Dark.NodeLockedInk else Light.NodeLockedInk
+val PathTrackIdle: Color @Composable get() = if (LocalDarkMode.current) Dark.PathTrackIdle else Light.PathTrackIdle
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Badge tiers. Fixed across themes — same reasoning as Gold/Coral; carry RewardInk, not Ink.
+// ─────────────────────────────────────────────────────────────────────────────
+val TierGold   = Color(0xFFFFC24A)
+val TierGoldDeep   = Color(0xFFD98200)
+val TierSilver = Color(0xFFC3C9D8)
+val TierSilverDeep = Color(0xFF8E96AA)
+val TierBronze = Color(0xFFD08A55)
+val TierBronzeDeep = Color(0xFF9C5F2E)
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Compatibility layer.
+// Screens not yet rebuilt still reference the old names. Each is remapped onto a Clay Canopy token
+// so nothing renders off-system in the meantime, and each disappears as its screen is rewritten.
+// Do not reference anything below this line in new code.
+// ═════════════════════════════════════════════════════════════════════════════
+val Primary: Color @Composable get() = Violet
+val PrimaryDark: Color @Composable get() = VioletDeep
+val PrimaryContainer: Color @Composable get() = VioletTint
+val Secondary = Gold
+val SecondaryDark = GoldDeep
+val SecondaryContainer = Color(0xFFFFE8BF)
+val Accent = Coral
+val AccentContainer = Color(0xFFFFDCCB)
+
+val LightThemeBackground: Color @Composable get() = Ground
+val LightSurfaceCard: Color @Composable get() = Surface
+val LightSurfaceVariant: Color @Composable get() = SurfaceSunken
+val SandBg: Color @Composable get() = Ground
+
+val StaticTextHeadingBlack: Color @Composable get() = Ink
+val StaticTextSubtleGray: Color @Composable get() = Muted
+val CoastInk: Color @Composable get() = Ink
+val CoastMuted: Color @Composable get() = Muted
+val CoastFaint: Color @Composable get() = Faint
+val TextWhite  = Color(0xFFFFFFFF)
+val TextDark: Color @Composable get() = Ink
 
 val TextHeadingBlack: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.onBackground
-
+    @Composable get() = MaterialTheme.colorScheme.onBackground
 val TextSubtleGray: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.onSurfaceVariant
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
-// ─── STRICT 3 SIGNATURE PLAY GRADIENT PAIRS ───
-val PlayPurpleStart = Color(0xFF7B6EF6)
-val PlayPurpleEnd   = Color(0xFFA78BFA)
+val PlayPurpleStart: Color @Composable get() = CanopyTop
+val PlayPurpleEnd   = Color(0xFF8C7CF0)
+val PlayGoldStart   = Gold
+val PlayGoldEnd     = GoldDeep
+val PlayPinkStart   = Coral
+val PlayPinkEnd     = CoralDeep
+val PlayChipTranslucent: Color @Composable get() = ChipOnCanopy
+val PlayNavDark: Color @Composable get() = CanopyBottom
 
-val PlayGoldStart   = Color(0xFFFFC94A)
-val PlayGoldEnd     = Color(0xFFFF9F1C)
+val XpGold       = Gold
+val XpGoldDark   = GoldDeep
+val StreakEmber  = Coral
+val StreakOrange = Coral
+val VocabSea        = Color(0xFF0F9C91)
+val VocabSeaDark    = Color(0xFF0A756E)
+val GamesCoral      = Coral
+val GamesCoralLight = Color(0xFFFFA47C)
+val StoriesDusk: Color @Composable get() = CanopyTop
+val SkyReview       = Color(0xFF2C7BE5)
+val SkyReviewDark   = Color(0xFF1E5DB8)
 
-val PlayPinkStart   = Color(0xFFFF9FC0)
-val PlayPinkEnd     = Color(0xFFFF6FA0)
+val Success: Color @Composable get() = Green
+val Warning = Color(0xFF9A6700)
+val Error: Color @Composable get() = Red
+val Info    = Color(0xFF2C7BE5)
+val ErrorLight: Color @Composable get() = RedTint
 
-val PlayCoinYellow    = Color(0xFFFFD93D)
-val PlayCardOnLight   = Color(0xFFFFFFFF)
-val PlayChipTranslucent = Color(0x66FFFFFF) // white @ 40%
-val PlayNavDark       = Color(0xFF15132A)   // bottom-bar background
-val PlayNavActive     = Color(0xFFFFC94A)   // active tab underline/glow
+val BadgeGold   = TierGold
+val BadgeSilver = TierSilver
+val BadgeBronze = TierBronze
+val BadgeWood        = Color(0xFFA87954)
+val BadgeEmerald: Color @Composable get() = Green
+val BadgeCrownPurple: Color @Composable get() = Violet
 
-// Legacy compatibility fallbacks mapped directly to the 3 Play Gradients
-val HeroCardStart = PlayPurpleStart
-val HeroCardEnd = PlayPurpleEnd
-
-val VocabCardStart = PlayGoldStart
-val VocabCardEnd = PlayGoldEnd
-
-val StoriesCardStart = PlayPurpleStart
-val StoriesCardEnd = PlayPurpleEnd
-
-val MiniGamesCardStart = PlayPinkStart
-val MiniGamesCardEnd = PlayPinkEnd
-
-val QuestsCardStart = PlayGoldStart
-val QuestsCardEnd = PlayGoldEnd
-
-// Floating Bottom Bar
-val FloatingNavBackground = Color(0xFF15132A)
-val FloatingNavActive = Color(0xFFFFC94A)
-
-// Background & Surface (Dark Theme)
-val DarkBackground = Color(0xFF0A1628)
-val DarkSurface = Color(0xFF132039)
-val DarkSurfaceVariant = Color(0xFF1A2A4A)
-val DarkSurfaceElevated = Color(0xFF213358)
-val DarkCard = Color(0xFF1E2D4D)
-
-// Text Colors
-val TextWhite = Color(0xFFFFFFFF)
-val TextDark = Color(0xFF1A1A2E)
-val TextGray = Color(0xFF9E9E9E)
-val TextDarkGray = Color(0xFF616161)
-val TextLightGray = Color(0xFFE0E0E0)
-
-// Status Colors
-val Success = Color(0xFF2ECC71)
-val Warning = Color(0xFFF1C40F)
-val Error = Color(0xFFE74C3C)
-val Info = Color(0xFF3498DB)
-val ErrorLight = Color(0xFFFFEBEE)
-
-// Gamification Medal Colors
-val BadgeGold = Color(0xFFFFD700)
-val BadgeSilver = Color(0xFFC0C0C0)
-val BadgeBronze = Color(0xFFCD7F32)
-val XpGold = Color(0xFFFFB020)
-val XpGoldDark = Color(0xFFFF9E1B)
-val StreakOrange = Color(0xFFFF7A3C)
-val LevelBlue = Color(0xFF7B6EF6)
-
-// ─── Casiguran Coast semantic tokens ───
-val VocabSea      = Color(0xFF12B3A6)   // vocabulary / coastal teal
-val VocabSeaDark  = Color(0xFF0E9E97)
-val GamesCoral    = Color(0xFFFF6B6B)   // mini-games
-val GamesCoralLight = Color(0xFFFF8A5B)
-val StoriesDusk   = Color(0xFF6C5CE7)   // stories / folklore purple
-val SkyReview     = Color(0xFF3FA9F5)   // review / spaced repetition
-val StreakEmber    = Color(0xFFFF7A3C)   // streak fire
-val SandBg        = Color(0xFFFAF5EC)   // warm sand scaffold
-val CoastInk      = Color(0xFF1C2233)   // primary text
-val CoastMuted    = Color(0xFF7A8195)   // secondary text
-
-// ─── Nudge Branding & Moodboard 1-5 Tokens ───
-val NudgeBurple = Color(0xFF8636CE)
-val NudgeBink = Color(0xFFFF828D)
-val NudgeFlame = Color(0xFFF78864)
-val NudgeMint = Color(0xFFADD5D5)
-val NudgeGold = Color(0xFFFFD15C)
-val CharcoalNav = Color(0xFF15132A)
-
-// Badge Tier Metallic Tokens (Moodboards 1 & 3)
-val BadgeWood = Color(0xFFA87954)
-val BadgeEmerald = Color(0xFF2ECC71)
-val BadgeCrownPurple = Color(0xFF9B59B6)
-
+val HeroCardStart: Color @Composable get() = CanopyTop
+val HeroCardEnd: Color @Composable get() = CanopyBottom
+val VocabCardStart = Gold
+val VocabCardEnd   = GoldDeep
+val StoriesCardStart: Color @Composable get() = CanopyTop
+val StoriesCardEnd: Color @Composable get() = CanopyBottom
+val MiniGamesCardStart = Coral
+val MiniGamesCardEnd   = CoralDeep
+val QuestsCardStart = Gold
+val QuestsCardEnd   = GoldDeep
+val NudgeBurple: Color @Composable get() = Violet
+val NudgeBink   = Coral
+val NudgeFlame  = Coral
+val NudgeGold   = Gold

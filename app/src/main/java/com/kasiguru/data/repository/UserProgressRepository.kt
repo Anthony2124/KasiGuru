@@ -8,6 +8,9 @@ import com.kasiguru.util.Constants
 import com.kasiguru.util.calculateLevel
 import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -18,6 +21,12 @@ class UserProgressRepository @Inject constructor(
     private val userProgressDao: UserProgressDao,
     private val achievementDao: AchievementDao
 ) {
+    // A level-up is a screen-agnostic celebratory moment (LevelUpDialog): XP is earned from lessons,
+    // flashcards and all six mini-games, so the event lives here at the one place that already
+    // detects a level change, rather than being duplicated at every XP-awarding call site.
+    private val _levelUpEvents = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val levelUpEvents: SharedFlow<Int> = _levelUpEvents.asSharedFlow()
+
     fun getUserProgress(): Flow<UserProgressEntity?> =
         userProgressDao.getUserProgress()
 
@@ -46,6 +55,9 @@ class UserProgressRepository @Inject constructor(
 
     suspend fun addXp(xp: Int) {
         userProgressDao.addXp(xp)
+        // Every XP award also lands in today's ledger, so the daily-goal ring reflects real activity
+        // no matter which surface earned it.
+        userProgressDao.addDailyXp(xp, LocalDate.now().toIsoString())
         // Recalculate level
         val progress = userProgressDao.getUserProgressOnce() ?: return
         val newLevel = calculateLevel(progress.totalXp)
@@ -53,6 +65,7 @@ class UserProgressRepository @Inject constructor(
             userProgressDao.updateLevel(newLevel)
             // Check level achievements
             checkLevelAchievements(newLevel)
+            _levelUpEvents.tryEmit(newLevel)
         }
     }
 

@@ -1,0 +1,152 @@
+package com.kasiguru.domain.lesson
+
+import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.repository.VocabularyRepository
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Turns a lesson's word list into an ordered run of exercises.
+ *
+ * Distractors come from [VocabularyRepository.getDistractorsForWord], which already prefers words from
+ * the same category and then words of similar length or first letter. That matters pedagogically: a
+ * multiple choice between "ant" and "helicopter" tests nothing, while a choice between two same-category
+ * words the learner keeps confusing is where the learning happens. Reusing it also means the lesson
+ * layer and the mini-games stay consistent about what counts as a plausible wrong answer.
+ */
+@Singleton
+class ExerciseGenerator @Inject constructor(
+    private val vocabularyRepository: VocabularyRepository
+) {
+
+    /**
+     * Builds a lesson.
+     *
+     * Each word gets one exercise chosen from the shapes its own data can support, then the strongest
+     * candidates are revisited in a second, different shape until the run reaches
+     * [LessonPlan.EXERCISES_PER_LESSON]. Re-testing a word in a different modality within the same
+     * session is the point — recognising a written word does not mean you can hear it.
+     */
+    suspend fun build(words: List<VocabularyEntity>): List<Exercise> {
+        if (words.isEmpty()) return emptyList()
+
+        val exercises = mutableListOf<Exercise>()
+
+        // First pass: introduce every word once.
+        words.forEachIndexed { index, word ->
+            // Alternate the translation direction so a run never becomes a single drill.
+            exercises += primaryExercise(word, preferKasiguraninPrompt = index % 2 == 0)
+        }
+
+        // Second pass: revisit words in a different shape until the run is long enough.
+        var cursor = 0
+        while (exercises.size < LessonPlan.EXERCISES_PER_LESSON && cursor < words.size) {
+            val word = words[cursor]
+            secondaryExercise(word, exercises)?.let { exercises += it }
+            cursor++
+        }
+
+        return exercises
+    }
+
+    private suspend fun primaryExercise(
+        word: VocabularyEntity,
+        preferKasiguraninPrompt: Boolean
+    ): Exercise {
+        val answer = if (preferKasiguraninPrompt) meaningOf(word) else word.kasiguranin
+        val distractors = distractorStrings(word, kasiguraninAnswers = !preferKasiguraninPrompt)
+        return Exercise.ChooseTranslation(
+            word = word,
+            options = (distractors + answer).distinct().shuffled(),
+            answer = answer,
+            promptIsKasiguranin = preferKasiguraninPrompt
+        )
+    }
+
+    /**
+     * A second look at [word] in a shape not already used for it, or null when the entry lacks the
+     * data any alternative shape needs. Never invents content: a word with no audio never becomes a
+     * listening exercise, and a word with no example sentence never becomes a fill-in-the-blank.
+     */
+    private suspend fun secondaryExercise(
+        word: VocabularyEntity,
+        existing: List<Exercise>
+    ): Exercise? {
+        val alreadyUsed = existing.filter { it.word.id == word.id }.map { it::class }
+
+        if (word.audioFileName.isNotBlank() && Exercise.ListenAndChoose::class !in alreadyUsed) {
+            val distractors = distractorStrings(word, kasiguraninAnswers = true)
+            return Exercise.ListenAndChoose(
+                word = word,
+                options = (distractors + word.kasiguranin).distinct().shuffled(),
+                answer = word.kasiguranin
+            )
+        }
+
+        val sentence = word.exampleSentence
+        if (sentence.isNotBlank() &&
+            sentence.contains(word.kasiguranin, ignoreCase = true) &&
+            Exercise.FillBlank::class !in alreadyUsed
+        ) {
+            val distractors = distractorStrings(word, kasiguraninAnswers = true)
+            return Exercise.FillBlank(
+                word = word,
+                options = (distractors + word.kasiguranin).distinct().shuffled(),
+                answer = word.kasiguranin,
+                sentenceWithBlank = sentence.replace(word.kasiguranin, BLANK, ignoreCase = true),
+                translation = word.exampleTranslation
+            )
+        }
+
+        val aspects = aspectFormsOf(word)
+        if (aspects.size >= 3 && Exercise.ChooseAspect::class !in alreadyUsed) {
+            val (label, correct) = aspects.entries.random().toPair()
+            return Exercise.ChooseAspect(
+                word = word,
+                options = aspects.values.distinct().shuffled(),
+                answer = correct,
+                aspectLabel = label
+            )
+        }
+
+        return null
+    }
+
+    /**
+     * How a word's meaning is written on an answer button.
+     *
+     * Tagalog and English together, because the audience reads both and one gloss alone is often
+     * ambiguous — except when the Tagalog is the same string as the Kasiguranin headword, which is
+     * common (`sayaw` is "sayaw · dance"). Printing it then hands the learner the answer: the option
+     * that repeats the prompt is obviously the right one, and the exercise tests nothing. In that case
+     * only the English is shown.
+     */
+    private fun meaningOf(word: VocabularyEntity): String {
+        val tagalogRepeatsHeadword = word.tagalog.equals(word.kasiguranin, ignoreCase = true)
+        return when {
+            tagalogRepeatsHeadword && word.english.isNotBlank() -> word.english
+            word.tagalog.isNotBlank() && word.english.isNotBlank() -> "${word.tagalog} · ${word.english}"
+            word.tagalog.isNotBlank() -> word.tagalog
+            else -> word.english
+        }
+    }
+
+    private suspend fun distractorStrings(
+        word: VocabularyEntity,
+        kasiguraninAnswers: Boolean
+    ): List<String> =
+        vocabularyRepository.getDistractorsForWord(word, count = 3)
+            .map { if (kasiguraninAnswers) it.kasiguranin else meaningOf(it) }
+            .filter { it.isNotBlank() }
+
+    private fun aspectFormsOf(word: VocabularyEntity): Map<String, String> = buildMap {
+        if (word.neutralForm.isNotBlank()) put("neutral", word.neutralForm)
+        if (word.imperfectiveForm.isNotBlank()) put("imperfective", word.imperfectiveForm)
+        if (word.perfectiveForm.isNotBlank()) put("perfective", word.perfectiveForm)
+        if (word.contemplativeForm.isNotBlank()) put("contemplative", word.contemplativeForm)
+    }
+
+    private companion object {
+        const val BLANK = "____"
+    }
+}

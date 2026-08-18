@@ -1,6 +1,5 @@
 package com.kasiguru.ui.screens.notifications
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,13 +7,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,10 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.NotificationEntity
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GlassChip
+import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationInboxScreen(
     onNavigateBack: () -> Unit,
@@ -33,157 +35,183 @@ fun NotificationInboxScreen(
     viewModel: NotificationInboxViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showMenu by remember { mutableStateOf(false) }
+    var showClearConfirm by remember { mutableStateOf(false) }
 
     val filterOptions = listOf(
-        "All" to "All 📬",
-        "Streak" to "Streaks 🔥",
-        "WordOfDay" to "Word of Day 🌟",
-        "Leaderboard" to "Leaderboard 🏆",
-        "Achievement" to "Badges 🎓"
+        "All" to "All",
+        "Streak" to "Streaks",
+        "WordOfDay" to "Word of Day",
+        "Leaderboard" to "Leaderboard",
+        "Achievement" to "Badges"
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Column {
-                        Text(
-                            text = "Notification Center",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                        Text(
-                            text = if (uiState.unreadCount > 0) "${uiState.unreadCount} Unread Alerts" else "All caught up!",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextSubtleGray
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState.unreadCount > 0) {
-                        TextButton(onClick = { viewModel.markAllAsRead() }) {
-                            Text(
-                                text = "Mark All Read",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Primary
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Filter Categories Row
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(filterOptions) { (key, label) ->
-                    val isSelected = uiState.selectedFilter.equals(key, ignoreCase = true)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setFilter(key) },
-                        label = {
-                            Text(
-                                text = label,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 13.sp
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = TextHeadingBlack,
-                            selectedLabelColor = Color.White,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            labelColor = TextHeadingBlack
-                        ),
-                        border = null,
-                        shape = RoundedCornerShape(20.dp)
-                    )
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text("Clear all notifications?") },
+            text = { Text("This removes every notification from your inbox. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = { showClearConfirm = false; viewModel.clearAll() }) {
+                    Text("Clear all", color = Red, fontWeight = FontWeight.Bold)
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirm = false }) { Text("Cancel") }
             }
+        )
+    }
 
-            if (uiState.notifications.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = HeroCardStart.copy(alpha = 0.4f),
-                            modifier = Modifier.size(80.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
+    CanopyScaffold(
+        canopyHeight = 148.dp,
+        canopyContent = {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                CanopyBackButton(onClick = onNavigateBack)
+                Row {
+                    if (uiState.notifications.isNotEmpty()) {
+                        Box {
+                            androidx.compose.material3.IconButton(onClick = { showMenu = true }) {
                                 Icon(
-                                    painter = painterResource(id = Iconsax.Notification),
-                                    contentDescription = null,
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(36.dp)
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More options",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Clear all", color = Red) },
+                                    onClick = { showMenu = false; showClearConfirm = true }
                                 )
                             }
                         }
-                        Text(
-                            text = "No Notifications",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                        Text(
-                            text = "You're all caught up! Check back later for streak reminders and daily words.",
-                            fontSize = 13.sp,
-                            color = TextSubtleGray,
-                            lineHeight = 18.sp
+                    }
+                }
+            }
+            Spacer(Modifier.height(Space.sm))
+            Text(text = "Notifications", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
+            Spacer(Modifier.weight(1f))
+            // Translucent chips only measure legibly at the canopy's deep end (DESIGN.md) — pinned to
+            // the bottom via the weighted spacer above, same placement CategoryDetailScreen uses.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GlassChip {
+                    Icon(
+                        painter = painterResource(id = Iconsax.Notification),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                        text = if (uiState.unreadCount > 0) "${uiState.unreadCount} unread" else "All caught up",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnCanopy
+                    )
+                }
+                if (uiState.unreadCount > 0) {
+                    Text(
+                        text = "Mark all read",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.clickable { viewModel.markAllAsRead() }
+                    )
+                }
+            }
+        },
+        sheetContent = {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Filter Categories Row
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = Space.gutter, vertical = Space.sm),
+                    horizontalArrangement = Arrangement.spacedBy(Space.xs)
+                ) {
+                    items(filterOptions) { (key, label) ->
+                        val isSelected = uiState.selectedFilter.equals(key, ignoreCase = true)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setFilter(key) },
+                            label = {
+                                Text(
+                                    text = label,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 13.sp
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Violet,
+                                selectedLabelColor = Color.White,
+                                containerColor = SurfaceSunken,
+                                labelColor = Muted
+                            ),
+                            border = null,
+                            shape = Shapes.pill
                         )
                     }
                 }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(uiState.notifications, key = { it.id }) { item ->
-                        NotificationCard(
-                            notification = item,
-                            onClick = {
-                                viewModel.markAsRead(item.id)
-                                if (item.deepLinkRoute.isNotEmpty()) {
-                                    onNavigateToRoute(item.deepLinkRoute)
+
+                if (uiState.notifications.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(Space.sm)
+                        ) {
+                            Surface(shape = CircleShape, color = Violet.copy(alpha = 0.12f), modifier = Modifier.size(80.dp)) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Notification),
+                                        contentDescription = null,
+                                        tint = Violet,
+                                        modifier = Modifier.size(36.dp)
+                                    )
                                 }
                             }
-                        )
+                            Text(
+                                text = "No Notifications",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Ink
+                            )
+                            Text(
+                                text = "You're all caught up! Check back later for streak reminders and daily words.",
+                                fontSize = 13.sp,
+                                color = Muted,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(
+                            start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(Space.sm),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(uiState.notifications, key = { it.id }) { item ->
+                            NotificationCard(
+                                notification = item,
+                                onClick = {
+                                    viewModel.markAsRead(item.id)
+                                    if (item.deepLinkRoute.isNotEmpty()) {
+                                        onNavigateToRoute(item.deepLinkRoute)
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -191,55 +219,28 @@ fun NotificationCard(
     notification: NotificationEntity,
     onClick: () -> Unit
 ) {
-    val (cardBg, iconRes, iconTint) = when (notification.category.lowercase()) {
-        "streak" -> Triple(
-            listOf(PlayGoldStart.copy(alpha = 0.4f), PlayGoldEnd.copy(alpha = 0.2f)),
-            Iconsax.Flash,
-            PlayGoldEnd
-        )
-        "wordofday" -> Triple(
-            listOf(PlayPurpleStart.copy(alpha = 0.4f), PlayPurpleEnd.copy(alpha = 0.2f)),
-            Iconsax.Book,
-            PlayPurpleEnd
-        )
-        "leaderboard" -> Triple(
-            listOf(PlayPinkStart.copy(alpha = 0.4f), PlayPinkEnd.copy(alpha = 0.2f)),
-            Iconsax.MedalStar,
-            PlayPinkEnd
-        )
-        else -> Triple(
-            listOf(QuestsCardStart.copy(alpha = 0.4f), QuestsCardEnd.copy(alpha = 0.2f)),
-            Iconsax.Cup,
-            QuestsCardEnd
-        )
+    val (iconRes, iconTint) = when (notification.category.lowercase()) {
+        "streak" -> Iconsax.Flash to Gold
+        "wordofday" -> Iconsax.Book to Violet
+        "leaderboard" -> Iconsax.MedalStar to Coral
+        else -> Iconsax.Cup to Green
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (notification.isRead) 0.dp else 2.dp)
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = if (notification.isRead) 0.dp else 6.dp,
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm),
             verticalAlignment = Alignment.Top
         ) {
-            // Category Icon Badge
-            Surface(
-                shape = CircleShape,
-                color = iconTint.copy(alpha = 0.15f),
-                modifier = Modifier.size(46.dp)
-            ) {
+            Surface(shape = CircleShape, color = iconTint.copy(alpha = 0.15f), modifier = Modifier.size(46.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = notification.category,
-                        tint = Color.Unspecified,
+                        tint = iconTint,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -258,7 +259,7 @@ fun NotificationCard(
                         text = notification.title,
                         fontSize = 15.sp,
                         fontWeight = if (notification.isRead) FontWeight.SemiBold else FontWeight.Bold,
-                        color = TextHeadingBlack,
+                        color = Ink,
                         modifier = Modifier.weight(1f)
                     )
                     if (!notification.isRead) {
@@ -267,7 +268,7 @@ fun NotificationCard(
                                 .padding(start = 6.dp)
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Primary)
+                                .background(Violet)
                         )
                     }
                 }
@@ -275,7 +276,7 @@ fun NotificationCard(
                 Text(
                     text = notification.message,
                     fontSize = 13.sp,
-                    color = TextSubtleGray,
+                    color = Muted,
                     lineHeight = 18.sp
                 )
 
@@ -285,7 +286,20 @@ fun NotificationCard(
                     text = notification.timestamp,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextSubtleGray.copy(alpha = 0.7f)
+                    color = Faint
+                )
+            }
+
+            // A tap on a purely informational notification only marks it read; a tap on one of
+            // these also navigates somewhere. Previously nothing distinguished the two in advance.
+            if (notification.deepLinkRoute.isNotEmpty()) {
+                Icon(
+                    painter = painterResource(id = Iconsax.ArrowRight),
+                    contentDescription = "Opens more detail",
+                    tint = Faint,
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .size(16.dp)
                 )
             }
         }

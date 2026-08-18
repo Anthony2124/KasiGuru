@@ -34,6 +34,17 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE nextReviewDate <= :todayDate OR nextReviewDate = '' ORDER BY nextReviewDate ASC, RANDOM() LIMIT :limit")
     suspend fun getDueReviewWords(todayDate: String, limit: Int = 10): List<VocabularyEntity>
 
+    /**
+     * Words with a real SM-2 review date that has arrived.
+     *
+     * Unlike [getDueReviewWords] this excludes `nextReviewDate = ''`. A never-reviewed word has an
+     * empty date, which sorts before every real date, so the looser query treats the entire unseen
+     * corpus as "due" - fine when filling a practice deck, but it makes any count shown to the
+     * learner read 20 on a fresh install.
+     */
+    @Query("SELECT * FROM vocabulary WHERE nextReviewDate != '' AND nextReviewDate <= :todayDate ORDER BY nextReviewDate ASC LIMIT :limit")
+    suspend fun getScheduledDueWords(todayDate: String, limit: Int = 20): List<VocabularyEntity>
+
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 

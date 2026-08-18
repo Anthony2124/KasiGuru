@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.time.DayOfWeek
@@ -166,10 +168,11 @@ fun StreakDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                CoastPillButton(
-                    label = "Keep It Up!",
+                ClayButton(
+                    label = "Keep it up!",
                     onClick = onDismiss,
-                    variant = PillVariant.Gold
+                    tone = ClayButtonTone.Reward,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

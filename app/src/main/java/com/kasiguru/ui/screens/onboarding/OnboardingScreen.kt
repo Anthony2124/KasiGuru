@@ -8,35 +8,60 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.kasiguru.ui.components.CoastPillButton
+import com.kasiguru.ui.components.CasiguranAvatarPortrait
+import com.kasiguru.ui.components.CasiguranResident
 import com.kasiguru.ui.components.ConfettiView
 import com.kasiguru.ui.components.MascotOwlSlot
 import com.kasiguru.ui.components.OnboardingDotStepper
-import com.kasiguru.ui.components.PillVariant
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.components.clay.ClaySurface
+import com.kasiguru.ui.components.clay.GlassChip
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.CanopyBottom
+import com.kasiguru.ui.theme.CanopyTop
+import com.kasiguru.ui.theme.Coral
+import com.kasiguru.ui.theme.Gold
+import com.kasiguru.ui.theme.GoldDeep
+import com.kasiguru.ui.theme.Green
+import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.Red
+import com.kasiguru.ui.theme.RewardInk
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.VioletTint
 
+/**
+ * First-run wizard. Not a [com.kasiguru.ui.components.clay.CanopyScaffold] host — a wizard's steps
+ * don't split into "who you are" versus "the work" the way a tab root does — but step 1's hero and
+ * step 6's reward panel each draw on canopy/clay tokens directly, so the flow still reads as the same
+ * app a returning learner lands in on Learn.
+ */
 @Composable
 fun OnboardingScreen(
     onCompleteOnboarding: (userName: String, avatarId: Int, dailyGoalXp: Int, motivation: String, startingLevel: String, titleBadge: String) -> Unit
@@ -54,107 +79,112 @@ fun OnboardingScreen(
     var selectedAvatarId by remember { mutableIntStateOf(1) }
     var selectedTitleBadge by remember { mutableStateOf("Kasiguranin Apprentice") }
 
-    Scaffold(
-        modifier = Modifier.statusBarsPadding(),
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Box(
+    Box(modifier = Modifier.fillMaxSize().background(Ground).statusBarsPadding()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(horizontal = Space.gutter, vertical = Space.sm)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
-            ) {
-                // Top stepper
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(Space.xl), contentAlignment = Alignment.Center) {
+                    if (step > 1) {
+                        IconButton(onClick = { step -= 1 }) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.ArrowLeft),
+                                contentDescription = "Back",
+                                tint = Muted
+                            )
+                        }
+                    }
+                }
                 OnboardingDotStepper(
                     total = 6,
                     current = step - 1,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    activeColor = Violet,
+                    modifier = Modifier.weight(1f).padding(horizontal = Space.sm),
                 )
+                Spacer(Modifier.size(Space.xl))
+            }
 
-                Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Space.sm))
 
-                AnimatedContent(
-                    targetState = step,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "OnboardingStepTransition",
-                    modifier = Modifier.weight(1f)
-                ) { currentStep ->
-                    when (currentStep) {
-                        1 -> Step1Welcome(onNext = {
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "OnboardingStepTransition",
+                modifier = Modifier.weight(1f)
+            ) { currentStep ->
+                when (currentStep) {
+                    1 -> Step1Welcome(onNext = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        step = 2
+                    })
+                    2 -> Step2Motivation(
+                        selected = motivation,
+                        onSelect = { motivation = it },
+                        onNext = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            step = 2
-                        })
-                        2 -> Step2Motivation(
-                            selected = motivation,
-                            onSelect = { motivation = it },
-                            onNext = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 3
-                            }
-                        )
-                        3 -> Step3SkillAndWarmUp(
-                            selectedLevel = skillLevel,
-                            onLevelSelect = { skillLevel = it },
-                            warmUpAnswer = warmUpAnswer,
-                            onAnswerSelect = { answer ->
-                                warmUpAnswer = answer
-                                if (answer == "Good Day") {
-                                    showConfetti = true
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                }
-                            },
-                            onNext = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 4
-                            }
-                        )
-                        4 -> Step4DailyGoal(
-                            selectedXp = dailyGoalXp,
-                            onSelectXp = { dailyGoalXp = it },
-                            onNext = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 5
-                            }
-                        )
-                        5 -> Step5ProfileSetup(
-                            userName = userName,
-                            onNameChange = { userName = it },
-                            selectedAvatarId = selectedAvatarId,
-                            onAvatarSelect = { selectedAvatarId = it },
-                            selectedTitleBadge = selectedTitleBadge,
-                            onTitleSelect = { selectedTitleBadge = it },
-                            onNext = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 6
-                            }
-                        )
-                        6 -> Step6SummaryAndBonus(
-                            userName = userName,
-                            dailyGoalXp = dailyGoalXp,
-                            motivation = motivation,
-                            onStartJourney = {
+                            step = 3
+                        }
+                    )
+                    3 -> Step3SkillAndWarmUp(
+                        selectedLevel = skillLevel,
+                        onLevelSelect = { skillLevel = it },
+                        warmUpAnswer = warmUpAnswer,
+                        onAnswerSelect = { answer ->
+                            warmUpAnswer = answer
+                            if (answer == "Good Day") {
+                                showConfetti = true
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onCompleteOnboarding(
-                                    userName.ifBlank { "Kasiguranin Learner" },
-                                    selectedAvatarId,
-                                    dailyGoalXp,
-                                    motivation,
-                                    skillLevel,
-                                    selectedTitleBadge
-                                )
                             }
-                        )
-                    }
+                        },
+                        onNext = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            step = 4
+                        }
+                    )
+                    4 -> Step4DailyGoal(
+                        selectedXp = dailyGoalXp,
+                        onSelectXp = { dailyGoalXp = it },
+                        onNext = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            step = 5
+                        }
+                    )
+                    5 -> Step5ProfileSetup(
+                        userName = userName,
+                        onNameChange = { userName = it },
+                        selectedAvatarId = selectedAvatarId,
+                        onAvatarSelect = { selectedAvatarId = it },
+                        selectedTitleBadge = selectedTitleBadge,
+                        onTitleSelect = { selectedTitleBadge = it },
+                        onNext = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            step = 6
+                        }
+                    )
+                    6 -> Step6SummaryAndBonus(
+                        userName = userName,
+                        dailyGoalXp = dailyGoalXp,
+                        motivation = motivation,
+                        onStartJourney = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onCompleteOnboarding(
+                                userName.ifBlank { "Kasiguranin Learner" },
+                                selectedAvatarId,
+                                dailyGoalXp,
+                                motivation,
+                                skillLevel,
+                                selectedTitleBadge
+                            )
+                        }
+                    )
                 }
             }
+        }
 
-            if (showConfetti) {
-                ConfettiView(modifier = Modifier.fillMaxSize())
-            }
+        if (showConfetti) {
+            ConfettiView(modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -166,92 +196,60 @@ private fun Step1Welcome(onNext: () -> Unit) {
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 24.dp)
-        ) {
-            Surface(
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 4.dp
+                    .clip(Shapes.panel)
+                    .background(Brush.verticalGradient(listOf(CanopyTop, CanopyBottom)))
+                    .padding(Space.lg),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Brush.linearGradient(listOf(Color(0xFF2D1B69), PlayPurpleStart)))
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        MascotOwlSlot(size = 96.dp)
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Surface(
-                            shape = CircleShape,
-                            color = XpGold
-                        ) {
-                            Text(
-                                text = "CASIGURAN, AURORA",
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Black,
-                                color = CoastInk
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    MascotOwlSlot(size = 88.dp)
+                    Spacer(modifier = Modifier.height(Space.sm))
+                    GlassChip {
                         Text(
-                            text = "Magandang Aldew!",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Black,
-                            color = TextWhite,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "Welcome to KasiGuru",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite.copy(alpha = 0.9f)
+                            text = "Casiguran, Aurora",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = OnCanopy
                         )
                     }
+                    Spacer(modifier = Modifier.height(Space.md))
+                    Text(
+                        text = "Magandang Aldew!",
+                        style = MaterialTheme.typography.displayMedium,
+                        color = OnCanopy,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(Space.xxs))
+                    Text(
+                        text = "Welcome to KasiGuru",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = OnCanopy
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Space.xl))
 
             Text(
                 text = "Preserve & Learn Kasiguranin",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack,
+                color = Ink,
                 textAlign = TextAlign.Center
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
+            Spacer(modifier = Modifier.height(Space.sm))
             Text(
-                text = "Join thousands of learners in discovering the indigenous language, stories, and culture of Casiguran, Aurora through bite-sized games.",
+                text = "Join thousands of learners discovering the indigenous language, stories, and culture of Casiguran, Aurora through bite-sized lessons.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSubtleGray,
+                color = Muted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = Space.sm)
             )
         }
 
-        CoastPillButton(
-            label = "Get started",
-            onClick = onNext,
-            variant = PillVariant.Gold,
-            modifier = Modifier.fillMaxWidth()
-        )
+        ClayButton(label = "Get started", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -262,84 +260,30 @@ private fun Step2Motivation(
     onNext: () -> Unit
 ) {
     val options = listOf(
-        MotivationOption("Cultural Heritage", "Connecting with my roots & family history", Iconsax.Teacher, PlayPurpleStart),
-        MotivationOption("Family & Relatives", "Talking with elders & relatives", Iconsax.People, PlayGoldStart),
-        MotivationOption("Travel & Exploration", "Visiting Casiguran, Aurora", Iconsax.Global, PlayPinkStart),
-        MotivationOption("Linguistic Interest", "Exploring indigenous Philippine languages", Iconsax.BookBold, PlayPurpleStart)
+        MotivationOption("Cultural Heritage", "Connecting with my roots & family history", Iconsax.Teacher, Violet),
+        MotivationOption("Family & Relatives", "Talking with elders & relatives", Iconsax.People, Gold),
+        MotivationOption("Travel & Exploration", "Visiting Casiguran, Aurora", Iconsax.Global, Coral),
+        MotivationOption("Linguistic Interest", "Exploring indigenous Philippine languages", Iconsax.BookBold, Violet)
     )
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(
-                text = "Why are you learning Kasiguranin?",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-            Text(
-                text = "We will customize your daily recommendations based on your goal.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSubtleGray
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            options.forEach { item ->
-                val isSelected = selected == item.title
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .clickable { onSelect(item.title) },
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (isSelected) item.accentColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(2.5.dp, item.accentColor) else null,
-                    shadowElevation = if (isSelected) 0.dp else 2.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = item.accentColor,
-                            modifier = Modifier.size(46.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(id = item.iconRes),
-                                    contentDescription = null,
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
-                            )
-                            Text(
-                                text = item.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSubtleGray
-                            )
-                        }
-                    }
+            StepHeading("Why are you learning Kasiguranin?", "We'll shape your daily recommendations around your goal.")
+            Spacer(modifier = Modifier.height(Space.lg))
+            Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                options.forEach { item ->
+                    SelectableRow(
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        iconRes = item.iconRes,
+                        accent = item.accentColor,
+                        isSelected = selected == item.title,
+                        onClick = { onSelect(item.title) }
+                    )
                 }
             }
         }
-
-        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+        ClayButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -354,135 +298,82 @@ private fun Step3SkillAndWarmUp(
     onNext: () -> Unit
 ) {
     val levels = listOf(
-        "Complete Beginner" to "I know 0 words — start from scratch 🐣",
-        "Some Basics" to "I know a few greetings & common words 🌿",
-        "Intermediate" to "I can follow simple sentences 💬"
+        "Complete Beginner" to "I know 0 words — start from scratch",
+        "Some Basics" to "I know a few greetings & common words",
+        "Intermediate" to "I can follow simple sentences"
     )
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(
-                text = "What is your skill level?",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            levels.forEach { (title, subtitle) ->
-                val isSelected = selectedLevel == title
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onLevelSelect(title) },
-                    shape = RoundedCornerShape(18.dp),
-                    color = if (isSelected) PlayGoldStart.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, PlayGoldStart) else null,
-                    shadowElevation = 1.dp
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
-                        )
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSubtleGray
-                        )
-                    }
+            StepHeading("What is your skill level?", null)
+            Spacer(modifier = Modifier.height(Space.md))
+            Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                levels.forEach { (title, subtitle) ->
+                    SelectableRow(
+                        title = title,
+                        subtitle = subtitle,
+                        isSelected = selectedLevel == title,
+                        onClick = { onLevelSelect(title) }
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Space.lg))
 
-            // Quick Warm-Up Challenge Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 4.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = PlayPinkStart
-                    ) {
-                        Text(
-                            text = "QUICK WARM-UP",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
+            SoftCard(modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "What does \"Magandang Aldew\" mean?",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack,
+                        color = Ink,
                         textAlign = TextAlign.Center
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
+                    Spacer(modifier = Modifier.height(Space.md))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(Space.sm)
                     ) {
                         val isCorrect = warmUpAnswer == "Good Day"
                         val isWrong = warmUpAnswer == "Goodbye"
-
-                        Button(
+                        WarmUpChoice(
+                            label = if (isCorrect) "Correct!" else "Good Day",
+                            state = if (isCorrect) WarmUpState.Correct else WarmUpState.Idle,
                             onClick = { onAnswerSelect("Good Day") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isCorrect) Success else PlayGoldStart
-                            )
-                        ) {
-                            Text(
-                                text = if (isCorrect) "Correct!" else "Good Day",
-                                color = TextHeadingBlack,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 13.sp
-                            )
-                        }
-
-                        Button(
+                            modifier = Modifier.weight(1f)
+                        )
+                        WarmUpChoice(
+                            label = "Goodbye",
+                            state = if (isWrong) WarmUpState.Wrong else WarmUpState.Idle,
                             onClick = { onAnswerSelect("Goodbye") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isWrong) Error else MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Text(
-                                text = "Goodbye",
-                                color = TextHeadingBlack,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                        }
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
         }
+        ClayButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+    }
+}
 
-        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+private enum class WarmUpState { Idle, Correct, Wrong }
+
+@Composable
+private fun WarmUpChoice(label: String, state: WarmUpState, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val face = when (state) {
+        WarmUpState.Idle -> VioletTint
+        WarmUpState.Correct -> Green
+        WarmUpState.Wrong -> Red
+    }
+    val labelColor = if (state == WarmUpState.Idle) Violet else Color.White
+    Box(
+        modifier = modifier
+            .clip(Shapes.tile)
+            .background(face)
+            .clickable(onClick = onClick)
+            .padding(vertical = Space.sm),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge, color = labelColor)
     }
 }
 
@@ -493,106 +384,55 @@ private fun Step4DailyGoal(
     onNext: () -> Unit
 ) {
     val goals = listOf(
-        GoalOption(50, "Casual", "5 mins / day", "50 XP", Iconsax.Flash, PlayGoldStart),
-        GoalOption(100, "Regular", "10 mins / day", "100 XP", Iconsax.StarBold, PlayPurpleStart),
-        GoalOption(150, "Serious", "15 mins / day", "150 XP", Iconsax.BookBold, PlayPinkStart),
-        GoalOption(200, "Intense", "20 mins / day", "200 XP", Iconsax.Cup, PlayGoldStart)
+        GoalOption(50, "Casual", "5 mins / day", "50 XP", Iconsax.Flash, Gold),
+        GoalOption(100, "Regular", "10 mins / day", "100 XP", Iconsax.StarBold, Violet),
+        GoalOption(150, "Serious", "15 mins / day", "150 XP", Iconsax.BookBold, Coral),
+        GoalOption(200, "Intense", "20 mins / day", "200 XP", Iconsax.Cup, Gold)
     )
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(
-                text = "Pick your daily learning target",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-            Text(
-                text = "You can change your daily commitment goal anytime in settings.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSubtleGray
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            goals.forEach { item ->
-                val isSelected = selectedXp == item.xp
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .clickable { onSelectXp(item.xp) },
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (isSelected) item.accentColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(2.5.dp, item.accentColor) else null,
-                    shadowElevation = if (isSelected) 0.dp else 2.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = item.accentColor,
-                                modifier = Modifier.size(44.dp)
+            StepHeading("Pick your daily learning target", "You can change this anytime in settings.")
+            Spacer(modifier = Modifier.height(Space.lg))
+            Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                goals.forEach { item ->
+                    SelectableRow(
+                        title = item.title,
+                        subtitle = item.time,
+                        iconRes = item.iconRes,
+                        accent = item.accentColor,
+                        isSelected = selectedXp == item.xp,
+                        onClick = { onSelectXp(item.xp) },
+                        trailing = {
+                            Box(
+                                modifier = Modifier.clip(Shapes.chip).background(item.accentColor.copy(alpha = 0.16f))
+                                    .padding(horizontal = Space.xs, vertical = Space.xxs)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        painter = painterResource(id = item.iconRes),
-                                        contentDescription = null,
-                                        tint = TextHeadingBlack,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                            }
-
-                            Column {
                                 Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextHeadingBlack
-                                )
-                                Text(
-                                    text = item.time,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSubtleGray
+                                    text = item.xpTarget,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = item.accentColor
                                 )
                             }
                         }
-
-                        Surface(
-                            shape = CircleShape,
-                            color = item.accentColor
-                        ) {
-                            Text(
-                                text = item.xpTarget,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
-                            )
-                        }
-                    }
+                    )
                 }
             }
         }
-
-        CoastPillButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+        ClayButton(label = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
 private data class GoalOption(val xp: Int, val title: String, val time: String, val xpTarget: String, val iconRes: Int, val accentColor: Color)
+
+private val onboardingAvatars = listOf(
+    CasiguranResident.STUDENT,
+    CasiguranResident.TEACHER,
+    CasiguranResident.ELDER,
+    CasiguranResident.SURFER,
+    CasiguranResident.MUSICIAN,
+    CasiguranResident.FARMER
+)
 
 @Composable
 private fun Step5ProfileSetup(
@@ -604,120 +444,82 @@ private fun Step5ProfileSetup(
     onTitleSelect: (String) -> Unit,
     onNext: () -> Unit
 ) {
-    val avatars = listOf(1, 2, 3, 4, 5, 6)
     val titles = listOf("Kasiguranin Apprentice", "Cultural Explorer", "Linguistic Scholar")
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(
-                text = "Customize Your Profile",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-            Text(
-                text = "Choose your avatar and display name for the leaderboard.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSubtleGray
-            )
+            StepHeading("Customize your profile", "Choose your avatar and display name for the leaderboard.")
+            Spacer(modifier = Modifier.height(Space.md))
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Display Name Input
             OutlinedTextField(
                 value = userName,
                 onValueChange = onNameChange,
-                label = { Text("Display Name / Handle", fontWeight = FontWeight.Bold) },
+                label = { Text("Display name") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = Shapes.tile,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PlayPurpleStart,
-                    unfocusedBorderColor = TextSubtleGray.copy(alpha = 0.5f)
+                    focusedBorderColor = Violet,
+                    unfocusedBorderColor = Muted.copy(alpha = 0.4f),
+                    focusedTextColor = Ink,
+                    unfocusedTextColor = Ink,
+                    focusedLabelColor = Violet,
+                    cursorColor = Violet
                 )
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(Space.lg))
+            Text(text = "Choose your avatar", style = MaterialTheme.typography.titleMedium, color = Ink)
+            Spacer(modifier = Modifier.height(Space.sm))
 
-            Text(
-                text = "Choose Profile Avatar",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                avatars.forEach { avatarId ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                onboardingAvatars.forEachIndexed { index, resident ->
+                    val avatarId = index + 1
                     val isSelected = selectedAvatarId == avatarId
-                    Surface(
+                    Box(
                         modifier = Modifier
-                            .size(50.dp)
                             .clip(CircleShape)
-                            .clickable { onAvatarSelect(avatarId) },
-                        shape = CircleShape,
-                        color = if (isSelected) PlayPurpleStart else MaterialTheme.colorScheme.surfaceVariant,
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(3.dp, PlayGoldStart) else null
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = when (avatarId) {
-                                    1 -> "🐣"
-                                    2 -> "🌿"
-                                    3 -> "🌊"
-                                    4 -> "🦅"
-                                    5 -> "👑"
-                                    else -> "⭐"
-                                },
-                                fontSize = 24.sp
+                            .then(
+                                if (isSelected) Modifier.border(3.dp, Violet, CircleShape).padding(2.dp)
+                                else Modifier.padding(2.dp)
                             )
-                        }
+                    ) {
+                        CasiguranAvatarPortrait(
+                            resident = resident,
+                            size = 48.dp,
+                            showLevelRing = false,
+                            onClick = { onAvatarSelect(avatarId) }
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Space.lg))
+            Text(text = "Choose your starting title", style = MaterialTheme.typography.titleMedium, color = Ink)
+            Spacer(modifier = Modifier.height(Space.sm))
 
-            Text(
-                text = "Choose Starting Title Badge",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            titles.forEach { title ->
-                val isSelected = selectedTitleBadge == title
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onTitleSelect(title) },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) PlayPurpleStart.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, PlayPurpleStart) else null
-                ) {
-                    Text(
-                        text = title,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {
+                titles.forEach { title ->
+                    val isSelected = selectedTitleBadge == title
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(Shapes.tile)
+                            .background(if (isSelected) Violet else VioletTint)
+                            .clickable { onTitleSelect(title) }
+                            .padding(horizontal = Space.md, vertical = Space.sm)
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (isSelected) Color.White else Violet
+                        )
+                    }
                 }
             }
         }
-
-        CoastPillButton(label = "Create profile", onClick = onNext, modifier = Modifier.fillMaxWidth())
+        ClayButton(label = "Create profile", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -737,111 +539,143 @@ private fun Step6SummaryAndBonus(
             Text(
                 text = "Your journey begins",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = TextHeadingBlack,
+                color = Ink,
                 textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(Space.lg))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Surface(
+            ClaySurface(
+                face = Gold,
+                lipColor = GoldDeep,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 4.dp
+                shape = Shapes.panel,
+                contentPadding = PaddingValues(Space.lg)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Brush.linearGradient(listOf(PlayGoldStart, PlayGoldEnd)))
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Color.White.copy(alpha = 0.4f)
-                        ) {
-                            Text(
-                                text = "WELCOME BONUS",
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "+50 XP Awarded!",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
+                    Text(
+                        text = "+50 XP awarded",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = RewardInk
+                    )
+                    Spacer(modifier = Modifier.height(Space.xxs))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.FlashBold),
+                            contentDescription = null,
+                            tint = RewardInk,
+                            modifier = Modifier.size(16.dp)
                         )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
+                        Spacer(Modifier.width(Space.xxs))
                         Text(
-                            text = "🔥 1-Day Streak Flame Lit",
+                            text = "Day 1 streak lit",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack.copy(alpha = 0.9f)
+                            color = RewardInk
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Space.lg))
 
-            // Personalized Plan Summary Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Your personalized learning plan",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack
-                    )
+            SoftCard(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "Your personalized learning plan", style = MaterialTheme.typography.titleMedium, color = Ink)
+                Spacer(modifier = Modifier.height(Space.md))
+                Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                    SummaryRow(Iconsax.Profile, "Learner name", userName)
+                    SummaryRow(Iconsax.Teacher, "Primary motivation", motivation)
+                    SummaryRow(Iconsax.FlashBold, "Daily target", "$dailyGoalXp XP / day")
+                    SummaryRow(Iconsax.BookBold, "Estimated growth", "~35 words in week 1")
+                }
+            }
+        }
+        ClayButton(
+            label = "Start learning",
+            onClick = onStartJourney,
+            tone = ClayButtonTone.Reward,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
 
-                    Spacer(modifier = Modifier.height(12.dp))
+@Composable
+private fun SummaryRow(iconRes: Int, label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(Space.xs))
+            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Muted)
+        }
+        Text(text = value, style = MaterialTheme.typography.titleSmall, color = Ink, textAlign = TextAlign.End)
+    }
+}
 
-                    Text(
-                        text = "• Learner Name: $userName",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "• Primary Motivation: $motivation",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSubtleGray
-                    )
-                    Text(
-                        text = "• Daily Target: $dailyGoalXp XP / day",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSubtleGray
-                    )
-                    Text(
-                        text = "• Estimated Growth: ~35 Kasiguranin words in Week 1",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextHeadingBlack,
-                        fontWeight = FontWeight.Bold
+@Composable
+private fun StepHeading(title: String, subtitle: String?) {
+    Text(text = title, style = MaterialTheme.typography.headlineMedium, color = Ink)
+    if (subtitle != null) {
+        Spacer(modifier = Modifier.height(Space.xxs))
+        Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
+    }
+}
+
+/**
+ * Shared row for every single-select list in the wizard (motivation, skill level, daily goal): an
+ * optional accent icon chip, a title/subtitle pair, and either a caller-supplied trailing slot or the
+ * default selected checkmark. One composable so the three lists read as one control, not three.
+ */
+@Composable
+private fun SelectableRow(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconRes: Int? = null,
+    accent: Color = Violet,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    SoftCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (isSelected) Modifier.border(2.dp, Violet, Shapes.tile) else Modifier),
+        shape = Shapes.tile,
+        color = if (isSelected) VioletTint else com.kasiguru.ui.theme.Surface,
+        elevation = if (isSelected) 2.dp else 6.dp,
+        onClick = onClick,
+        contentPadding = PaddingValues(Space.sm)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (iconRes != null) {
+                Box(
+                    modifier = Modifier.size(44.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = accent, modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.width(Space.sm))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = Ink)
+                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
+            }
+            when {
+                trailing != null -> {
+                    Spacer(Modifier.width(Space.xs))
+                    trailing()
+                }
+                isSelected -> {
+                    Spacer(Modifier.width(Space.xs))
+                    Icon(
+                        painter = painterResource(id = Iconsax.TickCircle),
+                        contentDescription = "Selected",
+                        tint = Violet,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
-
-        CoastPillButton(
-            label = "Start learning",
-            onClick = onStartJourney,
-            variant = PillVariant.Gold,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }

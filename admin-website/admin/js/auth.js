@@ -3,6 +3,8 @@ import { app, auth } from './firebase-config.js';
 import { 
   signInWithEmailAndPassword, 
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged, 
   signOut 
@@ -53,6 +55,23 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// Complete the redirect flow if we came back from Google.
+getRedirectResult(auth)
+  .then(async (result) => {
+    if (!result || !result.user) return;
+    const tokenResult = await result.user.getIdTokenResult(true);
+    if (tokenResult.claims && tokenResult.claims.admin === true) {
+      window.location.href = 'dashboard.html';
+    } else {
+      showLoginError(`Access Denied: Account "${result.user.email}" is not authorized as an administrator.`);
+      await signOut(auth);
+    }
+  })
+  .catch((err) => {
+    console.error('Redirect result error:', err);
+    showLoginError('Google Sign-In failed. Allow pop-ups for this site, then try again.');
+  });
+
 // Google Sign-In
 window.signInWithGoogle = async function () {
   const googleBtn = document.getElementById('google-login-btn');
@@ -74,6 +93,18 @@ window.signInWithGoogle = async function () {
     }
   } catch (err) {
     console.error('Google sign in error:', err);
+    // Chrome blocks popups on some hosts; fall back to the full-page redirect flow.
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      } catch (redirectErr) {
+        console.error('Redirect sign in error:', redirectErr);
+        showLoginError('Google Sign-In could not start. Allow pop-ups for this site, then try again.');
+        return;
+      }
+    }
+
     let msg = 'Google Sign-In failed. Please try again.';
     if (err.code === 'auth/popup-closed-by-user') {
       msg = 'Sign-in cancelled.';

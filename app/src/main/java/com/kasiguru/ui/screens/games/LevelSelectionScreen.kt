@@ -1,204 +1,174 @@
 package com.kasiguru.ui.screens.games
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.GameLevelEntity
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GlassChip
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.NodeLocked
+import com.kasiguru.ui.theme.NodeLockedInk
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.VioletTint
 
+/**
+ * Level picker for one mini-game: 30 levels across three difficulty bands. A pushed subscreen (no
+ * bottom bar), so the canopy carries its own back affordance rather than relying on one.
+ */
 @Composable
 fun LevelSelectionScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToGame: (String, Int) -> Unit, // gameType, levelId
+    onNavigateToGame: (String, Int) -> Unit,
     viewModel: LevelSelectionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val ruleInfo = GameRulesRegistry.games[uiState.gameType]
 
-    // Match the dark blue aesthetics from the image
-    val darkBlueBgStart = Color(0xFF141A4F)
-    val darkBlueBgEnd = Color(0xFF0F1230)
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(darkBlueBgStart, darkBlueBgEnd)))
-            .systemBarsPadding()
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Stars/Coins indicator
-                Row(verticalAlignment = Alignment.CenterVertically) {
+    CanopyScaffold(
+        canopyHeight = 148.dp,
+        canopyContent = {
+            CanopyBackButton(onClick = onNavigateBack)
+            Spacer(Modifier.height(Space.sm))
+            Text(
+                text = ruleInfo?.title ?: "Levels",
+                style = MaterialTheme.typography.headlineMedium,
+                color = OnCanopy
+            )
+            Text(
+                text = "Clear a level to unlock the next one",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnCanopy
+            )
+            Spacer(Modifier.weight(1f))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                GlassChip {
                     Icon(
                         painter = painterResource(id = Iconsax.StarBold),
-                        contentDescription = "Total Stars",
-                        tint = PlayGoldStart,
-                        modifier = Modifier.size(28.dp)
+                        contentDescription = null,
+                        tint = Gold,
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${uiState.totalStars}",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        text = "${uiState.totalStars} total",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = OnCanopy
                     )
                 }
-                
-                Text(
-                    text = "LEVEL SELECTION",
-                    color = PlayGoldStart,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 24.sp,
-                    letterSpacing = 1.sp
-                )
-                
-                // Invisible box for balance
-                Box(modifier = Modifier.size(40.dp))
             }
-            
+        },
+        sheetContent = {
             if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = PlayGoldStart)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Violet)
                 }
             } else {
-                // Level Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(4),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(Space.sm),
+                    verticalArrangement = Arrangement.spacedBy(Space.md)
                 ) {
                     items(uiState.levels) { level ->
-                        LevelButton(
+                        LevelCell(
                             level = level,
                             onClick = {
-                                if (level.isUnlocked) {
-                                    onNavigateToGame(uiState.gameType, level.levelNumber)
-                                }
+                                if (level.isUnlocked) onNavigateToGame(uiState.gameType, level.levelNumber)
                             }
                         )
                     }
                 }
-                
-                // Bottom Bar buttons (Back)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = onNavigateBack,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E5D93)),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .width(160.dp)
-                            .height(56.dp)
-                    ) {
-                        Text(
-                            text = "BACK",
-                            color = PlayGoldStart,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 20.sp
-                        )
-                    }
-                }
             }
         }
-    }
+    )
 }
 
 @Composable
-fun LevelButton(
-    level: GameLevelEntity,
-    onClick: () -> Unit
-) {
-    val buttonBgColor = Color(0xFF0F396B)
-    val buttonBorderColor = Color(0xFF1E5D93)
-    
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f) // Ensure it's square-ish
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (level.isUnlocked) buttonBorderColor else buttonBorderColor.copy(alpha = 0.5f))
-            .clickable(enabled = level.isUnlocked, onClick = onClick)
-            .padding(4.dp) // creates the "border" effect
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (level.isUnlocked) buttonBgColor else buttonBgColor.copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
+private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
+    // The cell's own text ("3") plus three star icons with individually-null descriptions read as
+    // just a bare number to a screen reader — nothing ever announced how many stars were earned.
+    val a11yLabel = if (level.isUnlocked) {
+        "Level ${level.levelNumber}, ${level.starsEarned} of 3 stars"
+    } else {
+        "Level ${level.levelNumber}, locked"
+    }
+    Box(modifier = Modifier.clearAndSetSemantics { contentDescription = a11yLabel }) {
+        SoftCard(
+            modifier = Modifier.aspectRatio(1f).fillMaxWidth(),
+            shape = Shapes.chip,
+            color = if (level.isUnlocked) VioletTint else NodeLocked,
+            elevation = if (level.isUnlocked) 2.dp else 0.dp,
+            onClick = if (level.isUnlocked) onClick else null,
+            contentPadding = PaddingValues(0.dp)
         ) {
-            if (level.isUnlocked) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (level.isUnlocked) {
                     Text(
-                        text = level.levelNumber.toString(),
-                        color = PlayGoldStart,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 28.sp
+                        text = "${level.levelNumber}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Violet
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(id = Iconsax.Lock),
+                        contentDescription = "Locked",
+                        tint = NodeLockedInk,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-            } else {
-                Icon(
-                    painter = painterResource(id = Iconsax.LockBold),
-                    contentDescription = "Locked",
-                    tint = PlayGoldStart.copy(alpha = 0.5f),
-                    modifier = Modifier.size(32.dp)
-                )
             }
         }
-        
-        // Stars
         if (level.isUnlocked) {
             Row(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 6.dp, y = 6.dp), // Hang stars off the edge slightly
-                horizontalArrangement = Arrangement.spacedBy((-6).dp)
+                modifier = Modifier.align(Alignment.BottomCenter).offset(y = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy((-4).dp)
             ) {
-                // Display 3 stars, colored if earned, dark if not
                 for (i in 1..3) {
-                    val isEarned = i <= level.starsEarned
+                    val earned = i <= level.starsEarned
                     Icon(
                         painter = painterResource(id = Iconsax.StarBold),
                         contentDescription = null,
-                        tint = if (isEarned) PlayGoldStart else Color(0xFF0B1229),
-                        modifier = Modifier
-                            .size(16.dp)
-                            .offset(y = if (i == 2) (-4).dp else 0.dp) // Middle star is slightly higher
+                        tint = if (earned) Gold else NodeLocked,
+                        modifier = Modifier.size(12.dp).alpha(if (earned) 1f else 0.7f)
                     )
                 }
             }

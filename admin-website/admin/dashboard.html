@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>KasiGuru Admin Portal &amp; Verification Panel</title>
   <!-- Standalone Synchronous Iconsax Bulk Web Component Script -->
   <script src="js/iconsax.js?v=2026_bulk_standalone"></script>
   <!-- Cache Buster Query String v=2026_pure_bulk_svg -->
-  <link rel="stylesheet" href="css/styles.css?v=2026_pure_bulk_svg">
+  <link rel="stylesheet" href="css/styles.css?v=2026_coast_light">
   <!-- SheetJS for Excel Importer -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
   <style>
@@ -16,7 +17,7 @@
     #auth-loading-screen {
       position: fixed;
       inset: 0;
-      background: var(--bg-dark);
+      background: var(--sand-bg);
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -51,8 +52,8 @@
 
     #logout-btn {
       background: transparent;
-      border: 1px solid rgba(255, 118, 117, 0.4);
-      color: #FF7675;
+      border: 1px solid rgba(192, 57, 43, 0.35);
+      color: var(--status-rejected);
       font-family: var(--font-family);
       font-size: 0.9rem;
       font-weight: 700;
@@ -66,12 +67,12 @@
     }
 
     #logout-btn:hover {
-      background: rgba(255, 118, 117, 0.1);
-      border-color: #FF7675;
+      background: rgba(192, 57, 43, 0.08);
+      border-color: var(--status-rejected);
     }
 
     #admin-user-chip {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(28, 34, 51, 0.03);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-pill);
       padding: 6px 14px;
@@ -94,14 +95,14 @@
   </div>
 
   <!-- Access Denied Screen (signed in, but no admin custom claim) -->
-  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--bg-dark); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;">
+  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--sand-bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;">
     <div class="logo-badge" style="font-size:1.2rem; padding:10px 20px;">KasiGuru</div>
-    <h2 style="color:#fff; margin:0;">Access Denied</h2>
+    <h2 style="color:var(--coast-ink); margin:0;">Access Denied</h2>
     <p style="color:var(--text-muted); max-width:420px; margin:0;">
       Your account is signed in but does not have administrator access.
       Please contact the project owner to be granted the admin role.
     </p>
-    <p id="access-denied-email-display" style="color:var(--play-gold-start); font-weight:700; margin:0;"></p>
+    <p id="access-denied-email-display" style="color:var(--status-pending); font-weight:700; margin:0;"></p>
     <button class="btn btn-danger" onclick="window.adminSignOut()">Sign Out</button>
   </div>
 
@@ -116,7 +117,7 @@
         <iconsax-icon name="element-3" type="bulk" size="20"></iconsax-icon> Dashboard
       </button>
       <button data-tab="tab-submissions" onclick="window.switchTab('tab-submissions')">
-        <iconsax-icon name="clock" type="bulk" size="20" color="var(--play-gold-start)"></iconsax-icon> Verification Queue
+        <iconsax-icon name="clock" type="bulk" size="20" color="var(--xp-gold)"></iconsax-icon> Verification Queue
       </button>
       <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
         <iconsax-icon name="book-1" type="bulk" size="20" color="var(--play-purple-start)"></iconsax-icon> Master Dictionary
@@ -131,7 +132,7 @@
         <span id="admin-email-display">Admin</span>
       </div>
       <button id="logout-btn" onclick="window.adminSignOut()">
-        <iconsax-icon name="logout" type="bulk" size="16" color="#FF7675"></iconsax-icon> Sign Out
+        <iconsax-icon name="logout" type="bulk" size="16" color="var(--status-rejected)"></iconsax-icon> Sign Out
       </button>
     </div>
   </header>
@@ -156,7 +157,7 @@
           </button>
         </div>
         <div style="background:var(--bg-surface); padding:8px 18px; border-radius:var(--radius-pill); border:1px solid var(--border-color); font-size:0.85rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-          <span style="color:#2ECC71;">🟢</span>
+          <span style="color:var(--status-approved);">🟢</span>
           <span>Firebase Cloud Live Sync Active</span>
         </div>
       </div>
@@ -177,7 +178,7 @@
       <div class="weekly-mission-strip">
         <div>
           <h3 style="font-size:1.15rem; font-weight:900; display:flex; align-items:center; gap:10px;">
-            <iconsax-icon name="calendar-1" type="bulk" size="24" color="var(--play-gold-start)"></iconsax-icon> Weekly Verification Momentum
+            <iconsax-icon name="calendar-1" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Weekly Verification Momentum
           </h3>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Active daily review &amp; submission momentum for Kasiguranin words this week</p>
         </div>
@@ -215,7 +216,7 @@
       <!-- Quick Action Panel -->
       <div class="panel">
         <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="flash-1" type="bulk" size="24" color="var(--play-gold-start)"></iconsax-icon> Quick Actions</h2>
+          <h2 class="panel-title"><iconsax-icon name="flash-1" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Quick Actions</h2>
         </div>
         <div style="display:flex; gap:14px; flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
@@ -233,7 +234,7 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h2 class="panel-title"><iconsax-icon name="clock" type="bulk" size="24" color="var(--play-gold-start)"></iconsax-icon> User Submitted Words Queue</h2>
+            <h2 class="panel-title"><iconsax-icon name="clock" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> User Submitted Words Queue</h2>
             <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Review crowd-sourced Kasiguranin words submitted by mobile app users. Approved entries will automatically migrate to the master dictionary.</p>
           </div>
         </div>
@@ -275,9 +276,9 @@
           </div>
         </div>
 
-        <div class="panel" style="border: 2px dashed var(--play-gold-start);">
+        <div class="panel" style="border: 2px dashed var(--xp-gold);">
           <div class="panel-header">
-            <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--play-gold-start)"></iconsax-icon> Bulk Excel Import (Database.xlsx)</h2>
+            <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Bulk Excel Import (Database.xlsx)</h2>
           </div>
           <div class="dropzone" id="excel-dropzone">
             <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">📊 Drag &amp; Drop "Database.xlsx" here</p>
@@ -339,7 +340,7 @@
     <section id="tab-releases" class="tab-content" style="display: none;">
       <div class="panel">
         <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--play-gold-start)"></iconsax-icon> Publish New App APK Release</h2>
+          <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Publish New App APK Release</h2>
         </div>
         <form id="publish-release-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:18px;">
           <div class="form-group">

@@ -69,4 +69,46 @@ class ProgressSyncTest {
 
         assertEquals(true, mergeProgress(local, remote).isOnboardingCompleted)
     }
+
+    // ── Daily-XP ledger ──────────────────────────────────────────────────────
+    //
+    // These exist because the ledger was being silently erased: mergeProgress builds a new entity
+    // field by field, so a field it does not mention reverts to its default on every sync. The write
+    // succeeds and nothing is logged, so only a test catches it.
+
+    private fun ledger(date: String, xp: Int, updatedAt: Long = 0) =
+        UserProgressEntity(dailyXpDate = date, dailyXpEarned = xp, updatedAt = updatedAt)
+
+    @Test
+    fun dailyLedgerSurvivesAMerge() {
+        val local = ledger("2026-08-17", 45, updatedAt = 1)
+        val remote = UserProgressEntity(updatedAt = 2) // an older client that never wrote the ledger
+
+        val merged = mergeProgress(local, remote)
+
+        assertEquals(45, merged.dailyXpEarned)
+        assertEquals("2026-08-17", merged.dailyXpDate)
+    }
+
+    @Test
+    fun sameDayTakesTheHigherCount() {
+        val merged = mergeProgress(ledger("2026-08-17", 30), ledger("2026-08-17", 75))
+        assertEquals(75, merged.dailyXpEarned)
+        assertEquals("2026-08-17", merged.dailyXpDate)
+    }
+
+    @Test
+    fun laterDateWinsOutrightRatherThanAccumulating() {
+        // Yesterday's 90 XP must not leak into today's goal ring.
+        val merged = mergeProgress(ledger("2026-08-17", 20), ledger("2026-08-16", 90))
+        assertEquals(20, merged.dailyXpEarned)
+        assertEquals("2026-08-17", merged.dailyXpDate)
+    }
+
+    @Test
+    fun remoteLaterDateWins() {
+        val merged = mergeProgress(ledger("2026-08-16", 90), ledger("2026-08-17", 20))
+        assertEquals(20, merged.dailyXpEarned)
+        assertEquals("2026-08-17", merged.dailyXpDate)
+    }
 }

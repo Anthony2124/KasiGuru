@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -76,6 +77,23 @@ fun WordVerificationDialog(
                     ConfettiView()
                 }
 
+                // A visible, discoverable way out — previously only the backdrop tap or system back
+                // could cancel this quiz, unlike every other decision dialog in the app.
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(32.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.CloseCircle),
+                        contentDescription = "Cancel",
+                        tint = CoastMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,23 +145,14 @@ fun WordVerificationDialog(
                                 )
                             }
 
-                            IconButton(
+                            AudioPlayButton(
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     audioPlayerManager.playAudio(targetWord.kasiguranin, targetWord.audioFileName)
                                 },
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(XpGold)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.VolumeHigh),
-                                    contentDescription = "Listen",
-                                    tint = CoastInk,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                                size = 44.dp,
+                                contentDescription = "Listen"
+                            )
                         }
                     }
 
@@ -185,7 +194,10 @@ fun WordVerificationDialog(
                                         } else {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         }
-                                    },
+                                    }
+                                    // Once answered, every other option visibly steps back instead of
+                                    // staying at full strength as if still tappable.
+                                    .alpha(if (selectedOption != null && !isChoiceSelected) 0.45f else 1f),
                                 shape = RoundedCornerShape(16.dp),
                                 color = optionBg,
                                 border = if (isChoiceSelected) {
@@ -300,14 +312,22 @@ fun WordVerificationDialog(
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
-                                CoastPillButton(
-                                    label = "Try Again",
-                                    onClick = {
-                                        selectedOption = null
-                                        isCorrect = null
-                                    },
-                                    variant = PillVariant.Gold
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(onClick = onDismiss) {
+                                        Text("Cancel", color = CoastMuted, fontWeight = FontWeight.Bold)
+                                    }
+                                    CoastPillButton(
+                                        label = "Try Again",
+                                        onClick = {
+                                            selectedOption = null
+                                            isCorrect = null
+                                        },
+                                        variant = PillVariant.Gold
+                                    )
+                                }
                             }
                         }
                     }

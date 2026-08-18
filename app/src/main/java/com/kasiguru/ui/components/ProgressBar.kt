@@ -17,14 +17,19 @@ import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.*
 
 /**
- * Animated gradient progress bar with smooth fill animation.
+ * Animated gradient progress bar.
+ *
+ * [backgroundColor] defaults to the light-surface track. On a saturated surface (the violet canopy,
+ * a coloured hero) pass `OnCanopyDecor` instead — the light default would vanish there. The previous
+ * default was the dead dark-theme token `DarkSurfaceVariant`, which is why the dictionary corpus bar
+ * rendered as an invisible navy strip on teal.
  */
 @Composable
 fun KasiGuruProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     height: Dp = 12.dp,
-    backgroundColor: Color = DarkSurfaceVariant,
+    backgroundColor: Color = TrackNeutral,
     gradientColors: List<Color> = listOf(Primary, PrimaryContainer),
     showLabel: Boolean = false,
     animated: Boolean = true
@@ -48,7 +53,7 @@ fun KasiGuruProgressBar(
                 Text(
                     text = "${(animatedProgress * 100).toInt()}%",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextGray
+                    color = Muted
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))

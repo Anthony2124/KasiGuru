@@ -1,22 +1,26 @@
 package com.kasiguru.ui.screens.about
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -25,7 +29,11 @@ data class FaqItem(
     val answer: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The identity the old screen re-stated inside a second gradient card belongs in the canopy itself —
+ * "who this app is" is exactly the canopy's job, so the logo/name/tagline moved there and the sheet is
+ * left to do only the sheet's job: the FAQ list.
+ */
 @Composable
 fun AboutScreen(
     onNavigateBack: () -> Unit
@@ -37,7 +45,7 @@ fun AboutScreen(
         ),
         FaqItem(
             question = "Does KasiGuru work offline?",
-            answer = "Yes! All 487 vocabulary entries, IPA transcriptions, example sentences, and mini-games are stored locally on your device in an SQLite database."
+            answer = "Yes! All 417 vocabulary entries, IPA transcriptions, example sentences, and mini-games are stored locally on your device in an SQLite database."
         ),
         FaqItem(
             question = "Where does the language data come from?",
@@ -49,159 +57,101 @@ fun AboutScreen(
         )
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "About & Help",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+    CanopyScaffold(
+        canopyHeight = 220.dp,
+        canopyContent = {
+            CanopyBackButton(onClick = onNavigateBack)
+            Spacer(Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Surface(modifier = Modifier.size(64.dp), shape = CircleShape, color = Color.White) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Hero Branding Banner Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(HeroCardStart, HeroCardEnd)
-                            )
-                        )
-                        .padding(24.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(72.dp),
-                            shape = CircleShape,
-                            color = androidx.compose.ui.graphics.Color.White
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Book),
-                                    contentDescription = "KasiGuru Logo",
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "KasiGuru Preservations",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Preserving Casiguran, Aurora's Heritage",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextHeadingBlack.copy(alpha = 0.8f)
+                            painter = painterResource(id = Iconsax.Book),
+                            contentDescription = null,
+                            tint = Violet,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = "KasiGuru",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = OnCanopy
+                )
+                Text(
+                    text = "Preserving Casiguran, Aurora's heritage",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnCanopy,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
+            Spacer(Modifier.weight(1f))
+        },
+        sheetContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(Space.gutter),
+                verticalArrangement = Arrangement.spacedBy(Space.sm)
+            ) {
+                Spacer(Modifier.height(Space.xs))
+                Text(
+                    text = "Frequently Asked Questions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Ink
+                )
 
-            Text(
-                text = "Frequently Asked Questions",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextHeadingBlack,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+                faqs.forEach { faq -> FaqCard(faq = faq) }
 
-            // FAQ Items List
-            faqs.forEach { faq ->
-                FaqCard(faq = faq)
+                Spacer(Modifier.height(Space.navBarClearance))
             }
         }
-    }
+    )
 }
 
 @Composable
 private fun FaqCard(faq: FaqItem) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { isExpanded = !isExpanded },
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { isExpanded = !isExpanded }
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = faq.question,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack,
-                    modifier = Modifier.weight(1f)
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = faq.question,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Ink,
+                modifier = Modifier.weight(1f)
+            )
 
-                Icon(
-                    painter = painterResource(id = if (isExpanded) Iconsax.ArrowUp1 else Iconsax.ArrowDown1),
-                    contentDescription = null,
-                    tint = TextSubtleGray,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+            Icon(
+                painter = painterResource(id = if (isExpanded) Iconsax.ArrowUp1 else Iconsax.ArrowDown1),
+                contentDescription = null,
+                tint = Muted,
+                modifier = Modifier.size(22.dp)
+            )
+        }
 
-            if (isExpanded) {
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = faq.answer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray,
-                    lineHeight = 22.sp
-                )
-            }
+        if (isExpanded) {
+            Spacer(Modifier.height(Space.sm))
+            HorizontalDivider(color = Faint.copy(alpha = 0.3f))
+            Spacer(Modifier.height(Space.sm))
+            Text(
+                text = faq.answer,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+                lineHeight = 22.sp
+            )
         }
     }
 }

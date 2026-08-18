@@ -17,9 +17,10 @@ import com.kasiguru.data.local.entity.*
         SyncQueueEntity::class,
         LeaderboardEntity::class,
         NotificationEntity::class,
-        GameLevelEntity::class
+        GameLevelEntity::class,
+        LessonProgressEntity::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -34,4 +35,5 @@ abstract class KasiGuruDatabase : RoomDatabase() {
     abstract fun leaderboardDao(): LeaderboardDao
     abstract fun notificationDao(): NotificationDao
     abstract fun gameLevelDao(): GameLevelDao
+    abstract fun lessonDao(): LessonDao
 }

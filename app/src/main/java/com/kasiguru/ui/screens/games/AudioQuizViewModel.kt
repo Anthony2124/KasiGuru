@@ -14,7 +14,6 @@ import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,10 +65,10 @@ class AudioQuizViewModel @Inject constructor(
             earnedXpTotal = 0
 
             if (questionQueue.isEmpty()) {
-                _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
+                _uiState.value = _uiState.value.copy(isLoading = false, isUnavailable = true)
                 return@launch
             }
-            
+
             loadNextQuestion()
         }
     }
@@ -96,20 +95,8 @@ class AudioQuizViewModel @Inject constructor(
                 options = allOptions,
                 selectedOption = null,
                 isCorrect = null,
-                isPlayingAudio = true,
                 totalQuestions = totalInitialQuestions
             )
-            
-            delay(1500)
-            _uiState.value = _uiState.value.copy(isPlayingAudio = false)
-        }
-    }
-
-    fun playAudio() {
-        _uiState.value = _uiState.value.copy(isPlayingAudio = true)
-        viewModelScope.launch {
-            delay(1500)
-            _uiState.value = _uiState.value.copy(isPlayingAudio = false)
         }
     }
 
@@ -139,11 +126,12 @@ class AudioQuizViewModel @Inject constructor(
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
-
-            delay(if (isCorrect) 1500 else 2600)
-            _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
-            loadNextQuestion()
         }
+    }
+
+    fun nextQuestion() {
+        _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
+        loadNextQuestion()
     }
 
     private fun endGame() {
@@ -190,13 +178,13 @@ class AudioQuizViewModel @Inject constructor(
 
 data class AudioQuizUiState(
     val isLoading: Boolean = true,
+    val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,
     val currentWord: VocabularyEntity? = null,
     val options: List<String> = emptyList(),
     val selectedOption: String? = null,
     val isCorrect: Boolean? = null,
     val score: Int = 0,
-    val isPlayingAudio: Boolean = false,
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,

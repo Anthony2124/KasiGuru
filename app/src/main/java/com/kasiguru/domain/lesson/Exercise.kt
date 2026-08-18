@@ -1,0 +1,81 @@
+package com.kasiguru.domain.lesson
+
+import com.kasiguru.data.local.entity.VocabularyEntity
+
+/**
+ * One step in a lesson.
+ *
+ * The variants mirror the question shapes the six existing mini-games already produce, so a lesson is
+ * built from mechanics the app has shipped and tested rather than from new ones. What the lesson layer
+ * adds is sequence, feedback and consequence — the things that were missing.
+ *
+ * Every variant carries its [word] so the completion screen can list what was covered and the
+ * feedback panel can teach from the full entry rather than from the answer string alone.
+ */
+sealed interface Exercise {
+
+    val word: VocabularyEntity
+    val options: List<String>
+    val answer: String
+
+    /** The instruction shown above the prompt. */
+    val instruction: String
+
+    /**
+     * Kasiguranin shown, learner picks the Tagalog or English meaning — or the reverse.
+     * Mirrors the Word Match and Reverse Match games.
+     */
+    data class ChooseTranslation(
+        override val word: VocabularyEntity,
+        override val options: List<String>,
+        override val answer: String,
+        /** True when the prompt is the Kasiguranin headword. */
+        val promptIsKasiguranin: Boolean
+    ) : Exercise {
+        val prompt: String get() = if (promptIsKasiguranin) word.kasiguranin else word.tagalog
+        override val instruction: String
+            get() = if (promptIsKasiguranin) "What does this mean?" else "Say this in Kasiguranin"
+    }
+
+    /**
+     * Audio plays, learner picks the written word. Mirrors the Audio Quiz.
+     * Only generated for entries that actually carry audio.
+     */
+    data class ListenAndChoose(
+        override val word: VocabularyEntity,
+        override val options: List<String>,
+        override val answer: String
+    ) : Exercise {
+        override val instruction: String get() = "Which word did you hear?"
+    }
+
+    /**
+     * The word is blanked out of its own example sentence. Mirrors Fill in the Blank, and is the only
+     * exercise that shows the word doing a job in a real sentence.
+     */
+    data class FillBlank(
+        override val word: VocabularyEntity,
+        override val options: List<String>,
+        override val answer: String,
+        val sentenceWithBlank: String,
+        val translation: String
+    ) : Exercise {
+        override val instruction: String get() = "Complete the sentence"
+    }
+
+    /**
+     * Pick the right aspectual form of a verb. Mirrors the Aspect Builder.
+     *
+     * This is the exercise most specific to Kasiguranin: the language marks neutral, imperfective,
+     * perfective and contemplative aspect, and those four forms are already stored on every verb entry
+     * but are currently buried in a collapsed row nobody opens.
+     */
+    data class ChooseAspect(
+        override val word: VocabularyEntity,
+        override val options: List<String>,
+        override val answer: String,
+        val aspectLabel: String
+    ) : Exercise {
+        override val instruction: String get() = "Choose the $aspectLabel form"
+    }
+}

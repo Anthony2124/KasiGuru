@@ -1,11 +1,30 @@
 package com.kasiguru.ui.screens.games
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,13 +33,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.components.clay.GlassChip
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.Coral
+import com.kasiguru.ui.theme.CoralDeep
+import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Gold
+import com.kasiguru.ui.theme.GoldDeep
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.RedTint
+import com.kasiguru.ui.theme.RewardInk
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Violet
+
+/**
+ * [GameRulesRegistry] is a plain data object built once at class-load time, outside composition, so
+ * its Violet gradients can't reference the theme-reactive tokens — same reasoning as
+ * `CategoryMetaData.kt`'s `FixedViolet`. Kept local rather than shared since each file's registry is
+ * itself the single place that should ever reference it.
+ */
+private val FixedViolet = Color(0xFF5B4CDB)
+private val FixedVioletDeep = Color(0xFF4034A8)
 
 data class GameRuleInfo(
     val gameType: String,
@@ -29,7 +69,9 @@ data class GameRuleInfo(
     val iconRes: Int,
     val unlockStars: Int,
     val rules: List<String>,
-    val gradient: List<Color>
+    val gradient: List<Color>,
+    /** Ink on light gradients (Gold, Coral); white on the deep Violet gradient. See DESIGN.md. */
+    val onGradientIsInk: Boolean = false
 )
 
 object GameRulesRegistry {
@@ -45,7 +87,7 @@ object GameRulesRegistry {
                 "Consecutive correct matches build a Combo Multiplier (x2, x3 XP!).",
                 "Earn up to +100 XP per round."
             ),
-            gradient = listOf(VocabCardStart, VocabCardEnd)
+            gradient = listOf(FixedViolet, FixedVioletDeep)
         ),
         "fill_blank" to GameRuleInfo(
             gameType = "fill_blank",
@@ -58,7 +100,8 @@ object GameRulesRegistry {
                 "Select the correct inflected word from 4 choices.",
                 "Earn +20 XP for each correct sentence completion."
             ),
-            gradient = listOf(QuestsCardStart, QuestsCardEnd)
+            gradient = listOf(Gold, GoldDeep),
+            onGradientIsInk = true
         ),
         "audio_quiz" to GameRuleInfo(
             gameType = "audio_quiz",
@@ -71,7 +114,8 @@ object GameRulesRegistry {
                 "Select the matching word from 4 choices.",
                 "Combos boost your XP payout by up to 3x!"
             ),
-            gradient = listOf(MiniGamesCardStart, MiniGamesCardEnd)
+            gradient = listOf(Coral, CoralDeep),
+            onGradientIsInk = true
         ),
         "aspect_builder" to GameRuleInfo(
             gameType = "aspect_builder",
@@ -84,7 +128,8 @@ object GameRulesRegistry {
                 "Assemble or select the correct verb inflection.",
                 "Master authentic Northern Luzon verb morphology!"
             ),
-            gradient = listOf(HeroCardStart, HeroCardEnd)
+            gradient = listOf(Gold, GoldDeep),
+            onGradientIsInk = true
         ),
         "sentence_order" to GameRuleInfo(
             gameType = "sentence_order",
@@ -97,7 +142,7 @@ object GameRulesRegistry {
                 "Tap word blocks in order to construct authentic sentences.",
                 "Earn +150 XP for perfect syntax construction!"
             ),
-            gradient = listOf(StoriesCardStart, StoriesCardEnd)
+            gradient = listOf(FixedViolet, FixedVioletDeep)
         ),
         "reverse_match" to GameRuleInfo(
             gameType = "reverse_match",
@@ -110,7 +155,8 @@ object GameRulesRegistry {
                 "Pick the matching Kasiguranin word from 4 choices.",
                 "Recall is harder than recognition — answer fast for bonus XP!"
             ),
-            gradient = listOf(PlayPurpleStart, PlayPurpleEnd)
+            gradient = listOf(Coral, CoralDeep),
+            onGradientIsInk = true
         )
     )
 }
@@ -119,132 +165,139 @@ object GameRulesRegistry {
 fun GameRulesDialog(
     gameType: String,
     totalStars: Int,
-    onStartGame: () -> Unit,
+    onStartGame: (dontShowAgain: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     val ruleInfo = GameRulesRegistry.games[gameType] ?: return
     val isUnlocked = totalStars >= ruleInfo.unlockStars
     val haptic = LocalHapticFeedback.current
+    val onGradient = if (ruleInfo.onGradientIsInk) RewardInk else Color.White
+    var dontShowAgain by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        SoftCard(shape = Shapes.panel, contentPadding = PaddingValues(0.dp)) {
             Column {
-                // Header Banner
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Brush.linearGradient(ruleInfo.gradient))
-                        .padding(20.dp)
+                        .padding(Space.lg)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = ruleInfo.iconRes),
-                                contentDescription = null,
-                                tint = TextHeadingBlack,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-
-                        Column {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(CircleShape)
+                                    .background(onGradient.copy(alpha = 0.22f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = ruleInfo.iconRes),
+                                    contentDescription = null,
+                                    tint = onGradient,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(Space.sm))
                             Text(
                                 text = ruleInfo.title,
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                color = TextHeadingBlack
+                                color = onGradient
                             )
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = Color.White.copy(alpha = 0.5f)
-                            ) {
-                                Text(
-                                    text = if (isUnlocked) "UNLOCKED (Req. ${ruleInfo.unlockStars} ⭐)" else "LOCKED (Req. ${ruleInfo.unlockStars} ⭐)",
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextHeadingBlack
-                                )
-                            }
+                        }
+                        Spacer(Modifier.height(Space.sm))
+                        GlassChip(tint = onGradient) {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (isUnlocked) Iconsax.TickCircle else Iconsax.Lock
+                                ),
+                                contentDescription = null,
+                                tint = onGradient,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = if (isUnlocked) "Unlocked" else "Needs ${ruleInfo.unlockStars} stars",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = onGradient
+                            )
                         }
                     }
                 }
 
-                // Content & Rules
                 Column(
-                    modifier = Modifier.padding(22.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    modifier = Modifier.padding(Space.lg),
+                    verticalArrangement = Arrangement.spacedBy(Space.sm)
                 ) {
-                    Text(
-                        text = ruleInfo.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextHeadingBlack
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Text(text = ruleInfo.description, style = MaterialTheme.typography.bodyMedium, color = Muted)
 
                     Text(
-                        text = "HOW TO PLAY & RULES:",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                        text = "How to play",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Ink
                     )
-
                     ruleInfo.rules.forEach { rule ->
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Text("•", fontWeight = FontWeight.Bold, color = HeroCardStart)
-                            Text(
-                                text = rule,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextHeadingBlack
+                        Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 7.dp)
+                                    .size(5.dp)
+                                    .clip(CircleShape)
+                                    .background(Violet)
                             )
+                            Text(text = rule, style = MaterialTheme.typography.bodySmall, color = Muted)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.height(Space.xs))
 
                     if (isUnlocked) {
-                        Button(
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { dontShowAgain = !dontShowAgain }
+                        ) {
+                            Checkbox(checked = dontShowAgain, onCheckedChange = { dontShowAgain = it })
+                            Text(
+                                text = "Don't show these rules again",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Muted
+                            )
+                        }
+                        Spacer(Modifier.height(Space.xs))
+                        ClayButton(
+                            label = "Start game",
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onDismiss()
-                                onStartGame()
+                                onStartGame(dontShowAgain)
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                            shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.fillMaxWidth().height(48.dp)
-                        ) {
-                            Text("Start Game!", color = TextHeadingBlack, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        }
-                    } else {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.errorContainer,
+                            tone = ClayButtonTone.Primary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(Space.xs))
+                        TextButton(
+                            onClick = onDismiss,
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            Text("Not now", color = Muted)
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(Shapes.tile)
+                                .background(RedTint)
+                                .padding(Space.sm)
+                        ) {
                             Text(
-                                text = "🔒 Earn ${ruleInfo.unlockStars} Total Stars to unlock this mini-game!",
-                                modifier = Modifier.padding(12.dp),
+                                text = "Earn ${ruleInfo.unlockStars} total stars to unlock this mini-game.",
                                 style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                textAlign = TextAlign.Center
+                                color = Ink
                             )
                         }
                     }

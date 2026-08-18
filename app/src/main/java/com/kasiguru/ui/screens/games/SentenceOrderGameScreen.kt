@@ -16,9 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOverView
-import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.rememberGameExitGuard
+import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -29,6 +33,10 @@ fun SentenceOrderGameScreen(
     viewModel: SentenceOrderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val exitGuard = rememberGameExitGuard(
+        active = uiState.questions.isNotEmpty() && !uiState.isGameFinished,
+        onExit = onNavigateBack
+    )
 
     Scaffold(
         topBar = {
@@ -42,7 +50,7 @@ fun SentenceOrderGameScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = exitGuard) {
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
@@ -60,7 +68,7 @@ fun SentenceOrderGameScreen(
     ) { padding ->
         if (uiState.questions.isEmpty() && !uiState.isGameFinished) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = StoriesCardStart)
+                CircularProgressIndicator(color = Violet)
             }
             return@Scaffold
         }
@@ -79,6 +87,7 @@ fun SentenceOrderGameScreen(
 
         val question = uiState.questions.getOrNull(uiState.currentQuestionIndex) ?: return@Scaffold
         val qIndex = uiState.currentQuestionIndex + 1
+        val hasChecked = uiState.isCorrect != null
 
         Column(
             modifier = Modifier
@@ -87,38 +96,15 @@ fun SentenceOrderGameScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Progress
             Column {
-                KasiGuruProgressBar(
-                    progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
-                    gradientColors = listOf(StoriesCardStart, StoriesCardEnd)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Sentence $qIndex/${uiState.totalQuestions}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = StoriesCardStart
-                    ) {
-                        Text(
-                            text = "Score: ${uiState.score}",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                    }
-                }
-            }
+            GameHeader(
+                label = "Sentence $qIndex/${uiState.totalQuestions}",
+                progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
+                score = uiState.score,
+                accentStart = StoriesCardStart,
+                accentEnd = StoriesCardEnd
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Target English Meaning
             Surface(
@@ -147,13 +133,25 @@ fun SentenceOrderGameScreen(
                 }
             }
 
-            // Selected Words Slot Box
+            // Selected Words Slot Box — the border and fill carry the result, not colour alone: the
+            // icon-free but explicit "Correct!"/"Not quite" line right below it backs it up in text.
+            val slotColor = when (uiState.isCorrect) {
+                true -> Success.copy(alpha = 0.16f)
+                false -> Error.copy(alpha = 0.16f)
+                null -> StoriesCardStart.copy(alpha = 0.3f)
+            }
+            val slotBorder = when (uiState.isCorrect) {
+                true -> BorderStroke(2.dp, Success)
+                false -> BorderStroke(2.dp, Error)
+                null -> null
+            }
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
                 shape = RoundedCornerShape(24.dp),
-                color = StoriesCardStart.copy(alpha = 0.3f)
+                color = slotColor,
+                border = slotBorder
             ) {
                 Box(
                     modifier = Modifier.padding(16.dp),
@@ -173,6 +171,7 @@ fun SentenceOrderGameScreen(
                             uiState.constructedWords.forEach { word ->
                                 FilterChip(
                                     selected = true,
+                                    enabled = !hasChecked,
                                     onClick = { viewModel.deselectWord(word) },
                                     label = { Text(word, fontWeight = FontWeight.Bold) },
                                     colors = FilterChipDefaults.filterChipColors(
@@ -187,50 +186,63 @@ fun SentenceOrderGameScreen(
                 }
             }
 
-            // Available Word Bank
-            Column {
+            if (hasChecked) {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Word Bank",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextSubtleGray,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    text = if (uiState.isCorrect == true) {
+                        "Correct!"
+                    } else {
+                        "Not quite — correct order: ${question.correctKasiguraninWords.joinToString(" ")}"
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (uiState.isCorrect == true) Success else Error,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    uiState.availableWords.forEach { word ->
-                        FilterChip(
-                            selected = false,
-                            onClick = { viewModel.selectWord(word) },
-                            label = { Text(word, fontWeight = FontWeight.SemiBold) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = HeroCardStart,
-                                labelColor = TextHeadingBlack
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        )
+                )
+            }
+
+            // Available Word Bank
+            if (!hasChecked) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column {
+                    Text(
+                        text = "Word Bank",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSubtleGray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        uiState.availableWords.forEach { word ->
+                            FilterChip(
+                                selected = false,
+                                onClick = { viewModel.selectWord(word) },
+                                label = { Text(word, fontWeight = FontWeight.SemiBold) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = HeroCardStart,
+                                    labelColor = TextHeadingBlack
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        }
                     }
                 }
             }
+            }
 
-            // Check Answer Button
-            Button(
-                onClick = { viewModel.checkAnswer() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = StoriesCardStart),
-                shape = RoundedCornerShape(20.dp),
-                enabled = uiState.constructedWords.isNotEmpty()
-            ) {
-                Text(
-                    text = "Check Sentence Order",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextHeadingBlack,
-                    fontWeight = FontWeight.Bold
+            if (hasChecked) {
+                GameContinueButton(onClick = { viewModel.nextQuestion() })
+            } else {
+                ClayButton(
+                    label = "Check sentence order",
+                    onClick = { viewModel.checkAnswer() },
+                    enabled = uiState.constructedWords.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

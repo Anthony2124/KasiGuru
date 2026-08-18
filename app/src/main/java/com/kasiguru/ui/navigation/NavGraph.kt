@@ -1,11 +1,30 @@
 package com.kasiguru.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.kasiguru.ui.components.clay.ClayFab
+import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ground
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,6 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
+import com.kasiguru.ui.components.LevelUpDialog
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
 import com.kasiguru.ui.screens.auth.AccountScreen
@@ -25,7 +45,8 @@ import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
 import com.kasiguru.ui.screens.leaderboard.LeaderboardScreen
 import com.kasiguru.ui.screens.notifications.NotificationInboxScreen
 import com.kasiguru.ui.screens.games.*
-import com.kasiguru.ui.screens.home.HomeScreen
+import com.kasiguru.ui.screens.learn.LearnScreen
+import com.kasiguru.ui.screens.lesson.LessonPlayerScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
 import com.kasiguru.ui.screens.contribute.SubmitWordScreen
 import com.kasiguru.ui.screens.profile.EditProfileScreen
@@ -34,6 +55,7 @@ import com.kasiguru.ui.screens.settings.SettingsScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
+import com.kasiguru.ui.screens.vocabulary.VocabularyDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
 
 @Composable
@@ -43,20 +65,35 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in listOf(
-        Screen.Home.route,
-        Screen.VocabularyList.route,
-        Screen.FlashcardDeck.route,
+        Screen.Learn.route,
         Screen.GameHub.route,
+        Screen.VocabularyList.route,
+        Screen.Achievements.route,
         Screen.Profile.route
     )
 
+    val levelUpViewModel: LevelUpViewModel = hiltViewModel()
+    val pendingLevelUp by levelUpViewModel.pendingLevelUp.collectAsState()
+    pendingLevelUp?.let { levelInfo ->
+        LevelUpDialog(newLevelInfo = levelInfo, onDismiss = levelUpViewModel::dismiss)
+    }
+
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Ground)
     ) {
+        // The navigation cluster measures itself and insets the host by exactly its own height.
+        //
+        // Insetting is what actually prevents overlap: content padding inside a screen only adds
+        // scroll room at the end, so a short screen still had the raised action sitting on top of it.
+        // The height is measured rather than hardcoded because it depends on the gesture-navigation
+        // inset, which varies by device and by whether three-button navigation is in use.
+        var navClusterHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current
+
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().padding(bottom = if (showBottomBar) navClusterHeight else 0.dp)
         ) {
             // Splash Screen for routing
             composable(Screen.Splash.route) {
@@ -83,29 +120,43 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 OnboardingScreen(
                     onCompleteOnboarding = { userName, avatarId, dailyGoalXp, motivation, startingLevel, titleBadge ->
                         viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
-                        navController.navigate(Screen.Home.route) {
+                        navController.navigate(Screen.Learn.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
                     }
                 )
             }
 
-            // Home Dashboard (Central Hub)
-            composable(Screen.Home.route) {
-                HomeScreen(
-                    onNavigateToStories = { navController.navigate(Screen.StoryList.route) },
-                    onNavigateToVocabulary = { navController.navigate(Screen.VocabularyList.route) },
-                    onNavigateToGames = { navController.navigate(Screen.GameHub.route) },
-                    onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
-                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
-                    onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
-                    onNavigateToFlashcards = { navController.navigate(Screen.FlashcardDeck.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) },
-                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) },
-                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+            // Learn: today's plan. Replaces the old Home dashboard, which duplicated four tabs.
+            composable(Screen.Learn.route) {
+                LearnScreen(
+                    onStartLesson = { unitId, lessonIndex ->
+                        navController.navigate(Screen.LessonPlayer.createRoute(unitId, lessonIndex))
+                    },
+                    onOpenReview = { navController.navigate(Screen.FlashcardDeck.route) },
+                    onOpenGames = { navController.navigate(Screen.GameHub.route) },
+                    onOpenStories = { navController.navigate(Screen.StoryList.route) },
+                    onOpenDictionary = { navController.navigate(Screen.VocabularyList.route) },
+                    onOpenProgress = { navController.navigate(Screen.Achievements.route) },
+                    onOpenNotifications = { navController.navigate(Screen.Notifications.route) },
+                    onOpenProfile = { navController.navigate(Screen.Profile.route) },
+                    onOpenAccount = { navController.navigate(Screen.Account.route) }
+                )
+            }
+
+            // The lesson player. Immersive: no bottom bar, no FAB.
+            composable(
+                route = Screen.LessonPlayer.route,
+                arguments = listOf(
+                    navArgument("unitId") { type = NavType.StringType },
+                    navArgument("lessonIndex") { type = NavType.IntType }
+                )
+            ) {
+                LessonPlayerScreen(
+                    onExit = { navController.popBackStack() },
+                    // Finishing returns to Learn, which re-derives today's plan so the completed
+                    // lesson is replaced by the next one rather than sitting there still marked to do.
+                    onFinished = { navController.popBackStack() }
                 )
             }
 
@@ -115,7 +166,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) }
+                    onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
+                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
+                    onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
                 )
             }
             
@@ -131,7 +185,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToCategory = { category ->
                         navController.navigate(Screen.VocabularyCategory.createRoute(category))
-                    }
+                    },
+                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) }
                 )
             }
             
@@ -145,7 +200,16 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-            
+
+            composable(
+                route = Screen.VocabularyDetail.route,
+                arguments = listOf(navArgument("wordId") { type = NavType.IntType })
+            ) {
+                VocabularyDetailScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
             // Stories
             composable(Screen.StoryList.route) {
                 StoryListScreen(
@@ -155,7 +219,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     }
                 )
             }
-            composable(Screen.StoryReader.route) {
+            composable(
+                route = Screen.StoryReader.route,
+                arguments = listOf(navArgument("storyId") { type = NavType.IntType })
+            ) {
                 StoryReaderScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -268,18 +335,34 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         }
 
         if (showBottomBar) {
+            val continueViewModel: ContinueLearningViewModel = hiltViewModel()
+            val nextLesson by continueViewModel.nextLesson.collectAsState()
+
             KasiGuruBottomBar(
                 currentRoute = currentRoute,
                 onNavigateToRoute = { route ->
                     if (currentRoute != route) {
                         navController.navigate(route) {
-                            popUpTo(Screen.Home.route) { saveState = true }
+                            popUpTo(Screen.Learn.route) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
                 },
-                modifier = Modifier.align(Alignment.BottomCenter)
+                onContinueClick = {
+                    nextLesson?.let {
+                        navController.navigate(
+                            Screen.LessonPlayer.createRoute(it.unitId, it.lessonIndex)
+                        )
+                    } ?: navController.navigate(Screen.FlashcardDeck.route)
+                },
+                continueIconRes = if (nextLesson != null) Iconsax.Play else Iconsax.Repeat,
+                continueDescription = if (nextLesson != null) "Continue learning" else "Review your words",
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { size ->
+                        navClusterHeight = with(density) { size.height.toDp() }
+                    }
             )
         }
     }

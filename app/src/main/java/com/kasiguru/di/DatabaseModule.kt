@@ -120,4 +120,9 @@ object DatabaseModule {
     @Singleton
     fun provideGameLevelDao(database: KasiGuruDatabase): GameLevelDao =
         database.gameLevelDao()
+
+    @Provides
+    @Singleton
+    fun provideLessonDao(database: KasiGuruDatabase): LessonDao =
+        database.lessonDao()
 }

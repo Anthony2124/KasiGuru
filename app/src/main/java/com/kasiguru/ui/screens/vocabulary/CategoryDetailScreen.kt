@@ -3,35 +3,76 @@ package com.kasiguru.ui.screens.vocabulary
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.WordVerificationDialog
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GlassChip
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.theme.CategoryRegistry
+import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.Red
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Surface
+import com.kasiguru.ui.theme.SurfaceSunken
+import com.kasiguru.ui.theme.Violet
 import com.kasiguru.util.audio.AudioPlayerManager
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * One category's word list. A pushed subscreen — no bottom bar, so the canopy carries its own back
+ * button — over a plain search-and-list sheet, since the corpus itself is the point here.
+ */
 @Composable
 fun CategoryDetailScreen(
     categoryName: String,
@@ -46,239 +87,135 @@ fun CategoryDetailScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val audioPlayerManager = remember { AudioPlayerManager(context) }
-
     val meta = remember(categoryName) { CategoryRegistry.getMeta(categoryName) }
 
-    LaunchedEffect(categoryName) {
-        viewModel.selectCategory(categoryName)
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            audioPlayerManager.stopAudio()
-        }
-    }
+    LaunchedEffect(categoryName) { viewModel.selectCategory(categoryName) }
+    DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
 
     val categoryWords = remember(searchQuery, uiState.filteredVocabulary) {
         val baseList = uiState.allVocabulary.filter { it.category.equals(categoryName, ignoreCase = true) }
-        if (searchQuery.isBlank()) {
-            baseList
-        } else {
-            baseList.filter {
-                it.kasiguranin.contains(searchQuery, ignoreCase = true) ||
-                        it.tagalog.contains(searchQuery, ignoreCase = true) ||
-                        it.english.contains(searchQuery, ignoreCase = true)
-            }
+        if (searchQuery.isBlank()) baseList else baseList.filter {
+            it.kasiguranin.contains(searchQuery, ignoreCase = true) ||
+                it.tagalog.contains(searchQuery, ignoreCase = true) ||
+                it.english.contains(searchQuery, ignoreCase = true)
         }
     }
-
     val totalWords = categoryWords.size
     val learnedCount = categoryWords.count { it.isLearned }
 
-    // Word Verification Dialog (Stricter Mechanics)
     verifyingWord?.let { word ->
         WordVerificationDialog(
             targetWord = word,
             allWords = uiState.allVocabulary,
-            onSuccess = {
-                viewModel.markWordAsLearned(word.id)
-                verifyingWord = null
-            },
+            onSuccess = { viewModel.markWordAsLearned(word.id); verifyingWord = null },
             onDismiss = { verifyingWord = null }
         )
     }
-
-    // Unlearn Reset Dialog
     unlearningWord?.let { word ->
         AlertDialog(
             onDismissRequest = { unlearningWord = null },
-            title = { Text("Reset Learned Word?") },
-            text = { Text("Reset '${word.kasiguranin}' back to unlearned so you can review it again?") },
+            title = { Text("Reset learned word?") },
+            text = { Text("Reset \"${word.kasiguranin}\" back to unlearned so you can review it again?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.unmarkWordAsLearned(word.id)
-                        unlearningWord = null
-                    }
-                ) {
-                    Text("Reset Word", color = Error, fontWeight = FontWeight.Bold)
+                TextButton(onClick = { viewModel.unmarkWordAsLearned(word.id); unlearningWord = null }) {
+                    Text("Reset word", color = Red)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { unlearningWord = null }) {
-                    Text("Cancel")
-                }
-            }
+            dismissButton = { TextButton(onClick = { unlearningWord = null }) { Text("Cancel") } }
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Text(
-                        categoryName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+    CanopyScaffold(
+        canopyHeight = 172.dp,
+        canopyContent = {
+            CanopyBackButton(onClick = onNavigateBack)
+            Spacer(Modifier.height(Space.sm))
+            Text(text = meta.name, style = MaterialTheme.typography.headlineMedium, color = OnCanopy, maxLines = 1)
+            Text(text = meta.description, style = MaterialTheme.typography.bodyMedium, color = OnCanopy)
+            Spacer(Modifier.height(Space.sm))
+            KasiGuruProgressBar(
+                progress = if (totalWords > 0) learnedCount.toFloat() / totalWords else 0f,
+                height = 5.dp,
+                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
+                animated = true
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ─── 1. Category Hero Banner ───
-            item {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 4.dp
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(meta.startColor, meta.endColor)))
-                            .padding(22.dp)
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.35f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = meta.iconRes),
-                                        contentDescription = null,
-                                        tint = TextWhite,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-
-                                Surface(
-                                    shape = CircleShape,
-                                    color = PlayGoldStart
-                                ) {
-                                    Text(
-                                        text = "$learnedCount / $totalWords Learned",
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Black,
-                                        color = TextHeadingBlack
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            Text(
-                                text = meta.name,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Black,
-                                color = TextWhite
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                text = meta.description,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextWhite.copy(alpha = 0.9f)
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            KasiGuruProgressBar(
-                                progress = if (totalWords > 0) learnedCount.toFloat() / totalWords.toFloat() else 0f,
-                                height = 8.dp,
-                                gradientColors = listOf(PlayGoldStart, PlayGoldEnd),
-                                animated = true
-                            )
-                        }
-                    }
+            Spacer(Modifier.weight(1f))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                GlassChip {
+                    Icon(
+                        painter = painterResource(id = Iconsax.BookBold),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                        text = "$learnedCount / $totalWords learned",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnCanopy
+                    )
                 }
             }
-
-            // ─── 2. Search Bar ───
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search in $categoryName...") },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Search),
-                            contentDescription = "Search",
-                            tint = TextSubtleGray
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedBorderColor = TextHeadingBlack,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                    ),
-                    singleLine = true
-                )
-            }
-
-            // ─── 3. Words List Header ───
-            item {
-                Text(
-                    text = "Vocabulary List ($totalWords words)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
-                )
-            }
-
-            // ─── 4. Vocabulary Word Cards List ───
-            items(categoryWords, key = { it.id }) { vocab ->
-                CategoryWordCard(
-                    vocab = vocab,
-                    audioPlayerManager = audioPlayerManager,
-                    onMarkLearned = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        if (vocab.isLearned) {
-                            unlearningWord = vocab
-                        } else {
-                            verifyingWord = vocab
+        },
+        sheetContent = {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
+                ),
+                verticalArrangement = Arrangement.spacedBy(Space.sm)
+            ) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search in ${meta.name}…") },
+                        leadingIcon = {
+                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Violet)
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.CloseCircle),
+                                    contentDescription = "Clear search",
+                                    tint = Faint,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable { searchQuery = "" }
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = Shapes.tile,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Surface,
+                            unfocusedContainerColor = Surface,
+                            focusedBorderColor = Violet,
+                            unfocusedBorderColor = SurfaceSunken
+                        ),
+                        singleLine = true
+                    )
+                }
+                item {
+                    Text(
+                        text = "$totalWords words",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Muted,
+                        modifier = Modifier.padding(top = Space.xs)
+                    )
+                }
+                items(categoryWords, key = { it.id }) { vocab ->
+                    CategoryWordCard(
+                        vocab = vocab,
+                        audioPlayerManager = audioPlayerManager,
+                        onMarkLearned = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (vocab.isLearned) unlearningWord = vocab else verifyingWord = vocab
                         }
-                    }
-                )
+                    )
+                }
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -290,142 +227,87 @@ private fun CategoryWordCard(
     var isExpanded by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                isExpanded = !isExpanded
-            },
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            isExpanded = !isExpanded
+        }
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = vocab.kasiguranin,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "English: ${vocab.english}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextHeadingBlack
-                    )
-                    Text(
-                        text = "Tagalog: ${vocab.tagalog}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSubtleGray
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    IconButton(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.VolumeHigh),
-                            contentDescription = "Listen",
-                            tint = VocabCardEnd,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    IconButton(onClick = onMarkLearned) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.TickCircle),
-                            contentDescription = "Verify Mastery",
-                            tint = if (vocab.isLearned) Success else TextSubtleGray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(text = vocab.kasiguranin, style = MaterialTheme.typography.titleLarge, color = Ink)
+                Text(text = "${vocab.english} · ${vocab.tagalog}", style = MaterialTheme.typography.bodySmall, color = Faint)
             }
+            // Both icons previously had only a 22dp clickable — under the 48dp minimum touch target
+            // and sitting inside a card that's itself clickable (to expand), which made mis-taps
+            // between "play audio," "mark learned," and "expand the card" easy. Each now gets its own
+            // properly-sized tap target instead of just its visible glyph.
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.VolumeHigh),
+                    contentDescription = "Listen",
+                    tint = Violet,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(Modifier.width(2.dp))
+            Box(
+                modifier = Modifier.size(44.dp).clickable(onClick = onMarkLearned),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.TickCircle),
+                    contentDescription = if (vocab.isLearned) "Learned" else "Mark as learned",
+                    tint = if (vocab.isLearned) Green else Faint,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
 
-            AnimatedVisibility(visible = isExpanded) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    if (vocab.phoneticGlottal || vocab.phoneticVowelLength || vocab.ipaNotation.isNotEmpty()) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        ) {
-                            if (vocab.phoneticGlottal) {
-                                SuggestionChip(
-                                    onClick = {},
-                                    label = { Text("Glottal Stop ʔ", style = MaterialTheme.typography.labelSmall) },
-                                    colors = SuggestionChipDefaults.suggestionChipColors(containerColor = StoriesCardStart)
-                                )
-                            }
-                            if (vocab.phoneticVowelLength) {
-                                SuggestionChip(
-                                    onClick = {},
-                                    label = { Text("Long Vowel ː", style = MaterialTheme.typography.labelSmall) },
-                                    colors = SuggestionChipDefaults.suggestionChipColors(containerColor = QuestsCardStart)
-                                )
-                            }
-                            if (vocab.ipaNotation.isNotEmpty()) {
-                                SuggestionChip(
-                                    onClick = {},
-                                    label = { Text("[${vocab.ipaNotation}]", style = MaterialTheme.typography.labelSmall) },
-                                    colors = SuggestionChipDefaults.suggestionChipColors(containerColor = HeroCardStart)
-                                )
-                            }
-                        }
-                    }
+        AnimatedVisibility(visible = isExpanded) {
+            Column(modifier = Modifier.padding(top = Space.sm)) {
+                HorizontalDivider(color = SurfaceSunken)
+                Spacer(Modifier.height(Space.sm))
 
-                    if (vocab.neutralForm.isNotEmpty()) {
-                        Text(
-                            text = "Verb Aspect Inflections:",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = VocabCardEnd,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AspectRow("Neutral (Infinitive)", vocab.neutralForm)
-                        AspectRow("Imperfective (Present)", vocab.imperfectiveForm)
-                        AspectRow("Perfective (Past)", vocab.perfectiveForm)
-                        AspectRow("Contemplative (Future)", vocab.contemplativeForm)
-                        Spacer(modifier = Modifier.height(12.dp))
+                if (vocab.phoneticGlottal || vocab.phoneticVowelLength || vocab.ipaNotation.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                        if (vocab.phoneticGlottal) TagChip(label = "Glottal stop ʔ")
+                        if (vocab.phoneticVowelLength) TagChip(label = "Long vowel ː")
+                        if (vocab.ipaNotation.isNotEmpty()) TagChip(label = "[${vocab.ipaNotation}]")
                     }
-                    
-                    if (vocab.exampleSentence.isNotEmpty()) {
-                        Text(
-                            text = "Example Sentence:",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextHeadingBlack,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "\"${vocab.exampleSentence}\"",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontStyle = FontStyle.Italic,
-                            color = TextSubtleGray
-                        )
-                        if (vocab.exampleTranslation.isNotEmpty()) {
-                            Text(
-                                text = "(${vocab.exampleTranslation})",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSubtleGray
-                            )
-                        }
+                    Spacer(Modifier.height(Space.sm))
+                }
+
+                if (vocab.neutralForm.isNotEmpty()) {
+                    Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Violet)
+                    Spacer(Modifier.height(Space.xs))
+                    AspectRow("Neutral (infinitive)", vocab.neutralForm)
+                    AspectRow("Imperfective (present)", vocab.imperfectiveForm)
+                    AspectRow("Perfective (past)", vocab.perfectiveForm)
+                    AspectRow("Contemplative (future)", vocab.contemplativeForm)
+                    Spacer(Modifier.height(Space.sm))
+                }
+
+                if (vocab.exampleSentence.isNotEmpty()) {
+                    Text(text = "Example sentence", style = MaterialTheme.typography.labelLarge, color = Ink)
+                    Text(
+                        text = "\"${vocab.exampleSentence}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = Muted
+                    )
+                    if (vocab.exampleTranslation.isNotEmpty()) {
+                        Text(text = vocab.exampleTranslation, style = MaterialTheme.typography.bodySmall, color = Faint)
                     }
                 }
             }
@@ -437,12 +319,10 @@ private fun CategoryWordCard(
 private fun AspectRow(label: String, value: String) {
     if (value.isBlank()) return
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = TextSubtleGray)
-        Text(text = value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = TextHeadingBlack)
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Faint)
+        Text(text = value, style = MaterialTheme.typography.bodySmall, color = Ink)
     }
 }

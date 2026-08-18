@@ -1,27 +1,30 @@
 package com.kasiguru.ui.screens.games
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameOptionRow
+import com.kasiguru.ui.components.GameOptionState
 import com.kasiguru.ui.components.GameOverView
-import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.GameUnavailableState
+import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.util.audio.AudioPlayerManager
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +33,27 @@ fun AudioQuizGameScreen(
     viewModel: AudioQuizViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val audioPlayer = remember { AudioPlayerManager(context) }
+    var isPlaying by remember { mutableStateOf(false) }
+    val exitGuard = rememberGameExitGuard(
+        active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
+        onExit = onNavigateBack
+    )
+
+    DisposableEffect(Unit) {
+        onDispose { audioPlayer.stopAudio() }
+    }
+
+    // Plays automatically on every new question, matching the pattern every other audio control in
+    // the app already follows (Lesson Player, Flashcards, the Dictionary).
+    LaunchedEffect(uiState.currentWord) {
+        val word = uiState.currentWord ?: return@LaunchedEffect
+        isPlaying = true
+        audioPlayer.playAudio(word.kasiguranin, word.audioFileName)
+        delay(700)
+        isPlaying = false
+    }
 
     Scaffold(
         topBar = {
@@ -43,7 +67,7 @@ fun AudioQuizGameScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = exitGuard) {
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
@@ -61,8 +85,17 @@ fun AudioQuizGameScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MiniGamesCardEnd)
+                CircularProgressIndicator(color = Violet)
             }
+            return@Scaffold
+        }
+
+        if (uiState.isUnavailable) {
+            GameUnavailableState(
+                accentColor = MiniGamesCardEnd,
+                onBack = onNavigateBack,
+                modifier = Modifier.padding(padding)
+            )
             return@Scaffold
         }
 
@@ -79,6 +112,7 @@ fun AudioQuizGameScreen(
         }
 
         val questionNum = uiState.currentQuestionIndex + 1
+        val hasAnswered = uiState.selectedOption != null
 
         Column(
             modifier = Modifier
@@ -87,143 +121,86 @@ fun AudioQuizGameScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Progress
             Column {
-                KasiGuruProgressBar(
+                GameHeader(
+                    label = "Question $questionNum/${uiState.totalQuestions}",
                     progress = questionNum.toFloat() / uiState.totalQuestions.toFloat(),
-                    gradientColors = listOf(MiniGamesCardStart, MiniGamesCardEnd)
+                    score = uiState.score,
+                    accentStart = MiniGamesCardStart,
+                    accentEnd = MiniGamesCardEnd
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+
+                // Audio Player Circle Button
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Question $questionNum/${uiState.totalQuestions}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
+                    val infiniteTransition = rememberInfiniteTransition(label = "Pulse")
+                    val pulseScale by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = if (isPlaying) 1.15f else 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "PulseScale"
                     )
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MiniGamesCardStart
-                    ) {
-                        Text(
-                            text = "Score: ${uiState.score}",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                    }
-                }
-            }
-
-            // Audio Player Circle Button
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                val infiniteTransition = rememberInfiniteTransition(label = "Pulse")
-                val pulseScale by infiniteTransition.animateFloat(
-                    initialValue = 1f,
-                    targetValue = if (uiState.isPlayingAudio) 1.15f else 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(600),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "PulseScale"
-                )
-
-                Surface(
-                    modifier = Modifier
-                        .size(110.dp)
-                        .scale(pulseScale)
-                        .clickable { viewModel.playAudio() },
-                    shape = CircleShape,
-                    color = MiniGamesCardStart,
-                    shadowElevation = 4.dp
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.VolumeHigh),
-                            contentDescription = "Play Audio",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = "Tap to listen & select the correct word",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSubtleGray,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            // Option Cards
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                uiState.options.forEach { option ->
-                    val isAnswered = uiState.selectedOption != null
-                    val isSelected = uiState.selectedOption == option
-                    val isTheAnswer = option == uiState.currentWord?.kasiguranin
-                    val isChosenWrong = isSelected && !isTheAnswer
-
-                    val optionBgColor = when {
-                        isAnswered && isTheAnswer -> QuestsCardStart
-                        isChosenWrong -> Error.copy(alpha = 0.2f)
-                        else -> MaterialTheme.colorScheme.surface
-                    }
 
                     Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = uiState.selectedOption == null) {
-                                viewModel.selectOption(option)
+                            .size(110.dp)
+                            .scale(pulseScale)
+                            .clickable {
+                                val word = uiState.currentWord ?: return@clickable
+                                isPlaying = true
+                                audioPlayer.playAudio(word.kasiguranin, word.audioFileName)
                             },
-                        shape = RoundedCornerShape(20.dp),
-                        color = optionBgColor,
-                        shadowElevation = 1.dp
+                        shape = CircleShape,
+                        color = MiniGamesCardStart,
+                        shadowElevation = 4.dp
                     ) {
-                        Row(
-                            modifier = Modifier.padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = option,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.VolumeHigh),
+                                contentDescription = "Play the word again",
+                                tint = TextHeadingBlack,
+                                modifier = Modifier.size(48.dp)
                             )
-                            if (isAnswered && isTheAnswer) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.TickCircle),
-                                    contentDescription = "Correct",
-                                    tint = Success,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
                         }
+                    }
+                }
+
+                Text(
+                    text = "Tap to listen again & select the correct word",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSubtleGray,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    uiState.options.forEach { option ->
+                        val correctAnswer = uiState.currentWord?.kasiguranin
+                        val state = when {
+                            !hasAnswered -> GameOptionState.Idle
+                            option == correctAnswer -> GameOptionState.Correct
+                            option == uiState.selectedOption -> GameOptionState.Wrong
+                            else -> GameOptionState.Idle
+                        }
+                        GameOptionRow(
+                            label = option,
+                            state = state,
+                            enabled = !hasAnswered,
+                            onClick = { viewModel.selectOption(option) }
+                        )
                     }
                 }
             }
 
-            // Teaching moment: reveal the correct answer after a mistake
-            if (uiState.selectedOption != null && uiState.isCorrect == false) {
-                Text(
-                    text = "Correct answer: ${uiState.currentWord?.kasiguranin ?: ""}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Success,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            if (hasAnswered) {
+                GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

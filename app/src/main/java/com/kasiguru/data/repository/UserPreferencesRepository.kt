@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -22,6 +23,22 @@ class UserPreferencesRepository @Inject constructor(
         val LEADERBOARD_ALERTS = booleanPreferencesKey("leaderboard_alerts")
         val DISMISSED_UPDATE_VERSION = intPreferencesKey("dismissed_update_version")
         val BACKUP_PROMPT_DISMISSED = booleanPreferencesKey("backup_prompt_dismissed")
+        val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
+    }
+
+    /**
+     * Mini-game types whose rules dialog the learner opted out of re-seeing. Before this existed,
+     * [com.kasiguru.ui.screens.games.GameRulesDialog] reappeared in full on every single entry to a
+     * game, even the 50th time.
+     */
+    val gameRulesSeen: Flow<Set<String>> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.GAME_RULES_SEEN] ?: emptySet()
+    }
+
+    suspend fun markGameRulesSeen(gameType: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.GAME_RULES_SEEN] = (prefs[PreferencesKeys.GAME_RULES_SEEN] ?: emptySet()) + gameType
+        }
     }
 
     /**

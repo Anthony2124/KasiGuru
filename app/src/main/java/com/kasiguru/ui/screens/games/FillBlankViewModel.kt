@@ -14,7 +14,6 @@ import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +61,7 @@ class FillBlankViewModel @Inject constructor(
             val pool = if (verbsWithAspects.isNotEmpty()) verbsWithAspects else list
             
             if (pool.isEmpty()) {
-                _uiState.value = _uiState.value.copy(isLoading = false, isGameOver = true)
+                _uiState.value = _uiState.value.copy(isLoading = false, isUnavailable = true)
                 return@launch
             }
 
@@ -175,11 +174,12 @@ class FillBlankViewModel @Inject constructor(
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetVerb, rating)
-
-            delay(if (isCorrect) 1500 else 2600)
-            _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
-            loadNextQuestion()
         }
+    }
+
+    fun nextQuestion() {
+        _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
+        loadNextQuestion()
     }
 
     private fun endGame() {
@@ -226,6 +226,7 @@ class FillBlankViewModel @Inject constructor(
 
 data class FillBlankUiState(
     val isLoading: Boolean = true,
+    val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,
     val currentVerb: VocabularyEntity? = null,
     val sentenceTemplate: String = "",

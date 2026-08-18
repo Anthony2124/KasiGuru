@@ -1,7 +1,9 @@
 package com.kasiguru.ui.screens.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -9,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -17,6 +18,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 
 /**
@@ -30,7 +36,6 @@ fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     var email by remember { mutableStateOf("") }
@@ -38,6 +43,28 @@ fun AccountScreen(
     var isSignInMode by remember { mutableStateOf(false) }
 
     val googleSignIn = rememberGoogleSignIn(onIdToken = { viewModel.linkGoogle(it) })
+
+    val hasUnsavedChanges = !uiState.account.isRecoverable && (email.isNotBlank() || password.isNotBlank())
+    var showDiscardConfirm by remember { mutableStateOf(false) }
+    val attemptBack: () -> Unit = { if (hasUnsavedChanges) showDiscardConfirm = true else onNavigateBack() }
+
+    BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
+
+    if (showDiscardConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirm = false },
+            title = { Text("Discard this?", fontWeight = FontWeight.Bold) },
+            text = { Text("What you've typed hasn't been submitted yet.") },
+            confirmButton = {
+                TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
+                    Text("Discard", fontWeight = FontWeight.Bold, color = Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep editing") }
+            }
+        )
+    }
 
     LaunchedEffect(uiState.message, uiState.error) {
         val text = uiState.message ?: uiState.error
@@ -69,187 +96,162 @@ fun AccountScreen(
         )
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Account",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+    CanopyScaffold(
+        canopyHeight = 128.dp,
+        canopyContent = {
+            CanopyBackButton(onClick = attemptBack)
+            Spacer(Modifier.height(Space.sm))
+            Text(text = "Account", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
+            Text(
+                text = "Keep your progress safe across devices",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnCanopy
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            AccountStatusCard(
-                isRecoverable = uiState.account.isRecoverable,
-                email = uiState.account.email,
-                providers = uiState.account.providers
-            )
-
-            if (uiState.account.isRecoverable) {
-                SignedInActions(
-                    isBusy = uiState.isBusy,
-                    onSignOut = { viewModel.signOut() }
-                )
-            } else {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
+        sheetContent = {
+            Box(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(Space.gutter),
+                    verticalArrangement = Arrangement.spacedBy(Space.md)
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = if (isSignInMode) "Sign in to your account" else "Create your account",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = if (isSignInMode) {
-                                "Already have an account? Sign in to load its progress on this device."
-                            } else {
-                                "Your current progress stays exactly as it is and gets attached to the new account."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSubtleGray
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(Space.xs))
 
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            label = { Text("Email") },
-                            singleLine = true,
-                            enabled = !uiState.isBusy,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Email,
-                                imeAction = ImeAction.Next
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = { password = it },
-                            label = { Text("Password") },
-                            singleLine = true,
-                            enabled = !uiState.isBusy,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Done
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    AccountStatusCard(
+                        isRecoverable = uiState.account.isRecoverable,
+                        email = uiState.account.email,
+                        providers = uiState.account.providers
+                    )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = {
-                                if (isSignInMode) viewModel.signIn(email, password)
-                                else viewModel.createOrLinkAccount(email, password)
-                            },
-                            enabled = !uiState.isBusy,
-                            colors = ButtonDefaults.buttonColors(containerColor = HeroCardStart),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                        ) {
-                            if (uiState.isBusy) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = TextHeadingBlack,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(
-                                    text = if (isSignInMode) "Sign In" else "Create Account",
-                                    color = TextHeadingBlack,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                    if (uiState.account.isRecoverable) {
+                        SignedInActions(
+                            isBusy = uiState.isBusy,
+                            onSignOut = { viewModel.signOut() }
+                        )
+                    } else {
+                        SoftCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = if (isSignInMode) "Sign in to your account" else "Create your account",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Ink
+                            )
+                            Spacer(Modifier.height(Space.xxs))
+                            Text(
+                                text = if (isSignInMode) {
+                                    "Already have an account? Sign in to load its progress on this device."
+                                } else {
+                                    "Your current progress stays exactly as it is and gets attached to the new account."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Muted
+                            )
+                            Spacer(Modifier.height(Space.md))
 
-                        if (googleSignIn != null) {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedButton(
-                                onClick = googleSignIn,
+                            OutlinedTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = { Text("Email") },
+                                singleLine = true,
                                 enabled = !uiState.isBusy,
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Global),
-                                    contentDescription = null,
-                                    tint = TextHeadingBlack,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "Continue with Google",
-                                    color = TextHeadingBlack,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Email,
+                                    imeAction = ImeAction.Next
+                                ),
+                                shape = Shapes.tile,
+                                colors = accountFieldColors(),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(Modifier.height(Space.sm))
+                            OutlinedTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                label = { Text("Password") },
+                                singleLine = true,
+                                enabled = !uiState.isBusy,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Password,
+                                    imeAction = ImeAction.Done
+                                ),
+                                shape = Shapes.tile,
+                                colors = accountFieldColors(),
+                                modifier = Modifier.fillMaxWidth()
+                            )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TextButton(onClick = { isSignInMode = !isSignInMode }) {
-                                Text(
-                                    text = if (isSignInMode) "Create an account" else "I already have one",
-                                    color = HeroCardStart,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Spacer(Modifier.height(Space.md))
+                            ClayButton(
+                                label = if (isSignInMode) "Sign In" else "Create Account",
+                                onClick = {
+                                    if (isSignInMode) viewModel.signIn(email, password)
+                                    else viewModel.createOrLinkAccount(email, password)
+                                },
+                                enabled = !uiState.isBusy,
+                                tone = ClayButtonTone.Primary,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            if (googleSignIn != null) {
+                                Spacer(Modifier.height(Space.sm))
+                                OutlinedButton(
+                                    onClick = googleSignIn,
+                                    enabled = !uiState.isBusy,
+                                    shape = Shapes.tile,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Global),
+                                        contentDescription = null,
+                                        tint = Ink,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(Space.xs))
+                                    Text("Continue with Google", color = Ink, fontWeight = FontWeight.Bold)
+                                }
                             }
-                            if (isSignInMode) {
-                                TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
-                                    Text("Forgot password?", color = TextSubtleGray)
+
+                            Spacer(Modifier.height(Space.xs))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { isSignInMode = !isSignInMode }) {
+                                    Text(
+                                        text = if (isSignInMode) "Create an account" else "I already have one",
+                                        color = Violet,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (isSignInMode) {
+                                    TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
+                                        Text("Forgot password?", color = Muted)
+                                    }
                                 }
                             }
                         }
                     }
+
+                    Spacer(Modifier.height(Space.navBarClearance))
                 }
+
+                SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
             }
         }
-    }
+    )
 }
+
+@Composable
+private fun accountFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = Surface,
+    unfocusedContainerColor = Surface,
+    focusedBorderColor = Violet,
+    unfocusedBorderColor = SurfaceSunken
+)
 
 @Composable
 private fun AccountStatusCard(
@@ -257,20 +259,14 @@ private fun AccountStatusCard(
     email: String?,
     providers: List<String>
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp
-    ) {
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = if (isRecoverable) Success.copy(alpha = 0.15f) else Warning.copy(alpha = 0.2f),
+                shape = Shapes.chip,
+                color = if (isRecoverable) Green.copy(alpha = 0.15f) else Warning.copy(alpha = 0.2f),
                 modifier = Modifier.size(46.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -279,7 +275,7 @@ private fun AccountStatusCard(
                             id = if (isRecoverable) Iconsax.TickCircle else Iconsax.InfoCircle
                         ),
                         contentDescription = null,
-                        tint = if (isRecoverable) Success else Warning,
+                        tint = if (isRecoverable) Green else Warning,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -289,7 +285,7 @@ private fun AccountStatusCard(
                     text = if (isRecoverable) "Progress protected" else "Guest progress",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
+                    color = Ink
                 )
                 Text(
                     text = when {
@@ -299,7 +295,7 @@ private fun AccountStatusCard(
                         else -> "Saved on this device only. Uninstalling loses it."
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSubtleGray
+                    color = Muted
                 )
             }
         }
@@ -324,7 +320,7 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
                 TextButton(onClick = {
                     confirming = false
                     onSignOut()
-                }) { Text("Sign out", fontWeight = FontWeight.Bold, color = Error) }
+                }) { Text("Sign out", fontWeight = FontWeight.Bold, color = Red) }
             },
             dismissButton = {
                 TextButton(onClick = { confirming = false }) { Text("Cancel") }
@@ -332,41 +328,34 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
         )
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = "Your progress syncs automatically",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextHeadingBlack
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Your progress syncs automatically",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Ink
+        )
+        Text(
+            text = "XP, streaks, badges, level stars and word reviews are saved to your " +
+                "account and restored whenever you sign in.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted
+        )
+        Spacer(Modifier.height(Space.md))
+        OutlinedButton(
+            onClick = { confirming = true },
+            enabled = !isBusy,
+            shape = Shapes.tile,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                painter = painterResource(id = Iconsax.Logout),
+                contentDescription = null,
+                tint = Red,
+                modifier = Modifier.size(18.dp)
             )
-            Text(
-                text = "XP, streaks, badges, level stars and word reviews are saved to your " +
-                    "account and restored whenever you sign in.",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSubtleGray
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(
-                onClick = { confirming = true },
-                enabled = !isBusy,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.Logout),
-                    contentDescription = null,
-                    tint = Error,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out", color = Error, fontWeight = FontWeight.Bold)
-            }
+            Spacer(Modifier.width(Space.xs))
+            Text("Sign Out", color = Red, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -22,6 +22,18 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET totalXp = totalXp + :xp WHERE id = 1")
     suspend fun addXp(xp: Int)
 
+    /**
+     * Adds to today's XP ledger, resetting it first when the stored date is not [today].
+     * Done in SQL so the read-modify-write cannot interleave with another coroutine.
+     */
+    @Query(
+        """UPDATE user_progress
+           SET dailyXpEarned = CASE WHEN dailyXpDate = :today THEN dailyXpEarned + :xp ELSE :xp END,
+               dailyXpDate = :today
+           WHERE id = 1"""
+    )
+    suspend fun addDailyXp(xp: Int, today: String)
+
     @Query("UPDATE user_progress SET wordsLearned = wordsLearned + 1 WHERE id = 1")
     suspend fun incrementWordsLearned()
 

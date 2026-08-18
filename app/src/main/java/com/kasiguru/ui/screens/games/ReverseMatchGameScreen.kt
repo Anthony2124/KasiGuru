@@ -1,8 +1,5 @@
 package com.kasiguru.ui.screens.games
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,16 +8,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameOptionRow
+import com.kasiguru.ui.components.GameOptionState
 import com.kasiguru.ui.components.GameOverView
-import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.GameUnavailableState
+import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -31,6 +30,10 @@ fun ReverseMatchGameScreen(
     viewModel: ReverseMatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val exitGuard = rememberGameExitGuard(
+        active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
+        onExit = onNavigateBack
+    )
 
     Scaffold(
         topBar = {
@@ -44,7 +47,7 @@ fun ReverseMatchGameScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = exitGuard) {
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowLeft),
                             contentDescription = "Back",
@@ -62,8 +65,17 @@ fun ReverseMatchGameScreen(
     ) { padding ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = VocabCardEnd)
+                CircularProgressIndicator(color = Violet)
             }
+            return@Scaffold
+        }
+
+        if (uiState.isUnavailable) {
+            GameUnavailableState(
+                accentColor = VocabCardEnd,
+                onBack = onNavigateBack,
+                modifier = Modifier.padding(padding)
+            )
             return@Scaffold
         }
 
@@ -80,6 +92,7 @@ fun ReverseMatchGameScreen(
         }
 
         val roundNum = uiState.currentQuestionIndex + 1
+        val hasAnswered = uiState.selectedOption != null
 
         Column(
             modifier = Modifier
@@ -88,137 +101,74 @@ fun ReverseMatchGameScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Progress
             Column {
-                KasiGuruProgressBar(
+                GameHeader(
+                    label = "Round $roundNum/${uiState.totalQuestions}",
                     progress = roundNum.toFloat() / uiState.totalQuestions.toFloat(),
-                    gradientColors = listOf(VocabCardStart, VocabCardEnd)
+                    score = uiState.score,
+                    accentStart = VocabCardStart,
+                    accentEnd = VocabCardEnd
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+
+                // Prompt Card: Tagalog meaning, English hint
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp
                 ) {
-                    Text(
-                        text = "Round $roundNum/${uiState.totalQuestions}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = VocabCardStart
+                    Column(
+                        modifier = Modifier.padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Score: ${uiState.score}",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
-                        )
-                    }
-                }
-            }
-
-            // Prompt Card: Tagalog meaning, English hint
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Match the Tagalog Word:",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSubtleGray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = uiState.currentWord?.tagalog ?: "",
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Black,
-                        color = TextHeadingBlack,
-                        fontSize = 32.sp
-                    )
-                    if (!uiState.currentWord?.english.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "(${uiState.currentWord?.english})",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Match the Tagalog Word:",
+                            style = MaterialTheme.typography.labelMedium,
                             color = TextSubtleGray
                         )
-                    }
-                }
-            }
-
-            // Options List (Kasiguranin words)
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                uiState.options.forEach { option ->
-                    val isAnswered = uiState.selectedOption != null
-                    val isSelected = uiState.selectedOption == option
-                    val isTheAnswer = option == uiState.currentWord?.kasiguranin
-                    val isChosenWrong = isSelected && !isTheAnswer
-
-                    val optionBgColor = when {
-                        isAnswered && isTheAnswer -> QuestsCardStart
-                        isChosenWrong -> Error.copy(alpha = 0.2f)
-                        else -> MaterialTheme.colorScheme.surface
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = uiState.selectedOption == null) {
-                                viewModel.selectOption(option)
-                            },
-                        shape = RoundedCornerShape(20.dp),
-                        color = optionBgColor,
-                        shadowElevation = 1.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = uiState.currentWord?.tagalog ?: "",
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Black,
+                            color = TextHeadingBlack,
+                            fontSize = 32.sp
+                        )
+                        if (!uiState.currentWord?.english.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = option,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextHeadingBlack
+                                text = "(${uiState.currentWord?.english})",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSubtleGray
                             )
-                            if (isAnswered && isTheAnswer) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.TickCircle),
-                                    contentDescription = "Correct",
-                                    tint = Success,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
                         }
                     }
                 }
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    uiState.options.forEach { option ->
+                        val correctAnswer = uiState.currentWord?.kasiguranin
+                        val state = when {
+                            !hasAnswered -> GameOptionState.Idle
+                            option == correctAnswer -> GameOptionState.Correct
+                            option == uiState.selectedOption -> GameOptionState.Wrong
+                            else -> GameOptionState.Idle
+                        }
+                        GameOptionRow(
+                            label = option,
+                            state = state,
+                            enabled = !hasAnswered,
+                            onClick = { viewModel.selectOption(option) }
+                        )
+                    }
+                }
             }
 
-            // Teaching moment: reveal the correct answer after a mistake
-            if (uiState.selectedOption != null && uiState.isCorrect == false) {
-                Text(
-                    text = "Correct answer: ${uiState.currentWord?.kasiguranin ?: ""}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Success,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            if (hasAnswered) {
+                GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

@@ -2,327 +2,229 @@ package com.kasiguru.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.ui.components.CasiguranAvatarPortrait
 import com.kasiguru.ui.components.CasiguranResident
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.CanopyIconButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.SectionHeading
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.components.clay.Stat
+import com.kasiguru.ui.components.clay.StatStrip
+import com.kasiguru.ui.theme.Coral
+import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.util.gamification.GamificationEngine
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Profile: a tall canopy carrying the avatar and headline stats, over a sheet of personal details, a
+ * learning-overview summary, and an "Explore" section — this is the only place Leaderboard, Cultural
+ * Heritage and About are reachable from since the old Home dashboard (which linked to all three) was
+ * retired. A tab root — no back chevron, matching Learn's precedent — with its canopy actions
+ * (settings, edit) as small circular icon buttons in the corner instead of a top bar.
+ */
 @Composable
 fun ProfileScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAchievements: () -> Unit = {},
+    onNavigateToLeaderboard: () -> Unit = {},
+    onNavigateToCultural: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
 
     if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = PlayPurpleStart)
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Violet)
         }
         return
     }
 
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
+    val levelInfo = remember(progress.totalXp) { GamificationEngine.getLevelInfo(progress.totalXp) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Text(
-                        "My Profile",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextHeadingBlack,
-                        letterSpacing = (-0.3).sp
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Setting),
-                            contentDescription = "Settings",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    IconButton(onClick = onNavigateToEditProfile) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Edit),
-                            contentDescription = "Edit Profile",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+    CanopyScaffold(
+        canopyHeight = 216.dp,
+        canopyContent = {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                CanopyIconButton(iconRes = Iconsax.Setting, contentDescription = "Settings", onClick = onNavigateToSettings)
+                Spacer(Modifier.width(Space.xs))
+                CanopyIconButton(iconRes = Iconsax.Edit, contentDescription = "Edit profile", onClick = onNavigateToEditProfile)
+            }
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                CasiguranAvatarPortrait(
+                    resident = CasiguranResident.TEACHER,
+                    size = 84.dp,
+                    level = progress.level,
+                    onClick = onNavigateToEditProfile
                 )
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = progress.fullName.ifBlank { progress.userName },
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = OnCanopy
+                )
+                Text(
+                    text = "@${progress.userName.lowercase().replace(" ", "_")}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnCanopy
+                )
+            }
+            Spacer(Modifier.height(Space.md))
+            StatStrip(
+                stats = listOf(
+                    Stat("Level", "${levelInfo.level}"),
+                    Stat("Total XP", "${progress.totalXp}"),
+                    Stat("Streak", "${progress.currentStreak}d")
+                ),
+                onCanopy = true
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(padding)
-                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 110.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Avatar Banner
-            CasiguranAvatarPortrait(
-                resident = CasiguranResident.TEACHER,
-                size = 96.dp,
-                level = progress.level,
-                onClick = onNavigateToEditProfile
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = if (progress.fullName.isNotEmpty()) progress.fullName else progress.userName,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = CoastInk,
-                letterSpacing = (-0.4).sp
-            )
-
-            Text(
-                text = "@${progress.userName.lowercase().replace(" ", "_")}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = CoastMuted
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // User Info Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
+        sheetContent = {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
+                ),
+                verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Personal Details",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    
-                    ProfileInfoRow(
-                        iconRes = Iconsax.Sms,
-                        label = "Email",
-                        value = if (progress.email.isNotEmpty()) progress.email else "kasiguranin.learner@gmail.com"
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ProfileInfoRow(
-                        iconRes = Iconsax.Calendar,
-                        label = "Age",
-                        value = if (progress.age != null) "${progress.age} years old" else "Not set"
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ProfileInfoRow(
-                        iconRes = Iconsax.Location,
-                        label = "Address",
-                        value = if (progress.address.isNotEmpty()) progress.address else "Casiguran, Aurora"
-                    )
+                item {
+                    SectionHeading(text = "Personal details")
+                    Spacer(Modifier.height(Space.sm))
+                    SoftCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
+                            ProfileInfoRow(Iconsax.Sms, "Email", progress.email.ifEmpty { "Not linked" })
+                            ProfileInfoRow(
+                                Iconsax.Calendar, "Age",
+                                progress.age?.let { "$it years old" } ?: "Not set"
+                            )
+                            ProfileInfoRow(Iconsax.Location, "Address", progress.address.ifEmpty { "Not set" })
+                        }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                item {
+                    SectionHeading(text = "Learning overview")
+                    Spacer(Modifier.height(Space.sm))
+                    SoftCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                            StatDetailRow("Words mastered", "${progress.wordsLearned}", Iconsax.BookBold)
+                            StatDetailRow("Current streak", "${progress.currentStreak} days", Iconsax.FlashBold)
+                            StatDetailRow("Longest streak", "${progress.longestStreak} days", Iconsax.Medal)
+                            StatDetailRow("Games played", "${progress.gamesPlayed}", Iconsax.Game)
+                        }
+                    }
+                }
 
-            // Stat Cards (Side by Side)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                val levelInfo = com.kasiguru.util.gamification.GamificationEngine.getLevelInfo(progress.totalXp)
-                StatCard(
-                    modifier = Modifier.weight(1f).clickable { onNavigateToAchievements() },
-                    title = "Level ${levelInfo.level}",
-                    value = "Lv. ${levelInfo.level}",
-                    subtitle = levelInfo.title,
-                    gradient = listOf(PlayPurpleStart, PlayPurpleEnd),
-                    iconRes = Iconsax.MedalStar
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Total XP",
-                    value = "${progress.totalXp}",
-                    subtitle = "Points Earned",
-                    gradient = listOf(PlayGoldStart, PlayGoldEnd),
-                    iconRes = Iconsax.Cup
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Learning Stats Detail
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Learning Overview",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    
-                    StatDetailRow("Words Mastered", "${progress.wordsLearned} / 487", iconRes = Iconsax.BookBold)
-                    StatDetailRow("Current Streak", "${progress.currentStreak} Days", iconRes = Iconsax.FlashBold)
-                    StatDetailRow("Longest Streak", "${progress.longestStreak} Days", iconRes = Iconsax.Medal)
-                    StatDetailRow("Games Played", "${progress.gamesPlayed}", iconRes = Iconsax.Game)
+                item {
+                    Spacer(Modifier.height(Space.xs))
+                    SectionHeading(text = "Explore")
+                    Spacer(Modifier.height(Space.sm))
+                    SoftCard(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = Space.xs)) {
+                        Column {
+                            ProfileLinkRow(Iconsax.MedalStar, Violet, "Leaderboard", "See how you rank this week", onNavigateToLeaderboard)
+                            ProfileLinkRow(Iconsax.Courthouse, Coral, "Cultural heritage", "Stories and context from Casiguran", onNavigateToCultural)
+                            ProfileLinkRow(Iconsax.InfoCircle, Gold, "About KasiGuru", "The project, the team, the mission", onNavigateToAbout)
+                        }
+                    }
                 }
             }
         }
+    )
+}
+
+@Composable
+private fun ProfileLinkRow(iconRes: Int, accent: Color, title: String, subtitle: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = Space.md, vertical = Space.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(Space.sm))
+        Column(Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = Ink)
+            Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = Faint)
+        }
+        Icon(painter = painterResource(id = Iconsax.ArrowRight), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
     }
 }
 
 @Composable
 private fun ProfileInfoRow(iconRes: Int, label: String, value: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(PlayPurpleStart.copy(alpha = 0.12f)),
+            modifier = Modifier.size(36.dp).clip(CircleShape).background(VioletTint),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = PlayPurpleStart,
-                modifier = Modifier.size(18.dp)
-            )
+            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = Violet, modifier = Modifier.size(18.dp))
         }
+        Spacer(Modifier.width(Space.sm))
         Column {
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = CoastMuted)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = CoastInk)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = Faint)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = Ink)
         }
     }
 }
 
 @Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    subtitle: String,
-    gradient: List<Color>,
-    iconRes: Int
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(22.dp),
-        shadowElevation = 2.dp
-    ) {
-        Box(
-            modifier = Modifier
-                .background(Brush.linearGradient(gradient))
-                .padding(18.dp)
-        ) {
-            Column(horizontalAlignment = Alignment.Start) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.28f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = iconRes),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(text = title, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.88f), fontWeight = FontWeight.Bold)
-                Text(text = value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color.White, letterSpacing = (-0.3).sp)
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.Medium)
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatDetailRow(label: String, value: String, iconRes: Int? = null) {
+private fun StatDetailRow(label: String, value: String, iconRes: Int) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 7.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (iconRes != null) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = null,
-                    tint = CoastMuted,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = CoastMuted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(Space.xs))
+            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = CoastInk)
+        Text(text = value, style = MaterialTheme.typography.titleMedium, color = Ink)
     }
 }

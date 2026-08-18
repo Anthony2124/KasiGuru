@@ -5,9 +5,9 @@ import { db, collection, query, orderBy, onSnapshot, getCountFromServer } from '
 
 // Current bundled production release baseline
 const CURRENT_RELEASE = {
-  versionCode: 5,
-  versionName: "1.4.0",
-  apkUrl: "https://download-woad-iota.vercel.app/kasiguru-v1.4.0.apk"
+  versionCode: 6,
+  versionName: "1.5.0",
+  apkUrl: "https://download-woad-iota.vercel.app/kasiguru-v1.5.0.apk"
 };
 
 // Apply release metadata to DOM
@@ -16,7 +16,7 @@ function applyReleaseInfo(release) {
 
   // 1. Update main download button
   const mainBtn = document.getElementById('store-download-btn');
-  if (mainBtn) mainBtn.setAttribute('href', release.apkUrl || 'kasiguru-v1.4.0.apk');
+  if (mainBtn) mainBtn.setAttribute('href', release.apkUrl || 'kasiguru-v1.5.0.apk');
 
   // 2. Update navigation "Get App" button
   const navBtn = document.querySelector('.store-link-btn');

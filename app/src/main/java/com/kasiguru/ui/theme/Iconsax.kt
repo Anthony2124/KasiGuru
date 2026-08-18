@@ -81,6 +81,7 @@ object Iconsax {
     val TickCircle: Int get() = IconSax.Bulk.TickCircle
     val TickCircleBold: Int get() = IconSax.Bulk.TickCircle
     val TickSquare: Int get() = IconSax.Bulk.TickSquare
+    val CloseCircle: Int get() = IconSax.Bulk.CloseCircle
     val Add: Int get() = IconSax.Bulk.AddCircle
     val AddCircle: Int get() = IconSax.Bulk.AddCircle
     val InfoCircle: Int get() = IconSax.Bulk.InfoCircle

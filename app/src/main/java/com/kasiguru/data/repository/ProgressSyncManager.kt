@@ -396,6 +396,11 @@ class ProgressSyncManager @Inject constructor(
         "lessonsCompleted" to p.lessonsCompleted,
         "isOnboardingCompleted" to p.isOnboardingCompleted,
         "dailyGoalXp" to p.dailyGoalXp,
+        // The daily-XP ledger must travel with the rest of progress. Any field written locally but
+        // missing from this map is silently reset to its default the next time a remote document is
+        // applied, because toEntity rebuilds the whole entity rather than patching it.
+        "dailyXpEarned" to p.dailyXpEarned,
+        "dailyXpDate" to p.dailyXpDate,
         "titleBadge" to p.titleBadge,
         "updatedAt" to System.currentTimeMillis()
         // password intentionally omitted
@@ -422,6 +427,8 @@ class ProgressSyncManager @Inject constructor(
         lessonsCompleted = (data["lessonsCompleted"] as? Number)?.toInt() ?: 0,
         isOnboardingCompleted = data["isOnboardingCompleted"] as? Boolean ?: false,
         dailyGoalXp = (data["dailyGoalXp"] as? Number)?.toInt() ?: 100,
+        dailyXpEarned = (data["dailyXpEarned"] as? Number)?.toInt() ?: 0,
+        dailyXpDate = data["dailyXpDate"] as? String ?: "",
         titleBadge = data["titleBadge"] as? String ?: "Kasiguranin Apprentice",
         updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
     )
@@ -432,11 +439,30 @@ class ProgressSyncManager @Inject constructor(
  * from the side with the newer [UserProgressEntity.updatedAt]. Pure function
  * (unit-tested). Passwords/emails are never part of the cloud payload.
  */
+/**
+ * Reconciles local and remote progress.
+ *
+ * **This constructs a new entity field by field rather than copying one.** Any field added to
+ * [UserProgressEntity] must therefore be handled here *and* in `toMap` *and* in `toEntity`, or it
+ * silently reverts to its default the next time a sync runs — the write succeeds, no error is logged,
+ * and the value simply disappears. That is exactly how the daily-XP ledger was being erased on every
+ * app start before it was added to all three.
+ */
 internal fun mergeProgress(
     local: UserProgressEntity,
     remote: UserProgressEntity
 ): UserProgressEntity {
     val remoteNewer = remote.updatedAt >= local.updatedAt
+
+    // Daily-XP ledger. ISO dates compare lexicographically, so the later date wins outright and a
+    // shared date takes the higher count — a second device cannot erase XP earned on this one.
+    val (ledgerDate, ledgerXp) = when {
+        local.dailyXpDate == remote.dailyXpDate ->
+            local.dailyXpDate to maxOf(local.dailyXpEarned, remote.dailyXpEarned)
+        local.dailyXpDate > remote.dailyXpDate -> local.dailyXpDate to local.dailyXpEarned
+        else -> remote.dailyXpDate to remote.dailyXpEarned
+    }
+
     return UserProgressEntity(
         id = 1,
         userName = pick(local.userName, remote.userName, remoteNewer),
@@ -459,6 +485,8 @@ internal fun mergeProgress(
         lessonsCompleted = maxOf(local.lessonsCompleted, remote.lessonsCompleted),
         isOnboardingCompleted = local.isOnboardingCompleted || remote.isOnboardingCompleted,
         dailyGoalXp = if (remoteNewer) remote.dailyGoalXp else local.dailyGoalXp,
+        dailyXpEarned = ledgerXp,
+        dailyXpDate = ledgerDate,
         titleBadge = pick(local.titleBadge, remote.titleBadge, remoteNewer),
         updatedAt = maxOf(local.updatedAt, remote.updatedAt)
     )

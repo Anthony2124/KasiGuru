@@ -14,7 +14,6 @@ import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,15 +63,17 @@ class WordMatchViewModel @Inject constructor(
             questionQueue.clear()
             questionQueue.addAll(words)
             earnedXpTotal = 0
-            
+
             if (questionQueue.isEmpty()) {
+                // Not enough vocabulary to run a real round — a distinct "come back later" state,
+                // not a fabricated "Score: 0" loss.
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    isGameOver = true
+                    isUnavailable = true
                 )
                 return@launch
             }
-            
+
             loadNextQuestion()
         }
     }
@@ -130,11 +131,13 @@ class WordMatchViewModel @Inject constructor(
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
-
-            delay(if (isCorrect) 1500 else 2600)
-            _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
-            loadNextQuestion()
         }
+    }
+
+    /** Called from a tap on "Continue," not a timer — the learner reads the feedback at their pace. */
+    fun nextQuestion() {
+        _uiState.value = _uiState.value.copy(currentQuestionIndex = _uiState.value.currentQuestionIndex + 1)
+        loadNextQuestion()
     }
 
     private fun endGame() {
@@ -181,6 +184,7 @@ class WordMatchViewModel @Inject constructor(
 
 data class WordMatchUiState(
     val isLoading: Boolean = true,
+    val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,
     val currentWord: VocabularyEntity? = null,
     val options: List<String> = emptyList(),

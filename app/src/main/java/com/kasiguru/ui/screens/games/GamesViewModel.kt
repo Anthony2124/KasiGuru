@@ -6,6 +6,7 @@ import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.GameLevelRepository
+import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class GamesViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
-    private val userProgressRepository: UserProgressRepository
+    private val userProgressRepository: UserProgressRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GamesUiState())
@@ -28,11 +30,20 @@ class GamesViewModel @Inject constructor(
         loadData()
     }
 
+    fun markRulesSeen(gameType: String) {
+        viewModelScope.launch { userPreferencesRepository.markGameRulesSeen(gameType) }
+    }
+
     private fun loadData() {
         viewModelScope.launch {
             launch {
                 gameLevelRepository.getTotalStarsFlow().collect { stars ->
                     _uiState.value = _uiState.value.copy(totalStars = stars)
+                }
+            }
+            launch {
+                userPreferencesRepository.gameRulesSeen.collect { seen ->
+                    _uiState.value = _uiState.value.copy(seenGameRules = seen)
                 }
             }
             launch {
@@ -81,5 +92,6 @@ data class GamesUiState(
     val recentScores: List<GameScoreEntity> = emptyList(),
     val highScores: Map<String, Int> = emptyMap(),
     val totalStars: Int = 0,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val seenGameRules: Set<String> = emptySet()
 )

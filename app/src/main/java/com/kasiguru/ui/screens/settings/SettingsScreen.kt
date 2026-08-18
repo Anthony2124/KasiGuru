@@ -1,6 +1,5 @@
 package com.kasiguru.ui.screens.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,10 +16,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.BuildConfig
+import com.kasiguru.ui.components.clay.CanopyBackButton
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import kotlinx.coroutines.launch
 
+/**
+ * Settings: the same grouped-card idiom every OS settings screen uses (Account / Notifications /
+ * Preferences / Sync / About), redrawn in the Violet Sheet system rather than the old Coastal one —
+ * every section a `SoftCard`, over a canopy carrying just the screen's name.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -45,10 +54,10 @@ fun SettingsScreen(
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold, color = CoastInk) },
+            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold, color = Ink) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Select your preferred daily notification time:", color = CoastMuted)
+                Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {
+                    Text("Select your preferred daily notification time:", color = Muted)
                     listOf("07:00 AM", "08:00 AM", "12:00 PM", "06:00 PM", "08:00 PM", "09:00 PM").forEach { time ->
                         Row(
                             modifier = Modifier
@@ -61,14 +70,14 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = CoastInk)
+                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Ink)
                             RadioButton(
                                 selected = (reminderTime == time),
                                 onClick = {
                                     reminderTime = time
                                     showTimePicker = false
                                 },
-                                colors = RadioButtonDefaults.colors(selectedColor = PlayPurpleStart)
+                                colors = RadioButtonDefaults.colors(selectedColor = Violet)
                             )
                         }
                     }
@@ -76,90 +85,57 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Close", fontWeight = FontWeight.Bold, color = PlayPurpleStart)
+                    Text("Close", fontWeight = FontWeight.Bold, color = Violet)
                 }
             }
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Text(
-                        "Settings & Notifications",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextHeadingBlack,
-                        letterSpacing = (-0.3).sp
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+    CanopyScaffold(
+        canopyHeight = 128.dp,
+        canopyContent = {
+            CanopyBackButton(onClick = onNavigateBack)
+            Spacer(Modifier.height(Space.sm))
+            Text(text = "Settings", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
+            Text(
+                text = "Notifications, sync, and app preferences",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnCanopy
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Account Section
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
+        sheetContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(Space.gutter),
+                verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Spacer(Modifier.height(Space.xs))
+
+                // Account Section
+                SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToAccount) {
                     Text(
                         text = "Account",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
+                        color = Ink
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigateToAccount() },
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
                             modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Space.sm),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (account.isRecoverable) {
-                                    Success.copy(alpha = 0.15f)
-                                } else {
-                                    Warning.copy(alpha = 0.2f)
-                                },
+                                shape = Shapes.chip,
+                                color = if (account.isRecoverable) Green.copy(alpha = 0.15f) else Warning.copy(alpha = 0.15f),
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -168,7 +144,7 @@ fun SettingsScreen(
                                             id = if (account.isRecoverable) Iconsax.TickCircle else Iconsax.Lock
                                         ),
                                         contentDescription = null,
-                                        tint = if (account.isRecoverable) Success else Warning,
+                                        tint = if (account.isRecoverable) Green else Warning,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -178,7 +154,7 @@ fun SettingsScreen(
                                     text = if (account.isRecoverable) "Progress protected" else "Secure your progress",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = CoastInk
+                                    color = Ink
                                 )
                                 Text(
                                     text = account.email
@@ -188,40 +164,28 @@ fun SettingsScreen(
                                             "Guest — progress is only on this device"
                                         },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = CoastMuted
+                                    color = Muted
                                 )
                             }
                         }
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowRight),
                             contentDescription = null,
-                            tint = CoastMuted,
+                            tint = Muted,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-            }
 
-            // Notifications Section
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                // Notifications Section
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Smart Notifications",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
+                        color = Ink
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Streak Protection Reminders",
@@ -231,7 +195,7 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleStreakReminders(it) }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Word of the Day",
@@ -241,7 +205,7 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleWordOfDayReminders(it) }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Leaderboard Rank Alerts",
@@ -251,9 +215,9 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleLeaderboardAlerts(it) }
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(Space.sm))
+                    HorizontalDivider(color = Faint.copy(alpha = 0.3f))
+                    Spacer(Modifier.height(Space.sm))
 
                     Row(
                         modifier = Modifier
@@ -267,51 +231,36 @@ fun SettingsScreen(
                                 text = "Daily Reminder Time",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = CoastInk
+                                color = Ink
                             )
                             Text(
                                 text = "Scheduled at $reminderTime every day",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CoastMuted
+                                color = Muted
                             )
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(999.dp),
-                            color = PlayPurpleStart.copy(alpha = 0.12f)
-                        ) {
+                        Surface(shape = Shapes.pill, color = Violet.copy(alpha = 0.12f)) {
                             Text(
                                 text = reminderTime,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = PlayPurpleStart
+                                color = Violet
                             )
                         }
                     }
                 }
-            }
 
-            // Preferences Section
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                // Preferences Section
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "App Preferences",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
+                        color = Ink
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Dark Theme",
@@ -321,7 +270,7 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleDarkMode(it) }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Audio Pronunciation",
@@ -331,28 +280,16 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleSoundEnabled(it) }
                     )
                 }
-            }
 
-            // Sync Section
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                // Sync Section
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Data Sync",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
-                        letterSpacing = (-0.2).sp
+                        color = Ink
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(Modifier.height(Space.sm))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -364,16 +301,18 @@ fun SettingsScreen(
                                 text = "Sync Now",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = CoastInk
+                                color = Ink
                             )
                             Text(
                                 text = "Merge this device with your saved cloud progress",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CoastMuted
+                                color = Muted
                             )
                         }
+                        Spacer(Modifier.width(Space.sm))
 
-                        Button(
+                        ClayButton(
+                            label = if (isSyncing) "Syncing…" else "Sync",
                             onClick = {
                                 isSyncing = true
                                 scope.launch {
@@ -386,67 +325,43 @@ fun SettingsScreen(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PlayPurpleStart),
-                            shape = RoundedCornerShape(999.dp),
-                            enabled = !isSyncing
-                        ) {
-                            if (isSyncing) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Refresh),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sync", color = Color.White, fontWeight = FontWeight.Bold)
-                            }
-                        }
+                            enabled = !isSyncing,
+                            leading = if (!isSyncing) {
+                                {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Refresh),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            } else null
+                        )
                     }
 
                     if (syncMessage.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(Space.xs))
                         Text(
                             text = syncMessage,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Success,
+                            color = Green,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
-            }
 
-            // About Info Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                // About Info Card
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(Space.sm)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = PlayPurpleStart.copy(alpha = 0.12f),
-                            modifier = Modifier.size(40.dp)
-                        ) {
+                        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.12f), modifier = Modifier.size(40.dp)) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = null,
-                                    tint = PlayPurpleStart,
+                                    tint = Violet,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -456,19 +371,21 @@ fun SettingsScreen(
                                 text = "KasiGuru v${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = CoastInk
+                                color = Ink
                             )
                             Text(
                                 text = "Installed build ${BuildConfig.VERSION_CODE}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CoastMuted
+                                color = Muted
                             )
                         }
                     }
                 }
+
+                Spacer(Modifier.height(Space.navBarClearance))
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -486,19 +403,15 @@ fun SettingSwitchRow(
     ) {
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = PlayPurpleStart.copy(alpha = 0.1f),
-                modifier = Modifier.size(40.dp)
-            ) {
+            Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
-                        tint = PlayPurpleStart,
+                        tint = Violet,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -509,12 +422,12 @@ fun SettingSwitchRow(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = CoastInk
+                    color = Ink
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = CoastMuted
+                    color = Muted
                 )
             }
         }
@@ -524,9 +437,9 @@ fun SettingSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = PlayPurpleStart,
-                uncheckedThumbColor = CoastMuted,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                checkedTrackColor = Violet,
+                uncheckedThumbColor = Surface,
+                uncheckedTrackColor = SurfaceSunken
             )
         )
     }

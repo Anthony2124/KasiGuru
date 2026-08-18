@@ -1,34 +1,74 @@
 package com.kasiguru.ui.screens.achievements
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.ClayCircle
+import com.kasiguru.ui.components.clay.GlassPanel
+import com.kasiguru.ui.components.clay.SectionHeading
+import com.kasiguru.ui.components.clay.SegmentedToggle
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Gold
+import com.kasiguru.ui.theme.GoldDeep
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.NodeLocked
+import com.kasiguru.ui.theme.NodeLockedInk
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.RewardInk
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Surface
+import com.kasiguru.ui.theme.SurfaceSunken
+import com.kasiguru.ui.theme.Violet
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Progress: a tall canopy carrying the badge count, with a translucent glass panel riding at the
+ * canopy's deep end — the one screen where DESIGN.md's "glass on vivid backdrops only" gets its
+ * fullest expression, since the panel's lower edge sits right where the sheet overlaps upward into
+ * the canopy — over the sheet's own badge grid.
+ */
 @Composable
 fun AchievementsScreen(
     onNavigateBack: () -> Unit,
@@ -39,223 +79,194 @@ fun AchievementsScreen(
     val haptic = LocalHapticFeedback.current
 
     val displayedAchievements = remember(selectedCategory, uiState.achievements) {
-        if (selectedCategory == "All") {
-            uiState.achievements
-        } else {
-            uiState.achievements.filter { it.category.equals(selectedCategory, ignoreCase = true) }
-        }
+        if (selectedCategory == "All") uiState.achievements
+        else uiState.achievements.filter { it.category.equals(selectedCategory, ignoreCase = true) }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = {
-                    Text(
-                        "Badges & Achievements",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = QuestsCardEnd)
-            }
-            return@Scaffold
+    if (uiState.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Violet)
         }
+        return
+    }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            // Header Summary Banner
-            Surface(
+    val total = uiState.achievements.size.coerceAtLeast(1)
+
+    CanopyScaffold(
+        canopyHeight = 214.dp,
+        canopyContent = {
+            Spacer(Modifier.height(Space.sm))
+            Text(text = "Progress", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
+            Text(
+                text = "Every badge here is earned, not given",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnCanopy
+            )
+            Spacer(Modifier.height(Space.md))
+            GlassPanel(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(26.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shape = Shapes.panel,
+                glow = {
+                    Box(
+                        Modifier
+                            .size(90.dp)
+                            .offset(x = (-10).dp, y = (-10).dp)
+                            .clip(CircleShape)
+                            .background(Gold.copy(alpha = 0.5f))
+                    )
+                }
             ) {
-                Box(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = OnCanopy
+                        )
+                        Text(text = "Badges unlocked", style = MaterialTheme.typography.labelMedium, color = OnCanopy)
+                    }
+                    Icon(
+                        painter = painterResource(id = Iconsax.MedalStar),
+                        contentDescription = null,
+                        tint = Gold,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(Modifier.height(Space.sm))
+                KasiGuruProgressBar(
+                    progress = uiState.unlockedCount.toFloat() / total,
+                    height = 5.dp,
+                    gradientColors = listOf(Gold, Color.White),
+                    animated = true
+                )
+            }
+        },
+        sheetContent = {
+            Column(modifier = Modifier.fillMaxSize()) {
+                val categories = listOf("All", "Level", "Progress", "Streaks")
+                SegmentedToggle(
+                    options = categories,
+                    selectedIndex = categories.indexOf(selectedCategory).coerceAtLeast(0),
+                    onSelect = { index ->
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        selectedCategory = categories[index]
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Brush.linearGradient(listOf(QuestsCardStart, QuestsCardEnd)))
-                        .padding(20.dp)
+                        .padding(horizontal = Space.gutter, vertical = Space.md)
+                )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = Space.gutter, end = Space.gutter, bottom = Space.navBarClearance
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(Space.sm),
+                    verticalArrangement = Arrangement.spacedBy(Space.sm)
                 ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Unlocked Badges",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = TextHeadingBlack,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = TextHeadingBlack,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        KasiGuruProgressBar(
-                            progress = if (uiState.achievements.isNotEmpty()) {
-                                uiState.unlockedCount.toFloat() / uiState.achievements.size
-                            } else 0f,
-                            gradientColors = listOf(TextHeadingBlack, TextHeadingBlack)
-                        )
+                    items(displayedAchievements, key = { it.id }) { achievement ->
+                        BadgeCard(achievement)
                     }
                 }
             }
-
-            // Weekly Mission Strip (Inspo Panel 3)
-            com.kasiguru.ui.components.WeeklyMissionStrip(
-                currentStreak = uiState.unlockedCount,
-                onCheckInClick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Category Filter Chips
-            val categories = listOf("All", "Level", "Progress", "Streaks")
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                categories.forEach { cat ->
-                    FilterChip(
-                        selected = selectedCategory == cat,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedCategory = cat
-                        },
-                        label = { Text(cat, fontWeight = FontWeight.Medium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PlayPurpleStart,
-                            selectedLabelColor = TextWhite,
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            labelColor = TextSubtleGray
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Badges Grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(displayedAchievements, key = { it.id }) { achievement ->
-                    BadgeCard(achievement = achievement)
-                }
-            }
         }
-    }
+    )
 }
 
-/**
- * Badge Card rendering:
- * - Unlocked: Full vibrant color, gold border, full opacity emoji, green "✓ Unlocked" pill.
- * - Locked: Visible on screen in elegant gray/grayscale style, 45% alpha emoji, gray "🔒 Locked" pill.
- */
+private fun achievementIcon(category: String): Int = when (category.lowercase()) {
+    "level" -> Iconsax.MedalStar
+    "streaks" -> Iconsax.FlashBold
+    "progress" -> Iconsax.BookBold
+    else -> Iconsax.Trophy
+}
+
 @Composable
 private fun BadgeCard(achievement: AchievementEntity) {
     val isUnlocked = achievement.isUnlocked
 
-    Surface(
+    SoftCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = if (isUnlocked) MaterialTheme.colorScheme.surface else Color(0xFFF2F3F5),
-        shadowElevation = if (isUnlocked) 2.dp else 0.dp,
-        border = if (isUnlocked) androidx.compose.foundation.BorderStroke(1.5.dp, HeroCardStart) else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0E0E0))
+        shape = Shapes.tile,
+        color = if (isUnlocked) Surface else SurfaceSunken,
+        elevation = if (isUnlocked) 4.dp else 0.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(if (isUnlocked) QuestsCardStart else Color(0xFFE0E0E0)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = achievement.iconEmoji,
-                    fontSize = 28.sp,
-                    modifier = Modifier.alpha(if (isUnlocked) 1.0f else 0.45f)
-                )
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+            if (isUnlocked) {
+                ClayCircle(size = 56.dp, face = Gold, lipColor = GoldDeep) {
+                    Icon(
+                        painter = painterResource(id = achievementIcon(achievement.category)),
+                        contentDescription = null,
+                        tint = RewardInk,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier.size(56.dp).clip(CircleShape).background(NodeLocked),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.Lock),
+                        contentDescription = null,
+                        tint = NodeLockedInk,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
+            Spacer(Modifier.height(Space.sm))
             Text(
                 text = achievement.name,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (isUnlocked) TextHeadingBlack else TextSubtleGray,
+                color = if (isUnlocked) Ink else Muted,
                 textAlign = TextAlign.Center,
                 maxLines = 1
             )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = achievement.description,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (isUnlocked) TextSubtleGray else Color.Gray.copy(alpha = 0.7f),
+                color = Faint,
                 textAlign = TextAlign.Center,
-                fontSize = 11.sp,
                 maxLines = 2
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (isUnlocked) Success.copy(alpha = 0.15f) else Color(0xFFE0E0E0)
-            ) {
+            if (!isUnlocked && achievement.requiredValue > 1) {
+                Spacer(Modifier.height(Space.xs))
+                val fraction = (achievement.currentValue.toFloat() / achievement.requiredValue).coerceIn(0f, 1f)
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(Shapes.pill).background(NodeLocked)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(fraction).height(4.dp).clip(Shapes.pill).background(Violet)
+                    )
+                }
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    text = if (isUnlocked) "✓ Unlocked (+${achievement.xpReward} XP)" else "🔒 Locked (+${achievement.xpReward} XP)",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    text = "${achievement.currentValue}/${achievement.requiredValue}",
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isUnlocked) Success else TextSubtleGray,
-                    fontSize = 10.sp
+                    color = Faint
                 )
+            }
+            Spacer(Modifier.height(Space.sm))
+            Box(
+                modifier = Modifier
+                    .clip(Shapes.chip)
+                    .background(if (isUnlocked) Gold.copy(alpha = 0.18f) else NodeLocked)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
+                    Icon(
+                        painter = painterResource(id = if (isUnlocked) Iconsax.TickCircle else Iconsax.Lock),
+                        contentDescription = null,
+                        tint = if (isUnlocked) Ink else NodeLockedInk,
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "+${achievement.xpReward} XP",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isUnlocked) Ink else NodeLockedInk
+                    )
+                }
             }
         }
     }

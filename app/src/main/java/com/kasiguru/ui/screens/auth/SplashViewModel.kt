@@ -25,7 +25,7 @@ class SplashViewModel @Inject constructor(
             if (progress == null || !progress.isOnboardingCompleted) {
                 _startDestination.value = Screen.Onboarding.route
             } else {
-                _startDestination.value = Screen.Home.route
+                _startDestination.value = Screen.Learn.route
             }
         }
     }

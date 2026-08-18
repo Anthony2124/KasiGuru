@@ -19,6 +19,10 @@ class VocabularyRepository @Inject constructor(
     fun getAllVocabulary(): Flow<List<VocabularyEntity>> =
         vocabularyDao.getAllVocabulary()
 
+    /** One-shot read of the whole corpus, for callers that must not hold a subscription. */
+    suspend fun getAllVocabularyOnce(): List<VocabularyEntity> =
+        vocabularyDao.getAllVocabularyOnce()
+
     fun getVocabularyByCategory(category: String): Flow<List<VocabularyEntity>> =
         vocabularyDao.getVocabularyByCategory(category)
 
@@ -42,6 +46,16 @@ class VocabularyRepository @Inject constructor(
         val due = vocabularyDao.getDueReviewWords(today, count)
         return if (due.isNotEmpty()) due else vocabularyDao.getRandomWords(count)
     }
+
+    /**
+     * Words genuinely due for review today, with no fallback.
+     *
+     * [getDueReviewWords] substitutes random words when nothing is due, which is right for filling a
+     * practice deck but wrong for any count shown to the learner — it would report words due every
+     * single day. Anything that displays a number must use this.
+     */
+    suspend fun getDueReviewWordsStrict(limit: Int = 20): List<VocabularyEntity> =
+        vocabularyDao.getScheduledDueWords(LocalDate.now().toString(), limit)
 
     fun getLearnedCount(): Flow<Int> =
         vocabularyDao.getLearnedCount()

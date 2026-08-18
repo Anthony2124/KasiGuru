@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.StoryPage
+import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.StoryRepository
 import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +22,8 @@ import javax.inject.Inject
 class StoryReaderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val storyRepository: StoryRepository,
-    private val userProgressRepository: UserProgressRepository
+    private val userProgressRepository: UserProgressRepository,
+    private val vocabularyRepository: VocabularyRepository
 ) : ViewModel() {
 
     private val storyId: Int = checkNotNull(savedStateHandle["storyId"])
@@ -30,6 +33,19 @@ class StoryReaderViewModel @Inject constructor(
 
     init {
         loadStory()
+        viewModelScope.launch {
+            val words = vocabularyRepository.getAllVocabularyOnce()
+            _uiState.value = _uiState.value.copy(vocabulary = words)
+        }
+    }
+
+    /**
+     * A real dictionary lookup for a word tapped in a story page, matched against the actual corpus
+     * instead of the "Tap for meaning" placeholder previously fabricated for every tap.
+     */
+    fun findWord(rawWord: String): VocabularyEntity? {
+        val normalized = rawWord.replace(Regex("[^a-zA-ZáéíóúÁÉÍÓÚñÑ]"), "")
+        return _uiState.value.vocabulary.firstOrNull { it.kasiguranin.equals(normalized, ignoreCase = true) }
     }
 
     private fun loadStory() {
@@ -120,5 +136,6 @@ data class StoryReaderUiState(
     val currentPageIndex: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val isFinished: Boolean = false
+    val isFinished: Boolean = false,
+    val vocabulary: List<VocabularyEntity> = emptyList()
 )
