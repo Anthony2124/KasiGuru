@@ -74,6 +74,13 @@ fun AccountScreen(
         }
     }
 
+    LaunchedEffect(uiState.didDeleteAccount) {
+        if (uiState.didDeleteAccount) {
+            snackbarHostState.showSnackbar("Account deleted. You're starting fresh as a guest.")
+            viewModel.consumeMessages()
+        }
+    }
+
     uiState.pendingSignIn?.let {
         AlertDialog(
             onDismissRequest = { viewModel.cancelSignIn() },
@@ -236,6 +243,12 @@ fun AccountScreen(
                         }
                     }
 
+                    Spacer(Modifier.height(Space.lg))
+                    DeleteAccountSection(
+                        isBusy = uiState.isBusy,
+                        onDelete = { viewModel.deleteAccount() }
+                    )
+
                     Spacer(Modifier.height(Space.navBarClearance))
                 }
 
@@ -357,5 +370,53 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
             Spacer(Modifier.width(Space.xs))
             Text("Sign Out", color = Red, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+/**
+ * Available whether the account is a guest or fully signed in — a guest's own local
+ * progress and any partial cloud doc are just as real to delete. Kept visually
+ * subordinate to everything above it: this is the one truly irreversible action
+ * on the whole screen.
+ */
+@Composable
+private fun DeleteAccountSection(isBusy: Boolean, onDelete: () -> Unit) {
+    var confirming by remember { mutableStateOf(false) }
+
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text("Delete your account?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "This permanently deletes your XP, streaks, badges, and word progress " +
+                        "from KasiGuru's servers, and can't be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirming = false
+                    onDelete()
+                }) { Text("Delete permanently", fontWeight = FontWeight.Bold, color = Red) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    Text(
+        text = "Danger zone",
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = Muted
+    )
+    Spacer(Modifier.height(Space.xs))
+    TextButton(
+        onClick = { confirming = true },
+        enabled = !isBusy,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("Delete my account and data", color = Red, fontWeight = FontWeight.Bold)
     }
 }

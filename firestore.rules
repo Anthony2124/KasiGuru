@@ -25,8 +25,15 @@ service cloud.firestore {
     }
 
     // users/{uid}/progress/main — the headline stats the leaderboard is built from.
+    // This is the authoritative document the sync merge (`maxOf(local, remote)`) treats
+    // as a floor that can never decrease — so unlike a display-only field, a single
+    // fabricated write here becomes permanent. Delta-capped the same way
+    // isValidLeaderboardEntry() already is, using the same +2000 XP/write bound that
+    // function already judged sufficient headroom for a debounced multi-action sync
+    // burst (a mini-game finish plus one or two achievement unlocks, worst case).
     function isValidMainProgress() {
       let d = request.resource.data;
+      let isFirstWrite = resource == null;
       return isSaneCounter(d.totalXp, 100000000)
         && isSaneCounter(d.level, 1000)
         && isSaneCounter(d.currentStreak, 36500)
@@ -34,7 +41,10 @@ service cloud.firestore {
         && isSaneCounter(d.wordsLearned, 1000000)
         && (!('userName' in d) || d.userName is string && d.userName.size() <= 100)
         && (!('fullName' in d) || d.fullName is string && d.fullName.size() <= 100)
-        && (!('titleBadge' in d) || d.titleBadge is string && d.titleBadge.size() <= 100);
+        && (!('titleBadge' in d) || d.titleBadge is string && d.titleBadge.size() <= 100)
+        && (isFirstWrite || (d.totalXp - resource.data.totalXp) <= 2000)
+        && (isFirstWrite || (d.currentStreak - resource.data.currentStreak) <= 1)
+        && (isFirstWrite || (d.wordsLearned - resource.data.wordsLearned) <= 50);
     }
 
     // The achievements / gameLevels / wordStates documents: a bounded entries map.
@@ -78,7 +88,12 @@ service cloud.firestore {
         && isSaneCounter(d.weekStartXp, 100000000)
         && d.weekStartDate is string && d.weekStartDate.size() <= 20
         && d.updatedAt is int
-        && (isFirstPublish || (d.totalXp - resource.data.totalXp) <= 2000);
+        && (isFirstPublish || (d.totalXp - resource.data.totalXp) <= 2000)
+        // Same reasoning as the totalXp cap above: streak legitimately moves by exactly
+        // 1 per day, and a 2000 XP burst can cross a handful of level thresholds at
+        // once but never hundreds.
+        && (isFirstPublish || (d.currentStreak - resource.data.currentStreak) <= 1)
+        && (isFirstPublish || (d.level - resource.data.level) <= 5);
     }
 
     // Allowed fields and size limits for community word submissions.

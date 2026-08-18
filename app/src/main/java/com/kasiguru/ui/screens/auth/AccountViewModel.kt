@@ -3,15 +3,18 @@ package com.kasiguru.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.AuthCredential
+import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthOutcome
 import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class AccountUiState(
@@ -25,13 +28,16 @@ data class AccountUiState(
      * confirms before we switch.
      */
     val pendingSignIn: AuthCredential? = null,
-    val didSucceed: Boolean = false
+    val didSucceed: Boolean = false,
+    /** True once account deletion has actually completed — the UI navigates away on this. */
+    val didDeleteAccount: Boolean = false
 )
 
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val preferences: UserPreferencesRepository
+    private val preferences: UserPreferencesRepository,
+    private val database: KasiGuruDatabase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountUiState(account = authRepository.currentAccount()))
@@ -99,8 +105,36 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch { preferences.setBackupPromptDismissed(true) }
     }
 
+    /**
+     * Permanently deletes the account and every document it owns, then clears local
+     * data and starts a fresh anonymous session — unlike signOut(), the local copy
+     * must not survive, or a new anonymous session would inherit the deleted
+     * account's XP/streak/words on its next sync.
+     */
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isBusy = true, error = null)
+            val result = authRepository.deleteAccount()
+            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    isBusy = false,
+                    error = "Couldn't delete your account. Check your connection and try again."
+                )
+                return@launch
+            }
+            withContext(Dispatchers.IO) { database.clearAllTables() }
+            authRepository.signOutToAnonymous()
+            _uiState.value = _uiState.value.copy(isBusy = false, didDeleteAccount = true)
+        }
+    }
+
     fun consumeMessages() {
-        _uiState.value = _uiState.value.copy(error = null, message = null, didSucceed = false)
+        _uiState.value = _uiState.value.copy(
+            error = null,
+            message = null,
+            didSucceed = false,
+            didDeleteAccount = false
+        )
     }
 
     private fun validate(email: String, password: String): Boolean {

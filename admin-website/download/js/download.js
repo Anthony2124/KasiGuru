@@ -1,14 +1,14 @@
 // download.js — Read-only public download page logic for KasiGuru
 // IMPORTANT: This file has ZERO write operations.
 // It reads app_releases to keep the download button and QR code up to date.
+//
+// There is deliberately no hardcoded fallback release here. Firestore's
+// `app_releases` collection is the single source of truth for what "latest"
+// means — a hardcoded version string here would be a second source of truth
+// that someone has to remember to update by hand on every release, and the
+// two *will* eventually disagree. Until Firestore resolves, the page shows an
+// honest "checking…" state instead of a guess.
 import { db, collection, query, orderBy, onSnapshot, getCountFromServer } from './firebase-config.js';
-
-// Current bundled production release baseline
-const CURRENT_RELEASE = {
-  versionCode: 6,
-  versionName: "1.5.0",
-  apkUrl: "https://download-woad-iota.vercel.app/kasiguru-v1.5.0.apk"
-};
 
 // Apply release metadata to DOM
 function applyReleaseInfo(release) {
@@ -16,11 +16,11 @@ function applyReleaseInfo(release) {
 
   // 1. Update main download button
   const mainBtn = document.getElementById('store-download-btn');
-  if (mainBtn) mainBtn.setAttribute('href', release.apkUrl || 'kasiguru-v1.5.0.apk');
+  if (mainBtn && release.apkUrl) mainBtn.setAttribute('href', release.apkUrl);
 
   // 2. Update navigation "Get App" button
   const navBtn = document.querySelector('.store-link-btn');
-  if (navBtn) navBtn.setAttribute('href', release.apkUrl || '#download-section');
+  if (navBtn && release.apkUrl) navBtn.setAttribute('href', release.apkUrl);
 
   // 3. Update version tag text
   const tag = document.getElementById('store-version-tag');
@@ -29,13 +29,13 @@ function applyReleaseInfo(release) {
   }
 
   // 4. Update hero CTA button text & href
-  const heroBtnSpan = document.querySelector('.download-btn-large span');
+  const heroBtnSpan = document.querySelector('.hero-cta-group .download-btn-large span');
   if (heroBtnSpan) {
     heroBtnSpan.textContent = `Download APK (v${release.versionName})`;
   }
   const heroBtn = document.querySelector('.hero-cta-group .download-btn-large');
-  if (heroBtn) {
-    heroBtn.setAttribute('href', release.apkUrl || '#download-section');
+  if (heroBtn && release.apkUrl) {
+    heroBtn.setAttribute('href', release.apkUrl);
   }
 
   // 5. Render QR Code
@@ -56,11 +56,8 @@ try {
     .catch(() => { /* keep static fallback */ });
 } catch (e) { /* keep static fallback */ }
 
-// ── Smooth scroll for anchor links & Initial Render ──
+// ── Smooth scroll for anchor links ──
 document.addEventListener('DOMContentLoaded', () => {
-  // Apply current release baseline immediately
-  applyReleaseInfo(CURRENT_RELEASE);
-
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', (e) => {
       const href = anchor.getAttribute('href');
@@ -107,6 +104,11 @@ function renderQR(url) {
 }
 
 // ── Read-only: listens to app_releases collection ──
+function showCheckFailedState() {
+  const tag = document.getElementById('store-version-tag');
+  if (tag) tag.textContent = "Couldn't check for the latest version — please try again shortly.";
+}
+
 try {
   const releaseQuery = query(
     collection(db, 'app_releases'),
@@ -116,18 +118,16 @@ try {
   onSnapshot(releaseQuery, (snapshot) => {
     const releases = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     const latest = releases[0];
-    
-    // Only upgrade if Firestore has a release newer than or equal to our bundled release
-    if (latest && (latest.versionCode || 0) >= CURRENT_RELEASE.versionCode) {
+    if (latest) {
       applyReleaseInfo(latest);
     } else {
-      applyReleaseInfo(CURRENT_RELEASE);
+      showCheckFailedState();
     }
   }, (error) => {
     console.warn('Release listener error:', error);
-    applyReleaseInfo(CURRENT_RELEASE);
+    showCheckFailedState();
   });
 } catch (e) {
   console.error('Firestore release query error:', e);
-  applyReleaseInfo(CURRENT_RELEASE);
+  showCheckFailedState();
 }

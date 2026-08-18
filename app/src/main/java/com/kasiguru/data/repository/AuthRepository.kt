@@ -5,6 +5,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -45,7 +46,8 @@ sealed interface AuthOutcome {
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions
 ) {
     val accountState: Flow<AccountState> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser.toAccountState()) }
@@ -60,8 +62,16 @@ class AuthRepository @Inject constructor(
      * progress has to be moved. Falls back to reporting a collision when the
      * credential is already registered, rather than silently switching accounts.
      */
-    suspend fun linkEmailPassword(email: String, password: String): AuthOutcome =
-        link(EmailAuthProvider.getCredential(email.trim(), password))
+    suspend fun linkEmailPassword(email: String, password: String): AuthOutcome {
+        val outcome = link(EmailAuthProvider.getCredential(email.trim(), password))
+        // Only on a genuinely new account (not a sign-in, not a collision) — email
+        // ownership was never confirmed before this, leaving password reset as the
+        // only recovery path and it went to an address nobody had verified.
+        if (outcome is AuthOutcome.Linked) {
+            runCatching { auth.currentUser?.sendEmailVerification()?.await() }
+        }
+        return outcome
+    }
 
     suspend fun linkGoogle(idToken: String): AuthOutcome =
         link(GoogleAuthProvider.getCredential(idToken, null))
@@ -111,6 +121,20 @@ class AuthRepository @Inject constructor(
     suspend fun signOutToAnonymous(): Result<Unit> = runCatching {
         auth.signOut()
         auth.signInAnonymously().await()
+        Unit
+    }
+
+    /**
+     * Permanently deletes the current user's account and every document keyed by
+     * their uid, via the `deleteAccount` Cloud Function — deleting a Firestore
+     * subtree and an Auth user both need elevated privileges a client doesn't
+     * have, so this can't be done directly from here. Leaves the app signed out;
+     * the caller is responsible for starting a fresh anonymous session afterward
+     * (mirrors signOutToAnonymous, kept separate since a failed deletion shouldn't
+     * silently start a new session over the still-intact old one).
+     */
+    suspend fun deleteAccount(): Result<Unit> = runCatching {
+        functions.getHttpsCallable("deleteAccount").call().await()
         Unit
     }
 

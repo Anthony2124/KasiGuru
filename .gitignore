@@ -22,3 +22,6 @@ backups/
 KasiGuruBackups/
 public/downloads/
 .firebase/
+.env
+.env.local
+.env.*.local

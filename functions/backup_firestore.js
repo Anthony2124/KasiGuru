@@ -2,8 +2,10 @@
  * Local JSON backup of Firestore — works on the FREE (Spark) plan.
  *
  * Uses the Admin SDK (service-account key) to read every collection and write
- * a timestamped folder of JSON files. No billing, no Cloud Functions, no GCS.
- * (Firestore's built-in GCS export requires billing; this does not.)
+ * a timestamped folder of JSON files. No billing, no Cloud Functions, no GCS
+ * export needed. (Firestore's built-in GCS export requires billing; this does not —
+ * uploading the resulting JSON files to Storage below is a separate, optional step
+ * that a Spark-plan default bucket already supports.)
  *
  * Usage:
  *   node backup_firestore.js <service-account.json> [output-dir]
@@ -14,8 +16,14 @@
  * Restore with: node restore_firestore.js <service-account.json> <backup-dir>
  *
  * The service-account JSON and the backup folders contain sensitive data —
- * keep them out of the repo and consider syncing the backup folder to
- * Google Drive / OneDrive / another machine for off-site redundancy.
+ * keep them out of the repo.
+ *
+ * Off-site copy: this previously only wrote to the local disk of whichever
+ * machine ran it — if that machine is off, wiped, or stops being logged into,
+ * backups silently stop with nothing to notice. Set KASIGURU_BACKUP_BUCKET to
+ * a Firebase Storage bucket name (e.g. kasiguru-86042.appspot.com, the default
+ * bucket every Firebase project already has) to also upload each run there.
+ * Left unset, behavior is unchanged — local-only, same as before.
  */
 
 const admin = require('firebase-admin');
@@ -88,6 +96,21 @@ const projectId = require(keyFile).project_id;
   console.log('Backup complete ->', runDir);
   console.log('Collections:', JSON.stringify(manifest.collections));
   console.log('WARNING: keep this folder private (contains user-submitted data).');
+
+  const bucketName = process.env.KASIGURU_BACKUP_BUCKET;
+  if (bucketName) {
+    const bucket = admin.storage().bucket(bucketName);
+    const destPrefix = `firestore-backups/${stamp}/`;
+    const files = fs.readdirSync(runDir);
+    for (const file of files) {
+      await bucket.upload(path.join(runDir, file), {
+        destination: destPrefix + file
+      });
+    }
+    console.log(`Off-site copy uploaded -> gs://${bucketName}/${destPrefix}`);
+  } else {
+    console.log('KASIGURU_BACKUP_BUCKET not set — backup stayed local-only.');
+  }
 })().catch((err) => {
   console.error('Backup failed:', err.message);
   process.exit(1);

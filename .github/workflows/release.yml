@@ -1,0 +1,88 @@
+name: Release
+
+# Triggered by pushing a tag like v1.5.0 (must match app/build.gradle.kts's versionName).
+# Builds the signed release APK, publishes it to the download site, and writes the
+# app_releases doc — the four manual steps a release previously required by hand.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Build, sign, and publish a release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Derive version
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          NAME="${TAG#v}"
+          # versionCode must match what's actually baked into the APK by Gradle — read
+          # it from the same build.gradle.kts the build itself uses, not an unrelated
+          # CI counter, or the in-app update check would compare against the wrong number.
+          CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)
+          if [ -z "$CODE" ]; then
+            echo "Could not read versionCode from app/build.gradle.kts" >&2
+            exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+
+          GRADLE_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          if [ "$GRADLE_NAME" != "$NAME" ]; then
+            echo "Tag $TAG doesn't match app/build.gradle.kts's versionName ($GRADLE_NAME) — bump it before tagging." >&2
+            exit 1
+          fi
+
+      - name: Restore signing keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.jks
+          cat > keystore.properties <<EOF
+          storeFile=${{ github.workspace }}/release.jks
+          storePassword=${{ secrets.KEYSTORE_STORE_PASSWORD }}
+          keyAlias=${{ secrets.KEYSTORE_KEY_ALIAS }}
+          keyPassword=${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          EOF
+
+      - name: Build signed release APK
+        run: ./gradlew assembleRelease
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f release.jks keystore.properties
+
+      - name: Copy APK into the download site
+        run: cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
+
+      - name: Deploy download site to Vercel
+        working-directory: admin-website/download
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          # Not secret — just identifiers for which Vercel project this is, the same
+          # ones `vercel link` already wrote locally to the (gitignored) .vercel/project.json.
+          VERCEL_ORG_ID: team_IxFhfgNVYDhTPMcSQOATHnKj
+          VERCEL_PROJECT_ID: prj_CBpxCvC3RwQryEkGMIYhAm2DJOWi
+        run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Publish app_releases doc
+        working-directory: functions
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          npm install --omit=dev
+          node publish_release.js \
+            "${{ steps.version.outputs.code }}" \
+            "${{ steps.version.outputs.name }}" \
+            "https://download-woad-iota.vercel.app/kasiguru-v${{ steps.version.outputs.name }}.apk"

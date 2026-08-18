@@ -30,6 +30,15 @@ android {
         }
     }
 
+    // MigrationTestHelper reads the exported schemas from the instrumented test APK's
+    // own assets, not from $projectDir directly — without this, every MigrationTest
+    // fails at runtime with "Cannot find the schema file in the assets folder"
+    // regardless of which versions the test itself asks for. This was missing, so the
+    // migration test suite could never actually execute, at any version.
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
+
     buildTypes {
         signingConfigs {
             // Loaded from keystore.properties (gitignored; kept outside the repo).
@@ -163,6 +172,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
 
     // Google Sign-In (account recovery across reinstalls/devices)
     implementation("com.google.android.gms:play-services-auth:21.2.0")

@@ -375,64 +375,71 @@ class ProgressSyncManager @Inject constructor(
         fun wordKey(kasiguranin: String) = kasiguranin.lowercase()
     }
 
-    private fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
-        "id" to p.id,
-        "userName" to p.userName,
-        "email" to p.email,
-        "fullName" to p.fullName,
-        "age" to p.age,
-        "address" to p.address,
-        "profileIconId" to p.profileIconId,
-        "totalXp" to p.totalXp,
-        "level" to p.level,
-        "currentStreak" to p.currentStreak,
-        "longestStreak" to p.longestStreak,
-        "lastActiveDate" to p.lastActiveDate,
-        "wordsLearned" to p.wordsLearned,
-        "storiesCompleted" to p.storiesCompleted,
-        "gamesPlayed" to p.gamesPlayed,
-        "totalCorrectAnswers" to p.totalCorrectAnswers,
-        "totalQuestionsAnswered" to p.totalQuestionsAnswered,
-        "lessonsCompleted" to p.lessonsCompleted,
-        "isOnboardingCompleted" to p.isOnboardingCompleted,
-        "dailyGoalXp" to p.dailyGoalXp,
-        // The daily-XP ledger must travel with the rest of progress. Any field written locally but
-        // missing from this map is silently reset to its default the next time a remote document is
-        // applied, because toEntity rebuilds the whole entity rather than patching it.
-        "dailyXpEarned" to p.dailyXpEarned,
-        "dailyXpDate" to p.dailyXpDate,
-        "titleBadge" to p.titleBadge,
-        "updatedAt" to System.currentTimeMillis()
-        // password intentionally omitted
-    )
-
-    private fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgressEntity(
-        id = (data["id"] as? Number)?.toInt() ?: 1,
-        userName = data["userName"] as? String ?: "",
-        email = data["email"] as? String ?: "",
-        fullName = data["fullName"] as? String ?: "",
-        age = (data["age"] as? Number)?.toInt(),
-        address = data["address"] as? String ?: "",
-        profileIconId = (data["profileIconId"] as? Number)?.toInt() ?: 1,
-        totalXp = (data["totalXp"] as? Number)?.toInt() ?: 0,
-        level = (data["level"] as? Number)?.toInt() ?: 1,
-        currentStreak = (data["currentStreak"] as? Number)?.toInt() ?: 0,
-        longestStreak = (data["longestStreak"] as? Number)?.toInt() ?: 0,
-        lastActiveDate = data["lastActiveDate"] as? String ?: "",
-        wordsLearned = (data["wordsLearned"] as? Number)?.toInt() ?: 0,
-        storiesCompleted = (data["storiesCompleted"] as? Number)?.toInt() ?: 0,
-        gamesPlayed = (data["gamesPlayed"] as? Number)?.toInt() ?: 0,
-        totalCorrectAnswers = (data["totalCorrectAnswers"] as? Number)?.toInt() ?: 0,
-        totalQuestionsAnswered = (data["totalQuestionsAnswered"] as? Number)?.toInt() ?: 0,
-        lessonsCompleted = (data["lessonsCompleted"] as? Number)?.toInt() ?: 0,
-        isOnboardingCompleted = data["isOnboardingCompleted"] as? Boolean ?: false,
-        dailyGoalXp = (data["dailyGoalXp"] as? Number)?.toInt() ?: 100,
-        dailyXpEarned = (data["dailyXpEarned"] as? Number)?.toInt() ?: 0,
-        dailyXpDate = data["dailyXpDate"] as? String ?: "",
-        titleBadge = data["titleBadge"] as? String ?: "Kasiguranin Apprentice",
-        updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
-    )
 }
+
+/**
+ * The Firestore payload for a progress document. Top-level and `internal` (not a private
+ * class member) specifically so [ProgressSyncFieldParityTest] can call it directly without
+ * mocking every one of ProgressSyncManager's constructor dependencies just to reach a pure
+ * mapping function that never touches any of them.
+ */
+internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
+    "id" to p.id,
+    "userName" to p.userName,
+    "email" to p.email,
+    "fullName" to p.fullName,
+    "age" to p.age,
+    "address" to p.address,
+    "profileIconId" to p.profileIconId,
+    "totalXp" to p.totalXp,
+    "level" to p.level,
+    "currentStreak" to p.currentStreak,
+    "longestStreak" to p.longestStreak,
+    "lastActiveDate" to p.lastActiveDate,
+    "wordsLearned" to p.wordsLearned,
+    "storiesCompleted" to p.storiesCompleted,
+    "gamesPlayed" to p.gamesPlayed,
+    "totalCorrectAnswers" to p.totalCorrectAnswers,
+    "totalQuestionsAnswered" to p.totalQuestionsAnswered,
+    "lessonsCompleted" to p.lessonsCompleted,
+    "isOnboardingCompleted" to p.isOnboardingCompleted,
+    "dailyGoalXp" to p.dailyGoalXp,
+    // The daily-XP ledger must travel with the rest of progress. Any field written locally but
+    // missing from this map is silently reset to its default the next time a remote document is
+    // applied, because toEntity rebuilds the whole entity rather than patching it.
+    "dailyXpEarned" to p.dailyXpEarned,
+    "dailyXpDate" to p.dailyXpDate,
+    "titleBadge" to p.titleBadge,
+    "updatedAt" to System.currentTimeMillis()
+    // password intentionally omitted
+)
+
+internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgressEntity(
+    id = (data["id"] as? Number)?.toInt() ?: 1,
+    userName = data["userName"] as? String ?: "",
+    email = data["email"] as? String ?: "",
+    fullName = data["fullName"] as? String ?: "",
+    age = (data["age"] as? Number)?.toInt(),
+    address = data["address"] as? String ?: "",
+    profileIconId = (data["profileIconId"] as? Number)?.toInt() ?: 1,
+    totalXp = (data["totalXp"] as? Number)?.toInt() ?: 0,
+    level = (data["level"] as? Number)?.toInt() ?: 1,
+    currentStreak = (data["currentStreak"] as? Number)?.toInt() ?: 0,
+    longestStreak = (data["longestStreak"] as? Number)?.toInt() ?: 0,
+    lastActiveDate = data["lastActiveDate"] as? String ?: "",
+    wordsLearned = (data["wordsLearned"] as? Number)?.toInt() ?: 0,
+    storiesCompleted = (data["storiesCompleted"] as? Number)?.toInt() ?: 0,
+    gamesPlayed = (data["gamesPlayed"] as? Number)?.toInt() ?: 0,
+    totalCorrectAnswers = (data["totalCorrectAnswers"] as? Number)?.toInt() ?: 0,
+    totalQuestionsAnswered = (data["totalQuestionsAnswered"] as? Number)?.toInt() ?: 0,
+    lessonsCompleted = (data["lessonsCompleted"] as? Number)?.toInt() ?: 0,
+    isOnboardingCompleted = data["isOnboardingCompleted"] as? Boolean ?: false,
+    dailyGoalXp = (data["dailyGoalXp"] as? Number)?.toInt() ?: 100,
+    dailyXpEarned = (data["dailyXpEarned"] as? Number)?.toInt() ?: 0,
+    dailyXpDate = data["dailyXpDate"] as? String ?: "",
+    titleBadge = data["titleBadge"] as? String ?: "Kasiguranin Apprentice",
+    updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
+)
 
 /**
  * Merges local and remote progress: counters take the max, profile fields come

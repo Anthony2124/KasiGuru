@@ -3,11 +3,15 @@
  * ------------------------
  * 1. bootstrapAdmin  – one-time, secret-protected call that grants the
  *                      `admin` custom claim to an existing Firebase Auth user.
- * 2. scheduledFirestoreBackup – nightly export of Firestore to Cloud Storage.
+ * 2. deleteAccount   – callable that lets a signed-in user (including a guest)
+ *                      permanently delete their own account and data.
+ * 3. scheduledFirestoreBackup – nightly export of Firestore to Cloud Storage.
  *
  * Deployment: firebase deploy --only functions
  * Requires the Firebase project on the Blaze (pay-as-you-go) plan for
  * scheduled exports and the Datastore export permission on the service account.
+ * bootstrapAdmin and deleteAccount are plain callable functions and work on
+ * the free Spark plan.
  */
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
@@ -15,6 +19,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
+const { getFirestore } = require('firebase-admin/firestore');
 const { GoogleAuth } = require('google-auth-library');
 
 initializeApp();
@@ -57,6 +62,36 @@ exports.bootstrapAdmin = onCall(
     }
   }
 );
+
+/**
+ * Deletes the calling user's own account and every document keyed by their uid.
+ *
+ * Firestore rules can only stop a *client* from writing another user's data —
+ * they can't cascade a delete across collections on their own, and there was
+ * previously no way for a user to remove their own data at all (rules-only
+ * `delete` on `users/{userId}/progress/{docId}` covers that one subcollection,
+ * but not `leaderboard_public` or `device_tokens`, and doesn't touch the Auth
+ * account itself). This does all three deletions server-side, in the order
+ * that leaves the least mess behind if it's interrupted partway through:
+ * Firestore data first, then the Auth account last (so a failed retry finds
+ * an intact, still-authenticatable user rather than an orphaned one).
+ */
+exports.deleteAccount = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'sign-in required');
+  }
+
+  const db = getFirestore();
+
+  await db.recursiveDelete(db.collection('users').doc(uid));
+  await db.collection('leaderboard_public').doc(uid).delete();
+  await db.collection('device_tokens').doc(uid).delete();
+
+  await getAuth().deleteUser(uid);
+
+  return { ok: true };
+});
 
 /**
  * Nightly Firestore export to Cloud Storage.
