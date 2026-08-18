@@ -172,7 +172,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-functions-ktx")
 
     // Google Sign-In (account recovery across reinstalls/devices)
     implementation("com.google.android.gms:play-services-auth:21.2.0")

@@ -5,7 +5,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -47,7 +47,7 @@ sealed interface AuthOutcome {
 @Singleton
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
-    private val functions: FirebaseFunctions
+    private val firestore: FirebaseFirestore
 ) {
     val accountState: Flow<AccountState> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser.toAccountState()) }
@@ -125,16 +125,31 @@ class AuthRepository @Inject constructor(
     }
 
     /**
-     * Permanently deletes the current user's account and every document keyed by
-     * their uid, via the `deleteAccount` Cloud Function — deleting a Firestore
-     * subtree and an Auth user both need elevated privileges a client doesn't
-     * have, so this can't be done directly from here. Leaves the app signed out;
-     * the caller is responsible for starting a fresh anonymous session afterward
-     * (mirrors signOutToAnonymous, kept separate since a failed deletion shouldn't
+     * Permanently deletes the current user's account and every Firestore document
+     * keyed by their uid, done directly from the client (the project stays on the
+     * free Spark plan, which can't run the Cloud Function this would otherwise be —
+     * see functions/index.js). firestore.rules grants each user delete rights on
+     * exactly these documents for this reason. Firestore data is removed before
+     * the Auth user so a failed retry finds an intact, still-authenticatable
+     * account rather than an orphaned one. Leaves the app signed out; the caller
+     * is responsible for starting a fresh anonymous session afterward (mirrors
+     * signOutToAnonymous, kept separate since a failed deletion shouldn't
      * silently start a new session over the still-intact old one).
      */
     suspend fun deleteAccount(): Result<Unit> = runCatching {
-        functions.getHttpsCallable("deleteAccount").call().await()
+        val user = auth.currentUser ?: throw IllegalStateException("Not signed in.")
+        val uid = user.uid
+        val progress = firestore.collection("users").document(uid).collection("progress")
+        for (docId in listOf("main", "achievements", "gameLevels", "wordStates")) {
+            progress.document(docId).delete().await()
+        }
+        firestore.collection("leaderboard_public").document(uid).delete().await()
+        firestore.collection("device_tokens").document(uid).delete().await()
+        try {
+            user.delete().await()
+        } catch (e: com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException) {
+            throw IllegalStateException("Please sign out and back in, then try deleting your account again.", e)
+        }
         Unit
     }
 

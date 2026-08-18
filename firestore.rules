@@ -185,7 +185,11 @@ service cloud.firestore {
     // see that function's comment.
     match /leaderboard_public/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) && isValidLeaderboardEntry();
+      allow create, update: if isOwner(userId) && isValidLeaderboardEntry();
+      // Split from create/update: isValidLeaderboardEntry() reads request.resource.data,
+      // which is null on a delete — under the old combined `allow write` rule, deleting
+      // your own row was silently rejected, which would have broken account deletion.
+      allow delete: if isOwner(userId);
     }
 
     // FCM device tokens (Phase 5): each user manages only their own token doc.

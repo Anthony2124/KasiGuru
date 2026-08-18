@@ -118,7 +118,8 @@ class AccountViewModel @Inject constructor(
             if (result.isFailure) {
                 _uiState.value = _uiState.value.copy(
                     isBusy = false,
-                    error = "Couldn't delete your account. Check your connection and try again."
+                    error = result.exceptionOrNull()?.message?.takeIf { it.isNotBlank() }
+                        ?: "Couldn't delete your account. Check your connection and try again."
                 )
                 return@launch
             }
