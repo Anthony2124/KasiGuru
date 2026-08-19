@@ -47,7 +47,7 @@ service cloud.firestore {
         && (isFirstWrite || (d.wordsLearned - resource.data.wordsLearned) <= 50);
     }
 
-    // The achievements / gameLevels / wordStates documents: a bounded entries map.
+    // The achievements / gameLevels / lessonProgress / wordStates documents: a bounded entries map.
     function isValidLearningDoc() {
       let d = request.resource.data;
       return d.keys().hasOnly(['entries', 'updatedAt'])
@@ -59,7 +59,7 @@ service cloud.firestore {
     function isValidProgressDoc(docId) {
       return docId == 'main'
         ? isValidMainProgress()
-        : (docId in ['achievements', 'gameLevels', 'wordStates'] && isValidLearningDoc());
+        : (docId in ['achievements', 'gameLevels', 'lessonProgress', 'wordStates'] && isValidLearningDoc());
     }
 
     // leaderboard_public/{uid} — published by the client itself (free/Spark plan:

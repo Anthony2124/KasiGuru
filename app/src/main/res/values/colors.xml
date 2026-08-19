@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0D7377</color>
+    <!-- Violet Sheet tokens mirrored for XML surfaces (splash, launcher) that cannot read Color.kt.
+         CanopyTop/Violet are fixed across light and dark, so these need no values-night variant. -->
+    <color name="canopy_top">#6C5CE7</color>
+    <color name="ic_launcher_background">#5B4CDB</color>
 </resources>

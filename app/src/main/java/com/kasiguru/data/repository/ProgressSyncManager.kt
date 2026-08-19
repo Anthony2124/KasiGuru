@@ -5,8 +5,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Log
 import com.kasiguru.data.local.dao.AchievementDao
 import com.kasiguru.data.local.dao.GameLevelDao
+import com.kasiguru.data.local.dao.LessonDao
 import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.dao.VocabularyDao
+import com.kasiguru.data.local.entity.LessonProgressEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ class ProgressSyncManager @Inject constructor(
     private val userProgressDao: UserProgressDao,
     private val achievementDao: AchievementDao,
     private val gameLevelDao: GameLevelDao,
+    private val lessonDao: LessonDao,
     private val vocabularyDao: VocabularyDao,
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
@@ -74,6 +77,7 @@ class ProgressSyncManager @Inject constructor(
                     launch { observeAndUpload(uid) },
                     launch { observeAndUploadAchievements(uid) },
                     launch { observeAndUploadGameLevels(uid) },
+                    launch { observeAndUploadLessonProgress(uid) },
                     launch { observeAndUploadWordStates(uid) }
                 )
             }
@@ -183,10 +187,11 @@ class ProgressSyncManager @Inject constructor(
     // Same shape as the main progress doc: pull, merge additively, persist the
     // result locally, then push the merged view back so the other side catches up.
 
-    /** Pulls the three learning-state documents and merges them into Room. */
+    /** Pulls the learning-state documents and merges them into Room. */
     suspend fun syncLearningStateFromCloud(uid: String) {
         mergeAchievementsFromCloud(uid)
         mergeGameLevelsFromCloud(uid)
+        mergeLessonProgressFromCloud(uid)
         mergeWordStatesFromCloud(uid)
     }
 
@@ -236,6 +241,33 @@ class ProgressSyncManager @Inject constructor(
         uploadGameLevels(uid, merged)
     }
 
+    private suspend fun mergeLessonProgressFromCloud(uid: String) {
+        val remote = readMap(uid, DOC_LESSON_PROGRESS) { value ->
+            LessonState(
+                isComplete = value["isComplete"] as? Boolean ?: false,
+                bestAccuracy = (value["bestAccuracy"] as? Number)?.toFloat() ?: 0f,
+                timesCompleted = (value["timesCompleted"] as? Number)?.toInt() ?: 0,
+                lastCompletedAt = (value["lastCompletedAt"] as? Number)?.toLong() ?: 0
+            )
+        } ?: return
+
+        val localByKey = lessonDao.getAllOnce().associateBy { lessonKey(it.unitId, it.lessonIndex) }
+        val local = localByKey.mapValues {
+            LessonState(it.value.isComplete, it.value.bestAccuracy, it.value.timesCompleted, it.value.lastCompletedAt)
+        }
+        val merged = mergeLessonProgress(local, remote)
+
+        // Unlike achievements, game levels and words, a lesson has no row until it is first played,
+        // so the cloud routinely carries keys this install has no row for. Rebuild the row from its
+        // key instead of only patching rows that already exist, or a reinstall silently drops them.
+        val updated = merged.mapNotNull { (key, state) ->
+            val row = lessonRowFrom(key, state) ?: return@mapNotNull null
+            row.takeIf { it != localByKey[key] }
+        }
+        if (updated.isNotEmpty()) lessonDao.upsertAll(updated)
+        uploadLessonProgress(uid, merged)
+    }
+
     private suspend fun mergeWordStatesFromCloud(uid: String) {
         val remote = readMap(uid, DOC_WORD_STATES) { value ->
             WordState(
@@ -281,6 +313,19 @@ class ProgressSyncManager @Inject constructor(
             .collect { uploadGameLevels(uid, it) }
     }
 
+    private suspend fun observeAndUploadLessonProgress(uid: String) {
+        lessonDao.observeAll()
+            .map { rows ->
+                rows.associate {
+                    lessonKey(it.unitId, it.lessonIndex) to
+                        LessonState(it.isComplete, it.bestAccuracy, it.timesCompleted, it.lastCompletedAt)
+                }
+            }
+            .distinctUntilChanged()
+            .debounce(DEBOUNCE_MS)
+            .collect { uploadLessonProgress(uid, it) }
+    }
+
     private suspend fun observeAndUploadWordStates(uid: String) {
         vocabularyDao.getAllVocabulary()
             // Project to review state first: dictionary content updates must not
@@ -307,6 +352,18 @@ class ProgressSyncManager @Inject constructor(
             mapOf("starsEarned" to it.value.starsEarned, "isUnlocked" to it.value.isUnlocked)
         }
         uploadLearningDoc(uid, DOC_GAME_LEVELS, payload)
+    }
+
+    private suspend fun uploadLessonProgress(uid: String, states: Map<String, LessonState>) {
+        val payload = states.mapValues {
+            mapOf(
+                "isComplete" to it.value.isComplete,
+                "bestAccuracy" to it.value.bestAccuracy,
+                "timesCompleted" to it.value.timesCompleted,
+                "lastCompletedAt" to it.value.lastCompletedAt
+            )
+        }
+        uploadLearningDoc(uid, DOC_LESSON_PROGRESS, payload)
     }
 
     private suspend fun uploadWordStates(uid: String, states: Map<String, WordState>) {
@@ -363,9 +420,32 @@ class ProgressSyncManager @Inject constructor(
         const val DEBOUNCE_MS = 5_000L
         const val DOC_ACHIEVEMENTS = "achievements"
         const val DOC_GAME_LEVELS = "gameLevels"
+        const val DOC_LESSON_PROGRESS = "lessonProgress"
         const val DOC_WORD_STATES = "wordStates"
 
         fun levelKey(gameType: String, levelNumber: Int) = "${gameType}_$levelNumber"
+
+        /**
+         * A lesson is identified by its unit (a category name, which can contain spaces and
+         * underscores) plus its index, so the separator has to be one a category never uses.
+         */
+        private const val LESSON_KEY_SEPARATOR = '#'
+
+        fun lessonKey(unitId: String, lessonIndex: Int) = "$unitId$LESSON_KEY_SEPARATOR$lessonIndex"
+
+        fun lessonRowFrom(key: String, state: LessonState): LessonProgressEntity? {
+            val unitId = key.substringBeforeLast(LESSON_KEY_SEPARATOR, "")
+            val lessonIndex = key.substringAfterLast(LESSON_KEY_SEPARATOR).toIntOrNull()
+            if (unitId.isEmpty() || lessonIndex == null) return null
+            return LessonProgressEntity(
+                unitId = unitId,
+                lessonIndex = lessonIndex,
+                isComplete = state.isComplete,
+                bestAccuracy = state.bestAccuracy,
+                timesCompleted = state.timesCompleted,
+                lastCompletedAt = state.lastCompletedAt
+            )
+        }
 
         /**
          * Words are keyed by their Kasiguranin text, not the Room row id: ids are

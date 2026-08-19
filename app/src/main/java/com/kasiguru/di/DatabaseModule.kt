@@ -62,6 +62,12 @@ object DatabaseModule {
                         if (gameLevelDaoProvider.get().getLevelCount() == 0) {
                             gameLevelDaoProvider.get().insertAll(DatabaseSeeder.getInitialGameLevels())
                         }
+                        // The single user_progress row must exist before anything else runs: almost
+                        // every write in UserProgressDao is an `UPDATE ... WHERE id = 1`, which
+                        // silently affects zero rows when the row is missing rather than failing.
+                        if (userProgressDaoProvider.get().getUserProgressDirect() == null) {
+                            userProgressDaoProvider.get().insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

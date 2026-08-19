@@ -3,12 +3,12 @@
     <style name="Theme.KasiGuru" parent="android:Theme.DeviceDefault.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowBackground">@color/canopy_top</item>
     </style>
 
     <!-- Splash screen theme — extends SplashScreen from core-splashscreen library -->
     <style name="Theme.KasiGuru.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#0D7377</item>
+        <item name="windowSplashScreenBackground">@color/canopy_top</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="postSplashScreenTheme">@style/Theme.KasiGuru</item>
     </style>

@@ -2,7 +2,7 @@ package com.kasiguru.data.repository
 
 /**
  * Merge rules for the progress that lives outside `user_progress` (achievements,
- * per-game level stars, per-word review state).
+ * per-game level stars, per-lesson completion, per-word review state).
  *
  * Every rule is additive — a device that is behind can never erase progress
  * earned elsewhere. That is what makes a reinstall or a second device safe:
@@ -18,6 +18,13 @@ data class AchievementState(
 data class GameLevelState(
     val starsEarned: Int = 0,
     val isUnlocked: Boolean = false
+)
+
+data class LessonState(
+    val isComplete: Boolean = false,
+    val bestAccuracy: Float = 0f,
+    val timesCompleted: Int = 0,
+    val lastCompletedAt: Long = 0
 )
 
 data class WordState(
@@ -60,6 +67,25 @@ internal fun mergeGameLevels(
             else -> GameLevelState(
                 starsEarned = maxOf(l.starsEarned, r.starsEarned),
                 isUnlocked = l.isUnlocked || r.isUnlocked
+            )
+        }
+    }
+
+internal fun mergeLessonProgress(
+    local: Map<String, LessonState>,
+    remote: Map<String, LessonState>
+): Map<String, LessonState> =
+    (local.keys + remote.keys).associateWith { key ->
+        val l = local[key]
+        val r = remote[key]
+        when {
+            l == null -> r!!
+            r == null -> l
+            else -> LessonState(
+                isComplete = l.isComplete || r.isComplete,
+                bestAccuracy = maxOf(l.bestAccuracy, r.bestAccuracy),
+                timesCompleted = maxOf(l.timesCompleted, r.timesCompleted),
+                lastCompletedAt = maxOf(l.lastCompletedAt, r.lastCompletedAt)
             )
         }
     }

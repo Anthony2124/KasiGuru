@@ -68,6 +68,38 @@ class LearningStateMergeTest {
     }
 
     @Test
+    fun completedLessonSurvivesAFreshInstall() {
+        val local = emptyMap<String, LessonState>()
+        val remote = mapOf(
+            "Greetings#2" to LessonState(
+                isComplete = true,
+                bestAccuracy = 0.8f,
+                timesCompleted = 2,
+                lastCompletedAt = 1_700_000_000_000L
+            )
+        )
+
+        val merged = mergeLessonProgress(local, remote).getValue("Greetings#2")
+
+        assertTrue(merged.isComplete)
+        assertEquals(0.8f, merged.bestAccuracy, 0.0001f)
+        assertEquals(2, merged.timesCompleted)
+        assertEquals(1_700_000_000_000L, merged.lastCompletedAt)
+    }
+
+    @Test
+    fun lessonKeepsTheBestAccuracyAndLatestCompletion() {
+        val local = mapOf("Food#0" to LessonState(true, bestAccuracy = 1.0f, timesCompleted = 1, lastCompletedAt = 100L))
+        val remote = mapOf("Food#0" to LessonState(true, bestAccuracy = 0.6f, timesCompleted = 3, lastCompletedAt = 900L))
+
+        val merged = mergeLessonProgress(local, remote).getValue("Food#0")
+
+        assertEquals(1.0f, merged.bestAccuracy, 0.0001f)
+        assertEquals(3, merged.timesCompleted)
+        assertEquals(900L, merged.lastCompletedAt)
+    }
+
+    @Test
     fun matureReviewScheduleSurvivesAFreshInstall() {
         // Fresh install: word never reviewed here.
         val local = mapOf("aldew" to WordState())

@@ -1,6 +1,7 @@
 package com.kasiguru.ui.screens.auth
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.R
 import com.kasiguru.ui.components.clay.CanopyBackButton
 import com.kasiguru.ui.components.clay.CanopyScaffold
 import com.kasiguru.ui.components.clay.ClayButton
@@ -210,10 +212,9 @@ fun AccountScreen(
                                         .fillMaxWidth()
                                         .height(52.dp)
                                 ) {
-                                    Icon(
-                                        painter = painterResource(id = Iconsax.Global),
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_google_g),
                                         contentDescription = null,
-                                        tint = Ink,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(Modifier.width(Space.xs))

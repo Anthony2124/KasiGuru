@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.onboarding
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -78,6 +79,8 @@ fun OnboardingScreen(
     var userName by remember { mutableStateOf("Kasiguranin Learner") }
     var selectedAvatarId by remember { mutableIntStateOf(1) }
     var selectedTitleBadge by remember { mutableStateOf("Kasiguranin Apprentice") }
+
+    BackHandler(enabled = step > 1) { step -= 1 }
 
     Box(modifier = Modifier.fillMaxSize().background(Ground).statusBarsPadding()) {
         Column(

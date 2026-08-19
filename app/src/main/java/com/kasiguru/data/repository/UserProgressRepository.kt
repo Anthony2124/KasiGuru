@@ -50,8 +50,21 @@ class UserProgressRepository @Inject constructor(
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int) =
         userProgressDao.updateProfileDetails(fullName, age, address, iconId)
 
-    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String) =
+    /**
+     * The row is created if it is missing before the update runs.
+     *
+     * [UserProgressDao.completeOnboarding] is an `UPDATE ... WHERE id = 1`, so on a fresh install it
+     * would otherwise affect zero rows and fail silently — the learner would finish the whole wizard,
+     * lose the +50 XP welcome bonus and the day-1 streak, and be shown onboarding again on the next
+     * cold start. The database callback seeds this row on create, but that seed runs asynchronously,
+     * so this guard closes the race rather than relying on the ordering.
+     */
+    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String) {
+        if (userProgressDao.getUserProgressOnce() == null) {
+            userProgressDao.insertOrUpdate(UserProgressEntity())
+        }
         userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
+    }
 
     suspend fun addXp(xp: Int) {
         userProgressDao.addXp(xp)
