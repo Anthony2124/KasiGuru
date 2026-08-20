@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KasiGuru — Bulk Migration Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #12161F; color: #fff; padding: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    .log { background: #1a1e2e; border: 1px solid #2a2e3e; border-radius: 8px; padding: 1rem; max-height: 70vh; overflow-y: auto; font-family: monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; }
+    .success { color: #4ade80; }
+    .skip { color: #fbbf24; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+    button { background: #6366f1; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 1rem 0.5rem 1rem 0; }
+    button:hover { background: #4f46e5; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stats { margin: 1rem 0; padding: 1rem; background: #1a1e2e; border-radius: 8px; display: flex; gap: 2rem; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; }
+    .stat-label { font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>🔧 KasiGuru Bulk Migration Tool</h1>
+  <p style="color:#94a3b8; margin-bottom:1rem;">This tool updates vocabulary words in Firestore: re-categorizes "General" words and assigns Part of Speech based on English definitions. <strong>You must be logged in as admin first.</strong></p>
+
+  <div class="stats" id="stats" style="display:none;">
+    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Words</div></div>
+    <div class="stat"><div class="stat-num" id="stat-cat">0</div><div class="stat-label">Categories Fixed</div></div>
+    <div class="stat"><div class="stat-num" id="stat-pos">0</div><div class="stat-label">POS Assigned</div></div>
+    <div class="stat"><div class="stat-num" id="stat-errors">0</div><div class="stat-label">Errors</div></div>
+  </div>
+
+  <button id="btn-preview" onclick="runMigration(true)">👁 Preview Changes (Dry Run)</button>
+  <button id="btn-run" onclick="runMigration(false)" style="background:#059669;">🚀 Run Migration</button>
+
+  <div class="log" id="log">Waiting for action...\n</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIADrpzbQZpE4SoHRp9xKsh9A03RLZDlg",
+      authDomain: "kasiguru-86042.firebaseapp.com",
+      projectId: "kasiguru-86042",
+      storageBucket: "kasiguru-86042.firebasestorage.app",
+      messagingSenderId: "25073459164",
+      appId: "1:25073459164:web:95c6e2ed2d6b89af56b919"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const logEl = document.getElementById('log');
+    function log(msg, cls = '') {
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = msg + '\n';
+      logEl.appendChild(span);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ── Category Classification ──
+    const categoryKeywords = {
+      'Greetings & Essentials': ['hello', 'goodbye', 'thank', 'please', 'sorry', 'yes', 'no', 'welcome', 'greet', 'farewell', 'excuse', 'pardon'],
+      'Body Parts & Health': ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'saliva', 'sweat', 'wound', 'medicine', 'breath', 'cough', 'sneeze', 'pus', 'scar'],
+      'Animals & Wildlife': ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'cat', 'eel', 'fish', 'fly', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'squid', 'octopus', 'carabao', 'buffalo', 'cow', 'nest', 'egg', 'feather', 'fur', 'tail', 'fin', 'gills', 'louse', 'leech', 'snail', 'shell'],
+      'Food & Dining': ['bitter', 'coconut', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'sugar', 'sweet', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'cook', 'boil', 'roast', 'sour', 'delicious', 'hungry', 'thirsty', 'chew', 'swallow', 'vegetable', 'corn', 'bean', 'potato', 'onion', 'garlic', 'pepper', 'spice', 'soup', 'porridge', 'vinegar', 'oil', 'flour'],
+      'Numbers & Time': ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'hundred', 'thousand', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday', 'hour', 'minute', 'noon', 'midnight', 'dawn', 'dusk'],
+      'Weather & Climate': ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'storm', 'flood', 'fog', 'rainbow', 'hail', 'drought', 'humid', 'warm', 'cool', 'frost', 'sunrise', 'sunset'],
+      'Nature & Environment': ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'root', 'seed', 'flower', 'grass', 'vine', 'bush', 'thorn', 'wood', 'lake', 'spring', 'waterfall', 'island', 'sand', 'mud', 'clay', 'rock', 'hill', 'valley', 'cave', 'field', 'garden', 'plant', 'grow', 'land', 'shore', 'reef', 'coral', 'shade', 'shadow', 'tide', 'hightide', 'lowtide'],
+      'House & Daily Life': ['house', 'home', 'door', 'window', 'wall', 'roof', 'floor', 'room', 'bed', 'chair', 'table', 'pillow', 'blanket', 'lamp', 'fire', 'smoke', 'ash', 'candle', 'ladder', 'fence', 'gate', 'path', 'road', 'bridge', 'well', 'stairs', 'kitchen', 'bathroom', 'sleep', 'wake', 'rest', 'sit', 'stand', 'clothes', 'dress', 'shirt', 'pants', 'hat', 'shoe', 'wash', 'bathe', 'sweep'],
+      'Family & People': ['boy', 'brother', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'aunt', 'grandparent', 'grandfather', 'grandmother', 'grandson', 'granddaughter', 'nephew', 'niece', 'baby', 'elder', 'twin', 'orphan', 'widow', 'friend', 'neighbor', 'enemy', 'stranger', 'people', 'family', 'name'],
+      'Emotions & Feelings': ['anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good', 'ugly', 'pretty', 'hate', 'envy', 'jealous', 'proud', 'shame', 'shy', 'brave', 'lazy', 'lonely', 'worried', 'surprised', 'bored', 'excited', 'kind', 'cruel', 'gentle', 'fierce', 'calm', 'nervous'],
+      'Colors & Shapes': ['black', 'blue', 'green', 'red', 'white', 'yellow', 'brown', 'orange', 'purple', 'pink', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'wide', 'narrow', 'thick', 'thin', 'big', 'small', 'large', 'tiny', 'tall', 'deep', 'shallow', 'straight', 'curved', 'circle', 'square'],
+      'Occupations & Tools': ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'knife', 'rope', 'needle', 'thread', 'hammer', 'saw', 'plow', 'broom', 'pot', 'bucket', 'jar', 'mat', 'cloth', 'weave', 'sew', 'hunt', 'farmer', 'fisherman', 'carpenter', 'healer', 'teacher', 'soldier', 'smith', 'merchant'],
+    };
+
+    function classifyCategory(eng) {
+      if (!eng) return null;
+      const e = eng.toLowerCase();
+      for (const [cat, words] of Object.entries(categoryKeywords)) {
+        if (words.some(w => e.includes(w))) return cat;
+      }
+      return null;
+    }
+
+    // ── Part of Speech Classification ──
+    // Verbs: action words
+    const verbKeywords = ['to go', 'to come', 'to walk', 'to run', 'to jump', 'to swim', 'to fly', 'to fall', 'to climb', 'to crawl', 'to push', 'to pull', 'to throw', 'to catch', 'to hit', 'to kick', 'to bite', 'to cut', 'to dig', 'to carry', 'to hold', 'to give', 'to take', 'to buy', 'to sell', 'to steal', 'to hide', 'to find', 'to search', 'to see', 'to hear', 'to smell', 'to taste', 'to touch', 'to feel', 'to think', 'to know', 'to forget', 'to remember', 'to speak', 'to say', 'to tell', 'to ask', 'to answer', 'to call', 'to shout', 'to whisper', 'to sing', 'to dance', 'to play', 'to work', 'to fight', 'to kill', 'to die', 'to live', 'to cry', 'to laugh', 'to smile', 'to open', 'to close', 'to break', 'to build', 'to make', 'to burn', 'to blow', 'to tie', 'to turn', 'to pour', 'to fill', 'to send', 'to receive', 'to wait', 'to follow', 'to lead', 'to enter', 'to leave', 'to return', 'to begin', 'to finish', 'to want', 'to need', 'to choose', 'to count', 'to plant', 'to harvest', 'to hang', 'to wrap', 'to eat', 'to drink', 'to cook', 'to wash', 'to bathe', 'to sleep', 'to wake', 'to rest', 'to sit', 'to stand', 'to sweep', 'to sew', 'to weave', 'to hunt'];
+    const pureVerbs = ['go', 'come', 'walk', 'run', 'jump', 'swim', 'fly', 'fall', 'climb', 'crawl', 'push', 'pull', 'throw', 'catch', 'hit', 'kick', 'bite', 'cut', 'dig', 'carry', 'hold', 'give', 'take', 'buy', 'sell', 'steal', 'hide', 'find', 'search', 'see', 'hear', 'smell', 'taste', 'touch', 'feel', 'think', 'know', 'forget', 'remember', 'speak', 'say', 'tell', 'ask', 'answer', 'call', 'shout', 'whisper', 'sing', 'dance', 'play', 'work', 'fight', 'kill', 'die', 'live', 'cry', 'laugh', 'smile', 'open', 'close', 'break', 'build', 'make', 'burn', 'blow', 'tie', 'turn', 'pour', 'fill', 'send', 'receive', 'wait', 'follow', 'lead', 'enter', 'leave', 'return', 'begin', 'finish', 'want', 'need', 'choose', 'count', 'plant', 'harvest', 'hang', 'wrap', 'eat', 'drink', 'cook', 'wash', 'bathe', 'sleep', 'wake', 'rest', 'sit', 'stand', 'sweep', 'sew', 'weave', 'hunt', 'boil', 'roast', 'chew', 'swallow', 'greet', 'grow', 'measure', 'point', 'stab', 'scratch', 'rub', 'squeeze', 'suck', 'spit', 'vomit', 'breathe', 'snore', 'wink', 'stare', 'float', 'sink', 'flow', 'freeze', 'melt'];
+
+    // Adjectives: descriptive words
+    const adjKeywords = ['bitter', 'sweet', 'sour', 'delicious', 'hungry', 'thirsty', 'cold', 'hot', 'dry', 'wet', 'warm', 'cool', 'humid', 'bright', 'dark', 'clean', 'dirty', 'beautiful', 'ugly', 'pretty', 'good', 'bad', 'happy', 'sad', 'afraid', 'tired', 'sick', 'angry', 'brave', 'lazy', 'lonely', 'worried', 'surprised', 'bored', 'excited', 'kind', 'cruel', 'gentle', 'fierce', 'calm', 'nervous', 'proud', 'shy', 'jealous', 'black', 'blue', 'green', 'red', 'white', 'yellow', 'brown', 'orange', 'purple', 'pink', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'wide', 'narrow', 'thick', 'thin', 'big', 'small', 'large', 'tiny', 'tall', 'deep', 'shallow', 'straight', 'curved', 'old', 'new', 'young', 'fast', 'slow', 'heavy', 'light', 'hard', 'soft', 'rough', 'smooth', 'full', 'empty', 'raw', 'ripe', 'rotten', 'alive', 'dead', 'strong', 'weak', 'many', 'few', 'rich', 'poor', 'near', 'far', 'right', 'left', 'correct', 'wrong'];
+
+    // Adverbs: time/manner words
+    const advKeywords = ['soon', 'later', 'early', 'late', 'always', 'never', 'often', 'sometimes', 'today', 'tomorrow', 'yesterday', 'now', 'then', 'here', 'there', 'above', 'below', 'inside', 'outside', 'quickly', 'slowly', 'already', 'again', 'also', 'very', 'too', 'maybe', 'probably'];
+
+    // Pronouns
+    const pronounKeywords = ['i', 'me', 'my', 'mine', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'we', 'us', 'our', 'ours', 'they', 'them', 'their', 'theirs', 'this', 'that', 'these', 'those', 'who', 'what', 'which', 'whom', 'whose'];
+
+    // Prepositions
+    const prepKeywords = ['in', 'on', 'at', 'to', 'from', 'with', 'without', 'between', 'among', 'under', 'over', 'above', 'below', 'beside', 'behind', 'before', 'after', 'during', 'until', 'through', 'across', 'around', 'near', 'toward', 'into', 'onto', 'upon'];
+
+    // Conjunctions
+    const conjKeywords = ['and', 'but', 'or', 'nor', 'so', 'yet', 'because', 'although', 'while', 'if', 'when', 'then', 'however', 'therefore', 'moreover', 'furthermore'];
+
+    // Interjections
+    const interjKeywords = ['oh', 'ouch', 'wow', 'hey', 'oops', 'hello', 'goodbye', 'farewell', 'welcome', 'please', 'sorry', 'thank you', 'yes', 'no', 'alas'];
+
+    // Nouns: people, places, things, animals, body parts, foods, tools, etc.
+    const nounKeywords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'saliva', 'sweat', 'wound', 'medicine', 'breath', 'pus', 'scar', 'animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'cat', 'eel', 'fish', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'squid', 'octopus', 'carabao', 'buffalo', 'cow', 'nest', 'egg', 'feather', 'fur', 'tail', 'fin', 'gills', 'louse', 'leech', 'snail', 'shell', 'coconut', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'sugar', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'vegetable', 'corn', 'bean', 'potato', 'onion', 'garlic', 'pepper', 'spice', 'soup', 'porridge', 'vinegar', 'oil', 'flour', 'cloud', 'dew', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'storm', 'flood', 'fog', 'rainbow', 'hail', 'drought', 'frost', 'sunrise', 'sunset', 'bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'root', 'seed', 'flower', 'grass', 'vine', 'bush', 'thorn', 'wood', 'lake', 'spring', 'waterfall', 'island', 'sand', 'mud', 'clay', 'rock', 'hill', 'valley', 'cave', 'field', 'garden', 'land', 'shore', 'reef', 'coral', 'shade', 'shadow', 'tide', 'house', 'home', 'door', 'window', 'wall', 'roof', 'floor', 'room', 'bed', 'chair', 'table', 'pillow', 'blanket', 'lamp', 'fire', 'smoke', 'ash', 'candle', 'ladder', 'fence', 'gate', 'path', 'road', 'bridge', 'well', 'stairs', 'kitchen', 'bathroom', 'clothes', 'dress', 'shirt', 'pants', 'hat', 'shoe', 'boy', 'brother', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'aunt', 'grandparent', 'grandfather', 'grandmother', 'grandson', 'granddaughter', 'nephew', 'niece', 'baby', 'elder', 'twin', 'orphan', 'widow', 'friend', 'neighbor', 'enemy', 'stranger', 'people', 'family', 'name', 'anger', 'love', 'fear', 'joy', 'hate', 'envy', 'shame', 'pride', 'adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'knife', 'rope', 'needle', 'thread', 'hammer', 'saw', 'plow', 'broom', 'pot', 'bucket', 'jar', 'mat', 'cloth', 'farmer', 'fisherman', 'carpenter', 'healer', 'teacher', 'soldier', 'smith', 'merchant', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'hour', 'minute', 'noon', 'midnight', 'dawn', 'dusk', 'circle', 'square', 'plant', 'thing', 'place', 'world', 'country', 'town', 'village'];
+
+    function classifyPartOfSpeech(eng) {
+      if (!eng) return null;
+      const e = eng.toLowerCase().trim();
+
+      // Check for "to ___" verb pattern first
+      if (e.startsWith('to ')) return 'Verb';
+
+      // Interjections (greetings, exclamations)
+      if (interjKeywords.some(w => e === w || e.startsWith(w + ' ') || e.includes('; ' + w))) return 'Interjection';
+
+      // Pronouns (exact match preferred)
+      if (pronounKeywords.some(w => e === w)) return 'Pronoun';
+
+      // Conjunctions (exact match)
+      if (conjKeywords.some(w => e === w)) return 'Conjunction / Connector';
+
+      // Prepositions (exact match)
+      if (prepKeywords.some(w => e === w)) return 'Preposition';
+
+      // Verbs: check pure verb list (exact or "to X" or contains as whole word)
+      if (verbKeywords.some(w => e === w || e.startsWith(w + ' '))) return 'Verb';
+      if (pureVerbs.some(w => e === w)) return 'Verb';
+
+      // Adverbs
+      if (advKeywords.some(w => e === w)) return 'Adverb';
+
+      // Adjectives (exact match or the word IS an adjective)
+      if (adjKeywords.some(w => e === w)) return 'Adjective';
+
+      // Nouns (the largest category — check last)
+      if (nounKeywords.some(w => e === w || e.includes(w))) return 'Noun';
+
+      // Fallback heuristics based on English patterns
+      if (e.endsWith('ness') || e.endsWith('ment') || e.endsWith('tion') || e.endsWith('sion') || e.endsWith('ity') || e.endsWith('ance') || e.endsWith('ence')) return 'Noun';
+      if (e.endsWith('ful') || e.endsWith('less') || e.endsWith('ous') || e.endsWith('ive') || e.endsWith('able') || e.endsWith('ible') || e.endsWith('ish') || e.endsWith('al') || e.endsWith('ic')) return 'Adjective';
+      if (e.endsWith('ly')) return 'Adverb';
+      if (e.endsWith('ing') || e.endsWith('ate') || e.endsWith('ize') || e.endsWith('ify')) return 'Verb';
+      if (e.endsWith('er') || e.endsWith('or') || e.endsWith('ist') || e.endsWith('ian')) return 'Noun';
+
+      return null;
+    }
+
+    // ── Main Migration Function ──
+    window.runMigration = async function(dryRun) {
+      const btnPreview = document.getElementById('btn-preview');
+      const btnRun = document.getElementById('btn-run');
+      btnPreview.disabled = true;
+      btnRun.disabled = true;
+      logEl.innerHTML = '';
+
+      const statsEl = document.getElementById('stats');
+      statsEl.style.display = 'flex';
+
+      let catFixed = 0, posAssigned = 0, errors = 0;
+
+      try {
+        log(dryRun ? '🔍 PREVIEW MODE — no changes will be written' : '🚀 LIVE MODE — writing changes to Firestore', 'info');
+        log('');
+
+        log('📥 Fetching all vocabulary words from Firestore...', 'info');
+        const snapshot = await getDocs(collection(db, "vocabulary"));
+        const allDocs = snapshot.docs;
+        log(`Found ${allDocs.length} total words.\n`, 'info');
+
+        document.getElementById('stat-total').textContent = allDocs.length;
+
+        for (const docSnap of allDocs) {
+          const data = docSnap.data();
+          const id = docSnap.id;
+          const eng = data.english || '';
+          const word = data.kasiguranin || '(unknown)';
+          const updates = {};
+
+          // 1. Re-categorize "General" words
+          if (data.category === 'General' || !data.category) {
+            const newCat = classifyCategory(eng);
+            if (newCat) {
+              updates.category = newCat;
+              catFixed++;
+              log(`📂 "${word}" (${eng}) → category: ${newCat}`, 'success');
+            }
+          }
+
+          // 2. Assign Part of Speech if missing
+          if (!data.partOfSpeech) {
+            const pos = classifyPartOfSpeech(eng);
+            if (pos) {
+              updates.partOfSpeech = pos;
+              posAssigned++;
+              log(`🏷️  "${word}" (${eng}) → POS: ${pos}`, 'success');
+            } else {
+              log(`⚪ "${word}" (${eng}) → POS: no match`, 'skip');
+            }
+          }
+
+          // Write updates
+          if (Object.keys(updates).length > 0 && !dryRun) {
+            try {
+              updates.updatedAt = Date.now();
+              await updateDoc(doc(db, "vocabulary", id), updates);
+            } catch (err) {
+              errors++;
+              log(`❌ Failed to update "${word}": ${err.message}`, 'error');
+            }
+          }
+
+          document.getElementById('stat-cat').textContent = catFixed;
+          document.getElementById('stat-pos').textContent = posAssigned;
+          document.getElementById('stat-errors').textContent = errors;
+        }
+
+        log('');
+        log('═══════════════════════════════════════════════', 'info');
+        log(`${dryRun ? '📋 PREVIEW' : '✅ MIGRATION'} COMPLETE`, 'info');
+        log(`  Categories fixed: ${catFixed}`, 'success');
+        log(`  Parts of Speech assigned: ${posAssigned}`, 'success');
+        log(`  Errors: ${errors}`, errors > 0 ? 'error' : 'success');
+        log('═══════════════════════════════════════════════', 'info');
+
+      } catch (err) {
+        log(`❌ Fatal error: ${err.message}`, 'error');
+        console.error(err);
+      }
+
+      btnPreview.disabled = false;
+      btnRun.disabled = false;
+    };
+
+    // Auth check
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        log(`✅ Logged in as: ${user.email}`, 'success');
+        log('Ready. Click "Preview" to see what will change, or "Run Migration" to apply.\n', 'info');
+      } else {
+        log('⚠️  Not logged in! Please log in at the admin dashboard first, then refresh this page.', 'error');
+        log('   The page shares cookies with admin-wheat-nu-52-phi.vercel.app', 'skip');
+      }
+    });
+  </script>
+</body>
+</html>
