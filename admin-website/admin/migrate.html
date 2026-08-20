@@ -122,30 +122,20 @@
       // Check for "to ___" verb pattern first
       if (e.startsWith('to ')) return 'Verb';
 
-      // Interjections (greetings, exclamations)
-      if (interjKeywords.some(w => e === w || e.startsWith(w + ' ') || e.includes('; ' + w))) return 'Interjection';
+      // Helper to check if any keyword exists as a whole word
+      const hasWord = (keywords) => keywords.some(w => new RegExp(`\\b${w}\\b`).test(e));
 
-      // Pronouns (exact match preferred)
-      if (pronounKeywords.some(w => e === w)) return 'Pronoun';
-
-      // Conjunctions (exact match)
-      if (conjKeywords.some(w => e === w)) return 'Conjunction / Connector';
-
-      // Prepositions (exact match)
-      if (prepKeywords.some(w => e === w)) return 'Preposition';
-
-      // Verbs: check pure verb list (exact or "to X" or contains as whole word)
-      if (verbKeywords.some(w => e === w || e.startsWith(w + ' '))) return 'Verb';
-      if (pureVerbs.some(w => e === w)) return 'Verb';
-
-      // Adverbs
-      if (advKeywords.some(w => e === w)) return 'Adverb';
-
-      // Adjectives (exact match or the word IS an adjective)
-      if (adjKeywords.some(w => e === w)) return 'Adjective';
-
-      // Nouns (the largest category — check last)
-      if (nounKeywords.some(w => e === w || e.includes(w))) return 'Noun';
+      if (hasWord(interjKeywords)) return 'Interjection';
+      if (hasWord(pronounKeywords)) return 'Pronoun';
+      if (hasWord(conjKeywords)) return 'Conjunction / Connector';
+      if (hasWord(prepKeywords)) return 'Preposition';
+      
+      if (hasWord(verbKeywords) || hasWord(pureVerbs)) return 'Verb';
+      if (hasWord(advKeywords)) return 'Adverb';
+      if (hasWord(adjKeywords)) return 'Adjective';
+      
+      // Nouns are the most common fallback, but we still check explicitly
+      if (hasWord(nounKeywords)) return 'Noun';
 
       // Fallback heuristics based on English patterns
       if (e.endsWith('ness') || e.endsWith('ment') || e.endsWith('tion') || e.endsWith('sion') || e.endsWith('ity') || e.endsWith('ance') || e.endsWith('ence')) return 'Noun';
@@ -154,7 +144,11 @@
       if (e.endsWith('ing') || e.endsWith('ate') || e.endsWith('ize') || e.endsWith('ify')) return 'Verb';
       if (e.endsWith('er') || e.endsWith('or') || e.endsWith('ist') || e.endsWith('ian')) return 'Noun';
 
-      return null;
+      // If it contains " a " or " the " it's usually a noun phrase
+      if (e.includes(' a ') || e.startsWith('a ') || e.includes(' the ') || e.startsWith('the ')) return 'Noun';
+
+      // Default to Noun if we really don't know, rather than null
+      return 'Noun';
     }
 
     // ── Main Migration Function ──
@@ -198,16 +192,12 @@
             }
           }
 
-          // 2. Assign Part of Speech if missing
-          if (!data.partOfSpeech) {
-            const pos = classifyPartOfSpeech(eng);
-            if (pos) {
-              updates.partOfSpeech = pos;
-              posAssigned++;
-              log(`🏷️  "${word}" (${eng}) → POS: ${pos}`, 'success');
-            } else {
-              log(`⚪ "${word}" (${eng}) → POS: no match`, 'skip');
-            }
+          // 2. FORCE Assign Part of Speech (overriding existing)
+          const pos = classifyPartOfSpeech(eng);
+          if (pos && data.partOfSpeech !== pos) {
+            updates.partOfSpeech = pos;
+            posAssigned++;
+            log(`🏷️  "${word}" (${eng}) → POS: ${pos}`, 'success');
           }
 
           // Write updates
