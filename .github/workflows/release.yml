@@ -63,8 +63,15 @@ jobs:
         if: always()
         run: rm -f release.jks keystore.properties
 
-      - name: Copy APK into the download site
-        run: cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
+      - name: Create GitHub Release with APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.name }}" \
+            "app/build/outputs/apk/release/app-release.apk#kasiguru-v${{ steps.version.outputs.name }}.apk" \
+            --title "KasiGuru v${{ steps.version.outputs.name }}" \
+            --notes "Release v${{ steps.version.outputs.name }} (Build ${{ steps.version.outputs.code }})" \
+            --latest
 
       - name: Deploy download site to Vercel
         working-directory: admin-website/download
@@ -85,4 +92,4 @@ jobs:
           node publish_release.js \
             "${{ steps.version.outputs.code }}" \
             "${{ steps.version.outputs.name }}" \
-            "https://download-woad-iota.vercel.app/kasiguru-v${{ steps.version.outputs.name }}.apk"
+            "https://github.com/ajaparicio36/kasiguru/releases/download/v${{ steps.version.outputs.name }}/kasiguru-v${{ steps.version.outputs.name }}.apk"

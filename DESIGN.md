@@ -234,3 +234,88 @@ cover, not a placeholder — which is the state every story ships in today.
 
 **Ground pattern overlay.** An optional tileable motif drawn over the pattern layer at 0.05–0.08 alpha,
 1080x1080, PNG or vector. Every screen must look finished with it null.
+
+## Web Surface Architecture & Specification
+
+DESIGN.md governs the Android app and its two web surfaces (`admin-website/download` and `admin-website/admin`). Both web surfaces read as direct continuations of the Android app's design system.
+
+### Shared Layer & Canonical Source
+
+The two web surfaces are separate static deployments with no build step. To prevent visual drift without a complex bundler:
+- Canonical source files live in `admin-website/shared/`:
+  - `tokens.css` — palette, type scale, spacing, radii, elevation, motion tokens.
+  - `components.css` — clay, SoftCard, TagChip, status badges, section headings, progress bars, state placeholders, toasts, focus rings, reduced motion.
+- `scripts/sync-web-shared.js` copies these into each surface's `css/` folder.
+- CI runs `node scripts/sync-web-shared.js --check` to enforce zero drift.
+
+### Clay in CSS
+
+The web ports the Android app's 3-layer clay press language:
+1. **The Lip:** Solid bottom edge offset (`5px` rest, `1px` active) in a deeper tone (`--violet-deep`, `--gold-deep`, `--red-deep`, or `--violet-tint`).
+2. **The Lit Top:** Vertical highlight gradient (`linear-gradient(to bottom, rgba(255,255,255,0.22), transparent 45%)`).
+3. **The Cast Shadow:** Soft violet-tinted shadow (`0 10px 20px -4px var(--violet-shadow)`), never neutral grey.
+4. **Timing:** `120ms` down (`--dur-quick`), `180ms` release (`--dur-exit`).
+
+```css
+.clay {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--clay-face, var(--violet));
+  color: var(--clay-label, #FFFFFF);
+  box-shadow: 0 var(--clay-lip) 0 0 var(--clay-lip-color, var(--violet-deep)), 0 10px 20px -4px var(--violet-shadow);
+  transition: box-shadow var(--dur-exit) var(--ease-out), transform var(--dur-exit) var(--ease-out);
+}
+.clay:active {
+  transform: translateY(4px);
+  box-shadow: 0 var(--clay-lip-pressed) 0 0 var(--clay-lip-color, var(--violet-deep)), 0 3px 8px -2px var(--violet-shadow);
+  transition-duration: var(--dur-quick);
+}
+```
+
+### Web Typography Mapping (16px Root)
+
+| Android Token | Web Rem | Size | Line Height | Tracking | Family |
+|---|---|---|---|---|---|
+| `DisplayLg` | `2.5rem` | 40sp | 1.1 | `-0.025em` | Nunito 900 |
+| `DisplayMd` | `2.125rem` | 34sp | 1.15 | `-0.0225em` | Nunito 900 |
+| `DisplaySm` | `1.75rem` | 28sp | 1.2 | `-0.0175em` | Nunito 800 |
+| `HeadlineLg` | `1.625rem` | 26sp | 1.25 | `-0.015em` | Nunito 800 |
+| `HeadlineMd` | `1.375rem` | 22sp | 1.3 | `-0.010em` | Nunito 800 |
+| `HeadlineSm` | `1.25rem` | 20sp | 1.3 | `-0.010em` | Nunito 800 |
+| `TitleLg` | `1.125rem` | 18sp | 1.35 | `-0.0075em` | Nunito 800 |
+| `TitleMd` | `1.0rem` | 16sp | 1.4 | `-0.005em` | Nunito 700 |
+| `TitleSm` | `0.875rem` | 14sp | 1.4 | `-0.0025em` | Nunito 700 |
+| `BodyLg` | `1.0rem` | 16sp | 1.55 | `0` | DM Sans 400 |
+| `BodyMd` | `0.875rem` | 14sp | 1.5 | `+0.0025em` | DM Sans 400 |
+| `BodySm` | `0.75rem` | 12sp | 1.45 | `+0.005em` | DM Sans 400 |
+| `LabelLg` | `0.875rem` | 14sp | 1.3 | `+0.0025em` | DM Sans 700 |
+| `LabelMd` | `0.8125rem` | 13sp | 1.35 | `+0.005em` | DM Sans 500 |
+| `LabelSm` | `0.6875rem` | 11sp | 1.3 | `+0.036em` | DM Sans 700 |
+| `KasiguraninHeadword` | `2.25rem` | 36sp | 1.15 | `-0.028em` | Nunito 900 (`.headword`) |
+
+### Responsive Breakpoints
+
+Mobile-first progression:
+- `360px–420px`: Compact mobile; full-width stacked CTAs, comfortable ≥48px touch targets.
+- `640px`: Small tablet / landscape phone; grids adjust to 1–2 columns.
+- `720px / 768px`: Tablet boundary; admin sidebar switches from slide-out mobile drawer to fixed desktop navigation.
+- `1024px`: Desktop; multi-column bento grids and asymmetric editorial feature layouts.
+- `1200px`: Max page container width (`--page-max`).
+
+### Component Equivalence
+
+| App Component (Compose) | Web Class | Role & Notes |
+|---|---|---|
+| `ClayButton(Primary)` | `.clay.clay--primary` | Main action, violet face, violet-deep lip, white text |
+| `ClayButton(Reward)` | `.clay.clay--reward` | Gold face, gold-deep lip, **ink text only** |
+| `ClayButton(Quiet)` | `.clay.clay--quiet` | Surface face, violet-tint lip, violet text |
+| `ClayButton(Danger)` | `.clay.clay--danger` | Red face, red-deep lip, white text |
+| `SoftCard` | `.soft-card` | White surface with diffuse `--violet-shadow`, 28px radius |
+| `TagChip` | `.tag-chip` | Violet-tint background with violet text |
+| `StatusBadge` | `.badge.badge--{status}` | Semantic status indicators with text + color |
+| `Snackbar` | `.toast` | Transient feedback host (`#toast-host`), replacing alert() |
+| `LinearProgressIndicator` | `.progress` + `.progress__fill` | Violet on neutral track |
+

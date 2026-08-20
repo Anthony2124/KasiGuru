@@ -121,7 +121,9 @@ try {
     if (latest) {
       applyReleaseInfo(latest);
     } else {
-      showCheckFailedState();
+      // No releases yet — show a neutral state, not an error
+      const tag = document.getElementById('store-version-tag');
+      if (tag) tag.textContent = 'No releases published yet — check back soon.';
     }
   }, (error) => {
     console.warn('Release listener error:', error);

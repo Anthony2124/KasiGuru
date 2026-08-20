@@ -29,7 +29,14 @@ admin.initializeApp({
 });
 
 (async () => {
-  const doc = { versionCode, versionName, apkUrl };
+  const doc = {
+    versionCode,
+    versionName,
+    apkUrl,
+    releaseNotes: '',  // CI doesn't have notes; admin can edit later
+    forceUpdate: false,
+    releasedAt: new Date().toISOString()
+  };
   await admin.firestore().collection('app_releases').doc(`v${versionName}`).set(doc);
   console.log(`Published app_releases/v${versionName}:`, JSON.stringify(doc));
 })().catch((err) => {

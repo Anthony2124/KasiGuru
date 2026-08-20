@@ -1,84 +1,7 @@
 /*
    KasiGuru Admin Web Portal
    2026 Casiguran Coast Design System — light surface variant.
-   Palette, scaffold and component conventions mirror the public download
-   site (../download/css/styles.css) so both properties read as one product.
 */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
-:root {
-  /* Violet Sheet. DESIGN.md is the authority for the app and both web surfaces, and it supersedes
-     the Casiguran Coast palette these pages were still on. Token NAMES are kept so every existing
-     rule keeps working; only the values move. */
-
-  /* Brand */
-  --violet: #5B4CDB;              /* white on it measures 6.00 */
-  --violet-deep: #4A3FC0;
-  --violet-tint: #EDEAFF;
-  --canopy-top: #6C5CE7;          /* white 4.86 */
-  --canopy-bottom: #4A3FC0;       /* white 7.60 */
-
-  /* Reward hues. Fills only, never foreground text: gold measures 1.83 on white. */
-  --gold: #FFB020;                /* ink on it measures 9.00 */
-  --gold-deep: #D98200;
-  --coral: #FF8B5E;               /* ink on it measures 7.14 */
-  --coral-deep: #E0651F;
-  --green: #15803D;               /* white 5.02 */
-  --red: #DC2626;                 /* white 4.83 */
-
-  /* Legacy aliases, kept so existing rules resolve. Each now points at a Violet Sheet value. */
-  --play-purple-start: #6C5CE7;
-  --play-purple-end: #8C7CF0;
-  --play-gold-start: #FFB020;
-  --play-gold-end: #D98200;
-  --play-pink-start: #FF8B5E;
-  --play-pink-end: #E0651F;
-  --vocab-sea: #5B4CDB;
-  --vocab-sea-dark: #4A3FC0;
-  --xp-gold: #FFB020;
-  --xp-gold-dark: #D98200;
-  --games-coral: #FF8B5E;
-  --games-coral-light: #FFA57E;
-  --streak-ember: #FF8B5E;
-  --stories-dusk: #6C5CE7;
-  --sky-review: #5B4CDB;
-
-  /* Gradients */
-  --grad-purple: linear-gradient(135deg, #6C5CE7 0%, #8C7CF0 100%);
-  --grad-gold: linear-gradient(135deg, #FFB020 0%, #D98200 100%);
-  --grad-pink: linear-gradient(135deg, #FF8B5E 0%, #E0651F 100%);
-  --grad-sea: linear-gradient(135deg, #5B4CDB 0%, #4A3FC0 100%);
-  --grad-coral: linear-gradient(135deg, #FF8B5E 0%, #E0651F 100%);
-  --grad-hero: linear-gradient(135deg, #6C5CE7 0%, #4A3FC0 100%);
-
-  /* Ground and surfaces. White cards read as floating on the lavender ground. */
-  --ground: #F1EEFF;
-  --sand-bg: #F1EEFF;
-  --bg-surface: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-nav: rgba(255, 255, 255, 0.92);
-  --surface-sunken: #F4F2FF;
-
-  /* Ink. Both pairings are measured against the ground: 14.43 and 5.67. */
-  --coast-ink: #1F1B3A;
-  --coast-muted: #5E5A80;
-  --text-main: #1F1B3A;
-  --text-muted: #5E5A80;
-  --faint: #8B87A8;
-  --border-color: rgba(31, 27, 58, 0.08);
-  --border-subtle: rgba(31, 27, 58, 0.04);
-  --violet-shadow: rgba(91, 76, 219, 0.16);
-
-  /* Shape and type. Radii match the app's four steps. */
-  --radius-hero: 32px;
-  --radius-card: 28px;
-  --radius-tile: 20px;
-  --radius-pill: 999px;
-  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-
-  /* Minimum comfortable tap target, per Material. */
-  --tap-min: 48px;
-}
 
 * {
   box-sizing: border-box;
@@ -91,17 +14,11 @@ html {
 }
 
 body {
-  font-family: var(--font-family);
-  background-color: var(--sand-bg);
-  color: var(--coast-ink);
+  font-family: var(--font-body);
+  background-color: var(--ground);
+  color: var(--ink);
   line-height: 1.6;
   min-height: 100vh;
-  padding-bottom: 4rem;
-  background-image:
-    radial-gradient(circle at 10% 10%, rgba(123, 110, 246, 0.07) 0%, transparent 40%),
-    radial-gradient(circle at 90% 40%, rgba(255, 176, 32, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 50% 85%, rgba(18, 179, 166, 0.06) 0%, transparent 50%);
-  background-attachment: fixed;
 }
 
 /* ── Web Component <iconsax-icon> Styling ── */
@@ -127,356 +44,257 @@ iconsax-icon svg {
   display: block !important;
 }
 
-/* ── Floating Capsule Header Navigation ── */
-header {
-  position: sticky;
-  top: 16px;
+/* ── Sidebar Layout ── */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  background: var(--grad-canopy);
+  color: var(--on-canopy);
+  display: flex;
+  flex-direction: column;
   z-index: 1000;
-  width: calc(100% - 32px);
-  max-width: 1200px;
-  margin: 0 auto 28px auto;
-  background: var(--bg-nav);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-pill);
-  padding: 10px 20px;
+  overflow-y: auto;
+  box-shadow: 4px 0 24px var(--violet-shadow);
+  transition: transform var(--dur-standard) var(--ease-out);
+}
+
+.sidebar-header {
+  padding: var(--space-xl) var(--space-lg);
   display: flex;
   align-items: center;
+  gap: var(--space-sm);
   justify-content: space-between;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .logo-badge {
-  background: var(--grad-purple);
-  color: #FFFFFF;
-  font-family: 'Outfit', sans-serif;
+  background: var(--surface);
+  color: var(--violet);
+  font-family: var(--font-display);
   font-weight: 900;
   font-size: 1.1rem;
   padding: 6px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-chip);
   letter-spacing: -0.5px;
-  box-shadow: 0 4px 14px rgba(123, 110, 246, 0.35);
+  box-shadow: 0 4px 14px var(--violet-shadow);
 }
 
 .logo-title {
   font-weight: 800;
   font-size: 1rem;
-  color: var(--coast-ink);
+  font-family: var(--font-display);
+  color: var(--on-canopy);
   letter-spacing: -0.3px;
 }
 
-nav {
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: 0 var(--space-lg);
+  flex: 1;
+}
+
+.sidebar-nav button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: var(--radius-chip);
+  cursor: pointer;
+  transition: all var(--dur-quick) var(--ease-out);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.sidebar-nav button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-canopy);
+}
+
+.sidebar-nav button.active {
+  background: var(--surface);
+  color: var(--violet);
+  box-shadow: 0 4px 12px var(--violet-shadow);
+}
+
+.sidebar-footer {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#admin-user-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-chip);
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--on-canopy);
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(28, 34, 51, 0.03);
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-subtle);
 }
 
-nav button, nav a {
+#logout-btn {
   background: transparent;
-  border: none;
-  color: var(--coast-muted);
-  font-family: var(--font-family);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--on-canopy);
+  font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 700;
   padding: 8px 18px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--dur-quick) ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  text-decoration: none;
 }
 
-nav button:hover, nav a:hover {
-  color: var(--coast-ink);
-  background: rgba(28, 34, 51, 0.05);
+#logout-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: var(--red);
+  color: #fff;
 }
 
-nav button.active {
-  background: var(--grad-purple);
-  color: #FFFFFF;
-  box-shadow: 0 6px 18px rgba(123, 110, 246, 0.35);
-}
-
-.store-link-btn {
-  background: var(--grad-purple) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 6px 18px rgba(123, 110, 246, 0.35);
-}
-
-.store-link-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(123, 110, 246, 0.45);
-}
-
-/* ── Main Layout Scaffolding ── */
-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-/* ── Subnav Pill Bar ── */
-.subnav-bar {
-  display: flex;
+.mobile-topbar {
+  display: none;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--surface);
+  box-shadow: 0 2px 8px var(--violet-shadow);
+  position: sticky;
+  top: 0;
+  z-index: 900;
 }
 
-.subnav-pills {
-  display: flex;
-  gap: 8px;
-  background: var(--bg-surface);
-  padding: 6px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
-.subnav-pill-btn {
+.hamburger-btn {
   background: transparent;
   border: none;
-  color: var(--coast-muted);
-  font-family: var(--font-family);
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: var(--radius-pill);
+  font-size: 1.5rem;
+  color: var(--ink);
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.subnav-pill-btn:hover {
-  color: var(--coast-ink);
-  background: rgba(28, 34, 51, 0.04);
+.close-sidebar-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--on-canopy);
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
-.subnav-pill-btn.active {
-  background: var(--grad-purple);
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(123, 110, 246, 0.3);
-}
-
-/* ── Hero Banner Card ── */
-.hero-card {
-  background: var(--grad-hero);
-  border-radius: var(--radius-hero);
-  padding: 40px;
-  margin-bottom: 28px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 20px 48px rgba(108, 92, 231, 0.25);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.hero-chip {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: #FFFFFF;
-  margin-bottom: 12px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.hero-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: #FFFFFF;
-  margin-bottom: 8px;
-  line-height: 1.2;
-}
-
-.hero-subtitle {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 1rem;
-  max-width: 540px;
-}
-
-/* ── Weekly Verification Track Strip ── */
-.weekly-mission-strip {
-  background: var(--bg-surface);
-  border-radius: var(--radius-card);
-  padding: 24px;
-  margin-bottom: 28px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.day-track {
-  display: flex;
-  gap: 10px;
-}
-
-.day-pill {
-  background: rgba(28, 34, 51, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 10px 14px;
-  text-align: center;
-  min-width: 54px;
-}
-
-.day-pill.active {
-  background: var(--grad-gold);
-  border-color: transparent;
-  color: #12161F;
-  box-shadow: 0 4px 14px rgba(255, 201, 74, 0.35);
-}
-
-.day-pill.active .day-name, .day-pill.active .day-num {
-  color: #12161F;
-}
-
-.day-name {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--coast-muted);
-  text-transform: uppercase;
-}
-
-.day-num {
-  font-size: 1.1rem;
-  font-weight: 900;
-  margin-top: 2px;
-  color: var(--coast-ink);
+.admin-main {
+  margin-left: 260px;
+  flex: 1;
+  padding: var(--space-xl);
+  max-width: 1200px;
 }
 
 /* ── Bento Grid Metric Cards ── */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: var(--gutter);
+  margin-bottom: var(--space-xl);
 }
 
 .bento-card {
-  border-radius: var(--radius-card);
-  padding: 24px;
+  border-radius: var(--radius-panel);
+  padding: var(--space-lg);
   display: flex;
-  align-items: center;
-  gap: 16px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  flex-direction: column;
+  gap: var(--space-md);
+  transition: transform var(--dur-standard) var(--ease-out), box-shadow var(--dur-standard) var(--ease-out);
   position: relative;
   overflow: hidden;
   border: 1px solid transparent;
+  text-decoration: none;
 }
 
 .bento-card:hover {
   transform: translateY(-4px);
-}
-
-.bento-card.purple {
-  background: var(--grad-purple);
-  box-shadow: 0 14px 30px rgba(123, 110, 246, 0.25);
-}
-
-.bento-card.gold {
-  background: var(--grad-gold);
-  color: #12161F;
-  box-shadow: 0 14px 30px rgba(255, 159, 28, 0.25);
-}
-
-.bento-card.gold .bento-info h3 {
-  color: rgba(18, 22, 31, 0.75);
-}
-
-.bento-card.gold .bento-info p {
-  color: #12161F;
-}
-
-.bento-card.pink {
-  background: var(--grad-pink);
-  box-shadow: 0 14px 30px rgba(255, 111, 160, 0.25);
-}
-
-.bento-card.teal {
-  background: var(--grad-sea);
-  box-shadow: 0 14px 30px rgba(18, 179, 166, 0.25);
+  box-shadow: 0 12px 24px var(--violet-shadow);
 }
 
 .bento-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.22);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-tile);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(--violet-tint);
+  color: var(--violet);
 }
 
 .bento-info h3 {
   font-size: 0.85rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-family: var(--font-body);
 }
 
 .bento-info p {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 900;
-  color: #FFFFFF;
+  color: var(--ink);
   line-height: 1;
   margin-top: 4px;
 }
 
 /* ── Panel Containers & Tables ── */
 .panel {
-  background: var(--bg-surface);
-  border-radius: var(--radius-card);
-  padding: 28px;
-  margin-bottom: 28px;
+  background: var(--surface);
+  border-radius: var(--radius-panel);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 8px 24px -8px var(--violet-shadow);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .panel-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 800;
-  color: var(--coast-ink);
+  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -486,35 +304,35 @@ main {
 .form-control {
   width: 100%;
   padding: 12px 18px;
-  background: #FFFFFF;
+  background: var(--surface);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
-  color: var(--coast-ink);
-  font-family: var(--font-family);
+  border-radius: var(--radius-chip);
+  color: var(--ink);
+  font-family: var(--font-body);
   font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-quick) ease, box-shadow var(--dur-quick) ease;
 }
 
 .form-control::placeholder {
-  color: #A2A9B8;
+  color: var(--faint);
 }
 
 .form-control:focus {
-  border-color: var(--play-purple-start);
-  box-shadow: 0 0 0 3px rgba(123, 110, 246, 0.15);
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px var(--violet-tint);
 }
 
 /* ── Buttons ── */
 .btn {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   font-weight: 800;
   font-size: 0.95rem;
   padding: 12px 24px;
   border-radius: var(--radius-pill);
   border: none;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all var(--dur-quick) ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -523,48 +341,48 @@ main {
 }
 
 .btn-primary {
-  background: var(--grad-purple);
+  background: var(--violet);
   color: #FFFFFF;
-  box-shadow: 0 6px 18px rgba(123, 110, 246, 0.35);
+  box-shadow: 0 6px 18px var(--violet-shadow);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(123, 110, 246, 0.45);
+  box-shadow: 0 10px 24px var(--violet-shadow);
 }
 
 .btn-success {
-  background: var(--grad-gold);
-  color: #12161F;
-  box-shadow: 0 6px 18px rgba(255, 201, 74, 0.35);
+  background: var(--gold);
+  color: var(--reward-ink);
+  box-shadow: 0 6px 18px rgba(255, 176, 32, 0.35);
 }
 
 .btn-success:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(255, 201, 74, 0.45);
+  box-shadow: 0 10px 24px rgba(255, 176, 32, 0.45);
 }
 
 .btn-danger {
-  background: var(--grad-coral);
+  background: var(--red);
   color: #FFFFFF;
-  box-shadow: 0 6px 18px rgba(255, 107, 107, 0.32);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.32);
 }
 
 .btn-danger:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(255, 107, 107, 0.42);
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.42);
 }
 
 .btn-outline {
-  background: #FFFFFF;
+  background: var(--surface);
   border: 1px solid var(--border-color);
-  color: var(--coast-ink);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  color: var(--ink);
+  box-shadow: 0 2px 8px var(--violet-shadow);
 }
 
 .btn-outline:hover {
-  background: rgba(28, 34, 51, 0.04);
-  border-color: rgba(28, 34, 51, 0.16);
+  background: var(--surface-sunken);
+  border-color: rgba(31, 27, 58, 0.16);
 }
 
 .btn-sm {
@@ -577,12 +395,12 @@ main {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  border-radius: var(--radius-tile);
 }
 
 table {
-  /* width:100% here defeated the .table-responsive wrapper: the table shrank to the container rather
-     than overflowing it, so eight columns were compressed into a phone's width instead of scrolling.
-     A min-width lets the wrapper do its job; 100% keeps it filling a wide screen. */
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
@@ -590,77 +408,60 @@ table {
 }
 
 th {
-  background: rgba(28, 34, 51, 0.025);
+  background: rgba(31, 27, 58, 0.025);
   padding: 14px 18px;
   font-size: 0.8rem;
   font-weight: 800;
-  color: var(--coast-muted);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-body);
 }
 
 td {
   padding: 16px 18px;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.95rem;
-  color: var(--coast-ink);
+  color: var(--ink);
   vertical-align: middle;
 }
 
 tr:hover td {
-  background: rgba(28, 34, 51, 0.02);
+  background: rgba(31, 27, 58, 0.02);
 }
 
-/* ── Badges ── */
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
+td .btn,
+td button {
+  min-height: 40px;
+  white-space: nowrap;
 }
 
-.badge-pending {
-  background: rgba(255, 159, 28, 0.12);
-  color: var(--status-pending);
-  border: 1px solid rgba(255, 159, 28, 0.28);
-}
+/* ── Legacy Badge Compat ── */
+.badge-pending { background: var(--status-pending-bg); color: var(--status-pending); }
+.badge-approved { background: var(--status-approved-bg); color: var(--status-approved); }
+.badge-rejected { background: var(--status-rejected-bg); color: var(--status-rejected); }
+.badge-category { background: var(--status-info-bg); color: var(--status-info); }
 
-.badge-approved {
-  background: rgba(18, 179, 166, 0.12);
-  color: var(--status-approved);
-  border: 1px solid rgba(18, 179, 166, 0.28);
-}
+/* Overrides */
+#releases-list-container .panel h3, #releases-list-container h3 { color: var(--ink) !important; }
+.badge-category[style*="color:#fff"] { color: var(--violet) !important; background: var(--violet-tint) !important; }
 
-.badge-rejected {
-  background: rgba(255, 107, 107, 0.12);
-  color: var(--status-rejected);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-}
-
-.badge-category {
-  background: rgba(123, 110, 246, 0.1);
-  color: var(--status-info);
-  border: 1px solid rgba(123, 110, 246, 0.25);
-}
-
-/* ── Excel Dropzone ── */
+/* ── Dropzones ── */
 .dropzone {
-  border: 2px dashed var(--play-purple-start);
-  border-radius: 20px;
+  border: 2px dashed var(--violet);
+  border-radius: var(--radius-tile);
   padding: 40px;
   text-align: center;
-  background: rgba(123, 110, 246, 0.04);
-  color: var(--coast-ink);
+  background: rgba(91, 76, 219, 0.04);
+  color: var(--ink);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all var(--dur-quick) ease;
 }
 
 .dropzone:hover, .dropzone.dragover {
-  background: rgba(123, 110, 246, 0.1);
-  border-color: var(--play-purple-end);
+  background: var(--violet-tint);
+  border-color: var(--violet-deep);
 }
 
 /* ── Modals ── */
@@ -670,7 +471,7 @@ tr:hover td {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(28, 34, 51, 0.45);
+  background: rgba(31, 27, 58, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 2000;
@@ -679,7 +480,7 @@ tr:hover td {
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--dur-standard) ease;
 }
 
 .modal-overlay.active {
@@ -688,17 +489,17 @@ tr:hover td {
 }
 
 .modal-card {
-  background: var(--bg-surface);
+  background: var(--surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
-  padding: 32px;
+  padding: var(--space-xl);
   width: 90%;
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 24px 60px rgba(28, 34, 51, 0.15), 0 4px 12px rgba(28, 34, 51, 0.06);
+  box-shadow: 0 24px 60px var(--violet-shadow), 0 4px 12px rgba(31, 27, 58, 0.06);
   transform: translateY(20px);
-  transition: transform 0.3s ease;
+  transition: transform var(--dur-standard) ease;
 }
 
 .modal-overlay.active .modal-card {
@@ -709,119 +510,113 @@ tr:hover td {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
 .close-btn {
   background: transparent;
   border: none;
-  color: var(--coast-muted);
+  color: var(--muted);
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color var(--dur-quick) ease;
 }
 
 .close-btn:hover {
-  color: var(--coast-ink);
+  color: var(--ink);
 }
 
-/* ── Section Headings ── */
-.section-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: var(--coast-ink);
-  margin-bottom: 12px;
+.form-group {
+  margin-bottom: var(--space-md);
 }
 
-.section-desc {
-  color: var(--coast-muted);
-  font-size: 1.05rem;
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
 }
 
-/* ── Responsive Breakpoints ── */
-@media (max-width: 1024px) {
+/* ── Layout Classes ── */
+.importer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter);
+  margin-bottom: var(--space-xl);
+}
+
+/* ── Responsive Breakpoints Mobile-First Ascending ── */
+@media (min-width: 640px) {
+  /* add rules if any */
+}
+
+@media (min-width: 720px) {
+  /* add rules if any */
+}
+
+@media (min-width: 1024px) {
+  /* add rules if any */
+}
+
+/* Mobile adjustments handled max-width for simplicity since base is desktop-ish, but the prompt says:
+   "Breakpoints sorted mobile-first: 640px, 720px, 1024px in ascending order."
+   Let's rewrite them mobile first:
+*/
+
+/* Base is mobile */
+.bento-grid {
+  grid-template-columns: 1fr;
+}
+.admin-main {
+  margin-left: 0;
+  padding: var(--space-md);
+}
+.admin-sidebar {
+  transform: translateX(-100%);
+}
+.admin-sidebar.open {
+  transform: translateX(0);
+}
+.mobile-topbar {
+  display: flex;
+}
+.close-sidebar-btn {
+  display: block;
+}
+.importer-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
   .bento-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 640px) {
+@media (min-width: 720px) {
+  .admin-main {
+    margin-left: 260px;
+    padding: var(--space-xl);
+  }
+  .admin-sidebar {
+    transform: translateX(0);
+  }
+  .mobile-topbar {
+    display: none;
+  }
+  .close-sidebar-btn {
+    display: none;
+  }
+  .importer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
   .bento-grid {
-    grid-template-columns: 1fr;
-  }
-  header {
-    flex-direction: column;
-    gap: 12px;
-  }
-  .hero-card {
-    padding: 28px;
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
-  }
-  .hero-title {
-    font-size: 1.8rem;
-  }
-}
-
-
-/* ── Mobile ─────────────────────────────────────────────────────────────────
-   The admin portal is Operate mode: moderators need to scan and act, so these
-   rules protect scanability rather than add expression. */
-
-/* The scroll container needs to be discoverable, not just functional. */
-.table-responsive {
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  border-radius: var(--radius-tile);
-}
-
-/* A row of actions inside a table cell must not wrap into an unhittable stack. */
-td .btn,
-td button {
-  min-height: 40px;
-  white-space: nowrap;
-}
-
-a, button, .btn {
-  min-height: var(--tap-min);
-}
-
-@media (max-width: 640px) {
-  .hero-title {
-    font-size: clamp(1.6rem, 6vw, 2.4rem);
-    text-wrap: balance;
-  }
-
-  /* Stat tiles stack rather than shrinking below readability. */
-  .bento-grid {
-    gap: 14px;
-  }
-
-  /* Forms: full-width fields, so a moderator can work one-handed. */
-  input, select, textarea {
-    width: 100%;
-    min-height: var(--tap-min);
-  }
-
-  /* Buttons get the tap floor, but not a blanket width. Stretching every button broke two real
-     layouts: a small "Remove" inside a space-between row grew across and collided with its own
-     label, and paired Save/Cancel actions each claimed the full row and wrapped their text.
-     Only a button that heads a panel is alone on its line and safe to fill it. */
-  .btn {
-    min-height: var(--tap-min);
-  }
-
-  .panel-header .btn:not(.btn-sm) {
-    width: 100%;
-  }
-
-  .section-wrapper,
-  .dashboard-wrapper {
-    padding-left: 16px;
-    padding-right: 16px;
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -830,31 +625,6 @@ a, button, .btn {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-
-
-/* Drawn rather than typed: an emoji status dot renders differently on every platform, cannot take a
-   theme token, and carries meaning that colour alone should not. Paired with visible status text. */
-.status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  margin-right: 6px;
-  vertical-align: middle;
-}
-
-
-/* Now that tables scroll rather than compress, their columns should stop behaving as if space were
-   scarce. Headers wrapping to two lines and a title shredding over four were both symptoms of the old
-   squeeze, not of the content. Long free-text cells keep wrapping - only the first column and the
-   headers are held on one line. */
-.table-responsive th {
-  white-space: nowrap;
-}
-
-.table-responsive td:first-child {
-  min-width: 180px;
 }
