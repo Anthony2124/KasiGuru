@@ -1000,8 +1000,8 @@ function renderLearnersTable() {
       <td>${level}</td>
       <td><strong>${l.totalXp || 0}</strong></td>
       <td>${weeklyXp}</td>
-      <td>${streak > 0 ? \`<span class="badge badge-category">\${streak} day\${streak !== 1 ? 's' : ''}</span>\` : '0'}</td>
-      <td>${title ? \`<span class="badge badge-category">\${escapeHtml(title)}</span>\` : '-'}</td>
+      <td>${streak > 0 ? '<span class="badge badge-category">' + streak + ' day' + (streak !== 1 ? 's' : '') + '</span>' : '0'}</td>
+      <td>${title ? '<span class="badge badge-category">' + escapeHtml(title) + '</span>' : '-'}</td>
       <td><small>${lastSynced}</small></td>
     `;
     tbody.appendChild(tr);
