@@ -1231,5 +1231,7 @@ async function logAudit(action, details = {}) {
       details,
       timestamp: Date.now()
     });
+  } catch (e) {
+    console.warn("Audit log write failed:", e);
+  }
 }
-
