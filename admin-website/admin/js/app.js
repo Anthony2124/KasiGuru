@@ -1037,7 +1037,7 @@ function renderActivityTable() {
       const parts = [];
       for (const [k, v] of Object.entries(entry.details)) {
         if (v !== null && v !== undefined && v !== '') {
-          parts.push(\`\${k}: \${v}\`);
+          parts.push(k + ': ' + v);
         }
       }
       detailStr = parts.join(' · ');
@@ -1046,7 +1046,7 @@ function renderActivityTable() {
     // Map action to a readable badge
     const actionParts = (entry.action || '').split('.');
     const actionBadge = actionParts.length === 2
-      ? \`<span class="badge badge-category">\${escapeHtml(actionParts[0])}</span> \${escapeHtml(actionParts[1])}\`
+      ? '<span class="badge badge-category">' + escapeHtml(actionParts[0]) + '</span> ' + escapeHtml(actionParts[1])
       : escapeHtml(entry.action || '-');
 
     tr.innerHTML = `
