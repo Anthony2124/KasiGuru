@@ -3484,102 +3484,224 @@ object DatabaseSeeder {
     )
 
     fun getInitialStories(): List<StoryEntity> {
+        // Ten Tagalog folk tales, replacing the five Casiguran stories.
+        //
+        // Every page carries an empty `kasiguranin`. Kasiguranin is the endangered language this
+        // project documents, and the source PDF contains none of it, so writing that layer here
+        // would mean inventing primary data for a preservation thesis. Adrian authors it. Until
+        // then StoryReaderScreen leads with Tagalog and hides the word chips and audio control,
+        // and StoryCoverCard falls back to the Tagalog title, so the stories read as finished
+        // rather than broken.
+
         val story1Pages = """[
-            {"pageNumber":1,"kasiguranin":"Ha baybayin ng Casiguran, may isáng batang babae na ang pangalan ay Si Maring.","tagalog":"Sa baybayin ng Casiguran, may isang batang babae na ang pangalan ay Si Maring.","english":"On the shore of Casiguran, there was a young girl named Maring.","illustrationDesc":"A young girl standing on a beautiful beach at sunrise, with the Sierra Madre mountains in the background"},
-            {"pageNumber":2,"kasiguranin":"Araw-araw, lumálakad si Maring papuntá ha dagat para mangisdâ kasama ing kanyang ama.","tagalog":"Araw-araw, lumalakad si Maring papunta sa dagat para mangisda kasama ang kanyang ama.","english":"Every day, Maring walked to the sea to fish with her father.","illustrationDesc":"Maring walking along a path with her father carrying fishing nets, coconut trees lining the way"},
-            {"pageNumber":3,"kasiguranin":"Isáng aldaw, nakatagpô siya ng magandáng kabibe ha dalampasigan.","tagalog":"Isang araw, nakatagpo siya ng magandang kabibe sa dalampasigan.","english":"One day, she found a beautiful shell on the beach.","illustrationDesc":"A glowing, colorful seashell on the sand with gentle waves"},
-            {"pageNumber":4,"kasiguranin":"'Ina,' sabi niya, 'tingnan mo itong kabibe! Parang kinúlay ng aldaw at dagat!'","tagalog":"'Ina,' sabi niya, 'tingnan mo itong kabibe! Parang kinulayan ng araw at dagat!'","english":"'Mother,' she said, 'look at this shell! It seems painted by the sun and sea!'","illustrationDesc":"Maring showing the shell to her mother inside their nipa hut"},
-            {"pageNumber":5,"kasiguranin":"Mula noon, iningatan ni Maring ing kabibe bilang aláala ng kagandahan ng Casiguran.","tagalog":"Mula noon, iningatan ni Maring ang kabibe bilang alaala ng kagandahan ng Casiguran.","english":"From then on, Maring kept the shell as a reminder of Casiguran's beauty.","illustrationDesc":"Maring holding the shell against a stunning sunset over the Casiguran bay"}
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Magkaibigan sina Pagong at Matsing. Mabait at matulungin si Pagong, ngunit tuso at palabiro si Matsing. Isang araw, binigyan sila ng isang supot ng pansit.", "english": "Turtle and Monkey were friends. Turtle was kind and helpful, but Monkey was cunning and full of mischief. One day they were given a packet of noodles.", "illustrationDesc": "A turtle and a monkey meeting on a forest path, a paper packet between them"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Sinabi ni Matsing na nangangamoy panis ang pansit at siya muna ang titikim. Naubos niya ang lahat at walang natira para kay Pagong.", "english": "Monkey said the noodles smelled spoiled and that he should taste them first. He finished every strand, and nothing was left for Turtle.", "illustrationDesc": "A monkey eating from a packet while a turtle waits beside him"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Nakakita sila ng puno ng saging at pinaghatian ito. Kinuha ni Matsing ang bahaging may dahon; napunta kay Pagong ang bahaging may ugat.", "english": "They found a banana tree and split it between them. Monkey took the leafy top; the rooted half went to Turtle.", "illustrationDesc": "A banana tree divided in two, one half leafy and one half with roots"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Nalanta ang tanim ni Matsing. Namunga naman nang hitik ang kay Pagong. Nag-alok si Matsing na siya na ang aakyat at maghuhulog ng bunga.", "english": "Monkey's half withered. Turtle's grew heavy with fruit. Monkey offered to climb up and drop the bananas down.", "illustrationDesc": "A withered stalk beside a tall banana tree laden with fruit"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Kinain ni Matsing ang lahat sa itaas ng puno. Naglagay si Pagong ng tinik sa ilalim, at nasaktan si Matsing nang bumaba siya.", "english": "Monkey ate everything up in the tree. Turtle laid thorns below, and Monkey was hurt when at last he climbed down.", "illustrationDesc": "A monkey resting high in a banana tree while thorns are placed at its base"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Galit na itinapon ni Matsing si Pagong sa dagat, hindi alam na marunong lumangoy ang pagong. Mula noon, nagbago si Matsing.", "english": "In anger Monkey threw Turtle into the sea, not knowing that turtles can swim. From that day on, Monkey changed.", "illustrationDesc": "A turtle swimming easily in shallow sea water near a shore"}
         ]"""
 
         val story2Pages = """[
-            {"pageNumber":1,"kasiguranin":"Noong unang panahon, may isáng matandáng mangingisdâ na tinatawag na Mang Tasyo.","tagalog":"Noong unang panahon, may isang matandang mangingisda na tinatawag na Mang Tasyo.","english":"Long ago, there was an old fisherman called Mang Tasyo.","illustrationDesc":"An old fisherman sitting in a wooden boat, mending his nets at dawn"},
-            {"pageNumber":2,"kasiguranin":"Kilala siya ha buóng Casiguran dahil ha kanyang karunungan tungkol ha dagat.","tagalog":"Kilala siya sa buong Casiguran dahil sa kanyang karunungan tungkol sa dagat.","english":"He was known throughout Casiguran for his wisdom about the sea.","illustrationDesc":"Villagers gathered around Mang Tasyo as he tells stories by a campfire"},
-            {"pageNumber":3,"kasiguranin":"'Pakinggan niyo ing dagat,' sabi ni Mang Tasyo. 'Itó ay nagsásalitâ kung makikinig ka.'","tagalog":"'Pakinggan niyo ang dagat,' sabi ni Mang Tasyo. 'Ito ay nagsasalita kung makikinig ka.'","english":"'Listen to the sea,' said Mang Tasyo. 'It speaks if you listen.'","illustrationDesc":"Mang Tasyo pointing at the ocean, moonlight reflecting off the waves"},
-            {"pageNumber":4,"kasiguranin":"Tinuruan niya ing mga kabataan kung paano basáhin ing hangin, ing alon, at ing mga bituin.","tagalog":"Tinuruan niya ang mga kabataan kung paano basahin ang hangin, ang alon, at ang mga bituin.","english":"He taught the youth how to read the wind, the waves, and the stars.","illustrationDesc":"Young people learning from Mang Tasyo on a boat, stars visible above"}
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Maganda ang panahon at maaga pa lamang ay gising na si Langgam. Naghanap siya ng pagkain at pinasan pauwi ang isang butil ng bigas.", "english": "The weather was fine, and Ant was awake early. He searched for food and carried a single grain of rice home on his back.", "illustrationDesc": "An ant carrying a grain of rice along a sunlit path"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Binati siya ni Tipaklong. Ang tanong nito, bakit wala siyang ginawa kundi mag-ipon ng pagkain habang maganda ang panahon.", "english": "Grasshopper greeted him and asked why he did nothing but gather food while the weather was fine.", "illustrationDesc": "A grasshopper resting on a tall blade of grass, calling out"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Inaya siya ni Tipaklong na lumukso at kumanta. Sagot ni Langgam, nag-iipon siya para may makain kapag sumama ang panahon.", "english": "Grasshopper invited him to leap and sing. Ant answered that he was storing food so there would be something to eat when the weather turned.", "illustrationDesc": "An ant walking past a dancing grasshopper toward a small burrow"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Dumating ang tag-ulan. Umuulan sa umaga, sa hapon at sa gabi. Ginaw na ginaw at gutom na gutom ang kawawang Tipaklong.", "english": "The rainy season came. It rained in the morning, in the afternoon and through the night. Poor Grasshopper was cold and very hungry.", "illustrationDesc": "Heavy rain falling on flattened grass under a dark sky"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Pinilit niyang marating ang bahay ni Langgam. Pinapasok siya, binigyan ng tuyong damit at pagkain, at magkasalo silang kumain.", "english": "He struggled to reach Ant's house. He was welcomed in, given dry clothes and food, and the two friends ate together.", "illustrationDesc": "Two friends sharing a warm meal inside a small dry shelter"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Mula noon, natuto si Tipaklong gumawa at mag-impok, at kasama na siya ni Langgam kapag maganda ang panahon.", "english": "From then on Grasshopper learned to work and to save, and he joined Ant whenever the weather was fine.", "illustrationDesc": "An ant and a grasshopper working side by side in sunshine"}
         ]"""
 
         val story3Pages = """[
-            {"pageNumber":1,"kasiguranin":"Tuwing buwan ng Mayo, nagdíriwang ing bayan ng Casiguran ng kanilang pista.","tagalog":"Tuwing buwan ng Mayo, nagdiriwang ang bayan ng Casiguran ng kanilang pista.","english":"Every May, the town of Casiguran celebrates its fiesta.","illustrationDesc":"A vibrant town plaza decorated with colorful banners and lights"},
-            {"pageNumber":2,"kasiguranin":"Naghahanda ing bawat pamilya ng masasarap na pagkain galing ha dagat at bukid.","tagalog":"Naghahanda ang bawat pamilya ng masasarap na pagkain galing sa dagat at bukid.","english":"Every family prepares delicious food from the sea and the fields.","illustrationDesc":"Tables full of Filipino food - grilled fish, rice, vegetables, with families cooking together"},
-            {"pageNumber":3,"kasiguranin":"Sumásayaw ing mga tao ha kalye habang tumútugtog ing banda ng musika.","tagalog":"Sumasayaw ang mga tao sa kalye habang tumutugtog ang banda ng musika.","english":"People dance in the streets while the music band plays.","illustrationDesc":"Colorful street dancing with traditional Filipino costumes and a marching band"},
-            {"pageNumber":4,"kasiguranin":"Ing pistá ay panahon ng pasasalamat at pagkakaisá ng buóng komunidad.","tagalog":"Ang pista ay panahon ng pasasalamat at pagkakaisa ng buong komunidad.","english":"The fiesta is a time of thanksgiving and unity for the whole community.","illustrationDesc":"The whole community gathered together, fireworks in the night sky over Casiguran bay"},
-            {"pageNumber":5,"kasiguranin":"Sa ganitong paraan, nananatili ing tradisyon at wika ng Casiguran sa pusó ng bawat tao.","tagalog":"Sa ganitong paraan, nananatili ang tradisyon at wika ng Casiguran sa puso ng bawat tao.","english":"In this way, the traditions and language of Casiguran live on in every person's heart.","illustrationDesc":"A family walking home from the fiesta under a starlit sky, the mountains silhouetted behind them"}
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Pinagtawanan ng Kuneho ang Pagong dahil sa bagal nitong maglakad. Sinabi niyang walang mararating ang may ganoong kaikling mga paa.", "english": "Rabbit laughed at Turtle for how slowly he walked. He said that legs so short would never get anywhere.", "illustrationDesc": "A rabbit laughing at a turtle on a woodland path"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Hinamon ng Pagong ang Kuneho ng karera patungo sa tuktok ng bundok. Tuwang-tuwa ang mayabang na Kuneho sa hamon.", "english": "Turtle challenged Rabbit to a race to the mountaintop. The boastful Rabbit was delighted by the challenge.", "illustrationDesc": "A turtle pointing toward a distant mountain while a rabbit grins"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Nagtawag pa ng mga kaibigan ang Kuneho para manood. Si Matsing ang nagbilang: Isa, dalawa, tatlo, takbo!", "english": "Rabbit even called friends to watch. Monkey counted them off: one, two, three, go!", "illustrationDesc": "Forest animals gathered at a starting line"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Sa isang sandali ay nasa paanan na ng bundok ang Kuneho. Malayung-malayo pa ang Pagong, ngunit patuloy siya sa paglakad.", "english": "In moments Rabbit was already at the foot of the mountain. Turtle was far behind, but he kept walking.", "illustrationDesc": "A rabbit bounding ahead while a turtle plods steadily behind"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Dahil tiwala sa sarili, nagpasya ang Kuneho na maidlip muna sa kalagitnaan ng bundok. Nilampasan siya ng Pagong na mahimbing na natutulog.", "english": "Sure of himself, Rabbit decided to nap halfway up. Turtle passed him as he slept soundly.", "illustrationDesc": "A rabbit asleep under a tree as a turtle passes by"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Nang magising ang Kuneho, natanaw niya ang Pagong sa tuktok ng bundok. Naunahan na pala siya.", "english": "When Rabbit woke, he saw Turtle already at the summit. He had been overtaken after all.", "illustrationDesc": "A turtle standing at a mountain summit against the sky"}
         ]"""
 
         val story4Pages = """[
-            {"pageNumber":1,"kasiguranin":"Noong unang panahon, wala pang lupa kundi ang langit, ang dagat, at ang isáng dakilang ibon.","tagalog":"Noong unang panahon, wala pang lupa kundi ang langit, ang dagat, at ang isang dakilang ibon.","english":"Long ago, there was no land, only the sky, the sea, and a great bird.","illustrationDesc":"A magnificent Philippine eagle flying over an endless blue ocean"},
-            {"pageNumber":2,"kasiguranin":"Tinuktok ng ibon ing isáng malakíng kawayan na lumálutang ha alon.","tagalog":"Tinuktok ng ibon ang isang malaking kawayan na lumalutang sa alon.","english":"The bird pecked at a large bamboo stalk floating on the waves.","illustrationDesc":"A giant golden bamboo stalk floating in ocean waves"},
-            {"pageNumber":3,"kasiguranin":"Nabayák ing kawayan at lumabás si Malakas at si Maganda.","tagalog":"Nabiak ang kawayan at lumabas si Malakas at si Maganda.","english":"The bamboo split open, and out stepped Malakas (The Strong) and Maganda (The Beautiful).","illustrationDesc":"A strong man and beautiful woman stepping out from split bamboo"},
-            {"pageNumber":4,"kasiguranin":"Silá ing naging unang ninuno ng mga Pilipino na namuhay nang may kapayapaan.","tagalog":"Sila ang naging unang ninuno ng mga Pilipino na namuhay nang may kapayapaan.","english":"They became the first ancestors of the Filipino people, living in peace.","illustrationDesc":"Malakas and Maganda walking along lush green Philippine island hills"}
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Nakatuwaan ng isang daga na maglaro sa likod ng isang natutulog na leon, umaakyat at nagpapadausdos pababa.", "english": "A mouse amused himself playing on the back of a sleeping lion, climbing up and sliding down again.", "illustrationDesc": "A small mouse climbing the back of a sleeping lion"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Sa katuwaan ay hindi niya napansing nagising ang leon. Dinakma siya nito at hinawakan sa buntot.", "english": "In his fun he did not notice the lion wake. The lion seized him and held him by the tail.", "illustrationDesc": "A lion holding a small mouse by the tail"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Nagmakaawa ang daga. Sinabi niyang hindi sinasadya ang paggambala at wala siyang masamang hangarin.", "english": "The mouse begged. He said the disturbance was not intended and that he meant no harm.", "illustrationDesc": "A mouse pleading, held in a lion's paw"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Pinakawalan siya ng leon. Nangako ang daga na balang araw ay makakaganti rin siya sa kabutihan nito.", "english": "The lion let him go. The mouse promised that one day he would repay the kindness.", "illustrationDesc": "A lion releasing a mouse onto the forest floor"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Lumipas ang maraming araw. Nakita ng daga ang leon na nahuli sa lambat na bitag ng mga mangangaso.", "english": "Many days passed. The mouse found the lion caught in a net set as a trap by hunters.", "illustrationDesc": "A lion tangled in a hunting net among trees"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Nginatngat ng daga ang lubid hanggang maputol. Sabi ng leon, utang niya rito ang kanyang buhay.", "english": "The mouse gnawed the rope until it broke. The lion said he owed the mouse his life.", "illustrationDesc": "A mouse gnawing through rope as a lion watches"}
         ]"""
 
         val story5Pages = """[
-            {"pageNumber":1,"kasiguranin":"May isáng batang babae na ang pangalan ay Si Pinang na napakatamád at laging nagdadahilan.","tagalog":"May isang batang babae na ang pangalan ay Si Pinang na napakatamad at laging nagdadahilan.","english":"There was a young girl named Pinang who was very lazy and always made excuses.","illustrationDesc":"A young girl sitting comfortably while her mother cooks"},
-            {"pageNumber":2,"kasiguranin":"'Nasaan ing sandok?' tanong ng ina. 'Hindi ko makita!' sagot ni Pinang.","tagalog":"'Nasaan ang sandok?' tanong ng ina. 'Hindi ko makita!' sagot ni Pinang.","english":"'Where is the ladle?' asked mother. 'I cannot see it!' replied Pinang.","illustrationDesc":"Pinang looking around carelessly in the kitchen"},
-            {"pageNumber":3,"kasiguranin":"Sabi ng ina, 'Sana magkaroon ka ng maraming matá para makita mo ing lahat!'","tagalog":"Sabi ng ina, 'Sana magkaroon ka ng maraming mata para makita mo ang lahat!'","english":"Said mother, 'I wish you had many eyes so you could see everything!'","illustrationDesc":"Mother looking worried while speaking to Pinang"},
-            {"pageNumber":4,"kasiguranin":"Nawala si Pinang, at sa halamanan ay tumubo ing prutas na may maraming matá — ing Pinya.","tagalog":"Nawala si Pinang, at sa halamanan ay tumubo ang prutas na may maraming mata — ang Pinya.","english":"Pinang vanished, and in the garden grew a fruit with a hundred eyes — the Pineapple.","illustrationDesc":"A golden pineapple growing in a garden under bright sunlight"}
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Isang magsasaka ang nais lumipat ng bayan. Inilulan niya ang kanyang mga gamit sa alagang kabayo at kalabaw.", "english": "A farmer wished to move to another town. He loaded his belongings onto his horse and his carabao.", "illustrationDesc": "A farmer loading bundles onto a horse and a carabao at dawn"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Makalipas ang ilang oras ay nanghina ang kalabaw dahil sa bigat ng kanyang pasan.", "english": "After some hours the carabao weakened under the weight of his load.", "illustrationDesc": "A carabao straining under a heavy load on a dusty road"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Nakiusap siya sa kabayo na pasanin ang ilan sa kanyang dala. Tumanggi ang kabayo at binilisan pa ang paglakad.", "english": "He asked the horse to carry some of his burden. The horse refused and walked faster still.", "illustrationDesc": "A horse walking ahead, leaving a carabao behind"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Tumindi ang init ng araw. Hindi nakayanan ng kalabaw ang bigat at siya ay pumanaw.", "english": "The heat of the sun grew fierce. The carabao could not bear the weight, and he died.", "illustrationDesc": "A dusty road under a harsh midday sun"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Inilipat ng magsasaka sa kabayo ang lahat ng gamit. Bulong nito sa sarili: kung tinulungan ko lang sana ang kasama ko.", "english": "The farmer moved every load onto the horse. He whispered to himself: if only I had helped my companion.", "illustrationDesc": "A horse carrying a doubled load alone"}
+        ]"""
+
+        val story6Pages = """[
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Nais ng pagong na makipagkaibigan sa kalabaw. Tumawa ang kalabaw at sinabing ayaw niya ng kaibigang maliit at makupad.", "english": "The turtle wished to befriend the carabao. The carabao laughed and said he wanted no friend so small and so slow.", "illustrationDesc": "A large carabao towering over a small turtle"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Napahiya ang pagong. Sinabi niyang mapang-api ang kalabaw at minamaliit nito ang kanyang kakayahan.", "english": "The turtle was shamed. He said the carabao was a bully who belittled what he could do.", "illustrationDesc": "A turtle standing its ground before a carabao"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Hinamon ng kalabaw ang pagong ng karera. Tinanggap ito ng pagong at itinakda ang laban kinabukasan.", "english": "The carabao challenged the turtle to a race. The turtle accepted and set the contest for the next day.", "illustrationDesc": "Two animals agreeing terms beside a river"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Kinausap ng pagong ang apat niyang kaibigan. Pinapuwesto niya ang mga ito sa tuktok ng bawat bundok.", "english": "The turtle spoke with four of his friends. He placed each of them at the summit of a different hill.", "illustrationDesc": "Four turtles waiting at the tops of five hills"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Sa bawat bundok na marating ng kalabaw ay may pagong na nauna sa kanya. Ganoon din sa ikalima.", "english": "At every hilltop the carabao reached, a turtle had arrived before him. So it went to the fifth.", "illustrationDesc": "A carabao arriving at a hilltop to find a turtle waiting"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Sa galit at kahihiyan ay sinipa ng kalabaw ang pagong. Matigas ang likod nito, kaya ang kalabaw ang napaiyak sa sakit.", "english": "In anger and shame the carabao kicked the turtle. Its shell was hard, and it was the carabao who cried out in pain.", "illustrationDesc": "A carabao recoiling in pain beside an unharmed turtle"}
+        ]"""
+
+        val story7Pages = """[
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Mayabang na inilatag ng Agila ang malapad niyang pakpak sa kaitaasan at hinamon ang Kalapati sa pabilisan ng paglipad.", "english": "The eagle spread his broad wings proudly on high and challenged the dove to a race.", "illustrationDesc": "An eagle with wings spread wide above a valley"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Naisip ng Kalapati na bigyan ng aral ang humahamon. Pumayag siya at tinanong kung kailan ito gaganapin.", "english": "The dove thought to teach the challenger a lesson. She agreed and asked when it would be held.", "illustrationDesc": "A white dove perched calmly on a branch"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Napansin ng Kalapati ang maitim na ulap sa kalawakan. Alam niyang ilang sandali na lamang ay uulan.", "english": "The dove noticed dark clouds gathering in the sky. She knew that rain was only moments away.", "illustrationDesc": "Dark storm clouds massing over green mountains"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Iminungkahi niyang may kagat-kagat silang dala. Magdadala siya ng tipak ng asin; ang Agila ay bungkos ng bulak.", "english": "She proposed that each carry something in their beak. She would take a block of salt; the eagle a bundle of cotton.", "illustrationDesc": "A block of salt and a bundle of cotton side by side"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Bumuhos ang ulan. Nabasa ang bulak at bumigat, habang natunaw ang asin at gumaan ang dala ng Kalapati.", "english": "The rain poured down. The cotton soaked and grew heavy, while the salt dissolved and the dove's load lightened.", "illustrationDesc": "An eagle struggling in rain while a dove flies freely"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Nanalo ang Kalapati. Mula noon ay hindi na nagyabang ang palalong Agila.", "english": "The dove won. From that day the proud eagle boasted no more.", "illustrationDesc": "A dove alighting on a green summit ahead of an eagle"}
+        ]"""
+
+        val story8Pages = """[
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Noong unang panahon, ang mga alitaptap ay maliliit na kulisap lamang na walang dalang apoy.", "english": "Long ago the fireflies were only small insects, and they carried no fire at all.", "illustrationDesc": "Small dark insects flying under a night sky"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Gabi lamang sila lumilipad, ngunit ayaw nila ng madilim na gabi. Kapag walang buwan ay nagtatago sila sa mga damo at bulaklak.", "english": "They flew only at night, yet they hated dark nights. When there was no moon they hid among the grass and the flowers.", "illustrationDesc": "Insects hiding among leaves and closed blossoms"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Tinanong sila ng punong sampaguita kung bakit sila natatakot. Sagot nila, hindi sa dilim kundi sa mga kabag na kumakain sa kanila.", "english": "A sampaguita tree asked why they were afraid. They answered that it was not the dark but the bats that ate them.", "illustrationDesc": "A flowering sampaguita tree at night"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Sabi ng mga kulisap, kapag maliwanag ang buwan ay hindi sila mahuli, dahil nasisilaw sa liwanag ang mga kabag.", "english": "The insects said that when the moon was bright they were not caught, because the light dazzled the bats.", "illustrationDesc": "Moonlight falling across a garden"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Tinuruan sila ng sampaguita: magdala ang bawat isa ng apoy at sabay-sabay lumabas. Matatakot ang mga kabag sa kanila.", "english": "The sampaguita taught them: let each one carry a fire and go out together. The bats would fear them.", "illustrationDesc": "A tree seeming to speak to a cloud of insects"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Ganoon nga ang ginawa nila. Para silang mga alipatong lumilipad, at hindi na sila malapitan. Sila ang tinatawag ngayong alitaptap.", "english": "So they did. They flew like drifting sparks, and none could come near them. These are what we now call fireflies.", "illustrationDesc": "Hundreds of glowing fireflies rising around a flowering tree"}
+        ]"""
+
+        val story9Pages = """[
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "Ubos na ang pagkain sa munting pulo ng Matsing. Gutom na gutom siya, at ang tanging pagkain ay nasa kabilang malaking pulo.", "english": "The food on Monkey's small island was gone. He was very hungry, and the only food lay on the large island across the water.", "illustrationDesc": "A monkey on a bare islet looking across a channel"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Mahirap ang pagtawid dahil maraming buaya sa tubig, gutom din tulad niya. Nagpasya pa rin siyang tumawid.", "english": "Crossing was hard, for many crocodiles swam there, as hungry as he was. Still he decided to cross.", "illustrationDesc": "Crocodiles drifting in a narrow channel of water"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Hinarang siya ni Buaya at hiningi ang kanyang atay. Sinabi ni Matsing na naiwan daw niya ito sa kabilang pampang.", "english": "A crocodile stopped him and demanded his liver. Monkey said he had left it behind on the other shore.", "illustrationDesc": "A monkey speaking to a crocodile in midwater"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Isinakay siya ni Buaya sa likod nito at itinawid. Pagdating sa pampang ay tumakbo si Matsing at tumawa. Sino ba ang nag-iiwan ng atay?", "english": "The crocodile carried him across on its back. On reaching the shore Monkey ran and laughed. Who ever leaves his liver behind?", "illustrationDesc": "A monkey leaping from a crocodile's back onto a shore"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Naghiganti si Buaya. Nagtago siya sa bahay ni Matsing, ngunit sumigaw ang matsing: kung may nasa loob, tumahimik; kung wala, humiyaw!", "english": "The crocodile sought revenge. He hid inside Monkey's house, but Monkey called out: if someone is inside, be silent; if no one waits, shout!", "illustrationDesc": "A house with a shadow waiting inside the doorway"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Humiyaw si Buaya at nabuko. Sa huli, nagkunwari siyang patay, ngunit umungol nang tanungin siya. Palaging nakaiwas ang tusong Matsing.", "english": "The crocodile shouted and gave himself away. At last he played dead, but groaned when questioned. The cunning monkey always escaped.", "illustrationDesc": "A crocodile lying still on mud while a monkey watches from a distance"}
+        ]"""
+
+        val story10Pages = """[
+            {"pageNumber": 1, "kasiguranin": "", "tagalog": "May isang diwatang napakapangit. Ang mukha niya ay mapula at kulubot, at pilay siya kaya hingkod-hingkod kung lumakad.", "english": "There was an enchantress who was very ugly. Her face was red and wrinkled, and she was lame, so she limped as she walked.", "illustrationDesc": "A stooped figure walking with difficulty along a shore"},
+            {"pageNumber": 2, "kasiguranin": "", "tagalog": "Ang bahay niya ay nasa magandang dalampasigan, may looban na tinamnan ng sari-saring halamang namumulaklak.", "english": "Her house stood on a beautiful shore, with a garden planted with all manner of flowering things.", "illustrationDesc": "A bright garden of many flowers beside the sea"},
+            {"pageNumber": 3, "kasiguranin": "", "tagalog": "Dalawang maralitang bata, sina Malakas at Ligaya, ang naglibot at nakakita ng bahay ng diwata. Pumasok sila sa halamanan.", "english": "Two poor children, Malakas and Ligaya, wandered by and saw the enchantress's house. They stepped into the garden.", "illustrationDesc": "Two children opening a garden gate"},
+            {"pageNumber": 4, "kasiguranin": "", "tagalog": "Namupol sila ng bulaklak at kumain ng bunga. Dumating ang diwata at tinanong kung bakit sila nangahas pumasok.", "english": "They picked flowers and ate the fruit. The enchantress came and asked why they had dared to enter.", "illustrationDesc": "Children startled among flowering plants"},
+            {"pageNumber": 5, "kasiguranin": "", "tagalog": "Inamin nila ang kasalanan. Sila ay mga ulila, at handa silang magsilbi bilang kabayaran.", "english": "They admitted their fault. They were orphans, and were willing to serve as payment.", "illustrationDesc": "Two children standing with heads bowed"},
+            {"pageNumber": 6, "kasiguranin": "", "tagalog": "Bumulong ang diwata ng mahiwagang salita at naging maganda siya. Sinabi niyang gagawin silang hardinero ng kanyang mga bulaklak.", "english": "The enchantress whispered a word of magic and became beautiful. She said she would make them gardeners of her flowers.", "illustrationDesc": "A radiant figure holding a star-tipped staff"},
+            {"pageNumber": 7, "kasiguranin": "", "tagalog": "Dinantayan niya sila ng mahiwagang baston at sa isang iglap ay nagkapakpak sila. Sila ngayon ang mga paru-paro ng diwata.", "english": "She touched them with her magic staff and in an instant they had wings. They are now the butterflies of the enchantress.", "illustrationDesc": "Two butterflies with black, blue, green and orange wings over a garden"}
         ]"""
 
         return listOf(
             StoryEntity(
                 id = 1,
-                title = "The Shell of Casiguran",
-                titleKasiguranin = "Ing Kabibe ng Casiguran",
-                description = "A young girl discovers the beauty of her coastal hometown through a magical shell.",
-                category = "Culture",
-                iconEmoji = "🐚",
+                title = "Si Pagong at si Matsing",
+                titleKasiguranin = "",
+                description = "The Turtle and the Monkey. A patient turtle and a scheming monkey share a banana tree, and each learns what tricking a friend costs.",
+                category = "Fable",
+                iconEmoji = "",
                 pagesJson = story1Pages,
-                totalPages = 5,
+                totalPages = 6,
                 requiredXp = 0,
                 isUnlocked = true
             ),
             StoryEntity(
                 id = 2,
-                title = "Malakas and Maganda",
-                titleKasiguranin = "Si Malakas at si Maganda",
-                description = "The ancient Philippine creation legend of the first man and woman born from bamboo.",
-                category = "Folklore",
-                iconEmoji = "🎋",
-                pagesJson = story4Pages,
-                totalPages = 4,
+                title = "Si Langgam at si Tipaklong",
+                titleKasiguranin = "",
+                description = "The Ant and the Grasshopper. One friend stores food through the fine weather and the other sings through it, until the rains arrive.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story2Pages,
+                totalPages = 6,
                 requiredXp = 0,
                 isUnlocked = true
             ),
             StoryEntity(
                 id = 3,
-                title = "Legend of the Pineapple",
-                titleKasiguranin = "Alamat ng Pinya (Si Pinang)",
-                description = "The classic Philippine moral folk story of young Pinang learning mindfulness.",
-                category = "Moral Tale",
-                iconEmoji = "🍍",
-                pagesJson = story5Pages,
-                totalPages = 4,
-                requiredXp = 50,
+                title = "Ang Kuneho at ang Pagong",
+                titleKasiguranin = "",
+                description = "The Rabbit and the Turtle. A rabbit mocks a turtle for being slow, then races him to the top of a mountain.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story3Pages,
+                totalPages = 6,
+                requiredXp = 30,
                 isUnlocked = false
             ),
             StoryEntity(
                 id = 4,
-                title = "The Wise Fisherman",
-                titleKasiguranin = "Ing Marunong na Mangingisdâ",
-                description = "Old Mang Tasyo shares his wisdom about the sea with the youth of Casiguran.",
-                category = "Wisdom",
-                iconEmoji = "🎣",
-                pagesJson = story2Pages,
-                totalPages = 4,
-                requiredXp = 100,
+                title = "Ang Daga at ang Leon",
+                titleKasiguranin = "",
+                description = "The Mouse and the Lion. A mouse spares a sleeping lion's temper, and later repays the debt with its teeth.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story4Pages,
+                totalPages = 6,
+                requiredXp = 60,
                 isUnlocked = false
             ),
             StoryEntity(
                 id = 5,
-                title = "The Town Fiesta",
-                titleKasiguranin = "Ing Pistá ng Bayan",
-                description = "Experience the joy and traditions of Casiguran's annual fiesta celebration.",
-                category = "Traditions",
-                iconEmoji = "🎉",
-                pagesJson = story3Pages,
+                title = "Ang Pabula ng Kabayo at Kalabaw",
+                titleKasiguranin = "",
+                description = "The Fable of the Horse and the Carabao. A carabao asks a horse to share the load on a long journey, and the horse refuses.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story5Pages,
                 totalPages = 5,
-                requiredXp = 200,
+                requiredXp = 90,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 6,
+                title = "Ang Pagong at ang Kalabaw",
+                titleKasiguranin = "",
+                description = "The Turtle and the Carabao. A carabao belittles a turtle's size, and the turtle answers with a race and four friends.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story6Pages,
+                totalPages = 6,
+                requiredXp = 130,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 7,
+                title = "Ang Agila at ang Kalapati",
+                titleKasiguranin = "",
+                description = "The Eagle and the Dove. A boastful eagle challenges a dove to a race, and the dove chooses what each will carry.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story7Pages,
+                totalPages = 6,
+                requiredXp = 170,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 8,
+                title = "Alamat ng mga Unang Alitaptap",
+                titleKasiguranin = "",
+                description = "Legend of the First Fireflies. Small insects hid from bats in the dark until a sampaguita tree taught them to carry fire.",
+                category = "Legend",
+                iconEmoji = "",
+                pagesJson = story8Pages,
+                totalPages = 6,
+                requiredXp = 220,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 9,
+                title = "Ang Buaya at ang Tusong Matsing",
+                titleKasiguranin = "",
+                description = "The Crocodile and the Cunning Monkey. A hungry monkey must cross water full of crocodiles, and talks his way past every trap.",
+                category = "Fable",
+                iconEmoji = "",
+                pagesJson = story9Pages,
+                totalPages = 6,
+                requiredXp = 280,
+                isUnlocked = false
+            ),
+            StoryEntity(
+                id = 10,
+                title = "Alamat ng Paru-paro",
+                titleKasiguranin = "",
+                description = "Legend of the Butterfly. Two orphans wander into an enchantress's garden and are changed by what they love.",
+                category = "Legend",
+                iconEmoji = "",
+                pagesJson = story10Pages,
+                totalPages = 7,
+                requiredXp = 350,
                 isUnlocked = false
             )
         )

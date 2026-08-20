@@ -143,6 +143,11 @@ fun StoryReaderScreen(
                 var selectedWord by remember { mutableStateOf<String?>(null) }
                 var wordNotFound by remember { mutableStateOf(false) }
 
+                // A story whose Kasiguranin has not been authored yet shows none of this rather than a
+                // row of empty chips: "".split(" ") returns a single blank entry, not nothing.
+                val hasKasiguranin = targetPage.kasiguranin.isNotBlank()
+
+                if (hasKasiguranin) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(Space.xs),
                     verticalArrangement = Arrangement.spacedBy(Space.xs),
@@ -212,17 +217,25 @@ fun StoryReaderScreen(
                     Spacer(Modifier.width(Space.xs))
                     Text("Pakinggan (Listen)", color = Color.White, fontWeight = FontWeight.Bold)
                 }
+                }
 
-                Spacer(Modifier.height(Space.lg))
-                HorizontalDivider(color = Faint.copy(alpha = 0.3f))
+                if (hasKasiguranin) {
+                    Spacer(Modifier.height(Space.lg))
+                    HorizontalDivider(color = Faint.copy(alpha = 0.3f))
+                }
                 Spacer(Modifier.height(Space.lg))
 
-                // Tagalog Translation
+                // Tagalog. Promoted to the page's own voice when no Kasiguranin sits above it, rather
+                // than staying a supporting translation of something absent.
                 Text(text = "Tagalog", style = MaterialTheme.typography.labelMedium, color = Muted)
                 Spacer(Modifier.height(Space.xxs))
                 Text(
                     text = targetPage.tagalog,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = if (hasKasiguranin) {
+                        MaterialTheme.typography.bodyLarge
+                    } else {
+                        MaterialTheme.typography.titleMedium
+                    },
                     color = Ink,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center

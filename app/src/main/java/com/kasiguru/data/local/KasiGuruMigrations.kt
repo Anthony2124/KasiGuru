@@ -43,7 +43,8 @@ object KasiGuruMigrations {
         MIGRATION_17_18,
         MIGRATION_18_19,
         MIGRATION_19_20,
-        MIGRATION_20_21
+        MIGRATION_20_21,
+        MIGRATION_21_22
         )
     }
 
@@ -60,6 +61,24 @@ object KasiGuruMigrations {
      * migration. Create statement matches the entity exactly, including the index, because Room
      * validates schema identity on open.
      */
+    // -- v21 -> v22 -----------------------------------------------------------
+    // The story corpus was replaced: the five Casiguran tales gave way to ten Tagalog folk stories.
+    // No schema change - this exists purely to make existing installs pick the new set up.
+    //
+    // Changing DatabaseSeeder alone would not have done it. Every seeding path is guarded by
+    // `getStoryCount() == 0`, so an install that already has stories keeps the old five forever.
+    // Emptying the table hands the work back to those guards, which reseed on the next read.
+    //
+    // Safe with respect to progress: reading state lives on the story rows themselves, and the
+    // replacement corpus is a different set of stories, so there is no per-story progress to carry
+    // across. Aggregate counters on user_progress (storiesCompleted, XP already awarded) are in a
+    // different table and are deliberately left untouched - a learner does not un-earn XP.
+    private val MIGRATION_21_22 = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DELETE FROM `stories`")
+        }
+    }
+
     private val MIGRATION_20_21 = object : Migration(20, 21) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(

@@ -7,55 +7,77 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  /* Signature Casiguran Coast Palette */
-  --play-purple-start: #7B6EF6;
-  --play-purple-end: #A78BFA;
-  --play-gold-start: #FFC94A;
-  --play-gold-end: #FF9F1C;
-  --play-pink-start: #FF9FC0;
-  --play-pink-end: #FF6FA0;
+  /* Violet Sheet. DESIGN.md is the authority for the app and both web surfaces, and it supersedes
+     the Casiguran Coast palette these pages were still on. Token NAMES are kept so every existing
+     rule keeps working; only the values move. */
 
-  --vocab-sea: #12B3A6;
-  --vocab-sea-dark: #0E9E97;
+  /* Brand */
+  --violet: #5B4CDB;              /* white on it measures 6.00 */
+  --violet-deep: #4A3FC0;
+  --violet-tint: #EDEAFF;
+  --canopy-top: #6C5CE7;          /* white 4.86 */
+  --canopy-bottom: #4A3FC0;       /* white 7.60 */
+
+  /* Reward hues. Fills only, never foreground text: gold measures 1.83 on white. */
+  --gold: #FFB020;                /* ink on it measures 9.00 */
+  --gold-deep: #D98200;
+  --coral: #FF8B5E;               /* ink on it measures 7.14 */
+  --coral-deep: #E0651F;
+  --green: #15803D;               /* white 5.02 */
+  --red: #DC2626;                 /* white 4.83 */
+
+  /* Legacy aliases, kept so existing rules resolve. Each now points at a Violet Sheet value. */
+  --play-purple-start: #6C5CE7;
+  --play-purple-end: #8C7CF0;
+  --play-gold-start: #FFB020;
+  --play-gold-end: #D98200;
+  --play-pink-start: #FF8B5E;
+  --play-pink-end: #E0651F;
+  --vocab-sea: #5B4CDB;
+  --vocab-sea-dark: #4A3FC0;
   --xp-gold: #FFB020;
-  --xp-gold-dark: #FF9E1B;
-  --games-coral: #FF6B6B;
-  --games-coral-light: #FF8A5B;
-  --streak-ember: #FF7A3C;
+  --xp-gold-dark: #D98200;
+  --games-coral: #FF8B5E;
+  --games-coral-light: #FFA57E;
+  --streak-ember: #FF8B5E;
   --stories-dusk: #6C5CE7;
-  --sky-review: #3FA9F5;
+  --sky-review: #5B4CDB;
 
-  /* Coastal Gradients */
-  --grad-purple: linear-gradient(135deg, #7B6EF6 0%, #A78BFA 100%);
-  --grad-gold: linear-gradient(135deg, #FFC94A 0%, #FF9F1C 100%);
-  --grad-pink: linear-gradient(135deg, #FF9FC0 0%, #FF6FA0 100%);
-  --grad-sea: linear-gradient(135deg, #12B3A6 0%, #0E9E97 100%);
-  --grad-coral: linear-gradient(135deg, #FF8A5B 0%, #FF6B6B 100%);
-  --grad-hero: linear-gradient(135deg, #6C5CE7 0%, #7B6EF6 55%, #9B8CFA 100%);
+  /* Gradients */
+  --grad-purple: linear-gradient(135deg, #6C5CE7 0%, #8C7CF0 100%);
+  --grad-gold: linear-gradient(135deg, #FFB020 0%, #D98200 100%);
+  --grad-pink: linear-gradient(135deg, #FF8B5E 0%, #E0651F 100%);
+  --grad-sea: linear-gradient(135deg, #5B4CDB 0%, #4A3FC0 100%);
+  --grad-coral: linear-gradient(135deg, #FF8B5E 0%, #E0651F 100%);
+  --grad-hero: linear-gradient(135deg, #6C5CE7 0%, #4A3FC0 100%);
 
-  /* Warm Coastal Scaffold & Surfaces */
-  --sand-bg: #FAF5EC;
+  /* Ground and surfaces. White cards read as floating on the lavender ground. */
+  --ground: #F1EEFF;
+  --sand-bg: #F1EEFF;
   --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
   --bg-nav: rgba(255, 255, 255, 0.92);
+  --surface-sunken: #F4F2FF;
 
-  --coast-ink: #1C2233;
-  --coast-muted: #6B7280;
-  --text-main: #1C2233;
-  --text-muted: #6B7280;
-  --border-color: rgba(28, 34, 51, 0.08);
-  --border-subtle: rgba(28, 34, 51, 0.04);
+  /* Ink. Both pairings are measured against the ground: 14.43 and 5.67. */
+  --coast-ink: #1F1B3A;
+  --coast-muted: #5E5A80;
+  --text-main: #1F1B3A;
+  --text-muted: #5E5A80;
+  --faint: #8B87A8;
+  --border-color: rgba(31, 27, 58, 0.08);
+  --border-subtle: rgba(31, 27, 58, 0.04);
+  --violet-shadow: rgba(91, 76, 219, 0.16);
 
-  /* Admin status accents — tuned for contrast on white surfaces */
-  --status-pending: #8F5600;
-  --status-approved: #0E7A72;
-  --status-rejected: #C0392B;
-  --status-info: #5B4FD6;
-
+  /* Shape and type. Radii match the app's four steps. */
   --radius-hero: 32px;
-  --radius-card: 24px;
+  --radius-card: 28px;
+  --radius-tile: 20px;
   --radius-pill: 999px;
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Minimum comfortable tap target, per Material. */
+  --tap-min: 48px;
 }
 
 * {
@@ -558,7 +580,11 @@ main {
 }
 
 table {
+  /* width:100% here defeated the .table-responsive wrapper: the table shrank to the container rather
+     than overflowing it, so eight columns were compressed into a phone's width instead of scrolling.
+     A min-width lets the wrapper do its job; 100% keeps it filling a wide screen. */
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -738,4 +764,97 @@ tr:hover td {
   .hero-title {
     font-size: 1.8rem;
   }
+}
+
+
+/* ── Mobile ─────────────────────────────────────────────────────────────────
+   The admin portal is Operate mode: moderators need to scan and act, so these
+   rules protect scanability rather than add expression. */
+
+/* The scroll container needs to be discoverable, not just functional. */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  border-radius: var(--radius-tile);
+}
+
+/* A row of actions inside a table cell must not wrap into an unhittable stack. */
+td .btn,
+td button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+a, button, .btn {
+  min-height: var(--tap-min);
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
+    text-wrap: balance;
+  }
+
+  /* Stat tiles stack rather than shrinking below readability. */
+  .bento-grid {
+    gap: 14px;
+  }
+
+  /* Forms: full-width fields, so a moderator can work one-handed. */
+  input, select, textarea {
+    width: 100%;
+    min-height: var(--tap-min);
+  }
+
+  /* Buttons get the tap floor, but not a blanket width. Stretching every button broke two real
+     layouts: a small "Remove" inside a space-between row grew across and collided with its own
+     label, and paired Save/Cancel actions each claimed the full row and wrapped their text.
+     Only a button that heads a panel is alone on its line and safe to fill it. */
+  .btn {
+    min-height: var(--tap-min);
+  }
+
+  .panel-header .btn:not(.btn-sm) {
+    width: 100%;
+  }
+
+  .section-wrapper,
+  .dashboard-wrapper {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* Drawn rather than typed: an emoji status dot renders differently on every platform, cannot take a
+   theme token, and carries meaning that colour alone should not. Paired with visible status text. */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+
+/* Now that tables scroll rather than compress, their columns should stop behaving as if space were
+   scarce. Headers wrapping to two lines and a title shredding over four were both symptoms of the old
+   squeeze, not of the content. Long free-text cells keep wrapping - only the first column and the
+   headers are held on one line. */
+.table-responsive th {
+  white-space: nowrap;
+}
+
+.table-responsive td:first-child {
+  min-width: 180px;
 }

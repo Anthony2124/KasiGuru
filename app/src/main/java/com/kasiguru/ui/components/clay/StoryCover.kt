@@ -140,22 +140,26 @@ fun StoryCoverCard(
             }
 
             Column(Modifier.padding(Space.sm)) {
-                // The Kasiguranin title leads. On any screen that shows both, the language being
-                // preserved is the loudest thing on it.
+                // The Kasiguranin title leads where it exists. Where it does not - the Tagalog folk
+                // tales, whose Kasiguranin layer is still to be authored - the cover promotes the
+                // title it does have instead of leaving the loudest line blank.
+                val lead = titleKasiguranin.ifBlank { title }
                 Text(
-                    text = titleKasiguranin,
+                    text = lead,
                     style = MaterialTheme.typography.titleMedium,
                     color = Ink,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (lead != title) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Spacer(Modifier.height(Space.xs))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TagChip(label = "$totalPages pages")

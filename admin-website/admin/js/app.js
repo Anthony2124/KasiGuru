@@ -13,6 +13,7 @@ import {
 let submissions = [];
 let vocabulary = [];
 let releases = [];
+let stories = [];
 let searchDebounceTimer = null;
 let unsubscribeFns = [];
 
@@ -110,6 +111,8 @@ function init() {
   initExcelImporter();
   initSqlImporter();
   initFormListeners();
+  initStoriesListener();
+  initStoryForm();
 
   const defaultBtn = document.querySelector('nav button[data-tab].active') || document.querySelector('nav button[data-tab]');
   if (defaultBtn) {
@@ -226,6 +229,265 @@ function initRealtimeListeners() {
 }
 
 // ── Dashboard Metrics ───────────────────────────────────────────────────────
+// ── Stories ─────────────────────────────────────────────────────────────────
+// The app ships a built-in corpus and overwrites it with whatever this collection holds, matching on
+// the numeric `id` field. That makes this the place a story is actually edited: a change here reaches
+// every device on the next sync, while the built-in copy only changes with an app release.
+
+function initStoriesListener() {
+  const storiesQuery = query(collection(db, "stories"));
+  const unsub = onSnapshot(storiesQuery, (snapshot) => {
+    stories = snapshot.docs.map(d => ({ docId: d.id, ...d.data() }));
+    stories.sort((a, b) => (a.id || 0) - (b.id || 0));
+    renderStoriesTable();
+  }, (error) => {
+    console.error('Stories listener failed:', error);
+    const tbody = document.getElementById('stories-tbody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--red);">
+        Couldn't load stories: ${escapeHtml(error.message)}</td></tr>`;
+    }
+  });
+  unsubscribeFns.push(unsub);
+}
+
+function renderStoriesTable() {
+  const tbody = document.getElementById('stories-tbody');
+  if (!tbody) return;
+
+  if (stories.length === 0) {
+    // A designed empty state: this collection being empty is the normal, correct condition for a
+    // project relying on the app's built-in corpus, so it should not read as a failure.
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+          <iconsax-icon name="book-1" type="bulk" size="32" color="var(--violet)"></iconsax-icon>
+          <div style="margin-top:8px; font-weight:700;">No stories published from here.</div>
+          <div style="margin-top:4px; font-size:0.9rem;">Learners are reading the ten stories built into the app. Add one here only to change or extend that set.</div>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  stories.forEach(story => {
+    let pageCount = story.totalPages || 0;
+    try {
+      const parsed = JSON.parse(story.pagesJson || '[]');
+      if (Array.isArray(parsed)) pageCount = parsed.length;
+    } catch (e) {
+      pageCount = story.totalPages || 0;
+    }
+
+    const kasiTitle = (story.titleKasiguranin || '').trim();
+    const kasiCell = kasiTitle
+      ? escapeHtml(kasiTitle)
+      : `<span style="color:var(--text-muted); font-style:italic;">Not written yet</span>`;
+
+    const xpCell = (story.requiredXp || 0) === 0
+      ? `<span class="badge badge-category">Free</span>`
+      : `${story.requiredXp} XP`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(story.title || '-')}</strong><div style="color:var(--text-muted); font-size:0.8rem;">id ${escapeHtml(String(story.id ?? '-'))}</div></td>
+      <td>${kasiCell}</td>
+      <td><span class="badge badge-category">${escapeHtml(story.category || 'Story')}</span></td>
+      <td>${pageCount}</td>
+      <td>${xpCell}</td>
+      <td>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="window.openStoryEditor('${story.docId}')"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="window.deleteStory('${story.docId}')"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Page editor ─────────────────────────────────────────────────────────────
+// Pages are stored as a JSON string on the story document, so the editor builds that array in the DOM
+// and serialises on save. Page numbers are assigned from position rather than typed, which removes a
+// whole class of mistake - a duplicated or skipped number breaks the reader's paging.
+
+function storyPageBlock(index, page) {
+  const p = page || {};
+  return `
+    <div class="panel" data-story-page style="margin-bottom:14px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong>Page ${index + 1}</strong>
+        <button type="button" class="btn btn-danger btn-sm" onclick="window.removeStoryPage(${index})">Remove</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kasiguranin</label>
+        <textarea class="form-control" data-field="kasiguranin" rows="2" placeholder="Leave blank until written. The app hides the word-tap and audio controls while this is empty.">${escapeHtml(p.kasiguranin || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tagalog *</label>
+        <textarea class="form-control" data-field="tagalog" rows="2" required>${escapeHtml(p.tagalog || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">English *</label>
+        <textarea class="form-control" data-field="english" rows="2" required>${escapeHtml(p.english || '')}</textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Illustration description</label>
+        <input type="text" class="form-control" data-field="illustrationDesc" value="${escapeHtml(p.illustrationDesc || '')}" placeholder="Shown in the app until artwork exists for this page.">
+      </div>
+    </div>`;
+}
+
+function renderStoryPages(pages) {
+  const host = document.getElementById('story-pages-editor');
+  if (!host) return;
+  if (!pages || pages.length === 0) {
+    host.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:14px;">No pages yet. A story needs at least one.</p>`;
+    return;
+  }
+  host.innerHTML = pages.map((pg, i) => storyPageBlock(i, pg)).join('');
+}
+
+function readStoryPagesFromDom() {
+  const blocks = document.querySelectorAll('#story-pages-editor [data-story-page]');
+  return Array.from(blocks).map((block, i) => {
+    const val = (field) => {
+      const el = block.querySelector(`[data-field="${field}"]`);
+      return el ? el.value.trim() : '';
+    };
+    return {
+      pageNumber: i + 1,
+      kasiguranin: val('kasiguranin'),
+      tagalog: val('tagalog'),
+      english: val('english'),
+      illustrationDesc: val('illustrationDesc')
+    };
+  });
+}
+
+window.addStoryPage = function() {
+  const pages = readStoryPagesFromDom();
+  pages.push({ kasiguranin: '', tagalog: '', english: '', illustrationDesc: '' });
+  renderStoryPages(pages);
+};
+
+window.removeStoryPage = function(index) {
+  const pages = readStoryPagesFromDom();
+  pages.splice(index, 1);
+  renderStoryPages(pages);
+};
+
+window.openStoryEditor = function(docId) {
+  const editing = docId ? stories.find(s => s.docId === docId) : null;
+
+  document.getElementById('story-editor-title').textContent = editing ? 'Edit story' : 'Add story';
+  document.getElementById('story-doc-id').value = editing ? editing.docId : '';
+  document.getElementById('story-input-id').value = editing ? (editing.id ?? '') : nextFreeStoryId();
+  document.getElementById('story-input-title').value = editing ? (editing.title || '') : '';
+  document.getElementById('story-input-title-kasiguranin').value = editing ? (editing.titleKasiguranin || '') : '';
+  document.getElementById('story-input-description').value = editing ? (editing.description || '') : '';
+  document.getElementById('story-input-category').value = editing ? (editing.category || '') : 'Folklore';
+  document.getElementById('story-input-required-xp').value = editing ? (editing.requiredXp ?? 0) : 0;
+
+  let pages = [];
+  if (editing) {
+    try {
+      const parsed = JSON.parse(editing.pagesJson || '[]');
+      if (Array.isArray(parsed)) pages = parsed;
+    } catch (e) {
+      console.warn('Story pagesJson could not be parsed; starting from empty.', e);
+    }
+  }
+  renderStoryPages(pages);
+  window.openModal('story-editor-modal');
+};
+
+// Suggests an id past both what this collection holds and the app's built-in corpus, so a new story
+// adds to the set rather than silently replacing one of the ten already shipping.
+function nextFreeStoryId() {
+  const BUILT_IN_STORY_COUNT = 10;
+  const highest = stories.reduce((max, s) => Math.max(max, s.id || 0), 0);
+  return Math.max(highest, BUILT_IN_STORY_COUNT) + 1;
+}
+
+window.deleteStory = async function(docId) {
+  const story = stories.find(s => s.docId === docId);
+  const name = story ? story.title : 'this story';
+  if (!confirm(`Delete "${name}"?\n\nLearners stop receiving it on their next sync. If the app ships a built-in story with the same id, that built-in version takes over again.`)) return;
+
+  try {
+    await deleteDoc(doc(db, "stories", docId));
+    await logAudit("story.delete", { docId, title: name, id: story ? story.id : null });
+  } catch (error) {
+    console.error('Story delete failed:', error);
+    alert("Couldn't delete the story: " + error.message);
+  }
+};
+
+function initStoryForm() {
+  const form = document.getElementById('story-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const pages = readStoryPagesFromDom();
+    if (pages.length === 0) {
+      alert('A story needs at least one page.');
+      return;
+    }
+    const incomplete = pages.findIndex(p => !p.tagalog || !p.english);
+    if (incomplete !== -1) {
+      alert(`Page ${incomplete + 1} needs both Tagalog and English before it can be saved.`);
+      return;
+    }
+
+    const docId = document.getElementById('story-doc-id').value;
+    const numericId = parseInt(document.getElementById('story-input-id').value, 10);
+    if (!Number.isInteger(numericId) || numericId < 1) {
+      alert('Story id must be a whole number of 1 or more.');
+      return;
+    }
+
+    const payload = {
+      id: numericId,
+      title: document.getElementById('story-input-title').value.trim(),
+      titleKasiguranin: document.getElementById('story-input-title-kasiguranin').value.trim(),
+      description: document.getElementById('story-input-description').value.trim(),
+      category: document.getElementById('story-input-category').value.trim() || 'Story',
+      requiredXp: parseInt(document.getElementById('story-input-required-xp').value, 10) || 0,
+      pagesJson: JSON.stringify(pages),
+      totalPages: pages.length,
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      if (docId) {
+        // Keep the document path and the numeric id in step. An admin who changes the id would
+        // otherwise leave a document at stories/3 carrying id 7 - which still works, because the app
+        // matches on the field, but makes the collection unreadable in the Firebase console.
+        if (docId !== String(numericId)) {
+          await setDoc(doc(db, "stories", String(numericId)), payload);
+          await deleteDoc(doc(db, "stories", docId));
+          await logAudit("story.reid", { from: docId, to: numericId, title: payload.title });
+        } else {
+          await updateDoc(doc(db, "stories", docId), payload);
+          await logAudit("story.update", { docId, id: numericId, title: payload.title });
+        }
+      } else {
+        // Document id mirrors the numeric story id, so the collection stays readable in the Firebase
+        // console and a story cannot be added twice under the same id by accident.
+        await setDoc(doc(db, "stories", String(numericId)), payload);
+        await logAudit("story.create", { id: numericId, title: payload.title });
+      }
+      window.closeModal('story-editor-modal');
+    } catch (error) {
+      console.error('Story save failed:', error);
+      alert("Couldn't save the story: " + error.message);
+    }
+  });
+}
+
 function updateDashboardMetrics() {
   const metricWords = document.getElementById('metric-total-words');
   if (metricWords) metricWords.textContent = vocabulary.length;

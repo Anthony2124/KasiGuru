@@ -4,6 +4,47 @@
     var c = color || 'currentColor';
     
     var svgMap = {
+      'sms': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="2" y="4" width="20" height="16" rx="4" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M3 8L10.2 12.8C11.3 13.5 12.7 13.5 13.8 12.8L21 8" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'lock': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="4" y="10" width="16" height="11" rx="4" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M8 10V7.5C8 5.29 9.79 3.5 12 3.5C14.21 3.5 16 5.29 16 7.5V10" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="12" cy="15.5" r="1.75" fill="' + c + '"/>' +
+      '</svg>',
+      'user': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<circle cx="12" cy="7.5" r="4" fill="' + c + '"/>' +
+        '<path d="M4 20C4 16.4 7.6 14 12 14C16.4 14 20 16.4 20 20V21H4V20Z" fill="' + c + '" opacity="0.35"/>' +
+      '</svg>',
+      'edit': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M4 20H8L19 9L15 5L4 16V20Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M15 5L19 9" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<path d="M17 3L21 7" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'logout': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M4 5C4 3.9 4.9 3 6 3H11V21H6C4.9 21 4 20.1 4 19V5Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M16 8L20 12L16 16" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M20 12H10" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'login': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M13 3H18C19.1 3 20 3.9 20 5V19C20 20.1 19.1 21 18 21H13V3Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M8 8L4 12L8 16" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M4 12H14" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'info-circle': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<circle cx="12" cy="12" r="10" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M12 11V16" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="12" cy="7.75" r="1.15" fill="' + c + '"/>' +
+      '</svg>',
+      'document-text': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M5 4C5 2.9 5.9 2 7 2H14L19 7V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M8.5 12H15.5M8.5 16H13" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'security-safe': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M12 2L20 5.5V11C20 16 16.5 20.3 12 22C7.5 20.3 4 16 4 11V5.5L12 2Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M8.75 12L11.25 14.5L15.5 10" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>',
       'element-3': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<rect x="3" y="3" width="8" height="8" rx="3" fill="' + c + '" opacity="0.35"/>' +
         '<rect x="13" y="3" width="8" height="8" rx="3" fill="' + c + '"/>' +
@@ -107,6 +148,7 @@
       '</svg>'
     };
 
+    if (name === 'lock-1') { name = 'lock'; }
     return svgMap[name] || svgMap['element-3'];
   }
 

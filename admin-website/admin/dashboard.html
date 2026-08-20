@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>KasiGuru Admin Portal &amp; Verification Panel</title>
   <!-- Standalone Synchronous Iconsax Bulk Web Component Script -->
-  <script src="js/iconsax.js?v=2026_bulk_standalone"></script>
+  <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
   <!-- Cache Buster Query String v=2026_pure_bulk_svg -->
   <link rel="stylesheet" href="css/styles.css?v=2026_coast_light">
   <!-- SheetJS for Excel Importer -->
@@ -122,6 +122,9 @@
       <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
         <iconsax-icon name="book-1" type="bulk" size="20" color="var(--play-purple-start)"></iconsax-icon> Master Dictionary
       </button>
+      <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
+        <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
+      </button>
       <button data-tab="tab-releases" onclick="window.switchTab('tab-releases')">
         <iconsax-icon name="box-search" type="bulk" size="20" color="var(--play-pink-start)"></iconsax-icon> APK Releases
       </button>
@@ -157,7 +160,7 @@
           </button>
         </div>
         <div style="background:var(--bg-surface); padding:8px 18px; border-radius:var(--radius-pill); border:1px solid var(--border-color); font-size:0.85rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-          <span style="color:var(--status-approved);">🟢</span>
+          <span class="status-dot" aria-hidden="true"></span>
           <span>Firebase Cloud Live Sync Active</span>
         </div>
       </div>
@@ -166,7 +169,7 @@
       <div class="hero-card">
         <div>
           <span class="hero-chip">KasiGuru Linguistic Dashboard</span>
-          <h1 class="hero-title">Preserving Kasiguranin Together 🌿</h1>
+          <h1 class="hero-title">Preserving Kasiguranin Together</h1>
           <p class="hero-subtitle">Manage user contributions, verify vocabulary words, and deploy mobile APK updates.</p>
         </div>
         <div style="color:rgba(255,255,255,0.3); padding-right:1rem;">
@@ -273,7 +276,7 @@
             <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> SQL Database Migration (.sql)</h2>
           </div>
           <div class="dropzone" id="sql-dropzone">
-            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">🗄️ Drag &amp; Drop "kasiguranin_migration.sql" here</p>
+            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;"><iconsax-icon name="document-upload" type="bulk" size="20" color="var(--violet)"></iconsax-icon> Drag &amp; Drop "kasiguranin_migration.sql" here</p>
             <p style="color:var(--text-muted); font-size:0.8rem;">Parses INSERT INTO vocabulary &amp; conjugations with strict NULL sanitization into Firestore.</p>
             <input type="file" id="sql-file-input" accept=".sql" style="display:none;">
           </div>
@@ -284,7 +287,7 @@
             <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Bulk Excel Import (Database.xlsx)</h2>
           </div>
           <div class="dropzone" id="excel-dropzone">
-            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">📊 Drag &amp; Drop "Database.xlsx" here</p>
+            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;"><iconsax-icon name="document-text" type="bulk" size="20" color="var(--violet)"></iconsax-icon> Drag &amp; Drop "Database.xlsx" here</p>
             <p style="color:var(--text-muted); font-size:0.8rem;">Parses KASIGURANIN, TAGALOG, ENGLISH, CATEGORY, and IPA columns into cloud Firestore.</p>
             <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;">
           </div>
@@ -342,6 +345,41 @@
     </section>
 
     <!-- Tab 4: App Release & APK Store Manager -->
+    <section id="tab-stories" class="tab-content" style="display: none;">
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Story Library</h2>
+          <button class="btn btn-primary" onclick="window.openStoryEditor()">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Add story
+          </button>
+        </div>
+
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;">
+          Stories here sync down to every learner's device and overwrite the app's built-in copy with the
+          same id. A story with no Kasiguranin text still reads correctly in the app: it leads with
+          Tagalog and hides the word-tap and audio controls until the Kasiguranin is written.
+        </p>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Kasiguranin title</th>
+                <th>Category</th>
+                <th>Pages</th>
+                <th>Unlocks at</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stories-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
     <section id="tab-releases" class="tab-content" style="display: none;">
       <div class="panel">
         <div class="panel-header">
@@ -477,6 +515,66 @@
   </div>
 
   <!-- Modal: Edit Vocabulary Word -->
+  <div id="story-editor-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:760px;">
+      <div class="modal-header">
+        <h3 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> <span id="story-editor-title">Add story</span></h3>
+        <button class="close-btn" onclick="closeModal('story-editor-modal')">&times;</button>
+      </div>
+
+      <form id="story-form">
+        <input type="hidden" id="story-doc-id">
+
+        <div class="form-group">
+          <label class="form-label">Story id *</label>
+          <input type="number" id="story-input-id" class="form-control" min="1" required>
+          <small style="color:var(--text-muted);">The app matches its built-in stories by this number. Reusing an id replaces that story on every device.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" id="story-input-title" class="form-control" required placeholder="Si Pagong at si Matsing">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kasiguranin title</label>
+          <input type="text" id="story-input-title-kasiguranin" class="form-control" placeholder="Leave blank until the Kasiguranin is written">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="story-input-description" class="form-control" rows="2" placeholder="One sentence describing the story."></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <input type="text" id="story-input-category" class="form-control" placeholder="Fable">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unlocks at (XP)</label>
+            <input type="number" id="story-input-required-xp" class="form-control" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="panel-header" style="margin-top:8px;">
+          <h4 style="font-weight:800; font-size:1rem;">Pages</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.addStoryPage()">
+            <iconsax-icon name="add-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Add page
+          </button>
+        </div>
+        <div id="story-pages-editor"></div>
+
+        <div style="display:flex; gap:12px; margin-top:20px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">
+            <iconsax-icon name="verify" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Save story
+          </button>
+          <button type="button" class="btn" onclick="closeModal('story-editor-modal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="edit-vocab-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
