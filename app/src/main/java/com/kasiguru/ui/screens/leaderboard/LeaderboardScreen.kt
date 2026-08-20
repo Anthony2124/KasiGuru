@@ -24,8 +24,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.LeaderboardEntity
 import com.kasiguru.ui.components.MascotOwlSlot
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClaySurface
 import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SegmentedToggle
@@ -44,42 +47,17 @@ fun LeaderboardScreen(
     val filterKeys = listOf("All-Time XP", "Weekly XP", "Streak Masters")
     val filterLabels = listOf("All-Time", "This Week", "Streaks")
 
-    CanopyScaffold(
-        canopyHeight = 180.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Kasiguranin Champions", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "Climb the rankings with daily learning streaks!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.weight(1f))
-            uiState.currentUserEntry?.let { userEntry ->
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    GlassChip {
-                        Icon(
-                            painter = painterResource(id = Iconsax.FlashBold),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = "You're #${uiState.currentUserRank} · ${userEntry.totalXp} XP",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = OnCanopy
-                        )
-                    }
-                }
-            }
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Kasiguranin Champions",
+        subtitle = "Climb the rankings with daily learning streaks!",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Arcs,
+        content = {
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Violet)
                 }
-                return@CanopyScaffold
+                return@GroundScaffold
             }
 
             val list = uiState.leaderboard
@@ -94,6 +72,40 @@ fun LeaderboardScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
+                item {
+                    GroundTitleBlock(
+                        title = "Kasiguranin Champions",
+                        subtitle = "Climb the rankings with daily learning streaks!",
+                        // Was a GlassChip tucked into the canopy's bottom corner. Given a real surface
+                        // it can say more and stay readable while the list scrolls under the bar.
+                        lead = {
+                            uiState.currentUserEntry?.let { userEntry ->
+                                SoftCard(modifier = Modifier.fillMaxWidth()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.FlashBold),
+                                            contentDescription = null,
+                                            tint = Violet,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(Space.sm))
+                                        Text(
+                                            text = "You are #${uiState.currentUserRank}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = Ink,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${userEntry.totalXp} XP",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = Muted
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
                 uiState.currentUserEntry?.let { userEntry ->
                     item {
                         ClaySurface(face = Gold, lipColor = GoldDeep, modifier = Modifier.fillMaxWidth()) {

@@ -25,3 +25,9 @@ public/downloads/
 .env
 .env.local
 .env.*.local
+
+# Agent tooling installed into the repo by `npx skills add`; not project source.
+.agents/
+.claude/
+skills-lock.json
+wd_tmp.xml

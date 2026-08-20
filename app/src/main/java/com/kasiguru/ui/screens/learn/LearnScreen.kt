@@ -41,6 +41,11 @@ import com.kasiguru.ui.components.StreakDialog
 import com.kasiguru.ui.components.clay.ActivityRow
 import com.kasiguru.ui.components.clay.ActivityState
 import com.kasiguru.ui.components.clay.CanopyIconButton
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.TextButton
+import com.kasiguru.ui.components.clay.StoryCoverCard
+import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.CanopyScaffold
 import com.kasiguru.ui.components.clay.DayMark
 import com.kasiguru.ui.components.clay.DayState
@@ -239,6 +244,63 @@ fun LearnScreen(
                     }
                 }
 
+                // The app's most-pressed control, and what replaced the docked FAB.
+                //
+                // It sits here rather than in the navigation bar for three reasons: a full-width button
+                // is entirely tappable, where the FAB lost roughly its top 12dp to overflowing the pill
+                // it was docked into; it can carry a label, so the action names itself instead of
+                // showing a bare glyph whose meaning changed underneath the user; and an action that
+                // belongs to Learn should not follow the learner onto Words or Profile.
+                item {
+                    val next = uiState.currentActivity
+                    val label: String
+                    val iconRes: Int
+                    val onContinue: () -> Unit
+                    when (next?.kind) {
+                        ActivityKind.Lesson -> {
+                            label = "Continue learning"
+                            iconRes = Iconsax.Play
+                            onContinue = {
+                                next.lessonRef
+                                    ?.let { onStartLesson(it.unitId, it.lessonIndex) }
+                                    ?: onOpenReview()
+                            }
+                        }
+                        ActivityKind.Game -> {
+                            label = "Play a game"
+                            iconRes = Iconsax.Game
+                            onContinue = onOpenGames
+                        }
+                        ActivityKind.Story -> {
+                            label = "Read a story"
+                            iconRes = Iconsax.BookBold
+                            onContinue = onOpenStories
+                        }
+                        // Review, or today's path already finished. The deck always has something to
+                        // show, so this is a real destination rather than a disabled state.
+                        else -> {
+                            label = "Review your words"
+                            iconRes = Iconsax.Repeat
+                            onContinue = onOpenReview
+                        }
+                    }
+
+                    ClayButton(
+                        label = label,
+                        onClick = onContinue,
+                        modifier = Modifier.fillMaxWidth(),
+                        leading = {
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = null, // the label already names the action
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    )
+                    Spacer(Modifier.height(Space.lg))
+                }
+
                 item {
                     SectionHeading(text = "Today")
                     SectionCaption(
@@ -300,6 +362,45 @@ fun LearnScreen(
                                 }
                             }
                         )
+                    }
+                }
+
+                // Story mode. Fully built since v1.2 and reachable only from a tile in the skills
+                // grid, which is why it read as missing. A shelf of covers says what it is.
+                if (uiState.stories.isNotEmpty()) {
+                    item {
+                        Spacer(Modifier.height(Space.lg))
+                        SectionHeading(
+                            text = "Story mode",
+                            action = {
+                                TextButton(onClick = onOpenStories) {
+                                    Text(
+                                        "All stories",
+                                        color = Violet,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                        )
+                        SectionCaption(
+                            text = uiState.stories.count { it.isCompleted }.toString() + " of " +
+                                uiState.stories.size + " read, with Tagalog and English alongside"
+                        )
+                        Spacer(Modifier.height(Space.sm))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                            items(uiState.stories, key = { it.id }) { story ->
+                                StoryCoverCard(
+                                    titleKasiguranin = story.titleKasiguranin,
+                                    title = story.title,
+                                    totalPages = story.totalPages,
+                                    isUnlocked = story.isUnlocked,
+                                    isCompleted = story.isCompleted,
+                                    requiredXp = story.requiredXp,
+                                    onClick = { onOpenStories() },
+                                    modifier = Modifier.width(160.dp)
+                                )
+                            }
+                        }
                     }
                 }
 

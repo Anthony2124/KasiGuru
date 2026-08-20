@@ -45,7 +45,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.ClaySurface
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.components.KasiGuruProgressBar
@@ -112,25 +115,11 @@ fun VocabularyScreen(
         uiState.totalLearnedCount.toFloat() / uiState.allVocabulary.size.toFloat()
     } else 0f
 
-    CanopyScaffold(
-        canopyHeight = 122.dp,
-        canopyContent = {
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Dictionary", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.height(Space.sm))
-            KasiGuruProgressBar(
-                progress = corpusProgress,
-                height = 5.dp,
-                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
-                animated = true
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Dictionary",
+        subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
+        pattern = GroundPattern.Grid,
+        content = {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
@@ -140,6 +129,30 @@ fun VocabularyScreen(
                 horizontalArrangement = Arrangement.spacedBy(Space.sm),
                 verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
+                item(span = { GridItemSpan(2) }) {
+                    GroundTitleBlock(
+                        title = "Dictionary",
+                        subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
+                        lead = {
+                            // The white gradient existed only to survive the violet canopy.
+                            KasiGuruProgressBar(
+                                progress = corpusProgress,
+                                modifier = Modifier.fillMaxWidth(),
+                                height = 6.dp,
+                                gradientColors = listOf(Violet, VioletDeep)
+                            )
+                        }
+                    )
+                }
+
+                item(span = { GridItemSpan(2) }) {
+                    SubmitWordBanner(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigateToSubmitWord()
+                    })
+                    Spacer(Modifier.height(Space.xs))
+                }
+
                 item(span = { GridItemSpan(2) }) {
                     OutlinedTextField(
                         value = searchQuery,
@@ -224,43 +237,67 @@ fun VocabularyScreen(
                     )
                 }
 
-                item(span = { GridItemSpan(2) }) {
-                    Spacer(Modifier.height(Space.xs))
-                    ContributeWordRow(onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onNavigateToSubmitWord()
-                    })
-                }
             }
         }
     )
 }
 
 /**
- * The corpus is community-grown (PRODUCT.md: contributors submit words into a moderated review
- * queue), and the old Home dashboard's banner for this was the only way in — dropped when Home was
- * retired. Dictionary is the entry point's natural home now: it's where a learner notices a gap.
+ * The way into the community review queue, and the loudest thing on the Dictionary.
+ *
+ * The corpus is community-grown (PRODUCT.md: contributors submit words into a moderated queue), but
+ * this used to be the very last item in the category grid - a 40dp icon and two lines of small text,
+ * below twelve cards nobody scrolls past. It now opens the screen.
+ *
+ * Clay and violet on purpose: on a page made of a search field and a grid of categories this is the
+ * only *action*, and DESIGN.md reserves clay for things you press. White text is safe here without
+ * new measurement - Violet carries white at 6.00 in the measured table - and the icon disc can be
+ * translucent because, unlike anything else on this screen, it has a genuinely vivid backdrop.
  */
 @Composable
-private fun ContributeWordRow(onClick: () -> Unit) {
-    SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.tile, onClick = onClick, elevation = 2.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+private fun SubmitWordBanner(onClick: () -> Unit) {
+    ClaySurface(
+        face = Violet,
+        lipColor = VioletDeep,
+        shape = Shapes.panel,
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(
-                modifier = Modifier.size(40.dp).clip(Shapes.chip).background(Violet.copy(alpha = 0.16f)),
+                modifier = Modifier.size(44.dp).clip(Shapes.chip).background(Color.White.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(painter = painterResource(id = Iconsax.Add), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                Icon(
+                    painter = painterResource(id = Iconsax.Add),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(Modifier.width(Space.md))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Submit a word",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
+                Text(
+                    text = "Add a Kasiguranin word you know to the community review queue",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White
+                )
             }
             Spacer(Modifier.width(Space.sm))
-            Column(Modifier.weight(1f)) {
-                Text(text = "Know a Kasiguranin word?", style = MaterialTheme.typography.titleSmall, color = Ink)
-                Text(text = "Submit it to the community review queue", style = MaterialTheme.typography.labelSmall, color = Muted)
-            }
-            Icon(painter = painterResource(id = Iconsax.ArrowRight), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
+            Icon(
+                painter = painterResource(id = Iconsax.ArrowRight),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
-
 @Composable
 private fun WordOfTheDayCard(kasiguranin: String, translation: String, onPlayClick: () -> Unit) {
     SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.panel) {

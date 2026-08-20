@@ -21,6 +21,9 @@ import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.theme.Ink
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,50 +37,31 @@ fun AspectBuilderGameScreen(
         onExit = onNavigateBack
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Aspect Builder",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = exitGuard) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    GroundScaffold(
+        title = "Aspect Builder",
+        onBack = exitGuard,
+        // Close, not back: this quits a round in progress, and exitGuard asks before discarding.
+        navIcon = Iconsax.CloseCircle,
+        // No texture while playing - the exercise is the only thing that should read as content.
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Violet)
             }
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
                 accentColor = HeroCardStart,
                 onBack = onNavigateBack,
-                modifier = Modifier.padding(padding),
+                modifier = Modifier,
                 title = "Aspect Builder is coming soon",
                 message = "We are documenting the verb aspect forms with our language experts. Check back after the next dictionary update!"
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isGameOver) {
@@ -87,19 +71,19 @@ fun AspectBuilderGameScreen(
                 xpEarned = uiState.xpEarned,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
-        val question = uiState.questions.getOrNull(uiState.currentIndex) ?: return@Scaffold
+        val question = uiState.questions.getOrNull(uiState.currentIndex) ?: return@GroundScaffold
         val qIndex = uiState.currentIndex + 1
         val hasAnswered = uiState.selectedAnswer != null
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -128,19 +112,19 @@ fun AspectBuilderGameScreen(
                         Text(
                             text = "Root Verb: ${question.rootWord.uppercase()}",
                             style = MaterialTheme.typography.labelMedium,
-                            color = TextSubtleGray
+                            color = Muted
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Form required: ${question.targetAspect}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextHeadingBlack
+                            color = Ink
                         )
                         Text(
                             text = "Meaning: \"${question.translation}\"",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextSubtleGray
+                            color = Muted
                         )
                     }
                 }
@@ -167,5 +151,6 @@ fun AspectBuilderGameScreen(
                 GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
         }
-    }
+        }
+    )
 }

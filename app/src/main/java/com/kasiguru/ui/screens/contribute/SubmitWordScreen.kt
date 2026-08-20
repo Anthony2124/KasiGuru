@@ -18,8 +18,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
@@ -118,24 +119,12 @@ fun SubmitWordScreen(
         return
     }
 
-    CanopyScaffold(
-        canopyHeight = 196.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = attemptBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(
-                text = "Help Expand Kasiguranin",
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.height(Space.xxs))
-            Text(
-                text = "Share native words, phrases, or local expressions to be verified and published to KasiGuru.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Help Expand Kasiguranin",
+        subtitle = "Share native words, phrases, or local expressions to be verified and published to KasiGuru.",
+        onBack = attemptBack,
+        pattern = GroundPattern.Orbs,
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,6 +132,10 @@ fun SubmitWordScreen(
                     .padding(Space.gutter),
                 verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
+                GroundTitleBlock(
+                    title = "Help Expand Kasiguranin",
+                    subtitle = "Share native words, phrases, or local expressions to be verified and published to KasiGuru."
+                )
                 Spacer(Modifier.height(Space.xs))
 
                 if (uiState.errorMessage != null) {

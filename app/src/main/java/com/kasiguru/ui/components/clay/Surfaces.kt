@@ -69,6 +69,10 @@ fun CanopyScaffold(
     canopyContent: @Composable ColumnScope.() -> Unit,
     sheetContent: @Composable BoxScope.() -> Unit
 ) {
+    // The canopy is violet in both themes, so its status-bar icons are always light. This used to be
+    // forced app-wide from Theme.kt on the assumption every screen had a canopy behind the status bar.
+    com.kasiguru.ui.theme.StatusBarIcons(dark = false)
+
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val totalCanopyHeight = statusBarHeight + canopyHeight
 
@@ -93,47 +97,6 @@ fun CanopyScaffold(
                 .background(Surface),
             content = sheetContent
         )
-    }
-}
-
-/**
- * Back affordance for a pushed subscreen's canopy.
- *
- * The five tab roots (Learn, Practice, Dictionary, Progress, Profile) never show this — they are
- * reached by switching tabs, not by navigating forward, so a back chevron there would answer a
- * question nobody asked. Screens reached with `navController.navigate()` have no bottom bar and
- * nothing else on screen to go back with, so the canopy carries its own.
- */
-@Composable
-fun CanopyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    // The visible pill reads best at 36dp, but a 36dp tap target sits under Material's 48dp minimum —
-    // so the clickable bounds are 48dp with the smaller pill centered inside, rather than growing the
-    // pill itself and changing how the canopy looks.
-    Box(
-        modifier = modifier
-            .size(48.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = LocalIndication.current,
-                role = Role.Button,
-                onClick = onClick
-            ),
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(Shapes.pill)
-                .background(Color.White.copy(alpha = 0.18f)),
-            contentAlignment = androidx.compose.ui.Alignment.Center
-        ) {
-            androidx.compose.material3.Icon(
-                painter = androidx.compose.ui.res.painterResource(id = com.kasiguru.ui.theme.Iconsax.ArrowLeft),
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
-        }
     }
 }
 

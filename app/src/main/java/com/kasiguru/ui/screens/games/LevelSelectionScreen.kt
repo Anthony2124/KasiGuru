@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,8 +33,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.GameLevelEntity
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.theme.RewardInk
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.Gold
@@ -61,39 +65,12 @@ fun LevelSelectionScreen(
     val uiState by viewModel.uiState.collectAsState()
     val ruleInfo = GameRulesRegistry.games[uiState.gameType]
 
-    CanopyScaffold(
-        canopyHeight = 148.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(
-                text = ruleInfo?.title ?: "Levels",
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnCanopy
-            )
-            Text(
-                text = "Clear a level to unlock the next one",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.weight(1f))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                GlassChip {
-                    Icon(
-                        painter = painterResource(id = Iconsax.StarBold),
-                        contentDescription = null,
-                        tint = Gold,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "${uiState.totalStars} total",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = OnCanopy
-                    )
-                }
-            }
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = ruleInfo?.title ?: "Levels",
+        subtitle = "Clear a level to unlock the next one",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Arcs,
+        content = {
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Violet)
@@ -108,6 +85,21 @@ fun LevelSelectionScreen(
                     horizontalArrangement = Arrangement.spacedBy(Space.sm),
                     verticalArrangement = Arrangement.spacedBy(Space.md)
                 ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        GroundTitleBlock(
+                            title = ruleInfo?.title ?: "Levels",
+                            subtitle = "Clear a level to unlock the next one",
+                            // The star count was a canopy GlassChip. Gold carries RewardInk at 9.00
+                            // measured, so the tag states it without needing a translucent fill.
+                            lead = {
+                                TagChip(
+                                    label = "${uiState.totalStars} stars earned",
+                                    tint = Gold,
+                                    labelColor = RewardInk
+                                )
+                            }
+                        )
+                    }
                     items(uiState.levels) { level ->
                         LevelCell(
                             level = level,

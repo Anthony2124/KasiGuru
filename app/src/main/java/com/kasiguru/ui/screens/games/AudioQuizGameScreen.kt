@@ -23,6 +23,9 @@ import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.theme.Ink
 import com.kasiguru.util.audio.AudioPlayerManager
 import kotlinx.coroutines.delay
 
@@ -55,48 +58,29 @@ fun AudioQuizGameScreen(
         isPlaying = false
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Audio Quiz",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = exitGuard) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    GroundScaffold(
+        title = "Audio Quiz",
+        onBack = exitGuard,
+        // Close, not back: this quits a round in progress, and exitGuard asks before discarding.
+        navIcon = Iconsax.CloseCircle,
+        // No texture while playing - the exercise is the only thing that should read as content.
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Violet)
             }
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
                 accentColor = MiniGamesCardEnd,
                 onBack = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isGameOver) {
@@ -106,9 +90,9 @@ fun AudioQuizGameScreen(
                 xpEarned = uiState.finalXp,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         val questionNum = uiState.currentQuestionIndex + 1
@@ -117,7 +101,7 @@ fun AudioQuizGameScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -163,7 +147,7 @@ fun AudioQuizGameScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.VolumeHigh),
                                 contentDescription = "Play the word again",
-                                tint = TextHeadingBlack,
+                                tint = Ink,
                                 modifier = Modifier.size(48.dp)
                             )
                         }
@@ -173,7 +157,7 @@ fun AudioQuizGameScreen(
                 Text(
                     text = "Tap to listen again & select the correct word",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSubtleGray,
+                    color = Muted,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
@@ -202,5 +186,6 @@ fun AudioQuizGameScreen(
                 GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
         }
-    }
+        }
+    )
 }

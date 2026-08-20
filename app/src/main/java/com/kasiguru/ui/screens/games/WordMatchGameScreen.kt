@@ -22,6 +22,9 @@ import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.theme.Ink
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,48 +38,29 @@ fun WordMatchGameScreen(
         onExit = onNavigateBack
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Word Match",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = exitGuard) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    GroundScaffold(
+        title = "Word Match",
+        onBack = exitGuard,
+        // Close, not back: this quits a round in progress, and exitGuard asks before discarding.
+        navIcon = Iconsax.CloseCircle,
+        // No texture while playing - the exercise is the only thing that should read as content.
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Violet)
             }
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
                 accentColor = VocabCardEnd,
                 onBack = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isGameOver) {
@@ -86,9 +70,9 @@ fun WordMatchGameScreen(
                 xpEarned = uiState.finalXp,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         val roundNum = uiState.currentQuestionIndex + 1
@@ -97,7 +81,7 @@ fun WordMatchGameScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -125,14 +109,14 @@ fun WordMatchGameScreen(
                         Text(
                             text = "Match Kasiguranin Word:",
                             style = MaterialTheme.typography.labelMedium,
-                            color = TextSubtleGray
+                            color = Muted
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = uiState.currentWord?.kasiguranin ?: "",
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Black,
-                            color = TextHeadingBlack,
+                            color = Ink,
                             fontSize = 32.sp
                         )
                     }
@@ -161,5 +145,6 @@ fun WordMatchGameScreen(
                 GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
         }
-    }
+        }
+    )
 }

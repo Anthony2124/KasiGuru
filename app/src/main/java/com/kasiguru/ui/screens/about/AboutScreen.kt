@@ -18,8 +18,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -57,39 +58,12 @@ fun AboutScreen(
         )
     )
 
-    CanopyScaffold(
-        canopyHeight = 220.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Surface(modifier = Modifier.size(64.dp), shape = CircleShape, color = Color.White) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Book),
-                            contentDescription = null,
-                            tint = Violet,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
-                Spacer(Modifier.height(Space.sm))
-                Text(
-                    text = "KasiGuru",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    color = OnCanopy
-                )
-                Text(
-                    text = "Preserving Casiguran, Aurora's heritage",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnCanopy,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-            }
-            Spacer(Modifier.weight(1f))
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "KasiGuru",
+        subtitle = "Preserving Casiguran, Aurora's heritage",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Orbs,
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -97,6 +71,10 @@ fun AboutScreen(
                     .padding(Space.gutter),
                 verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
+                GroundTitleBlock(
+                    title = "KasiGuru",
+                    subtitle = "Preserving Casiguran, Aurora's heritage"
+                )
                 Spacer(Modifier.height(Space.xs))
                 Text(
                     text = "Frequently Asked Questions",

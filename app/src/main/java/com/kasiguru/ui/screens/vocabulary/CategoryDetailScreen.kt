@@ -49,8 +49,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.WordVerificationDialog
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.theme.VioletDeep
+import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.components.clay.TagChip
@@ -125,38 +128,12 @@ fun CategoryDetailScreen(
         )
     }
 
-    CanopyScaffold(
-        canopyHeight = 172.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(text = meta.name, style = MaterialTheme.typography.headlineMedium, color = OnCanopy, maxLines = 1)
-            Text(text = meta.description, style = MaterialTheme.typography.bodyMedium, color = OnCanopy)
-            Spacer(Modifier.height(Space.sm))
-            KasiGuruProgressBar(
-                progress = if (totalWords > 0) learnedCount.toFloat() / totalWords else 0f,
-                height = 5.dp,
-                gradientColors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
-                animated = true
-            )
-            Spacer(Modifier.weight(1f))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                GlassChip {
-                    Icon(
-                        painter = painterResource(id = Iconsax.BookBold),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Text(
-                        text = "$learnedCount / $totalWords learned",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = OnCanopy
-                    )
-                }
-            }
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = meta.name,
+        subtitle = meta.description,
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Grid,
+        content = {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -164,6 +141,28 @@ fun CategoryDetailScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
+                item {
+                    GroundTitleBlock(
+                        title = meta.name,
+                        subtitle = meta.description,
+                        // The learned count was a canopy GlassChip; a progress bar says the same thing
+                        // and shows how far along it is, which the chip could only state as a fraction.
+                        lead = {
+                            KasiGuruProgressBar(
+                                progress = if (totalWords == 0) 0f else learnedCount.toFloat() / totalWords,
+                                modifier = Modifier.fillMaxWidth(),
+                                height = 6.dp,
+                                gradientColors = listOf(Violet, VioletDeep)
+                            )
+                            Spacer(Modifier.height(Space.xs))
+                            Text(
+                                text = "$learnedCount of $totalWords learned",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Muted
+                            )
+                        }
+                    )
+                }
                 item {
                     OutlinedTextField(
                         value = searchQuery,

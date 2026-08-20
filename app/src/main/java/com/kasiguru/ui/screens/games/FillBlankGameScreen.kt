@@ -29,6 +29,9 @@ import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.theme.Ink
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,48 +45,29 @@ fun FillBlankGameScreen(
         onExit = onNavigateBack
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Fill in the Blank",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = exitGuard) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    GroundScaffold(
+        title = "Fill in the Blank",
+        onBack = exitGuard,
+        // Close, not back: this quits a round in progress, and exitGuard asks before discarding.
+        navIcon = Iconsax.CloseCircle,
+        // No texture while playing - the exercise is the only thing that should read as content.
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Violet)
             }
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
                 accentColor = QuestsCardEnd,
                 onBack = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isGameOver) {
@@ -93,9 +77,9 @@ fun FillBlankGameScreen(
                 xpEarned = uiState.finalXp,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
         val questionNumber = uiState.currentQuestionIndex + 1
@@ -104,7 +88,7 @@ fun FillBlankGameScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -133,7 +117,7 @@ fun FillBlankGameScreen(
                     Text(
                         text = "Complete the Sentence:",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextSubtleGray
+                        color = Muted
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -141,7 +125,7 @@ fun FillBlankGameScreen(
                     val parts = rawTemplate.split("___")
                     val filledText = buildAnnotatedString {
                         append(parts.getOrElse(0) { "" })
-                        withStyle(style = SpanStyle(color = TextHeadingBlack, fontWeight = FontWeight.Bold)) {
+                        withStyle(style = SpanStyle(color = Ink, fontWeight = FontWeight.Bold)) {
                             append(uiState.selectedOption ?: " _____ ")
                         }
                         append(parts.getOrElse(1) { "" })
@@ -151,7 +135,7 @@ fun FillBlankGameScreen(
                         text = filledText,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.SemiBold,
-                            color = TextHeadingBlack,
+                            color = Ink,
                             textAlign = TextAlign.Center,
                             lineHeight = 32.sp
                         )
@@ -162,7 +146,7 @@ fun FillBlankGameScreen(
                         Text(
                             text = "(${uiState.currentVerb?.english})",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextSubtleGray,
+                            color = Muted,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -192,5 +176,6 @@ fun FillBlankGameScreen(
                 GameContinueButton(onClick = { viewModel.nextQuestion() })
             }
         }
-    }
+        }
+    )
 }

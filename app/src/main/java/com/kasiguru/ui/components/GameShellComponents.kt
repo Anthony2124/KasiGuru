@@ -36,8 +36,8 @@ import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.theme.Error
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Success
-import com.kasiguru.ui.theme.TextHeadingBlack
-import com.kasiguru.ui.theme.TextSubtleGray
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
 
 /**
  * Shared shell for the six mini-games. Before this, each game hand-rolled its own copy of the
@@ -67,7 +67,7 @@ fun GameHeader(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextHeadingBlack
+                color = Ink
             )
             Surface(shape = RoundedCornerShape(16.dp), color = accentStart) {
                 Text(
@@ -75,7 +75,7 @@ fun GameHeader(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = TextHeadingBlack
+                    color = Ink
                 )
             }
         }
@@ -120,7 +120,7 @@ fun GameOptionRow(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextHeadingBlack,
+                color = Ink,
                 modifier = Modifier.weight(1f)
             )
             when (state) {
@@ -209,14 +209,14 @@ fun GameUnavailableState(
             text = title,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = TextHeadingBlack,
+            color = Ink,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSubtleGray,
+            color = Muted,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))

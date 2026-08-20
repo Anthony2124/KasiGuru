@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.learn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.BuildConfig
+import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.remote.model.AppReleaseDto
 import com.kasiguru.data.repository.AppUpdateRepository
@@ -51,6 +52,8 @@ data class LearnUiState(
     val week: List<DayActivity> = emptyList(),
     val activities: List<PathActivity> = emptyList(),
     val skills: List<Skill> = emptyList(),
+    /** Every story, locked ones included - the lock is the motivation, so the shelf shows them. */
+    val stories: List<StoryEntity> = emptyList(),
     val updateRelease: AppReleaseDto? = null,
     val showBackupPrompt: Boolean = false
 ) {
@@ -106,6 +109,7 @@ class LearnViewModel @Inject constructor(
                     week = buildWeek(progress),
                     activities = buildActivities(),
                     skills = buildSkills(progress),
+                    stories = storyRepository.getAllStories().first(),
                     isLoading = false
                 )
             }
@@ -228,14 +232,12 @@ class LearnViewModel @Inject constructor(
         // Six games x 30 levels x 3 stars is the ceiling the level seeder creates.
         val gamePercent = percent(stars, 6 * 30 * 3)
 
-        val stories = storyRepository.getAllStories().first()
-        val storyPercent = percent(stories.count { it.isCompleted }, stories.size)
-
         return listOf(
             Skill("Vocabulary", vocabularyPercent, ActivityKind.Lesson),
             Skill("Lessons", lessonPercent, ActivityKind.Review),
-            Skill("Games", gamePercent, ActivityKind.Game),
-            Skill("Stories", storyPercent, ActivityKind.Story)
+            Skill("Games", gamePercent, ActivityKind.Game)
+            // Stories used to be a fourth tile here. The shelf below Today's Path carries them with
+            // covers, page counts and lock state, which is strictly more than a percentage.
         )
     }
 

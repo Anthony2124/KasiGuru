@@ -20,8 +20,20 @@ class StoryRepository @Inject constructor(
         storyDao.getAllStories().collect { emit(it) }
     }
 
-    fun getUnlockedStories(): Flow<List<StoryEntity>> =
-        storyDao.getUnlockedStories()
+    /**
+     * Seeds before reading, like its siblings above and below.
+     *
+     * Without the guard this raced the Room `onCreate` seeding callback on a first launch:
+     * `LearnViewModel.buildActivities()` runs before `buildSkills()`, saw zero unlocked stories,
+     * and silently dropped the story row from Today's Path — so a new learner was never offered
+     * the two stories that ship unlocked at 0 XP.
+     */
+    fun getUnlockedStories(): Flow<List<StoryEntity>> = flow {
+        if (storyDao.getStoryCount() == 0) {
+            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+        }
+        storyDao.getUnlockedStories().collect { emit(it) }
+    }
 
     suspend fun getStoryById(id: Int): StoryEntity? {
         if (storyDao.getStoryCount() == 0) {

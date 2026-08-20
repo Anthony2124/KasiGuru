@@ -30,8 +30,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.components.CasiguranAvatarPortrait
 import com.kasiguru.ui.components.CasiguranResident
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.OnCanopy
@@ -91,15 +92,12 @@ fun EditProfileScreen(
         )
     }
 
-    CanopyScaffold(
-        canopyHeight = 128.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = attemptBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Edit profile", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(text = "Keep your details up to date", style = MaterialTheme.typography.bodyMedium, color = OnCanopy)
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Edit profile",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Orbs,
+        compactTitle = true,
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

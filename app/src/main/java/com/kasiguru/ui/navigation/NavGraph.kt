@@ -5,16 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.kasiguru.ui.components.clay.ClayFab
-import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ground
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -335,9 +327,6 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         }
 
         if (showBottomBar) {
-            val continueViewModel: ContinueLearningViewModel = hiltViewModel()
-            val nextLesson by continueViewModel.nextLesson.collectAsState()
-
             KasiGuruBottomBar(
                 currentRoute = currentRoute,
                 onNavigateToRoute = { route ->
@@ -349,15 +338,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                         }
                     }
                 },
-                onContinueClick = {
-                    nextLesson?.let {
-                        navController.navigate(
-                            Screen.LessonPlayer.createRoute(it.unitId, it.lessonIndex)
-                        )
-                    } ?: navController.navigate(Screen.FlashcardDeck.route)
-                },
-                continueIconRes = if (nextLesson != null) Iconsax.Play else Iconsax.Repeat,
-                continueDescription = if (nextLesson != null) "Continue learning" else "Review your words",
+                // Still measured, and still worth measuring: the cluster is shorter without the docked
+                // FAB, so every screen's bottom inset shrinks with it rather than being hardcoded.
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { size ->

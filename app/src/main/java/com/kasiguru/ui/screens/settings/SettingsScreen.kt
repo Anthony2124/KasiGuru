@@ -16,8 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.BuildConfig
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
@@ -91,27 +92,25 @@ fun SettingsScreen(
         )
     }
 
-    CanopyScaffold(
-        canopyHeight = 128.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Settings", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "Notifications, sync, and app preferences",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Settings",
+        subtitle = "Notifications, sync, and app preferences",
+        onBack = onNavigateBack,
+        // A settings list is rows of text; colour fields behind them would fight the reading.
+        pattern = GroundPattern.Grid,
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(Space.gutter),
+                    .padding(horizontal = Space.gutter)
+                    .padding(bottom = Space.navBarClearance),
                 verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
-                Spacer(Modifier.height(Space.xs))
+                GroundTitleBlock(
+                    title = "Settings",
+                    subtitle = "Notifications, sync, and app preferences"
+                )
 
                 // Account Section
                 SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToAccount) {

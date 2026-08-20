@@ -32,8 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.AudioPlayButton
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -57,20 +58,12 @@ fun VocabularyDetailScreen(
     val audioPlayerManager = remember { AudioPlayerManager(context) }
     DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
 
-    CanopyScaffold(
-        canopyHeight = 132.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(
-                text = uiState.word?.kasiguranin ?: "Word",
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnCanopy,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Word",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Orbs,
+        compactTitle = true,
+        content = {
             when {
                 uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Violet)

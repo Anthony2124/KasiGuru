@@ -21,8 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.NotificationEntity
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
@@ -62,68 +66,67 @@ fun NotificationInboxScreen(
         )
     }
 
-    CanopyScaffold(
-        canopyHeight = 148.dp,
-        canopyContent = {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                CanopyBackButton(onClick = onNavigateBack)
-                Row {
-                    if (uiState.notifications.isNotEmpty()) {
-                        Box {
-                            androidx.compose.material3.IconButton(onClick = { showMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More options",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                                DropdownMenuItem(
-                                    text = { Text("Clear all", color = Red) },
-                                    onClick = { showMenu = false; showClearConfirm = true }
+    GroundScaffold(
+        title = "Notifications",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Grid,
+        actions = {
+            if (uiState.notifications.isNotEmpty()) {
+                Box {
+                    // Material's vector rather than an Iconsax drawable, as before - the set has no
+                    // overflow glyph. Tinted Muted now that the bar is lavender, not violet.
+                    androidx.compose.material3.IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                            tint = Muted,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Clear all", color = Red) },
+                            onClick = { showMenu = false; showClearConfirm = true }
+                        )
+                    }
+                }
+            }
+        },
+        content = {
+            Column(modifier = Modifier.fillMaxSize()) {
+                GroundTitleBlock(
+                    title = "Notifications",
+                    modifier = Modifier.padding(horizontal = Space.gutter),
+                    lead = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Was a GlassChip on the canopy. On lavender a translucent white fill has
+                            // nothing to be translucent against, so it becomes a solid tinted tag.
+                            TagChip(
+                                label = if (uiState.unreadCount > 0) {
+                                    "${uiState.unreadCount} unread"
+                                } else {
+                                    "All caught up"
+                                }
+                            )
+                            if (uiState.unreadCount > 0) {
+                                Text(
+                                    text = "Mark all read",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Violet,
+                                    modifier = Modifier
+                                        .clip(Shapes.chip)
+                                        .clickable { viewModel.markAllAsRead() }
+                                        .padding(horizontal = Space.xs, vertical = Space.xxs)
                                 )
                             }
                         }
                     }
-                }
-            }
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Notifications", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Spacer(Modifier.weight(1f))
-            // Translucent chips only measure legibly at the canopy's deep end (DESIGN.md) — pinned to
-            // the bottom via the weighted spacer above, same placement CategoryDetailScreen uses.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                GlassChip {
-                    Icon(
-                        painter = painterResource(id = Iconsax.Notification),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Text(
-                        text = if (uiState.unreadCount > 0) "${uiState.unreadCount} unread" else "All caught up",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = OnCanopy
-                    )
-                }
-                if (uiState.unreadCount > 0) {
-                    Text(
-                        text = "Mark all read",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.clickable { viewModel.markAllAsRead() }
-                    )
-                }
-            }
-        },
-        sheetContent = {
-            Column(modifier = Modifier.fillMaxSize()) {
+                )
                 // Filter Categories Row
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = Space.gutter, vertical = Space.sm),

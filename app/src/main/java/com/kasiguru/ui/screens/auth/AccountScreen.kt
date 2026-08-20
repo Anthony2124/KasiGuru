@@ -20,8 +20,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
@@ -105,19 +106,12 @@ fun AccountScreen(
         )
     }
 
-    CanopyScaffold(
-        canopyHeight = 128.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = attemptBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Account", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "Keep your progress safe across devices",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Account",
+        subtitle = "Keep your progress safe across devices",
+        onBack = attemptBack,
+        pattern = GroundPattern.Orbs,
+        content = {
             Box(Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -126,6 +120,10 @@ fun AccountScreen(
                         .padding(Space.gutter),
                     verticalArrangement = Arrangement.spacedBy(Space.md)
                 ) {
+                    GroundTitleBlock(
+                        title = "Account",
+                        subtitle = "Keep your progress safe across devices"
+                    )
                     Spacer(Modifier.height(Space.xs))
 
                     AccountStatusCard(

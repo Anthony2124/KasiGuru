@@ -72,19 +72,39 @@ fun KasiGuruTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            // Every screen opens with the violet canopy behind the status bar, in both themes, so the
-            // system icons must stay light regardless of which theme is active.
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            (view.context as Activity).window.statusBarColor = android.graphics.Color.TRANSPARENT
         }
     }
 
-    CompositionLocalProvider(LocalDarkMode provides darkTheme) {
+    CompositionLocalProvider(
+        LocalDarkMode provides darkTheme,
+        LocalReducedMotion provides rememberReducedMotion()
+    ) {
         MaterialTheme(
             colorScheme = clayCanopyScheme(),
             typography = KasiGuruTypography,
             content = content
         )
+    }
+}
+
+/**
+ * Sets whether the system status-bar icons are drawn dark.
+ *
+ * This used to be forced light for the whole app, on the reasoning that "every screen opens with the
+ * violet canopy behind the status bar". That stopped being true the moment a screen drew [Ground] up
+ * there — and it was already untrue for Onboarding, where white icons sat on `#F1EEFF` at roughly
+ * 1.05:1 and were simply invisible.
+ *
+ * Each shell now declares what is behind the status bar: [com.kasiguru.ui.components.clay.CanopyScaffold]
+ * passes false, [com.kasiguru.ui.components.clay.GroundScaffold] passes true.
+ */
+@Composable
+fun StatusBarIcons(dark: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    SideEffect {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = dark
     }
 }

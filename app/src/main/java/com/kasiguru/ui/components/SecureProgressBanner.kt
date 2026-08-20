@@ -10,8 +10,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Iconsax
-import com.kasiguru.ui.theme.TextHeadingBlack
-import com.kasiguru.ui.theme.TextSubtleGray
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Warning
 
 /**
@@ -46,7 +46,7 @@ fun SecureProgressBanner(
                     text = "Secure your progress",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextHeadingBlack
+                    color = Ink
                 )
             }
 
@@ -54,7 +54,7 @@ fun SecureProgressBanner(
                 text = "Your XP, streak and badges are saved only on this phone. Add an " +
                     "account so they come back if you reinstall or change device.",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSubtleGray
+                color = Muted
             )
 
             Row(
@@ -63,14 +63,14 @@ fun SecureProgressBanner(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("Not now", color = TextSubtleGray)
+                    Text("Not now", color = Muted)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = onSecure,
                     colors = ButtonDefaults.buttonColors(containerColor = Warning)
                 ) {
-                    Text("Add account", color = TextHeadingBlack, fontWeight = FontWeight.Bold)
+                    Text("Add account", color = Ink, fontWeight = FontWeight.Bold)
                 }
             }
         }

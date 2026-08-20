@@ -35,7 +35,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionCaption
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
@@ -134,33 +136,37 @@ fun GameHubScreen(
         return
     }
 
-    CanopyScaffold(
-        canopyHeight = 174.dp,
-        canopyContent = {
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Practice", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "Level ${levelInfo.level} · ${levelInfo.title}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.height(Space.lg))
-            StatStrip(
-                stats = listOf(
-                    Stat("XP", "$totalXp"),
-                    Stat("Stars", "${uiState.totalStars}"),
-                    Stat("Accuracy", "${(uiState.accuracyRate * 100).toInt()}%")
-                ),
-                onCanopy = true
-            )
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Practice",
+        subtitle = "Level ${levelInfo.level} · ${levelInfo.title}",
+        pattern = GroundPattern.Orbs,
+        content = {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
                 )
             ) {
+                item {
+                    GroundTitleBlock(
+                        title = "Practice",
+                        subtitle = "Level ${levelInfo.level} · ${levelInfo.title}",
+                        // StatStrip already branches for off-canopy use; it just never had a caller.
+                        // The card gives it a surface so it does not float on bare Ground.
+                        lead = {
+                            SoftCard(modifier = Modifier.fillMaxWidth()) {
+                                StatStrip(
+                                    stats = listOf(
+                                        Stat("XP", "$totalXp"),
+                                        Stat("Stars", "${uiState.totalStars}"),
+                                        Stat("Accuracy", "${(uiState.accuracyRate * 100).toInt()}%")
+                                    ),
+                                    onCanopy = false
+                                )
+                            }
+                        }
+                    )
+                }
                 recommended?.let { game ->
                     item {
                         SectionHeading(text = "Continue practicing")

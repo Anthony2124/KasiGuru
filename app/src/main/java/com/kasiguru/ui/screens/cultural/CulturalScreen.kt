@@ -17,8 +17,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kasiguru.ui.components.clay.CanopyBackButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
@@ -28,34 +30,12 @@ import com.kasiguru.ui.theme.Iconsax
 fun CulturalScreen(
     onNavigateBack: () -> Unit
 ) {
-    CanopyScaffold(
-        canopyHeight = 196.dp,
-        canopyContent = {
-            CanopyBackButton(onClick = onNavigateBack)
-            Spacer(Modifier.height(Space.sm))
-            Text(
-                text = "The Kasiguranin People & Language",
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.height(Space.xxs))
-            Text(
-                text = "Explore the unique Agta-Dumagat contact history, linguistic affixes, and coastal heritage of northern Aurora.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.weight(1f))
-            GlassChip {
-                Icon(
-                    painter = painterResource(id = Iconsax.Location),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(13.dp)
-                )
-                Text("Casiguran, Aurora", style = MaterialTheme.typography.labelMedium, color = OnCanopy)
-            }
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "The Kasiguranin People & Language",
+        subtitle = "Explore the unique Agta-Dumagat contact history, linguistic affixes, and coastal heritage of northern Aurora.",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.Orbs,
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -63,6 +43,13 @@ fun CulturalScreen(
                     .padding(Space.gutter),
                 verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
+                GroundTitleBlock(
+                    title = "The Kasiguranin People & Language",
+                    subtitle = "Explore the unique Agta-Dumagat contact history, linguistic affixes, and coastal heritage of northern Aurora.",
+                    // Was a GlassChip low on the canopy, where translucency measured legibly. On the
+                    // Ground there is no vivid backdrop to be translucent against, so it is a solid tag.
+                    lead = { TagChip(label = "Casiguran, Aurora") }
+                )
                 Spacer(Modifier.height(Space.xs))
 
                 HeritageInfoCard(

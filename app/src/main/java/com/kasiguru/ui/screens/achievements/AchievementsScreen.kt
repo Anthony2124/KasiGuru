@@ -41,7 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
-import com.kasiguru.ui.components.clay.CanopyScaffold
+import com.kasiguru.ui.components.clay.ClaySurface
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.ui.components.clay.GlassPanel
 import com.kasiguru.ui.components.clay.SectionHeading
@@ -92,57 +95,50 @@ fun AchievementsScreen(
 
     val total = uiState.achievements.size.coerceAtLeast(1)
 
-    CanopyScaffold(
-        canopyHeight = 214.dp,
-        canopyContent = {
-            Spacer(Modifier.height(Space.sm))
-            Text(text = "Progress", style = MaterialTheme.typography.headlineMedium, color = OnCanopy)
-            Text(
-                text = "Every badge here is earned, not given",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnCanopy
-            )
-            Spacer(Modifier.height(Space.md))
-            GlassPanel(
-                modifier = Modifier.fillMaxWidth(),
-                shape = Shapes.panel,
-                glow = {
-                    Box(
-                        Modifier
-                            .size(90.dp)
-                            .offset(x = (-10).dp, y = (-10).dp)
-                            .clip(CircleShape)
-                            .background(Gold.copy(alpha = 0.5f))
-                    )
-                }
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = OnCanopy
-                        )
-                        Text(text = "Badges unlocked", style = MaterialTheme.typography.labelMedium, color = OnCanopy)
-                    }
-                    Icon(
-                        painter = painterResource(id = Iconsax.MedalStar),
-                        contentDescription = null,
-                        tint = Gold,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                Spacer(Modifier.height(Space.sm))
-                KasiGuruProgressBar(
-                    progress = uiState.unlockedCount.toFloat() / total,
-                    height = 5.dp,
-                    gradientColors = listOf(Gold, Color.White),
-                    animated = true
-                )
-            }
-        },
-        sheetContent = {
+    GroundScaffold(
+        title = "Progress",
+        subtitle = "Every badge here is earned, not given",
+        pattern = GroundPattern.Arcs,
+        content = {
             Column(modifier = Modifier.fillMaxSize()) {
+                GroundTitleBlock(
+                    title = "Progress",
+                    subtitle = "Every badge here is earned, not given",
+                    modifier = Modifier.padding(horizontal = Space.gutter),
+                    // This was a GlassPanel on the canopy. Glass needs a vivid backdrop and the Ground
+                    // is not one, so rather than degrade it into a duller SoftCard it becomes clay -
+                    // which DESIGN.md reserves for things you earn, and this panel counts nothing else.
+                    // Gold carries RewardInk at 9.00 measured, so no new contrast pairing is created.
+                    lead = {
+                        ClaySurface(
+                            face = Gold,
+                            lipColor = GoldDeep,
+                            shape = Shapes.panel,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${uiState.unlockedCount} / ${uiState.achievements.size}",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = RewardInk
+                                    )
+                                    Text(
+                                        text = "Badges unlocked",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = RewardInk
+                                    )
+                                }
+                                Icon(
+                                    painter = painterResource(id = Iconsax.MedalStar),
+                                    contentDescription = null,
+                                    tint = RewardInk,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                        }
+                    }
+                )
                 val categories = listOf("All", "Level", "Progress", "Streaks")
                 SegmentedToggle(
                     options = categories,

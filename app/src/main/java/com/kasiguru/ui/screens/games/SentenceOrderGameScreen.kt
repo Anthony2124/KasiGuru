@@ -25,6 +25,9 @@ import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.theme.Ink
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -38,39 +41,20 @@ fun SentenceOrderGameScreen(
         onExit = onNavigateBack
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Sentence Order",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = exitGuard) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowLeft),
-                            contentDescription = "Back",
-                            tint = TextHeadingBlack,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    GroundScaffold(
+        title = "Sentence Order",
+        onBack = exitGuard,
+        // Close, not back: this quits a round in progress, and exitGuard asks before discarding.
+        navIcon = Iconsax.CloseCircle,
+        // No texture while playing - the exercise is the only thing that should read as content.
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
         if (uiState.questions.isEmpty() && !uiState.isGameFinished) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Violet)
             }
-            return@Scaffold
+            return@GroundScaffold
         }
 
         if (uiState.isGameFinished) {
@@ -80,19 +64,19 @@ fun SentenceOrderGameScreen(
                 xpEarned = uiState.score * 10,
                 starsEarned = uiState.starsEarned,
                 onFinish = onNavigateBack,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier
             )
-            return@Scaffold
+            return@GroundScaffold
         }
 
-        val question = uiState.questions.getOrNull(uiState.currentQuestionIndex) ?: return@Scaffold
+        val question = uiState.questions.getOrNull(uiState.currentQuestionIndex) ?: return@GroundScaffold
         val qIndex = uiState.currentQuestionIndex + 1
         val hasChecked = uiState.isCorrect != null
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -120,14 +104,14 @@ fun SentenceOrderGameScreen(
                     Text(
                         text = "Arrange words to mean:",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextSubtleGray
+                        color = Muted
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "\"${question.englishSentence}\"",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = TextHeadingBlack,
+                        color = Ink,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -161,7 +145,7 @@ fun SentenceOrderGameScreen(
                         Text(
                             text = "Tap word blocks below in predicate-initial order",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSubtleGray
+                            color = Muted
                         )
                     } else {
                         FlowRow(
@@ -175,7 +159,7 @@ fun SentenceOrderGameScreen(
                                     onClick = { viewModel.deselectWord(word) },
                                     label = { Text(word, fontWeight = FontWeight.Bold) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TextHeadingBlack,
+                                        selectedContainerColor = Ink,
                                         selectedLabelColor = Color.White
                                     ),
                                     shape = RoundedCornerShape(16.dp)
@@ -209,7 +193,7 @@ fun SentenceOrderGameScreen(
                     Text(
                         text = "Word Bank",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextSubtleGray,
+                        color = Muted,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -225,7 +209,7 @@ fun SentenceOrderGameScreen(
                                 label = { Text(word, fontWeight = FontWeight.SemiBold) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     containerColor = HeroCardStart,
-                                    labelColor = TextHeadingBlack
+                                    labelColor = Ink
                                 ),
                                 shape = RoundedCornerShape(16.dp)
                             )
@@ -246,5 +230,6 @@ fun SentenceOrderGameScreen(
                 )
             }
         }
-    }
+        }
+    )
 }

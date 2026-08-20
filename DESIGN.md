@@ -13,13 +13,59 @@ independently resolved this product to **Claymorphism** — *"soft 3D, chunky, p
 rounded 16-24px; best for educational apps"* — which corroborated the references rather than competing
 with them.
 
-### Canopy to Sheet
+### Two shells: Canopy and Ground
 
-Every screen is a violet **canopy** carrying *who you are and where you stand today*, with a white
-**sheet** — rounded top corners, overlapping upward into the canopy — carrying *the work*. Three of the
-five references make exactly this move. It gives the app one recognisable spine and structurally
-prevents the flat card-stack this rebuild exists to kill. The canopy is sized by role: tall on Learn and
-Progress, short on Dictionary.
+**The canopy belongs to Learn, and to nothing else.** A violet canopy carrying *who you are and where
+you stand today*, with a white **sheet** — rounded top corners, overlapping upward into it — carrying
+*the work*. Three of the five references make exactly this move, and on the app's front door it earns
+its space: Learn is the one screen with a streak, a daily goal and a week to state.
+
+It used to be on all seventeen screens, on the reasoning that one repeated motif gives the app a
+recognisable spine. In practice sixteen violet headers made the violet mean nothing, every secondary
+page read as a near-copy of home, and a hero block on Settings was decoration rather than information.
+A spine stops being a spine when everything is spine. The per-screen sizing rule that went with it
+("tall on Learn and Progress, short on Dictionary") has no subjects left: there is exactly one canopy,
+at one height.
+
+**Every other screen uses the Ground shell.** Not a shortened canopy — the deliberate removal of both
+things that constitute one. `Ground` runs unbroken from behind the status bar to the bottom edge, and
+white appears only as `SoftCard`s floating on it, which is the relationship the palette table already
+described. A fixed 56 dp bar carries the back affordance and any actions; an optional large title sits
+in the content and scrolls away, handing its title to the bar; a 1 dp hairline is the only boundary,
+and only once scrolled.
+
+| | Canopy — Learn only | Ground — every other screen |
+|---|---|---|
+| Top region | Violet gradient, `statusBar + 244 dp` | No block; `Ground` under the status bar; fixed 56 dp bar |
+| Body | White sheet, 32 dp corners, overlaps up 26 dp | No sheet, no seam, no radius |
+| Type | Pure white on violet | `Ink` title, `Muted` subtitle |
+| Back | 36 dp white-at-18% pill | Bare `Ink` chevron, 48 dp target |
+| Boundary | The sheet's radius | 1 dp hairline, only while scrolled |
+| Status-bar icons | Light | Follows the theme |
+
+The Ground shell introduces **no new contrast pairings**: `Ink`/`Ground` at 14.43 and `Muted`/`Ground`
+at 5.67 are already in the measured table below.
+
+**Status-bar icons are the shell's job, not the theme's.** They were forced light app-wide on the
+premise that every screen opened with a canopy. That was never true of Onboarding, where white glyphs
+sat on `#F1EEFF` at roughly 1.05:1 and were invisible. Each shell now declares what is behind them.
+
+### Pattern layer
+
+Ground screens draw a texture behind their content so a page of white cards on lavender does not read
+as flat. It is drawn in a `Canvas`, never shipped as a raster: the release APK has to stay small for a
+data-sensitive audience, and a drawn pattern re-derives itself from the theme tokens, so it follows
+dark mode for free.
+
+- **Orbs** (default) — two or three soft radial fields in Violet/Coral/Gold at 0.06–0.10 alpha.
+  Placement varies by screen title, so twenty-two screens do not carry one identical arrangement.
+- **Grid** — a 24 dp dot lattice at `Ink` 0.04, for list-heavy screens where colour fields fight rows.
+- **Arcs** — concentric rings stepped by the sheet radius, for screens about something earned.
+- **None** — a game in play, where any texture competes with the exercise.
+
+**No `Modifier.blur` on the pattern.** Blur is API 31+ against a minSdk of 26, and a radial gradient is
+already a soft-edged disc — blurring one buys no visible softness while putting a full-screen render
+pass on the mid-range phones this app targets.
 
 ### Soft by default, clay for rewards, glass on vivid backdrops only
 
@@ -53,6 +99,14 @@ placement rule: pure white text, on the canopy's deep end or a comparably deep f
 
 **Mode: Operate.** The learner is in a task. Familiarity and scanability outrank expression; the brand
 lives in the canopy, the clay, the glass, and the motion — not in novel affordances for standard jobs.
+
+**Where glass is legal, as of the Ground restructure.** Glass needs a genuinely vivid backdrop, and
+sixteen screens just lost theirs. It is legal on the Learn canopy, on a clay or reward fill, and on a
+dialog's colour band — and nowhere else. A translucent white fill over `Ground` has nothing to
+differentiate against and degrades into a duller `SoftCard`, which is the failure this rule already
+named. Enforcing it removed the Progress `GlassPanel` (now gold clay, since it counts badges earned)
+and five detail-screen `GlassChip`s (now `TagChip`s, a progress bar, and one rank card). Two callers
+remain, both correct: the game rules dialog's gradient band, and Onboarding's hero panel.
 
 ## Palette (verified)
 
@@ -128,18 +182,27 @@ One authored moment per screen, not an entrance on every element.
 - Answer feedback: the feedback panel rises from the bottom edge in 220 ms with a colour flood.
 - XP and counters: `animateIntAsState`, 600 ms, ease-out — the number counts, it does not fade in.
 - Path unlock: the newly available node scales 0.8→1 with a single spring overshoot. Once, on unlock.
-- Honour the system "Remove animations" setting with a crossfade or instant cut.
+- Ground shell title handoff: the compact title and its hairline crossfade in together over 150 ms,
+  once the large title has scrolled 40 dp out of view.
+- Honour the system "Remove animations" setting with a crossfade or instant cut. This is a contract,
+  not a courtesy: durations collapse to zero via `LocalReducedMotion`, and nothing may depend on an
+  animation having run. Tokens live in `ui/theme/Motion.kt` — quick 120 / standard 240 / emphasized
+  400 ms, exits at roughly 65% of their entrance, so everything moves to one rhythm.
 
 ## Android structure (non-negotiable)
 
 Material 3 governs structure; the brand expresses through Material's theming.
 
-- **Navigation bar**, 5 labelled destinations, 48 dp targets, with a **docked FAB** for "continue
-  learning". A copied iPhone bottom bar is the top Android slop tell; the reference's iOS chrome is
-  reinterpreted, not transcribed.
+- **Navigation bar**, 5 labelled destinations, 48 dp targets, and **no docked FAB**. A copied iPhone
+  bottom bar is the top Android slop tell; the reference's iOS chrome is reinterpreted, not
+  transcribed. The continue action is a primary `ClayButton` at the top of Learn instead, for two
+  reasons: an action whose meaning changes depending on which tab you are on is not a floating action,
+  and the docked FAB overflowed the bar it was docked into, so roughly its top 12 dp never received
+  touches. A full-width button is wholly tappable and can say which of "continue" or "review" it
+  currently means.
 - Predictive **Back** always works. Edge-to-edge with real window insets — status bar, navigation bar,
   cutout and IME.
-- One FAB, one primary action. Snackbars for transient feedback; dialogs only for decisions that
+- One primary action per screen, stated in place. The app has no FAB. Snackbars for transient feedback; dialogs only for decisions that
   must interrupt.
 - `sp` for type, `dp` for space. Never fixed px.
 
@@ -155,8 +218,19 @@ Beyond impeccable's craft floor, these are specific to this product's history:
 - **Emoji as interface.** Already purged once; it must not return through `GamificationEngine`.
 - **Gradient text.** Emphasis comes from weight and size.
 - **Decorative progress rings and sparklines** standing in for content.
+- **A canopy on a screen that has nothing to state.** A hero block over a settings list is decoration.
+- **Glass over the Ground or over a white card.** Glass needs a vivid backdrop or it is just grey.
+- **A bottom-bar action whose meaning depends on which tab you are on.**
+- **A control that overflows its parent.** In Compose it silently stops receiving touches there.
 
 ## Illustration
 
 **Adrian authors all artwork.** Every art position is an optional `@DrawableRes` defaulting to null;
 layouts must look finished with none present. Document filename, aspect ratio and dp size at each slot.
+
+**Story covers.** `story_cover_<id>`, 3:2, rendered at roughly 160x107 dp on Learn's shelf and
+gutter-width on the Stories screen. With it absent the violet field plus the page count is a finished
+cover, not a placeholder — which is the state every story ships in today.
+
+**Ground pattern overlay.** An optional tileable motif drawn over the pattern layer at 0.05–0.08 alpha,
+1080x1080, PNG or vector. Every screen must look finished with it null.

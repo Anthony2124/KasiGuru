@@ -195,18 +195,13 @@ val LightSurfaceCard: Color @Composable get() = Surface
 val LightSurfaceVariant: Color @Composable get() = SurfaceSunken
 val SandBg: Color @Composable get() = Ground
 
-val StaticTextHeadingBlack: Color @Composable get() = Ink
-val StaticTextSubtleGray: Color @Composable get() = Muted
+val StaticInk: Color @Composable get() = Ink
+val StaticMuted: Color @Composable get() = Muted
 val CoastInk: Color @Composable get() = Ink
 val CoastMuted: Color @Composable get() = Muted
 val CoastFaint: Color @Composable get() = Faint
 val TextWhite  = Color(0xFFFFFFFF)
 val TextDark: Color @Composable get() = Ink
-
-val TextHeadingBlack: Color
-    @Composable get() = MaterialTheme.colorScheme.onBackground
-val TextSubtleGray: Color
-    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 val PlayPurpleStart: Color @Composable get() = CanopyTop
 val PlayPurpleEnd   = Color(0xFF8C7CF0)

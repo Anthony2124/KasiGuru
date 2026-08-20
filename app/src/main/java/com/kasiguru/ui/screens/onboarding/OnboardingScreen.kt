@@ -46,6 +46,8 @@ import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.GoldDeep
 import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Ground
+import com.kasiguru.ui.theme.LocalDarkMode
+import com.kasiguru.ui.theme.StatusBarIcons
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -81,6 +83,11 @@ fun OnboardingScreen(
     var selectedTitleBadge by remember { mutableStateOf("Kasiguranin Apprentice") }
 
     BackHandler(enabled = step > 1) { step -= 1 }
+
+    // The wizard draws Ground behind the status bar. Icons were forced light app-wide on the premise
+    // that every screen opened with the violet canopy, which was never true here - white glyphs on
+    // #F1EEFF measure about 1.05:1 and were simply invisible.
+    StatusBarIcons(dark = !LocalDarkMode.current)
 
     Box(modifier = Modifier.fillMaxSize().background(Ground).statusBarsPadding()) {
         Column(
