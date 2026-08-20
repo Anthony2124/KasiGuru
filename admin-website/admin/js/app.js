@@ -14,8 +14,6 @@ let submissions = [];
 let vocabulary = [];
 let releases = [];
 let stories = [];
-let learners = [];
-let activityLog = [];
 let searchDebounceTimer = null;
 let unsubscribeFns = [];
 
@@ -227,55 +225,6 @@ function initRealtimeListeners() {
     unsubscribeFns.push(unsubReleases);
   } catch (e) {
     console.error("Firestore release query error:", e);
-  }
-
-  // 4. Learners Listener (from leaderboard_public)
-  try {
-    const learnersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
-    const unsubLearners = onSnapshot(learnersQuery, (snapshot) => {
-      learners = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderLearnersTable();
-    }, (error) => {
-      console.warn("Learners listener error:", error);
-      // Fallback without orderBy
-      try {
-        const fallback = query(collection(db, "leaderboard_public"));
-        const unsubFb = onSnapshot(fallback, (snapshot) => {
-          learners = snapshot.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
-          renderLearnersTable();
-        });
-        unsubscribeFns.push(unsubFb);
-      } catch (e) {}
-    });
-    unsubscribeFns.push(unsubLearners);
-  } catch (e) {
-    console.error("Learners query error:", e);
-  }
-
-  // 5. Activity Log Listener (from admin_audit_log)
-  try {
-    const activityQuery = query(collection(db, "admin_audit_log"), orderBy("timestamp", "desc"));
-    const unsubActivity = onSnapshot(activityQuery, (snapshot) => {
-      activityLog = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderActivityTable();
-    }, (error) => {
-      console.warn("Activity listener error:", error);
-      try {
-        const fallback = query(collection(db, "admin_audit_log"));
-        const unsubFb = onSnapshot(fallback, (snapshot) => {
-          activityLog = snapshot.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-          renderActivityTable();
-        });
-        unsubscribeFns.push(unsubFb);
-      } catch (e) {}
-    });
-    unsubscribeFns.push(unsubActivity);
-  } catch (e) {
-    console.error("Activity query error:", e);
   }
 }
 
@@ -581,7 +530,7 @@ function renderSubmissionsTable() {
       <td>${escapeHtml(sub.tagalog || '-')}</td>
       <td>${escapeHtml(sub.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
+      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
       <td><small>${escapeHtml(sub.contributorName || 'Anonymous')}</small></td>
       <td><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
       <td>
@@ -639,7 +588,7 @@ async function approveSubmission(id) {
     });
 
     await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
-    showToast(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`);
+    alert(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`);
   } catch (error) {
     console.error("Error approving submission:", error);
     alert("Failed to approve submission: " + error.message);
@@ -684,7 +633,7 @@ function renderVocabularyTable() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
           <iconsax-icon name="book-1" type="bulk" size="32" color="var(--play-purple-start)"></iconsax-icon>
           <div style="margin-top:8px;">No matching Kasiguranin entries found.</div>
         </td>
@@ -704,7 +653,7 @@ function renderVocabularyTable() {
       <td>${escapeHtml(item.tagalog || '-')}</td>
       <td>${escapeHtml(item.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
+      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
       <td>${conjugationsBadge}</td>
       <td>
         <div style="display:flex; gap:8px;">
@@ -828,7 +777,7 @@ function handleSqlFile(file) {
         count++;
       }
 
-      showToast(`Successfully imported ${count} entries from SQL migration script into Firestore!`);
+      alert(`Successfully imported ${count} entries from SQL migration script into Firestore!`);
     } catch (err) {
       console.error("SQL Parsing Error:", err);
       alert("Failed to parse SQL file: " + err.message);
@@ -916,7 +865,7 @@ function handleExcelFile(file) {
         count++;
       }
 
-      showToast(`Successfully imported ${count} Kasiguranin entries into the cloud database!`);
+      alert(`Successfully imported ${count} Kasiguranin entries into the cloud database!`);
     } catch (err) {
       console.error("Excel Parsing Error:", err);
       alert("Failed to parse Excel file: " + err.message);
@@ -948,15 +897,15 @@ function renderReleasesList() {
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <h3 style="font-size:1.2rem; font-weight:800; color:var(--ink);">v${escapeHtml(rel.versionName)} <small style="color:var(--text-muted);">(Build ${rel.versionCode})</small></h3>
+          <h3 style="font-size:1.2rem; font-weight:800; color:#fff;">v${escapeHtml(rel.versionName)} <small style="color:var(--text-muted);">(Build ${rel.versionCode})</small></h3>
           <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">
-            Released: ${rel.releasedAt ? new Date(rel.releasedAt).toLocaleDateString() : 'Unknown'}
+            Released: ${new Date(rel.releasedAt).toLocaleDateString()}
             &nbsp;·&nbsp;
             <span style="color:${rel.forceUpdate ? '#F1C40F' : 'var(--text-muted)'}; font-weight:${rel.forceUpdate ? '700' : '400'};">
               ${rel.forceUpdate ? 'Required update' : 'Optional update'}
             </span>
           </p>
-          <p style="margin-top:8px; font-size:0.95rem; color:var(--text-main);">${escapeHtml(rel.releaseNotes || rel.notes || 'No release notes provided.')}</p>
+          <p style="margin-top:8px; font-size:0.95rem; color:var(--text-main);">${escapeHtml(rel.releaseNotes || 'No release notes provided.')}</p>
         </div>
         <div>
           <a href="${escapeHtml(rel.apkUrl || '#')}" target="_blank" class="btn btn-success btn-sm"><iconsax-icon name="document-download" type="bulk" size="18" color="#12161F"></iconsax-icon> Download APK</a>
@@ -964,100 +913,6 @@ function renderReleasesList() {
       </div>
     `;
     container.appendChild(card);
-  });
-}
-
-// ── Render Learners Table ────────────────────────────────────────────────────
-function renderLearnersTable() {
-  const tbody = document.getElementById('learners-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (learners.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--muted);">
-          <iconsax-icon name="people" type="bulk" size="32" color="var(--violet)"></iconsax-icon>
-          <div style="margin-top:8px; font-weight:700;">No learners found.</div>
-          <div style="margin-top:4px; font-size:0.9rem;">This view reads from leaderboard_public, which only includes learners with XP above zero.</div>
-        </td>
-      </tr>`;
-    return;
-  }
-
-  learners.forEach(l => {
-    const tr = document.createElement('tr');
-    const lastSynced = l.lastSyncedAt
-      ? new Date(typeof l.lastSyncedAt === 'number' ? l.lastSyncedAt : l.lastSyncedAt).toLocaleDateString()
-      : 'Unknown';
-    const streak = l.currentStreak || l.streak || 0;
-    const weeklyXp = l.weeklyXp || 0;
-    const level = l.level || 1;
-    const title = l.titleBadge || l.title || '';
-
-    tr.innerHTML = `
-      <td><strong>${escapeHtml(l.displayName || l.name || 'Anonymous')}</strong></td>
-      <td>${level}</td>
-      <td><strong>${l.totalXp || 0}</strong></td>
-      <td>${weeklyXp}</td>
-      <td>${streak > 0 ? '<span class="badge badge-category">' + streak + ' day' + (streak !== 1 ? 's' : '') + '</span>' : '0'}</td>
-      <td>${title ? '<span class="badge badge-category">' + escapeHtml(title) + '</span>' : '-'}</td>
-      <td><small>${lastSynced}</small></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// ── Render Activity Log Table ────────────────────────────────────────────────
-function renderActivityTable() {
-  const tbody = document.getElementById('activity-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (activityLog.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align:center; padding:2.5rem; color:var(--muted);">
-          <iconsax-icon name="activity" type="bulk" size="32" color="var(--violet)"></iconsax-icon>
-          <div style="margin-top:8px;">No activity recorded yet.</div>
-        </td>
-      </tr>`;
-    return;
-  }
-
-  activityLog.forEach(entry => {
-    const tr = document.createElement('tr');
-    const time = entry.timestamp
-      ? new Date(typeof entry.timestamp === 'number' ? entry.timestamp : entry.timestamp).toLocaleString()
-      : 'Unknown';
-
-    // Format details as a compact summary
-    let detailStr = '';
-    if (entry.details && typeof entry.details === 'object') {
-      const parts = [];
-      for (const [k, v] of Object.entries(entry.details)) {
-        if (v !== null && v !== undefined && v !== '') {
-          parts.push(k + ': ' + v);
-        }
-      }
-      detailStr = parts.join(' · ');
-    }
-
-    // Map action to a readable badge
-    const actionParts = (entry.action || '').split('.');
-    const actionBadge = actionParts.length === 2
-      ? '<span class="badge badge-category">' + escapeHtml(actionParts[0]) + '</span> ' + escapeHtml(actionParts[1])
-      : escapeHtml(entry.action || '-');
-
-    tr.innerHTML = `
-      <td><small>${time}</small></td>
-      <td>${escapeHtml(entry.actor || '-')}</td>
-      <td>${actionBadge}</td>
-      <td style="max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-        <small>${escapeHtml(detailStr || '-')}</small>
-      </td>
-    `;
-    tbody.appendChild(tr);
   });
 }
 
@@ -1102,7 +957,7 @@ function initFormListeners() {
         await logAudit("vocabulary.create", { word });
         addVocabForm.reset();
         closeModal('add-vocab-modal');
-        showToast(`Successfully added "${word}" to dictionary!`);
+        alert(`Successfully added "${word}" to dictionary!`);
       } catch (error) {
         alert("Error adding word: " + error.message);
       }
@@ -1144,7 +999,7 @@ function initFormListeners() {
         await logAudit("vocabulary.update", { id, word });
         editVocabForm.reset();
         closeModal('edit-vocab-modal');
-        showToast(`Successfully updated "${word}"!`);
+        alert(`Successfully updated "${word}"!`);
       } catch (error) {
         alert("Error updating word: " + error.message);
       }
@@ -1167,17 +1022,17 @@ function initFormListeners() {
       if (forceUpdate && !confirm(`Publish v${name} as a REQUIRED update? Every user will see a banner they cannot dismiss.`)) return;
 
       try {
-        await setDoc(doc(db, "app_releases", `v${name}`), {
+        await addDoc(collection(db, "app_releases"), {
           versionCode: code,
           versionName: name,
           apkUrl: url,
           releaseNotes: notes,
           forceUpdate: forceUpdate,
-          releasedAt: new Date().toISOString()
+          releasedAt: Date.now()
         });
         await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
         releaseForm.reset();
-        showToast(`Successfully published KasiGuru v${name} APK release!`);
+        alert(`Successfully published KasiGuru v${name} APK release!`);
       } catch (err) {
         alert("Failed to publish release: " + err.message);
       }
@@ -1199,15 +1054,6 @@ function initFormListeners() {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-function showToast(message, type = 'success') {
-  const host = document.getElementById('toast-host') || document.body;
-  const el = document.createElement('div');
-  el.className = `toast toast--${type}`;
-  el.textContent = message;
-  host.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
-}
-
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1235,3 +1081,5 @@ async function logAudit(action, details = {}) {
     console.warn("Audit log write failed:", e);
   }
 }
+
+
