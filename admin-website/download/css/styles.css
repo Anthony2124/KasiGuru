@@ -729,6 +729,21 @@ main {
   .mockup-container {
     margin-top: 40px;
   }
+  /* The hero is one full-width column from here down, so the offsets that the
+     desktop gutter used to absorb now push straight past the right edge
+     (measured: 432px against a 411px viewport). Pull them back inside. */
+  .mockup-phone.primary {
+    transform: rotate(-3deg) translateX(-12px);
+  }
+  .mockup-phone.secondary {
+    transform: rotate(8deg) translateX(24px) translateY(20px);
+  }
+  .floating-chip.top-left {
+    left: 0;
+  }
+  .floating-chip.bottom-right {
+    right: 0;
+  }
   .feature-asymmetric-grid {
     grid-template-columns: 1fr;
   }
@@ -748,7 +763,9 @@ main {
     text-align: center;
   }
   .hero-marketing-title {
-    font-size: 2.5rem;
+    /* Was a flat 2.5rem, which overrode the clamp() and meant the fluid scale
+       never applied on the one device class this page is actually for. */
+    font-size: clamp(1.9rem, 8vw, 2.5rem);
   }
   .download-hub-card {
     padding: 36px 20px;
@@ -783,9 +800,40 @@ main {
   .hero-marketing-desc {
     font-size: 1.02rem;
   }
+
+  /* The download card's own padding leaves ~335px inside it, and 36px of button
+     padding either side left too little for the label plus its version. It wrapped
+     to two lines, which stranded the icon against the vertical middle of the block
+     rather than beside the words it belongs to. Give the button the card's full
+     width, tighten its horizontal padding, and forbid the wrap outright. */
+  .download-hub-card .download-btn-large {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    padding-left: 18px;
+    padding-right: 18px;
+    white-space: nowrap;
+    font-size: 1.02rem;
+  }
 }
 
-/* Every interactive element clears the 48dp floor, and nothing scrolls sideways. */
+/* Nothing may scroll sideways. The offsets above are the fix; this is the backstop
+   that keeps a future decorative element from reopening the same defect.
+   `clip`, never `hidden` — `hidden` turns this into a scroll container and would
+   silently break the sticky header. */
+html, body {
+  overflow-x: clip;
+}
+
+/* The header is sticky on desktop, so an anchor jump would land its target
+   underneath. Reserve its height plus a breath. */
+:target,
+section[id],
+[id^="download"] {
+  scroll-margin-top: 96px;
+}
+
+/* Every interactive element clears the 48dp floor. */
 a, button, .download-btn-large, .hero-spec-pill {
   min-height: var(--tap-min);
 }
@@ -817,6 +865,10 @@ a, button, .download-btn-large, .hero-spec-pill {
    the nav rather than in the header row. */
 @media (max-width: 760px) {
   header {
+    /* Stacked, this block is ~217px tall. Sticking it would spend 27% of a
+       360x740 screen on navigation for a page you can reach the bottom of in
+       three flicks — and would hide the heading of every section it scrolls to. */
+    position: static;
     flex-direction: column;
     gap: 10px;
     /* A full pill around a stacked block reads as a mistake; the card radius
