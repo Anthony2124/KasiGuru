@@ -64,7 +64,14 @@ jobs:
         run: rm -f release.jks keystore.properties
 
       - name: Copy APK into the download site
-        run: cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
+        # Two names for one file. The versioned copy is what app_releases points at
+        # and what a user's download history will show. The unversioned alias is what
+        # the page's buttons link to before Firestore answers — the site is deployed
+        # fresh on every release and carries only this build's APK, so a link to the
+        # newest one is the only static href that cannot 404.
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-latest.apk"
 
       - name: Deploy download site to Vercel
         working-directory: admin-website/download

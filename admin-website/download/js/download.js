@@ -2,12 +2,17 @@
 // IMPORTANT: This file has ZERO write operations.
 // It reads app_releases to keep the download button and QR code up to date.
 //
-// There is deliberately no hardcoded fallback release here. Firestore's
-// `app_releases` collection is the single source of truth for what "latest"
-// means — a hardcoded version string here would be a second source of truth
-// that someone has to remember to update by hand on every release, and the
-// two *will* eventually disagree. Until Firestore resolves, the page shows an
-// honest "checking…" state instead of a guess.
+// Firestore's `app_releases` collection is the single source of truth for what
+// "latest" means. No version string is hardcoded here — a second copy of it is
+// a thing someone has to remember to update on every release, and the two *will*
+// eventually disagree.
+//
+// The buttons, however, are never dead. Their static href is `kasiguru-latest.apk`,
+// an unversioned alias the release workflow writes alongside the versioned file on
+// every publish. It carries no version information, so it cannot drift; it just
+// means "whatever shipped last". Firestore only ever *upgrades* the buttons — to
+// the exact versioned URL and a label naming the version. If the network is down,
+// the download still works, which is the whole point of this page.
 import { db, collection, query, orderBy, onSnapshot, getCountFromServer } from './firebase-config.js';
 
 // Apply release metadata to DOM
@@ -17,10 +22,12 @@ function applyReleaseInfo(release) {
   // 1. Update main download button
   const mainBtn = document.getElementById('store-download-btn');
   if (mainBtn && release.apkUrl) mainBtn.setAttribute('href', release.apkUrl);
+  const mainBtnSpan = mainBtn && mainBtn.querySelector('span');
+  if (mainBtnSpan) mainBtnSpan.textContent = `Download APK (v${release.versionName})`;
 
-  // 2. Update navigation "Get App" button
-  const navBtn = document.querySelector('.store-link-btn');
-  if (navBtn && release.apkUrl) navBtn.setAttribute('href', release.apkUrl);
+  // 2. The nav "Get App" link is deliberately left alone. It scrolls to the
+  //    download card; silently swapping it for a 7.6 MB binary means the same
+  //    control does two different things depending on when you press it.
 
   // 3. Update version tag text
   const tag = document.getElementById('store-version-tag');
@@ -106,7 +113,14 @@ function renderQR(url) {
 // ── Read-only: listens to app_releases collection ──
 function showCheckFailedState() {
   const tag = document.getElementById('store-version-tag');
-  if (tag) tag.textContent = "Couldn't check for the latest version — please try again shortly.";
+  if (!tag) return;
+  // The buttons still work — they point at the latest-APK alias. What failed is
+  // only the version *lookup*, so the message says that rather than implying the
+  // download is unavailable.
+  tag.textContent = "Couldn't check the version number, but the download below still works.";
+
+  // The QR encodes the same alias, so a phone hop survives the failure too.
+  renderQR(new URL('kasiguru-latest.apk', window.location.href).href);
 }
 
 try {
