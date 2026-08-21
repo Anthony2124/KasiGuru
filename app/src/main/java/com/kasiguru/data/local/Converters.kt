@@ -21,6 +21,7 @@ class Converters {
                 put("english", page.english)
                 put("audioFileName", page.audioFileName)
                 put("illustrationDesc", page.illustrationDesc)
+                put("imageId", page.imageId)
             }
             jsonArray.put(obj)
         }
@@ -39,7 +40,8 @@ class Converters {
                 tagalog = obj.optString("tagalog", ""),
                 english = obj.optString("english", ""),
                 audioFileName = obj.optString("audioFileName", ""),
-                illustrationDesc = obj.optString("illustrationDesc", "")
+                illustrationDesc = obj.optString("illustrationDesc", ""),
+                imageId = obj.optString("imageId", "")
             )
         }
     }

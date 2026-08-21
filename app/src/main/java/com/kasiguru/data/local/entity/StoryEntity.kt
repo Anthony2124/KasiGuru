@@ -39,5 +39,18 @@ data class StoryPage(
     val tagalog: String,
     val english: String,
     val audioFileName: String = "",
-    val illustrationDesc: String = ""
+    val illustrationDesc: String = "",
+    /**
+     * Key of this page's illustration in the Firestore `story_page_images` collection, which stores
+     * one document per picture at `{storyId}_{imageId}`. Empty means no picture yet, and the reader
+     * falls back to the gradient and [illustrationDesc].
+     *
+     * The pictures live outside the story document because all pages share one `pagesJson` string
+     * against Firestore's 1 MiB per-document ceiling, and because the sync pulls the whole stories
+     * collection — embedding them would make every learner download every picture of every story.
+     *
+     * It is a stable random token rather than the page number so that reordering pages in the admin
+     * moves a picture with its page instead of rewriting every image document below it.
+     */
+    val imageId: String = ""
 )

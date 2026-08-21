@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.kasiguru.data.local.entity.StoryPage
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
@@ -119,22 +121,39 @@ fun StoryReaderScreen(
                     .padding(Space.gutter),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Illustration Placeholder Box
+                // The page's illustration. Square, because that is the shape the artwork is
+                // authored and stored in -- the admin centre-crops every upload to 1:1 -- so any
+                // other ratio here would either letterbox it or crop it a second time.
+                //
+                // The gradient stays underneath rather than behind a loading spinner: it is the
+                // finished state for a page with no picture, not a placeholder waiting to be
+                // replaced, which is what DESIGN.md asks of every art slot.
+                val pageImage = uiState.pageImages[targetPage.imageId]
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .aspectRatio(1f)
                         .clip(Shapes.panel)
                         .background(brush = Brush.linearGradient(colors = listOf(CanopyTop, CanopyBottom))),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = targetPage.illustrationDesc,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(Space.md)
-                    )
+                    if (pageImage != null) {
+                        AsyncImage(
+                            model = pageImage,
+                            // The description was written as an art brief; it doubles as the alt text.
+                            contentDescription = targetPage.illustrationDesc.takeIf { it.isNotBlank() },
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Text(
+                            text = targetPage.illustrationDesc,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(Space.md)
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(Space.lg))

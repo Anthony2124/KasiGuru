@@ -141,6 +141,24 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Story page illustrations, one document per picture, keyed {storyId}_{imageId}.
+    //
+    // They live outside the story document on purpose. All of a story's pages share one `pagesJson`
+    // string field, and the app pulls the entire stories collection on every sync -- so an embedded
+    // picture would both push the document toward Firestore's 1 MiB ceiling and make every learner
+    // download every picture of every story. Here the reader fetches one page's image at a time.
+    //
+    // The size guard is deliberate: the admin writes 1440x1440 WebP at roughly 150 KB, and without a
+    // ceiling a mis-encoded upload would fail against the 1 MiB document limit with nothing but a raw
+    // Firestore error to explain it.
+    match /story_page_images/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                            && request.resource.data.data is bytes
+                            && request.resource.data.data.size() < 400 * 1024;
+      allow delete: if isAdmin();
+    }
+
     // App releases: public read (download page + in-app update), admin-only writes.
     match /app_releases/{docId} {
       allow read: if true;

@@ -870,3 +870,73 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
   .deflist { grid-template-columns: 1fr; gap: var(--s-1) 0; }
   .deflist dd { margin-bottom: var(--s-3); }
 }
+
+/* ══ Story page editor ════════════════════════════════════════════════════════
+   A fifteen-page story used to be fifteen fully expanded forms in one column — roughly six thousand
+   pixels of scroll inside a nine-hundred-pixel card, with no way to see the shape of the story or to
+   move a page. Pages now collapse to a scannable row and open one at a time. */
+.page-row {
+  border: 1px solid var(--hair); border-radius: var(--r-chip);
+  margin-bottom: var(--s-2); background: var(--surface); overflow: hidden;
+}
+.page-row.is-open { border-color: var(--hair-strong); box-shadow: var(--lift); }
+.page-summary { display: flex; align-items: center; gap: var(--s-1); padding: var(--s-2); }
+.page-toggle {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-2);
+  background: none; border: none; cursor: pointer; text-align: left;
+  font-family: var(--sans); font-size: var(--t-sm); color: var(--ink);
+  padding: var(--s-2); border-radius: var(--r-ctl); min-height: 40px;
+}
+.page-toggle:hover { background: var(--sunken); }
+.page-caret { color: var(--muted); width: 12px; flex-shrink: 0; }
+.page-num {
+  font-family: var(--display); font-weight: 800; font-size: var(--t-xs);
+  background: var(--violet-wash); color: var(--status-info);
+  min-width: 24px; height: 24px; border-radius: var(--r-pill);
+  display: grid; place-items: center; flex-shrink: 0; font-variant-numeric: tabular-nums;
+}
+.page-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.page-row.is-open .page-text { color: var(--ink); }
+/* Filled or empty, never colour alone — the glyph differs and each carries its own label. */
+.page-imgflag { color: var(--faint); font-size: var(--t-base); flex-shrink: 0; padding: 0 var(--s-1); }
+.page-imgflag.has { color: var(--violet); }
+.page-move {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--r-ctl);
+  border: 1px solid transparent; background: none; color: var(--muted);
+  cursor: pointer; font-size: var(--t-sm); line-height: 1;
+  transition: background var(--t-quick) ease, color var(--t-quick) ease;
+}
+.page-move:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
+.page-move:disabled { opacity: .3; cursor: default; }
+.page-del:hover:not(:disabled) { background: var(--status-rejected-tint); color: var(--status-rejected); }
+
+.page-body { padding: 0 var(--s-4) var(--s-4); border-top: 1px solid var(--hair); padding-top: var(--s-4); }
+
+/* The picture slot is square in the editor too, so what Adrian sees here is what the reader gets. */
+.page-image { display: flex; gap: var(--s-4); margin-bottom: var(--s-4); flex-wrap: wrap; }
+.page-thumb {
+  width: 128px; height: 128px; flex-shrink: 0; border-radius: var(--r-chip);
+  border: 2px dashed var(--hair-strong); background: var(--sunken);
+  display: grid; place-items: center; cursor: pointer; overflow: hidden;
+  text-align: center; padding: var(--s-2); color: var(--muted); font-size: var(--t-xs);
+  transition: border-color var(--t-quick) ease, background var(--t-quick) ease;
+}
+.page-thumb:hover { border-color: var(--violet); background: var(--violet-wash); }
+.page-thumb.has-img { border-style: solid; border-color: var(--hair); padding: 0; }
+.page-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.page-image-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-content: flex-start; flex: 1; min-width: 180px; }
+.page-image-note { font-size: var(--t-xs); color: var(--muted); width: 100%; margin: 0; line-height: 1.5; }
+
+/* The save action stays reachable no matter how long the story is. */
+.story-form-footer {
+  position: sticky; bottom: calc(var(--s-8) * -1); z-index: 2;
+  display: flex; gap: var(--s-2); margin-top: var(--s-5);
+  padding: var(--s-4) 0; background: var(--surface);
+  border-top: 1px solid var(--hair);
+}
+
+@media (max-width: 760px) {
+  .page-image { gap: var(--s-3); }
+  .page-thumb { width: 96px; height: 96px; }
+  .story-form-footer { bottom: calc(var(--s-5) * -1); }
+}

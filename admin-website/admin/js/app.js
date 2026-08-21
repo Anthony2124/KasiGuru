@@ -3,7 +3,8 @@
 
 import { 
   db, auth,
-  collection, doc, setDoc, addDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot 
+  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+  query, orderBy, where, onSnapshot, Bytes
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
@@ -215,6 +216,7 @@ function init() {
   initFormListeners();
   initStoriesListener();
   initStoryForm();
+  initStoryImageInput();
   initTopbar();
   initModalBehaviour();
   initDictionaryControls();
@@ -740,75 +742,298 @@ function renderReleasesList() {
 
 
 // ── Page editor ─────────────────────────────────────────────────────────────
-// Pages are stored as a JSON string on the story document, so the editor builds that array in the DOM
-// and serialises on save. Page numbers are assigned from position rather than typed, which removes a
-// whole class of mistake - a duplicated or skipped number breaks the reader's paging.
+// Pages are stored as a JSON string on the story document, so the editor holds the array in memory
+// and serialises it on save. Page numbers are assigned from position rather than typed, which removes
+// a whole class of mistake — a duplicated or skipped number breaks the reader's paging.
+//
+// The array, not the DOM, is the source of truth. The previous version read every field back out of
+// the DOM on each add or remove, which meant a page could only carry the fields this file happened to
+// know about: editing any story silently stripped `audioFileName`, which the app reads and the admin
+// has no input for. Pages now round-trip whole, and only the fields with inputs are overwritten.
+
+let storyPages = [];              // the working array while the modal is open
+let storyPageExpanded = 0;        // index of the one expanded page, -1 for none
+const pendingImages = new Map();  // imageId -> { blob, url, width, height } awaiting save
+const removedImageIds = new Set();// imageIds whose documents must be deleted on save
+
+const STORY_IMAGE_EDGE = 1440;    // px, square
+const STORY_IMAGE_QUALITY = 0.85;
+const STORY_IMAGE_MAX_BYTES = 400 * 1024;  // must match the Firestore rule
+
+function newImageId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+// Release every object URL this modal created. Without this each reopen leaks a blob per picture.
+function releasePendingImages() {
+  pendingImages.forEach(entry => { if (entry.url) URL.revokeObjectURL(entry.url); });
+  pendingImages.clear();
+  removedImageIds.clear();
+}
+
+// Centre-crop to the shorter side, then draw to a fixed square. Cropping rather than squashing is
+// what makes "square orientation" honest — a portrait photo keeps its proportions and loses its edges
+// instead of being distorted into a square.
+async function processStoryImage(file) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('That file is not an image.');
+  }
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const sx = Math.round((bitmap.width - side) / 2);
+  const sy = Math.round((bitmap.height - side) / 2);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = STORY_IMAGE_EDGE;
+  canvas.height = STORY_IMAGE_EDGE;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, STORY_IMAGE_EDGE, STORY_IMAGE_EDGE);
+  bitmap.close?.();
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('The image could not be encoded.')),
+                  'image/webp', STORY_IMAGE_QUALITY);
+  });
+
+  if (blob.size > STORY_IMAGE_MAX_BYTES) {
+    throw new Error(`That picture encodes to ${Math.round(blob.size / 1024)} KB, over the ${Math.round(STORY_IMAGE_MAX_BYTES / 1024)} KB limit. Try a less detailed image.`);
+  }
+  return { blob, width: STORY_IMAGE_EDGE, height: STORY_IMAGE_EDGE };
+}
+
+window.pickStoryPageImage = function(index) {
+  const input = document.getElementById('story-page-file');
+  if (!input) return;
+  input.dataset.pageIndex = String(index);
+  input.value = '';
+  input.click();
+};
+
+async function acceptStoryPageImage(index, file) {
+  const page = storyPages[index];
+  if (!page || !file) return;
+  try {
+    const { blob, width, height } = await processStoryImage(file);
+    // Replacing a saved picture leaves the old document behind, so mark it for deletion.
+    if (page.imageId && !pendingImages.has(page.imageId)) removedImageIds.add(page.imageId);
+    const prev = page.imageId && pendingImages.get(page.imageId);
+    if (prev?.url) URL.revokeObjectURL(prev.url);
+
+    const imageId = newImageId();
+    page.imageId = imageId;
+    pendingImages.set(imageId, { blob, url: URL.createObjectURL(blob), width, height });
+    renderStoryPages();
+    notify(`Picture added to page ${index + 1} (${Math.round(blob.size / 1024)} KB).`, 'success');
+  } catch (err) {
+    notify(err.message || 'That picture could not be read.', 'error');
+  }
+}
+
+window.removeStoryPageImage = function(index) {
+  const page = storyPages[index];
+  if (!page || !page.imageId) return;
+  const pending = pendingImages.get(page.imageId);
+  if (pending?.url) URL.revokeObjectURL(pending.url);
+  if (pending) pendingImages.delete(page.imageId);
+  else removedImageIds.add(page.imageId);   // already saved: delete its document
+  page.imageId = '';
+  renderStoryPages();
+};
+
+// The preview source: a freshly picked blob, or the stored bytes fetched back for an existing page.
+function storyPagePreviewSrc(page) {
+  if (!page.imageId) return '';
+  const pending = pendingImages.get(page.imageId);
+  if (pending) return pending.url;
+  return savedImageUrls.get(page.imageId) || '';
+}
+
+const savedImageUrls = new Map();   // imageId -> object URL for pictures already in Firestore
+
+// Fetch the pictures an existing story already has, so reopening the editor shows them rather than an
+// empty slot that looks like the image was lost.
+async function loadSavedStoryImages(storyId, pages) {
+  const ids = pages.map(p => p.imageId).filter(Boolean);
+  for (const imageId of ids) {
+    if (savedImageUrls.has(imageId)) continue;
+    try {
+      const snap = await getDoc(doc(db, 'story_page_images', `${storyId}_${imageId}`));
+      if (!snap.exists()) continue;
+      const bytes = snap.data().data?.toUint8Array?.();
+      if (!bytes) continue;
+      const blob = new Blob([bytes], { type: snap.data().mimeType || 'image/webp' });
+      savedImageUrls.set(imageId, URL.createObjectURL(blob));
+      renderStoryPages();
+    } catch (err) {
+      console.warn('Could not load story page image', imageId, err);
+    }
+  }
+}
+
+function releaseSavedStoryImages() {
+  savedImageUrls.forEach(url => URL.revokeObjectURL(url));
+  savedImageUrls.clear();
+}
+
+function storyPageSummary(page) {
+  const text = (page.tagalog || page.english || page.kasiguranin || '').trim();
+  if (!text) return 'Empty page';
+  return text.length > 46 ? text.slice(0, 46) + '…' : text;
+}
 
 function storyPageBlock(index, page) {
-  const p = page || {};
+  const expanded = index === storyPageExpanded;
+  const hasImage = Boolean(page.imageId);
+  const src = expanded ? storyPagePreviewSrc(page) : '';
+  const last = index === storyPages.length - 1;
+
   return `
-    <div class="panel" data-story-page style="margin-bottom:14px; padding:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <strong>Page ${index + 1}</strong>
-        <button type="button" class="btn btn-danger btn-sm" onclick="window.removeStoryPage(${index})">Remove</button>
+    <div class="page-row${expanded ? ' is-open' : ''}" data-story-page>
+      <div class="page-summary">
+        <button type="button" class="page-toggle" onclick="window.toggleStoryPage(${index})"
+                aria-expanded="${expanded}">
+          <span class="page-caret" aria-hidden="true">${expanded ? '▾' : '▸'}</span>
+          <span class="page-num">${index + 1}</span>
+          <span class="page-text">${escapeHtml(storyPageSummary(page))}</span>
+        </button>
+        <span class="page-imgflag ${hasImage ? 'has' : ''}" title="${hasImage ? 'Has a picture' : 'No picture yet'}">
+          ${hasImage ? '▣' : '□'}<span class="sr-only">${hasImage ? 'Has a picture' : 'No picture yet'}</span>
+        </span>
+        <button type="button" class="page-move" onclick="window.moveStoryPage(${index},-1)" ${index === 0 ? 'disabled' : ''} aria-label="Move page ${index + 1} up">&uarr;</button>
+        <button type="button" class="page-move" onclick="window.moveStoryPage(${index},1)" ${last ? 'disabled' : ''} aria-label="Move page ${index + 1} down">&darr;</button>
+        <button type="button" class="page-move page-del" onclick="window.removeStoryPage(${index})" aria-label="Remove page ${index + 1}">&times;</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Kasiguranin</label>
-        <textarea class="form-control" data-field="kasiguranin" rows="2" placeholder="Leave blank until written. The app hides the word-tap and audio controls while this is empty.">${escapeHtml(p.kasiguranin || '')}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tagalog *</label>
-        <textarea class="form-control" data-field="tagalog" rows="2" required>${escapeHtml(p.tagalog || '')}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">English *</label>
-        <textarea class="form-control" data-field="english" rows="2" required>${escapeHtml(p.english || '')}</textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label class="form-label">Illustration description</label>
-        <input type="text" class="form-control" data-field="illustrationDesc" value="${escapeHtml(p.illustrationDesc || '')}" placeholder="Shown in the app until artwork exists for this page.">
-      </div>
+
+      ${expanded ? `
+      <div class="page-body">
+        <div class="page-image">
+          <div class="page-thumb${src ? ' has-img' : ''}" onclick="window.pickStoryPageImage(${index})"
+               role="button" tabindex="0" aria-label="Choose a picture for page ${index + 1}">
+            ${src ? `<img src="${escapeHtml(src)}" alt="">`
+                  : `<span>Add a square picture</span>`}
+          </div>
+          <div class="page-image-actions">
+            <button type="button" class="btn btn-outline btn-sm" onclick="window.pickStoryPageImage(${index})">
+              ${hasImage ? 'Replace' : 'Choose picture'}
+            </button>
+            ${hasImage ? `<button type="button" class="btn btn-quiet-danger btn-sm" onclick="window.removeStoryPageImage(${index})">Remove</button>` : ''}
+            <p class="page-image-note">Any shape is accepted and centre-cropped to a square, then saved at ${STORY_IMAGE_EDGE}&times;${STORY_IMAGE_EDGE}.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kasiguranin</label>
+          <textarea class="form-control" data-field="kasiguranin" rows="2" placeholder="Leave blank until written. The app hides the word-tap and audio controls while this is empty.">${escapeHtml(page.kasiguranin || '')}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tagalog *</label>
+          <textarea class="form-control" data-field="tagalog" rows="2">${escapeHtml(page.tagalog || '')}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">English *</label>
+          <textarea class="form-control" data-field="english" rows="2">${escapeHtml(page.english || '')}</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Illustration description</label>
+          <input type="text" class="form-control" data-field="illustrationDesc" value="${escapeHtml(page.illustrationDesc || '')}" placeholder="Describes the picture for screen readers, and stands in for it when none exists.">
+        </div>
+      </div>` : ''}
     </div>`;
 }
 
-function renderStoryPages(pages) {
-  const host = document.getElementById('story-pages-editor');
-  if (!host) return;
-  if (!pages || pages.length === 0) {
-    host.innerHTML = `<p style="color:var(--muted); font-size:0.9rem; margin-bottom:14px;">No pages yet. A story needs at least one.</p>`;
-    return;
-  }
-  host.innerHTML = pages.map((pg, i) => storyPageBlock(i, pg)).join('');
-}
-
-function readStoryPagesFromDom() {
-  const blocks = document.querySelectorAll('#story-pages-editor [data-story-page]');
-  return Array.from(blocks).map((block, i) => {
-    const val = (field) => {
-      const el = block.querySelector(`[data-field="${field}"]`);
-      return el ? el.value.trim() : '';
-    };
-    return {
-      pageNumber: i + 1,
-      kasiguranin: val('kasiguranin'),
-      tagalog: val('tagalog'),
-      english: val('english'),
-      illustrationDesc: val('illustrationDesc')
-    };
+// Copy whatever is typed in the one expanded page back into the array before re-rendering, so
+// switching pages never loses keystrokes.
+function commitExpandedPage() {
+  const block = document.querySelector('#story-pages-editor .page-row.is-open');
+  if (!block || storyPageExpanded < 0) return;
+  const page = storyPages[storyPageExpanded];
+  if (!page) return;
+  block.querySelectorAll('[data-field]').forEach(el => {
+    page[el.getAttribute('data-field')] = el.value.trim();
   });
 }
 
-window.addStoryPage = function() {
-  const pages = readStoryPagesFromDom();
-  pages.push({ kasiguranin: '', tagalog: '', english: '', illustrationDesc: '' });
-  renderStoryPages(pages);
+function renderStoryPages(pages) {
+  if (Array.isArray(pages)) storyPages = pages;
+  const host = document.getElementById('story-pages-editor');
+  if (!host) return;
+
+  const count = document.getElementById('story-page-count');
+  if (count) count.textContent = storyPages.length === 1 ? '1 page' : `${storyPages.length} pages`;
+
+  if (storyPages.length === 0) {
+    host.innerHTML = `<p style="color:var(--muted); font-size:0.9rem;">No pages yet. A story needs at least one.</p>`;
+    return;
+  }
+  host.innerHTML = storyPages.map((pg, i) => storyPageBlock(i, pg)).join('');
+}
+
+window.toggleStoryPage = function(index) {
+  commitExpandedPage();
+  storyPageExpanded = (storyPageExpanded === index) ? -1 : index;
+  renderStoryPages();
 };
 
-window.removeStoryPage = function(index) {
-  const pages = readStoryPagesFromDom();
-  pages.splice(index, 1);
-  renderStoryPages(pages);
+window.moveStoryPage = function(index, delta) {
+  commitExpandedPage();
+  const target = index + delta;
+  if (target < 0 || target >= storyPages.length) return;
+  [storyPages[index], storyPages[target]] = [storyPages[target], storyPages[index]];
+  if (storyPageExpanded === index) storyPageExpanded = target;
+  else if (storyPageExpanded === target) storyPageExpanded = index;
+  renderStoryPages();
 };
+
+window.addStoryPage = function() {
+  commitExpandedPage();
+  storyPages.push({ kasiguranin: '', tagalog: '', english: '', illustrationDesc: '', imageId: '' });
+  storyPageExpanded = storyPages.length - 1;
+  renderStoryPages();
+  document.querySelector('#story-pages-editor .page-row.is-open')?.scrollIntoView({ block: 'nearest' });
+};
+
+window.removeStoryPage = async function(index) {
+  const page = storyPages[index];
+  const hasContent = page && (page.tagalog || page.english || page.kasiguranin || page.imageId);
+  if (hasContent) {
+    const ok = await confirmDialog({
+      title: `Remove page ${index + 1}?`,
+      body: 'Its text and picture are discarded when the story is saved.',
+      confirmLabel: 'Remove page',
+      danger: true
+    });
+    if (!ok) return;
+  }
+  commitExpandedPage();
+  if (page?.imageId) {
+    const pending = pendingImages.get(page.imageId);
+    if (pending?.url) URL.revokeObjectURL(pending.url);
+    if (pending) pendingImages.delete(page.imageId);
+    else removedImageIds.add(page.imageId);
+  }
+  storyPages.splice(index, 1);
+  if (storyPageExpanded >= storyPages.length) storyPageExpanded = storyPages.length - 1;
+  renderStoryPages();
+};
+
+// Pages round-trip whole: only fields with inputs are overwritten, so keys this admin has no UI for
+// (audioFileName, and anything added later) survive an edit instead of being silently dropped.
+function readStoryPagesFromDom() {
+  commitExpandedPage();
+  return storyPages.map((page, i) => ({ ...page, pageNumber: i + 1 }));
+}
+
+function initStoryImageInput() {
+  const input = document.getElementById('story-page-file');
+  if (!input) return;
+  input.addEventListener('change', (e) => {
+    const index = parseInt(input.dataset.pageIndex, 10);
+    const file = e.target.files && e.target.files[0];
+    if (file && Number.isInteger(index)) acceptStoryPageImage(index, file);
+  });
+}
+
 
 window.openStoryEditor = function(docId) {
   const editing = docId ? stories.find(s => s.docId === docId) : null;
@@ -831,8 +1056,15 @@ window.openStoryEditor = function(docId) {
       console.warn('Story pagesJson could not be parsed; starting from empty.', e);
     }
   }
+  releasePendingImages();
+  releaseSavedStoryImages();
+  storyPageExpanded = pages.length ? 0 : -1;
   renderStoryPages(pages);
   window.openModal('story-editor-modal');
+
+  // Existing pictures are fetched back so reopening shows them rather than an empty slot that
+  // reads as "the image was lost".
+  if (editing && editing.id) loadSavedStoryImages(editing.id, pages);
 };
 
 // Suggests an id past both what this collection holds and the app's built-in corpus, so a new story
@@ -841,6 +1073,17 @@ function nextFreeStoryId() {
   const BUILT_IN_STORY_COUNT = 10;
   const highest = stories.reduce((max, s) => Math.max(max, s.id || 0), 0);
   return Math.max(highest, BUILT_IN_STORY_COUNT) + 1;
+}
+
+// Every picture belonging to a story. Used when a story is deleted, and when its numeric id changes
+// (the id is part of the image document key, so the pictures have to move with it).
+async function deleteStoryImages(storyId) {
+  try {
+    const snap = await getDocs(query(collection(db, 'story_page_images'), where('storyId', '==', storyId)));
+    for (const d of snap.docs) await deleteDoc(doc(db, 'story_page_images', d.id));
+  } catch (err) {
+    console.warn('Could not remove story page images for story', storyId, err);
+  }
 }
 
 window.deleteStory = async function(docId) {
@@ -854,6 +1097,7 @@ window.deleteStory = async function(docId) {
 
   try {
     await deleteDoc(doc(db, "stories", docId));
+    if (story && story.id) await deleteStoryImages(story.id);
     await logAudit("story.delete", { docId, title: name, id: story ? story.id : null });
   } catch (error) {
     console.error('Story delete failed:', error);
@@ -867,14 +1111,22 @@ function initStoryForm() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;   // a double-click used to fire two writes
 
     const pages = readStoryPagesFromDom();
     if (pages.length === 0) {
       notify('A story needs at least one page.', 'error');
       return;
     }
+    // The fields are no longer `required`, because a collapsed page cannot receive native validation
+    // focus — the browser would silently refuse to submit with nothing visible to fix. Report the
+    // offending page and open it instead.
     const incomplete = pages.findIndex(p => !p.tagalog || !p.english);
     if (incomplete !== -1) {
+      storyPageExpanded = incomplete;
+      renderStoryPages();
+      document.querySelector('#story-pages-editor .page-row.is-open')?.scrollIntoView({ block: 'center' });
       notify(`Page ${incomplete + 1} needs both Tagalog and English before it can be saved.`, 'error');
       return;
     }
@@ -886,6 +1138,7 @@ function initStoryForm() {
       return;
     }
 
+    const existing = docId ? stories.find(s => s.docId === docId) : null;
     const payload = {
       id: numericId,
       title: document.getElementById('story-input-title').value.trim(),
@@ -893,12 +1146,42 @@ function initStoryForm() {
       description: document.getElementById('story-input-description').value.trim(),
       category: document.getElementById('story-input-category').value.trim() || 'Story',
       requiredXp: parseInt(document.getElementById('story-input-required-xp').value, 10) || 0,
+      // The app reads iconEmoji but this admin has no input for it, and setDoc replaces the whole
+      // document — so carry the existing value through rather than dropping it on every save.
+      iconEmoji: existing?.iconEmoji ?? '📖',
       pagesJson: JSON.stringify(pages),
       totalPages: pages.length,
       updatedAt: new Date().toISOString()
     };
 
+    const setBusy = (on, label) => {
+      if (!submitBtn) return;
+      submitBtn.disabled = on;
+      submitBtn.textContent = on ? label : 'Save story';
+    };
+
     try {
+      // Pictures first. If a write fails partway the story still points at whatever already existed,
+      // rather than at a document that was never created.
+      const toUpload = pages.filter(p => p.imageId && pendingImages.has(p.imageId));
+      for (let i = 0; i < toUpload.length; i++) {
+        const page = toUpload[i];
+        const img = pendingImages.get(page.imageId);
+        setBusy(true, `Uploading picture ${i + 1} of ${toUpload.length}…`);
+        const buf = new Uint8Array(await img.blob.arrayBuffer());
+        await setDoc(doc(db, 'story_page_images', `${numericId}_${page.imageId}`), {
+          storyId: numericId,
+          imageId: page.imageId,
+          data: Bytes.fromUint8Array(buf),
+          mimeType: 'image/webp',
+          width: img.width,
+          height: img.height,
+          byteSize: buf.length,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      setBusy(true, 'Saving…');
       if (docId) {
         // Keep the document path and the numeric id in step. An admin who changes the id would
         // otherwise leave a document at stories/3 carrying id 7 - which still works, because the app
@@ -917,10 +1200,26 @@ function initStoryForm() {
         await setDoc(doc(db, "stories", String(numericId)), payload);
         await logAudit("story.create", { id: numericId, title: payload.title });
       }
+
+      // Only now that the story no longer references them: drop replaced and removed pictures.
+      for (const imageId of removedImageIds) {
+        try { await deleteDoc(doc(db, 'story_page_images', `${numericId}_${imageId}`)); }
+        catch (err) { console.warn('Could not remove old story image', imageId, err); }
+      }
+      if (toUpload.length || removedImageIds.size) {
+        await logAudit("story.images", { id: numericId, added: toUpload.length, removed: removedImageIds.size });
+      }
+
+      const withPictures = pages.filter(p => p.imageId).length;
+      releasePendingImages();
+      releaseSavedStoryImages();
       window.closeModal('story-editor-modal');
+      notify(`"${payload.title}" saved — ${pages.length} page${pages.length === 1 ? '' : 's'}, ${withPictures} with a picture.`, 'success');
     } catch (error) {
       console.error('Story save failed:', error);
       notify("Couldn't save the story: " + error.message, 'error');
+    } finally {
+      setBusy(false);
     }
   });
 }

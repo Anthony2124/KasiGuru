@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>KasiGuru — Admin</title>
   <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
-  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v2">
+  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v3">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -493,18 +493,26 @@
         </div>
 
         <div class="panel-header" style="margin-top:8px;">
-          <h3 style="font-family:var(--display); font-weight:800; font-size:1rem;">Pages</h3>
+          <h3 style="font-family:var(--display); font-weight:800; font-size:1rem;">
+            Pages <span class="result-count" id="story-page-count"></span>
+          </h3>
           <button type="button" class="btn btn-primary btn-sm" onclick="window.addStoryPage()">
             <iconsax-icon name="add-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Add page
           </button>
         </div>
         <div id="story-pages-editor"></div>
 
-        <div style="display:flex; gap:12px; margin-top:20px;">
+        <!-- One shared picker for every page: a file input per page would put N hidden inputs in the
+             DOM for a story with N pages, and only one can be open at a time anyway. -->
+        <input type="file" id="story-page-file" accept="image/*" style="display:none;">
+
+        <!-- Sticky, because a fifteen-page story puts this several thousand pixels down the modal's
+             own scroll region. -->
+        <div class="story-form-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('story-editor-modal')">Cancel</button>
           <button type="submit" class="btn btn-primary" style="flex:1;">
             <iconsax-icon name="verify" type="bulk" size="18" color="currentColor"></iconsax-icon> Save story
           </button>
-          <button type="button" class="btn" onclick="closeModal('story-editor-modal')">Cancel</button>
         </div>
       </form>
     </div>
