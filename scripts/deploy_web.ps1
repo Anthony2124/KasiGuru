@@ -35,12 +35,25 @@ if (-not $env:VERCEL_TOKEN) {
 $projects = @(
     @{ Name = 'kasi-guru (root placeholder)'; Path = Join-Path $repoRoot 'admin-website';       VercelProject = 'kasi-guru' },
     @{ Name = 'admin (login + dashboard)';    Path = Join-Path $repoRoot 'admin-website\admin';   VercelProject = 'admin' },
-    @{ Name = 'download (public APK page)';   Path = Join-Path $repoRoot 'admin-website\download'; VercelProject = 'download' }
+    @{ Name = 'download (public APK page)';   Path = Join-Path $repoRoot 'admin-website\download'; VercelProject = 'download'; RequiresApk = $true }
 )
+
+$anyFailed = $false
 
 foreach ($p in $projects) {
     Write-Host ""
     Write-Host ("=== Deploying " + $p.Name + " ===") -ForegroundColor Cyan
+
+    # A manual deploy of the download project with no APK physically present ships a
+    # brochure page whose download buttons all 404 — the exact failure mode that took
+    # the site offline last time. The release workflow always builds and copies one in
+    # first; this only guards the manual path, so refuse rather than silently deploying
+    # a broken page.
+    if ($p.RequiresApk -and -not (Test-Path (Join-Path $p.Path 'kasiguru-latest.apk'))) {
+        Write-Error ("Refusing to deploy " + $p.Name + ": no kasiguru-latest.apk in " + $p.Path + ". Run the tagged release workflow (which builds and copies it in) instead of deploying this manually, or copy a built APK into that folder first if you really mean to.")
+        $anyFailed = $true
+        continue
+    }
 
     Push-Location $p.Path
     try {
@@ -59,4 +72,9 @@ foreach ($p in $projects) {
 }
 
 Write-Host ""
-Write-Host "All three portals deployed." -ForegroundColor Green
+if ($anyFailed) {
+    Write-Host "Done, but at least one portal was skipped or failed — see above." -ForegroundColor Yellow
+    exit 1
+} else {
+    Write-Host "All three portals deployed." -ForegroundColor Green
+}
