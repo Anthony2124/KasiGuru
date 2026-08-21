@@ -188,7 +188,7 @@ function applyTab(targetTab) {
   document.querySelectorAll('.tab-content').forEach(tc => {
     const on = tc.id === targetTab;
     tc.classList.toggle('active', on);
-    tc.style.setProperty('display', on ? 'block' : 'none', 'important');
+    tc.style.setProperty('display', on ? 'flex' : 'none', 'important');
   });
 }
 
