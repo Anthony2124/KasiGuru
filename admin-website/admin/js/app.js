@@ -17,6 +17,94 @@ let stories = [];
 let searchDebounceTimer = null;
 let unsubscribeFns = [];
 
+// Whether each collection has answered at least once. The Overview holds a shimmer until it has,
+// because a count that renders as 0 before the snapshot arrives is not "loading", it is wrong.
+let submissionsLoaded = false;
+let vocabularyLoaded = false;
+let releasesLoaded = false;
+let storiesLoaded = false;
+
+// -- Dialogs ------------------------------------------------------------------------------------
+// confirm() and alert() block the whole page, cannot be styled, and some browsers suppress them
+// outright after repeated use -- a moderator then sees a Delete button silently do nothing. These
+// two replacements use the modal and the status region the stylesheet already covers.
+
+function dialogHost() {
+  let host = document.getElementById('confirm-dialog');
+  if (host) return host;
+  host = document.createElement('div');
+  host.id = 'confirm-dialog';
+  host.className = 'modal-overlay';
+  host.innerHTML =
+    '<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">' +
+      '<div class="modal-header"><h3 id="confirm-dialog-title"></h3></div>' +
+      '<div class="modal-body" id="confirm-dialog-body"></div>' +
+      '<div class="modal-actions">' +
+        '<button type="button" class="btn btn-outline" data-act="cancel">Cancel</button>' +
+        '<button type="button" class="btn btn-primary" data-act="ok"></button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(host);
+  return host;
+}
+
+// Resolves true/false. Escape and the backdrop both cancel, which is the escape route a blocking
+// confirm() never offered, and focus returns to whatever opened it.
+function confirmDialog(opts) {
+  const o = opts || {};
+  const host = dialogHost();
+  const okBtn = host.querySelector('[data-act="ok"]');
+  const cancelBtn = host.querySelector('[data-act="cancel"]');
+  host.querySelector('#confirm-dialog-title').textContent = o.title || 'Are you sure?';
+  host.querySelector('#confirm-dialog-body').innerHTML = o.body || '';
+  okBtn.textContent = o.confirmLabel || 'Confirm';
+  okBtn.className = 'btn ' + (o.danger ? 'btn-danger' : 'btn-primary');
+
+  const opener = document.activeElement;
+  return new Promise((resolve) => {
+    function close(result) {
+      host.classList.remove('active');
+      host.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      if (opener && opener.focus) opener.focus();
+      resolve(result);
+    }
+    function onBackdrop(e) { if (e.target === host) close(false); }
+    function onKey(e) { if (e.key === 'Escape') close(false); }
+    okBtn.onclick = () => close(true);
+    cancelBtn.onclick = () => close(false);
+    host.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    host.classList.add('active');
+    okBtn.focus();
+  });
+}
+
+// A toast, not a dialog: it reports what already happened, so it must not take focus or block the
+// next action. polite rather than assertive for the same reason.
+function notify(message, kind) {
+  let host = document.getElementById('toast-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toast-host';
+    host.className = 'toast-host';
+    host.setAttribute('role', 'status');
+    host.setAttribute('aria-live', 'polite');
+    document.body.appendChild(host);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + (kind || 'info');
+  el.textContent = message;
+  host.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('leaving');
+    setTimeout(() => el.remove(), 220);
+  }, kind === 'error' ? 6000 : 3800);
+}
+
+
 // ── Auth Guard ──────────────────────────────────────────────────────────────
 // If the user is not authenticated, redirect to login page immediately.
 // If the user is authenticated but lacks the `admin` custom claim, deny access.
@@ -81,28 +169,42 @@ window.adminSignOut = async function () {
 };
 
 // ── Tab Switcher ────────────────────────────────────────────────────────────
-window.switchTab = function(targetTab) {
-  const navBtns = document.querySelectorAll('nav button[data-tab]');
-  const allTabs = document.querySelectorAll('.tab-content');
-
-  navBtns.forEach(b => {
-    if (b.getAttribute('data-tab') === targetTab) {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
-  });
-
-  allTabs.forEach(tc => {
-    if (tc.id === targetTab) {
-      tc.classList.add('active');
-      tc.style.setProperty('display', 'block', 'important');
-    } else {
-      tc.classList.remove('active');
-      tc.style.setProperty('display', 'none', 'important');
-    }
-  });
+// Tabs are routes, not just visual states. Without a URL per section the dashboard could not be
+// bookmarked or shared, and browser Back left the panel entirely instead of returning to the
+// previous tab -- the single most disorienting thing about the old console.
+const TAB_ROUTES = {
+  'tab-dashboard': 'overview',
+  'tab-submissions': 'queue',
+  'tab-vocabulary': 'dictionary',
+  'tab-stories': 'stories',
+  'tab-releases': 'releases'
 };
+const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
+
+function applyTab(targetTab) {
+  document.querySelectorAll('nav button[data-tab]').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-tab') === targetTab);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => {
+    const on = tc.id === targetTab;
+    tc.classList.toggle('active', on);
+    tc.style.setProperty('display', on ? 'block' : 'none', 'important');
+  });
+}
+
+window.switchTab = function(targetTab, fromHistory) {
+  applyTab(targetTab);
+  const route = TAB_ROUTES[targetTab];
+  if (!route || fromHistory) return;
+  if (location.hash.slice(1) !== route) {
+    history.pushState({ tab: targetTab }, '', '#' + route);
+  }
+};
+
+window.addEventListener('popstate', () => {
+  const tab = ROUTE_TABS[location.hash.slice(1)] || 'tab-dashboard';
+  window.switchTab(tab, true);
+});
 
 // ── Init ────────────────────────────────────────────────────────────────────
 function init() {
@@ -113,12 +215,13 @@ function init() {
   initFormListeners();
   initStoriesListener();
   initStoryForm();
+  initTopbar();
+  initModalBehaviour();
+  initDictionaryControls();
 
-  const defaultBtn = document.querySelector('nav button[data-tab].active') || document.querySelector('nav button[data-tab]');
-  if (defaultBtn) {
-    const defaultTab = defaultBtn.getAttribute('data-tab');
-    window.switchTab(defaultTab);
-  }
+  // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
+  const routed = ROUTE_TABS[location.hash.slice(1)];
+  applyTab(routed || 'tab-dashboard');
 }
 
 function initNavigation() {
@@ -147,6 +250,7 @@ function initRealtimeListeners() {
     const subQueryPrimary = query(collection(db, "word_submissions"), orderBy("submittedAt", "desc"));
     const unsubSub = onSnapshot(subQueryPrimary, (snapshot) => {
       submissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      submissionsLoaded = true;
       renderSubmissionsTable();
       updateDashboardMetrics();
     }, (error) => {
@@ -159,6 +263,7 @@ function initRealtimeListeners() {
           submissions = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .sort((a, b) => (b.submittedAt || b.createdAt || 0) - (a.submittedAt || a.createdAt || 0));
+          submissionsLoaded = true;
           renderSubmissionsTable();
           updateDashboardMetrics();
         }, (fallbackErr) => {
@@ -184,6 +289,7 @@ function initRealtimeListeners() {
     const vocabQuery = query(collection(db, "vocabulary"));
     const unsubVocab = onSnapshot(vocabQuery, (snapshot) => {
       vocabulary = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      vocabularyLoaded = true;
       renderVocabularyTable();
       updateDashboardMetrics();
     }, (error) => {
@@ -204,6 +310,7 @@ function initRealtimeListeners() {
     const releaseQueryPrimary = query(collection(db, "app_releases"), orderBy("versionCode", "desc"));
     const unsubReleases = onSnapshot(releaseQueryPrimary, (snapshot) => {
       releases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      releasesLoaded = true;
       renderReleasesList();
       updateDashboardMetrics();
     }, (error) => {
@@ -214,6 +321,7 @@ function initRealtimeListeners() {
           releases = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .sort((a, b) => (b.versionCode || 0) - (a.versionCode || 0));
+          releasesLoaded = true;
           renderReleasesList();
           updateDashboardMetrics();
         }, (relErr) => {
@@ -239,72 +347,397 @@ function initStoriesListener() {
   const unsub = onSnapshot(storiesQuery, (snapshot) => {
     stories = snapshot.docs.map(d => ({ docId: d.id, ...d.data() }));
     stories.sort((a, b) => (a.id || 0) - (b.id || 0));
+    storiesLoaded = true;
     renderStoriesTable();
+    updateDashboardMetrics();
   }, (error) => {
     console.error('Stories listener failed:', error);
     const tbody = document.getElementById('stories-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--red);">
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--status-rejected);">
         Couldn't load stories: ${escapeHtml(error.message)}</td></tr>`;
     }
   });
   unsubscribeFns.push(unsub);
 }
 
-function renderStoriesTable() {
-  const tbody = document.getElementById('stories-tbody');
-  if (!tbody) return;
+// ── Modals ──────────────────────────────────────────────────────────────────
+// A dialog takes focus, keeps it, and gives it back. Without that a keyboard user tabs straight
+// out of the open modal into the page behind it, which is still scrolling and still clickable.
+let modalStack = [];
 
-  if (stories.length === 0) {
-    // A designed empty state: this collection being empty is the normal, correct condition for a
-    // project relying on the app's built-in corpus, so it should not read as a failure.
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
-          <iconsax-icon name="book-1" type="bulk" size="32" color="var(--violet)"></iconsax-icon>
-          <div style="margin-top:8px; font-weight:700;">No stories published from here.</div>
-          <div style="margin-top:4px; font-size:0.9rem;">Learners are reading the ten stories built into the app. Add one here only to change or extend that set.</div>
-        </td>
-      </tr>`;
+window.openModal = function(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const card = el.querySelector('.modal-card');
+  if (card) {
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('tabindex', '-1');
+  }
+  modalStack.push({ id, returnTo: document.activeElement });
+  el.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Land on the first thing worth typing into, or the dialog itself when there is nothing.
+  const first = card && card.querySelector(
+    'input:not([type=hidden]):not([disabled]), select, textarea, button:not(.close-btn)'
+  );
+  (first || card)?.focus({ preventScroll: true });
+};
+
+window.closeModal = function(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('active');
+  const idx = modalStack.map(m => m.id).lastIndexOf(id);
+  const entry = idx > -1 ? modalStack.splice(idx, 1)[0] : null;
+  if (modalStack.length === 0) document.body.style.overflow = '';
+  entry?.returnTo?.focus?.({ preventScroll: true });
+};
+
+function initModalBehaviour() {
+  // Escape closes the topmost dialog; the backdrop closes the one that was clicked.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalStack.length) {
+      e.preventDefault();
+      window.closeModal(modalStack[modalStack.length - 1].id);
+      return;
+    }
+    if (e.key !== 'Tab' || !modalStack.length) return;
+
+    const card = document.getElementById(modalStack[modalStack.length - 1].id)?.querySelector('.modal-card');
+    if (!card) return;
+    const focusable = [...card.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )].filter(n => n.offsetParent !== null);
+    if (!focusable.length) return;
+
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('mousedown', (e) => {
+      if (e.target === overlay) window.closeModal(overlay.id);
+    });
+  });
+}
+
+// ── Counting figures ────────────────────────────────────────────────────────
+// DESIGN.md's rule for counters, ported from the app: "the number counts, it does not fade in."
+// This is the Overview's one authored moment; everything else on the console is quiet feedback.
+const countTimers = new Map();
+
+function countTo(el, target) {
+  if (!el) return;
+  const from = parseInt((el.dataset.value ?? '0'), 10) || 0;
+  el.dataset.value = String(target);
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || from === target || target > 100000) {
+    el.textContent = target.toLocaleString();
     return;
   }
 
-  tbody.innerHTML = '';
-  stories.forEach(story => {
-    let pageCount = story.totalPages || 0;
-    try {
-      const parsed = JSON.parse(story.pagesJson || '[]');
-      if (Array.isArray(parsed)) pageCount = parsed.length;
-    } catch (e) {
-      pageCount = story.totalPages || 0;
-    }
+  cancelAnimationFrame(countTimers.get(el) || 0);
+  const start = performance.now();
+  const dur = 600;
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3);          // ease-out, matching the app's curve
+    el.textContent = Math.round(from + (target - from) * eased).toLocaleString();
+    if (t < 1) countTimers.set(el, requestAnimationFrame(step));
+    else countTimers.delete(el);
+  };
+  countTimers.set(el, requestAnimationFrame(step));
+}
 
-    const kasiTitle = (story.titleKasiguranin || '').trim();
-    const kasiCell = kasiTitle
-      ? escapeHtml(kasiTitle)
-      : `<span style="color:var(--text-muted); font-style:italic;">Not written yet</span>`;
+// ── Dictionary ──────────────────────────────────────────────────────────────
+let vocabLetter = '';
 
-    const xpCell = (story.requiredXp || 0) === 0
-      ? `<span class="badge badge-category">Free</span>`
-      : `${story.requiredXp} XP`;
+const POS_SHORT = {
+  'Noun': 'n.', 'Verb': 'v.', 'Adjective': 'adj.', 'Adverb': 'adv.', 'Pronoun': 'pron.',
+  'Preposition': 'prep.', 'Conjunction / Connector': 'conj.', 'Interjection': 'interj.',
+  'Marker & Particle': 'part.'
+};
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${escapeHtml(story.title || '-')}</strong><div style="color:var(--text-muted); font-size:0.8rem;">id ${escapeHtml(String(story.id ?? '-'))}</div></td>
-      <td>${kasiCell}</td>
-      <td><span class="badge badge-category">${escapeHtml(story.category || 'Story')}</span></td>
-      <td>${pageCount}</td>
-      <td>${xpCell}</td>
-      <td>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-primary btn-sm" onclick="window.openStoryEditor('${story.docId}')"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="window.deleteStory('${story.docId}')"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+window.setVocabLetter = function(letter) {
+  vocabLetter = (vocabLetter === letter) ? '' : letter;
+  vocabPage = 1;
+  renderVocabularyTable();
+};
+
+function filteredVocabulary() {
+  const rawSearch = document.getElementById('search-vocab-input')?.value || '';
+  const term = rawSearch.trim().toLowerCase();
+  const cat = document.getElementById('filter-vocab-category')?.value || '';
+
+  return vocabulary.filter(item => {
+    const matchesSearch = !term ||
+      (item.kasiguranin || '').toLowerCase().includes(term) ||
+      (item.tagalog || '').toLowerCase().includes(term) ||
+      (item.english || '').toLowerCase().includes(term);
+    const matchesCat = !cat || item.category === cat;
+    const matchesLetter = !vocabLetter ||
+      (item.kasiguranin || '').trim().charAt(0).toUpperCase() === vocabLetter;
+    return matchesSearch && matchesCat && matchesLetter;
   });
 }
+
+function renderLetterRail() {
+  const rail = document.getElementById('letter-rail');
+  if (!rail) return;
+
+  // Which letters the corpus actually has, given the search and category already applied. A letter
+  // is disabled rather than hidden so the shape of the corpus stays visible.
+  const term = (document.getElementById('search-vocab-input')?.value || '').trim().toLowerCase();
+  const cat = document.getElementById('filter-vocab-category')?.value || '';
+  const present = new Set(
+    vocabulary
+      .filter(i => (!term ||
+          (i.kasiguranin || '').toLowerCase().includes(term) ||
+          (i.tagalog || '').toLowerCase().includes(term) ||
+          (i.english || '').toLowerCase().includes(term)) &&
+        (!cat || i.category === cat))
+      .map(i => (i.kasiguranin || '').trim().charAt(0).toUpperCase())
+      .filter(Boolean)
+  );
+
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  rail.innerHTML =
+    `<button type="button" onclick="window.setVocabLetter('')" aria-pressed="${!vocabLetter}">All</button>` +
+    letters.map(L => {
+      const has = present.has(L);
+      return `<button type="button" onclick="window.setVocabLetter('${L}')" aria-pressed="${vocabLetter === L}"${has ? '' : ' disabled'}>${L}</button>`;
+    }).join('');
+}
+
+function renderVocabularyTable() {
+  const host = document.getElementById('entry-list');
+  if (!host) return;
+
+  renderLetterRail();
+  const filtered = filteredVocabulary();
+
+  filtered.sort((a, b) => {
+    const av = (a[vocabSort.key] || '').toString().toLowerCase();
+    const bv = (b[vocabSort.key] || '').toString().toLowerCase();
+    const cmp = av.localeCompare(bv);
+    if (cmp !== 0) return vocabSort.dir === 'asc' ? cmp : -cmp;
+    // Within a category or part of speech, fall back to the headword so the order is stable.
+    return (a.kasiguranin || '').localeCompare(b.kasiguranin || '');
+  });
+
+  const countEl = document.getElementById('vocab-result-count');
+  if (countEl) {
+    const bits = [];
+    if (vocabLetter) bits.push(`starting with ${vocabLetter}`);
+    countEl.textContent = filtered.length === vocabulary.length
+      ? `${vocabulary.length.toLocaleString()} entries`
+      : `${filtered.length.toLocaleString()} of ${vocabulary.length.toLocaleString()} entries${bits.length ? ' ' + bits.join(', ') : ''}`;
+  }
+
+  if (filtered.length === 0) {
+    host.innerHTML = `
+      <div class="empty">
+        <iconsax-icon name="book-1" type="bulk" size="30" color="currentColor"></iconsax-icon>
+        <b>No entries match</b>
+        Try a different spelling, clear the category, or choose All on the letter index.
+      </div>`;
+    renderVocabPager(0);
+    return;
+  }
+
+  // Paged rather than rendering the whole corpus: every filtered entry used to be built into the
+  // DOM on each keystroke of the debounced search, which is work nobody can see.
+  const pages = Math.max(1, Math.ceil(filtered.length / VOCAB_PAGE_SIZE));
+  if (vocabPage > pages) vocabPage = pages;
+  const start = (vocabPage - 1) * VOCAB_PAGE_SIZE;
+  const slice = filtered.slice(start, start + VOCAB_PAGE_SIZE);
+
+  host.innerHTML = slice.map(item => {
+    const pos = item.partOfSpeech || '';
+    const posShort = POS_SHORT[pos] || (pos ? pos.toLowerCase() + '.' : '');
+    const glosses = [];
+    if (item.tagalog) glosses.push(`<span class="lang">TL</span>${escapeHtml(item.tagalog)}`);
+    if (item.english) glosses.push(`<span class="lang">EN</span>${escapeHtml(item.english)}`);
+    const aspects = ['neutralForm', 'perfectiveForm', 'imperfectiveForm', 'contemplativeForm']
+      .filter(k => (item[k] || '').trim()).length;
+
+    return `
+      <button type="button" class="entry" onclick="window.openEntryModal('${item.id}')">
+        <span>
+          <span class="entry-head">
+            <span class="headword">${escapeHtml(item.kasiguranin || '—')}</span>
+            ${item.ipaNotation ? `<span class="ipa">/${escapeHtml(item.ipaNotation)}/</span>` : ''}
+            ${posShort ? `<span class="pos">${escapeHtml(posShort)}</span>` : ''}
+          </span>
+          <span class="gloss">${glosses.join('<span class="sep">·</span>') || '<span class="lang">No gloss recorded yet</span>'}</span>
+        </span>
+        <span class="entry-side">
+          ${aspects ? `<span class="badge badge-pending">${aspects} aspect${aspects === 1 ? '' : 's'}</span>` : ''}
+          <span class="badge badge-category">${escapeHtml(item.category || 'General')}</span>
+        </span>
+      </button>`;
+  }).join('');
+
+  renderVocabPager(filtered.length);
+}
+
+window.openEntryModal = function(id) {
+  const item = vocabulary.find(v => v.id === id);
+  const body = document.getElementById('entry-modal-body');
+  if (!item || !body) return;
+
+  const pos = item.partOfSpeech || '';
+  const aspects = [
+    ['Neutral', item.neutralForm],
+    ['Past', item.perfectiveForm],
+    ['Present', item.imperfectiveForm],
+    ['Future', item.contemplativeForm]
+  ].filter(([, v]) => (v || '').trim());
+
+  const row = (label, value) => value
+    ? `<dt>${label}</dt><dd>${escapeHtml(value)}</dd>`
+    : `<dt>${label}</dt><dd style="color:var(--muted); font-style:italic;">Not recorded</dd>`;
+
+  body.innerHTML = `
+    <div class="entry-detail-head">
+      <span class="headword">${escapeHtml(item.kasiguranin || '—')}</span>
+      ${item.ipaNotation ? `<span class="ipa">/${escapeHtml(item.ipaNotation)}/</span>` : ''}
+      ${pos ? `<span class="pos">${escapeHtml(pos)}</span>` : ''}
+    </div>
+    <dl class="deflist">
+      ${row('Tagalog', item.tagalog)}
+      ${row('English', item.english)}
+      <dt>Category</dt><dd><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></dd>
+    </dl>
+    ${aspects.length ? `
+      <div style="margin-top:var(--s-5);">
+        <dt style="font-size:var(--t-xs); font-weight:700; color:var(--muted);">Verb aspects</dt>
+        <div class="aspect-grid">
+          ${aspects.map(([label, value]) => `
+            <div class="aspect"><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join('')}
+        </div>
+      </div>` : ''}`;
+
+  const editBtn = document.getElementById('entry-modal-edit');
+  if (editBtn) {
+    editBtn.onclick = () => {
+      window.closeModal('entry-modal');
+      window.openEditVocabModal(id);
+    };
+  }
+  window.openModal('entry-modal');
+};
+
+// ── Stories ─────────────────────────────────────────────────────────────────
+function renderStoriesTable() {
+  const host = document.getElementById('story-grid');
+  if (!host) return;
+
+  if (stories.length === 0) {
+    // An empty collection is the normal, correct condition for a project relying on the app's
+    // built-in corpus, so this must not read as a failure.
+    host.innerHTML = `
+      <div class="panel" style="grid-column:1/-1; margin:0;">
+        <div class="empty">
+          <iconsax-icon name="document-text" type="bulk" size="30" color="currentColor"></iconsax-icon>
+          <b>Learners are reading the built-in stories</b>
+          The ten stories shipped with the app are live. Add one here only to change or extend that set.
+        </div>
+      </div>`;
+    return;
+  }
+
+  host.innerHTML = stories.map(story => {
+    let pages = story.totalPages || 0;
+    try {
+      const parsed = JSON.parse(story.pagesJson || '[]');
+      if (Array.isArray(parsed)) pages = parsed.length;
+    } catch (e) { /* keep totalPages */ }
+
+    const kasi = (story.titleKasiguranin || '').trim();
+    const xp = (story.requiredXp || 0) === 0
+      ? '<span class="badge badge-approved">Free</span>'
+      : `<span class="badge badge-category">${story.requiredXp} XP</span>`;
+
+    // The cover is an optional slot. With no artwork the violet field plus the page count is a
+    // finished cover, not a placeholder — which is what DESIGN.md asks of every art position.
+    return `
+      <article class="story-card">
+        <div class="story-cover">
+          <span class="story-cover-id">${escapeHtml(String(story.id ?? '·'))}</span>
+          <span class="story-cover-pages">${pages} page${pages === 1 ? '' : 's'}</span>
+        </div>
+        <div class="story-body">
+          <h3 class="story-title">${escapeHtml(story.title || 'Untitled story')}</h3>
+          <p class="story-kasi${kasi ? '' : ' is-missing'}">${kasi ? escapeHtml(kasi) : 'Kasiguranin title not written yet'}</p>
+          <div class="story-meta">
+            <span class="badge badge-category">${escapeHtml(story.category || 'Story')}</span>
+            ${xp}
+          </div>
+        </div>
+        <div class="story-actions">
+          <button class="btn btn-outline btn-sm" onclick="window.openStoryEditor('${story.docId}')">
+            <iconsax-icon name="edit" type="bulk" size="15" color="currentColor"></iconsax-icon> Edit
+          </button>
+          <button class="btn btn-quiet-danger btn-sm" onclick="window.deleteStory('${story.docId}')">
+            <iconsax-icon name="close-circle" type="bulk" size="15" color="currentColor"></iconsax-icon> Delete
+          </button>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+// ── Releases ────────────────────────────────────────────────────────────────
+function renderReleasesList() {
+  const container = document.getElementById('releases-list-container');
+  if (!container) return;
+
+  if (releases.length === 0) {
+    container.innerHTML = `
+      <div class="empty">
+        <iconsax-icon name="box-search" type="bulk" size="30" color="currentColor"></iconsax-icon>
+        <b>No releases published yet</b>
+        Publish one to give learners something to install.
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = releases.map((rel, i) => {
+    const ms = toMillis(rel.releasedAt);
+    const when = ms
+      ? new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'date not recorded';
+    const notes = (rel.releaseNotes || '').trim();
+
+    return `
+      <div class="release-row${i === 0 ? ' is-live' : ''}">
+        <div class="release-node"><span class="release-dot" aria-hidden="true"></span></div>
+        <div class="release-main">
+          <div class="release-title">
+            <b>v${escapeHtml(String(rel.versionName || '?'))}</b>
+            <small>Build ${escapeHtml(String(rel.versionCode ?? '—'))} · ${escapeHtml(when)}</small>
+            ${i === 0 ? '<span class="badge badge-approved">Live</span>' : ''}
+            ${rel.forceUpdate ? '<span class="badge badge-pending">Required</span>' : ''}
+          </div>
+          <p class="release-notes${notes ? '' : ' is-empty'}">${notes ? escapeHtml(notes) : 'No release notes were recorded for this build.'}</p>
+        </div>
+        <div class="release-side">
+          ${rel.apkUrl
+            ? `<a href="${escapeHtml(rel.apkUrl)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                 <iconsax-icon name="document-download" type="bulk" size="15" color="currentColor"></iconsax-icon> APK
+               </a>`
+            : '<span class="result-count">No link</span>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+
 
 // ── Page editor ─────────────────────────────────────────────────────────────
 // Pages are stored as a JSON string on the story document, so the editor builds that array in the DOM
@@ -342,7 +775,7 @@ function renderStoryPages(pages) {
   const host = document.getElementById('story-pages-editor');
   if (!host) return;
   if (!pages || pages.length === 0) {
-    host.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:14px;">No pages yet. A story needs at least one.</p>`;
+    host.innerHTML = `<p style="color:var(--muted); font-size:0.9rem; margin-bottom:14px;">No pages yet. A story needs at least one.</p>`;
     return;
   }
   host.innerHTML = pages.map((pg, i) => storyPageBlock(i, pg)).join('');
@@ -413,14 +846,18 @@ function nextFreeStoryId() {
 window.deleteStory = async function(docId) {
   const story = stories.find(s => s.docId === docId);
   const name = story ? story.title : 'this story';
-  if (!confirm(`Delete "${name}"?\n\nLearners stop receiving it on their next sync. If the app ships a built-in story with the same id, that built-in version takes over again.`)) return;
+  if (!(await confirmDialog({
+    title: `Delete "${name}"?`,
+    body: 'Learners stop receiving it on their next sync. If the app ships a built-in story with the same id, that built-in version takes over again.',
+    confirmLabel: 'Delete story', danger: true
+  }))) return;
 
   try {
     await deleteDoc(doc(db, "stories", docId));
     await logAudit("story.delete", { docId, title: name, id: story ? story.id : null });
   } catch (error) {
     console.error('Story delete failed:', error);
-    alert("Couldn't delete the story: " + error.message);
+    notify("Couldn't delete the story: " + error.message, 'error');
   }
 };
 
@@ -433,19 +870,19 @@ function initStoryForm() {
 
     const pages = readStoryPagesFromDom();
     if (pages.length === 0) {
-      alert('A story needs at least one page.');
+      notify('A story needs at least one page.', 'error');
       return;
     }
     const incomplete = pages.findIndex(p => !p.tagalog || !p.english);
     if (incomplete !== -1) {
-      alert(`Page ${incomplete + 1} needs both Tagalog and English before it can be saved.`);
+      notify(`Page ${incomplete + 1} needs both Tagalog and English before it can be saved.`, 'error');
       return;
     }
 
     const docId = document.getElementById('story-doc-id').value;
     const numericId = parseInt(document.getElementById('story-input-id').value, 10);
     if (!Number.isInteger(numericId) || numericId < 1) {
-      alert('Story id must be a whole number of 1 or more.');
+      notify('Story id must be a whole number of 1 or more.', 'error');
       return;
     }
 
@@ -483,27 +920,319 @@ function initStoryForm() {
       window.closeModal('story-editor-modal');
     } catch (error) {
       console.error('Story save failed:', error);
-      alert("Couldn't save the story: " + error.message);
+      notify("Couldn't save the story: " + error.message, 'error');
     }
   });
 }
 
+// ── Overview ────────────────────────────────────────────────────────────────
+// Every figure on this page is counted from a collection the console already streams. Nothing here
+// is modelled, estimated or filled in: the app has no analytics, so a download count or an
+// engagement trend would be an invention, and the page says only what the data can support.
+
+// Firestore hands timestamps back as either a millisecond number or a Timestamp object depending
+// on which writer produced the document, and CI and the admin panel disagree. Normalise both.
+function toMillis(value) {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function relativeTime(ms) {
+  if (!ms) return 'date unknown';
+  const diff = Date.now() - ms;
+  if (diff < 0) return 'just now';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+  return `${Math.floor(months / 12)} year${Math.floor(months / 12) === 1 ? '' : 's'} ago`;
+}
+
+// A count that arrives a beat after paint should not first render as a zero that is wrong.
+function setFigure(id, value, ready) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('skeleton', !ready);
+  // Numeric figures count; anything else (a version string) is set directly.
+  const n = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9]/g, ''));
+  if (ready && Number.isFinite(n) && String(value).match(/^[\d,]+$/)) countTo(el, n);
+  else el.textContent = value;
+}
+
+function setNote(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
 function updateDashboardMetrics() {
-  const metricWords = document.getElementById('metric-total-words');
-  if (metricWords) metricWords.textContent = vocabulary.length;
+  const pending  = submissions.filter(s => (s.status || 'pending') === 'pending');
+  const approved = submissions.filter(s => s.status === 'approved');
+  const rejected = submissions.filter(s => s.status === 'rejected');
+  const haveSubs = submissions.length > 0 || submissionsLoaded;
+  const haveVocab = vocabulary.length > 0 || vocabularyLoaded;
 
-  const metricPending = document.getElementById('metric-pending-sub');
-  if (metricPending) metricPending.textContent = submissions.filter(s => s.status === 'pending').length;
+  // ── Figures ───────────────────────────────────────────────────────────────
+  setFigure('metric-pending-sub', pending.length, haveSubs);
+  if (pending.length === 0) {
+    setNote('metric-pending-note', haveSubs ? 'Queue is clear' : '&nbsp;');
+  } else {
+    const oldest = Math.min(...pending.map(s => toMillis(s.submittedAt || s.createdAt)).filter(Boolean));
+    setNote('metric-pending-note', Number.isFinite(oldest)
+      ? `Oldest waiting ${escapeHtml(relativeTime(oldest))}`
+      : `${pending.length} to review`);
+  }
 
-  const metricReleases = document.getElementById('metric-total-releases');
-  if (metricReleases) metricReleases.textContent = releases.length;
+  const categories = new Set(vocabulary.map(v => (v.category || 'General')));
+  setFigure('metric-total-words', vocabulary.length.toLocaleString(), haveVocab);
+  setNote('metric-words-note', haveVocab
+    ? `Across ${categories.size} categor${categories.size === 1 ? 'y' : 'ies'}`
+    : '&nbsp;');
 
-  const metricVersion = document.getElementById('metric-latest-version');
-  const latestRelease = releases[0];
-  if (metricVersion) metricVersion.textContent = latestRelease ? `v${latestRelease.versionName}` : 'v1.0.0';
+  const written = stories.filter(s => (s.titleKasiguranin || '').trim()).length;
+  setFigure('metric-total-stories', stories.length, storiesLoaded);
+  setNote('metric-stories-note', !storiesLoaded ? '&nbsp;'
+    : stories.length === 0 ? 'Using the app’s built-in set'
+    : `${written} with Kasiguranin text`);
+
+  setFigure('metric-total-releases', releases.length, releasesLoaded);
+  const latest = releases[0];
+  setNote('metric-releases-note', !releasesLoaded ? '&nbsp;'
+    : latest ? `Latest build ${escapeHtml(String(latest.versionCode ?? '—'))}` : 'None published yet');
+
+  renderCategoryChart();
+  renderOutcomeFigure(approved.length, pending.length, rejected.length);
+  renderRecentSubmissions();
+  renderStoryShelf();
+  renderReleaseCard(latest);
+
+  // The bell mirrors the queue count already in the sidebar, so the two can never disagree.
+  const navCount = document.getElementById('nav-queue-count');
+  if (navCount) {
+    navCount.textContent = pending.length;
+    navCount.hidden = pending.length === 0;
+  }
+  const dot = document.getElementById('topbar-queue-dot');
+  if (dot) {
+    dot.textContent = pending.length > 99 ? '99+' : pending.length;
+    dot.hidden = pending.length === 0;
+  }
+  const bellLabel = document.getElementById('topbar-queue-label');
+  if (bellLabel) {
+    bellLabel.textContent = pending.length === 0
+      ? 'Verification queue, nothing waiting'
+      : `Verification queue, ${pending.length} submission${pending.length === 1 ? '' : 's'} waiting`;
+  }
+}
+
+// One bar per category, longest first. Each bar states its own count, so the figure reads without
+// relying on bar length or on colour — which is also what makes it legible to a screen reader.
+function renderCategoryChart() {
+  const host = document.getElementById('category-bars');
+  const caption = document.getElementById('chart-caption');
+  if (!host) return;
+
+  if (vocabulary.length === 0) {
+    host.innerHTML = vocabularyLoaded
+      ? `<div class="empty">
+           <iconsax-icon name="book-1" type="bulk" size="30" color="currentColor"></iconsax-icon>
+           <b>No dictionary entries yet</b>
+           Import a corpus or add the first word to see the shape of it here.
+         </div>`
+      : '<div class="bar-row"><span class="bar-track skeleton" style="grid-column:1/-1"></span></div>'.repeat(6);
+    if (caption) caption.textContent = 'Where the corpus is thin, and where it is not.';
+    return;
+  }
+
+  const counts = new Map();
+  vocabulary.forEach(v => {
+    const key = (v.category || 'General').trim() || 'General';
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const shown = ranked.slice(0, 8);
+  const max = shown[0][1];
+
+  host.innerHTML = shown.map(([name, count], i) => `
+    <div class="bar-row${i === 0 ? ' is-top' : ''}">
+      <span class="bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${Math.max(2, (count / max) * 100).toFixed(1)}%"></span></span>
+      <span class="bar-value">${count}</span>
+    </div>`).join('');
+
+  if (caption) {
+    const rest = ranked.length - shown.length;
+    caption.textContent = rest > 0
+      ? `Largest ${shown.length} of ${ranked.length} categories · ${vocabulary.length.toLocaleString()} entries in total`
+      : `All ${ranked.length} categories · ${vocabulary.length.toLocaleString()} entries in total`;
+  }
+}
+
+// A ring, because the proportion is the point. The legend carries every count in text beside it,
+// so the figure never depends on telling three colours apart.
+function renderOutcomeFigure(approved, pending, rejected) {
+  const host = document.getElementById('outcome-figure');
+  if (!host) return;
+
+  const total = approved + pending + rejected;
+  if (total === 0) {
+    host.innerHTML = submissionsLoaded
+      ? `<div class="empty">
+           <iconsax-icon name="clock" type="bulk" size="30" color="currentColor"></iconsax-icon>
+           <b>No submissions yet</b>
+           Words contributed from the app land here for review.
+         </div>`
+      : '<div class="donut-wrap"><div class="donut skeleton" style="border-radius:50%"></div></div>';
+    return;
+  }
+
+  const R = 54;
+  const C = 2 * Math.PI * R;
+  const segments = [
+    { label: 'Approved', value: approved, color: 'var(--green)' },
+    { label: 'Awaiting review', value: pending, color: 'var(--amber)' },
+    { label: 'Rejected', value: rejected, color: 'var(--red)' }
+  ];
+
+  let offset = 0;
+  const arcs = segments.filter(s => s.value > 0).map(s => {
+    const len = (s.value / total) * C;
+    const arc = `<circle cx="66" cy="66" r="${R}" fill="none" stroke="${s.color}" stroke-width="20"
+      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"></circle>`;
+    offset += len;
+    return arc;
+  }).join('');
+
+  const pct = Math.round((approved / total) * 100);
+  host.innerHTML = `
+    <div class="donut-wrap">
+      <div class="donut">
+        <svg width="132" height="132" viewBox="0 0 132 132" role="img"
+             aria-label="Of ${total} submissions, ${approved} approved, ${pending} awaiting review, ${rejected} rejected.">
+          <circle cx="66" cy="66" r="${R}" fill="none" stroke="var(--sunken)" stroke-width="20"></circle>
+          ${arcs}
+        </svg>
+        <div class="donut-centre" aria-hidden="true"><b>${pct}%</b><span>approved</span></div>
+      </div>
+      <div class="legend">
+        ${segments.map(s => `
+          <div class="legend-row">
+            <span class="legend-swatch" style="background:${s.color}" aria-hidden="true"></span>
+            ${escapeHtml(s.label)} <b>${s.value}</b>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderRecentSubmissions() {
+  const host = document.getElementById('recent-submissions');
+  if (!host) return;
+
+  if (submissions.length === 0) {
+    host.innerHTML = submissionsLoaded
+      ? `<div class="empty">
+           <iconsax-icon name="verify" type="bulk" size="30" color="currentColor"></iconsax-icon>
+           <b>Nothing submitted yet</b>
+           Contributions from the app appear here as they arrive.
+         </div>`
+      : '<div class="item"><span class="item-mark skeleton"></span><span class="item-body"><span class="item-title skeleton">&nbsp;</span></span></div>'.repeat(5);
+    return;
+  }
+
+  host.innerHTML = submissions.slice(0, 6).map(sub => {
+    const status = (sub.status || 'pending');
+    const word = (sub.kasiguranin || '?').trim();
+    return `
+      <div class="item">
+        <span class="item-mark is-${escapeHtml(status)}" aria-hidden="true">${escapeHtml(word.charAt(0).toUpperCase())}</span>
+        <span class="item-body">
+          <span class="item-title">${escapeHtml(word)}</span>
+          <span class="item-sub">${escapeHtml(status === 'pending' ? 'Awaiting review' : status === 'approved' ? 'Approved' : 'Rejected')} · ${escapeHtml(sub.contributorName || 'Anonymous')}</span>
+        </span>
+        <span class="item-meta">${escapeHtml(relativeTime(toMillis(sub.submittedAt || sub.createdAt)))}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderStoryShelf() {
+  const host = document.getElementById('story-list');
+  if (!host) return;
+
+  if (stories.length === 0) {
+    // This collection being empty is the normal, correct condition for a project relying on the
+    // app's built-in corpus, so it must not read as a failure.
+    host.innerHTML = storiesLoaded
+      ? `<div class="empty">
+           <iconsax-icon name="document-text" type="bulk" size="30" color="currentColor"></iconsax-icon>
+           <b>Reading the built-in stories</b>
+           Learners have the ten stories shipped with the app. Add one here only to change that set.
+         </div>`
+      : '<div class="item"><span class="item-mark skeleton"></span><span class="item-body"><span class="item-title skeleton">&nbsp;</span></span></div>'.repeat(4);
+    return;
+  }
+
+  host.innerHTML = stories.slice(0, 5).map(story => {
+    let pages = story.totalPages || 0;
+    try {
+      const parsed = JSON.parse(story.pagesJson || '[]');
+      if (Array.isArray(parsed)) pages = parsed.length;
+    } catch (e) { /* keep totalPages */ }
+    const hasKasi = Boolean((story.titleKasiguranin || '').trim());
+    return `
+      <div class="item">
+        <span class="item-mark" aria-hidden="true">${escapeHtml(String(story.id ?? '·'))}</span>
+        <span class="item-body">
+          <span class="item-title">${escapeHtml(story.title || 'Untitled story')}</span>
+          <span class="item-sub">${pages} page${pages === 1 ? '' : 's'} · ${escapeHtml(story.category || 'Story')}</span>
+        </span>
+        <span class="badge ${hasKasi ? 'badge-approved' : 'badge-pending'}">${hasKasi ? 'Written' : 'Kasiguranin pending'}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderReleaseCard(latest) {
+  const version = document.getElementById('metric-latest-version');
+  const meta = document.getElementById('release-meta');
+  if (!version || !meta) return;
+
+  if (!latest) {
+    version.textContent = releasesLoaded ? 'None' : '…';
+    meta.textContent = releasesLoaded
+      ? 'No APK has been published yet. Publish one to give learners something to install.'
+      : 'Loading release history…';
+    return;
+  }
+
+  version.textContent = `v${latest.versionName}`;
+  const released = toMillis(latest.releasedAt);
+  const when = released ? new Date(released).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'date not recorded';
+  meta.textContent = `Build ${latest.versionCode ?? '—'} · ${when} · ${latest.forceUpdate ? 'Required update' : 'Optional update'}`;
 }
 
 // ── Render Submissions Table ────────────────────────────────────────────────
+// Below 760px the tables are re-laid out as cards with `display: block`, which silently drops the
+// implicit table / row / cell roles a screen reader navigates by — on exactly the devices the card
+// pattern exists for. Restating the roles explicitly keeps the structure announced either way.
+function applyTableSemantics(root) {
+  const scope = root || document;
+  scope.querySelectorAll('.table-responsive table').forEach(table => {
+    table.setAttribute('role', 'table');
+    table.querySelectorAll('thead, tbody').forEach(g => g.setAttribute('role', 'rowgroup'));
+    table.querySelectorAll('tr').forEach(r => r.setAttribute('role', 'row'));
+    table.querySelectorAll('th').forEach(c => c.setAttribute('role', 'columnheader'));
+    table.querySelectorAll('td').forEach(c => c.setAttribute('role', 'cell'));
+  });
+}
+
 function renderSubmissionsTable() {
   const tbody = document.getElementById('submissions-tbody');
   if (!tbody) return;
@@ -513,12 +1242,20 @@ function renderSubmissionsTable() {
   if (submissions.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
-          <iconsax-icon name="clock" type="bulk" size="32" color="var(--play-gold-start)"></iconsax-icon>
+        <td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">
+          <iconsax-icon name="clock" type="bulk" size="32" color="var(--gold-ink)"></iconsax-icon>
           <div style="margin-top:8px;">No pending word submissions in queue.</div>
         </td>
       </tr>`;
     return;
+  }
+
+  const queueCount = document.getElementById('queue-result-count');
+  if (queueCount) {
+    const pending = submissions.filter(s => (s.status || 'pending') === 'pending').length;
+    queueCount.textContent = pending === 0
+      ? `${submissions.length} reviewed, none waiting`
+      : `${pending} waiting of ${submissions.length}`;
   }
 
   submissions.forEach(sub => {
@@ -526,19 +1263,21 @@ function renderSubmissionsTable() {
     const statusBadgeClass = sub.status === 'approved' ? 'badge-approved' : (sub.status === 'rejected' ? 'badge-rejected' : 'badge-pending');
     
     tr.innerHTML = `
-      <td><strong>${escapeHtml(sub.kasiguranin)}</strong></td>
-      <td>${escapeHtml(sub.tagalog || '-')}</td>
-      <td>${escapeHtml(sub.english || '-')}</td>
-      <td><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet); border-color:var(--border-color);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
-      <td><small>${escapeHtml(sub.contributorName || 'Anonymous')}</small></td>
-      <td><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
-      <td>
+      <td data-label="Kasiguranin"><strong>${escapeHtml(sub.kasiguranin)}</strong></td>
+      <td data-label="Tagalog">${escapeHtml(sub.tagalog || '-')}</td>
+      <td data-label="English">${escapeHtml(sub.english || '-')}</td>
+      <td data-label="Category"><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
+      <td data-label="Part of speech">${sub.partOfSpeech ? `<span class="badge badge-category">${escapeHtml(sub.partOfSpeech)}</span>` : '-'}</td>
+      <td data-label="Contributor">${escapeHtml(sub.contributorName || 'Anonymous')}</td>
+      <td data-label="Status"><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
+      <td data-label="Actions">
         ${sub.status === 'pending' ? `
-          <button class="btn btn-success btn-sm approve-btn" data-id="${sub.id}"><iconsax-icon name="tick-circle" type="bulk" size="16" color="#12161F"></iconsax-icon> Approve</button>
-          <button class="btn btn-danger btn-sm reject-btn" data-id="${sub.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Reject</button>
+        <div class="row-actions">
+          <button class="btn btn-success btn-sm approve-btn" data-id="${sub.id}"><iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Approve</button>
+          <button class="btn btn-danger btn-sm reject-btn" data-id="${sub.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject</button>
+        </div>
         ` : `
-          <span style="color:var(--text-muted); font-size:0.85rem;">Processed</span>
+          <span style="color:var(--muted); font-size:0.85rem;">Processed</span>
         `}
       </td>
     `;
@@ -546,17 +1285,25 @@ function renderSubmissionsTable() {
   });
 
   tbody.querySelectorAll('.approve-btn').forEach(btn => {
-    btn.addEventListener('click', () => approveSubmission(btn.getAttribute('data-id')));
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      approveSubmission(btn.getAttribute('data-id'));
+    });
   });
   tbody.querySelectorAll('.reject-btn').forEach(btn => {
-    btn.addEventListener('click', () => rejectSubmission(btn.getAttribute('data-id')));
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      rejectSubmission(btn.getAttribute('data-id'));
+    });
   });
+
+  applyTableSemantics();
 }
 
 function renderSubmissionsError(message) {
   const tbody = document.getElementById('submissions-tbody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
   }
 }
 
@@ -588,16 +1335,20 @@ async function approveSubmission(id) {
     });
 
     await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
-    alert(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`);
+    notify(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`, 'success');
   } catch (error) {
     console.error("Error approving submission:", error);
-    alert("Failed to approve submission: " + error.message);
+    notify("Failed to approve submission: " + error.message, 'error');
   }
 }
 
 // ── Reject Submission ───────────────────────────────────────────────────────
 async function rejectSubmission(id) {
-  if (!confirm("Are you sure you want to reject this user submission?")) return;
+  if (!(await confirmDialog({
+    title: 'Reject this submission?',
+    body: 'The contributor will not see it in the dictionary. This does not delete their account or their other submissions.',
+    confirmLabel: 'Reject', danger: true
+  }))) return;
   try {
     await updateDoc(doc(db, "word_submissions", id), {
       status: "rejected",
@@ -611,76 +1362,69 @@ async function rejectSubmission(id) {
 }
 
 // ── Render Vocabulary Table ─────────────────────────────────────────────────
-function renderVocabularyTable() {
-  const tbody = document.getElementById('vocabulary-tbody');
-  if (!tbody) return;
+// Dictionary state that survives a re-render: which page, and which column orders the list.
+let vocabPage = 1;
+const VOCAB_PAGE_SIZE = 50;
+let vocabSort = { key: 'kasiguranin', dir: 'asc' };
 
-  tbody.innerHTML = '';
 
-  const rawSearch = document.getElementById('search-vocab-input')?.value || '';
-  const searchInput = rawSearch.trim().toLowerCase();
-  const categoryFilter = document.getElementById('filter-vocab-category')?.value || '';
 
-  const filtered = vocabulary.filter(item => {
-    const matchesSearch = !searchInput || 
-                          (item.kasiguranin || '').toLowerCase().includes(searchInput) || 
-                          (item.tagalog || '').toLowerCase().includes(searchInput) ||
-                          (item.english || '').toLowerCase().includes(searchInput);
-    const matchesCat = !categoryFilter || item.category === categoryFilter;
-    return matchesSearch && matchesCat;
-  });
+window.setVocabPage = function (n) {
+  vocabPage = n;
+  renderVocabularyTable();
+  const panel = document.getElementById('tab-vocabulary');
+  if (panel) panel.scrollIntoView({ block: 'start' });
+};
 
-  if (filtered.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
-          <iconsax-icon name="book-1" type="bulk" size="32" color="var(--play-purple-start)"></iconsax-icon>
-          <div style="margin-top:8px;">No matching Kasiguranin entries found.</div>
-        </td>
-      </tr>`;
-    return;
+
+
+function renderVocabPager(total) {
+  const host = document.getElementById('vocab-pager');
+  if (!host) return;
+  const pages = Math.ceil(total / VOCAB_PAGE_SIZE);
+  if (pages <= 1) { host.innerHTML = ''; return; }
+
+  const from = (vocabPage - 1) * VOCAB_PAGE_SIZE + 1;
+  const to = Math.min(vocabPage * VOCAB_PAGE_SIZE, total);
+
+  // A window of pages around the current one, so 40 pages do not produce 40 buttons.
+  const nums = [];
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || Math.abs(i - vocabPage) <= 1) nums.push(i);
+    else if (nums[nums.length - 1] !== '...') nums.push('...');
   }
 
-  filtered.forEach(item => {
-    const tr = document.createElement('tr');
-    const conjugationsCount = item.conjugations ? item.conjugations.length : 0;
-    const conjugationsBadge = conjugationsCount > 0 
-      ? `<span class="badge badge-category" style="background:rgba(255, 201, 74, 0.15); color:var(--play-gold-start); border-color:rgba(255, 201, 74, 0.3);">${conjugationsCount} Conjugation${conjugationsCount > 1 ? 's' : ''}</span>`
-      : `<code>${escapeHtml(item.ipaNotation || '-')}</code>`;
-
-    tr.innerHTML = `
-      <td><strong>${escapeHtml(item.kasiguranin)}</strong></td>
-      <td>${escapeHtml(item.tagalog || '-')}</td>
-      <td>${escapeHtml(item.english || '-')}</td>
-      <td><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet); border-color:var(--border-color);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
-      <td>${conjugationsBadge}</td>
-      <td>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-primary btn-sm" onclick="window.openEditVocabModal('${item.id}')"><iconsax-icon name="edit" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="window.deleteVocabWord('${item.id}')"><iconsax-icon name="close-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Delete</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  host.innerHTML = `
+    <span class="result-count">Showing ${from}–${to} of ${total}</span>
+    <div class="pager-pages">
+      <button onclick="window.setVocabPage(${vocabPage - 1})" ${vocabPage === 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>
+      ${nums.map(n => n === '...'
+        ? '<button disabled>…</button>'
+        : `<button onclick="window.setVocabPage(${n})" ${n === vocabPage ? 'aria-current="page"' : ''}>${n}</button>`).join('')}
+      <button onclick="window.setVocabPage(${vocabPage + 1})" ${vocabPage === pages ? 'disabled' : ''} aria-label="Next page">›</button>
+    </div>
+  `;
 }
 
 function renderVocabularyError(message) {
   const tbody = document.getElementById('vocabulary-tbody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#FF7675; padding:2rem;">⚠️ ${escapeHtml(message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
   }
 }
 
 // ── Delete Vocabulary Word ──────────────────────────────────────────────────
 window.deleteVocabWord = async function(id) {
-  if (!confirm("Are you sure you want to delete this word from the master dictionary?")) return;
+  if (!(await confirmDialog({
+    title: 'Delete this word?',
+    body: 'It is removed from the master dictionary and stops reaching learners on their next sync.',
+    confirmLabel: 'Delete word', danger: true
+  }))) return;
   try {
     await deleteDoc(doc(db, "vocabulary", id));
     await logAudit("vocabulary.delete", { id });
   } catch (e) {
-    alert("Error deleting word: " + e.message);
+    notify("Error deleting word: " + e.message, 'error');
   }
 };
 
@@ -764,11 +1508,15 @@ function handleSqlFile(file) {
       }
 
       if (entries.length === 0) {
-        alert(`No valid INSERT INTO vocabulary statements found in "${file.name}"!`);
+        notify(`No valid INSERT INTO vocabulary statements found in "${file.name}"!`, 'error');
         return;
       }
 
-      if (!confirm(`Import ${entries.length} SQL vocabulary records from "${file.name}" into Firestore?`)) return;
+      if (!(await confirmDialog({
+        title: `Import ${entries.length} records?`,
+        body: `Parsed from <strong>${escapeHtml(file.name)}</strong>. Existing entries with the same id are overwritten.`,
+        confirmLabel: 'Import'
+      }))) return;
 
       let count = 0;
       for (const entry of entries) {
@@ -777,10 +1525,10 @@ function handleSqlFile(file) {
         count++;
       }
 
-      alert(`Successfully imported ${count} entries from SQL migration script into Firestore!`);
+      notify(`Successfully imported ${count} entries from SQL migration script into Firestore!`, 'success');
     } catch (err) {
       console.error("SQL Parsing Error:", err);
-      alert("Failed to parse SQL file: " + err.message);
+      notify("Failed to parse SQL file: " + err.message, 'error');
     }
   };
   reader.readAsText(file);
@@ -833,11 +1581,15 @@ function handleExcelFile(file) {
       const rawRows = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex });
 
       if (rawRows.length === 0) {
-        alert("The selected Excel file contains no data rows! Make sure your header row includes a column named KASIGURANIN, ENGLISH, or TAGALOG.");
+        notify("The selected Excel file contains no data rows! Make sure your header row includes a column named KASIGURANIN, ENGLISH, or TAGALOG.", 'error');
         return;
       }
 
-      if (!confirm(`Import ${rawRows.length} rows from Excel "${file.name}" into Firestore vocabulary collection?`)) return;
+      if (!(await confirmDialog({
+        title: `Import ${rawRows.length} rows?`,
+        body: `Parsed from <strong>${escapeHtml(file.name)}</strong> into the vocabulary collection.`,
+        confirmLabel: 'Import'
+      }))) return;
 
       let count = 0;
       for (const rawRow of rawRows) {
@@ -865,56 +1617,17 @@ function handleExcelFile(file) {
         count++;
       }
 
-      alert(`Successfully imported ${count} Kasiguranin entries into the cloud database!`);
+      notify(`Successfully imported ${count} Kasiguranin entries into the cloud database!`, 'success');
     } catch (err) {
       console.error("Excel Parsing Error:", err);
-      alert("Failed to parse Excel file: " + err.message);
+      notify("Failed to parse Excel file: " + err.message, 'error');
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
 // ── Render Releases List ────────────────────────────────────────────────────
-function renderReleasesList() {
-  const container = document.getElementById('releases-list-container');
-  if (!container) return;
 
-  container.innerHTML = '';
-
-  if (releases.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center; padding:2.5rem; color:var(--text-muted); background:var(--bg-surface); border-radius:var(--radius-hero); border:1px solid var(--border-color);">
-        <iconsax-icon name="box-search" type="bulk" size="36" color="var(--play-pink-start)"></iconsax-icon>
-        <div style="margin-top:8px;">No APK releases published yet. Use the form above to publish Version 1.0.0!</div>
-      </div>`;
-    return;
-  }
-
-  releases.forEach(rel => {
-    const card = document.createElement('div');
-    card.className = 'panel';
-    card.style.marginBottom = '1rem';
-    card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <div>
-          <h3 style="font-size:1.2rem; font-weight:800; color:#fff;">v${escapeHtml(rel.versionName)} <small style="color:var(--text-muted);">(Build ${rel.versionCode})</small></h3>
-          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">
-            Released: ${new Date(rel.releasedAt).toLocaleDateString()}
-            &nbsp;·&nbsp;
-            <span style="color:${rel.forceUpdate ? '#F1C40F' : 'var(--text-muted)'}; font-weight:${rel.forceUpdate ? '700' : '400'};">
-              ${rel.forceUpdate ? 'Required update' : 'Optional update'}
-            </span>
-          </p>
-          <p style="margin-top:8px; font-size:0.95rem; color:var(--text-main);">${escapeHtml(rel.releaseNotes || 'No release notes provided.')}</p>
-        </div>
-        <div>
-          <a href="${escapeHtml(rel.apkUrl || '#')}" target="_blank" class="btn btn-success btn-sm"><iconsax-icon name="document-download" type="bulk" size="18" color="#12161F"></iconsax-icon> Download APK</a>
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
 
 // ── Form Listeners ──────────────────────────────────────────────────────────
 function initFormListeners() {
@@ -933,11 +1646,15 @@ function initFormListeners() {
       const imperfective = document.getElementById('input-imperfective').value.trim();
       const contemplative = document.getElementById('input-contemplative').value.trim();
 
-      if (!word) return alert("Please enter the Kasiguranin word.");
+      if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
       const isDuplicate = vocabulary.some(v => (v.kasiguranin || '').toLowerCase() === word.toLowerCase());
       if (isDuplicate) {
-        if (!confirm(`"${word}" already exists in the master dictionary. Do you want to add it anyway?`)) return;
+        if (!(await confirmDialog({
+          title: `"${word}" already exists`,
+          body: 'The master dictionary already has this Kasiguranin word. Adding it again creates a duplicate entry.',
+          confirmLabel: 'Add anyway'
+        }))) return;
       }
 
       try {
@@ -957,9 +1674,9 @@ function initFormListeners() {
         await logAudit("vocabulary.create", { word });
         addVocabForm.reset();
         closeModal('add-vocab-modal');
-        alert(`Successfully added "${word}" to dictionary!`);
+        notify(`Successfully added "${word}" to dictionary!`, 'success');
       } catch (error) {
-        alert("Error adding word: " + error.message);
+        notify("Error adding word: " + error.message, 'error');
       }
     });
   }
@@ -980,7 +1697,7 @@ function initFormListeners() {
       const imperfective = document.getElementById('edit-input-imperfective').value.trim();
       const contemplative = document.getElementById('edit-input-contemplative').value.trim();
 
-      if (!word) return alert("Please enter the Kasiguranin word.");
+      if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
       try {
         await updateDoc(doc(db, "vocabulary", id), {
@@ -999,9 +1716,9 @@ function initFormListeners() {
         await logAudit("vocabulary.update", { id, word });
         editVocabForm.reset();
         closeModal('edit-vocab-modal');
-        alert(`Successfully updated "${word}"!`);
+        notify(`Successfully updated "${word}"!`, 'success');
       } catch (error) {
-        alert("Error updating word: " + error.message);
+        notify("Error updating word: " + error.message, 'error');
       }
     });
   }
@@ -1016,10 +1733,14 @@ function initFormListeners() {
       const notes = document.getElementById('rel-notes').value.trim();
       const forceUpdate = document.getElementById('rel-force')?.checked || false;
 
-      if (isNaN(code) || code <= 0) return alert("Please enter a valid positive integer version code (e.g. 1, 2, 3).");
-      if (!name) return alert("Please enter a version name (e.g. 1.0.0).");
-      if (!url.startsWith('http://') && !url.startsWith('https://')) return alert("Direct APK Download link must start with http:// or https://");
-      if (forceUpdate && !confirm(`Publish v${name} as a REQUIRED update? Every user will see a banner they cannot dismiss.`)) return;
+      if (isNaN(code) || code <= 0) { notify("Please enter a valid positive integer version code (e.g. 1, 2, 3).", 'error'); return; }
+      if (!name) { notify("Please enter a version name (e.g. 1.0.0).", 'error'); return; }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) { notify("Direct APK Download link must start with http:// or https://", 'error'); return; }
+      if (forceUpdate && !(await confirmDialog({
+        title: `Publish v${name} as a required update?`,
+        body: 'Every user sees a banner they cannot dismiss until they update.',
+        confirmLabel: 'Publish required update', danger: true
+      }))) return;
 
       try {
         // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
@@ -1036,9 +1757,9 @@ function initFormListeners() {
         }, { merge: true });
         await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
         releaseForm.reset();
-        alert(`Successfully published KasiGuru v${name} APK release!`);
+        notify(`Successfully published KasiGuru v${name} APK release!`, 'success');
       } catch (err) {
-        alert("Failed to publish release: " + err.message);
+        notify("Failed to publish release: " + err.message, 'error');
       }
     });
   }
@@ -1047,14 +1768,86 @@ function initFormListeners() {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => renderVocabularyTable(), 300);
+      searchDebounceTimer = setTimeout(() => {
+        vocabPage = 1;
+        vocabLetter = '';
+        renderVocabularyTable();
+      }, 300);
     });
   }
 
   const categoryFilter = document.getElementById('filter-vocab-category');
   if (categoryFilter) {
-    categoryFilter.addEventListener('change', renderVocabularyTable);
+    categoryFilter.addEventListener('change', () => {
+      vocabPage = 1;
+      vocabLetter = '';
+      renderVocabularyTable();
+    });
   }
+}
+
+// Nothing depends on this animation having run: the row is replaced by the next Firestore
+// snapshot regardless, and under reduced motion the class simply expires immediately.
+function markRowLeaving(btn) {
+  const row = btn.closest('tr');
+  if (!row) return;
+  row.classList.add('row-leaving');
+  row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+}
+
+// ── Dictionary controls ─────────────────────────────────────────────────────
+// The entry list has no column headers to click, so sorting is an explicit control. Ascending is
+// the only direction that makes sense for an alphabetical dictionary, so the toggle is gone.
+function initDictionaryControls() {
+  const sortSelect = document.getElementById('sort-vocab');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      vocabSort = { key: sortSelect.value, dir: 'asc' };
+      vocabPage = 1;
+      renderVocabularyTable();
+    });
+  }
+}
+
+// ── Topbar ──────────────────────────────────────────────────────────────────
+// The search field is not a second search: it hands its term to the dictionary's own filter and
+// opens that tab, so there is one place a lookup can be, and the URL still says where you are.
+function initTopbar() {
+  const email = auth.currentUser ? auth.currentUser.email : '';
+  const mail = document.getElementById('topbar-email');
+  if (mail) {
+    mail.textContent = email || 'Signed in';
+    mail.title = email || '';
+  }
+  const avatar = document.getElementById('topbar-avatar');
+  if (avatar) avatar.textContent = (email.charAt(0) || 'A').toUpperCase();
+
+  const global = document.getElementById('global-search');
+  const target = document.getElementById('search-vocab-input');
+  if (!global || !target) return;
+
+  global.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      target.value = global.value;
+      vocabPage = 1;
+      if (!document.getElementById('tab-vocabulary')?.classList.contains('active')) {
+        window.switchTab('tab-vocabulary');
+      }
+      renderVocabularyTable();
+    }, 300);
+  });
+
+  // "/" is the convention for jumping to search, and it must not fire while you are typing
+  // somewhere else.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+    e.preventDefault();
+    global.focus();
+    global.select();
+  });
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -1063,12 +1856,8 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-window.openModal = function(id) {
-  document.getElementById(id)?.classList.add('active');
-};
-window.closeModal = function(id) {
-  document.getElementById(id)?.classList.remove('active');
-};
+
+
 
 // ── Admin Audit Log ─────────────────────────────────────────────────────────
 // Append-only record of admin actions (rules: admins create/read, never update/delete).

@@ -1,13 +1,14 @@
 // auth.js — Firebase Auth (Google OAuth & Email/Password) for KasiGuru Admin Panel
 import { app, auth } from './firebase-config.js';
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
-  onAuthStateChanged, 
-  signOut 
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const googleProvider = new GoogleAuthProvider();
@@ -28,7 +29,7 @@ function showLoginError(message) {
   if (errEl) errEl.style.display = 'flex';
   if (btn) {
     btn.disabled = false;
-    btn.innerHTML = `<iconsax-icon name="login" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Sign In with Email`;
+    btn.innerHTML = `<iconsax-icon name="login" type="bulk" size="18" color="currentColor"></iconsax-icon> Sign In with Email`;
   }
   if (googleBtn) {
     googleBtn.disabled = false;
@@ -40,6 +41,71 @@ function clearLoginError() {
   const errEl = document.getElementById('login-error');
   if (errEl) errEl.style.display = 'none';
 }
+
+function showLoginNotice(message) {
+  const el = document.getElementById('login-notice');
+  const text = document.getElementById('login-notice-text');
+  if (text) text.textContent = message;
+  if (el) el.style.display = 'flex';
+}
+
+function clearLoginNotice() {
+  const el = document.getElementById('login-notice');
+  if (el) el.style.display = 'none';
+}
+
+// Password reset. Firebase mails the link; nothing about the password passes through this page or
+// through anyone administering it.
+//
+// The reply is deliberately the same whether or not the address has an account. Saying "no such
+// user" here would turn the sign-in page into a way to test whether a given email is an admin,
+// which is worth more to an attacker than the convenience is worth to us. auth/user-not-found is
+// therefore reported exactly like success. Firebase rate-limits the endpoint, and that one case
+// -- too-many-requests -- is surfaced, since it is about the sender rather than the account.
+window.resetAdminPassword = async function () {
+  const emailInput = document.getElementById('admin-email');
+  const email = emailInput?.value.trim() || '';
+  const link = document.getElementById('forgot-password-link');
+
+  if (!email) {
+    clearLoginNotice();
+    showLoginError('Enter your admin email address above, then choose "Forgot password".');
+    emailInput?.focus();
+    return;
+  }
+
+  clearLoginError();
+  clearLoginNotice();
+  if (link) {
+    link.disabled = true;
+    link.textContent = 'Sending...';
+  }
+
+  const sent = 'If an admin account exists for that address, a reset link is on its way. Check your inbox, and your spam folder.';
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showLoginNotice(sent);
+  } catch (err) {
+    console.error('Password reset error:', err);
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+      showLoginNotice(sent);
+    } else if (err.code === 'auth/invalid-email') {
+      showLoginError('That does not look like a valid email address.');
+    } else if (err.code === 'auth/too-many-requests') {
+      showLoginError('Too many reset requests. Please wait a few minutes and try again.');
+    } else if (err.code === 'auth/network-request-failed') {
+      showLoginError('Network connection failed. Please check your internet connection.');
+    } else {
+      showLoginError('Could not send the reset email. Please try again shortly.');
+    }
+  } finally {
+    if (link) {
+      link.disabled = false;
+      link.textContent = 'Forgot password?';
+    }
+  }
+};
 
 // On the LOGIN page (index.html): if user is already logged in as admin, go straight to dashboard
 onAuthStateChanged(auth, async (user) => {

@@ -138,6 +138,19 @@
         '<circle cx="9" cy="7" r="1" fill="#12161F"/>' +
         '<circle cx="15" cy="7" r="1" fill="#12161F"/>' +
       '</svg>',
+      'search-normal-1': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<circle cx="11" cy="11" r="7" fill="' + c + '" opacity="0.35"/>' +
+        '<circle cx="11" cy="11" r="7" stroke="' + c + '" stroke-width="2"/>' +
+        '<path d="M16.5 16.5L21 21" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'notification': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M12 2.5C8.4 2.5 5.5 5.4 5.5 9V12.6L4.2 15.6C3.9 16.3 4.4 17 5.1 17H18.9C19.6 17 20.1 16.3 19.8 15.6L18.5 12.6V9C18.5 5.4 15.6 2.5 12 2.5Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M9.5 19.5C9.9 20.6 10.9 21.4 12 21.4C13.1 21.4 14.1 20.6 14.5 19.5" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'arrow-up-right': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M7 17L17 7" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round"/>' +
+        '<path d="M9 7H17V15" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>',
       'tick-circle': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<circle cx="12" cy="12" r="9" fill="' + c + '" opacity="0.35"/>' +
         '<path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +

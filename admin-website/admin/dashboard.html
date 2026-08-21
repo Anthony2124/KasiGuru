@@ -5,284 +5,232 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <title>KasiGuru Admin Portal &amp; Verification Panel</title>
-  <!-- Standalone Synchronous Iconsax Bulk Web Component Script -->
+  <title>KasiGuru — Admin</title>
   <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
-  <!-- Cache Buster Query String v=2026_pure_bulk_svg -->
-  <link rel="stylesheet" href="css/styles.css?v=2026_coast_light">
-  <!-- SheetJS for Excel Importer -->
+  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v1">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
-  <style>
-    /* Auth loading screen — shown while Firebase checks session */
-    #auth-loading-screen {
-      position: fixed;
-      inset: 0;
-      background: var(--sand-bg);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      transition: opacity 0.4s ease;
-    }
-
-    #auth-loading-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Access denied overlay — hidden until the admin claim check fails */
-    #access-denied-screen.hidden {
-      display: none !important;
-    }
-
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid var(--border-color);
-      border-top-color: var(--play-purple-start);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    #logout-btn {
-      background: transparent;
-      border: 1px solid rgba(192, 57, 43, 0.35);
-      color: var(--status-rejected);
-      font-family: var(--font-family);
-      font-size: 0.9rem;
-      font-weight: 700;
-      padding: 8px 18px;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: all 0.25s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #logout-btn:hover {
-      background: rgba(192, 57, 43, 0.08);
-      border-color: var(--status-rejected);
-    }
-
-    #admin-user-chip {
-      background: rgba(28, 34, 51, 0.03);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-pill);
-      padding: 6px 14px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  </style>
 </head>
 <body>
 
-  <!-- Auth Loading Screen (shown until Firebase confirms session) -->
+  <!-- Auth loading screen, shown until Firebase confirms the session -->
   <div id="auth-loading-screen">
-    <div class="logo-badge" style="font-size:1.2rem; padding:10px 20px;">KasiGuru</div>
+    <div class="logo-badge">KasiGuru</div>
     <div class="spinner"></div>
-    <p style="color:var(--text-muted); font-size:0.9rem;">Verifying admin session...</p>
+    <p style="color:var(--muted);">Verifying admin session&hellip;</p>
   </div>
 
-  <!-- Access Denied Screen (signed in, but no admin custom claim) -->
-  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--sand-bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;">
-    <div class="logo-badge" style="font-size:1.2rem; padding:10px 20px;">KasiGuru</div>
-    <h2 style="color:var(--coast-ink); margin:0;">Access Denied</h2>
-    <p style="color:var(--text-muted); max-width:420px; margin:0;">
+  <!-- Access denied: signed in, but without the admin claim -->
+  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--ground); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;">
+    <div class="logo-badge">KasiGuru</div>
+    <h2 style="margin:0;">Access denied</h2>
+    <p style="color:var(--muted); max-width:420px; margin:0;">
       Your account is signed in but does not have administrator access.
       Please contact the project owner to be granted the admin role.
     </p>
     <p id="access-denied-email-display" style="color:var(--status-pending); font-weight:700; margin:0;"></p>
-    <button class="btn btn-danger" onclick="window.adminSignOut()">Sign Out</button>
+    <button class="btn btn-danger" onclick="window.adminSignOut()">Sign out</button>
   </div>
 
-  <!-- Floating Pill Header Navigation -->
-  <header>
-    <div class="logo-container">
-      <div class="logo-badge">KasiGuru</div>
-      <div class="logo-title">Admin Hub</div>
-    </div>
-    <nav>
-      <button data-tab="tab-dashboard" class="active" onclick="window.switchTab('tab-dashboard')">
-        <iconsax-icon name="element-3" type="bulk" size="20"></iconsax-icon> Dashboard
-      </button>
-      <button data-tab="tab-submissions" onclick="window.switchTab('tab-submissions')">
-        <iconsax-icon name="clock" type="bulk" size="20" color="var(--xp-gold)"></iconsax-icon> Verification Queue
-      </button>
-      <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
-        <iconsax-icon name="book-1" type="bulk" size="20" color="var(--play-purple-start)"></iconsax-icon> Master Dictionary
-      </button>
-      <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
-        <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
-      </button>
-      <button data-tab="tab-releases" onclick="window.switchTab('tab-releases')">
-        <iconsax-icon name="box-search" type="bulk" size="20" color="var(--play-pink-start)"></iconsax-icon> APK Releases
-      </button>
-    </nav>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div id="admin-user-chip">
-        <iconsax-icon name="user" type="bulk" size="16" color="var(--text-muted)"></iconsax-icon>
-        <span id="admin-email-display">Admin</span>
-      </div>
-      <button id="logout-btn" onclick="window.adminSignOut()">
-        <iconsax-icon name="logout" type="bulk" size="16" color="var(--status-rejected)"></iconsax-icon> Sign Out
-      </button>
-    </div>
-  </header>
+  <div class="app">
 
-  <!-- Main Workspace -->
+    <!-- Sidebar. A moderator alternates between the queue and the dictionary constantly, so both
+         stay visible and one click apart. Each destination has its own glyph: Dictionary and
+         Stories previously shared book-1, which made them indistinguishable at a glance. -->
+    <aside>
+      <div class="logo-container">
+        <div class="logo-mark" aria-hidden="true">K</div>
+        <div>
+          <div class="logo-badge">KasiGuru</div>
+          <div class="logo-title">Moderation console</div>
+        </div>
+      </div>
+
+      <div class="navgroup">
+        <div class="navlabel">Moderate</div>
+        <nav>
+          <button data-tab="tab-dashboard" class="active" onclick="window.switchTab('tab-dashboard')">
+            <iconsax-icon name="element-3" type="bulk" size="18" color="currentColor"></iconsax-icon> Overview
+          </button>
+          <button data-tab="tab-submissions" onclick="window.switchTab('tab-submissions')">
+            <iconsax-icon name="clock" type="bulk" size="18" color="currentColor"></iconsax-icon> Verification queue
+            <span class="nav-count" id="nav-queue-count" hidden>0</span>
+          </button>
+          <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
+            <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
+          </button>
+          <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
+            <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
+          </button>
+        </nav>
+      </div>
+
+      <div class="navgroup">
+        <div class="navlabel">Publish</div>
+        <nav>
+          <button data-tab="tab-releases" onclick="window.switchTab('tab-releases')">
+            <iconsax-icon name="box-search" type="bulk" size="18" color="currentColor"></iconsax-icon> APK releases
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-foot">
+        <div id="admin-user-chip">
+          <iconsax-icon name="user" type="bulk" size="14" color="currentColor"></iconsax-icon>
+          <span id="admin-email-display">Admin</span>
+        </div>
+        <button id="logout-btn" onclick="window.adminSignOut()">
+          <iconsax-icon name="logout" type="bulk" size="14" color="currentColor"></iconsax-icon> Sign out
+        </button>
+      </div>
+    </aside>
+
   <main>
+
+    <!-- Topbar. Search reaches the dictionary from anywhere, which is the lookup a moderator does
+         most; the bell mirrors the queue count already in the sidebar. -->
+    <div class="topbar">
+      <div class="topsearch">
+        <iconsax-icon name="search-normal-1" type="linear" size="18" color="currentColor"></iconsax-icon>
+        <label class="sr-only" for="global-search">Search the dictionary</label>
+        <input type="search" id="global-search" placeholder="Search the dictionary&hellip;" autocomplete="off">
+        <kbd aria-hidden="true">/</kbd>
+      </div>
+      <button type="button" class="icon-btn" id="topbar-queue-btn" onclick="window.switchTab('tab-submissions')">
+        <iconsax-icon name="notification" type="bulk" size="19" color="currentColor"></iconsax-icon>
+        <span class="dot" id="topbar-queue-dot" hidden>0</span>
+        <span class="sr-only" id="topbar-queue-label">Verification queue</span>
+      </button>
+      <div class="topuser">
+        <div class="avatar" id="topbar-avatar" aria-hidden="true">&hellip;</div>
+        <div class="topuser-meta">
+          <span class="topuser-name">Administrator</span>
+          <span class="topuser-mail" id="topbar-email">&hellip;</span>
+        </div>
+      </div>
+    </div>
 
     <!-- Tab 1: Dashboard Overview -->
     <section id="tab-dashboard" class="tab-content active" style="display: block;">
-      
 
-      <!-- Hero Banner Card -->
-      <div class="hero-card">
+      <div class="pagehead">
         <div>
-          <span class="hero-chip">KasiGuru Linguistic Dashboard</span>
-          <h1 class="hero-title">Preserving Kasiguranin Together</h1>
-          <p class="hero-subtitle">Manage user contributions, verify vocabulary words, and deploy mobile APK updates.</p>
+          <h1>Overview</h1>
+          <p>Verify community submissions, maintain the master dictionary, and publish app releases.</p>
         </div>
-        <div style="color:rgba(255,255,255,0.3); padding-right:1rem;">
-          <iconsax-icon name="book-1" type="bulk" size="80" color="rgba(255,255,255,0.3)"></iconsax-icon>
-        </div>
-      </div>
-
-      <!-- Bento Grid Metrics -->
-      <div class="bento-grid">
-        <div class="bento-card purple" style="cursor:pointer;" onclick="window.switchTab('tab-vocabulary')">
-          <div class="bento-icon"><iconsax-icon name="book-1" type="bulk" size="32" color="#FFFFFF"></iconsax-icon></div>
-          <div class="bento-info"><h3>Master Dictionary Words</h3><p id="metric-total-words">0</p></div>
-        </div>
-        <div class="bento-card gold" style="cursor:pointer;" onclick="window.switchTab('tab-submissions')">
-          <div class="bento-icon"><iconsax-icon name="clock" type="bulk" size="32" color="#12161F"></iconsax-icon></div>
-          <div class="bento-info"><h3>Pending Queue</h3><p id="metric-pending-sub">0</p></div>
-        </div>
-        <div class="bento-card pink" style="cursor:pointer;" onclick="window.switchTab('tab-releases')">
-          <div class="bento-icon"><iconsax-icon name="box-search" type="bulk" size="32" color="#FFFFFF"></iconsax-icon></div>
-          <div class="bento-info"><h3>Published Releases</h3><p id="metric-total-releases">0</p></div>
-        </div>
-        <div class="bento-card teal">
-          <div class="bento-icon"><iconsax-icon name="mobile" type="bulk" size="32" color="#FFFFFF"></iconsax-icon></div>
-          <div class="bento-info"><h3>Active App Version</h3><p id="metric-latest-version">v1.0.0</p></div>
-        </div>
-      </div>
-
-      <!-- Quick Action Panel -->
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="flash-1" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Quick Actions</h2>
-        </div>
-        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <div class="pagehead-actions">
           <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
-            <iconsax-icon name="add-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Add New Word Entry
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add word
           </button>
-          <button class="btn btn-success" onclick="window.switchTab('tab-submissions')">
-            <iconsax-icon name="verify" type="bulk" size="18" color="#12161F"></iconsax-icon> Review User Submissions
+          <button class="btn btn-outline" onclick="window.switchTab('tab-vocabulary')">
+            <iconsax-icon name="document-upload" type="bulk" size="18" color="currentColor"></iconsax-icon> Import data
           </button>
         </div>
+      </div>
+
+      <!-- Four figures. The queue carries colour because it is the only one that is a claim on the
+           moderator's time; the other three are states of the corpus. Each tile is the button that
+           opens what it counts. -->
+      <div class="statgrid">
+        <button type="button" class="stat stat--queue" onclick="window.switchTab('tab-submissions')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Awaiting review</span>
+          <span class="stat-value num skeleton" id="metric-pending-sub">0</span>
+          <span class="stat-note" id="metric-pending-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-vocabulary')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Dictionary entries</span>
+          <span class="stat-value num skeleton" id="metric-total-words">0</span>
+          <span class="stat-note" id="metric-words-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-stories')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Stories</span>
+          <span class="stat-value num skeleton" id="metric-total-stories">0</span>
+          <span class="stat-note" id="metric-stories-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-releases')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Published releases</span>
+          <span class="stat-value num skeleton" id="metric-total-releases">0</span>
+          <span class="stat-note" id="metric-releases-note">&nbsp;</span>
+        </button>
+      </div>
+
+      <div class="bento">
+
+        <!-- Corpus shape. Real counts from the vocabulary collection, one bar per category. -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Dictionary by category</h2>
+              <p id="chart-caption">Where the corpus is thin, and where it is not.</p>
+            </div>
+          </div>
+          <div class="bars" id="category-bars"></div>
+        </div>
+
+        <!-- Where submissions end up. The legend states each count, so nothing rests on colour. -->
+        <div class="card span-3">
+          <div class="card-head">
+            <div>
+              <h2>Submission outcomes</h2>
+              <p>Every word the community has sent.</p>
+            </div>
+          </div>
+          <div id="outcome-figure"></div>
+        </div>
+
+        <!-- The queue itself, newest first. -->
+        <div class="card span-3 row-2">
+          <div class="card-head">
+            <div><h2>Recent submissions</h2></div>
+            <button class="text-link" onclick="window.switchTab('tab-submissions')">See all</button>
+          </div>
+          <div class="itemlist" id="recent-submissions"></div>
+        </div>
+
+        <!-- The story shelf, with the one thing about a story that decides whether it is finished. -->
+        <div class="card span-5">
+          <div class="card-head">
+            <div><h2>Story library</h2></div>
+            <button class="text-link" onclick="window.switchTab('tab-stories')">Manage</button>
+          </div>
+          <div class="itemlist" id="story-list"></div>
+        </div>
+
+        <!-- What learners are actually running. -->
+        <div class="span-4">
+          <div class="release-card" id="release-card">
+            <h2>Live app release</h2>
+            <div class="release-version num" id="metric-latest-version">&hellip;</div>
+            <div class="release-meta" id="release-meta">Loading release history&hellip;</div>
+            <button class="btn btn-on-violet" onclick="window.switchTab('tab-releases')">
+              <iconsax-icon name="send-1" type="bulk" size="17" color="currentColor"></iconsax-icon> Publish a release
+            </button>
+          </div>
+        </div>
+
       </div>
     </section>
 
     <!-- Tab 2: User Word Submissions Verification Queue -->
     <section id="tab-submissions" class="tab-content" style="display: none;">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title"><iconsax-icon name="clock" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> User Submitted Words Queue</h2>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Review crowd-sourced Kasiguranin words submitted by mobile app users. Approved entries will automatically migrate to the master dictionary.</p>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Kasiguranin Word</th>
-                <th>Tagalog Translation</th>
-                <th>English Translation</th>
-                <th>Category</th>
-                <th>Part of Speech</th>
-                <th>Contributor</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="submissions-tbody">
-              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading submissions queue...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
 
-    <!-- Tab 3: Master Vocabulary CRUD & SQL/Excel Importers -->
-    <section id="tab-vocabulary" class="tab-content" style="display: none;">
-      
-      <!-- SQL & Excel Importer Panels -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:28px;">
-        <div class="panel" style="border: 2px dashed var(--play-purple-start);">
-          <div class="panel-header">
-            <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> SQL Database Migration (.sql)</h2>
-          </div>
-          <div class="dropzone" id="sql-dropzone">
-            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;"><iconsax-icon name="document-upload" type="bulk" size="20" color="var(--violet)"></iconsax-icon> Drag &amp; Drop "kasiguranin_migration.sql" here</p>
-            <p style="color:var(--text-muted); font-size:0.8rem;">Parses INSERT INTO vocabulary &amp; conjugations with strict NULL sanitization into Firestore.</p>
-            <input type="file" id="sql-file-input" accept=".sql" style="display:none;">
-          </div>
+      <div class="pagehead">
+        <div>
+          <h1>Verification queue</h1>
+          <p>Words contributed from the app, newest first. Approving one moves it into the master
+             dictionary and it reaches every learner on the next sync.</p>
         </div>
-
-        <div class="panel" style="border: 2px dashed var(--xp-gold);">
-          <div class="panel-header">
-            <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Bulk Excel Import (Database.xlsx)</h2>
-          </div>
-          <div class="dropzone" id="excel-dropzone">
-            <p style="font-size:1.1rem; font-weight:800; margin-bottom:6px;"><iconsax-icon name="document-text" type="bulk" size="20" color="var(--violet)"></iconsax-icon> Drag &amp; Drop "Database.xlsx" here</p>
-            <p style="color:var(--text-muted); font-size:0.8rem;">Parses KASIGURANIN, TAGALOG, ENGLISH, CATEGORY, and IPA columns into cloud Firestore.</p>
-            <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;">
-          </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="queue-result-count"></span>
         </div>
       </div>
 
-      <!-- Master Dictionary Panel -->
       <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> Master Kasiguranin Dictionary</h2>
-          <div style="display:flex; gap:12px; align-items:center;">
-            <input type="text" id="search-vocab-input" class="form-control" placeholder="Search words or definitions..." style="width:240px;">
-            <select id="filter-vocab-category" class="form-control" style="width:200px;">
-              <option value="">All Categories</option>
-              <option value="Greetings &amp; Essentials">Greetings &amp; Essentials</option>
-              <option value="House &amp; Daily Life">House &amp; Daily Life</option>
-              <option value="Body Parts &amp; Health">Body Parts &amp; Health</option>
-              <option value="Animals &amp; Wildlife">Animals &amp; Wildlife</option>
-              <option value="Food &amp; Dining">Food &amp; Dining</option>
-              <option value="Numbers &amp; Time">Numbers &amp; Time</option>
-              <option value="Weather &amp; Climate">Weather &amp; Climate</option>
-              <option value="Nature &amp; Environment">Nature &amp; Environment</option>
-              <option value="Family &amp; People">Family &amp; People</option>
-              <option value="Emotions &amp; Feelings">Emotions &amp; Feelings</option>
-              <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
-              <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
-              <option value="Actions (Verbs)">Actions (Verbs)</option>
-              <option value="General">General</option>
-            </select>
-            <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
-              <iconsax-icon name="add-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Add Word
-            </button>
-          </div>
-        </div>
-
         <div class="table-responsive">
           <table>
             <thead>
@@ -291,112 +239,139 @@
                 <th>Tagalog</th>
                 <th>English</th>
                 <th>Category</th>
-                <th>Part of Speech</th>
-                <th>Conjugations / IPA</th>
+                <th>Part of speech</th>
+                <th>Contributor</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="vocabulary-tbody">
-              <tr><td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">Loading master dictionary...</td></tr>
+            <tbody id="submissions-tbody">
+              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading submissions queue&hellip;</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- Tab 4: App Release & APK Store Manager -->
-    <section id="tab-stories" class="tab-content" style="display: none;">
+    <!-- Tab 3: The dictionary itself.
+         Read as entries, not scanned as a table: headword, pronunciation, part of speech, then the
+         glosses. The two bulk importers used to occupy the whole first screen of the page a
+         moderator opens all day; they are an occasional task and now live behind "Import". -->
+    <section id="tab-vocabulary" class="tab-content" style="display: none;">
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Story Library</h2>
-          <button class="btn btn-primary" onclick="window.openStoryEditor()">
-            <iconsax-icon name="add-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Add story
+      <div class="pagehead">
+        <div>
+          <h1>Dictionary</h1>
+          <p>The master Kasiguranin corpus. Every entry here is what the app teaches, so a
+             correction made in this list is a correction on every learner's device.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add word
+          </button>
+          <button class="btn btn-outline" onclick="openModal('import-modal')">
+            <iconsax-icon name="document-upload" type="bulk" size="18" color="currentColor"></iconsax-icon> Import
           </button>
         </div>
-
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;">
-          Stories here sync down to every learner's device and overwrite the app's built-in copy with the
-          same id. A story with no Kasiguranin text still reads correctly in the app: it leads with
-          Tagalog and hides the word-tap and audio controls until the Kasiguranin is written.
-        </p>
-
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Kasiguranin title</th>
-                <th>Category</th>
-                <th>Pages</th>
-                <th>Unlocks at</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="stories-tbody"></tbody>
-          </table>
-        </div>
       </div>
 
+      <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-vocab-input">Search the dictionary</label>
+            <input type="search" id="search-vocab-input" class="form-control" placeholder="Search Kasiguranin, Tagalog or English&hellip;">
+          </div>
+          <label class="sr-only" for="filter-vocab-category">Filter by category</label>
+          <select id="filter-vocab-category" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All categories</option>
+            <option value="Greetings &amp; Essentials">Greetings &amp; Essentials</option>
+            <option value="House &amp; Daily Life">House &amp; Daily Life</option>
+            <option value="Body Parts &amp; Health">Body Parts &amp; Health</option>
+            <option value="Animals &amp; Wildlife">Animals &amp; Wildlife</option>
+            <option value="Food &amp; Dining">Food &amp; Dining</option>
+            <option value="Numbers &amp; Time">Numbers &amp; Time</option>
+            <option value="Weather &amp; Climate">Weather &amp; Climate</option>
+            <option value="Nature &amp; Environment">Nature &amp; Environment</option>
+            <option value="Family &amp; People">Family &amp; People</option>
+            <option value="Emotions &amp; Feelings">Emotions &amp; Feelings</option>
+            <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
+            <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
+            <option value="Actions (Verbs)">Actions (Verbs)</option>
+            <option value="General">General</option>
+          </select>
+          <label class="sr-only" for="sort-vocab">Sort by</label>
+          <select id="sort-vocab" class="form-control" style="width:auto; min-width:160px;">
+            <option value="kasiguranin">A&ndash;Z by headword</option>
+            <option value="english">A&ndash;Z by English</option>
+            <option value="category">By category</option>
+            <option value="partOfSpeech">By part of speech</option>
+          </select>
+        </div>
+
+        <!-- The alphabet index. Letters with no entry behind them stay visible but unpressable:
+             a gap in the corpus is information, not something to hide. -->
+        <div class="letter-rail" id="letter-rail" role="group" aria-label="Jump to a letter"></div>
+
+        <div class="toolbar" style="margin-bottom:0; justify-content:space-between;">
+          <span class="result-count" id="vocab-result-count">Loading&hellip;</span>
+        </div>
+
+        <div class="entry-list" id="entry-list"></div>
+        <div class="pager" id="vocab-pager"></div>
+      </div>
     </section>
 
-    <section id="tab-releases" class="tab-content" style="display: none;">
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="document-upload" type="bulk" size="24" color="var(--xp-gold)"></iconsax-icon> Publish New App APK Release</h2>
+    <!-- Tab 4: Stories. Content with covers, not rows. -->
+    <section id="tab-stories" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Stories</h1>
+          <p>Published from here, a story overwrites the app's built-in copy with the same id on
+             every learner's device.</p>
         </div>
-        <form id="publish-release-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:18px;">
-          <div class="form-group">
-            <label>Version Code (e.g. 2)</label>
-            <input type="number" id="rel-code" class="form-control" required placeholder="2">
-          </div>
-          <div class="form-group">
-            <label>Version Name (e.g. 1.1.0)</label>
-            <input type="text" id="rel-name" class="form-control" required placeholder="1.1.0">
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label>Direct APK Download Link (URL)</label>
-            <input type="url" id="rel-url" class="form-control" required placeholder="https://kasiguru.web.app/downloads/kasiguru-v1.1.0.apk">
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label>Release Notes &amp; Change Log</label>
-            <textarea id="rel-notes" class="form-control" rows="3" placeholder="Added new games, updated Kasiguranin dictionary corpus..."></textarea>
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-              <input type="checkbox" id="rel-force" style="width:18px; height:18px; cursor:pointer;">
-              <span>Required update — users cannot dismiss the in-app banner</span>
-            </label>
-            <p style="color:var(--text-muted); font-size:0.82rem; margin-top:6px;">
-              Leave unchecked for optional updates. Optional banners can be dismissed
-              once and stay hidden until a newer version is published.
-            </p>
-          </div>
-          <div style="grid-column: span 2;">
-            <button type="submit" class="btn btn-success" style="width:100%;">
-              <iconsax-icon name="send-1" type="bulk" size="18" color="#12161F"></iconsax-icon> Publish Release to App Store
-            </button>
-          </div>
-        </form>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="window.openStoryEditor()">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add story
+          </button>
+        </div>
+      </div>
+
+      <div class="story-grid stagger" id="story-grid"></div>
+    </section>
+
+    <!-- Tab 5: Releases. Publishing is rare; checking what shipped is constant, so the history is
+         the page and the form is behind the primary action. -->
+    <section id="tab-releases" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>APK releases</h1>
+          <p>Every build published to the download site. The version marked live is the one the
+             app checks against when it decides whether to prompt for an update.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="openModal('publish-release-modal')">
+            <iconsax-icon name="send-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Publish release
+          </button>
+        </div>
       </div>
 
       <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><iconsax-icon name="box-search" type="bulk" size="24" color="var(--play-pink-start)"></iconsax-icon> Published APK Release History</h2>
-        </div>
-        <div id="releases-list-container">
-          <!-- Populated dynamically -->
-        </div>
+        <div class="timeline" id="releases-list-container"></div>
       </div>
     </section>
 
   </main>
+  </div><!-- /.app -->
+
 
   <!-- Modal: Add New Vocabulary Word -->
   <div id="add-vocab-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="add-circle" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> Add New Kasiguranin Entry</h3>
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="add-circle" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Add New Kasiguranin Entry</h2>
         <button class="close-btn" onclick="closeModal('add-vocab-modal')">&times;</button>
       </div>
       <form id="add-vocab-form">
@@ -468,7 +443,7 @@
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
-          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Save Entry</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Save Entry</button>
         </div>
       </form>
     </div>
@@ -478,7 +453,7 @@
   <div id="story-editor-modal" class="modal-overlay">
     <div class="modal-card" style="max-width:760px;">
       <div class="modal-header">
-        <h3 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> <span id="story-editor-title">Add story</span></h3>
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> <span id="story-editor-title">Add story</span></h2>
         <button class="close-btn" onclick="closeModal('story-editor-modal')">&times;</button>
       </div>
 
@@ -488,7 +463,7 @@
         <div class="form-group">
           <label class="form-label">Story id *</label>
           <input type="number" id="story-input-id" class="form-control" min="1" required>
-          <small style="color:var(--text-muted);">The app matches its built-in stories by this number. Reusing an id replaces that story on every device.</small>
+          <small style="color:var(--muted);">The app matches its built-in stories by this number. Reusing an id replaces that story on every device.</small>
         </div>
 
         <div class="form-group">
@@ -518,16 +493,16 @@
         </div>
 
         <div class="panel-header" style="margin-top:8px;">
-          <h4 style="font-weight:800; font-size:1rem;">Pages</h4>
+          <h3 style="font-family:var(--display); font-weight:800; font-size:1rem;">Pages</h3>
           <button type="button" class="btn btn-primary btn-sm" onclick="window.addStoryPage()">
-            <iconsax-icon name="add-circle" type="bulk" size="16" color="#FFFFFF"></iconsax-icon> Add page
+            <iconsax-icon name="add-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Add page
           </button>
         </div>
         <div id="story-pages-editor"></div>
 
         <div style="display:flex; gap:12px; margin-top:20px;">
           <button type="submit" class="btn btn-primary" style="flex:1;">
-            <iconsax-icon name="verify" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Save story
+            <iconsax-icon name="verify" type="bulk" size="18" color="currentColor"></iconsax-icon> Save story
           </button>
           <button type="button" class="btn" onclick="closeModal('story-editor-modal')">Cancel</button>
         </div>
@@ -538,7 +513,7 @@
   <div id="edit-vocab-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="edit" type="bulk" size="24" color="var(--play-purple-start)"></iconsax-icon> Edit Kasiguranin Entry</h3>
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="edit" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Edit Kasiguranin Entry</h2>
         <button class="close-btn" onclick="closeModal('edit-vocab-modal')">&times;</button>
       </div>
       <form id="edit-vocab-form">
@@ -611,13 +586,125 @@
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
-          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Update Entry</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Update Entry</button>
         </div>
       </form>
     </div>
   </div>
 
   <script type="module" src="js/app.js"></script>
+
+
+  <!-- Modal: bulk import. Moved off the dictionary page, which it used to occupy the whole first
+       screen of. The dropzone ids are unchanged, so the existing SQL and Excel parsers bind to
+       exactly the elements they always did. -->
+  <div id="import-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:720px;">
+      <div class="modal-header">
+        <h2>Import entries</h2>
+        <button class="close-btn" onclick="closeModal('import-modal')" aria-label="Close">&times;</button>
+      </div>
+
+      <p class="section-desc">Both importers write straight into the master dictionary. Existing
+        entries are matched and updated rather than duplicated, and a malformed row is skipped with
+        a count reported at the end.</p>
+
+      <div class="form-group">
+        <label class="form-label">SQL migration (.sql)</label>
+        <div class="dropzone" id="sql-dropzone">
+          <p style="font-weight:800; margin-bottom:6px;">Drop a .sql file, or click to choose</p>
+          <p style="color:var(--muted); font-size:0.8rem;">Parses <code>INSERT INTO vocabulary</code>
+            and conjugation statements, sanitising NULLs.</p>
+          <input type="file" id="sql-file-input" accept=".sql" style="display:none;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Spreadsheet (.xlsx, .xls, .csv)</label>
+        <div class="dropzone" id="excel-dropzone">
+          <p style="font-weight:800; margin-bottom:6px;">Drop a spreadsheet, or click to choose</p>
+          <p style="color:var(--muted); font-size:0.8rem;">Reads the KASIGURANIN, TAGALOG, ENGLISH,
+            CATEGORY and IPA columns.</p>
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('import-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: the full dictionary entry. This is the view the old table could not give — every
+       aspect the corpus records for a word, in one place. -->
+  <div id="entry-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:620px;">
+      <div class="modal-header modal-header--bare">
+        <h2 class="sr-only">Dictionary entry</h2>
+        <button class="close-btn" onclick="closeModal('entry-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div id="entry-modal-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('entry-modal')">Close</button>
+        <button type="button" class="btn btn-primary" id="entry-modal-edit">
+          <iconsax-icon name="edit" type="bulk" size="17" color="currentColor"></iconsax-icon> Edit entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: publish a release. -->
+  <div id="publish-release-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h2>Publish release</h2>
+        <button class="close-btn" onclick="closeModal('publish-release-modal')" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="publish-release-form">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--s-4);">
+          <div class="form-group">
+            <label for="rel-code">Version code</label>
+            <input type="number" id="rel-code" class="form-control" required placeholder="10">
+            <small style="color:var(--muted);">The integer the app compares. Must increase.</small>
+          </div>
+          <div class="form-group">
+            <label for="rel-name">Version name</label>
+            <input type="text" id="rel-name" class="form-control" required placeholder="1.9.0">
+            <small style="color:var(--muted);">What learners see, e.g. 1.9.0.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rel-url">APK download link</label>
+          <input type="url" id="rel-url" class="form-control" required placeholder="https://github.com/Anthony2124/KasiGuru/releases/download/v1.9.0/kasiguru-v1.9.0.apk">
+        </div>
+
+        <div class="form-group">
+          <label for="rel-notes">Release notes</label>
+          <textarea id="rel-notes" class="form-control" rows="3" placeholder="What changed in this build."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="check-label">
+            <input type="checkbox" id="rel-force">
+            <span>Required update &mdash; learners cannot dismiss the in-app banner</span>
+          </label>
+          <p style="color:var(--muted); font-size:0.82rem; margin-top:6px;">
+            Leave unchecked for optional updates. An optional banner can be dismissed once and stays
+            hidden until a newer version is published.
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('publish-release-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <iconsax-icon name="send-1" type="bulk" size="17" color="currentColor"></iconsax-icon> Publish release
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 </body>
 </html>

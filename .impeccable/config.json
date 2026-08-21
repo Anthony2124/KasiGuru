@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "admin-website/admin/index.html"
+        ],
+        "createdAt": "2026-08-21T09:22:00.090Z",
+        "reason": "DESIGN.md clay technique: the cast shadow is violet-tinted, never neutral grey. The only chromatic shadow left in this file is 0 8px 24px var(--clay-cast), and --clay-cast is now overridden in the dark block to rgba(12, 8, 38, 0.55) -- deeper than the surface it falls on -- so it reads as a cast shadow rather than a halo in both themes. The other two shadows are the neutral --shadow-2 and --shadow-4 tokens."
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-21T10:20:00.381Z",
+        "reason": "Static-engine limitation, not a design defect: it cannot resolve clamp() so it only sees the four literal token sizes (12/14/16/20) and reports 1.7:1. Measured in Chrome on the rendered page at 1536px, the real set is 12, 14, 16, 17, 20, 30.4, 32, 43.2, 48, 54.4, 80 -- ratio 6.67:1. h1 computes to 80px, the specimen headword 54.4px, the pull quote 30.4px."
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "admin-website/admin/dashboard.html"
+        ],
+        "createdAt": "2026-08-21T15:26:06.624Z",
+        "reason": "Loading skeleton for Firestore-backed figures, not decorative motion: the shimmer runs only while a snapshot is in flight, never on settled content, and collapses under prefers-reduced-motion."
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "admin-website/admin/index.html"
+        ],
+        "createdAt": "2026-08-21T15:26:19.370Z",
+        "reason": "Same loading skeleton as the dashboard: shimmer runs only while data is in flight and is disabled under prefers-reduced-motion."
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "admin-website/admin/dashboard.html"
+        ],
+        "createdAt": "2026-08-21T15:26:19.497Z",
+        "reason": "Media-query cascade artifact in the static engine: .topuser has 14px of inset where its 1px border-left exists (>760px), and the <=760px rule removes the border and the padding together, so children are never flush against a visible boundary."
+      }
+    ]
+  }
+}
