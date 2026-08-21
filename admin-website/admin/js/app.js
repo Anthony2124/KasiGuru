@@ -1022,14 +1022,18 @@ function initFormListeners() {
       if (forceUpdate && !confirm(`Publish v${name} as a REQUIRED update? Every user will see a banner they cannot dismiss.`)) return;
 
       try {
-        await addDoc(collection(db, "app_releases"), {
+        // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
+        // same version — setDoc + merge means republishing a version CI already wrote only
+        // overwrites these six known fields instead of creating a second, duplicate doc via
+        // addDoc's random id.
+        await setDoc(doc(db, "app_releases", `v${name}`), {
           versionCode: code,
           versionName: name,
           apkUrl: url,
           releaseNotes: notes,
           forceUpdate: forceUpdate,
           releasedAt: Date.now()
-        });
+        }, { merge: true });
         await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
         releaseForm.reset();
         alert(`Successfully published KasiGuru v${name} APK release!`);

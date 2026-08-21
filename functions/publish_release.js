@@ -29,8 +29,19 @@ admin.initializeApp({
 });
 
 (async () => {
-  const doc = { versionCode, versionName, apkUrl };
-  await admin.firestore().collection('app_releases').doc(`v${versionName}`).set(doc);
+  // Full canonical shape, even though CI has no source for releaseNotes/forceUpdate yet —
+  // the admin dashboard's publish form writes the same six fields to the same doc id, and
+  // {merge: true} means whichever one runs second only overwrites what it actually knows,
+  // instead of a CI republish silently blanking out notes an admin already typed in.
+  const doc = {
+    versionCode,
+    versionName,
+    apkUrl,
+    releaseNotes: '',
+    forceUpdate: false,
+    releasedAt: Date.now(),
+  };
+  await admin.firestore().collection('app_releases').doc(`v${versionName}`).set(doc, { merge: true });
   console.log(`Published app_releases/v${versionName}:`, JSON.stringify(doc));
 })().catch((err) => {
   console.error('Publish failed:', err.message);

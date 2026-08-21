@@ -89,7 +89,13 @@ jobs:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           npm install --omit=dev
+          # apkUrl points at the unversioned alias, not this release's own versioned
+          # filename. Every deploy of the download site carries only the newest APK, so
+          # a versioned URL stored today is guaranteed to 404 the moment the *next*
+          # release ships and redeploys. The alias always resolves to whatever shipped
+          # last, which is what "download this release" means in practice anyway once a
+          # newer version exists.
           node publish_release.js \
             "${{ steps.version.outputs.code }}" \
             "${{ steps.version.outputs.name }}" \
-            "https://download-woad-iota.vercel.app/kasiguru-v${{ steps.version.outputs.name }}.apk"
+            "https://download-woad-iota.vercel.app/kasiguru-latest.apk"
