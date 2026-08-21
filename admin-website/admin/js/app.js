@@ -244,7 +244,7 @@ function initStoriesListener() {
     console.error('Stories listener failed:', error);
     const tbody = document.getElementById('stories-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--red);">
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--red);">
         Couldn't load stories: ${escapeHtml(error.message)}</td></tr>`;
     }
   });
@@ -260,7 +260,7 @@ function renderStoriesTable() {
     // project relying on the app's built-in corpus, so it should not read as a failure.
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
           <iconsax-icon name="book-1" type="bulk" size="32" color="var(--violet)"></iconsax-icon>
           <div style="margin-top:8px; font-weight:700;">No stories published from here.</div>
           <div style="margin-top:4px; font-size:0.9rem;">Learners are reading the ten stories built into the app. Add one here only to change or extend that set.</div>
@@ -530,7 +530,7 @@ function renderSubmissionsTable() {
       <td>${escapeHtml(sub.tagalog || '-')}</td>
       <td>${escapeHtml(sub.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
+      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet); border-color:var(--border-color);">${escapeHtml(sub.partOfSpeech || '-')}</span></td>
       <td><small>${escapeHtml(sub.contributorName || 'Anonymous')}</small></td>
       <td><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
       <td>
@@ -633,7 +633,7 @@ function renderVocabularyTable() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+        <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
           <iconsax-icon name="book-1" type="bulk" size="32" color="var(--play-purple-start)"></iconsax-icon>
           <div style="margin-top:8px;">No matching Kasiguranin entries found.</div>
         </td>
@@ -653,7 +653,7 @@ function renderVocabularyTable() {
       <td>${escapeHtml(item.tagalog || '-')}</td>
       <td>${escapeHtml(item.english || '-')}</td>
       <td><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></td>
-      <td><span class="badge badge-category" style="background:rgba(255,255,255,0.1); color:#fff; border-color:var(--border-color);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
+      <td><span class="badge badge-category" style="background:var(--violet-tint); color:var(--violet); border-color:var(--border-color);">${escapeHtml(item.partOfSpeech || '-')}</span></td>
       <td>${conjugationsBadge}</td>
       <td>
         <div style="display:flex; gap:8px;">
