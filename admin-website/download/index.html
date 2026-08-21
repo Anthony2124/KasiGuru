@@ -3,277 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KasiGuru - Learn Kasiguranin Language App</title>
-  <meta name="description" content="Download KasiGuru — the gamified mobile learning application for preserving and mastering the Kasiguranin language. Free APK for Android 8.0+.">
-  <!-- Standalone Synchronous Iconsax Bulk Web Component Script -->
+  <title>KasiGuru — Learn Kasiguranin</title>
+  <meta name="description" content="Download KasiGuru — the gamified mobile learning application for preserving and mastering the Kasiguranin language of Casiguran, Aurora. Free APK for Android 8.0+.">
   <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
-  <!-- Cache Buster Query String v=2026_coastal_theme -->
-  <link rel="stylesheet" href="css/styles.css?v=2026_coastal_theme">
+  <link rel="stylesheet" href="css/styles.css?v=2026_editorial">
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k" crossorigin="anonymous"></script>
 </head>
 <body>
 
-  <!-- Floating Capsule Header Navigation -->
-  <header>
-    <div class="logo-container">
-      <div class="logo-badge">KasiGuru</div>
-      <div class="logo-title">Language Preservation</div>
-    </div>
-    <nav>
-      <a href="#features"><iconsax-icon name="star-1" type="bulk" size="18" color="var(--xp-gold)"></iconsax-icon> Features</a>
-      <a href="#how-it-works"><iconsax-icon name="flash-1" type="bulk" size="18" color="var(--play-purple-start)"></iconsax-icon> How It Works</a>
-      <a href="#mission"><iconsax-icon name="heart" type="bulk" size="18" color="var(--games-coral)"></iconsax-icon> Heritage</a>
-      <a href="#download-section" class="store-link-btn">
-        <iconsax-icon name="document-download" type="bulk" size="18" color="#FFFFFF"></iconsax-icon> Get App
-      </a>
+<header>
+  <div class="wrap masthead">
+    <div class="logotype">Kasi<em>Guru</em></div>
+    <!-- Nav order matches DOM order. It previously did not: the nav read Features, How It Works,
+         Heritage while the page ran Features, Heritage, How It Works, so "How It Works" jumped
+         past a section and scrolling back landed somewhere unexpected. -->
+    <nav id="site-nav">
+      <a href="#dictionary">The Words</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#heritage">Heritage</a>
+      <a href="#download-section" class="get">Get the App</a>
     </nav>
-  </header>
+  </div>
+</header>
 
-  <main>
-    
-    <!-- Hero Section: 2-Column Product Showcase -->
-    <section class="hero-landing-grid">
-      
-      <!-- Left Content: Bold Marketing Copy & CTAs -->
-      <div class="hero-content-col">
-        <h1 class="hero-marketing-title">
-          Learn Kasiguranin. Keep the language alive.
-        </h1>
-        <p class="hero-marketing-desc">
-          Master authentic vocabulary from the Casiguran coast, play cognitive recall challenges, and help preserve an endangered Philippine heritage language.
-        </p>
-
-        <div class="hero-cta-group">
-          <a href="kasiguru-latest.apk" download class="download-btn-large" id="hero-download-btn">
-            <iconsax-icon name="document-download" type="bulk" size="22" color="#FFFFFF"></iconsax-icon>
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="rule-top"></div>
+        <h1>The dialect of Casiguran, <em>written down.</em></h1>
+        <p class="lede"><span class="dateline">Casiguran, Aurora &mdash;</span> Kasiguranin is an endangered Northern Philippine language, and it is not taught in schools. KasiGuru is a <strong>free Android app</strong> that teaches it the way you would actually learn it: a word at a time, checked by the people who still speak it.</p>
+        <div class="cta-row hero-cta-group">
+          <a class="download-btn-large" href="kasiguru-latest.apk" download>
+            <iconsax-icon name="document-download" type="bulk" size="20" color="currentColor"></iconsax-icon>
             <span>Download APK</span>
           </a>
-          <div class="hero-spec-pill">
-            <iconsax-icon name="android" type="bulk" size="20" color="var(--vocab-sea)"></iconsax-icon>
-            <span>Android 8.0+</span>
-          </div>
+          <a class="btn btn-ghost" href="#dictionary">Browse the words</a>
         </div>
-
-        <div class="hero-community-proof">
-          <p class="proof-text">
-            Documenting <strong id="word-count-hero">417 Kasiguranin words</strong> with audio pronunciations &amp; phonetic guides.
-          </p>
-        </div>
+        <!-- download.js replaces the whole textContent of #word-count-hero with the live count,
+             so it has to be its own span. Putting the id on the line itself would have wiped the
+             platform and licence facts the moment Firestore answered. -->
+        <p class="meta"><span id="word-count-hero">417+ Kasiguranin words</span> &middot; Free &middot; Android 8.0+ &middot; No account needed to browse</p>
       </div>
 
-      <!-- Right Visual Showcase: Layered Android Phone Mockups -->
-      <div class="mockup-container">
-        <div class="mockup-backing-shape"></div>
-
-        <!-- Floating UI Stat Chips (Iconsax - No Emoji UI) -->
-        <div class="floating-chip top-left">
-          <iconsax-icon name="flash-1" type="bulk" size="18" color="var(--streak-ember)"></iconsax-icon>
-          <span>7-Day Learning Streak</span>
+      <aside class="specimen">
+        <div class="specimen-head"><span>From the dictionary</span><span>Entry</span></div>
+        <div class="specimen-body">
+          <div class="headword">aldew</div>
+          <div class="phon">noun</div>
+          <dl>
+            <div class="gloss"><dt>English</dt><dd>sun</dd></div>
+            <div class="gloss"><dt>Filipino</dt><dd>araw</dd></div>
+          </dl>
         </div>
-        <div class="floating-chip bottom-right">
-          <iconsax-icon name="cup" type="bulk" size="18" color="var(--xp-gold)"></iconsax-icon>
-          <span>Level 5 Kasiguranin Master</span>
-        </div>
+        <div class="specimen-foot"><span>Verified entry</span><span>Casiguran, Aurora</span></div>
+      </aside>
+    </div>
+  </div>
 
-        <!-- Primary Phone Mockup (Dashboard Screen) -->
-        <div class="mockup-phone primary">
-          <div class="phone-screen-content">
-            <div class="phone-header-bar">
-              <span style="font-weight:900; font-size:0.85rem; color:var(--play-purple-start);">KasiGuru</span>
-              <div style="display:flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--xp-gold-dark); font-weight:800;">
-                <iconsax-icon name="flash-1" type="bulk" size="13" color="var(--xp-gold-dark)"></iconsax-icon> 450 XP
-              </div>
-            </div>
+  <div class="wrap">
+    <div class="figures">
+      <div class="figure"><b><span id="word-count-features">417</span>+</b><span>Words recorded</span></div>
+      <div class="figure"><b>6</b><span>Game modes</span></div>
+      <div class="figure"><b>IPA</b><span>Phonetic notation</span></div>
+      <div class="figure"><b>Free</b><span>No ads, ever</span></div>
+    </div>
+  </div>
 
-            <!-- Progress Ring Card inside phone -->
-            <div class="phone-hero-card">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                  <h4 style="font-weight:900; font-size:1rem; margin-top:4px; color:#FFFFFF;">Your progress</h4>
-                  <p style="font-size:0.7rem; color:rgba(255,255,255,0.85);">320 of 400 XP today</p>
-                </div>
-                <div class="phone-ring-indicator">80%</div>
-              </div>
-            </div>
-
-            <!-- Word of the Day Card Item -->
-            <div class="phone-card-item">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.65rem; color:var(--vocab-sea); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Word of the Day</span>
-                <div class="phone-sound-btn">
-                  <iconsax-icon name="clock" type="bulk" size="12" color="var(--play-purple-start)"></iconsax-icon>
-                </div>
-              </div>
-              <h5 style="font-weight:900; font-size:1.15rem; color:var(--coast-ink); margin-top:2px;">singët</h5>
-              <p style="font-size:0.75rem; color:var(--coast-muted);">Tagalog: langgam • English: ant</p>
-            </div>
-
-            <!-- Aspect Builder Mini-Game Card -->
-            <div class="phone-card-item" style="background:var(--grad-coral); color:#FFFFFF; border:none;">
-              <h5 style="font-weight:900; font-size:0.95rem; margin-top:4px;">Aspect Builder Challenge</h5>
-              <p style="font-size:0.7rem; opacity:0.9;">Master verbal aspect inflections</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Secondary Phone Mockup (Word Match Screen) -->
-        <div class="mockup-phone secondary">
-          <div class="phone-screen-content">
-            <div class="phone-header-bar">
-              <span style="font-weight:800; font-size:0.75rem; color:var(--coast-ink);">Word Match Blitz</span>
-              <span style="font-size:0.7rem; font-weight:800; color:var(--vocab-sea);">12/15</span>
-            </div>
-            <div class="phone-card-item" style="background:var(--grad-sea); color:#FFFFFF; text-align:center; border:none;">
-              <span style="font-size:0.65rem; font-weight:800; opacity:0.85;">KASIGURANIN</span>
-              <h5 style="font-weight:900; font-size:1.05rem; margin:2px 0;">apak</h5>
-              <span style="font-size:0.75rem; opacity:0.9;">adze (adze tool)</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- Section 2: Asymmetric Product Feature Showcase -->
-    <section id="features" class="section-wrapper">
-      <div class="section-header-center">
-        <h2 class="section-title">Everything you need to master Kasiguranin</h2>
-        <p class="section-desc">Engineered with linguistically sound research and active-recall gamification mechanics.</p>
-      </div>
-
-      <div class="feature-asymmetric-grid">
-        
-        <!-- Feature 1: Wide Featured Card (Dictionary Corpus) -->
-        <div class="feature-card featured-wide">
-          <div class="feature-card-header">
-            <div class="feature-card-badge" style="background:rgba(18, 179, 166, 0.12);">
-              <iconsax-icon name="book-1" type="bulk" size="30" color="var(--vocab-sea)"></iconsax-icon>
-            </div>
-            <div>
-              <h3 class="feature-card-title">Rich Linguistic Dictionary</h3>
-            </div>
-          </div>
-          <p class="feature-card-desc">
-            Explore over <span id="word-count-features">417</span>+ authentic Kasiguranin entries extracted directly from published linguistic thesis documentation, complete with IPA phonetic transcriptions, grammatical root tags, and clear English and Tagalog definitions.
-          </p>
-          <div class="dictionary-sample-row">
-            <div class="dict-chip">
-              <span class="dict-word">aldew</span>
-              <span class="dict-def">sun • araw</span>
-            </div>
-            <div class="dict-chip">
-              <span class="dict-word">tubig</span>
-              <span class="dict-def">water • tubig</span>
-            </div>
-            <div class="dict-chip">
-              <span class="dict-word">singët</span>
-              <span class="dict-def">ant • langgam</span>
-            </div>
-            <div class="dict-chip">
-              <span class="dict-word">kumpit</span>
-              <span class="dict-def">boat • bangka</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feature 2: Interactive Mini Games -->
-        <div class="feature-card">
-          <div class="feature-card-badge" style="background:rgba(255, 107, 107, 0.12);">
-            <iconsax-icon name="game" type="bulk" size="30" color="var(--games-coral)"></iconsax-icon>
-          </div>
-          <h3 class="feature-card-title">6 Challenge Game Modes</h3>
-          <p class="feature-card-desc">
-            Reinforce long-term retention with Aspect Builder, Sentence Construction, Word Match, Audio Quiz, Reverse Match, and Fill in the Blanks.
-          </p>
-        </div>
-
-        <!-- Feature 3: Community Submissions -->
-        <div class="feature-card">
-          <div class="feature-card-badge" style="background:rgba(255, 176, 32, 0.12);">
-            <iconsax-icon name="add-circle" type="bulk" size="30" color="var(--xp-gold)"></iconsax-icon>
-          </div>
-          <h3 class="feature-card-title">Community Contributions</h3>
-          <p class="feature-card-desc">
-            Submit local expressions and cultural words directly from the mobile app to be verified by administrators before joining the official corpus.
-          </p>
-        </div>
-
+  <div class="wrap">
+    <!-- 1. The words -->
+    <section id="dictionary">
+      <div class="sec-head"><h2>The words</h2></div>
+      <p class="sec-lede">Entries are drawn from published linguistic thesis documentation and from speakers in Casiguran, each with IPA phonetic transcription, grammatical root tags, and English and Filipino definitions. Community submissions are verified by a moderator before they join the corpus. Nothing here is machine-translated.</p>
+      <div class="wordlist">
+        <div class="wordrow"><div class="w">aldew</div><div class="g"><b>sun</b></div><div class="g">araw</div></div>
+        <div class="wordrow"><div class="w">tubig</div><div class="g"><b>water</b></div><div class="g">tubig</div></div>
+        <div class="wordrow"><div class="w">sing&euml;t</div><div class="g"><b>ant</b></div><div class="g">langgam</div></div>
+        <div class="wordrow"><div class="w">kumpit</div><div class="g"><b>boat</b></div><div class="g">bangka</div></div>
       </div>
     </section>
 
-    <!-- Section 3: Cultural Story Banner -->
-    <section id="mission" class="section-wrapper">
-      <div class="cultural-story-banner">
-        <div style="max-width:620px;">
-          <h2 style="font-size:2.2rem; font-weight:900; color:#FFFFFF; margin-bottom:12px; line-height:1.2;">
-            Why Learning Kasiguranin Matters
-          </h2>
-          <p style="color:rgba(255,255,255,0.92); font-size:1.05rem; line-height:1.6;">
-            Kasiguranin is an endangered Northern Philippine language spoken in Casiguran, Aurora. KasiGuru bridges mobile technology and indigenous cultural preservation to empower the next generation of speakers.
-          </p>
-        </div>
-        <div>
-          <a href="#download-section" class="btn btn-gold" style="padding:16px 32px; font-size:1.05rem;">
-            <iconsax-icon name="heart" type="bulk" size="20" color="#12161F"></iconsax-icon> Support the Mission
-          </a>
-        </div>
+    <!-- 2. How it works -->
+    <section id="how-it-works">
+      <div class="sec-head"><h2>How it works</h2></div>
+      <div class="entries">
+        <article class="entry">
+          <span class="num">01</span>
+          <h3>Download the APK</h3>
+          <p>Take the installer directly, or scan the QR code below with the phone you want it on. Android 8.0 or newer.</p>
+        </article>
+        <article class="entry">
+          <span class="num">02</span>
+          <h3>Install and set a goal</h3>
+          <p>Allow installation from this source on your device, then choose a daily goal you will actually keep.</p>
+        </article>
+        <article class="entry">
+          <span class="num">03</span>
+          <h3>Learn, play, contribute</h3>
+          <p>Six game modes &mdash; Aspect Builder, Sentence Construction, Word Match, Audio Quiz, Reverse Match and Fill in the Blanks &mdash; plus streaks, XP, and a way to submit words the dictionary is missing.</p>
+        </article>
       </div>
     </section>
 
-    <!-- Section 4: How It Works Step-by-Step -->
-    <section id="how-it-works" class="section-wrapper">
-      <div class="section-header-center">
-        <h2 class="section-title">Start Learning in 3 Easy Steps</h2>
-        <p class="section-desc">Get started with KasiGuru on your Android device in less than two minutes.</p>
-      </div>
-
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <h3 style="font-size:1.2rem; font-weight:800; color:var(--coast-ink); margin-bottom:8px;">Download APK</h3>
-          <p style="color:var(--coast-muted); font-size:0.92rem; line-height:1.5;">Download the official KasiGuru installer directly or scan the QR Code on your mobile phone.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <h3 style="font-size:1.2rem; font-weight:800; color:var(--coast-ink); margin-bottom:8px;">Install &amp; Set Up</h3>
-          <p style="color:var(--coast-muted); font-size:0.92rem; line-height:1.5;">Enable APK installation on your Android device and configure your personal daily goal.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <h3 style="font-size:1.2rem; font-weight:800; color:var(--coast-ink); margin-bottom:8px;">Learn &amp; Preserve</h3>
-          <p style="color:var(--coast-muted); font-size:0.92rem; line-height:1.5;">Master vocabulary, earn XP, maintain daily streaks, and submit local expressions!</p>
-        </div>
-      </div>
+    <!-- 3. Heritage -->
+    <section id="heritage">
+      <div class="sec-head"><h2>Why it matters</h2></div>
+      <p class="pull">A language is not lost all at once. It goes one word at a time.</p>
+      <p class="sec-lede">Kasiguranin is spoken in Casiguran, Aurora, and the people who speak it best are the oldest people in town. KasiGuru exists to put the language somewhere it can be found later &mdash; by a child in Casiguran, or by a grandchild somewhere else entirely. The app is free and always will be, and the dictionary is open whether or not you ever install it.</p>
     </section>
 
-    <!-- Section 5: Prominent Footer Download CTA Card -->
-    <section id="download-section" class="section-wrapper">
-      <div class="download-hub-card">
-        <div style="margin-bottom:1rem;">
-          <iconsax-icon name="document-download" type="bulk" size="56" color="var(--play-purple-start)"></iconsax-icon>
-        </div>
-        <h2 style="font-size:2.2rem; font-weight:900; margin-bottom:8px; color:var(--coast-ink);">Ready to Learn Kasiguranin?</h2>
-        <p style="color:var(--play-purple-start); font-size:1.1rem; font-weight:800; margin-bottom:2rem;" id="store-version-tag" role="status" aria-live="polite">
-          Checking for the latest version…
-        </p>
+    <!-- 4. Social proof. Deliberately empty: real quotes only, supplied by the project. -->
+    <section id="voices">
+      <div class="sec-head"><h2>From the community</h2></div>
+      <div class="slot">
+        <b>Reserved for real voices</b>
+        <p>Testimonials from actual users, teachers and elders belong here. This slot is deliberately empty until those quotes exist &mdash; the same rule the project already applies to illustration. Nothing invented ships on this page.</p>
+      </div>
+    </section>
+  </div>
 
+  <!-- 5. Download -->
+  <div class="download-hub" id="download-section">
+    <div class="wrap hub-grid">
+      <div>
+        <h2>Start with one word.</h2>
+        <p id="store-version-tag" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
         <a id="store-download-btn" href="kasiguru-latest.apk" download class="download-btn-large">
-          <iconsax-icon name="document-download" type="bulk" size="22" color="#FFFFFF"></iconsax-icon>
+          <iconsax-icon name="document-download" type="bulk" size="20" color="currentColor"></iconsax-icon>
           <span>Download APK</span>
         </a>
-
-        <div style="margin-top:2.5rem; padding-top:2rem; border-top:1px solid var(--border-color);">
-          <p style="font-size:0.9rem; font-weight:700; color:var(--coast-muted); margin-bottom:14px;">Scan QR Code to Download directly on your Mobile Phone:</p>
-          <div class="qr-container">
-            <canvas id="qr-canvas"></canvas>
-          </div>
-        </div>
       </div>
-    </section>
+      <div class="qr-panel">
+        <canvas id="qr-canvas" width="336" height="336" aria-label="QR code linking to the KasiGuru APK download"></canvas>
+        <p>Scan to download on your phone</p>
+      </div>
+    </div>
+  </div>
+</main>
 
-  </main>
+<footer>
+  <div class="wrap">KasiGuru &middot; A language preservation project for Casiguran, Aurora</div>
+</footer>
 
-  <script type="module" src="js/download.js"></script>
+<script type="module" src="js/download.js"></script>
+<script>
+  /* Scroll-spy. The nav previously indicated nothing about where you were on the page.
+     IntersectionObserver rather than a scroll handler, so this costs nothing per frame. */
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#site-nav a[href^="#"]'));
+    var byId = {};
+    links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+    var targets = Object.keys(byId)
+      .map(function (id) { return document.getElementById(id); })
+      .filter(Boolean);
+    if (!targets.length || !('IntersectionObserver' in window)) return;
+
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0; });
+      var best = null, bestRatio = 0;
+      Object.keys(visible).forEach(function (id) {
+        if (visible[id] > bestRatio) { bestRatio = visible[id]; best = id; }
+      });
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best && byId[best]) byId[best].setAttribute('aria-current', 'true');
+    }, { rootMargin: '-20% 0px -60% 0px', threshold: [0, 0.25, 0.5, 1] });
+
+    targets.forEach(function (t) { io.observe(t); });
+  })();
+</script>
 </body>
 </html>
