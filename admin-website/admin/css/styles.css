@@ -4,7 +4,10 @@
    Palette, scaffold and component conventions mirror the public download
    site (../download/css/styles.css) so both properties read as one product.
 */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+/* Nunito carries headings and every number that celebrates; DM Sans carries body, labels and
+   controls. Both are on Google Fonts, which the app also requires — it loads them through the
+   downloadable-font provider, so the two surfaces stay in step. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap');
 
 :root {
   /* Violet Sheet. DESIGN.md is the authority for the app and both web surfaces, and it supersedes
@@ -74,7 +77,16 @@
   --radius-card: 28px;
   --radius-tile: 20px;
   --radius-pill: 999px;
-  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Kept so every existing rule keeps resolving; it now means the body face. */
+  --font-family: var(--font-body);
+
+  /* Tracking tightens as size grows — the optical correction that makes large type look evenly
+     set. Ported from the app's scale, where display sits at -1.0sp and labels at +0.4sp. */
+  --track-display: -0.025em;
+  --track-headline: -0.018em;
+  --track-title: -0.01em;
 
   /* Minimum comfortable tap target, per Material. */
   --tap-min: 48px;
@@ -156,7 +168,7 @@ header {
 .logo-badge {
   background: var(--grad-purple);
   color: #FFFFFF;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-weight: 900;
   font-size: 1.1rem;
   padding: 6px 14px;
@@ -304,7 +316,7 @@ main {
 }
 
 .hero-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 2.4rem;
   font-weight: 900;
   color: #FFFFFF;
@@ -445,7 +457,7 @@ main {
 }
 
 .bento-info p {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 900;
   color: #FFFFFF;
@@ -473,7 +485,7 @@ main {
 }
 
 .panel-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 800;
   color: var(--coast-ink);
@@ -728,7 +740,7 @@ tr:hover td {
 
 /* ── Section Headings ── */
 .section-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 2.2rem;
   font-weight: 900;
   color: var(--coast-ink);
@@ -857,4 +869,103 @@ a, button, .btn {
 
 .table-responsive td:first-child {
   min-width: 180px;
+}
+
+
+/* ── Type, aligned to the app ──────────────────────────────────────────────
+   Headings take the display face; body text stays on the body face. Added
+   rather than substituted, so nothing that already had a family loses it. */
+h1, h2, h3, h4,
+.hero-marketing-title, .section-title, .feature-card-title,
+.logo-badge, .logo-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+h1, .hero-marketing-title { font-weight: 900; letter-spacing: var(--track-display); }
+h2, .section-title { letter-spacing: var(--track-headline); }
+h3, h4, .feature-card-title { letter-spacing: var(--track-title); }
+
+/* Numbers that celebrate — version, counts, XP — read as display, and tabular so
+   a column of them lines up. */
+.num, .hero-spec-pill span, #store-version-tag {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ── Clay ──────────────────────────────────────────────────────────────────
+   The app's press language, built from its three real layers rather than faked
+   with one drop shadow:
+     1. the lip        — a solid darker side offset below the face, zero blur
+     2. the lit top    — a white gradient across the upper 45% of the face
+     3. the cast shadow — violet-tinted, never neutral grey
+   Pressing compresses the lip and drops the face. The release is slower than the
+   press (180ms vs 120ms), which is what makes it read as weight rather than as a
+   colour change.
+
+   Reserved for things you press. Content surfaces stay flat. */
+
+.download-btn-large,
+.store-link-btn,
+.btn-gold {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.22), transparent 45%);
+  box-shadow:
+    0 5px 0 0 var(--clay-lip, #4034A8),
+    0 10px 22px -4px rgba(91, 76, 219, 0.30);
+  transform: translateY(0);
+  transition:
+    transform 180ms cubic-bezier(0.05, 0.7, 0.1, 1),
+    box-shadow 180ms cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.download-btn-large { background-color: #5B4CDB; --clay-lip: #4034A8; }
+.store-link-btn     { background-color: #5B4CDB; --clay-lip: #4034A8; }
+
+/* Gold carries ink, never white: it measures 1.83:1 against white, below even the
+   non-text floor. Ink on gold measures 9.00. */
+.btn-gold {
+  background-color: #FFB020;
+  --clay-lip: #D98200;
+  color: #1F1B3A;
+}
+
+/* The lift on hover is replaced by the press on activate. A button that rises when
+   you point at it and rises further when you press it is telling the wrong story. */
+.download-btn-large:hover,
+.store-link-btn:hover,
+.btn-gold:hover {
+  transform: translateY(0);
+}
+
+.download-btn-large:active,
+.store-link-btn:active,
+.btn-gold:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 1px 0 0 var(--clay-lip, #4034A8),
+    0 3px 8px -2px rgba(91, 76, 219, 0.30);
+  transition-duration: 120ms;
+}
+
+.download-btn-large:focus-visible,
+.store-link-btn:focus-visible,
+.btn-gold:focus-visible {
+  outline: 3px solid #5B4CDB;
+  outline-offset: 3px;
+}
+
+/* The lip sits outside the box model, so a button in a tight stack needs to
+   reserve its own space or it crowds whatever follows. */
+.hero-cta-group .download-btn-large { margin-bottom: 5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* A contract, not a courtesy: the pressed state must still be reached, just
+     instantly. Nothing may depend on the animation having run. */
+  .download-btn-large,
+  .store-link-btn,
+  .btn-gold { transition-duration: 0.01ms; }
 }
