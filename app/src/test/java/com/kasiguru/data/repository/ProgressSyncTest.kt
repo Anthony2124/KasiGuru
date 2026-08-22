@@ -10,14 +10,54 @@ class ProgressSyncTest {
         totalXp: Int = 0,
         wordsLearned: Int = 0,
         fullName: String = "",
-        updatedAt: Long = 0
+        updatedAt: Long = 0,
+        submissionsMade: Int = 0
     ) = UserProgressEntity(
         userName = fullName.ifBlank { "Learner" },
         fullName = fullName,
         totalXp = totalXp,
         wordsLearned = wordsLearned,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        submissionsMade = submissionsMade
     )
+
+    /**
+     * submissionsMade was absent from toMap() entirely, so it never reached Firestore and
+     * toEntity() — which rebuilds the whole entity rather than patching it — restored it as
+     * 0. Signing in on a second device, or reinstalling and restoring from cloud, silently
+     * wiped the user's contribution count and the "First Contribution" badge progress
+     * resting on it.
+     *
+     * These pin the behaviour that fixes it: a lifetime counter, merged like the others.
+     */
+    @Test
+    fun submissionsMadeTakesTheMaxLikeOtherLifetimeCounters() {
+        val local = progress(submissionsMade = 7, updatedAt = 1)
+        val remote = progress(submissionsMade = 3, updatedAt = 2)
+
+        // Remote is newer, but a lifetime total must never move backwards just because the
+        // other side synced more recently — that is exactly how the count got lost before.
+        assertEquals(7, mergeProgress(local, remote).submissionsMade)
+        assertEquals(7, mergeProgress(remote, local).submissionsMade)
+    }
+
+    @Test
+    fun submissionsMadeSurvivesARemoteWithNoSubmissions() {
+        // The realistic reinstall case: cloud predates the field, local has the real count.
+        val local = progress(submissionsMade = 4, updatedAt = 1)
+        val freshRemote = progress(submissionsMade = 0, updatedAt = 99)
+
+        assertEquals(4, mergeProgress(local, freshRemote).submissionsMade)
+    }
+
+    @Test
+    fun submissionsMadeRoundTripsThroughTheCloudPayload() {
+        // toMap -> toEntity is the actual path a second device takes. If the field is
+        // missing from either half it silently reads back as 0.
+        val original = progress(submissionsMade = 12, updatedAt = 5)
+
+        assertEquals(12, toEntity(toMap(original)).submissionsMade)
+    }
 
     @Test
     fun countersTakeTheMax() {

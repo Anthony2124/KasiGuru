@@ -94,35 +94,21 @@ class FirestoreSyncManager @Inject constructor(
         }
     }
 
-    private suspend fun shouldSync(): Boolean {
-        // An empty local dictionary means a fresh install (or cleared data) that has
-        // nothing to read offline, so it always syncs regardless of the interval.
+    private suspend fun shouldSync(): Boolean = isDueForSync(
         // Counted rather than fetched — a full pull reads every row anyway, and there is
         // no reason to pay for that when it won't run.
-        if (vocabularyDao.getTotalCountDirect() == 0) return true
+        hasLocalContent = vocabularyDao.getTotalCountDirect() > 0,
+        lastRunAt = userPreferencesRepository.lastContentSyncAtOnce(),
+        now = System.currentTimeMillis(),
+        intervalMs = MIN_SYNC_INTERVAL_MS
+    )
 
-        val lastSync = userPreferencesRepository.lastContentSyncAtOnce()
-        if (lastSync == 0L) return true
-
-        val elapsed = System.currentTimeMillis() - lastSync
-        // A clock moved backwards (timezone change, manual set) would otherwise wedge
-        // the throttle shut until real time caught up.
-        if (elapsed < 0) return true
-
-        return elapsed >= MIN_SYNC_INTERVAL_MS
-    }
-
-    private suspend fun shouldFullReconcile(): Boolean {
-        if (vocabularyDao.getTotalCountDirect() == 0) return true
-
-        val lastFull = userPreferencesRepository.lastFullReconcileAtOnce()
-        if (lastFull == 0L) return true
-
-        val elapsed = System.currentTimeMillis() - lastFull
-        if (elapsed < 0) return true
-
-        return elapsed >= FULL_RECONCILE_INTERVAL_MS
-    }
+    private suspend fun shouldFullReconcile(): Boolean = isDueForSync(
+        hasLocalContent = vocabularyDao.getTotalCountDirect() > 0,
+        lastRunAt = userPreferencesRepository.lastFullReconcileAtOnce(),
+        now = System.currentTimeMillis(),
+        intervalMs = FULL_RECONCILE_INTERVAL_MS
+    )
 
     /**
      * Reads the collection, incrementally when possible.
@@ -242,4 +228,40 @@ class FirestoreSyncManager @Inject constructor(
             storyDao.insertAll(storiesToSave)
         }
     }
+}
+
+/**
+ * Whether an interval-gated sync pass is due. Pure, so it can be unit-tested without a
+ * Firestore instance or a DAO — the same reason [com.kasiguru.data.repository.mergeProgress]
+ * lives outside its manager.
+ *
+ * Both the six-hour content pull and the weekly full reconcile run this identical decision
+ * with different intervals. Sharing it means the awkward cases below are reasoned about once
+ * rather than duplicated and drifting apart.
+ *
+ * @param hasLocalContent false on a fresh install or after the user clears app data, where
+ *   there is nothing to read offline and the interval must not apply.
+ * @param lastRunAt epoch millis of the last successful pass; 0 means never.
+ * @param now current epoch millis.
+ * @param intervalMs minimum gap between passes.
+ */
+internal fun isDueForSync(
+    hasLocalContent: Boolean,
+    lastRunAt: Long,
+    now: Long,
+    intervalMs: Long
+): Boolean {
+    // Nothing usable offline — sync regardless of how recently one ran.
+    if (!hasLocalContent) return true
+
+    // Never run before.
+    if (lastRunAt <= 0L) return true
+
+    val elapsed = now - lastRunAt
+    // A clock moved backwards (timezone change, manual set, or a device whose clock was
+    // wrong when the timestamp was written) would otherwise wedge the throttle shut until
+    // real time caught up to the stored future timestamp — potentially years.
+    if (elapsed < 0) return true
+
+    return elapsed >= intervalMs
 }
