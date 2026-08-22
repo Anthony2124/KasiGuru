@@ -2337,36 +2337,42 @@ window.autoCategorizeWords = async function() {
   }))) return;
 
   // ── Expanded keyword lists based on actual dictionary contents ──
-  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'ankle', 'nape', 'navel', 'gills', 'fin', 'tail', 'fur', 'mustache', 'saliva', 'pus', 'urine', 'excrement', 'penis', 'vagina', 'erection', 'corpse', 'bald', 'curly', 'guts', 'swollen', 'cough', 'sneeze', 'burp', 'yawn', 'breath', 'medicine', 'healthy', 'pain', 'itch', 'blind', 'deaf', 'spit', 'flatulence', 'vommit'];
-  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fishbone', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'louse', 'octopus', 'squid', 'water buffalo', 'nest', 'whale'];
-  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'salty', 'sugar', 'sugarcane', 'sweet', 'sour', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup', 'ginger', 'vegetables', 'hungry', 'thirsty', 'full after eating', 'swallow', 'boil'];
-  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday', 'first', 'last', 'once', 'often', 'now', 'count', 'many', 'few', 'some'];
-  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'fog', 'flood', 'monsoon', 'shower'];
-  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'flower', 'grass', 'root', 'seed', 'plant', 'island', 'sand', 'mud', 'dust', 'moss', 'ashes', 'ember', 'fire', 'smoke', 'foam', 'torch', 'gold'];
-  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'sibling', 'orphan', 'lastborn', 'female', 'male', 'slave', 'companion', 'god'];
-  const emotionsWords = ['anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good', 'scared', 'ugly', 'sleepy', 'awake', 'dream', 'soul', 'alive', 'foul-smelling', 'fragrant', 'wrong'];
-  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow', 'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft', 'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat', 'full', 'new', 'old', 'wet', 'dirty', 'near', 'far'];
-  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle'];
-  const houseWords = ['house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse', 'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same'];
+  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'ankle', 'nape', 'navel', 'gills', 'fin', 'tail', 'fur', 'mustache', 'saliva', 'pus', 'urine', 'excrement', 'penis', 'vagina', 'erection', 'corpse', 'bald', 'curly', 'guts', 'swollen', 'cough', 'sneeze', 'burp', 'yawn', 'breath', 'medicine', 'healthy', 'pain', 'itch', 'blind', 'deaf', 'spit', 'flatulence', 'vommit', 'sweat', 'tear', 'disease'];
+  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fishbone', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'louse', 'octopus', 'squid', 'water buffalo', 'nest', 'whale', 'cow', 'cat', 'horse', 'sheep', 'duck', 'goose', 'tiger', 'lion', 'bear', 'eagle', 'owl', 'bee', 'wasp', 'fly', 'bug', 'beetle', 'elephant', 'giraffe', 'ape', 'gorilla', 'tortoise', 'clam', 'oyster', 'snail', 'slug', 'leech'];
+  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'salty', 'sugar', 'sugarcane', 'sweet', 'sour', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup', 'ginger', 'vegetables', 'hungry', 'thirsty', 'full after eating', 'swallow', 'boil', 'pork', 'beef', 'spicy', 'bland', 'tasty', 'delicious', 'meal', 'snack', 'breakfast', 'lunch', 'dinner'];
+  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday', 'first', 'last', 'once', 'often', 'now', 'count', 'many', 'few', 'some', 'hundred', 'thousand', 'million', 'second', 'minute', 'hour', 'always', 'never', 'sometimes'];
+  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'fog', 'flood', 'monsoon', 'shower', 'storm', 'typhoon', 'hurricane', 'breeze', 'snow', 'ice', 'freeze'];
+  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'flower', 'grass', 'root', 'seed', 'plant', 'island', 'sand', 'mud', 'dust', 'moss', 'ashes', 'ember', 'fire', 'smoke', 'foam', 'torch', 'gold', 'silver', 'copper', 'iron', 'wood', 'hill', 'valley', 'cave', 'lake', 'pond', 'waterfall', 'swamp', 'jungle'];
+  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'sibling', 'orphan', 'lastborn', 'female', 'male', 'slave', 'companion', 'god', 'aunt', 'nephew', 'niece', 'grandfather', 'grandmother', 'grandchild', 'ancestor', 'friend', 'enemy', 'guest', 'stranger', 'neighbor'];
+  const emotionsWords = ['anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good', 'scared', 'ugly', 'sleepy', 'awake', 'dream', 'soul', 'alive', 'foul-smelling', 'fragrant', 'wrong', 'right', 'true', 'false', 'lie', 'truth', 'shame', 'proud', 'brave', 'coward', 'smart', 'stupid', 'crazy', 'calm', 'nervous', 'excited', 'bored', 'lonely', 'jealous'];
+  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow', 'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft', 'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat', 'full', 'new', 'old', 'wet', 'dirty', 'near', 'far', 'brown', 'purple', 'orange', 'pink', 'heavy'];
+  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle', 'knife', 'sword', 'shield', 'bow', 'hammer', 'saw', 'rope', 'string', 'thread', 'cloth', 'weaving', 'loom', 'pot', 'pan', 'bowl', 'plate', 'cup', 'spoon', 'fork'];
+  const houseWords = ['house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse', 'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same', 'home', 'room', 'floor', 'wall', 'window', 'bed', 'blanket', 'table', 'chair', 'village', 'town', 'city', 'path', 'trail', 'bridge'];
+  const greetingsWords = ['goodbye', 'how', 'how much', 'what', 'when', 'where', 'who', 'why', 'not', 'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right', 'over there', 'middle', 'other', 'shadow', 'hello', 'hi', 'welcome', 'thank you', 'thanks', 'please', 'sorry', 'excuse me', 'yes', 'no', 'okay'];
 
-  const greetingsWords = ['goodbye', 'how', 'how much', 'what', 'when', 'where', 'who', 'why', 'not', 'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right', 'over there', 'middle', 'other,', 'shadow'];
+  function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   function getCategory(eng) {
       const e = (eng || '').toLowerCase();
-      // Check specific categories first, broader ones later
-      if (bodyWords.some(w => e.includes(w))) return 'Body Parts & Health';
-      if (animalsWords.some(w => e.includes(w))) return 'Animals & Wildlife';
-      if (foodWords.some(w => e.includes(w))) return 'Food & Dining';
-      if (houseWords.some(w => e.includes(w))) return 'House & Daily Life';
-      if (numbersWords.some(w => e.includes(w))) return 'Numbers & Time';
-      if (weatherWords.some(w => e.includes(w))) return 'Weather & Climate';
-      if (natureWords.some(w => e.includes(w))) return 'Nature & Environment';
-      if (familyWords.some(w => e.includes(w))) return 'Family & People';
-      if (emotionsWords.some(w => e.includes(w))) return 'Emotions & Feelings';
-      if (toolsWords.some(w => e.includes(w))) return 'Occupations & Tools';
+      
+      const matches = (words) => words.some(w => new RegExp('\\b' + escapeRegex(w) + '\\b', 'i').test(e));
 
-      if (colorsWords.some(w => e.includes(w))) return 'Colors & Shapes';
-      if (greetingsWords.some(w => e.includes(w))) return 'Greetings & Essentials';
+      // Check specific categories first, broader ones later
+      if (matches(bodyWords)) return 'Body Parts & Health';
+      if (matches(animalsWords)) return 'Animals & Wildlife';
+      if (matches(foodWords)) return 'Food & Dining';
+      if (matches(houseWords)) return 'House & Daily Life';
+      if (matches(numbersWords)) return 'Numbers & Time';
+      if (matches(weatherWords)) return 'Weather & Climate';
+      if (matches(natureWords)) return 'Nature & Environment';
+      if (matches(familyWords)) return 'Family & People';
+      if (matches(emotionsWords)) return 'Emotions & Feelings';
+      if (matches(toolsWords)) return 'Occupations & Tools';
+      if (matches(colorsWords)) return 'Colors & Shapes';
+      if (matches(greetingsWords)) return 'Greetings & Essentials';
+      
       return 'General';
   }
 
