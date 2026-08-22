@@ -22,6 +22,16 @@
         '<path d="M15 5L19 9" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
         '<path d="M17 3L21 7" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
       '</svg>',
+      'volume-high': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M4 9H7L12 5V19L7 15H4C3.45 15 3 14.55 3 14V10C3 9.45 3.45 9 4 9Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M15.3 9.4C16.4 10.5 16.4 13.5 15.3 14.6" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<path d="M18.3 6.9C20.4 9 20.4 15 18.3 17.1" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+      'repeat': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="3" y="4" width="18" height="16" rx="5" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M8 10H14.5M14.5 10L12.5 8M14.5 10L12.5 12" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M16 14H9.5M9.5 14L11.5 12M9.5 14L11.5 16" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>',
       'logout': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M4 5C4 3.9 4.9 3 6 3H11V21H6C4.9 21 4 20.1 4 19V5Z" fill="' + c + '" opacity="0.35"/>' +
         '<path d="M16 8L20 12L16 16" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +

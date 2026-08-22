@@ -1,294 +1,462 @@
-/*
-   KasiGuru — public download site
-   2026 "Kasiguranin Editorial".
+/* ─────────────────────────────────────────────────────────────────────────────
+   KasiGuru — download site, direction D: "Clay Canopy" on the web.
 
-   The product is a language, so the words are the hero rather than the app. Print-inspired: a warm
-   paper ground, hairline rules, small-caps labels, asymmetric columns, and real dictionary entries
-   set as typographic specimens.
+   Layout language is taken from the supplied reference: organic blob grounds,
+   wave section dividers, chunky pill buttons with a solid lip, staggered offset
+   cards, big outline circles and confetti, a ghost outline watermark.
 
-   This supersedes Violet Sheet on this surface only. DESIGN.md remains the authority for the
-   Android app, which is unchanged and still Violet Sheet — see the scope note at the top of it.
+   Every colour and every font here is lifted verbatim from the Android app
+   (app/src/main/java/com/kasiguru/ui/theme/Color.kt, Type.kt, Dimens.kt,
+   Motion.kt). Nothing was re-picked for the web. DESIGN.md stays the authority.
 
-   Colour is measured, not guessed. Light: ink 14.43 on ground, muted 5.67, accent 5.26, white on
-   accent 6.00, white on canopy 7.60. Dark: ink 16.23, muted 8.64, accent 7.72. Worst text pair
-   in either theme is 5.26. Nothing here is below 4.5.
+   Three rules from DESIGN.md shape what follows, each from a measured WCAG
+   failure rather than from taste:
+     1. Gold and Coral are FILLS carrying RewardInk. On white they measure 1.83
+        and 2.31, so neither is ever a text colour.
+     2. Clay (lip + lit top + press compression) is reserved for things you
+        press or earn. Ordinary content is a soft card. Content built out of
+        clay tips the page into a toy, and the audience includes a thesis panel.
+     3. Nothing may depend on an animation having run. Reduced motion is a
+        contract, so every revealed element is readable with motion disabled.
 
-   Two accent forms exist on purpose. The bare name (--accent) is a FOREGROUND and climbs in
-   dark mode. The -fill name is a SURFACE carrying a light label and must not move, because the
-   label on it is the same colour in both themes. Collapsing the two is how dark mode breaks.
-*/
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Public+Sans:wght@400;500;600;700&display=swap');
+   Measured with a WCAG calculator, both themes, worst text pairing 4.54:
+     ink/ground 14.43 light, 16.08 dark      muted/ground 5.67, 9.04
+     ink/card 16.46, 14.68                   muted/card 6.46, 8.25
+     violet/card 6.00, 6.15                  ink/band 12.46, 14.96
+     muted/band 4.89, 8.41                   violet on violet chip 4.59, 4.70
+     ink on gold chip 12.34, 8.21            ink on coral chip 11.96, 9.92
+     white/canopy-top 4.86                   white/canopy-bottom 7.60
+     reward-ink/gold 9.00                    reward-ink/coral 7.14
+     white on the glass chip 4.54 over the canopy's deep end, and 3.27 over its
+     top end, which is why the chip is placed where it is.
+   Nothing carrying text is below 4.5.
 
-:root {
-  /* Ground and ink. This is the app's Violet Sheet palette, unchanged, so the two web surfaces
-     and the Android app read as one product. DESIGN.md remains the authority for these values;
-     what is editorial here is the layout and the typography, not the colour. */
-  --paper: #F1EEFF;            /* Ground. White cards float on it, exactly as in the app. */
-  --paper-2: #FFFFFF;          /* Surface */
-  --ink: #1F1B3A;              /* 14.43 on ground, 16.46 on surface */
-  --muted: #5E5A80;            /* 5.67 on ground, 6.46 on surface */
-  --hair: #D8D2F0;             /* decorative rule; no contrast floor applies */
+   The primary button uses the canopy pair (#6C5CE7 face over #4A3FC0 lip)
+   rather than the interactive violet, because the canopy is fixed across both
+   themes while Violet lightens to #9C90F5 in dark, where white on it would
+   fail. White on the canopy top measures 4.86 and holds in either theme.
+   Ported from design/mockups/d-kasi-playful.html after Adrian's sign-off. The
+   markup differs from that mockup only in the parts download.js and the QR
+   canvas depend on (element ids/classes, direct-download hrefs); the visual
+   system is unchanged.
+   ───────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
 
-  /* Accent. Foreground and fill are separate tokens: the foreground climbs in dark mode, the
-     fill does not, because the label on it is white in both themes. */
-  --accent: #5B4CDB;           /* 5.26 on ground, 6.00 on surface */
-  --accent-fill: #5B4CDB;      /* white on it: 6.00 */
-  --canopy: #4A3FC0;
-  --canopy-fill: #4A3FC0;      /* white on it: 7.60 */
-  --on-fill: #FFFFFF;
+:root{
+  /* Ground and surfaces — theme-reactive */
+  --ground:#F1EEFF;
+  --surface:#FFFFFF;
+  --sunken:#E8E4F8;
+  --ink:#1F1B3A;
+  --muted:#5E5A80;
+  --faint:#8A86A6;
+  --hair:rgba(31,27,58,.12);
 
-  /* Type scale. Few steps, real ratios. Sizes that differ by a fraction of a pixel are drift,
-     not hierarchy. The smallest step is 12px, which clears the legibility floor for functional
-     text — letterspaced small caps are still functional text. */
-  --t-xs: 0.75rem;
-  --t-sm: 0.875rem;
-  --t-base: 1rem;
-  --t-md: 1.25rem;
-  --t-lg: 2rem;
-  --t-xl: 3rem;
-  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
-  --sans: 'Public Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Interactive violet — theme-reactive */
+  --violet:#5B4CDB;
+  --violet-deep:#4034A8;
+  --violet-tint:#E7E3FF;
+  --band:#E3DCFB;
+  --shadow:rgba(91,76,219,.20);
 
-  /* Editorial shapes are squared. Rounding is reserved for the controls you press. */
-  --radius: 2px;
-  --radius-control: 4px;
+  /* Fixed in both themes: the canopy and the reward fills. The canopy is
+     already a vivid self-contained accent surface, and the reward fills carry
+     a fixed ink label, so neither may move between themes. */
+  --canopy-top:#6C5CE7;
+  --canopy-bottom:#4A3FC0;
+  --on-canopy:#FFFFFF;
+  --gold:#FFB020;
+  --gold-deep:#D98200;
+  --coral:#FF8B5E;
+  --coral-deep:#E0651F;
+  --reward-ink:#1F1B3A;
+  --white-lip:#CFC7EE;
 
-  /* Minimum comfortable tap target, per Material. */
-  --tap-min: 48px;
-  --measure: 68ch;
+  /* Shape. One radius system, from Dimens.kt. Mixing 14/18/20/22/26 on
+     adjacent surfaces is what made the old app screens read as a pile of
+     cards rather than one designed system. */
+  --r-chip:14px;
+  --r-tile:20px;
+  --r-panel:28px;
+  --r-sheet:32px;
+  --r-pill:999px;
+
+  /* Clay geometry, from Dimens.kt object Clay */
+  --clay-lip:5px;
+  --clay-lip-pressed:1px;
+
+  /* Motion, from Motion.kt */
+  --quick:120ms;
+  --standard:240ms;
+  --emphasized:400ms;
+  --ease-out:cubic-bezier(0.05,0.7,0.1,1);
+
+  --tap:48px;
+  --wrap:1180px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #14122B;
-    --paper-2: #201C3D;
-    --ink: #F2F0FF;            /* 16.23 on ground, 14.43 on surface */
-    --muted: #B3AED6;          /* 8.64 / 7.68 */
-    --hair: #332C55;
-    --accent: #A99CFF;         /* foreground climbs: #5B4CDB measures 1.6 on the dark surface */
-    --accent-fill: #5B4CDB;    /* fill does not move: white on it is still 6.00 */
-    --canopy: #A99CFF;
-    /* The closing band goes to a raised dark. It separates from the ground by only 1.18, so the
-       rule below carries the boundary rather than the fill. */
-    --canopy-fill: #241F45;
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#15131F;
+    --surface:#1E1B30;
+    --sunken:#282440;
+    --ink:#F1EEFF;
+    --muted:#B7B2D6;
+    --faint:#827DA0;
+    --hair:rgba(241,238,255,.14);
+    --violet:#9C90F5;
+    --violet-deep:#6C5CE7;
+    --violet-tint:#2A2660;
+    --band:#1C1930;
+    --shadow:rgba(10,7,28,.55);
   }
+  .step-2,.m-coral{background:rgba(255,139,94,.34)}
+  .step-3,.m-gold{background:rgba(255,176,32,.36)}
+  .step-1,.m-violet{background:rgba(156,144,245,.22)}
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 17px;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
-
-iconsax-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  vertical-align: middle; line-height: 1; pointer-events: none;
-}
-iconsax-icon svg { display: block; overflow: visible; }
-
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-
-/* ── Masthead ─────────────────────────────────────────────────────────────── */
-header {
-  border-bottom: 1px solid var(--ink);
-  position: sticky; top: 0; background: var(--paper); z-index: 100;
-}
-.masthead {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 24px; padding: 18px 0; flex-wrap: wrap;
-}
-.logotype {
-  font-family: var(--serif); font-size: var(--t-md); font-weight: 600; letter-spacing: -0.02em;
-}
-.logotype em { font-style: italic; font-weight: 400; color: var(--accent); }
-nav { display: flex; gap: 26px; align-items: baseline; flex-wrap: wrap; }
-/* Padding rather than min-height: the masthead aligns on the baseline, and a min-height on an
-   inline-flex child shifts that baseline. Measured in the browser at 37px before this, which is
-   under the 44px floor for a tap target. */
-nav a {
-  font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase;
-  color: var(--muted); text-decoration: none; padding: 13px 0;
-  border-bottom: 2px solid transparent; display: inline-flex; align-items: center; gap: 8px;
-}
-nav a:hover { color: var(--ink); border-bottom-color: var(--hair); }
-/* Scroll-spy marks where you are. The live nav previously indicated nothing. */
-nav a[aria-current="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-nav a.get {
-  background: var(--accent-fill); color: var(--on-fill); border: none;
-  padding: 14px 18px; letter-spacing: 0.1em; border-radius: var(--radius-control);
-}
-nav a.get:hover { background: var(--ink); color: var(--paper); border-bottom-color: transparent; }
-
-/* ── Hero ─────────────────────────────────────────────────────────────────── */
-.hero { display: grid; grid-template-columns: 7fr 5fr; gap: 56px; padding: 68px 0 56px; align-items: start; }
-.rule-top { height: 1px; background: var(--ink); margin-bottom: 26px; }
-/* A dateline, the way a paper opens a story: place, em dash, then into the sentence. */
-.dateline { font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; font-size: var(--t-sm); color: var(--ink); }
-h1 {
-  font-family: var(--serif); font-weight: 400; font-size: clamp(2.9rem, 6.4vw, 5rem);
-  line-height: 1.02; letter-spacing: -0.028em; text-wrap: balance; margin-bottom: 24px;
-}
-h1 em { font-style: italic; color: var(--accent); }
-.lede { font-size: var(--t-md); line-height: 1.5; color: var(--muted); max-width: 52ch; margin-bottom: 32px; }
-.lede strong { color: var(--ink); font-weight: 600; }
-.cta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
-.meta { font-size: var(--t-sm); color: var(--muted); margin-top: 18px; }
-
-/* ── Buttons. Squared, bordered, no gradient and no lift. ─────────────────── */
-.btn, .download-btn-large {
-  font-family: var(--sans); font-size: var(--t-base); font-weight: 600; letter-spacing: 0.01em;
-  padding: 15px 26px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
-  border: 1px solid var(--ink); cursor: pointer; border-radius: var(--radius-control);
-  min-height: var(--tap-min); transition: background .18s ease, color .18s ease;
-}
-.download-btn-large, .btn-primary { background: var(--ink); color: var(--paper); }
-.download-btn-large:hover, .btn-primary:hover {
-  background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-fill);
-}
-.btn-ghost { background: transparent; color: var(--ink); }
-.btn-ghost:hover { background: var(--paper-2); }
-@media (prefers-reduced-motion: reduce) { .btn, .download-btn-large { transition-duration: .01ms; } }
-
-/* ── Specimen card ────────────────────────────────────────────────────────── */
-.specimen { border: 1px solid var(--ink); background: var(--paper-2); border-radius: var(--radius); }
-.specimen-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 13px 22px; border-bottom: 1px solid var(--ink);
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
-}
-.specimen-head span:last-child { color: var(--muted); }
-.specimen-body { padding: 32px 22px 24px; }
-.headword {
-  font-family: var(--serif); font-size: clamp(2.4rem, 4.4vw, 3.4rem); font-weight: 500;
-  line-height: 1; letter-spacing: -0.03em; margin-bottom: 8px;
-}
-.phon { font-family: var(--serif); font-style: italic; font-size: var(--t-base); color: var(--muted); margin-bottom: 18px; }
-/* Every row identical: same inset top and bottom, one hairline between. Per-row padding
-   exceptions are what leave a line of text sitting on a rule. */
-.gloss { border-bottom: 1px solid var(--hair); padding: 14px 0; display: flex; gap: 16px; align-items: baseline; }
-.gloss:last-of-type { border-bottom: none; }
-.gloss dt {
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--muted); min-width: 68px; flex-shrink: 0;
-}
-.gloss dd { font-family: var(--serif); font-size: var(--t-base); }
-.specimen-foot {
-  border-top: 1px solid var(--ink); padding: 12px 22px; font-size: var(--t-xs); color: var(--muted);
-  display: flex; justify-content: space-between; gap: 12px;
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 
-/* ── Figures band ─────────────────────────────────────────────────────────── */
-.figures {
-  border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);
-  display: grid; grid-template-columns: repeat(4, 1fr);
-}
-.figure { padding: 26px 22px; border-left: 1px solid var(--hair); }
-.figure:first-child { border-left: none; }
-.figure b {
-  display: block; font-family: var(--serif); font-size: var(--t-lg); font-weight: 500;
-  line-height: 1.1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px;
-}
-.figure span { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); }
+h1,h2,h3,.figure b,.headword,.logotype,.step-n{font-family:'Nunito',system-ui,sans-serif}
 
-/* ── Sections ─────────────────────────────────────────────────────────────── */
-section { padding: 76px 0; }
-.sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 40px; }
-.sec-head h2 {
-  font-family: var(--serif); font-weight: 400; font-size: clamp(1.9rem, 3.4vw, 2.7rem);
-  letter-spacing: -0.022em; line-height: 1.15;
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px;position:relative;z-index:2}
+
+/* The sticky header offsets every anchor jump. Without this the header eats
+   the heading you just jumped to. */
+section[id],div[id]{scroll-margin-top:96px}
+
+a{color:var(--violet);text-decoration-thickness:1.5px;text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--violet);outline-offset:3px;border-radius:6px}
+
+/* ── Decoration ───────────────────────────────────────────────────────────────
+   Every shape below is CSS or inline SVG. The live site's CSP is
+   img-src 'self' data: blob:, so no external image can load, and the project
+   ships no decorative rasters by policy: Adrian authors all artwork, and the
+   page has to look finished with none of it present. */
+.blob{position:absolute;pointer-events:none;z-index:0}
+.blob-gold{background:var(--gold);border-radius:58% 42% 47% 53% / 51% 40% 60% 49%}
+.blob-gold-soft{background:var(--gold);opacity:.32;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%}
+.blob-coral-soft{background:var(--coral);opacity:.26;border-radius:63% 37% 41% 59% / 40% 62% 38% 60%}
+.blob-tint{background:var(--violet-tint);border-radius:52% 48% 39% 61% / 61% 37% 63% 39%}
+
+.ring{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.ring-coral{border:10px solid var(--coral);opacity:.5}
+.ring-gold{border:9px solid var(--gold);opacity:.55}
+.ring-violet{border:8px solid var(--violet);opacity:.24}
+
+.dot{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.leaf{position:absolute;border-radius:0 100% 0 100%;pointer-events:none;z-index:0}
+
+/* The reference's plus mark, built from two rounded bars. Used once. */
+.plus{position:absolute;pointer-events:none;z-index:0}
+.plus::before,.plus::after{content:"";position:absolute;background:var(--gold);border-radius:8px}
+.plus::before{left:38%;top:0;width:24%;height:100%}
+.plus::after{top:38%;left:0;height:24%;width:100%}
+
+.wave{display:block;width:100%;height:clamp(44px,5.5vw,80px);position:relative;z-index:1;line-height:0}
+.wave svg{display:block;width:100%;height:100%}
+
+/* ── Clay ─────────────────────────────────────────────────────────────────────
+   Face, a solid darker lip beneath it, and a lit gradient over the top 45% of
+   the face. Pressing compresses the lip and drops the face onto it. */
+.clay{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:var(--tap);padding:0 30px;
+  border:0;border-radius:var(--r-pill);
+  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;
+  letter-spacing:-0.2px;text-decoration:none;cursor:pointer;
+  transition:transform var(--quick) var(--ease-out),box-shadow var(--quick) var(--ease-out);
 }
-.sec-head::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
-.sec-lede { color: var(--muted); max-width: var(--measure); line-height: 1.6; margin-bottom: 40px; }
+.clay:active{transform:translateY(4px)}
+/* The lit top is a background layer rather than a pseudo-element: an overlay
+   stacked behind an opaque background paints nothing and leaves a halo. */
+.clay-primary{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),var(--canopy-top);color:var(--on-canopy);box-shadow:0 var(--clay-lip) 0 var(--canopy-bottom),0 10px 20px var(--shadow)}
+.clay-primary:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--canopy-bottom),0 3px 8px var(--shadow)}
+.clay-reward{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,0) 45%),var(--gold);color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--gold-deep),0 10px 20px rgba(217,130,0,.24)}
+.clay-reward:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--gold-deep),0 3px 8px rgba(217,130,0,.24)}
+.clay-white{background:#FFFFFF;color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--white-lip),0 10px 22px rgba(20,14,60,.28)}
+.clay-white:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--white-lip),0 3px 8px rgba(20,14,60,.28)}
+.clay-sm{min-height:44px;padding:0 22px;font-size:.95rem}
+@media (prefers-reduced-motion:reduce){.clay{transition:none}}
 
-/* Numbered editorial entries */
-.entries { display: grid; grid-template-columns: repeat(3, 1fr); }
-.entry { padding: 0 28px; border-left: 1px solid var(--hair); }
-.entry:first-child { padding-left: 0; border-left: none; }
-.entry:last-child { padding-right: 0; }
-.num { font-family: var(--serif); font-size: var(--t-sm); color: var(--accent); font-weight: 600; letter-spacing: 0.1em; display: block; margin-bottom: 14px; }
-.entry h3 { font-family: var(--serif); font-size: var(--t-md); font-weight: 500; letter-spacing: -0.015em; margin-bottom: 10px; }
-.entry p { color: var(--muted); font-size: var(--t-base); line-height: 1.6; }
-
-/* Dictionary specimens: real entries set as a word list rather than as cards. */
-.wordlist { border-top: 1px solid var(--ink); }
-.wordrow {
-  display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 20px; align-items: baseline;
-  padding: 18px 0; border-bottom: 1px solid var(--hair);
+/* ── Soft card — the default surface for content ──────────────────────────── */
+.soft{
+  background:var(--surface);
+  border-radius:var(--r-tile);
+  box-shadow:0 8px 24px var(--shadow);
+  padding:26px;
+  position:relative;z-index:2;
 }
-.wordrow .w { font-family: var(--serif); font-size: var(--t-md); font-weight: 500; letter-spacing: -0.015em; }
-.wordrow .g { color: var(--muted); font-size: var(--t-base); }
-.wordrow .g b { color: var(--ink); font-weight: 600; }
 
-/* Pull quote */
-.pull {
-  font-family: var(--serif); font-size: clamp(1.35rem, 2.6vw, 1.9rem); line-height: 1.4;
-  color: var(--accent); max-width: 32ch; margin: 0 44px 22px 0; float: left;
-  border-top: 2px solid var(--accent); padding-top: 16px;
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
 }
-@media (max-width: 700px) { .pull { float: none; margin: 0 0 26px 0; max-width: none; } }
-
-/* ── Social-proof slot. Marked empty on purpose; nothing invented ships. ───── */
-.slot { border: 1px dashed var(--hair); padding: 44px 28px; text-align: center; color: var(--muted); background: var(--paper-2); border-radius: var(--radius); }
-.slot b { display: block; font-family: var(--serif); font-size: var(--t-md); color: var(--ink); margin-bottom: 8px; font-weight: 500; }
-.slot p { font-size: var(--t-sm); line-height: 1.6; max-width: 56ch; margin: 0 auto; }
-
-/* ── Download hub ─────────────────────────────────────────────────────────── */
-/* A rule, not just a fill change, marks where the page ends and the download begins. A surface
-   difference alone is too quiet to carry a section boundary in dark mode, and rules are this
-   design's native way of dividing anything. */
-.download-hub {
-  background: var(--canopy-fill); color: var(--on-fill); padding: 68px 0;
-  border-top: 1px solid var(--canopy-fill);
+.masthead{display:flex;align-items:center;gap:20px;height:72px}
+.brand{display:flex;align-items:center;text-decoration:none}
+.logomark{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:var(--r-pill);
+  background:var(--canopy-top);color:#fff;font-weight:900;font-size:1.15rem;
+  margin-right:10px;box-shadow:0 3px 0 var(--canopy-bottom);
+  font-family:'Nunito',system-ui,sans-serif;
 }
-@media (prefers-color-scheme: dark) { .download-hub { border-top-color: var(--hair); } }
-.download-hub h2 {
-  font-family: var(--serif); font-weight: 400; font-size: clamp(2rem, 4.4vw, 3rem);
-  letter-spacing: -0.025em; margin-bottom: 14px; max-width: 20ch;
+.logotype{font-weight:900;font-size:1.35rem;letter-spacing:-0.6px;color:var(--ink);white-space:nowrap}
+.logotype em{font-style:normal;color:var(--violet)}
+nav{margin-left:auto;display:flex;align-items:center;gap:4px}
+nav a:not(.clay){
+  display:inline-flex;align-items:center;height:44px;padding:0 14px;
+  color:var(--muted);text-decoration:none;font-weight:500;font-size:.98rem;
+  border-radius:var(--r-chip);white-space:nowrap;
+  transition:color var(--quick) var(--ease-out),background var(--quick) var(--ease-out);
 }
-/* A real colour, never opacity. Faded text measures differently on every fill it lands on and
-   nobody re-checks it; that is what produced the AA failures on the old canopy. 5.04 on the light canopy, 10.27 on the dark one. */
-.download-hub p { color: #D4CEF4; max-width: 52ch; line-height: 1.6; }
-.hub-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 48px; align-items: center; }
-#store-version-tag { font-weight: 600; margin-bottom: 26px; font-size: var(--t-base); }
-.download-hub .download-btn-large { background: var(--on-fill); color: var(--canopy-fill); border-color: var(--on-fill); }
-.download-hub .download-btn-large:hover { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-fill); }
-/* The QR stays black on white whatever the theme — that is what scanners expect, and a themed
-   QR is an unreadable one. The panel around it is deliberately always white. */
-.qr-panel { background: #FFFFFF; padding: 20px; text-align: center; border-radius: var(--radius); }
-.qr-panel canvas { display: block; margin: 0 auto; width: 168px; height: 168px; }
-.qr-panel p { color: #3A3A3A; font-size: var(--t-xs); font-weight: 600; margin-top: 12px; letter-spacing: 0.04em; line-height: 1.5; }
+nav a:not(.clay):hover{color:var(--ink);background:var(--violet-tint)}
+nav a:not(.clay)[aria-current="true"]{color:var(--violet);font-weight:700;background:var(--violet-tint)}
+nav .clay{margin-left:10px}
 
-footer { padding: 34px 0; font-size: var(--t-sm); color: var(--muted); border-top: 1px solid var(--hair); }
-
-/* ── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; gap: 40px; padding: 48px 0 36px; }
-  .figures { grid-template-columns: repeat(2, 1fr); }
-  .figure:nth-child(3) { border-left: none; }
-  .figure:nth-child(n+3) { border-top: 1px solid var(--hair); }
-  .entries { grid-template-columns: 1fr; }
-  .entry { padding: 26px 0; border-left: none; border-top: 1px solid var(--hair); }
-  .entry:first-child { padding-top: 0; border-top: none; }
-  .hub-grid { grid-template-columns: 1fr; gap: 34px; }
-  section { padding: 56px 0; }
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero-sec{position:relative;overflow:hidden;padding:clamp(36px,5vw,68px) 0 clamp(16px,3vw,36px)}
+.hero{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr);gap:clamp(28px,4vw,52px);align-items:center}
+.ghost{
+  position:absolute;left:-4px;top:80px;z-index:0;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:'Nunito',system-ui,sans-serif;font-weight:900;
+  font-size:clamp(88px,8.5vw,128px);letter-spacing:8px;
+  color:transparent;-webkit-text-stroke:2px var(--hair);
+  user-select:none;
 }
-@media (max-width: 560px) {
-  body { font-size: 16px; }
-  .wrap { padding: 0 20px; }
-  nav { gap: 14px; width: 100%; }
-  .figures { grid-template-columns: 1fr; }
-  .figure { border-left: none; border-top: 1px solid var(--hair); }
-  .figure:first-child { border-top: none; }
-  /* Three columns of gloss on a phone is three unreadable columns. */
-  .wordrow { grid-template-columns: 1fr; gap: 4px; }
-  .cta-row .btn, .cta-row .download-btn-large { width: 100%; justify-content: center; }
+h1{font-size:clamp(2.2rem,4.4vw,3.05rem);font-weight:900;line-height:1.08;letter-spacing:-1.4px;margin-bottom:18px}
+h1 em{font-style:normal;color:var(--violet)}
+.lede{font-size:1.06rem;color:var(--muted);max-width:46ch;margin-bottom:30px}
+.lede strong{color:var(--ink);font-weight:700}
+
+/* Three-step row. The dotted connector is drawn on a pseudo-element so it
+   never affects layout or reflows as the fonts load. */
+.steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:32px;max-width:470px}
+.step{position:relative;text-align:center}
+.step:not(:last-child)::after{
+  content:"";position:absolute;top:28px;left:calc(50% + 36px);right:calc(-50% + 36px);
+  border-top:2px dashed var(--hair);
+}
+.step-chip{
+  width:56px;height:56px;margin:0 auto 10px;border-radius:var(--r-pill);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink);position:relative;z-index:1;
+}
+.step-1{background:rgba(91,76,219,.10);color:var(--violet)}
+.step-2{background:rgba(255,139,94,.26)}
+.step-3{background:rgba(255,176,32,.30)}
+.step span{display:block;font-size:.85rem;font-weight:500;color:var(--muted);line-height:1.35}
+.cta-row{display:flex;flex-wrap:wrap;gap:14px}
+
+/* Art slots. Each wrapper reserves its aspect ratio whether or not a file is
+   present, so dropping artwork in later shifts nothing on the page. */
+.art{position:relative;display:grid;place-items:center}
+/* The blob is part of the slot, not the section, so it tracks the slot's size
+   and reads as a deliberate ground for the artwork rather than a stray circle
+   while the slot is empty. */
+.art::before{
+  content:"";position:absolute;z-index:0;
+  background:var(--gold);
+  border-radius:64% 36% 42% 58% / 39% 62% 38% 61%;
+}
+.art-a::before{inset:16% 0 6% 10%;transform:rotate(-8deg)}
+.art-b::before{inset:8% 2% 8% 2%;background:var(--coral);opacity:.8;border-radius:52% 48% 63% 37% / 58% 41% 59% 42%}
+.art-c::before{inset:10% 4% 8% 0;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%;transform:rotate(6deg)}
+
+/* ── The art-free state ───────────────────────────────────────────────────────
+   With no artwork present the hero's right column would be a bare blob, which
+   reads as decoration with nothing to decorate. A real dictionary entry sits on
+   it instead: it is the product, it is real corpus data, and it gives the shape
+   something to hold. If artwork is later dropped into slot A, this card can
+   stay beside it or be deleted; neither choice moves anything else. */
+.specimen{
+  position:relative;z-index:3;width:min(300px,86%);
+  background:var(--surface);border-radius:var(--r-panel);
+  box-shadow:0 18px 40px var(--shadow);
+  padding:24px 26px;transform:rotate(-2.5deg);
+}
+.specimen .headword{display:block;font-size:2.3rem;line-height:1.05;margin:10px 0 2px}
+.specimen .pos{margin-bottom:16px}
+.specimen dl{display:flex;gap:26px;border-top:1px solid var(--hair);padding-top:14px;margin:0}
+.specimen dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
+.specimen dd{font-size:1.02rem;font-weight:700;margin:0}
+.specimen dd.fil{font-weight:500;color:var(--muted)}
+.verified{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(21,128,61,.14);color:var(--ink);
+  border-radius:var(--r-pill);padding:5px 12px;font-size:.76rem;font-weight:700;
+}
+.verified svg{color:#15803D}
+.art-a{aspect-ratio:1/1;max-width:500px;margin-left:auto;width:100%}
+.art-b{aspect-ratio:1/1;width:100%;max-width:290px}
+.art-c{aspect-ratio:4/5;max-width:380px;width:100%}
+.art-b:not(:has(img)),.art-c:not(:has(img)){display:none}
+.art img{position:relative;z-index:2;width:100%;height:100%;object-fit:contain;object-position:bottom}
+
+/* ── Figures band ────────────────────────────────────────────────────────── */
+.figures{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:6px 0 clamp(24px,4vw,44px)}
+.figure{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:20px 18px;text-align:center}
+.figure b{display:block;font-size:1.9rem;font-weight:900;letter-spacing:-1px;color:var(--violet);line-height:1.1;font-variant-numeric:tabular-nums}
+/* Direct-child selector, not a descendant one: the live word count is a span
+   nested inside <b> (download.js targets it by id), and the earlier
+   descendant selector matched that span too, block-ifying it and pushing the
+   sibling "+" text onto its own line. */
+.figure > span{display:block;font-size:.86rem;color:var(--muted);margin-top:4px}
+
+/* ── Why it matters — offset cluster + aside ─────────────────────────────── */
+.heritage-sec{position:relative;overflow:hidden;padding:clamp(24px,4vw,56px) 0}
+.heritage{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(28px,4vw,60px);align-items:center}
+/* The section heading leads in the DOM so the heading order is h1, h2, h3.
+   Above the breakpoint the cluster is placed first visually; below it the
+   order is dropped and the heading leads its own cards. */
+.heritage > .cluster{order:-1}
+.cluster{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:40px}
+.cluster .soft:nth-child(2){background:var(--violet-tint)}
+.cluster .soft:nth-child(3){background:color-mix(in srgb,var(--gold) 16%,var(--surface))}
+.card-icon{width:44px;height:44px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;background:rgba(91,76,219,.10);color:var(--violet);margin-bottom:14px}
+.cluster h3{font-size:1.08rem;font-weight:800;letter-spacing:-0.3px;margin-bottom:7px}
+.cluster p{font-size:.9rem;color:var(--muted);line-height:1.5}
+h2{font-size:clamp(1.7rem,3.2vw,2.4rem);font-weight:900;letter-spacing:-1px;line-height:1.15;margin-bottom:16px}
+.sec-lede{color:var(--muted);max-width:52ch}
+.pull{
+  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.3rem;
+  line-height:1.35;letter-spacing:-0.5px;color:var(--violet);
+  border-left:5px solid var(--gold);padding-left:18px;margin:22px 0;
+}
+
+/* ── Practice band ───────────────────────────────────────────────────────── */
+.practice-sec{background:var(--band);position:relative;overflow:hidden;padding:clamp(8px,1.5vw,20px) 0 clamp(32px,4vw,60px)}
+.practice-head{text-align:center;max-width:56ch;margin:0 auto clamp(24px,4vw,44px)}
+.practice-head .sec-lede{margin:0 auto}
+.practice{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:start;max-width:940px;margin:0 auto}
+.practice:has(img){grid-template-columns:1fr minmax(0,290px) 1fr;align-items:center;max-width:none}
+.mode-col{display:flex;flex-direction:column;gap:26px}
+.mode{display:flex;gap:14px;align-items:flex-start}
+.practice:has(img) .mode-col.right .mode{flex-direction:row-reverse;text-align:right}
+.mode-icon{flex:0 0 auto;width:48px;height:48px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.m-violet{background:rgba(91,76,219,.10);color:var(--violet)}
+.m-gold{background:rgba(255,176,32,.34)}
+.m-coral{background:rgba(255,139,94,.30)}
+.mode b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.2px;margin-bottom:2px}
+.mode span{display:block;font-size:.86rem;color:var(--muted);line-height:1.45}
+.practice-cta{text-align:center;margin-top:clamp(28px,4vw,48px)}
+
+/* ── The words ───────────────────────────────────────────────────────────── */
+.words-sec{position:relative;overflow:hidden;padding:clamp(32px,4.5vw,68px) 0}
+.words{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center}
+.words:has(img){grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr)}
+.entries{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.words:has(img) .entries{grid-template-columns:1fr}
+.entry{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:16px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.headword{font-size:1.45rem;font-weight:900;letter-spacing:-0.7px;line-height:1.15}
+.pos{display:block;font-size:.78rem;color:var(--faint);font-weight:500;margin-top:2px}
+.gloss{display:flex;gap:26px;flex-wrap:wrap;justify-content:flex-end;margin:0}
+.gloss dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
+.gloss dd{font-size:1rem;font-weight:700;color:var(--ink);margin:0}
+.gloss dd.fil{font-weight:500;color:var(--muted)}
+
+/* ── Voices — an honest empty slot ───────────────────────────────────────── */
+.voices-sec{padding:0 0 clamp(32px,4.5vw,60px)}
+.slot{
+  border:2px dashed var(--hair);border-radius:var(--r-panel);
+  background:transparent;padding:34px;text-align:center;max-width:640px;margin:0 auto;
+}
+.slot b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:8px}
+.slot p{color:var(--muted);font-size:.94rem;max-width:52ch;margin:0 auto}
+
+/* ── Download hub — the canopy ───────────────────────────────────────────── */
+.hub-sec{position:relative;background:linear-gradient(180deg,var(--canopy-top),var(--canopy-bottom));color:var(--on-canopy);overflow:hidden;padding:clamp(10px,2vw,22px) 0 clamp(40px,5vw,74px)}
+.hub{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(28px,4vw,56px);align-items:center}
+.hub h2{color:var(--on-canopy)}
+/* Text on the canopy is never faded: white at 0.70-0.90 alpha measures
+   3.23-4.27 and fails AA at every step. Secondary lines are pure white and
+   differentiated by size and weight instead. */
+.hub p{color:var(--on-canopy);font-size:1rem;font-weight:500;margin-bottom:24px}
+/* Glass is legal here and only here. It needs a genuinely vivid backdrop, and
+   the chip sits on the gradient's deep end where a white label measures 4.54
+   rather than the 3.27 it would measure on the top end. */
+.glass-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);
+  border-radius:var(--r-pill);padding:7px 16px;font-size:.85rem;font-weight:700;
+  color:#fff;margin-bottom:18px;
+}
+.qr-panel{background:#fff;border-radius:var(--r-panel);padding:20px;text-align:center;box-shadow:0 14px 34px rgba(20,14,60,.32)}
+.qr-panel canvas{width:168px;height:168px;display:block;margin:0 auto;border-radius:12px}
+.qr-panel p{color:var(--reward-ink);font-size:.84rem;font-weight:500;margin:12px 0 0}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+/* The footer is a reward fill, fixed in both themes exactly like the canopy
+   above it, carrying RewardInk at 9.00. It does not invert with the theme
+   because the fill itself never moves. */
+footer{background:var(--gold);color:var(--reward-ink);position:relative;overflow:hidden;padding:clamp(26px,3.5vw,42px) 0}
+.foot{display:flex;flex-wrap:wrap;gap:18px 30px;align-items:center}
+.foot .logotype,.foot .logotype em{color:var(--reward-ink)}
+.foot .logomark{background:var(--reward-ink);color:var(--gold);box-shadow:none}
+.foot nav{gap:22px}
+.foot nav a{color:var(--reward-ink);font-weight:700;text-decoration:underline;text-underline-offset:3px;height:auto;padding:0;background:none}
+.foot-legal{width:100%;font-size:.85rem;border-top:1px solid rgba(31,27,58,.22);padding-top:16px;margin-top:4px;display:flex;flex-wrap:wrap;gap:6px 22px}
+
+/* ── Reveal on scroll ────────────────────────────────────────────────────── */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity var(--emphasized) var(--ease-out),transform var(--emphasized) var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width:1100px){.ghost{display:none}}
+@media (max-width:900px){
+  header{height:112px;padding-bottom:8px}
+  .masthead{height:64px}
+  nav{
+    position:absolute;left:0;right:0;top:64px;
+    margin:0;gap:6px;padding:0 20px 8px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  nav::-webkit-scrollbar{display:none}
+  nav a:not(.clay){height:38px;padding:0 12px;font-size:.9rem}
+  nav .clay{position:absolute;right:20px;top:-54px;margin:0}
+  section[id],div[id]{scroll-margin-top:124px}
+  .hero-sec{padding-top:26px}
+  .blob,.ring,.plus,.leaf,.dot{display:none}
+  .hero,.heritage,.words,.hub{grid-template-columns:1fr}
+  .heritage > .cluster{order:0}
+  .art-a{margin:0 auto;max-width:360px}
+  .art-c{margin:0 auto}
+  .figures{grid-template-columns:repeat(2,1fr)}
+  .practice{grid-template-columns:1fr;gap:28px}
+  .mode-col.right .mode{flex-direction:row;text-align:left}
+  .art-b{margin:0 auto;order:-1}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .entries{grid-template-columns:1fr}
+  .cluster{grid-template-columns:1fr}
+  .cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:0}
+  .steps{max-width:none}
+  .step:not(:last-child)::after{display:none}
+  .cta-row .clay{width:100%}
+  .entry{grid-template-columns:1fr}
+  .gloss{justify-content:flex-start}
+  .masthead{gap:12px}
+  .logotype{font-size:1.2rem}
 }

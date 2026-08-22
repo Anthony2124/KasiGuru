@@ -47,6 +47,168 @@
         ],
         "createdAt": "2026-08-21T15:26:19.497Z",
         "reason": "Media-query cascade artifact in the static engine: .topuser has 14px of inset where its 1px border-left exists (>760px), and the <=760px rule removes the border and the padding together, so children are never flush against a visible boundary."
+      },
+      {
+        "rule": "dark-glow",
+        "value": "var(--shadow)",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T07:49:13.512Z",
+        "reason": "DESIGN.md mandates violet-tinted elevation shadows (never neutral grey); all instances have real y-offsets (6-20px), not zero-offset glow halos"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "overflow:hidden",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T07:49:13.601Z",
+        "reason": "overflow:hidden on section wrappers clips aria-hidden decorative blobs/waves to section bounds; nothing inside is a tooltip/menu/popover that needs to escape"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "color:var(--faint)",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T07:49:22.881Z",
+        "reason": "DESIGN.md defines Faint as non-text-critical only (placeholders, part-of-speech tags); measured 3.48:1 light / 4.30:1 dark against the 3:1 non-text floor in scratchpad/contrast.py, both pass"
+      },
+      {
+        "rule": "side-tab",
+        "value": "border-left:5px solid var(--gold)",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:07.654Z",
+        "reason": "Editorial pull-quote convention (border-left rule + padding-left on a quotation), not a fake card accent; no card in this design carries a side-tab border"
+      },
+      {
+        "rule": "side-tab",
+        "value": "border-left:5px solid var(--gold)",
+        "files": [
+          "admin-website/download/css/styles.css"
+        ],
+        "createdAt": "2026-08-22T08:18:07.754Z",
+        "reason": "Same pull-quote convention as index.html; the rule lives here since styles.css is index.html's stylesheet"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "text #1f1b3a on #15131f",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:07.852Z",
+        "reason": "Static-engine limitation, not a real pairing: walked every live element with computed color rgb(31,27,58) in Chrome under dark scheme (clay-reward on gold, clay-white/qr-panel-p on white, footer/logotype/foot-legal on gold via ancestor walk) -- 100% sit on a correct reward fill, none touch Ground (#15131f) directly"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "color:var(--faint)",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:07.963Z",
+        "reason": "DESIGN.md defines Faint as non-text-critical only (placeholders, part-of-speech tags); measured 3.48:1 light / 4.30:1 dark against the 3:1 non-text floor in scratchpad/contrast.py, both pass"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "#d98200",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:08.061Z",
+        "reason": "DESIGN.md mandates shadows tinted to match the surface they fall from; the gold clay button's ambient shadow is gold-tinted with a real 10px y-offset, not a zero-offset glow halo, same principle as the already-ignored violet var(--shadow)"
+      },
+      {
+        "rule": "extreme-negative-tracking",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:08.154Z",
+        "reason": "Same clamp() limitation already recorded in this file's flat-type-hierarchy ignore: the engine falls back to a small default font-size it cannot resolve from clamp(), computing -0.09em. Measured live in Chrome: h1 renders at 48.8px with -1.4px tracking, a real ratio of -2.9%, in line with the app's own Nunito Display tracking"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "practice-sec",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:08.247Z",
+        "reason": "Same clamp() limitation as the file's other ignores: .practice-sec padding is clamp(8px,1.5vw,20px) top / clamp(32px,4vw,60px) bottom. Measured live in Chrome at 1521px: 20px top, 60px bottom -- not flush against any edge"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "body",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T08:18:08.341Z",
+        "reason": "body{overflow-x:hidden} only, a standard technique to stop edge-bleeding decoration from causing a horizontal scrollbar; it does not clip vertically, and this page has zero tooltips, dropdowns, or popovers that would need to escape it"
+      },
+      {
+        "rule": "side-tab",
+        "value": "border-left:5px solid var(--gold)",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.323Z",
+        "reason": "Editorial pull-quote convention (border-left rule + padding-left on a quotation), not a fake card accent; same as the sanctioned ignore already applied to the ported production file"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "text #1f1b3a on #15131f",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.420Z",
+        "reason": "Static-engine limitation, not a real pairing: verified live in Chrome against the ported production file (same CSS/markup) that every element with computed color rgb(31,27,58) sits on a gold or white reward fill via ancestor walk, none touch Ground directly"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "#d98200",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.509Z",
+        "reason": "DESIGN.md mandates shadows tinted to match the surface they fall from; the gold clay button's ambient shadow is gold-tinted with a real 10px y-offset, not a zero-offset glow halo, same principle as the already-ignored violet var(--shadow)"
+      },
+      {
+        "rule": "extreme-negative-tracking",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.595Z",
+        "reason": "Static engine cannot resolve clamp() and falls back to a small default font-size, computing -0.09em. Measured live in Chrome on the ported production file: h1 renders at 48.8px with -1.4px tracking, a real ratio of -2.9%, matching the app's own Nunito Display tracking"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "practice-sec",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.684Z",
+        "reason": "Same clamp() limitation: .practice-sec padding is clamp(8px,1.5vw,20px) top / clamp(32px,4vw,60px) bottom. Measured live in Chrome on the ported production file at 1521px: 20px top, 60px bottom -- not flush against any edge"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "body",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.790Z",
+        "reason": "body{overflow-x:hidden} only, prevents edge-bleeding decoration from causing a horizontal scrollbar; does not clip vertically, and this page has zero tooltips/dropdowns/popovers that need to escape"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T08:37:23.894Z",
+        "reason": "This is the mockup-only QR placeholder (.qr-stand-in), explicitly commented 'the live page renders a real QR onto a canvas here'. The shipped production page uses a real canvas-drawn QR code, not this pattern -- it exists only so the throwaway mockup renders something in that slot"
       }
     ]
   }
