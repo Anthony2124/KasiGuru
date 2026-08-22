@@ -3,3 +3,8 @@ node_modules/
 lib/
 *.service-account.json
 *-service-account*.json
+# The name the Firebase console actually gives a generated admin SDK key, which
+# neither pattern above matches: <project>-firebase-adminsdk-<hash>.json. That is
+# the file most likely to be downloaded and dropped in here by hand.
+*firebase-adminsdk*.json
+serviceAccountKey.json

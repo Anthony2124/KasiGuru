@@ -17,6 +17,12 @@ build/
 .cxx
 local.properties
 keystore.properties
+# The signing key itself, not just the properties file pointing at it. Nothing
+# stopped a .jks dropped anywhere in the tree from being committed; losing control
+# of it means anyone can ship an update signed as KasiGuru, and it cannot be
+# rotated for already-installed apps.
+*.jks
+*.keystore
 node_modules/
 backups/
 KasiGuruBackups/
