@@ -490,6 +490,12 @@ internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
     "dailyXpEarned" to p.dailyXpEarned,
     "dailyXpDate" to p.dailyXpDate,
     "titleBadge" to p.titleBadge,
+    // Lifetime contribution counter behind the "First Contribution" badge
+    // (UserProgressRepository.checkAchievements(MetricType.SUBMISSIONS_MADE, ...)). It was
+    // missing here, so it never reached the cloud and toEntity rebuilt it as 0 — a second
+    // device, or a reinstall restoring from cloud, silently wiped the user's submission count
+    // and the badge progress resting on it.
+    "submissionsMade" to p.submissionsMade,
     "updatedAt" to System.currentTimeMillis()
     // password intentionally omitted
 )
@@ -518,6 +524,7 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
     dailyXpEarned = (data["dailyXpEarned"] as? Number)?.toInt() ?: 0,
     dailyXpDate = data["dailyXpDate"] as? String ?: "",
     titleBadge = data["titleBadge"] as? String ?: "Kasiguranin Apprentice",
+    submissionsMade = (data["submissionsMade"] as? Number)?.toInt() ?: 0,
     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
 )
 
@@ -575,6 +582,9 @@ internal fun mergeProgress(
         dailyXpEarned = ledgerXp,
         dailyXpDate = ledgerDate,
         titleBadge = pick(local.titleBadge, remote.titleBadge, remoteNewer),
+        // A lifetime total, so it takes the max like the other counters rather than the
+        // newer side's value — a device that synced before a submission must not undo it.
+        submissionsMade = maxOf(local.submissionsMade, remote.submissionsMade),
         updatedAt = maxOf(local.updatedAt, remote.updatedAt)
     )
 }
