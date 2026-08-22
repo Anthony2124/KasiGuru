@@ -2667,8 +2667,8 @@ window.autoCategorizeWords = async function() {
   vocabulary.forEach(v => {
     const suggestedCat = getCategory(v.english);
     
-    // Force update if it's the deprecated 'Actions (Verbs)' category
-    if (v.category === 'Actions (Verbs)') {
+    // Force update if it's the deprecated 'Actions (Verbs)' or 'Actions & Verbs' category
+    if (v.category === 'Actions (Verbs)' || v.category === 'Actions & Verbs') {
       updates.push({ id: v.id, category: suggestedCat });
     } 
     // Update if it's currently General, or if we want to aggressively categorize everything
