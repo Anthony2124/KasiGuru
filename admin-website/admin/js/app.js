@@ -4,7 +4,7 @@
 import { 
   db, auth,
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, where, onSnapshot, Bytes
+  query, orderBy, where, onSnapshot, Bytes, writeBatch
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
@@ -1891,6 +1891,14 @@ function handleExcelFile(file) {
       }))) return;
 
       let count = 0;
+      let skipped = 0;
+      let batches = [];
+      let currentBatch = writeBatch(db);
+      let operationsInCurrentBatch = 0;
+      
+      const existingWords = new Set(vocabulary.map(v => (v.kasiguranin || '').toLowerCase()));
+      const wordsInThisImport = new Set(); 
+
       for (const rawRow of rawRows) {
         const row = {};
         Object.keys(rawRow).forEach(key => {
@@ -1902,9 +1910,18 @@ function handleExcelFile(file) {
 
         const wordClean = String(kasiguranin).trim();
         if (!wordClean) continue;
+        
+        const wordLower = wordClean.toLowerCase();
+        
+        if (existingWords.has(wordLower) || wordsInThisImport.has(wordLower)) {
+          skipped++;
+          continue;
+        }
+        
+        wordsInThisImport.add(wordLower);
 
         const newDoc = doc(collection(db, "vocabulary"));
-        await setDoc(newDoc, {
+        currentBatch.set(newDoc, {
           kasiguranin: wordClean,
           tagalog: String(row.tagalog || "").trim() || null,
           english: String(row.english || "").trim() || null,
@@ -1913,10 +1930,30 @@ function handleExcelFile(file) {
           importedFromExcel: file.name,
           createdAt: Date.now()
         });
+        
         count++;
+        operationsInCurrentBatch++;
+        
+        if (operationsInCurrentBatch === 490) {
+          batches.push(currentBatch);
+          currentBatch = writeBatch(db);
+          operationsInCurrentBatch = 0;
+        }
       }
 
-      notify(`Successfully imported ${count} Kasiguranin entries into the cloud database!`, 'success');
+      if (operationsInCurrentBatch > 0) {
+        batches.push(currentBatch);
+      }
+
+      if (batches.length > 0) {
+        notify(`Importing ${count} new entries (skipping ${skipped} duplicates)...`, 'success');
+        for (const batch of batches) {
+          await batch.commit();
+        }
+        notify(`Successfully imported ${count} new Kasiguranin entries! Skipped ${skipped} duplicates.`, 'success');
+      } else {
+        notify(`No new entries to import. Skipped ${skipped} duplicates.`, 'success');
+      }
     } catch (err) {
       console.error("Excel Parsing Error:", err);
       notify("Failed to parse Excel file: " + err.message, 'error');
@@ -2174,4 +2211,83 @@ async function logAudit(action, details = {}) {
   }
 }
 
+window.removeDuplicateWords = async function() {
+  if (!(await confirmDialog({
+    title: `Remove Duplicate Words?`,
+    body: `Are you sure you want to scan and remove all duplicate words from the dictionary? This action cannot be undone.`,
+    confirmLabel: 'Remove Duplicates'
+  }))) return;
+
+  const duplicatesToDelete = [];
+  const wordMap = new Map();
+
+  vocabulary.forEach(v => {
+    const wordClean = (v.kasiguranin || '').trim().toLowerCase();
+    if (!wordClean) return;
+    
+    if (!wordMap.has(wordClean)) {
+      wordMap.set(wordClean, [v]);
+    } else {
+      wordMap.get(wordClean).push(v);
+    }
+  });
+
+  wordMap.forEach((docs, word) => {
+    if (docs.length > 1) {
+      docs.sort((a, b) => {
+        const timeA = a.createdAt || 0;
+        const timeB = b.createdAt || 0;
+        return timeB - timeA;
+      });
+      for (let i = 1; i < docs.length; i++) {
+        duplicatesToDelete.push(docs[i].id);
+      }
+    }
+  });
+
+  if (duplicatesToDelete.length === 0) {
+    notify("No duplicates found in the dictionary.", 'success');
+    return;
+  }
+
+  if (!(await confirmDialog({
+    title: `Delete ${duplicatesToDelete.length} duplicates?`,
+    body: `Found ${duplicatesToDelete.length} duplicates. Proceed with deletion?`,
+    confirmLabel: 'Delete'
+  }))) return;
+
+  try {
+    let count = 0;
+    let batches = [];
+    let currentBatch = writeBatch(db);
+    let operations = 0;
+
+    for (const id of duplicatesToDelete) {
+      currentBatch.delete(doc(db, "vocabulary", id));
+      count++;
+      operations++;
+
+      if (operations === 490) {
+        batches.push(currentBatch);
+        currentBatch = writeBatch(db);
+        operations = 0;
+      }
+    }
+
+    if (operations > 0) {
+      batches.push(currentBatch);
+    }
+
+    notify(`Deleting ${count} duplicate entries...`, 'success');
+    for (const batch of batches) {
+      await batch.commit();
+    }
+    
+    await logAudit("vocabulary.remove_duplicates", { count });
+    notify(`Successfully removed ${count} duplicate entries!`, 'success');
+  } catch (e) {
+    console.error("Error removing duplicates:", e);
+    notify("Failed to remove duplicates: " + e.message, 'error');
+  }
+};
 

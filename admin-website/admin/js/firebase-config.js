@@ -16,7 +16,8 @@ import {
   onSnapshot,
   // Bytes carries a story page illustration as raw binary. Base64 in a string field would inflate
   // every picture by a third for an audience that is explicitly data-sensitive.
-  Bytes
+  Bytes,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -50,5 +51,6 @@ export {
   orderBy, 
   where, 
   onSnapshot,
-  Bytes
+  Bytes,
+  writeBatch
 };
