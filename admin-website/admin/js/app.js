@@ -2237,29 +2237,37 @@ window.autoCategorizeWords = async function() {
     confirmLabel: 'Auto-Categorize'
   }))) return;
 
-  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist'];
-  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fly', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm'];
-  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'sugar', 'sweet', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup'];
-  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday'];
-  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind'];
-  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave'];
-  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife'];
-  const emotionsWords = ['anger', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good'];
-  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'round', 'sharp', 'flat', 'long', 'short'];
-  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap'];
+  // ── Expanded keyword lists based on actual dictionary contents ──
+  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'ankle', 'nape', 'navel', 'gills', 'fin', 'tail', 'fur', 'mustache', 'saliva', 'pus', 'urine', 'excrement', 'penis', 'vagina', 'erection', 'corpse', 'bald', 'curly', 'guts', 'swollen', 'cough', 'sneeze', 'burp', 'yawn', 'breath', 'medicine', 'healthy', 'pain', 'itch', 'blind', 'deaf', 'spit', 'flatulence', 'vommit'];
+  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fishbone', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'louse', 'octopus', 'squid', 'water buffalo', 'nest', 'whale'];
+  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'salty', 'sugar', 'sugarcane', 'sweet', 'sour', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup', 'ginger', 'vegetables', 'hungry', 'thirsty', 'full after eating', 'swallow', 'boil'];
+  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday', 'first', 'last', 'once', 'often', 'now', 'count', 'many', 'few', 'some'];
+  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'fog', 'flood', 'monsoon', 'shower'];
+  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'flower', 'grass', 'root', 'seed', 'plant', 'island', 'sand', 'mud', 'dust', 'moss', 'ashes', 'ember', 'fire', 'smoke', 'foam', 'torch', 'gold'];
+  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'sibling', 'orphan', 'lastborn', 'female', 'male', 'slave', 'companion', 'god'];
+  const emotionsWords = ['anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good', 'scared', 'ugly', 'sleepy', 'awake', 'dream', 'soul', 'alive', 'foul-smelling', 'fragrant', 'wrong'];
+  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow', 'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft', 'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat', 'full', 'new', 'old', 'wet', 'dirty', 'near', 'far'];
+  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle'];
+  const houseWords = ['house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse', 'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same'];
+  const actionWords = ['ask', 'bite', 'blow', 'break', 'bring', 'burn', 'bury', 'buy', 'carry', 'catch', 'choose', 'climb', 'come', 'cry', 'cut', 'dance', 'demolish', 'do', 'drag', 'drown', 'fall', 'fight', 'find', 'float', 'flow', 'fly', 'forget', 'give', 'go', 'hear', 'hold', 'jump', 'kill', 'kiss', 'know', 'lay', 'leak', 'lie', 'look', 'melt', 'play', 'press', 'pull', 'push', 'put', 'return', 'rinse', 'rub', 'run', 'say', 'scratch', 'see', 'sew', 'shout', 'show', 'singe', 'sink', 'sit', 'sleep', 'smell', 'speak', 'split', 'squeeze', 'stand', 'steal', 'stick', 'stretch', 'strike', 'suck', 'throw', 'tie', 'wake', 'want', 'wash', 'weave', 'bear,'];
+  const greetingsWords = ['goodbye', 'how', 'how much', 'what', 'when', 'where', 'who', 'why', 'not', 'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right', 'over there', 'middle', 'other,', 'shadow'];
 
   function getCategory(eng) {
       const e = (eng || '').toLowerCase();
+      // Check specific categories first, broader ones later
       if (bodyWords.some(w => e.includes(w))) return 'Body Parts & Health';
       if (animalsWords.some(w => e.includes(w))) return 'Animals & Wildlife';
       if (foodWords.some(w => e.includes(w))) return 'Food & Dining';
+      if (houseWords.some(w => e.includes(w))) return 'House & Daily Life';
       if (numbersWords.some(w => e.includes(w))) return 'Numbers & Time';
       if (weatherWords.some(w => e.includes(w))) return 'Weather & Climate';
       if (natureWords.some(w => e.includes(w))) return 'Nature & Environment';
       if (familyWords.some(w => e.includes(w))) return 'Family & People';
       if (emotionsWords.some(w => e.includes(w))) return 'Emotions & Feelings';
-      if (colorsWords.some(w => e.includes(w))) return 'Colors & Shapes';
       if (toolsWords.some(w => e.includes(w))) return 'Occupations & Tools';
+      if (actionWords.some(w => e.includes(w))) return 'Actions (Verbs)';
+      if (colorsWords.some(w => e.includes(w))) return 'Colors & Shapes';
+      if (greetingsWords.some(w => e.includes(w))) return 'Greetings & Essentials';
       return 'General';
   }
 
