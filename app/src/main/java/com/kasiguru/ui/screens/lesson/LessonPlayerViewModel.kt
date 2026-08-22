@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.LessonRepository
+import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.domain.lesson.LessonRef
+import com.kasiguru.util.srs.ReviewRatingMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +51,7 @@ data class LessonUiState(
 @HiltViewModel
 class LessonPlayerViewModel @Inject constructor(
     private val lessonRepository: LessonRepository,
+    private val vocabularyRepository: VocabularyRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -69,6 +72,22 @@ class LessonPlayerViewModel @Inject constructor(
     /** Exercises already solved, tracked by queue identity rather than position. */
     private val solved = mutableSetOf<Int>()
 
+    /**
+     * Words already sent to SM-2 during this lesson, by row id.
+     *
+     * Rated **once per word per lesson**, not once per exercise. A lesson deliberately revisits each
+     * word in a second modality, and SM-2 assumes its reviews are spaced out — feeding it two
+     * retrievals minutes apart would multiply the interval twice off one sitting and schedule the
+     * word far further out than the learner has earned.
+     */
+    private val ratedWordIds = mutableSetOf<Int>()
+
+    /**
+     * When the current prompt appeared, for [ReviewRatingMapper], which grades partly on latency:
+     * a fast answer is recalled, a slow one is reconstructed, and they deserve different intervals.
+     */
+    private var questionShownAtMs: Long = System.currentTimeMillis()
+
     init {
         load()
     }
@@ -87,6 +106,7 @@ class LessonPlayerViewModel @Inject constructor(
                     isComplete = exercises.isEmpty()
                 )
             }
+            questionShownAtMs = System.currentTimeMillis()
         }
     }
 
@@ -107,6 +127,37 @@ class LessonPlayerViewModel @Inject constructor(
         if (!correct) missedFirstAttempt += identity
 
         _uiState.update { it.copy(isCorrect = correct) }
+
+        recordReview(exercise, correct)
+    }
+
+    /**
+     * Feeds a lesson answer into spaced repetition.
+     *
+     * Lessons are the app's main path — the home screen's primary call to action — and they used to
+     * schedule nothing at all. Only the six games and the flashcard deck ever called SM-2, so a
+     * learner could work through lesson after lesson and still open Review to an empty deck, because
+     * no word had ever been given a next-review date. Every retrieval is evidence about memory; this
+     * makes the main path produce that evidence like every other surface does.
+     *
+     * Deliberately first attempt only. A requeued retry is answered seconds after seeing the correct
+     * answer, so it measures short-term echo rather than recall, and letting it overwrite the first
+     * attempt would turn every miss into a success.
+     */
+    private fun recordReview(exercise: Exercise, correct: Boolean) {
+        val wordId = exercise.word.id
+        if (!ratedWordIds.add(wordId)) return
+
+        val elapsedMs = System.currentTimeMillis() - questionShownAtMs
+        val rating = ReviewRatingMapper.ratingForAnswer(correct, elapsedMs)
+
+        viewModelScope.launch {
+            // Re-read rather than reusing the entity captured when the lesson loaded: the same word
+            // may have been reviewed in a game since, and writing a stale copy would roll back its
+            // schedule.
+            val current = vocabularyRepository.getVocabularyById(wordId) ?: exercise.word
+            vocabularyRepository.processWordReview(current, rating)
+        }
     }
 
     /** Advances past the feedback: forward on a correct answer, requeue on a wrong one. */
@@ -140,6 +191,8 @@ class LessonPlayerViewModel @Inject constructor(
                     solvedCount = solved.size
                 )
             }
+            // The next prompt is on screen now; latency is measured from here.
+            questionShownAtMs = System.currentTimeMillis()
         }
     }
 

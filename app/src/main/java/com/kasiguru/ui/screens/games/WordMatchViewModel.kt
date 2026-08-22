@@ -54,7 +54,11 @@ class WordMatchViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
             
-            var words = vocabularyRepository.getFreshWords(totalInitialQuestions)
+            // Review-first, then new material. Every answer below writes an SM-2 schedule via
+            // processWordReview; selecting purely by timesReviewed meant that schedule was never
+            // read back, so a word about to be forgotten was no likelier to come up than any
+            // other. See VocabularyRepository.buildPracticeRound for the mix.
+            var words = vocabularyRepository.getPracticeWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
                 words = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()

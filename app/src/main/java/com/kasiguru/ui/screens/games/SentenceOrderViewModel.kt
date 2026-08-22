@@ -237,17 +237,32 @@ class SentenceOrderViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch {
-            // Match sentence tokens to vocabulary entities and trigger SM-2 update
-            val allVocab = vocabularyRepository.getAllVocabulary().first()
-            for (rawToken in currentQuestion.correctKasiguraninWords) {
-                val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "")
-                val matched = allVocab.firstOrNull {
-                    it.kasiguranin.equals(cleanToken, ignoreCase = true) ||
-                            it.neutralForm.equals(cleanToken, ignoreCase = true)
-                }
-                if (matched != null) {
-                    vocabularyRepository.processWordReview(matched, rating)
+        // Feeds SM-2 only on success, and only ever as a mild positive.
+        //
+        // This game tests word *order*, not word *meaning*, so the evidence it produces about any
+        // individual word is asymmetric. Ordering the sentence correctly does show the learner
+        // recognised each word in context — weak but real positive evidence. Getting the order
+        // wrong shows nothing about vocabulary at all: someone can know every word perfectly and
+        // still misplace the enclitic.
+        //
+        // Previously every token in the sentence was written with the shared rating, so one fast
+        // correct sentence stamped EASY on five or six words at once — inflating their intervals
+        // far beyond what a single ordering task earns — and one wrong sentence stamped AGAIN on
+        // all of them, wiping the schedule of words the learner may well have known. GOOD rather
+        // than the latency-derived rating for the same reason: how fast a sentence is assembled
+        // measures syntax fluency, not how fast any one word was recalled.
+        if (isCorrect) {
+            viewModelScope.launch {
+                val allVocab = vocabularyRepository.getAllVocabulary().first()
+                for (rawToken in currentQuestion.correctKasiguraninWords) {
+                    val cleanToken = rawToken.replace(Regex("[^a-zA-ZáéíóúəÁÉÍÓÚƏ\\-]"), "")
+                    val matched = allVocab.firstOrNull {
+                        it.kasiguranin.equals(cleanToken, ignoreCase = true) ||
+                                it.neutralForm.equals(cleanToken, ignoreCase = true)
+                    }
+                    if (matched != null) {
+                        vocabularyRepository.processWordReview(matched, ReviewRating.GOOD)
+                    }
                 }
             }
         }

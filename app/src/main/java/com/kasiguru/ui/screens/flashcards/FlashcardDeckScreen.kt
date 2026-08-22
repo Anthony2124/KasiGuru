@@ -58,6 +58,17 @@ fun FlashcardDeckScreen(
         return
     }
 
+    // An empty schedule is spaced repetition working, not a deck to celebrate finishing. Kept
+    // separate from the completion state below, which used to render "Daily Deck Complete! You
+    // reviewed 0 flashcards" on a day with nothing due.
+    if (uiState.isNothingDue) {
+        NothingDueState(
+            onPractiseAnyway = viewModel::practiseAnyway,
+            onNavigateBack = onNavigateBack
+        )
+        return
+    }
+
     if (uiState.cards.isEmpty() || uiState.isDeckComplete) {
         Box(
             modifier = Modifier
@@ -393,6 +404,95 @@ fun FlashcardDeckScreen(
             }
 
             Spacer(Modifier.height(Space.navBarClearance))
+        }
+    }
+}
+
+/**
+ * Shown when the schedule has nothing for today.
+ *
+ * Deliberately not framed as an error or an empty shelf. Nothing due means the words are resting
+ * at the point where recall is hardest and therefore most durable — coming back tomorrow is the
+ * correct move, and the copy says so rather than nudging the learner into busywork. The practice
+ * option stays available because sometimes people want to study anyway, but it is secondary and
+ * honestly labelled as ahead of schedule.
+ */
+@Composable
+private fun NothingDueState(
+    onPractiseAnyway: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Ground)
+            .padding(Space.gutter),
+        contentAlignment = Alignment.Center
+    ) {
+        SoftCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(Violet.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.TickCircleBold),
+                        contentDescription = null,
+                        tint = Violet,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(Space.md))
+
+                Text(
+                    "You're all caught up",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Ink,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(Space.xs))
+
+                Text(
+                    "No words are due for review today. They're scheduled to come back just before you'd forget them — that spacing is what makes them stick.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(Modifier.height(Space.lg))
+
+                ClayButton(
+                    label = "Back to Learn",
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onNavigateBack()
+                    },
+                    tone = ClayButtonTone.Primary
+                )
+
+                Spacer(Modifier.height(Space.sm))
+
+                ClayButton(
+                    label = "Practise ahead anyway",
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onPractiseAnyway()
+                    },
+                    tone = ClayButtonTone.Quiet
+                )
+            }
         }
     }
 }

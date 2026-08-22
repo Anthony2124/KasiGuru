@@ -9,6 +9,7 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.data.repository.buildPracticeRoundFromPool
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -66,7 +68,10 @@ class FillBlankViewModel @Inject constructor(
             }
 
             questionQueue.clear()
-            questionQueue.addAll(pool.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled())
+            // Review-first within the filtered pool, rather than plain timesReviewed order.
+            questionQueue.addAll(
+                buildPracticeRoundFromPool(pool, LocalDate.now().toString(), totalInitialQuestions)
+            )
             earnedXpTotal = 0
 
             loadNextQuestion()

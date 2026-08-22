@@ -54,7 +54,8 @@ class AudioQuizViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
 
-            var words = vocabularyRepository.getFreshWords(totalInitialQuestions)
+            // Review-first, then new material — see VocabularyRepository.buildPracticeRound.
+            var words = vocabularyRepository.getPracticeWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
                 words = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()

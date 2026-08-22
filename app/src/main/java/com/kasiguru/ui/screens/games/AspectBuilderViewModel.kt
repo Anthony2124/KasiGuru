@@ -8,6 +8,8 @@ import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.data.repository.buildPracticeRoundFromPool
+import java.time.LocalDate
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
@@ -99,13 +101,17 @@ class AspectBuilderViewModel @Inject constructor(
         val aspectList = listOf("Neutral", "Imperfective", "Perfective", "Contemplative")
         val result = mutableListOf<AspectQuestion>()
 
-        val verbs = vocabList.filter {
+        val conjugatable = vocabList.filter {
             it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.imperfectiveForm.isNotBlank() || it.contemplativeForm.isNotBlank()
-        }.sortedBy { it.timesReviewed }
+        }
 
-        if (verbs.isEmpty()) return emptyList()
+        if (conjugatable.isEmpty()) return emptyList()
 
-        for (vocab in verbs.take(questionCount)) {
+        // Review-first within the conjugatable pool, rather than plain timesReviewed order —
+        // this game writes an SM-2 schedule like the others and should read it back too.
+        val verbs = buildPracticeRoundFromPool(conjugatable, LocalDate.now().toString(), questionCount)
+
+        for (vocab in verbs) {
             val aspect = aspectList.random()
             val correct = when (aspect) {
                 "Neutral" -> vocab.neutralForm.ifEmpty { vocab.kasiguranin }

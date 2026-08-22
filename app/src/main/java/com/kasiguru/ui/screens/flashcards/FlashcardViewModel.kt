@@ -7,7 +7,6 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
-import com.kasiguru.util.srs.Sm2Algorithm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +20,18 @@ data class FlashcardUiState(
     val currentIndex: Int = 0,
     val isLoading: Boolean = true,
     val isDeckComplete: Boolean = false,
-    val isRating: Boolean = false
+    val isRating: Boolean = false,
+    /**
+     * Nothing was scheduled for today, as distinct from having worked through a deck.
+     *
+     * These were the same state, which produced "Daily Deck Complete! You reviewed 0 flashcards"
+     * — and before that, the deck quietly filled itself with random words so the screen rarely
+     * admitted an empty schedule at all. An honest empty day is the correct outcome of spaced
+     * repetition working, not a failure to paper over.
+     */
+    val isNothingDue: Boolean = false,
+    /** Reviewed anyway, past the schedule, at the learner's explicit request. */
+    val isExtraPractice: Boolean = false
 )
 
 @HiltViewModel
@@ -29,6 +39,11 @@ class FlashcardViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository
 ) : ViewModel() {
+
+    private companion object {
+        /** Cards per sitting. A cap, not a target — a short honest deck beats a padded one. */
+        const val DECK_SIZE = 10
+    }
 
     private val _uiState = MutableStateFlow(FlashcardUiState())
     val uiState: StateFlow<FlashcardUiState> = _uiState.asStateFlow()
@@ -39,13 +54,43 @@ class FlashcardViewModel @Inject constructor(
 
     private fun loadDeck() {
         viewModelScope.launch {
-            val dueWords = vocabularyRepository.getDueReviewWords(10)
+            // Strict, not getDueReviewWords: the loose query matches nextReviewDate = '' (every
+            // never-seen word) and substitutes random words when nothing is due, so the deck
+            // served ten arbitrary cards while the Learn screen said "Nothing due today". Review
+            // that isn't scheduled isn't review — it's a quiz wearing review's clothes, and it
+            // silently rewrites the schedule for words that were not ready.
+            val dueWords = vocabularyRepository.getDueReviewWordsStrict(DECK_SIZE)
             _uiState.update {
                 it.copy(
                     cards = dueWords,
                     currentIndex = 0,
                     isLoading = false,
-                    isDeckComplete = dueWords.isEmpty()
+                    isDeckComplete = false,
+                    isNothingDue = dueWords.isEmpty(),
+                    isExtraPractice = false
+                )
+            }
+        }
+    }
+
+    /**
+     * Practises words that are not due yet, on request.
+     *
+     * The learner asked for this, so it is not the schedule lying to them. Words are still rated
+     * through SM-2 — an early correct answer legitimately lengthens the interval.
+     */
+    fun practiseAnyway() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val extra = vocabularyRepository.getPracticeWords(DECK_SIZE)
+            _uiState.update {
+                it.copy(
+                    cards = extra,
+                    currentIndex = 0,
+                    isLoading = false,
+                    isDeckComplete = false,
+                    isNothingDue = extra.isEmpty(),
+                    isExtraPractice = extra.isNotEmpty()
                 )
             }
         }
@@ -60,20 +105,16 @@ class FlashcardViewModel @Inject constructor(
         _uiState.update { it.copy(isRating = true) }
 
         viewModelScope.launch {
-            // 1. Run SM-2 SRS calculation
-            val sm2Result = Sm2Algorithm.calculateNextReview(currentCard, rating)
+            // Routed through the repository rather than running SM-2 here. This screen used to
+            // duplicate the calculation and write the entity itself, which meant it set isLearned
+            // without ever calling incrementWordsLearned, awarding the word-learned XP, or
+            // checking category mastery — so a word first mastered on a flashcard raised the row
+            // flag but not the counter the profile displays, and the two drifted apart
+            // permanently. One path for reviews, whatever surface they happen on.
+            vocabularyRepository.processWordReview(currentCard, rating)
 
-            // 2. Update vocabulary entity in database
-            val updatedCard = currentCard.copy(
-                easinessFactor = sm2Result.easinessFactor,
-                intervalDays = sm2Result.intervalDays,
-                nextReviewDate = sm2Result.nextReviewDate,
-                timesReviewed = sm2Result.timesReviewed,
-                isLearned = sm2Result.isLearned
-            )
-            vocabularyRepository.updateVocabulary(updatedCard)
-
-            // 3. Reward XP for reviewing card
+            // Per-card XP for the act of reviewing, on top of any word-learned bonus the
+            // repository awards when a word crosses the threshold.
             val xpGain = when (rating) {
                 ReviewRating.AGAIN -> 2
                 ReviewRating.HARD -> 5
