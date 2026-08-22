@@ -2120,6 +2120,28 @@ function initFormListeners() {
       renderVocabularyTable();
     });
   }
+
+  const inputEnglish = document.getElementById('input-english');
+  const inputPos = document.getElementById('input-part-of-speech');
+  if (inputEnglish && inputPos) {
+    inputEnglish.addEventListener('input', () => {
+      if (!inputPos.value) {
+        const guessed = guessPOS(inputEnglish.value);
+        if (guessed) inputPos.value = guessed;
+      }
+    });
+  }
+
+  const editInputEnglish = document.getElementById('edit-input-english');
+  const editInputPos = document.getElementById('edit-input-part-of-speech');
+  if (editInputEnglish && editInputPos) {
+    editInputEnglish.addEventListener('input', () => {
+      if (!editInputPos.value) {
+        const guessed = guessPOS(editInputEnglish.value);
+        if (guessed) editInputPos.value = guessed;
+      }
+    });
+  }
 }
 
 // Nothing depends on this animation having run: the row is replaced by the next Firestore
@@ -2223,6 +2245,74 @@ window.checkPOS = function() {
   
   const percentage = Math.round((posCount / vocabulary.length) * 100);
   notify(`Parts of Speech Check: ${posCount} out of ${vocabulary.length} words (${percentage}%) have a Part of Speech set.`, 'success');
+};
+
+function guessPOS(eng) {
+  if (!eng) return null;
+  eng = eng.trim().toLowerCase();
+  if (eng.startsWith('to ')) return 'Verb';
+  if (eng.startsWith('a ') || eng.startsWith('an ') || eng.startsWith('the ')) return 'Noun';
+  if (eng.endsWith('ly')) return 'Adverb';
+  if (['i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'this', 'that', 'these', 'those'].includes(eng)) return 'Pronoun';
+  if (['and', 'but', 'or', 'so', 'because', 'although', 'if', 'when', 'while'].includes(eng)) return 'Conjunction / Connector';
+  if (['in', 'on', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'of', 'over', 'under', 'again', 'without'].includes(eng)) return 'Preposition';
+  if (['oh', 'ah', 'wow', 'ouch', 'hey', 'alas', 'yes', 'no'].includes(eng) || eng.endsWith('!')) return 'Interjection';
+  if (eng.match(/^(very|really|quite|too|so|enough|just|almost|only)$/)) return 'Adverb';
+  if (eng.match(/^(what|who|where|when|why|how)$/)) return 'Pronoun';
+  return null;
+}
+
+window.autoAssignPOS = async function() {
+  if (vocabulary.length === 0) {
+    notify("Dictionary is empty, nothing to process.", 'error');
+    return;
+  }
+  
+  if (!(await confirmDialog({
+    title: `Auto-Assign Parts of Speech?`,
+    body: `This will scan all ${vocabulary.length} words and automatically assign a Part of Speech based on their English translation if they don't have one. Proceed?`,
+    confirmLabel: 'Auto-Assign POS'
+  }))) return;
+
+  let updatedCount = 0;
+  let batches = [];
+  let currentBatch = writeBatch(db);
+  let operations = 0;
+
+  for (const v of vocabulary) {
+    if (v.partOfSpeech && v.partOfSpeech.trim() !== '') continue;
+    if (!v.english) continue;
+
+    const pos = guessPOS(v.english);
+    if (pos) {
+      currentBatch.update(doc(db, "vocabulary", v.id), { partOfSpeech: pos, updatedAt: Date.now() });
+      updatedCount++;
+      operations++;
+
+      if (operations === 490) {
+        batches.push(currentBatch);
+        currentBatch = writeBatch(db);
+        operations = 0;
+      }
+    }
+  }
+
+  if (operations > 0) {
+    batches.push(currentBatch);
+  }
+
+  if (updatedCount === 0) {
+    notify("No new Parts of Speech could be automatically assigned.", 'success');
+    return;
+  }
+
+  notify(`Auto-Assigning Part of Speech for ${updatedCount} words...`, 'success');
+  for (const batch of batches) {
+    await batch.commit();
+  }
+  
+  await logAudit("vocabulary.auto_assign_pos", { count: updatedCount });
+  notify(`Successfully assigned Part of Speech to ${updatedCount} words!`, 'success');
 };
 
 window.autoCategorizeWords = async function() {
