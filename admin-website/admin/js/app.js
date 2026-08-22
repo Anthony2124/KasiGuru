@@ -2634,76 +2634,7 @@ window.autoCategorizeWords = async function() {
     'with', 'without', 'about', 'through', 'during', 'before', 'after'
   ];
 
-  // ── Actions & Verbs category ──
-  const actionsWords = [
-    'walk', 'run', 'jump', 'climb', 'crawl', 'swim', 'dive', 'fly', 'fall', 'slip',
-    'slide', 'roll', 'spin', 'turn', 'twist', 'bend', 'stretch', 'reach', 'grab', 'hold',
-    'carry', 'lift', 'push', 'pull', 'drag', 'throw', 'catch', 'drop', 'pick', 'put',
-    'place', 'set', 'lay', 'hang', 'tie', 'bind', 'wrap', 'fold', 'unfold', 'open',
-    'close', 'shut', 'lock', 'unlock', 'break', 'crack', 'crush', 'smash', 'shatter',
-    'tear', 'rip', 'cut', 'carve', 'scrape', 'scratch', 'dig', 'bury', 'plant',
-    'harvest', 'reap', 'sow', 'plow', 'irrigate', 'water', 'weed', 'prune', 'trim',
-    'build', 'construct', 'assemble', 'erect', 'demolish', 'destroy', 'repair', 'fix',
-    'mend', 'restore', 'renovate', 'paint', 'decorate', 'furnish',
-    'hit', 'strike', 'beat', 'punch', 'kick', 'slap', 'whip', 'stab', 'pierce', 'poke',
-    'press', 'squeeze', 'pinch', 'tap', 'knock', 'pound', 'hammer', 'chop', 'split',
-    'fight', 'wrestle', 'attack', 'defend', 'protect', 'guard', 'rescue', 'save',
-    'hunt', 'chase', 'pursue', 'track', 'stalk', 'ambush', 'capture', 'release', 'free',
-    'escape', 'flee', 'hide', 'seek', 'find', 'search', 'look', 'see', 'watch', 'observe',
-    'stare', 'glance', 'peek', 'spy', 'notice', 'recognize', 'identify', 'discover',
-    'hear', 'listen', 'smell', 'sniff', 'taste', 'touch', 'feel', 'sense',
-    'speak', 'talk', 'say', 'tell', 'ask', 'answer', 'reply', 'respond', 'explain',
-    'describe', 'discuss', 'argue', 'debate', 'negotiate', 'agree', 'disagree', 'refuse',
-    'accept', 'reject', 'deny', 'admit', 'confess', 'promise', 'swear', 'vow',
-    'sing', 'dance', 'play', 'drum', 'clap', 'whistle', 'hum', 'chant', 'recite',
-    'read', 'write', 'draw', 'paint', 'sketch', 'engrave', 'inscribe', 'print', 'copy',
-    'learn', 'study', 'teach', 'train', 'practice', 'memorize', 'remember', 'forget',
-    'think', 'believe', 'know', 'understand', 'realize', 'imagine', 'suppose', 'guess',
-    'decide', 'choose', 'select', 'prefer', 'compare', 'judge', 'evaluate', 'measure',
-    'weigh', 'calculate', 'estimate', 'plan', 'prepare', 'arrange', 'organize',
-    'give', 'take', 'receive', 'send', 'deliver', 'distribute', 'share', 'divide',
-    'lend', 'borrow', 'steal', 'rob', 'pay', 'buy', 'sell', 'trade', 'exchange', 'barter',
-    'own', 'possess', 'keep', 'store', 'save', 'collect', 'gather', 'accumulate',
-    'use', 'utilize', 'apply', 'operate', 'handle', 'manage', 'control', 'direct',
-    'lead', 'follow', 'obey', 'command', 'order', 'instruct', 'advise', 'warn',
-    'help', 'assist', 'support', 'serve', 'provide', 'supply', 'offer', 'contribute',
-    'work', 'labor', 'toil', 'earn', 'produce', 'create', 'make', 'manufacture',
-    'invent', 'design', 'develop', 'improve', 'modify', 'change', 'transform', 'convert',
-    'grow', 'increase', 'expand', 'extend', 'spread', 'multiply', 'add', 'combine',
-    'mix', 'blend', 'merge', 'join', 'connect', 'attach', 'fasten', 'glue', 'weld',
-    'separate', 'detach', 'disconnect', 'remove', 'extract', 'withdraw', 'subtract',
-    'reduce', 'shrink', 'decrease', 'diminish', 'fade', 'disappear', 'vanish',
-    'appear', 'emerge', 'arise', 'occur', 'happen', 'exist', 'become', 'remain', 'stay',
-    'go', 'come', 'arrive', 'depart', 'leave', 'return', 'enter', 'exit',
-    'move', 'travel', 'journey', 'wander', 'roam', 'explore', 'navigate', 'cross',
-    'pass', 'approach', 'reach', 'visit', 'meet', 'encounter', 'greet',
-    'wait', 'pause', 'stop', 'rest', 'sleep', 'wake', 'rise', 'stand', 'sit',
-    'lie', 'kneel', 'squat', 'crouch', 'lean', 'recline', 'bow',
-    'start', 'begin', 'commence', 'initiate', 'launch', 'trigger',
-    'end', 'finish', 'complete', 'conclude', 'terminate', 'cease', 'quit',
-    'continue', 'proceed', 'persist', 'endure', 'survive', 'last', 'maintain',
-    'succeed', 'fail', 'win', 'lose', 'compete', 'challenge', 'conquer', 'defeat',
-    'surrender', 'submit', 'yield', 'resist', 'oppose', 'struggle',
-    'try', 'attempt', 'endeavor', 'strive', 'aim', 'intend', 'want', 'wish', 'need',
-    'like', 'enjoy', 'appreciate', 'value', 'treasure', 'cherish',
-    'hate', 'dislike', 'despise', 'loathe', 'detest', 'abhor',
-    'fear', 'dread', 'worry', 'doubt', 'suspect', 'question',
-    'trust', 'rely', 'depend', 'expect', 'anticipate', 'predict', 'foresee',
-    'allow', 'permit', 'forbid', 'prohibit', 'prevent', 'restrict', 'limit',
-    'punish', 'reward', 'praise', 'criticize', 'blame', 'accuse', 'condemn',
-    'forgive', 'pardon', 'excuse', 'apologize', 'regret',
-    'marry', 'divorce', 'adopt', 'raise', 'nurture', 'care',
-    'born', 'live', 'die', 'kill', 'murder', 'slaughter', 'sacrifice',
-    'pray', 'meditate', 'worship', 'bless', 'curse', 'hex',
-    'wash', 'clean', 'scrub', 'rinse', 'wipe', 'sweep', 'polish', 'shine',
-    'pour', 'spill', 'spray', 'splash', 'drip', 'leak', 'flow', 'flood',
-    'burn', 'ignite', 'kindle', 'extinguish', 'douse', 'smother',
-    'dry', 'wet', 'soak', 'dip', 'submerge', 'immerse', 'float', 'sink', 'drown',
-    'wear', 'dress', 'undress', 'strip', 'clothe', 'cover', 'uncover', 'expose',
-    'show', 'display', 'exhibit', 'demonstrate', 'present', 'reveal', 'conceal',
-    'point', 'aim', 'direct', 'guide', 'steer', 'navigate',
-    'count', 'add', 'subtract', 'multiply', 'divide', 'measure', 'weigh'
-  ];
+
 
   function escapeRegex(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -2718,7 +2649,7 @@ window.autoCategorizeWords = async function() {
       if (matches(bodyWords)) return 'Body Parts & Health';
       if (matches(animalsWords)) return 'Animals & Wildlife';
       if (matches(foodWords)) return 'Food & Dining';
-      if (matches(actionsWords)) return 'Actions & Verbs';
+
       if (matches(houseWords)) return 'House & Daily Life';
       if (matches(numbersWords)) return 'Numbers & Time';
       if (matches(weatherWords)) return 'Weather & Climate';
