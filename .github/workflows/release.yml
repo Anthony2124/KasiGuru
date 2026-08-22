@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history and tags: the versionCode bump check reads the previous release
+          # tag's build.gradle.kts, which a default shallow checkout cannot see.
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -27,24 +31,73 @@ jobs:
       - name: Derive version
         id: version
         run: |
+          set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
           NAME="${TAG#v}"
+
           # versionCode must match what's actually baked into the APK by Gradle — read
           # it from the same build.gradle.kts the build itself uses, not an unrelated
           # CI counter, or the in-app update check would compare against the wrong number.
-          CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)
-          if [ -z "$CODE" ]; then
-            echo "Could not read versionCode from app/build.gradle.kts" >&2
+          #
+          # Anchored to the start of the line and required to match exactly once. The
+          # previous unanchored grep took whatever came first in the file, so a comment
+          # or a second build flavour mentioning versionCode would silently have been
+          # published as the release's build number.
+          CODE_MATCHES=$(grep -cP '^\s*versionCode\s*=\s*[0-9]+' app/build.gradle.kts || true)
+          if [ "$CODE_MATCHES" != "1" ]; then
+            echo "Expected exactly one versionCode assignment in app/build.gradle.kts, found $CODE_MATCHES" >&2
             exit 1
           fi
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          CODE=$(grep -oP '^\s*versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)
 
-          GRADLE_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          GRADLE_NAME=$(grep -oP '^\s*versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
           if [ "$GRADLE_NAME" != "$NAME" ]; then
             echo "Tag $TAG doesn't match app/build.gradle.kts's versionName ($GRADLE_NAME) — bump it before tagging." >&2
             exit 1
           fi
+
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Releasing $NAME (versionCode $CODE)"
+
+      - name: Check versionCode was bumped
+        run: |
+          set -euo pipefail
+          CODE="${{ steps.version.outputs.code }}"
+
+          # Only versionName was checked before. Shipping a new versionName on a stale
+          # versionCode produces an APK Android refuses to install over the existing one,
+          # and an in-app update check — which compares versionCode, not name — that never
+          # fires. Both failures surface after release, to users, not here.
+          PREV_TAG=$(git tag --list 'v*.*.*' --sort=-v:refname \
+            | grep -v "^${GITHUB_REF_NAME}$" | head -n1 || true)
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No earlier release tag to compare against; skipping bump check."
+            exit 0
+          fi
+
+          PREV_CODE=$(git show "$PREV_TAG:app/build.gradle.kts" \
+            | grep -oP '^\s*versionCode\s*=\s*\K[0-9]+' | head -n1 || true)
+          if [ -z "$PREV_CODE" ]; then
+            echo "Could not read versionCode from $PREV_TAG; skipping bump check."
+            exit 0
+          fi
+
+          if [ "$CODE" -le "$PREV_CODE" ]; then
+            echo "versionCode $CODE is not greater than $PREV_TAG's $PREV_CODE — bump it before tagging." >&2
+            exit 1
+          fi
+          echo "versionCode $CODE > $PREV_TAG's $PREV_CODE"
+
+      # A tag build previously ran no tests at all: lint and unit tests lived only in
+      # ci.yml, which triggers on pushes to main and pull requests, never on tags. So a
+      # tagged commit could ship without a single test having run against it.
+      - name: Lint
+        run: ./gradlew lintDebug
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest
 
       - name: Restore signing keystore
         run: |
@@ -58,6 +111,24 @@ jobs:
 
       - name: Build signed release APK
         run: ./gradlew assembleRelease
+
+      # app/build.gradle.kts resolves the release signingConfig with
+      # signingConfigs.findByName("release"), which returns null — yielding an *unsigned*
+      # APK rather than a build failure — if keystore.properties is missing or unusable.
+      # Nothing downstream checked, so an unsigned artifact would have been copied to the
+      # download site and announced in app_releases. Users cannot install it.
+      - name: Verify the APK is signed
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -f "$APK" || { echo "Release APK missing at $APK" >&2; exit 1; }
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f \
+            | sort -V | tail -n1)
+          test -n "$APKSIGNER" || { echo "apksigner not found in $ANDROID_HOME/build-tools" >&2; exit 1; }
+
+          "$APKSIGNER" verify --print-certs "$APK"
+          echo "APK signature verified"
 
       - name: Remove signing material
         if: always()
@@ -73,7 +144,18 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
           cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-latest.apk"
 
+      # Dependencies are installed *before* the Vercel deploy on purpose. This step and
+      # the publish below are the two halves of a release that can disagree: once the
+      # site is live, an npm failure here would leave the download page serving the new
+      # APK while app_releases still names the old version — the in-app update check
+      # reporting "up to date" against a build users can already download. Doing the
+      # fallible, side-effect-free half first shrinks that window to the Firestore write.
+      - name: Install publish dependencies
+        working-directory: functions
+        run: npm install --omit=dev
+
       - name: Deploy download site to Vercel
+        id: deploy
         working-directory: admin-website/download
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -83,12 +165,32 @@ jobs:
           VERCEL_PROJECT_ID: prj_CBpxCvC3RwQryEkGMIYhAm2DJOWi
         run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
 
+      # Confirms the deploy actually serves this build before Firestore is told it exists.
+      # Announcing a release whose APK 404s is the one ordering mistake worse than the
+      # mislabelling above, because the app would prompt users toward a broken download.
+      - name: Verify the published APK is reachable
+        run: |
+          set -euo pipefail
+          URL="https://download-woad-iota.vercel.app/kasiguru-latest.apk"
+          for attempt in 1 2 3 4 5; do
+            CODE=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 60 "$URL" || echo "000")
+            if [ "$CODE" = "200" ]; then
+              echo "$URL is live (HTTP $CODE)"
+              exit 0
+            fi
+            echo "attempt $attempt: HTTP $CODE — waiting for the deploy to propagate"
+            sleep 15
+          done
+          echo "$URL never returned 200; refusing to announce this release." >&2
+          exit 1
+
       - name: Publish app_releases doc
         working-directory: functions
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          npm install --omit=dev
+          # Dependencies were installed in an earlier step, before the site went live.
+          #
           # apkUrl points at the unversioned alias, not this release's own versioned
           # filename. Every deploy of the download site carries only the newest APK, so
           # a versioned URL stored today is guaranteed to 404 the moment the *next*
@@ -99,3 +201,16 @@ jobs:
             "${{ steps.version.outputs.code }}" \
             "${{ steps.version.outputs.name }}" \
             "https://download-woad-iota.vercel.app/kasiguru-latest.apk"
+
+      # Only when the site actually went live — a lint or build failure never deployed
+      # anything and must not be reported as half-published. Nothing here can roll Vercel
+      # back, but a release that got this far must not fail without naming the fix.
+      - name: Report a half-published release
+        if: failure() && steps.deploy.outcome == 'success'
+        run: |
+          echo "::error title=Release is half-published::The download site is serving \
+          v${{ steps.version.outputs.name }} but the app_releases document was not \
+          written. The in-app update check will report 'up to date' until it is. Re-run \
+          this job, or from functions/ run: node publish_release.js \
+          ${{ steps.version.outputs.code }} ${{ steps.version.outputs.name }} \
+          https://download-woad-iota.vercel.app/kasiguru-latest.apk"
