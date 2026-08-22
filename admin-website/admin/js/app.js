@@ -2337,18 +2337,373 @@ window.autoCategorizeWords = async function() {
   }))) return;
 
   // ── Expanded keyword lists based on actual dictionary contents ──
-  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist', 'ankle', 'nape', 'navel', 'gills', 'fin', 'tail', 'fur', 'mustache', 'saliva', 'pus', 'urine', 'excrement', 'penis', 'vagina', 'erection', 'corpse', 'bald', 'curly', 'guts', 'swollen', 'cough', 'sneeze', 'burp', 'yawn', 'breath', 'medicine', 'healthy', 'pain', 'itch', 'blind', 'deaf', 'spit', 'flatulence', 'vommit', 'sweat', 'tear', 'disease'];
-  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fishbone', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm', 'bat', 'louse', 'octopus', 'squid', 'water buffalo', 'nest', 'whale', 'cow', 'cat', 'horse', 'sheep', 'duck', 'goose', 'tiger', 'lion', 'bear', 'eagle', 'owl', 'bee', 'wasp', 'fly', 'bug', 'beetle', 'elephant', 'giraffe', 'ape', 'gorilla', 'tortoise', 'clam', 'oyster', 'snail', 'slug', 'leech'];
-  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'salty', 'sugar', 'sugarcane', 'sweet', 'sour', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup', 'ginger', 'vegetables', 'hungry', 'thirsty', 'full after eating', 'swallow', 'boil', 'pork', 'beef', 'spicy', 'bland', 'tasty', 'delicious', 'meal', 'snack', 'breakfast', 'lunch', 'dinner'];
-  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday', 'first', 'last', 'once', 'often', 'now', 'count', 'many', 'few', 'some', 'hundred', 'thousand', 'million', 'second', 'minute', 'hour', 'always', 'never', 'sometimes'];
-  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind', 'fog', 'flood', 'monsoon', 'shower', 'storm', 'typhoon', 'hurricane', 'breeze', 'snow', 'ice', 'freeze'];
-  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave', 'flower', 'grass', 'root', 'seed', 'plant', 'island', 'sand', 'mud', 'dust', 'moss', 'ashes', 'ember', 'fire', 'smoke', 'foam', 'torch', 'gold', 'silver', 'copper', 'iron', 'wood', 'hill', 'valley', 'cave', 'lake', 'pond', 'waterfall', 'swamp', 'jungle'];
-  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife', 'sibling', 'orphan', 'lastborn', 'female', 'male', 'slave', 'companion', 'god', 'aunt', 'nephew', 'niece', 'grandfather', 'grandmother', 'grandchild', 'ancestor', 'friend', 'enemy', 'guest', 'stranger', 'neighbor'];
-  const emotionsWords = ['anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good', 'scared', 'ugly', 'sleepy', 'awake', 'dream', 'soul', 'alive', 'foul-smelling', 'fragrant', 'wrong', 'right', 'true', 'false', 'lie', 'truth', 'shame', 'proud', 'brave', 'coward', 'smart', 'stupid', 'crazy', 'calm', 'nervous', 'excited', 'bored', 'lonely', 'jealous'];
-  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow', 'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft', 'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat', 'full', 'new', 'old', 'wet', 'dirty', 'near', 'far', 'brown', 'purple', 'orange', 'pink', 'heavy'];
-  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle', 'knife', 'sword', 'shield', 'bow', 'hammer', 'saw', 'rope', 'string', 'thread', 'cloth', 'weaving', 'loom', 'pot', 'pan', 'bowl', 'plate', 'cup', 'spoon', 'fork'];
-  const houseWords = ['house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse', 'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same', 'home', 'room', 'floor', 'wall', 'window', 'bed', 'blanket', 'table', 'chair', 'village', 'town', 'city', 'path', 'trail', 'bridge'];
-  const greetingsWords = ['goodbye', 'how', 'how much', 'what', 'when', 'where', 'who', 'why', 'not', 'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right', 'over there', 'middle', 'other', 'shadow', 'hello', 'hi', 'welcome', 'thank you', 'thanks', 'please', 'sorry', 'excuse me', 'yes', 'no', 'okay'];
+  const bodyWords = [
+    'arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast',
+    'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash',
+    'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel',
+    'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle',
+    'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach',
+    'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist',
+    'ankle', 'nape', 'navel', 'gills', 'fur', 'mustache', 'saliva', 'pus', 'urine',
+    'excrement', 'penis', 'vagina', 'erection', 'corpse', 'bald', 'curly', 'guts', 'swollen',
+    'cough', 'sneeze', 'burp', 'yawn', 'breath', 'medicine', 'healthy', 'pain', 'itch', 'blind',
+    'deaf', 'spit', 'flatulence', 'vommit', 'sweat', 'tear', 'disease', 'wound', 'scar', 'fever',
+    'pregnant', 'birth', 'die', 'dead', 'skeleton', 'spine', 'pelvis', 'tendon', 'ligament',
+    'artery', 'organ', 'bladder', 'colon', 'pancreas', 'spleen', 'tonsil', 'gland', 'nerve',
+    'marrow', 'anus', 'rectum', 'womb', 'fetus', 'embryo', 'placenta', 'umbilical', 'molar',
+    'canine', 'incisor', 'gum', 'palate', 'larynx', 'trachea', 'esophagus', 'diaphragm',
+    'pupil', 'iris', 'retina', 'cornea', 'eardrum', 'nostril', 'dimple', 'wrinkle', 'pore',
+    'freckle', 'mole', 'callus', 'blister', 'bruise', 'rash', 'boil', 'pimple', 'wart',
+    'heal', 'cure', 'remedy', 'symptom', 'infection', 'inflammation', 'fracture', 'sprain',
+    'diarrhea', 'constipation', 'nausea', 'headache', 'toothache', 'stomachache', 'backache',
+    'vomit', 'bleed', 'faint', 'dizzy', 'numb', 'paralyzed', 'limp', 'lame', 'mute',
+    'handicapped', 'disabled', 'physician', 'doctor', 'nurse', 'patient', 'surgery', 'injection',
+    'bandage', 'ointment', 'tablet', 'capsule', 'syrup', 'herb', 'potion', 'antidote'
+  ];
+
+  const animalsWords = [
+    'animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile',
+    'crow', 'deer', 'dog', 'eel', 'fish', 'fishbone', 'frog', 'goat', 'hawk', 'insect', 'lizard',
+    'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle',
+    'worm', 'louse', 'octopus', 'squid', 'water buffalo', 'nest', 'whale', 'cow', 'cat',
+    'horse', 'sheep', 'duck', 'goose', 'tiger', 'lion', 'bear', 'eagle', 'owl', 'bee', 'wasp',
+    'beetle', 'elephant', 'giraffe', 'ape', 'gorilla', 'tortoise', 'clam', 'oyster', 'snail',
+    'slug', 'leech', 'cricket', 'grasshopper', 'dragonfly', 'firefly', 'centipede', 'millipede',
+    'scorpion', 'termite', 'tick', 'flea', 'maggot', 'larva', 'caterpillar', 'cocoon', 'chrysalis',
+    'moth', 'hornet', 'locust', 'cicada', 'mantis', 'praying mantis', 'ladybug',
+    'parrot', 'pigeon', 'dove', 'sparrow', 'swallow', 'heron', 'pelican', 'flamingo', 'penguin',
+    'stork', 'crane', 'vulture', 'falcon', 'kite', 'robin', 'woodpecker', 'kingfisher',
+    'rooster', 'hen', 'turkey', 'quail', 'pheasant', 'peacock', 'ostrich',
+    'carabao', 'buffalo', 'ox', 'bull', 'calf', 'mare', 'stallion', 'foal', 'donkey', 'mule',
+    'lamb', 'ram', 'ewe', 'kid', 'piglet', 'sow', 'boar', 'puppy', 'kitten',
+    'rabbit', 'hare', 'squirrel', 'hedgehog', 'porcupine', 'skunk', 'fox', 'wolf',
+    'hyena', 'leopard', 'panther', 'cheetah', 'jaguar', 'rhino', 'rhinoceros', 'hippo',
+    'hippopotamus', 'zebra', 'antelope', 'gazelle', 'moose', 'elk', 'caribou', 'bison',
+    'kangaroo', 'koala', 'platypus', 'armadillo', 'sloth', 'raccoon', 'badger', 'otter',
+    'beaver', 'weasel', 'ferret', 'mink', 'seal', 'walrus', 'manatee', 'dolphin', 'porpoise',
+    'stingray', 'jellyfish', 'starfish', 'sea urchin', 'sea cucumber', 'seahorse', 'coral',
+    'lobster', 'crawfish', 'crayfish', 'prawn', 'mussel', 'scallop', 'conch', 'abalone',
+    'salmon', 'tuna', 'trout', 'catfish', 'bass', 'carp', 'cod', 'herring', 'sardine',
+    'mackerel', 'swordfish', 'barracuda', 'piranha', 'goldfish', 'guppy',
+    'alligator', 'iguana', 'chameleon', 'gecko', 'salamander', 'newt', 'toad', 'tadpole',
+    'cobra', 'viper', 'python', 'boa', 'anaconda', 'rattlesnake',
+    'animal', 'creature', 'beast', 'wildlife', 'predator', 'prey', 'herbivore', 'carnivore',
+    'omnivore', 'mammal', 'reptile', 'amphibian', 'crustacean', 'mollusk', 'arachnid',
+    'livestock', 'poultry', 'cattle', 'flock', 'herd', 'swarm', 'colony',
+    'horn', 'hoof', 'claw', 'talon', 'fang', 'tusk', 'antler', 'mane', 'feather',
+    'wing', 'beak', 'bill', 'snout', 'muzzle', 'paw', 'whisker', 'shell', 'scale',
+    'cockatoo', 'toucan', 'seagull', 'albatross', 'raven', 'magpie', 'jay',
+    'chimpanzee', 'orangutan', 'baboon', 'lemur', 'gibbon',
+    'bat', 'flying fox', 'pangolin', 'mongoose', 'civet', 'tapir',
+    'pig', 'hog', 'swine'
+  ];
+
+  const foodWords = [
+    'bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt',
+    'salty', 'sugar', 'sugarcane', 'sweet', 'sour', 'water', 'rice', 'banana', 'cassava', 'taro',
+    'yam', 'drink', 'eat', 'cook', 'grater', 'soup', 'ginger', 'hungry', 'thirsty',
+    'full after eating', 'boil', 'pork', 'beef', 'spicy', 'bland', 'tasty', 'delicious',
+    'meal', 'snack', 'breakfast', 'lunch', 'dinner', 'vegetable', 'vegetables', 'garlic', 'onion',
+    'pepper', 'chili', 'tomato', 'potato', 'corn', 'maize', 'wheat', 'flour', 'bread', 'noodle',
+    'pasta', 'bean', 'pea', 'lentil', 'nut', 'peanut', 'almond', 'cashew', 'walnut',
+    'mango', 'papaya', 'pineapple', 'guava', 'melon', 'watermelon', 'grape', 'apple',
+    'orange', 'lemon', 'lime', 'cherry', 'peach', 'pear', 'plum', 'berry', 'strawberry',
+    'blueberry', 'raspberry', 'avocado', 'olive', 'fig', 'date', 'pomegranate', 'kiwi',
+    'jackfruit', 'durian', 'lychee', 'rambutan', 'mangosteen', 'starfruit', 'dragonfruit',
+    'breadfruit', 'plantain', 'persimmon', 'tamarind', 'passion fruit', 'calamansi',
+    'cabbage', 'lettuce', 'spinach', 'kale', 'celery', 'carrot', 'radish', 'turnip', 'beet',
+    'squash', 'pumpkin', 'cucumber', 'zucchini', 'okra', 'asparagus', 'broccoli', 'cauliflower',
+    'mushroom', 'bamboo shoot', 'sprout', 'watercress', 'parsley', 'basil', 'cilantro',
+    'mint', 'oregano', 'thyme', 'rosemary', 'bay leaf', 'cinnamon', 'clove', 'nutmeg',
+    'turmeric', 'cumin', 'coriander', 'cardamom', 'anise', 'fennel', 'dill', 'saffron',
+    'vinegar', 'soy sauce', 'fish sauce', 'oyster sauce', 'ketchup', 'mustard', 'mayonnaise',
+    'oil', 'butter', 'cheese', 'cream', 'yogurt', 'tofu', 'tempeh',
+    'stew', 'broth', 'porridge', 'congee', 'gruel', 'cereal', 'oatmeal',
+    'roast', 'grill', 'fry', 'bake', 'steam', 'stir-fry', 'braise', 'simmer', 'sauté',
+    'slice', 'dice', 'chop', 'mince', 'peel', 'grate', 'blend', 'knead', 'ferment',
+    'pickle', 'preserve', 'smoke', 'dry', 'marinate', 'season', 'spice',
+    'feast', 'banquet', 'recipe', 'ingredient', 'dish', 'course', 'serving', 'portion',
+    'appetite', 'flavor', 'taste', 'aroma', 'savory', 'umami', 'ripe', 'unripe', 'raw',
+    'cooked', 'overcooked', 'undercooked', 'burnt', 'stale', 'fresh', 'rotten', 'spoiled',
+    'juice', 'tea', 'coffee', 'wine', 'beer', 'liquor', 'alcohol', 'vinegar',
+    'fish', 'shrimp', 'crab', 'lobster', 'squid', 'prawn', 'seafood',
+    'chicken', 'duck', 'goat', 'lamb', 'venison',
+    'supper', 'brunch', 'refreshment', 'beverage', 'morsel', 'crumb', 'leftovers',
+    'pantry', 'kitchen', 'stove', 'oven', 'pan', 'pot', 'wok', 'skillet', 'cauldron',
+    'feed', 'nourish', 'starve', 'famish', 'gobble', 'devour', 'nibble', 'chew', 'bite',
+    'sip', 'gulp', 'swallow', 'digest', 'burp', 'vomit'
+  ];
+
+  const numbersWords = [
+    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+    'eighteen', 'nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy',
+    'eighty', 'ninety', 'hundred', 'thousand', 'million', 'billion', 'zero', 'half',
+    'quarter', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth',
+    'dozen', 'pair', 'double', 'triple', 'single',
+    'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week',
+    'today', 'tomorrow', 'yesterday', 'first', 'last', 'once', 'often', 'now', 'count',
+    'many', 'few', 'some', 'second', 'minute', 'hour', 'always', 'never', 'sometimes',
+    'dawn', 'dusk', 'twilight', 'midnight', 'noon', 'midday', 'sunrise', 'sunset',
+    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+    'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+    'september', 'october', 'november', 'december',
+    'season', 'century', 'decade', 'fortnight', 'era', 'epoch', 'age',
+    'early', 'late', 'soon', 'recently', 'formerly', 'meanwhile', 'eventually',
+    'daily', 'weekly', 'monthly', 'yearly', 'annual', 'biweekly',
+    'clock', 'calendar', 'schedule', 'date', 'time', 'duration', 'period', 'interval'
+  ];
+
+  const weatherWords = [
+    'cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun',
+    'thunder', 'weather', 'wind', 'fog', 'flood', 'monsoon', 'shower', 'storm', 'typhoon',
+    'hurricane', 'breeze', 'snow', 'ice', 'freeze', 'hail', 'sleet', 'frost', 'mist', 'drizzle',
+    'downpour', 'tornado', 'cyclone', 'blizzard', 'drought', 'humidity', 'humid',
+    'overcast', 'cloudy', 'sunny', 'rainy', 'windy', 'stormy', 'foggy', 'misty',
+    'rainbow', 'haze', 'smog', 'eclipse', 'meteor', 'comet', 'constellation',
+    'temperature', 'climate', 'warm', 'cool', 'chilly', 'freezing', 'scorching',
+    'tide', 'current', 'whirlpool', 'tsunami', 'earthquake', 'tremor', 'eruption', 'volcano',
+    'landslide', 'avalanche'
+  ];
+
+  const natureWords = [
+    'bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea',
+    'soil', 'stone', 'tree', 'wave', 'flower', 'grass', 'root', 'seed', 'plant', 'island',
+    'sand', 'mud', 'dust', 'moss', 'ashes', 'ember', 'fire', 'smoke', 'foam', 'torch', 'gold',
+    'silver', 'copper', 'iron', 'wood', 'hill', 'valley', 'cave', 'lake', 'pond', 'waterfall',
+    'swamp', 'jungle', 'creek', 'stream', 'brook', 'spring', 'well', 'canal', 'dam', 'reef',
+    'cliff', 'canyon', 'gorge', 'ravine', 'plateau', 'prairie', 'meadow', 'pasture', 'field',
+    'desert', 'oasis', 'tundra', 'glacier', 'iceberg', 'volcano', 'crater', 'geyser',
+    'pebble', 'gravel', 'boulder', 'rock', 'mineral', 'crystal', 'gem', 'jewel', 'diamond',
+    'ruby', 'emerald', 'sapphire', 'pearl', 'jade', 'amber', 'coral', 'ivory', 'marble',
+    'granite', 'limestone', 'sandstone', 'clay', 'chalk', 'slate', 'quartz',
+    'tin', 'zinc', 'lead', 'steel', 'bronze', 'brass', 'aluminum', 'platinum',
+    'vine', 'shrub', 'bush', 'hedge', 'thicket', 'grove', 'orchard', 'plantation',
+    'stump', 'trunk', 'twig', 'bud', 'blossom', 'petal', 'pollen', 'nectar', 'thorn', 'spine',
+    'sap', 'resin', 'latex', 'timber', 'lumber', 'log', 'plank', 'firewood', 'kindling',
+    'fern', 'palm', 'pine', 'oak', 'maple', 'willow', 'cedar', 'cypress', 'elm', 'birch',
+    'eucalyptus', 'acacia', 'mahogany', 'teak', 'narra', 'mangrove', 'coconut tree',
+    'mushroom', 'fungus', 'lichen', 'algae', 'seaweed', 'kelp',
+    'wilderness', 'habitat', 'ecosystem', 'wetland', 'marsh', 'bog', 'delta', 'estuary',
+    'peninsula', 'cape', 'bay', 'gulf', 'strait', 'channel', 'lagoon', 'cove', 'harbor',
+    'shore', 'beach', 'coast', 'bank', 'bed', 'rapids', 'tributary', 'confluence',
+    'horizon', 'landscape', 'terrain', 'topography', 'altitude', 'elevation',
+    'continent', 'archipelago', 'atoll', 'islet'
+  ];
+
+  const familyWords = [
+    'boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother',
+    'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband',
+    'wife', 'sibling', 'orphan', 'lastborn', 'female', 'male', 'slave', 'companion', 'god',
+    'aunt', 'nephew', 'niece', 'grandfather', 'grandmother', 'grandchild', 'ancestor', 'friend',
+    'enemy', 'guest', 'stranger', 'neighbor', 'brother', 'baby', 'infant', 'toddler',
+    'teenager', 'adolescent', 'adult', 'elder', 'elders', 'youth', 'maiden', 'widow', 'widower',
+    'bride', 'groom', 'fiancé', 'fiancee', 'spouse', 'couple', 'family', 'clan', 'tribe',
+    'kinship', 'lineage', 'dynasty', 'generation', 'descendant', 'heir', 'offspring',
+    'godfather', 'godmother', 'godchild', 'stepfather', 'stepmother', 'stepson', 'stepdaughter',
+    'father-in-law', 'mother-in-law', 'sister-in-law', 'son-in-law', 'daughter-in-law',
+    'firstborn', 'twin', 'triplet', 'adopted', 'foster',
+    'people', 'human', 'folk', 'community', 'society', 'citizen', 'villager', 'townsman',
+    'king', 'queen', 'prince', 'princess', 'knight', 'warrior', 'soldier', 'guard',
+    'priest', 'priestess', 'shaman', 'healer', 'midwife', 'teacher', 'student', 'pupil',
+    'master', 'servant', 'lord', 'noble', 'peasant', 'commoner', 'beggar', 'thief',
+    'leader', 'ruler', 'governor', 'mayor', 'judge', 'counselor', 'adviser',
+    'merchant', 'trader', 'farmer', 'fisherman', 'hunter', 'gatherer', 'craftsman',
+    'blacksmith', 'carpenter', 'weaver', 'potter', 'tailor', 'baker', 'butcher',
+    'sailor', 'navigator', 'captain', 'crew'
+  ];
+
+  const emotionsWords = [
+    'anger', 'angry', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love',
+    'tired', 'sick', 'fear', 'joy', 'good', 'scared', 'ugly', 'sleepy', 'awake', 'dream',
+    'soul', 'alive', 'foul-smelling', 'fragrant', 'wrong', 'true', 'false', 'lie', 'truth',
+    'shame', 'proud', 'brave', 'coward', 'smart', 'stupid', 'crazy', 'calm', 'nervous',
+    'excited', 'bored', 'lonely', 'jealous', 'envy', 'greed', 'greedy', 'selfish', 'generous',
+    'kind', 'cruel', 'gentle', 'fierce', 'humble', 'arrogant', 'patient', 'impatient',
+    'grateful', 'ungrateful', 'hopeful', 'hopeless', 'confident', 'shy', 'timid', 'bold',
+    'anxious', 'worried', 'relieved', 'surprised', 'shocked', 'amazed', 'astonished',
+    'delighted', 'thrilled', 'ecstatic', 'content', 'satisfied', 'pleased', 'glad',
+    'miserable', 'depressed', 'gloomy', 'melancholy', 'sorrowful', 'grieving', 'mourning',
+    'furious', 'enraged', 'irritated', 'annoyed', 'frustrated', 'resentful', 'bitter',
+    'disgusted', 'horrified', 'terrified', 'petrified', 'panic', 'dread',
+    'compassion', 'empathy', 'sympathy', 'pity', 'mercy', 'forgiveness', 'gratitude',
+    'hatred', 'contempt', 'scorn', 'spite', 'malice', 'revenge', 'vengeance',
+    'desire', 'longing', 'yearning', 'craving', 'passion', 'lust', 'devotion', 'affection',
+    'admiration', 'respect', 'worship', 'praise', 'blessing', 'curse',
+    'peace', 'harmony', 'chaos', 'conflict', 'tension', 'stress', 'relief',
+    'courage', 'determination', 'perseverance', 'willpower', 'spirit', 'morale',
+    'wisdom', 'knowledge', 'ignorance', 'curiosity', 'wonder', 'awe',
+    'guilt', 'regret', 'remorse', 'apology', 'forgive', 'pardon',
+    'doubt', 'suspicion', 'trust', 'faith', 'belief', 'hope',
+    'laugh', 'cry', 'weep', 'sob', 'mourn', 'grieve', 'celebrate', 'rejoice',
+    'smile', 'frown', 'scowl', 'grimace', 'grin', 'smirk', 'blush',
+    'sigh', 'groan', 'moan', 'scream', 'shout', 'whisper', 'murmur'
+  ];
+
+  const colorsWords = [
+    'black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'grey', 'brown', 'purple',
+    'violet', 'indigo', 'orange', 'pink', 'magenta', 'cyan', 'turquoise', 'maroon', 'navy',
+    'teal', 'olive', 'beige', 'tan', 'cream', 'ivory', 'scarlet', 'crimson', 'burgundy',
+    'lavender', 'lilac', 'mauve', 'coral', 'salmon', 'peach', 'gold', 'golden', 'silver',
+    'bronze', 'copper', 'khaki', 'charcoal', 'ebony', 'rust',
+    'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow',
+    'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft',
+    'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat',
+    'full', 'new', 'old', 'wet', 'dirty', 'near', 'far', 'heavy', 'empty', 'hollow',
+    'solid', 'liquid', 'rigid', 'flexible', 'elastic', 'stiff', 'limp', 'firm', 'tender',
+    'coarse', 'fine', 'gross', 'net', 'broad', 'slim', 'lean', 'plump', 'obese',
+    'huge', 'tiny', 'massive', 'miniature', 'enormous', 'gigantic', 'microscopic',
+    'square', 'rectangular', 'triangular', 'circular', 'oval', 'spherical', 'cylindrical',
+    'curved', 'bent', 'twisted', 'spiral', 'zigzag', 'wavy', 'crooked',
+    'pointed', 'blunt', 'jagged', 'serrated', 'smooth', 'polished', 'glossy', 'matte',
+    'transparent', 'translucent', 'opaque', 'shiny', 'glowing', 'luminous', 'dim', 'bright',
+    'colorful', 'drab', 'vivid', 'pale', 'faded'
+  ];
+
+  const toolsWords = [
+    'adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear',
+    'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle', 'knife', 'sword', 'shield',
+    'bow', 'hammer', 'saw', 'rope', 'string', 'thread', 'cloth', 'weaving', 'loom', 'pot',
+    'pan', 'bowl', 'plate', 'cup', 'spoon', 'fork', 'chisel', 'drill', 'file', 'pliers',
+    'wrench', 'screwdriver', 'nail', 'screw', 'bolt', 'hook', 'chain', 'wire', 'cable',
+    'shovel', 'hoe', 'rake', 'sickle', 'scythe', 'plow', 'harrow', 'trowel', 'pickaxe',
+    'machete', 'bolo', 'cleaver', 'scissors', 'shears', 'razor', 'grindstone', 'whetstone',
+    'anvil', 'forge', 'bellows', 'tongs', 'crucible', 'mold',
+    'canoe', 'raft', 'ship', 'vessel', 'sail', 'mast', 'anchor', 'rudder', 'oar',
+    'cart', 'wagon', 'sled', 'stretcher', 'yoke', 'harness', 'bridle', 'saddle',
+    'bucket', 'barrel', 'crate', 'jar', 'jug', 'pitcher', 'vase', 'urn', 'gourd',
+    'mortar', 'pestle', 'sieve', 'strainer', 'funnel', 'ladle', 'spatula', 'whisk',
+    'broom', 'mop', 'dustpan', 'brush', 'comb', 'mirror',
+    'lamp', 'lantern', 'candle', 'torch', 'match', 'lighter', 'flint',
+    'bag', 'sack', 'pouch', 'wallet', 'purse', 'box', 'chest', 'trunk', 'cabinet',
+    'shelf', 'drawer', 'rack', 'hanger', 'peg', 'clip', 'pin', 'ring', 'bracelet',
+    'earring', 'brooch', 'pendant', 'crown', 'tiara', 'headdress',
+    'weapon', 'dagger', 'lance', 'pike', 'mace', 'club', 'slingshot', 'blowgun',
+    'crossbow', 'quiver', 'sheath', 'scabbard', 'armor', 'helmet',
+    'fishing rod', 'fishhook', 'fishing line', 'bait', 'lure', 'tackle',
+    'tool', 'instrument', 'implement', 'utensil', 'gadget', 'device', 'apparatus',
+    'equipment', 'gear', 'machinery', 'mechanism'
+  ];
+
+  const houseWords = [
+    'house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse',
+    'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same', 'home',
+    'room', 'floor', 'wall', 'window', 'bed', 'blanket', 'table', 'chair', 'village', 'town',
+    'city', 'path', 'trail', 'bridge', 'hut', 'cabin', 'cottage', 'tent', 'shelter', 'dwelling',
+    'building', 'structure', 'tower', 'castle', 'palace', 'temple', 'church', 'mosque',
+    'shrine', 'altar', 'cemetery', 'grave', 'tomb',
+    'gate', 'entrance', 'exit', 'hallway', 'corridor', 'porch', 'veranda', 'balcony',
+    'terrace', 'courtyard', 'yard', 'lawn', 'driveway', 'garage', 'shed', 'barn',
+    'attic', 'basement', 'cellar', 'closet', 'pantry', 'bathroom', 'bedroom', 'kitchen',
+    'ceiling', 'beam', 'pillar', 'column', 'post', 'rafter', 'joist', 'foundation',
+    'brick', 'mortar', 'concrete', 'cement', 'plaster', 'paint', 'tile', 'shingle', 'thatch',
+    'carpet', 'rug', 'curtain', 'drape', 'blinds', 'shade',
+    'furniture', 'sofa', 'couch', 'bench', 'stool', 'desk', 'wardrobe', 'dresser',
+    'shelf', 'bookcase', 'cabinet', 'cupboard', 'counter',
+    'mattress', 'sheet', 'quilt', 'comforter', 'duvet', 'cushion',
+    'shirt', 'pants', 'trousers', 'skirt', 'dress', 'blouse', 'jacket', 'coat',
+    'hat', 'cap', 'scarf', 'glove', 'sock', 'shoe', 'boot', 'sandal', 'slipper',
+    'belt', 'tie', 'apron', 'uniform', 'robe', 'cloak', 'veil', 'underwear',
+    'clothing', 'outfit', 'costume', 'fabric', 'textile', 'silk', 'cotton', 'wool',
+    'linen', 'leather', 'denim', 'satin', 'velvet', 'nylon', 'polyester',
+    'sew', 'stitch', 'hem', 'patch', 'button', 'zipper', 'buckle', 'lace',
+    'market', 'shop', 'store', 'school', 'hospital', 'office', 'factory', 'warehouse',
+    'prison', 'jail', 'court', 'library', 'museum', 'theater', 'stadium', 'arena',
+    'street', 'avenue', 'highway', 'alley', 'lane', 'intersection', 'crossroads'
+  ];
+
+  const greetingsWords = [
+    'goodbye', 'how much', 'what', 'when', 'where', 'who', 'why', 'not',
+    'i don\\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right',
+    'over there', 'middle', 'other', 'shadow', 'hello', 'hi', 'welcome', 'thank you', 'thanks',
+    'please', 'sorry', 'excuse me', 'yes', 'no', 'okay', 'farewell', 'greetings',
+    'good morning', 'good afternoon', 'good evening', 'good night',
+    'here', 'there', 'everywhere', 'nowhere', 'somewhere', 'anywhere',
+    'above', 'below', 'behind', 'beside', 'between', 'inside', 'outside',
+    'front', 'back', 'top', 'bottom', 'center', 'edge', 'corner',
+    'north', 'south', 'east', 'west', 'direction', 'toward', 'away',
+    'also', 'too', 'already', 'still', 'yet', 'again', 'perhaps', 'maybe',
+    'certainly', 'definitely', 'probably', 'possibly', 'truly', 'really',
+    'very', 'quite', 'rather', 'somewhat', 'enough', 'almost', 'barely',
+    'only', 'just', 'even', 'except', 'instead', 'however', 'therefore',
+    'all', 'every', 'each', 'both', 'either', 'neither', 'none', 'any',
+    'much', 'more', 'most', 'less', 'least', 'than',
+    'this', 'that', 'these', 'those', 'which', 'whose',
+    'if', 'then', 'else', 'unless', 'until', 'while', 'because', 'since',
+    'although', 'though', 'whether', 'so', 'and', 'but', 'or', 'nor',
+    'with', 'without', 'about', 'through', 'during', 'before', 'after'
+  ];
+
+  // ── Actions & Verbs category ──
+  const actionsWords = [
+    'walk', 'run', 'jump', 'climb', 'crawl', 'swim', 'dive', 'fly', 'fall', 'slip',
+    'slide', 'roll', 'spin', 'turn', 'twist', 'bend', 'stretch', 'reach', 'grab', 'hold',
+    'carry', 'lift', 'push', 'pull', 'drag', 'throw', 'catch', 'drop', 'pick', 'put',
+    'place', 'set', 'lay', 'hang', 'tie', 'bind', 'wrap', 'fold', 'unfold', 'open',
+    'close', 'shut', 'lock', 'unlock', 'break', 'crack', 'crush', 'smash', 'shatter',
+    'tear', 'rip', 'cut', 'carve', 'scrape', 'scratch', 'dig', 'bury', 'plant',
+    'harvest', 'reap', 'sow', 'plow', 'irrigate', 'water', 'weed', 'prune', 'trim',
+    'build', 'construct', 'assemble', 'erect', 'demolish', 'destroy', 'repair', 'fix',
+    'mend', 'restore', 'renovate', 'paint', 'decorate', 'furnish',
+    'hit', 'strike', 'beat', 'punch', 'kick', 'slap', 'whip', 'stab', 'pierce', 'poke',
+    'press', 'squeeze', 'pinch', 'tap', 'knock', 'pound', 'hammer', 'chop', 'split',
+    'fight', 'wrestle', 'attack', 'defend', 'protect', 'guard', 'rescue', 'save',
+    'hunt', 'chase', 'pursue', 'track', 'stalk', 'ambush', 'capture', 'release', 'free',
+    'escape', 'flee', 'hide', 'seek', 'find', 'search', 'look', 'see', 'watch', 'observe',
+    'stare', 'glance', 'peek', 'spy', 'notice', 'recognize', 'identify', 'discover',
+    'hear', 'listen', 'smell', 'sniff', 'taste', 'touch', 'feel', 'sense',
+    'speak', 'talk', 'say', 'tell', 'ask', 'answer', 'reply', 'respond', 'explain',
+    'describe', 'discuss', 'argue', 'debate', 'negotiate', 'agree', 'disagree', 'refuse',
+    'accept', 'reject', 'deny', 'admit', 'confess', 'promise', 'swear', 'vow',
+    'sing', 'dance', 'play', 'drum', 'clap', 'whistle', 'hum', 'chant', 'recite',
+    'read', 'write', 'draw', 'paint', 'sketch', 'engrave', 'inscribe', 'print', 'copy',
+    'learn', 'study', 'teach', 'train', 'practice', 'memorize', 'remember', 'forget',
+    'think', 'believe', 'know', 'understand', 'realize', 'imagine', 'suppose', 'guess',
+    'decide', 'choose', 'select', 'prefer', 'compare', 'judge', 'evaluate', 'measure',
+    'weigh', 'calculate', 'estimate', 'plan', 'prepare', 'arrange', 'organize',
+    'give', 'take', 'receive', 'send', 'deliver', 'distribute', 'share', 'divide',
+    'lend', 'borrow', 'steal', 'rob', 'pay', 'buy', 'sell', 'trade', 'exchange', 'barter',
+    'own', 'possess', 'keep', 'store', 'save', 'collect', 'gather', 'accumulate',
+    'use', 'utilize', 'apply', 'operate', 'handle', 'manage', 'control', 'direct',
+    'lead', 'follow', 'obey', 'command', 'order', 'instruct', 'advise', 'warn',
+    'help', 'assist', 'support', 'serve', 'provide', 'supply', 'offer', 'contribute',
+    'work', 'labor', 'toil', 'earn', 'produce', 'create', 'make', 'manufacture',
+    'invent', 'design', 'develop', 'improve', 'modify', 'change', 'transform', 'convert',
+    'grow', 'increase', 'expand', 'extend', 'spread', 'multiply', 'add', 'combine',
+    'mix', 'blend', 'merge', 'join', 'connect', 'attach', 'fasten', 'glue', 'weld',
+    'separate', 'detach', 'disconnect', 'remove', 'extract', 'withdraw', 'subtract',
+    'reduce', 'shrink', 'decrease', 'diminish', 'fade', 'disappear', 'vanish',
+    'appear', 'emerge', 'arise', 'occur', 'happen', 'exist', 'become', 'remain', 'stay',
+    'go', 'come', 'arrive', 'depart', 'leave', 'return', 'enter', 'exit',
+    'move', 'travel', 'journey', 'wander', 'roam', 'explore', 'navigate', 'cross',
+    'pass', 'approach', 'reach', 'visit', 'meet', 'encounter', 'greet',
+    'wait', 'pause', 'stop', 'rest', 'sleep', 'wake', 'rise', 'stand', 'sit',
+    'lie', 'kneel', 'squat', 'crouch', 'lean', 'recline', 'bow',
+    'start', 'begin', 'commence', 'initiate', 'launch', 'trigger',
+    'end', 'finish', 'complete', 'conclude', 'terminate', 'cease', 'quit',
+    'continue', 'proceed', 'persist', 'endure', 'survive', 'last', 'maintain',
+    'succeed', 'fail', 'win', 'lose', 'compete', 'challenge', 'conquer', 'defeat',
+    'surrender', 'submit', 'yield', 'resist', 'oppose', 'struggle',
+    'try', 'attempt', 'endeavor', 'strive', 'aim', 'intend', 'want', 'wish', 'need',
+    'like', 'enjoy', 'appreciate', 'value', 'treasure', 'cherish',
+    'hate', 'dislike', 'despise', 'loathe', 'detest', 'abhor',
+    'fear', 'dread', 'worry', 'doubt', 'suspect', 'question',
+    'trust', 'rely', 'depend', 'expect', 'anticipate', 'predict', 'foresee',
+    'allow', 'permit', 'forbid', 'prohibit', 'prevent', 'restrict', 'limit',
+    'punish', 'reward', 'praise', 'criticize', 'blame', 'accuse', 'condemn',
+    'forgive', 'pardon', 'excuse', 'apologize', 'regret',
+    'marry', 'divorce', 'adopt', 'raise', 'nurture', 'care',
+    'born', 'live', 'die', 'kill', 'murder', 'slaughter', 'sacrifice',
+    'pray', 'meditate', 'worship', 'bless', 'curse', 'hex',
+    'wash', 'clean', 'scrub', 'rinse', 'wipe', 'sweep', 'polish', 'shine',
+    'pour', 'spill', 'spray', 'splash', 'drip', 'leak', 'flow', 'flood',
+    'burn', 'ignite', 'kindle', 'extinguish', 'douse', 'smother',
+    'dry', 'wet', 'soak', 'dip', 'submerge', 'immerse', 'float', 'sink', 'drown',
+    'wear', 'dress', 'undress', 'strip', 'clothe', 'cover', 'uncover', 'expose',
+    'show', 'display', 'exhibit', 'demonstrate', 'present', 'reveal', 'conceal',
+    'point', 'aim', 'direct', 'guide', 'steer', 'navigate',
+    'count', 'add', 'subtract', 'multiply', 'divide', 'measure', 'weigh'
+  ];
 
   function escapeRegex(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -2363,6 +2718,7 @@ window.autoCategorizeWords = async function() {
       if (matches(bodyWords)) return 'Body Parts & Health';
       if (matches(animalsWords)) return 'Animals & Wildlife';
       if (matches(foodWords)) return 'Food & Dining';
+      if (matches(actionsWords)) return 'Actions & Verbs';
       if (matches(houseWords)) return 'House & Daily Life';
       if (matches(numbersWords)) return 'Numbers & Time';
       if (matches(weatherWords)) return 'Weather & Climate';
