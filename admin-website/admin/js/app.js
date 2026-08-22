@@ -2274,10 +2274,15 @@ window.autoCategorizeWords = async function() {
   let updates = [];
   vocabulary.forEach(v => {
     const suggestedCat = getCategory(v.english);
+    
+    // Force update if it's the deprecated 'Actions (Verbs)' category
+    if (v.category === 'Actions (Verbs)') {
+      updates.push({ id: v.id, category: suggestedCat });
+    } 
     // Update if it's currently General, or if we want to aggressively categorize everything
     // We will only update if the suggested category is different from current.
     // Also, if the current is a specific category (not General) and the suggestion is General, don't downgrade it.
-    if (suggestedCat !== 'General' && v.category !== suggestedCat) {
+    else if (suggestedCat !== 'General' && v.category !== suggestedCat) {
       updates.push({ id: v.id, category: suggestedCat });
     } else if ((!v.category || v.category === 'General' || v.category === 'Greetings & Essentials') && suggestedCat !== 'General') {
       updates.push({ id: v.id, category: suggestedCat });
