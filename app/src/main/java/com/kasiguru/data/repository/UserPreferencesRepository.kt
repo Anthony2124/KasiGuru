@@ -5,8 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +26,29 @@ class UserPreferencesRepository @Inject constructor(
         val DISMISSED_UPDATE_VERSION = intPreferencesKey("dismissed_update_version")
         val BACKUP_PROMPT_DISMISSED = booleanPreferencesKey("backup_prompt_dismissed")
         val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
+        val LAST_CONTENT_SYNC_AT = longPreferencesKey("last_content_sync_at")
+    }
+
+    /**
+     * When the dictionary/stories pull last completed, as epoch millis. 0 means never.
+     *
+     * This exists to cap Firestore reads. [com.kasiguru.data.remote.FirestoreSyncManager]
+     * pulls the whole `vocabulary` and `stories` collections, and it used to do that on
+     * every single launch — roughly 400 document reads a time against the Spark plan's
+     * 50,000/day project-wide ceiling, i.e. the entire quota for all users combined
+     * exhausted by ~125 app opens. Reading this timestamp costs nothing and skips the
+     * pull when the local copy is recent enough.
+     */
+    val lastContentSyncAt: Flow<Long> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.LAST_CONTENT_SYNC_AT] ?: 0L
+    }
+
+    suspend fun lastContentSyncAtOnce(): Long = lastContentSyncAt.first()
+
+    suspend fun setLastContentSyncAt(epochMillis: Long) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.LAST_CONTENT_SYNC_AT] = epochMillis
+        }
     }
 
     /**
