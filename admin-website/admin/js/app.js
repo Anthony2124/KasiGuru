@@ -2614,7 +2614,7 @@ window.autoCategorizeWords = async function() {
 
   const greetingsWords = [
     'goodbye', 'how much', 'what', 'when', 'where', 'who', 'why', 'not',
-    'i don\\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right',
+    'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right',
     'over there', 'middle', 'other', 'shadow', 'hello', 'hi', 'welcome', 'thank you', 'thanks',
     'please', 'sorry', 'excuse me', 'yes', 'no', 'okay', 'farewell', 'greetings',
     'good morning', 'good afternoon', 'good evening', 'good night',
