@@ -2250,16 +2250,25 @@ window.checkPOS = function() {
 function guessPOS(eng) {
   if (!eng) return null;
   eng = eng.trim().toLowerCase();
+  
   if (eng.startsWith('to ')) return 'Verb';
   if (eng.startsWith('a ') || eng.startsWith('an ') || eng.startsWith('the ')) return 'Noun';
   if (eng.endsWith('ly')) return 'Adverb';
+  
   if (['i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'this', 'that', 'these', 'those'].includes(eng)) return 'Pronoun';
   if (['and', 'but', 'or', 'so', 'because', 'although', 'if', 'when', 'while'].includes(eng)) return 'Conjunction / Connector';
   if (['in', 'on', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'of', 'over', 'under', 'again', 'without'].includes(eng)) return 'Preposition';
   if (['oh', 'ah', 'wow', 'ouch', 'hey', 'alas', 'yes', 'no'].includes(eng) || eng.endsWith('!')) return 'Interjection';
   if (eng.match(/^(very|really|quite|too|so|enough|just|almost|only)$/)) return 'Adverb';
   if (eng.match(/^(what|who|where|when|why|how)$/)) return 'Pronoun';
-  return null;
+
+  // Common Adjective Suffixes
+  if (eng.endsWith('ful') || eng.endsWith('less') || eng.endsWith('ous') || eng.endsWith('ish') || eng.endsWith('ive') || eng.endsWith('able') || eng.endsWith('ible')) {
+    return 'Adjective';
+  }
+
+  // Default to Noun for anything that isn't caught by the above rules
+  return 'Noun';
 }
 
 window.autoAssignPOS = async function() {
