@@ -2249,7 +2249,7 @@ window.autoCategorizeWords = async function() {
   const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'gray', 'round', 'sharp', 'flat', 'long', 'short', 'big', 'small', 'tall', 'wide', 'narrow', 'thick', 'thin', 'deep', 'shallow', 'high', 'dark', 'light', 'rough', 'smooth', 'soft', 'hard', 'dull', 'fragile', 'tight', 'loose', 'straight', 'fast', 'slow', 'strong', 'fat', 'full', 'new', 'old', 'wet', 'dirty', 'near', 'far'];
   const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap', 'needle', 'necklace', 'outrigger', 'wheel', 'bundle'];
   const houseWords = ['house', 'door', 'roof', 'stairs', 'fence', 'garment', 'mat', 'pillow', 'storehouse', 'garden', 'road', 'image', 'war', 'debt', 'name', 'called', 'side', 'same'];
-  const actionWords = ['ask', 'bite', 'blow', 'break', 'bring', 'burn', 'bury', 'buy', 'carry', 'catch', 'choose', 'climb', 'come', 'cry', 'cut', 'dance', 'demolish', 'do', 'drag', 'drown', 'fall', 'fight', 'find', 'float', 'flow', 'fly', 'forget', 'give', 'go', 'hear', 'hold', 'jump', 'kill', 'kiss', 'know', 'lay', 'leak', 'lie', 'look', 'melt', 'play', 'press', 'pull', 'push', 'put', 'return', 'rinse', 'rub', 'run', 'say', 'scratch', 'see', 'sew', 'shout', 'show', 'singe', 'sink', 'sit', 'sleep', 'smell', 'speak', 'split', 'squeeze', 'stand', 'steal', 'stick', 'stretch', 'strike', 'suck', 'throw', 'tie', 'wake', 'want', 'wash', 'weave', 'bear,'];
+
   const greetingsWords = ['goodbye', 'how', 'how much', 'what', 'when', 'where', 'who', 'why', 'not', 'i don\'t know', 'in', 'out', 'up', 'down', 'downward', 'to', 'left', 'right', 'over there', 'middle', 'other,', 'shadow'];
 
   function getCategory(eng) {
@@ -2265,7 +2265,7 @@ window.autoCategorizeWords = async function() {
       if (familyWords.some(w => e.includes(w))) return 'Family & People';
       if (emotionsWords.some(w => e.includes(w))) return 'Emotions & Feelings';
       if (toolsWords.some(w => e.includes(w))) return 'Occupations & Tools';
-      if (actionWords.some(w => e.includes(w))) return 'Actions (Verbs)';
+
       if (colorsWords.some(w => e.includes(w))) return 'Colors & Shapes';
       if (greetingsWords.some(w => e.includes(w))) return 'Greetings & Essentials';
       return 'General';
