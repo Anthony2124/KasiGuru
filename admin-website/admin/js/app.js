@@ -2211,6 +2211,119 @@ async function logAudit(action, details = {}) {
   }
 }
 
+window.checkPOS = function() {
+  if (vocabulary.length === 0) {
+    notify("Dictionary is empty, nothing to check.", 'error');
+    return;
+  }
+  let posCount = 0;
+  vocabulary.forEach(v => {
+    if (v.partOfSpeech && v.partOfSpeech.trim() !== '') posCount++;
+  });
+  
+  const percentage = Math.round((posCount / vocabulary.length) * 100);
+  notify(`Parts of Speech Check: ${posCount} out of ${vocabulary.length} words (${percentage}%) have a Part of Speech set.`, 'success');
+};
+
+window.autoCategorizeWords = async function() {
+  if (vocabulary.length === 0) {
+    notify("Dictionary is empty, nothing to categorize.", 'error');
+    return;
+  }
+  
+  if (!(await confirmDialog({
+    title: `Auto-Categorize Dictionary?`,
+    body: `This will scan all ${vocabulary.length} words and automatically assign them to a category based on their English translation. Existing categories may be overwritten. Proceed?`,
+    confirmLabel: 'Auto-Categorize'
+  }))) return;
+
+  const bodyWords = ['arm', 'armpit', 'back', 'beard', 'belly', 'bile', 'blood', 'body', 'bone', 'brain', 'breast', 'buttocks', 'cheek', 'chest', 'chin', 'ear', 'earwax', 'elbow', 'eye', 'eyebrow', 'eyelash', 'face', 'finger', 'fingernail', 'foot', 'forehead', 'hair', 'hand', 'head', 'heart', 'heel', 'intestines', 'jaw', 'kidney', 'knee', 'leg', 'lip', 'liver', 'lung', 'mouth', 'muscle', 'nail', 'neck', 'nose', 'palm', 'rib', 'shoulder', 'skin', 'skull', 'sole', 'stomach', 'temple', 'thigh', 'throat', 'thumb', 'toe', 'tongue', 'tooth', 'vein', 'waist', 'wrist'];
+  const animalsWords = ['animal', 'ant', 'bird', 'butterfly', 'chick', 'chicken', 'cockroach', 'crab', 'crocodile', 'crow', 'deer', 'dog', 'eel', 'fish', 'fly', 'frog', 'goat', 'hawk', 'insect', 'lizard', 'monkey', 'mosquito', 'mouse', 'pig', 'rat', 'shark', 'shrimp', 'snake', 'spider', 'turtle', 'worm'];
+  const foodWords = ['bitter', 'coconut', 'egg', 'eggplant', 'food', 'fruit', 'honey', 'meat', 'milk', 'salt', 'sugar', 'sweet', 'water', 'rice', 'banana', 'cassava', 'taro', 'yam', 'drink', 'eat', 'cook', 'grater', 'soup'];
+  const numbersWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'day', 'daytime', 'night', 'year', 'morning', 'afternoon', 'evening', 'month', 'week', 'today', 'tomorrow', 'yesterday'];
+  const weatherWords = ['cloud', 'cold', 'dew', 'dry', 'hot', 'lightning', 'moon', 'rain', 'sky', 'star', 'sun', 'thunder', 'weather', 'wind'];
+  const natureWords = ['bamboo', 'bark', 'branch', 'earth', 'forest', 'leaf', 'mountain', 'ocean', 'river', 'sea', 'soil', 'stone', 'tree', 'wave'];
+  const familyWords = ['boy', 'brother-in-law', 'chief', 'child', 'cousin', 'father', 'girl', 'man', 'mother', 'person', 'relative', 'sister', 'uncle', 'woman', 'daughter', 'son', 'parent', 'husband', 'wife'];
+  const emotionsWords = ['anger', 'bad', 'beautiful', 'bright', 'clean', 'happy', 'sad', 'afraid', 'love', 'tired', 'sick', 'fear', 'joy', 'good'];
+  const colorsWords = ['black', 'blue', 'green', 'red', 'white', 'yellow', 'round', 'sharp', 'flat', 'long', 'short'];
+  const toolsWords = ['adze', 'arrow', 'axe', 'basket', 'blade', 'boat', 'charcoal', 'net', 'paddle', 'spear', 'trap'];
+
+  function getCategory(eng) {
+      const e = (eng || '').toLowerCase();
+      if (bodyWords.some(w => e.includes(w))) return 'Body Parts & Health';
+      if (animalsWords.some(w => e.includes(w))) return 'Animals & Wildlife';
+      if (foodWords.some(w => e.includes(w))) return 'Food & Dining';
+      if (numbersWords.some(w => e.includes(w))) return 'Numbers & Time';
+      if (weatherWords.some(w => e.includes(w))) return 'Weather & Climate';
+      if (natureWords.some(w => e.includes(w))) return 'Nature & Environment';
+      if (familyWords.some(w => e.includes(w))) return 'Family & People';
+      if (emotionsWords.some(w => e.includes(w))) return 'Emotions & Feelings';
+      if (colorsWords.some(w => e.includes(w))) return 'Colors & Shapes';
+      if (toolsWords.some(w => e.includes(w))) return 'Occupations & Tools';
+      return 'General';
+  }
+
+  let updates = [];
+  vocabulary.forEach(v => {
+    const suggestedCat = getCategory(v.english);
+    // Update if it's currently General, or if we want to aggressively categorize everything
+    // We will only update if the suggested category is different from current.
+    // Also, if the current is a specific category (not General) and the suggestion is General, don't downgrade it.
+    if (suggestedCat !== 'General' && v.category !== suggestedCat) {
+      updates.push({ id: v.id, category: suggestedCat });
+    } else if ((!v.category || v.category === 'General' || v.category === 'Greetings & Essentials') && suggestedCat !== 'General') {
+      updates.push({ id: v.id, category: suggestedCat });
+    } else if (!v.category) {
+      updates.push({ id: v.id, category: 'General' });
+    }
+  });
+
+  if (updates.length === 0) {
+    notify("All words are already accurately categorized!", 'success');
+    return;
+  }
+
+  if (!(await confirmDialog({
+    title: `Update ${updates.length} categories?`,
+    body: `Found ${updates.length} words that can be automatically categorized. Proceed?`,
+    confirmLabel: 'Update'
+  }))) return;
+
+  try {
+    let count = 0;
+    let batches = [];
+    let currentBatch = writeBatch(db);
+    let operations = 0;
+
+    for (const update of updates) {
+      currentBatch.update(doc(db, "vocabulary", update.id), { category: update.category });
+      count++;
+      operations++;
+
+      if (operations === 490) {
+        batches.push(currentBatch);
+        currentBatch = writeBatch(db);
+        operations = 0;
+      }
+    }
+
+    if (operations > 0) {
+      batches.push(currentBatch);
+    }
+
+    notify(`Updating ${count} categories...`, 'success');
+    for (const batch of batches) {
+      await batch.commit();
+    }
+    
+    await logAudit("vocabulary.auto_categorize", { count });
+    notify(`Successfully categorized ${count} words!`, 'success');
+  } catch (e) {
+    console.error("Error updating categories:", e);
+    notify("Failed to auto-categorize: " + e.message, 'error');
+  }
+};
+
 window.removeDuplicateWords = async function() {
   if (!(await confirmDialog({
     title: `Remove Duplicate Words?`,
