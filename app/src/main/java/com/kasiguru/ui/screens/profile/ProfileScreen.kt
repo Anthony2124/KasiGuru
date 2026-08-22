@@ -276,7 +276,13 @@ fun ProfileScreen(
                     Spacer(Modifier.height(Space.sm))
                     SoftCard(modifier = Modifier.fillMaxWidth()) {
                         Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                            StatDetailRow("Words mastered", "${progress.wordsLearned}", Iconsax.BookBold)
+                            // Two different, both-honest numbers. "Mastered" counts words that
+                            // currently satisfy the SM-2 bar and can fall when one lapses;
+                            // "practised" is the lifetime tally of words ever taken that far and
+                            // only rises. The second used to be labelled "mastered", which made a
+                            // number that never goes down stand for something that certainly can.
+                            StatDetailRow("Words mastered", "${uiState.masteredCount}", Iconsax.BookBold)
+                            StatDetailRow("Words practised", "${progress.wordsLearned}", Iconsax.Book)
                             StatDetailRow("Current streak", "${progress.currentStreak} days", Iconsax.FlashBold)
                             StatDetailRow("Longest streak", "${progress.longestStreak} days", Iconsax.Medal)
                             StatDetailRow("Games played", "${progress.gamesPlayed}", Iconsax.Game)

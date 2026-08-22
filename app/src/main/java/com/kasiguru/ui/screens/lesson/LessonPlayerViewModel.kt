@@ -8,6 +8,9 @@ import com.kasiguru.data.repository.LessonRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.domain.lesson.LessonRef
+import com.kasiguru.util.RecallAnswerMatcher
+import com.kasiguru.util.RecallMatch
+import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,6 +118,12 @@ class LessonPlayerViewModel @Inject constructor(
         _uiState.update { it.copy(selectedOption = option) }
     }
 
+    /** Live text for a [Exercise.TypeWord] prompt. Same slot as a chosen option. */
+    fun updateTypedAnswer(text: String) {
+        if (_uiState.value.hasAnswered) return
+        _uiState.update { it.copy(selectedOption = text) }
+    }
+
     /** Commits the selected answer and reveals feedback. */
     fun check() {
         val state = _uiState.value
@@ -122,13 +131,26 @@ class LessonPlayerViewModel @Inject constructor(
         val selected = state.selectedOption ?: return
         if (state.hasAnswered) return
 
-        val correct = selected == exercise.answer
+        val correct = when (exercise) {
+            // Typed answers are graded on recall, not orthography. A near miss counts as correct
+            // here and is downgraded to HARD in recordReview, so the schedule reflects that the
+            // word was retrieved but shakily — rather than either resetting it as a failure or
+            // banking it as a clean success and letting the misspelling set.
+            is Exercise.TypeWord ->
+                RecallAnswerMatcher.match(selected, exercise.answer) != RecallMatch.Wrong
+            else -> selected == exercise.answer
+        }
         val identity = exerciseIdentity(state.position)
         if (!correct) missedFirstAttempt += identity
 
         _uiState.update { it.copy(isCorrect = correct) }
 
-        recordReview(exercise, correct)
+        // A typed answer that was only close retrieved the word but not its spelling, so it earns
+        // the conservative rating rather than the latency-derived one.
+        val wasApproximate = exercise is Exercise.TypeWord &&
+            RecallAnswerMatcher.match(selected, exercise.answer) == RecallMatch.Close
+
+        recordReview(exercise, correct, forceHard = wasApproximate)
     }
 
     /**
@@ -144,12 +166,15 @@ class LessonPlayerViewModel @Inject constructor(
      * answer, so it measures short-term echo rather than recall, and letting it overwrite the first
      * attempt would turn every miss into a success.
      */
-    private fun recordReview(exercise: Exercise, correct: Boolean) {
+    private fun recordReview(exercise: Exercise, correct: Boolean, forceHard: Boolean = false) {
         val wordId = exercise.word.id
         if (!ratedWordIds.add(wordId)) return
 
         val elapsedMs = System.currentTimeMillis() - questionShownAtMs
-        val rating = ReviewRatingMapper.ratingForAnswer(correct, elapsedMs)
+        val rating = when {
+            forceHard -> ReviewRating.HARD
+            else -> ReviewRatingMapper.ratingForAnswer(correct, elapsedMs)
+        }
 
         viewModelScope.launch {
             // Re-read rather than reusing the entity captured when the lesson loaded: the same word

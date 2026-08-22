@@ -138,19 +138,28 @@ class VocabularyRepository @Inject constructor(
     }
 
     /**
-     * Manually mark a word as learned from the dictionary.
-     * Bypasses the multiple spaced reviews requirement for instant UI feedback.
+     * Manually mark a word as learned from the dictionary — "I already know this one".
+     *
+     * Seeds SM-2 to a state that genuinely satisfies the mastery bar rather than setting the flag
+     * and hoping. The previous version pinned `timesReviewed` to 2 with the comment "ensure SM-2
+     * treats it as learned", which was true only while the threshold happened to be 2; once the bar
+     * moved, the next real review would recompute `isLearned` as false and the learner's manual
+     * mark would silently evaporate. Reading the thresholds from the algorithm keeps the two in
+     * step by construction.
      */
     suspend fun markAsLearned(id: Int) {
         val word = vocabularyDao.getVocabularyById(id) ?: return
         if (word.isLearned) return
-        
+
         val sm2Result = Sm2Algorithm.calculateNextReview(word, ReviewRating.GOOD)
+        val seededInterval = maxOf(Sm2Algorithm.MIN_LEARNED_INTERVAL_DAYS, sm2Result.intervalDays)
         val updatedWord = word.copy(
             easinessFactor = sm2Result.easinessFactor,
-            intervalDays = sm2Result.intervalDays,
-            nextReviewDate = sm2Result.nextReviewDate,
-            timesReviewed = maxOf(2, sm2Result.timesReviewed), // Ensure SM-2 treats it as learned
+            intervalDays = seededInterval,
+            // Next review follows the seeded interval, not SM-2's shorter one — claiming to know a
+            // word should not put it at the front of tomorrow's queue.
+            nextReviewDate = LocalDate.now().plusDays(seededInterval.toLong()).toString(),
+            timesReviewed = maxOf(Sm2Algorithm.MIN_LEARNED_REVIEWS, sm2Result.timesReviewed),
             isLearned = true
         )
         vocabularyDao.updateVocabulary(updatedWord)

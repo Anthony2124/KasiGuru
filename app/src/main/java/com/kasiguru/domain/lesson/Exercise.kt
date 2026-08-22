@@ -78,4 +78,31 @@ sealed interface Exercise {
     ) : Exercise {
         override val instruction: String get() = "Choose the $aspectLabel form"
     }
+
+    /**
+     * The meaning is shown and the learner types the Kasiguranin word from memory.
+     *
+     * The only exercise in the app that asks for *production* rather than recognition. Picking the
+     * right option out of four is a far weaker test than producing the word unaided — recognition
+     * can succeed on a familiarity signal that is nowhere near strong enough to use the word — so
+     * every other exercise systematically overstates what the learner knows.
+     *
+     * It also has no data requirements beyond a headword and a meaning, which makes it the natural
+     * fallback for entries too sparse to support any other second-pass shape: no example sentence,
+     * too few aspect forms, and no audio anywhere in the corpus. Those words previously got one
+     * exercise and were never revisited.
+     *
+     * [options] is empty — the answer is typed, and grading goes through
+     * [com.kasiguru.util.RecallAnswerMatcher] rather than string equality so keyboard limitations
+     * (no schwa key) and stress accents do not read as wrong answers.
+     */
+    data class TypeWord(
+        override val word: VocabularyEntity,
+        override val answer: String,
+        /** The meaning shown as the prompt — Tagalog when present, otherwise English. */
+        val promptMeaning: String
+    ) : Exercise {
+        override val options: List<String> = emptyList()
+        override val instruction: String get() = "Type this in Kasiguranin"
+    }
 }

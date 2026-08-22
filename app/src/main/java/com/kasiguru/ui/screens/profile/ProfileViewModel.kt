@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,18 @@ data class ProfileUiState(
     val achievements: List<AchievementEntity> = emptyList(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    /**
+     * Words that currently satisfy the SM-2 mastery bar, counted from the words themselves.
+     *
+     * Distinct from [UserProgressEntity.wordsLearned], which is a lifetime counter that only ever
+     * rises: it is never decremented when a word lapses, and until recently the flashcard path
+     * raised the row flag without touching it at all. Profile showed that counter as "Words
+     * mastered", so the headline number drifted upward away from anything checkable. The counter
+     * is still an honest record of effort — it is now labelled as such — while this is the honest
+     * record of retention.
+     */
+    val masteredCount: Int = 0
 ) {
     val unlockedCount: Int get() = achievements.count { it.isUnlocked }
 
@@ -51,7 +63,8 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userProgressRepository: UserProgressRepository
+    private val userProgressRepository: UserProgressRepository,
+    private val vocabularyRepository: VocabularyRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -60,6 +73,20 @@ class ProfileViewModel @Inject constructor(
     init {
         loadProfile()
         observeAchievements()
+        observeMasteredCount()
+    }
+
+    /**
+     * Counts mastered words from the vocabulary rows rather than the progress counter, so the
+     * figure reflects what the learner can currently recall — including going down when a word
+     * lapses, which the counter cannot do.
+     */
+    private fun observeMasteredCount() {
+        viewModelScope.launch {
+            vocabularyRepository.getLearnedCount().collect { count ->
+                _uiState.value = _uiState.value.copy(masteredCount = count)
+            }
+        }
     }
 
     /**

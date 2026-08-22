@@ -21,6 +21,25 @@ data class Sm2Result(
 object Sm2Algorithm {
 
     /**
+     * Successful retrievals before a word may count as learned.
+     *
+     * Was effectively two. Combined with [MIN_LEARNED_INTERVAL_DAYS] this now means a word has been
+     * recalled on three separate occasions with real time in between, rather than answered
+     * correctly twice in one sitting.
+     */
+    const val MIN_LEARNED_REVIEWS = 3
+
+    /**
+     * Interval a word must have reached before it counts as learned.
+     *
+     * This is the part that makes "learned" mean something. Review count alone can be run up inside
+     * a single session, but the interval ladder only reaches 6 once a word has survived the gap
+     * between the second and third review — so this is a proxy for "remembered after forgetting had
+     * a chance to set in", which is the only evidence that actually predicts retention.
+     */
+    const val MIN_LEARNED_INTERVAL_DAYS = 6
+
+    /**
      * Calculates the next SuperMemo-2 (SM-2) review schedule.
      */
     fun calculateNextReview(
@@ -46,7 +65,14 @@ object Sm2Algorithm {
         // 3. Compute next review date
         val nextDate = currentDate.plusDays(newInterval.toLong()).toString()
         val timesReviewed = card.timesReviewed + 1
-        val isLearned = q >= 3 && timesReviewed >= 2
+
+        // Was `q >= 3 && timesReviewed >= 2`, which meant two correct multiple-choice answers
+        // marked a word learned — and with four options, two lucky guesses lands about 6% of the
+        // time. That is recognition under prompting, not recall, and it made the headline "words
+        // learned" number describe something the learner could not actually do.
+        val isLearned = q >= 3 &&
+            timesReviewed >= MIN_LEARNED_REVIEWS &&
+            newInterval >= MIN_LEARNED_INTERVAL_DAYS
 
         return Sm2Result(
             easinessFactor = newEf,

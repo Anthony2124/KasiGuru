@@ -109,6 +109,19 @@ class ExerciseGenerator @Inject constructor(
             )
         }
 
+        // Typed recall needs nothing but a headword and a meaning, so it catches every entry the
+        // shapes above cannot serve — no example sentence, fewer than three aspect forms, and (for
+        // the whole corpus) no audio. Those words used to appear once in pass one and never again,
+        // which is the weakest possible treatment for exactly the sparsest entries.
+        val meaning = word.tagalog.ifBlank { word.english }
+        if (meaning.isNotBlank() && Exercise.TypeWord::class !in alreadyUsed) {
+            return Exercise.TypeWord(
+                word = word,
+                answer = word.kasiguranin,
+                promptMeaning = meaning
+            )
+        }
+
         return null
     }
 

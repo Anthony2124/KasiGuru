@@ -28,12 +28,18 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -201,18 +207,27 @@ fun LessonPlayerScreen(
 
             Spacer(Modifier.height(Space.lg))
 
-            exercise.options.forEach { option ->
-                AnswerOption(
-                    label = option,
-                    isSelected = uiState.selectedOption == option,
-                    isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
-                    isRevealedWrong = uiState.hasAnswered &&
-                        uiState.selectedOption == option &&
-                        option != exercise.answer,
+            if (exercise is Exercise.TypeWord) {
+                RecallInput(
+                    value = uiState.selectedOption.orEmpty(),
                     enabled = !uiState.hasAnswered,
-                    onClick = { viewModel.selectOption(option) }
+                    onValueChange = viewModel::updateTypedAnswer,
+                    onSubmit = viewModel::check
                 )
-                Spacer(Modifier.height(Space.sm))
+            } else {
+                exercise.options.forEach { option ->
+                    AnswerOption(
+                        label = option,
+                        isSelected = uiState.selectedOption == option,
+                        isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
+                        isRevealedWrong = uiState.hasAnswered &&
+                            uiState.selectedOption == option &&
+                            option != exercise.answer,
+                        enabled = !uiState.hasAnswered,
+                        onClick = { viewModel.selectOption(option) }
+                    )
+                    Spacer(Modifier.height(Space.sm))
+                }
             }
             Spacer(Modifier.height(Space.lg))
         }
@@ -221,7 +236,9 @@ fun LessonPlayerScreen(
         LessonActionArea(
             hasAnswered = uiState.hasAnswered,
             isCorrect = uiState.isCorrect == true,
-            canCheck = uiState.selectedOption != null,
+            // Blank input must not be submittable: for a typed prompt selectedOption holds the
+            // live text, which is "" before the learner types anything rather than null.
+            canCheck = !uiState.selectedOption.isNullOrBlank(),
             correctAnswer = exercise.answer,
             word = exercise.word,
             onCheck = viewModel::check,
@@ -282,10 +299,59 @@ private fun LessonActionArea(
     }
 }
 
+/**
+ * Text entry for a typed-recall prompt.
+ *
+ * Autocorrect, autocapitalisation and spell-check are all off. A phone keyboard trained on English
+ * will happily rewrite a correctly recalled Kasiguranin word into an English one, which would mark
+ * the learner wrong for something they did not do — and worse, teach them to distrust their own
+ * recall. Suggestions would also hand them the answer.
+ */
+@Composable
+private fun RecallInput(
+    value: String,
+    enabled: Boolean,
+    onValueChange: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        placeholder = { Text("Type the word") },
+        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center),
+        keyboardOptions = KeyboardOptions(
+            autoCorrect = false,
+            capitalization = KeyboardCapitalization.None,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                focusManager.clearFocus()
+                if (value.isNotBlank()) onSubmit()
+            }
+        )
+    )
+}
+
 /** The prompt, which differs by exercise type. */
 @Composable
 private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
     when (exercise) {
+        is Exercise.TypeWord -> {
+            // The meaning is the prompt; the Kasiguranin word is what the learner must produce, so
+            // nothing on screen may show it before they commit an answer.
+            Text(
+                text = exercise.promptMeaning,
+                style = KasiguraninHeadword,
+                color = Ink
+            )
+        }
+
         is Exercise.ChooseTranslation -> {
             Text(
                 text = exercise.prompt,
