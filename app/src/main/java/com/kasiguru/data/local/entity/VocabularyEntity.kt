@@ -43,6 +43,16 @@ data class VocabularyEntity(
     val exampleSentence: String = "",
     @ColumnInfo(defaultValue = "")
     val exampleTranslation: String = "",
+    /**
+     * A second example sentence, so a meaning is illustrated twice rather than once. Flat
+     * columns rather than a related table: the requirement is fixed at exactly two, and every
+     * consumer (GameAnswerFeedback, the lesson player, the admin word-edit form) already reads
+     * exampleSentence/exampleTranslation as plain fields.
+     */
+    @ColumnInfo(defaultValue = "")
+    val exampleSentence2: String = "",
+    @ColumnInfo(defaultValue = "")
+    val exampleTranslation2: String = "",
     @ColumnInfo(defaultValue = "0")
     val phoneticGlottal: Boolean = false,
     @ColumnInfo(defaultValue = "0")

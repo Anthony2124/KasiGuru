@@ -12,6 +12,9 @@ import {
 
 // Global state
 let submissions = [];
+let literatureSubmissions = [];
+let literatureSubmissionsLoaded = false;
+let announcements = [];
 let vocabulary = [];
 let releases = [];
 let stories = [];
@@ -284,6 +287,37 @@ function initRealtimeListeners() {
     unsubscribeFns.push(unsubSub);
   } catch (e) {
     console.error("Firestore submission query error:", e);
+  }
+
+  // 1b. Literature Submissions Listener (stories/poems, extending the word-submissions queue).
+  try {
+    const litQuery = query(collection(db, "literature_submissions"), orderBy("submittedAt", "desc"));
+    const unsubLit = onSnapshot(litQuery, (snapshot) => {
+      literatureSubmissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      literatureSubmissionsLoaded = true;
+      renderLiteratureSubmissionsTable();
+      updateDashboardMetrics();
+    }, (error) => {
+      console.warn("Literature submissions listener error:", error);
+      renderLiteratureSubmissionsError("Unable to connect to live Firestore literature queue.");
+    });
+    unsubscribeFns.push(unsubLit);
+  } catch (e) {
+    console.error("Firestore literature submission query error:", e);
+  }
+
+  // 1c. Announcements Listener - the admin's own view of what AnnouncementRepository serves live.
+  try {
+    const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+    const unsubAnn = onSnapshot(annQuery, (snapshot) => {
+      announcements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderAnnouncementsList();
+    }, (error) => {
+      console.warn("Announcements listener error:", error);
+    });
+    unsubscribeFns.push(unsubAnn);
+  } catch (e) {
+    console.error("Firestore announcements query error:", e);
   }
 
   // 2. Vocabulary Listener
@@ -1660,6 +1694,173 @@ async function rejectSubmission(id) {
   }
 }
 
+// ── Announcements ────────────────────────────────────────────────────────────
+function renderAnnouncementsList() {
+  const container = document.getElementById('announcements-list');
+  if (!container) return;
+
+  const active = announcements.filter(a => a.active !== false);
+  if (active.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted); padding:0.5rem 0;">No active announcements.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+  active.forEach(a => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:0.75rem 0; border-bottom:1px solid var(--border, #eee);';
+    row.innerHTML = `
+      <div>
+        ${a.title ? `<strong>${escapeHtml(a.title)}</strong><br>` : ''}
+        <span style="color:var(--muted);">${escapeHtml(a.message || '')}</span>
+      </div>
+      <button class="btn btn-outline btn-sm deactivate-announcement-btn" data-id="${a.id}">Deactivate</button>
+    `;
+    container.appendChild(row);
+  });
+
+  container.querySelectorAll('.deactivate-announcement-btn').forEach(btn => {
+    btn.addEventListener('click', () => deactivateAnnouncement(btn.getAttribute('data-id')));
+  });
+}
+
+async function deactivateAnnouncement(id) {
+  try {
+    await updateDoc(doc(db, "announcements", id), { active: false });
+    await logAudit("announcement.deactivate", { announcementId: id });
+  } catch (error) {
+    console.error("Error deactivating announcement:", error);
+    notify("Failed to deactivate: " + error.message, 'error');
+  }
+}
+
+// ── Literature Submissions (stories/poems) ──────────────────────────────────
+function renderLiteratureSubmissionsTable() {
+  const tbody = document.getElementById('literature-submissions-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (literatureSubmissions.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">
+          No pending story or poem submissions.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  literatureSubmissions.forEach(sub => {
+    const tr = document.createElement('tr');
+    const statusBadgeClass = sub.status === 'approved' ? 'badge-approved' : (sub.status === 'rejected' ? 'badge-rejected' : 'badge-pending');
+    let pageCount = 0;
+    try { pageCount = JSON.parse(sub.pagesJson || '[]').length; } catch (e) { pageCount = 0; }
+
+    tr.innerHTML = `
+      <td data-label="Title"><strong>${escapeHtml(sub.titleKasiguranin || sub.title || '(untitled)')}</strong></td>
+      <td data-label="Pages">${pageCount}</td>
+      <td data-label="Contributor">${escapeHtml(sub.contributorName || 'Anonymous')}</td>
+      <td data-label="Status"><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
+      <td data-label="Actions">
+        ${sub.status === 'pending' ? `
+        <div class="row-actions">
+          <button class="btn btn-success btn-sm lit-approve-btn" data-id="${sub.id}"><iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Approve</button>
+          <button class="btn btn-danger btn-sm lit-reject-btn" data-id="${sub.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject</button>
+        </div>
+        ` : `
+          <span style="color:var(--muted); font-size:0.85rem;">Processed</span>
+        `}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.lit-approve-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      approveLiteratureSubmission(btn.getAttribute('data-id'));
+    });
+  });
+  tbody.querySelectorAll('.lit-reject-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      rejectLiteratureSubmission(btn.getAttribute('data-id'));
+    });
+  });
+
+  applyTableSemantics();
+}
+
+function renderLiteratureSubmissionsError(message) {
+  const tbody = document.getElementById('literature-submissions-tbody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
+  }
+}
+
+// Approving copies the submission into the real `stories` collection - the same copy-on-approve
+// pattern approveSubmission() uses for words, never mutating live tables directly. A numeric id
+// is picked the same way the story editor picks one for a new story: one past the current max.
+async function approveLiteratureSubmission(id) {
+  const sub = literatureSubmissions.find(s => s.id === id);
+  if (!sub) return;
+
+  try {
+    let pages = [];
+    try { pages = JSON.parse(sub.pagesJson || '[]'); } catch (e) { pages = []; }
+
+    const maxId = storiesLoaded && stories.length
+      ? Math.max(0, ...stories.map(s => Number(s.id) || 0))
+      : 0;
+    const newId = maxId + 1;
+
+    await setDoc(doc(db, "stories", String(newId)), {
+      id: newId,
+      title: (sub.title || sub.titleKasiguranin || '').trim(),
+      titleKasiguranin: (sub.titleKasiguranin || '').trim(),
+      description: `Submitted by ${sub.contributorName || 'Anonymous'}`,
+      category: "Community",
+      iconEmoji: "📖",
+      pagesJson: JSON.stringify(pages),
+      totalPages: pages.length,
+      requiredXp: 0,
+      isUnlocked: true,
+      isCompleted: false,
+      currentPage: 0
+    });
+
+    await updateDoc(doc(db, "literature_submissions", id), {
+      status: "approved",
+      reviewedAt: Date.now()
+    });
+
+    await logAudit("literature_submission.approve", { submissionId: id, title: sub.title || sub.titleKasiguranin });
+    notify(`Approved "${sub.title || sub.titleKasiguranin}" and added it to Stories.`, 'success');
+  } catch (error) {
+    console.error("Error approving literature submission:", error);
+    notify("Failed to approve submission: " + error.message, 'error');
+  }
+}
+
+async function rejectLiteratureSubmission(id) {
+  if (!(await confirmDialog({
+    title: 'Reject this submission?',
+    body: 'The contributor will not see it in Stories. This does not delete their other submissions.',
+    confirmLabel: 'Reject', danger: true
+  }))) return;
+  try {
+    await updateDoc(doc(db, "literature_submissions", id), {
+      status: "rejected",
+      reviewedAt: Date.now()
+    });
+    const sub = literatureSubmissions.find(s => s.id === id);
+    await logAudit("literature_submission.reject", { submissionId: id, title: sub ? (sub.title || sub.titleKasiguranin) : "" });
+  } catch (error) {
+    console.error("Error rejecting literature submission:", error);
+  }
+}
+
 // ── Render Vocabulary Table ─────────────────────────────────────────────────
 // Dictionary state that survives a re-render: which page, and which column orders the list.
 let vocabPage = 1;
@@ -1746,6 +1947,10 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
   document.getElementById('edit-input-imperfective').value = item.imperfectiveForm || '';
   document.getElementById('edit-input-contemplative').value = item.contemplativeForm || '';
+  document.getElementById('edit-input-example1').value = item.exampleSentence || '';
+  document.getElementById('edit-input-example1-translation').value = item.exampleTranslation || '';
+  document.getElementById('edit-input-example2').value = item.exampleSentence2 || '';
+  document.getElementById('edit-input-example2-translation').value = item.exampleTranslation2 || '';
 
   window.openModal('edit-vocab-modal');
 };
@@ -1967,6 +2172,34 @@ function handleExcelFile(file) {
 
 // ── Form Listeners ──────────────────────────────────────────────────────────
 function initFormListeners() {
+  const announcementForm = document.getElementById('announcement-form');
+  if (announcementForm) {
+    announcementForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('input-announcement-title').value.trim();
+      const message = document.getElementById('input-announcement-message').value.trim();
+      if (!message) { notify("Please enter a message.", 'error'); return; }
+
+      try {
+        const ref = doc(collection(db, "announcements"));
+        await setDoc(ref, {
+          id: ref.id,
+          title,
+          message,
+          active: true,
+          createdAt: Date.now()
+        });
+        await logAudit("announcement.post", { announcementId: ref.id, title });
+        notify("Announcement posted. It's live in the app now.", 'success');
+        announcementForm.reset();
+        closeModal('announcement-modal');
+      } catch (error) {
+        console.error("Error posting announcement:", error);
+        notify("Failed to post announcement: " + error.message, 'error');
+      }
+    });
+  }
+
   const addVocabForm = document.getElementById('add-vocab-form');
   if (addVocabForm) {
     addVocabForm.addEventListener('submit', async (e) => {
@@ -1981,6 +2214,10 @@ function initFormListeners() {
       const perfective = document.getElementById('input-perfective').value.trim();
       const imperfective = document.getElementById('input-imperfective').value.trim();
       const contemplative = document.getElementById('input-contemplative').value.trim();
+      const example1 = document.getElementById('input-example1').value.trim();
+      const example1Translation = document.getElementById('input-example1-translation').value.trim();
+      const example2 = document.getElementById('input-example2').value.trim();
+      const example2Translation = document.getElementById('input-example2-translation').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
@@ -2005,6 +2242,10 @@ function initFormListeners() {
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,
           contemplativeForm: contemplative || null,
+          exampleSentence: example1 || null,
+          exampleTranslation: example1Translation || null,
+          exampleSentence2: example2 || null,
+          exampleTranslation2: example2Translation || null,
           createdAt: Date.now()
         });
         await logAudit("vocabulary.create", { word });
@@ -2032,6 +2273,10 @@ function initFormListeners() {
       const perfective = document.getElementById('edit-input-perfective').value.trim();
       const imperfective = document.getElementById('edit-input-imperfective').value.trim();
       const contemplative = document.getElementById('edit-input-contemplative').value.trim();
+      const example1 = document.getElementById('edit-input-example1').value.trim();
+      const example1Translation = document.getElementById('edit-input-example1-translation').value.trim();
+      const example2 = document.getElementById('edit-input-example2').value.trim();
+      const example2Translation = document.getElementById('edit-input-example2-translation').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
@@ -2047,6 +2292,10 @@ function initFormListeners() {
           perfectiveForm: perfective || null,
           imperfectiveForm: imperfective || null,
           contemplativeForm: contemplative || null,
+          exampleSentence: example1 || null,
+          exampleTranslation: example1Translation || null,
+          exampleSentence2: example2 || null,
+          exampleTranslation2: example2Translation || null,
           updatedAt: Date.now()
         });
         await logAudit("vocabulary.update", { id, word });

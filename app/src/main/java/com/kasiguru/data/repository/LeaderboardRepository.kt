@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.kasiguru.data.local.dao.LeaderboardDao
 import com.kasiguru.data.local.entity.LeaderboardEntity
+import com.kasiguru.data.local.entity.MetricType
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -29,14 +30,22 @@ import javax.inject.Singleton
 class LeaderboardRepository @Inject constructor(
     private val leaderboardDao: LeaderboardDao,
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val userProgressRepository: UserProgressRepository
 ) {
     fun getLeaderboardByXp(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_XP)
 
     fun getLeaderboardByStreak(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_STREAK)
 
     /** This week's XP, reset by the weekly rollover function. */
-    fun getWeeklyLeaderboard(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_WEEKLY_XP)
+    fun getWeeklyLeaderboard(): Flow<List<LeaderboardEntity>> = leaderboard(FIELD_WEEKLY_XP).map { entries ->
+        // Backs the "Top of the Week" badge: checked here, not from a screen, so it unlocks
+        // whenever the live ranking crosses top 10, not only while the leaderboard is open.
+        if (entries.take(10).any { it.isCurrentUser }) {
+            runCatching { userProgressRepository.checkAchievements(MetricType.WEEKLY_TOP_TEN, 1) }
+        }
+        entries
+    }
 
     private fun leaderboard(orderField: String): Flow<List<LeaderboardEntity>> = flow {
         // Show the cached rankings immediately, then live values as they arrive.

@@ -14,7 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOptionRow
 import com.kasiguru.ui.components.GameOptionState
@@ -102,7 +102,7 @@ fun AudioQuizGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 
-                .padding(20.dp),
+                .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
@@ -183,7 +183,12 @@ fun AudioQuizGameScreen(
             }
 
             if (hasAnswered) {
-                GameContinueButton(onClick = { viewModel.nextQuestion() })
+                GameAnswerFeedback(
+                    isCorrect = uiState.selectedOption == uiState.currentWord?.kasiguranin,
+                    correctAnswer = uiState.currentWord?.kasiguranin ?: "",
+                    word = uiState.currentWord,
+                    onContinue = { viewModel.nextQuestion() }
+                )
             }
         }
         }

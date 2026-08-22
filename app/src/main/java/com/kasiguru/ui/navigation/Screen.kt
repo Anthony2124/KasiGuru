@@ -6,6 +6,7 @@ package com.kasiguru.ui.navigation
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
+    data object ProfileSelection : Screen("profile_selection")
     /** The learner's home: today's plan. Replaces the old Home dashboard. */
     data object Learn : Screen("learn")
     data object LessonPlayer : Screen("lesson/{unitId}/{lessonIndex}") {
@@ -59,4 +60,5 @@ sealed class Screen(val route: String) {
     data object Account : Screen("account")
     data object About : Screen("about")
     data object SubmitWord : Screen("submit_word")
+    data object SubmitLiterature : Screen("submit_literature")
 }

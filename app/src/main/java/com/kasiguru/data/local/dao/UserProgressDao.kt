@@ -43,6 +43,9 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET gamesPlayed = gamesPlayed + 1 WHERE id = 1")
     suspend fun incrementGamesPlayed()
 
+    @Query("UPDATE user_progress SET submissionsMade = submissionsMade + 1 WHERE id = 1")
+    suspend fun incrementSubmissionsMade()
+
     @Query("UPDATE user_progress SET totalCorrectAnswers = totalCorrectAnswers + :correct, totalQuestionsAnswered = totalQuestionsAnswered + :total WHERE id = 1")
     suspend fun updateGameStats(correct: Int, total: Int)
 

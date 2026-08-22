@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.clay.ClaySurface
+import com.kasiguru.ui.components.clay.FloatingSearchBar
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -80,12 +81,15 @@ import com.kasiguru.util.audio.AudioPlayerManager
 fun VocabularyScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCategory: (String) -> Unit,
+    onNavigateToWord: (Int) -> Unit = {},
     onNavigateToSubmitWord: () -> Unit = {},
     viewModel: VocabularyViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterCategory by remember { mutableStateOf("All") }
+    var dictionaryQuery by remember { mutableStateOf("") }
+    val dictionaryResults by viewModel.dictionarySearchResults.collectAsState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayerManager(context) }
@@ -107,8 +111,19 @@ fun VocabularyScreen(
         }
     }
 
+    // Word of the Day was the alphabetically-first eligible word, recomputed only when the
+    // vocabulary list reference changed - the same word for every user, forever, until the
+    // dictionary itself changed. Seeding the pick by the epoch day gives a word that is stable
+    // for everyone on a given day and rotates the next, over a stable id-sorted list so the
+    // pick doesn't shift if Room's category/name ordering ever does.
     val featuredWord = remember(uiState.allVocabulary) {
-        uiState.allVocabulary.firstOrNull { it.kasiguranin.isNotBlank() && it.tagalog.isNotBlank() }
+        val eligible = uiState.allVocabulary
+            .filter { it.kasiguranin.isNotBlank() && it.tagalog.isNotBlank() }
+            .sortedBy { it.id }
+        if (eligible.isEmpty()) null else {
+            val today = java.time.LocalDate.now().toEpochDay()
+            eligible[(today % eligible.size).toInt()]
+        }
     }
 
     val corpusProgress = if (uiState.allVocabulary.isNotEmpty()) {
@@ -238,6 +253,25 @@ fun VocabularyScreen(
                 }
 
             }
+
+            // Overlays the grid rather than pushing it - the grid stays scrollable underneath.
+            FloatingSearchBar(
+                query = dictionaryQuery,
+                onQueryChange = {
+                    dictionaryQuery = it
+                    viewModel.onDictionarySearchQueryChange(it)
+                },
+                results = dictionaryResults,
+                onResultClick = { word ->
+                    dictionaryQuery = ""
+                    viewModel.onDictionarySearchQueryChange("")
+                    onNavigateToWord(word.id)
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = Space.gutter)
+                    .padding(top = 64.dp)
+            )
         }
     )
 }

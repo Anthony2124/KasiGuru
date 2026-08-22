@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.remote.model.WordSubmissionDto
 import com.kasiguru.data.repository.SubmissionRepository
+import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +33,8 @@ data class SubmitWordUiState(
 
 @HiltViewModel
 class SubmitWordViewModel @Inject constructor(
-    private val submissionRepository: SubmissionRepository
+    private val submissionRepository: SubmissionRepository,
+    private val userProgressRepository: UserProgressRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SubmitWordUiState())
@@ -134,6 +136,7 @@ class SubmitWordViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     lastSubmittedAt = System.currentTimeMillis()
+                    userProgressRepository.incrementSubmissionsMade()
                     _uiState.value = SubmitWordUiState(isSuccess = true)
                 },
                 onFailure = { error ->

@@ -19,12 +19,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -56,6 +58,24 @@ import com.kasiguru.ui.theme.Surface
  *   the violet field plus the page count is a finished cover, not a placeholder - which is the state
  *   every story ships in today.
  */
+/**
+ * Resolves `story_cover_<storyId>` from `res/drawable` at runtime, or null if it isn't there.
+ *
+ * This is the wiring half of the slot [StoryCoverCard.cover] documents: it needs no code change
+ * when Adrian adds a cover, only the asset itself (`story_cover_<id>.png` or `.webp`, 3:2). A
+ * missing asset resolves to 0 from [android.content.res.Resources.getIdentifier], which this
+ * turns into null so the caller falls back to the finished gradient state.
+ */
+@Composable
+fun rememberStoryCoverRes(storyId: Int): Int? {
+    val context = LocalContext.current
+    return remember(storyId) {
+        val name = "story_cover_$storyId"
+        context.resources.getIdentifier(name, "drawable", context.packageName)
+            .takeIf { it != 0 }
+    }
+}
+
 @Composable
 fun StoryCoverCard(
     titleKasiguranin: String,

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Admin dense console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOCKUP — Admin as a dense console (built in direction B's system)
+   This is the answer to "the admin is slow to work in". Every change here is
+   aimed at clicks and scanning speed, not decoration:
+     · sidebar nav, so Queue and Dictionary are one click apart and always visible
+     · a real URL per section, so Back works and a view can be bookmarked
+     · 44 rows per screen instead of 18, from tighter row padding and no card chrome
+     · pagination, because the live table currently renders all 394 rows every
+       keystroke of a 300ms-debounced search
+     · sortable headers carrying aria-sort
+     · filters and search on one line with the result count
+   Measured: ink 19.67, muted 6.82, indigo 7.89 on white. Status foregrounds are
+   the deepened forms (amber 7.09, green 6.63, red 6.47) because each sits on its
+   own tint, which is a harder test than plain white.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root{
+  /* Type scale. Fewer steps, real ratios between them. Sizes that differ by
+     0.02rem are noise, not hierarchy. */
+  --t-xs:0.75rem;
+  --t-sm:0.875rem;
+  --t-base:1rem;
+  --t-lg:1.5rem;
+  --bg:#FFFFFF; --shell:#F7F7F9; --surface:#FFFFFF;
+  --ink:#0B0B0C; --muted:#5A5A63; --line:#E4E4E9; --line-2:#EFEFF2;
+  --accent:#3D34D6; --accent-fill:#3D34D6; --on-fill:#FFFFFF;
+  --amber:#92400E; --amber-tint:#FDF3E4;
+  --green:#0F6B32; --green-tint:#E8F3EC;
+  --red:#B91C1C;   --red-tint:#FBE9E9;
+  --sans:'IBM Plex Sans',-apple-system,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0B0B0C; --shell:#0F0F11; --surface:#151517;
+    --ink:#F5F5F7; --muted:#A0A0AB; --line:#2A2A2F; --line-2:#212125;
+    --accent:#A99CFF; --accent-fill:#4B41E0;
+    --amber:#FFC46B; --amber-tint:#2B2416;
+    --green:#4ADE80; --green-tint:#14241A;
+    --red:#FF8A8A;   --red-tint:#2A1618;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--shell);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+aside{background:var(--bg);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:var(--t-base);letter-spacing:-0.02em;padding:6px 8px}
+.mark{width:24px;height:24px;border-radius:6px;background:var(--accent-fill);color:var(--on-fill);display:grid;place-items:center;font-size:var(--t-xs);font-weight:800}
+.navgroup{display:flex;flex-direction:column;gap:2px}
+.navlabel{font-size:var(--t-xs);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0 8px 7px}
+aside a{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--muted);
+  font-size:var(--t-sm);font-weight:500;min-height:36px;
+}
+aside a:hover{background:var(--shell);color:var(--ink)}
+aside a[aria-current="page"]{background:var(--accent-fill);color:var(--on-fill);font-weight:600}
+.count{font-size:var(--t-xs);font-weight:600;background:var(--amber-tint);color:var(--amber);padding:1px 7px;border-radius:999px}
+aside a[aria-current="page"] .count{background:rgba(255,255,255,.22);color:var(--on-fill)}
+.spacer{flex:1}
+.who{border-top:1px solid var(--line);padding:12px 8px 4px;font-size:var(--t-sm);color:var(--muted)}
+.who b{display:block;color:var(--ink);font-weight:600;font-size:var(--t-sm);margin-bottom:2px}
+
+/* ── Main ─────────────────────────────────────────────────────────────────── */
+main{padding:0;min-width:0}
+.topbar{background:var(--bg);border-bottom:1px solid var(--line);padding:14px 24px;position:sticky;top:0;z-index:5}
+.crumbs{font-size:var(--t-xs);color:var(--muted);margin-bottom:7px;font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.crumbs b{color:var(--accent);font-weight:600}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:var(--t-lg);font-weight:700;letter-spacing:-0.024em}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:var(--t-sm);font-weight:600;padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;min-height:36px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--shell)}
+.btn-primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn-primary:hover{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-fill)}
+.btn-sm{padding:5px 10px;font-size:var(--t-xs);min-height:30px}
+.btn-danger{color:var(--red);border-color:var(--line)}
+.btn-danger:hover{background:var(--red-tint);border-color:var(--red)}
+
+.toolbar{display:flex;align-items:center;gap:10px;padding:12px 24px;background:var(--bg);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;font:inherit;font-size:var(--t-sm);padding:8px 12px 8px 32px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);min-height:36px}
+.search input::placeholder{color:var(--muted)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+select{font:inherit;font-size:var(--t-sm);padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);min-height:36px}
+.result{font-size:var(--t-sm);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+kbd{font-family:ui-monospace,Menlo,monospace;font-size:var(--t-xs);background:var(--shell);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:2px 5px;color:var(--muted)}
+
+/* ── Table: the density change ────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--bg);font-size:var(--t-sm)}
+th{
+  text-align:left;padding:9px 16px;font-size:var(--t-xs);font-weight:600;color:var(--muted);
+  border-bottom:1px solid var(--line);white-space:nowrap;background:var(--bg);
+  position:sticky;top:0;
+}
+th button{font:inherit;font-size:var(--t-xs);font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:2px 0}
+th button:hover{color:var(--ink)}
+th[aria-sort] button{color:var(--ink)}
+th[aria-sort="ascending"] button::after{content:"\2191"}
+th[aria-sort="descending"] button::after{content:"\2193"}
+td{padding:9px 16px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+tbody tr:hover{background:var(--shell)}
+td.word{font-weight:650;letter-spacing:-0.01em;font-size:var(--t-base)}
+td.trans{color:var(--muted)}
+.badge{display:inline-block;font-size:var(--t-xs);font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.b-cat{background:var(--shell);color:var(--muted);border:1px solid var(--line)}
+.b-pos{background:var(--amber-tint);color:var(--amber)}
+.b-ok{background:var(--green-tint);color:var(--green)}
+.rowact{display:flex;gap:6px;justify-content:flex-end}
+
+/* ── Pagination: absent from the live table today ─────────────────────────── */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 24px;background:var(--bg);border-top:1px solid var(--line);flex-wrap:wrap}
+.pages{display:flex;gap:4px}
+.pages button{font:inherit;font-size:var(--t-sm);font-weight:600;min-width:32px;min-height:32px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pages button[aria-current="page"]{background:var(--accent-fill);color:var(--on-fill);border-color:var(--accent-fill)}
+.pages button:hover:not([aria-current]){background:var(--shell)}
+
+.note{margin:20px 24px;padding:14px 16px;border:1px dashed var(--line);border-radius:9px;background:var(--bg);color:var(--muted);font-size:var(--t-sm)}
+.note b{color:var(--ink);font-weight:650}
+
+@media (max-width:1024px){
+  .app{grid-template-columns:1fr}
+  aside{position:static;height:auto;flex-direction:row;align-items:center;gap:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:10px 14px}
+  .navgroup{flex-direction:row;gap:4px}
+  .navlabel,.spacer,.who{display:none}
+  aside a{white-space:nowrap;min-height:40px}
+}
+@media (max-width:640px){
+  /* Rows become cards: a 7-column table on a phone is unreadable however it scrolls. */
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{border-bottom:1px solid var(--line);padding:12px 16px}
+  td{border:none;padding:2px 0;display:flex;justify-content:space-between;gap:14px}
+  td::before{content:attr(data-label);font-size:var(--t-xs);color:var(--muted);font-weight:600}
+  td.word{font-size:var(--t-base);padding-bottom:6px}
+  .rowact{justify-content:flex-start;padding-top:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside>
+    <div class="brand"><span class="mark">K</span> Admin</div>
+    <div class="navgroup">
+      <div class="navlabel">Moderate</div>
+      <a href="#queue">Verification queue <span class="count">7</span></a>
+      <a href="#dictionary" aria-current="page">Dictionary</a>
+      <a href="#stories">Stories</a>
+    </div>
+    <div class="navgroup">
+      <div class="navlabel">Publish</div>
+      <a href="#releases">APK releases</a>
+      <a href="#import">Bulk import</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="who"><b>adrianmiras13</b>Signed in as administrator</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">kasiguru-admin.vercel.app/<b>#dictionary</b></div>
+      <div class="titlerow">
+        <h1>Dictionary</h1>
+        <div class="actions">
+          <button class="btn">Export CSV</button>
+          <button class="btn btn-primary">Add entry</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" placeholder="Search Kasiguranin, Filipino or English…" aria-label="Search dictionary">
+      </div>
+      <select aria-label="Filter by category">
+        <option>All categories</option>
+        <option selected>Nature &amp; Environment</option>
+        <option>Family &amp; People</option>
+      </select>
+      <span class="result">38 of 394</span>
+      <span class="result"><kbd>/</kbd> to search</span>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th aria-sort="ascending"><button>Kasiguranin</button></th>
+            <th><button>Filipino</button></th>
+            <th><button>English</button></th>
+            <th><button>Category</button></th>
+            <th>Part of speech</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="word" data-label="Kasiguranin">hamog</td>
+            <td class="trans" data-label="Filipino">hamog</td>
+            <td class="trans" data-label="English">dew</td>
+            <td data-label="Category"><span class="badge b-cat">Nature &amp; Environment</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+          <tr>
+            <td class="word" data-label="Kasiguranin">kawayan</td>
+            <td class="trans" data-label="Filipino">kawayan</td>
+            <td class="trans" data-label="English">bamboo</td>
+            <td data-label="Category"><span class="badge b-cat">Nature &amp; Environment</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+          <tr>
+            <td class="word" data-label="Kasiguranin">kulet ng kayo</td>
+            <td class="trans" data-label="Filipino">balat ng kahoy</td>
+            <td class="trans" data-label="English">bark</td>
+            <td data-label="Category"><span class="badge b-cat">Nature &amp; Environment</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+          <tr>
+            <td class="word" data-label="Kasiguranin">sanga</td>
+            <td class="trans" data-label="Filipino">sanga</td>
+            <td class="trans" data-label="English">branch</td>
+            <td data-label="Category"><span class="badge b-cat">Nature &amp; Environment</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+          <tr>
+            <td class="word" data-label="Kasiguranin">ulap</td>
+            <td class="trans" data-label="Filipino">ulap</td>
+            <td class="trans" data-label="English">cloud</td>
+            <td data-label="Category"><span class="badge b-cat">Weather &amp; Climate</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+          <tr>
+            <td class="word" data-label="Kasiguranin">niyog</td>
+            <td class="trans" data-label="Filipino">niyog</td>
+            <td class="trans" data-label="English">coconut</td>
+            <td data-label="Category"><span class="badge b-cat">Food &amp; Dining</span></td>
+            <td data-label="Part of speech"><span class="badge b-pos">noun</span></td>
+            <td data-label="Status"><span class="badge b-ok">Verified</span></td>
+            <td><div class="rowact"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <span class="result">Showing 1–50 of 394</span>
+      <div class="pages">
+        <button aria-label="Previous page">‹</button>
+        <button aria-current="page">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>…</button>
+        <button>8</button>
+        <button aria-label="Next page">›</button>
+      </div>
+    </div>
+
+    <p class="note"><b>What changed and why.</b> The live dashboard is five tab buttons in a wrapping header with no URLs, so browser Back exits the panel entirely and no view can be bookmarked or shared. It renders all 394 rows on every keystroke of the search. This mockup gives each section a real hash route, pages the table, adds sortable headers with <code>aria-sort</code>, and tightens rows so roughly twice as many fit on screen. Under 640px the rows become cards rather than a seven-column horizontal scroll.</p>
+  </main>
+</div>
+
+</body>
+</html>

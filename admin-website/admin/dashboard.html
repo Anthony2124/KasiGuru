@@ -126,6 +126,22 @@
           <button class="btn btn-outline" onclick="window.switchTab('tab-vocabulary')">
             <iconsax-icon name="document-upload" type="bulk" size="18" color="currentColor"></iconsax-icon> Import data
           </button>
+          <button class="btn btn-outline" onclick="openModal('announcement-modal')">
+            <iconsax-icon name="notification" type="bulk" size="18" color="currentColor"></iconsax-icon> Post announcement
+          </button>
+        </div>
+      </div>
+
+      <!-- Live system announcements. Read by AnnouncementRepository (a Firestore listener) while
+           the app is open - there is no push-while-closed delivery here, that still needs
+           functions/send_push.js run by hand, the same Spark-plan limitation the release
+           pipeline already has. -->
+      <div class="panel" id="announcements-panel" style="margin-bottom:1.5rem;">
+        <div class="pagehead" style="margin-bottom:0.5rem;">
+          <div><h2 style="font-size:1rem; font-weight:800;">Active announcements</h2></div>
+        </div>
+        <div id="announcements-list">
+          <p style="color:var(--muted); padding:0.5rem 0;">Loading announcements&hellip;</p>
         </div>
       </div>
 
@@ -247,6 +263,32 @@
             </thead>
             <tbody id="submissions-tbody">
               <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading submissions queue&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pagehead" style="margin-top:2rem;">
+        <div>
+          <h1>Story &amp; poem submissions</h1>
+          <p>Full literature contributed from the app. Approving one copies it into Stories.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Pages</th>
+                <th>Contributor</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="literature-submissions-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading literature queue&hellip;</td></tr>
             </tbody>
           </table>
         </div>
@@ -377,6 +419,29 @@
 
 
   <!-- Modal: Add New Vocabulary Word -->
+  <div id="announcement-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="notification" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Post a system announcement</h2>
+        <button class="close-btn" onclick="closeModal('announcement-modal')">&times;</button>
+      </div>
+      <form id="announcement-form">
+        <div class="form-group">
+          <label>Title (optional)</label>
+          <input type="text" id="input-announcement-title" class="form-control" placeholder="e.g. New words this week">
+        </div>
+        <div class="form-group">
+          <label>Message *</label>
+          <textarea id="input-announcement-message" class="form-control" rows="3" required placeholder="Shown live to every learner with the app open."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('announcement-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="add-vocab-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
@@ -449,6 +514,22 @@
         <div class="form-group">
           <label>Future Tense (Contemplative)</label>
           <input type="text" id="input-contemplative" class="form-control" placeholder="e.g. magalakaw">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence, in Kasiguranin</label>
+          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div class="form-group">
+          <label>Second Example Sentence, in Kasiguranin</label>
+          <input type="text" id="input-example2" class="form-control" placeholder="A second, different sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Second Example Translation</label>
+          <input type="text" id="input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
@@ -600,6 +681,22 @@
         <div class="form-group">
           <label>Future Tense (Contemplative)</label>
           <input type="text" id="edit-input-contemplative" class="form-control" placeholder="e.g. magalakaw">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence, in Kasiguranin</label>
+          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div class="form-group">
+          <label>Second Example Sentence, in Kasiguranin</label>
+          <input type="text" id="edit-input-example2" class="form-control" placeholder="A second, different sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Second Example Translation</label>
+          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>

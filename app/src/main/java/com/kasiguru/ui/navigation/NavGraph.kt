@@ -40,6 +40,7 @@ import com.kasiguru.ui.screens.games.*
 import com.kasiguru.ui.screens.learn.LearnScreen
 import com.kasiguru.ui.screens.lesson.LessonPlayerScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
+import com.kasiguru.ui.screens.contribute.SubmitLiteratureScreen
 import com.kasiguru.ui.screens.contribute.SubmitWordScreen
 import com.kasiguru.ui.screens.profile.EditProfileScreen
 import com.kasiguru.ui.screens.profile.ProfileScreen
@@ -110,12 +111,27 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.Onboarding.route) {
                 val viewModel: com.kasiguru.ui.screens.onboarding.OnboardingViewModel = hiltViewModel()
                 OnboardingScreen(
-                    onCompleteOnboarding = { userName, avatarId, dailyGoalXp, motivation, startingLevel, titleBadge ->
-                        viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
+                    onCompleteOnboarding = { userName, avatarId, dailyGoalXp, motivation, startingLevel, titleBadge, residentName ->
+                        viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge, residentName)
                         navController.navigate(Screen.Learn.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            // "Who's learning?" - only ever reached when more than one profile exists (see
+            // SplashViewModel), or from Settings to add/switch profiles on a shared device.
+            composable(Screen.ProfileSelection.route) {
+                com.kasiguru.ui.screens.profile.ProfileSelectionScreen(
+                    onProfileSelected = {
+                        navController.navigate(Screen.Learn.route) {
+                            popUpTo(Screen.ProfileSelection.route) { inclusive = true }
+                        }
+                    },
+                    onBack = if (navController.previousBackStackEntry != null) {
+                        { navController.popBackStack() }
+                    } else null
                 )
             }
 
@@ -178,10 +194,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToCategory = { category ->
                         navController.navigate(Screen.VocabularyCategory.createRoute(category))
                     },
+                    onNavigateToWord = { wordId ->
+                        navController.navigate(Screen.VocabularyDetail.createRoute(wordId))
+                    },
                     onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) }
                 )
             }
-            
+
             composable(
                 route = Screen.VocabularyCategory.route,
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -189,7 +208,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 val categoryName = backStackEntry.arguments?.getString("category") ?: "All"
                 CategoryDetailScreen(
                     categoryName = categoryName,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToWord = { wordId ->
+                        navController.navigate(Screen.VocabularyDetail.createRoute(wordId))
+                    }
                 )
             }
 
@@ -208,7 +230,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToStory = { storyId ->
                         navController.navigate(Screen.StoryReader.createRoute(storyId))
-                    }
+                    },
+                    onNavigateToSubmitLiterature = { navController.navigate(Screen.SubmitLiterature.route) }
                 )
             }
             composable(
@@ -299,7 +322,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+                    onNavigateToAccount = { navController.navigate(Screen.Account.route) },
+                    onNavigateToProfiles = { navController.navigate(Screen.ProfileSelection.route) }
                 )
             }
             composable(Screen.Account.route) {
@@ -323,6 +347,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
             composable(Screen.SubmitWord.route) {
                 SubmitWordScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(Screen.SubmitLiterature.route) {
+                SubmitLiteratureScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
 

@@ -5,9 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +33,7 @@ data class VocabularyUiState(
     val isLoading: Boolean = true
 )
 
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class VocabularyViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository
@@ -34,8 +42,24 @@ class VocabularyViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(VocabularyUiState())
     val uiState: StateFlow<VocabularyUiState> = _uiState.asStateFlow()
 
+    // Backs the floating dictionary search bar, separate from selectCategory's in-memory filter:
+    // this one queries Room directly (VocabularyDao.searchVocabulary) so it can find a word in any
+    // category, not just the one currently selected. Debounced so every keystroke doesn't issue a
+    // new query - the first debounce anywhere in this app outside an unrelated sync timer.
+    private val searchQuery = MutableStateFlow("")
+    val dictionarySearchResults: StateFlow<List<VocabularyEntity>> = searchQuery
+        .debounce(300)
+        .flatMapLatest { query ->
+            if (query.isBlank()) flowOf(emptyList()) else vocabularyRepository.searchVocabulary(query.trim())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         loadData()
+    }
+
+    fun onDictionarySearchQueryChange(query: String) {
+        searchQuery.value = query
     }
 
     private fun loadData() {

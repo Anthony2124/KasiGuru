@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup A — Kasiguranin Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOCKUP A — "Kasiguranin Editorial"
+   The product is a language, so the words are the hero rather than the app.
+   Print-inspired: a warm paper ground, hairline rules, small-caps labels,
+   asymmetric columns, and real dictionary entries set as typographic specimens.
+   Every colour pair below is measured: ink 17.48, muted 6.94, terracotta 6.10,
+   forest 11.49 on paper; white on terracotta 6.47.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root{
+  --paper:#FBF8F3;
+  --paper-2:#F3EEE5;
+  --ink:#16130F;
+  --muted:#5C554B;
+  --hair:#D9D1C4;
+  /* Accents come in two forms, and conflating them is how dark mode breaks. The bare name is the
+     *foreground* — it has to climb when the ground goes dark. The -fill name is the surface a white
+     label sits on, and it must NOT move, because the label on it is white in both themes. */
+  --terracotta:#A63A20;        /* foreground on paper: 6.10 */
+  --terracotta-fill:#A63A20;   /* fill carrying white: 6.47 */
+  --forest:#1D3B33;            /* foreground on paper: 11.49 */
+  --forest-fill:#1D3B33;       /* panel fill carrying paper: 12.17 */
+  --on-fill:#FBF8F3;
+  --serif:'Newsreader',Georgia,serif;
+  --sans:'Public Sans',-apple-system,system-ui,sans-serif;
+  --measure:68ch;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#16130F; --paper-2:#1F1B16; --ink:#FBF8F3; --muted:#B8AFA1;
+    --hair:#3A342C;
+    --terracotta:#E8A08C;      /* foreground on dark paper: 8.67 */
+    --forest:#9DC4B4;          /* foreground on dark paper: 9.69 */
+    --terracotta-fill:#A63A20; /* unchanged: white on it is still 6.47 */
+    --forest-fill:#1F1B16;     /* the closing panel goes to a raised dark, not a light sage */
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:17px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+header{border-bottom:1px solid var(--ink);position:sticky;top:0;background:var(--paper);z-index:10}
+.masthead{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:18px 0;flex-wrap:wrap}
+.logotype{font-family:var(--serif);font-size:1.5rem;font-weight:600;letter-spacing:-0.02em}
+.logotype em{font-style:italic;font-weight:400;color:var(--terracotta)}
+nav{display:flex;gap:26px;align-items:baseline;flex-wrap:wrap}
+nav a{
+  font-size:0.72rem;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;padding:6px 0;border-bottom:2px solid transparent;
+}
+nav a:hover,nav a[aria-current]{color:var(--ink);border-bottom-color:var(--terracotta)}
+nav a.get{
+  background:var(--terracotta-fill);color:var(--on-fill);border:none;padding:9px 16px;letter-spacing:0.1em;
+}
+nav a.get:hover{background:var(--ink);color:var(--paper)}
+
+/* ── Hero: asymmetric 7/5 ─────────────────────────────────────────────────── */
+.hero{display:grid;grid-template-columns:7fr 5fr;gap:56px;padding:72px 0 56px;align-items:start}
+.rule-top{height:1px;background:var(--ink);margin-bottom:26px}
+/* A dateline, the way a paper opens a story: place, em dash, then straight into the sentence. */
+.dateline{font-weight:700;letter-spacing:0.07em;text-transform:uppercase;font-size:0.82rem;color:var(--ink)}
+h1{
+  font-family:var(--serif);font-weight:400;font-size:clamp(2.9rem,6.4vw,5rem);
+  line-height:1.02;letter-spacing:-0.028em;text-wrap:balance;margin-bottom:26px;
+}
+h1 em{font-style:italic;color:var(--terracotta)}
+.lede{font-size:1.14rem;color:var(--muted);max-width:52ch;margin-bottom:34px}
+.lede strong{color:var(--ink);font-weight:600}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.btn{
+  font-family:var(--sans);font-size:0.9rem;font-weight:600;letter-spacing:0.02em;
+  padding:15px 26px;text-decoration:none;display:inline-block;border:1px solid var(--ink);
+  transition:background .18s ease,color .18s ease;cursor:pointer;
+}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--terracotta-fill);border-color:var(--terracotta-fill);color:var(--on-fill)}
+.btn-ghost{background:transparent;color:var(--ink)}
+.btn-ghost:hover{background:var(--paper-2)}
+.btn:focus-visible{outline:3px solid var(--terracotta);outline-offset:3px}
+.meta{font-size:0.78rem;color:var(--muted);margin-top:18px;letter-spacing:0.01em}
+
+/* ── Specimen card: the word itself, set like a dictionary page ───────────── */
+.specimen{border:1px solid var(--ink);background:var(--paper-2);padding:0}
+.specimen-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:13px 22px;border-bottom:1px solid var(--ink);
+  font-size:0.72rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;
+}
+.specimen-head span:last-child{color:var(--muted)}
+.specimen-body{padding:34px 22px 26px}
+.headword{
+  font-family:var(--serif);font-size:clamp(2.6rem,4.4vw,3.5rem);font-weight:500;
+  line-height:1;letter-spacing:-0.03em;margin-bottom:8px;
+}
+.phon{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--muted);margin-bottom:22px}
+/* Every row identical: same inset top and bottom, one hairline between. Per-row padding
+   exceptions are what leave a line of text sitting on a rule. */
+.gloss{border-bottom:1px solid var(--hair);padding:14px 0;display:flex;gap:16px;align-items:baseline}
+.gloss:last-of-type{border-bottom:none}
+.gloss dt{
+  font-size:0.7rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--muted);min-width:68px;flex-shrink:0;
+}
+.gloss dd{font-family:var(--serif);font-size:1.16rem}
+.specimen-foot{
+  border-top:1px solid var(--ink);padding:12px 22px;font-size:0.72rem;color:var(--muted);
+  display:flex;justify-content:space-between;
+}
+
+/* ── Figures band ─────────────────────────────────────────────────────────── */
+.figures{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);display:grid;grid-template-columns:repeat(4,1fr)}
+.figure{padding:26px 22px;border-left:1px solid var(--hair)}
+.figure:first-child{border-left:none}
+.figure b{
+  display:block;font-family:var(--serif);font-size:2.5rem;font-weight:500;line-height:1;
+  letter-spacing:-0.03em;font-variant-numeric:tabular-nums;margin-bottom:6px;
+}
+.figure span{font-size:0.72rem;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Features as numbered editorial entries ───────────────────────────────── */
+section{padding:76px 0}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:44px}
+.sec-head h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.9rem,3.4vw,2.7rem);letter-spacing:-0.022em}
+.sec-head::after{content:"";flex:1;height:1px;background:var(--hair)}
+.entries{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.entry{padding:0 28px;border-left:1px solid var(--hair)}
+.entry:first-child{padding-left:0;border-left:none}
+.entry:last-child{padding-right:0}
+.num{
+  font-family:var(--serif);font-size:0.8rem;color:var(--terracotta);font-weight:600;
+  letter-spacing:0.1em;display:block;margin-bottom:14px;
+}
+.entry h3{font-family:var(--serif);font-size:1.45rem;font-weight:500;letter-spacing:-0.015em;margin-bottom:10px}
+.entry p{color:var(--muted);font-size:0.96rem}
+
+/* ── Social proof: an explicit empty slot, never invented ─────────────────── */
+.slot{
+  border:1px dashed var(--hair);padding:44px 28px;text-align:center;color:var(--muted);
+  background:var(--paper-2);
+}
+.slot b{display:block;font-family:var(--serif);font-size:1.2rem;color:var(--ink);margin-bottom:8px;font-weight:500}
+.slot p{font-size:0.9rem;max-width:56ch;margin:0 auto}
+
+/* ── Closing CTA ──────────────────────────────────────────────────────────── */
+.closer{background:var(--forest-fill);color:var(--on-fill);padding:76px 0;margin-top:20px}
+.closer h2{font-family:var(--serif);font-weight:400;font-size:clamp(2rem,4.4vw,3.2rem);letter-spacing:-0.025em;margin-bottom:18px;max-width:20ch}
+/* A real colour, never opacity. Faded text is what produced the AA failures on the old canopy:
+   it measures differently on every fill it lands on and nobody re-checks it. 8.11 on forest,
+   and the fill does not move between themes, so neither does this number. */
+.closer p{color:#C9D6CF;max-width:50ch;margin-bottom:30px}
+.closer .btn{border-color:var(--on-fill);background:var(--on-fill);color:var(--forest-fill)}
+.closer .btn:hover{background:var(--terracotta-fill);border-color:var(--terracotta-fill);color:var(--on-fill)}
+footer{padding:34px 0;font-size:0.78rem;color:var(--muted);border-top:1px solid var(--hair)}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:44px;padding:52px 0 40px}
+  .figures{grid-template-columns:repeat(2,1fr)}
+  .figure:nth-child(3){border-left:none}
+  .figure:nth-child(n+3){border-top:1px solid var(--hair)}
+  .entries{grid-template-columns:1fr}
+  .entry{padding:26px 0;border-left:none;border-top:1px solid var(--hair)}
+  .entry:first-child{padding-top:0;border-top:none}
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .wrap{padding:0 20px}
+  nav{gap:16px;width:100%}
+  .figures{grid-template-columns:1fr}
+  .figure{border-left:none;border-top:1px solid var(--hair)}
+  .figure:first-child{border-top:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap masthead">
+    <div class="logotype">Kasi<em>Guru</em></div>
+    <nav>
+      <a href="#words" aria-current="true">The Words</a>
+      <a href="#how">How It Works</a>
+      <a href="#heritage">Heritage</a>
+      <a href="#get" class="get">Get the App</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="rule-top"></div>
+        <h1>A dialect of <em>eleven thousand</em> speakers, written down.</h1>
+        <p class="lede"><span class="dateline">Casiguran, Aurora &mdash;</span> Kasiguranin is spoken by fewer people every year. KasiGuru is a free Android app that teaches it the way you would actually learn it — <strong>a word at a time, with the people who still speak it.</strong></p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#get">Download for Android</a>
+          <a class="btn btn-ghost" href="#words">Browse the dictionary</a>
+        </div>
+        <p class="meta">Free · No account required to browse · 12 MB</p>
+      </div>
+
+      <aside class="specimen">
+        <div class="specimen-head"><span>Word of the day</span><span>№ 043</span></div>
+        <div class="specimen-body">
+          <div class="headword">kawayan</div>
+          <div class="phon">/ka·wa·yan/ · noun</div>
+          <dl>
+            <div class="gloss"><dt>English</dt><dd>bamboo</dd></div>
+            <div class="gloss"><dt>Filipino</dt><dd>kawayan</dd></div>
+            <div class="gloss"><dt>Category</dt><dd>Nature &amp; Environment</dd></div>
+          </dl>
+        </div>
+        <div class="specimen-foot"><span>Verified entry</span><span>Updated today</span></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="figures">
+      <div class="figure"><b>394</b><span>Words recorded</span></div>
+      <div class="figure"><b>13</b><span>Categories</span></div>
+      <div class="figure"><b>1</b><span>Dialect preserved</span></div>
+      <div class="figure"><b>Free</b><span>Always</span></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section id="how">
+      <div class="sec-head"><h2>How it works</h2></div>
+      <div class="entries">
+        <article class="entry">
+          <span class="num">01</span>
+          <h3>Learn a path, not a list</h3>
+          <p>Each day gives you a short lesson, a review of what is slipping, a game, and a story — built from the words you have actually met.</p>
+        </article>
+        <article class="entry">
+          <span class="num">02</span>
+          <h3>Play until it sticks</h3>
+          <p>Matching, listening and recall games turn a vocabulary list into something you can recognise when a neighbour says it out loud.</p>
+        </article>
+        <article class="entry">
+          <span class="num">03</span>
+          <h3>Add what is missing</h3>
+          <p>Know a word the dictionary does not? Submit it. A moderator in Casiguran verifies it and it joins the record for everyone.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="heritage">
+      <div class="sec-head"><h2>Why it matters</h2></div>
+      <p style="font-family:var(--serif);font-size:1.5rem;line-height:1.5;max-width:34ch;float:left;margin:0 44px 20px 0;color:var(--terracotta)">“A language is not lost all at once. It goes one word at a time.”</p>
+      <p style="color:var(--muted);max-width:var(--measure)">Kasiguranin sits between Tagalog and the Northern Luzon languages, and it is not taught in schools. The people who speak it best are the oldest people in town. Every entry in this dictionary was collected from them, checked, and published so that a child in Casiguran — or a grandchild somewhere else entirely — can still find it in twenty years.</p>
+      <p style="color:var(--muted);max-width:var(--measure);margin-top:18px">The app is free and always will be. The dictionary is open to anyone, whether or not they ever install it.</p>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>From the community</h2></div>
+      <div class="slot">
+        <b>Reserved for real voices</b>
+        <p>This is where testimonials from actual users, teachers and elders belong. Left deliberately empty — Adrian supplies the real quotes, the same way he supplies the artwork. Nothing invented ships here.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="closer" id="get">
+    <div class="wrap">
+      <h2>Start with one word.</h2>
+      <p>Download KasiGuru free on Android. Browse all 394 entries without making an account.</p>
+      <a class="btn" href="#">Download the APK</a>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap">KasiGuru · A language preservation project for Casiguran, Aurora · Mockup A, not a live page</div></footer>
+
+</body>
+</html>

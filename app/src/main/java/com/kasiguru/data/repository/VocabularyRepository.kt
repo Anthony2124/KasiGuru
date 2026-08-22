@@ -6,6 +6,7 @@ import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.Sm2Algorithm
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -75,6 +76,9 @@ class VocabularyRepository @Inject constructor(
     fun getCategories(): Flow<List<String>> =
         vocabularyDao.getCategories()
 
+    fun searchVocabulary(query: String): Flow<List<VocabularyEntity>> =
+        vocabularyDao.searchVocabulary(query)
+
     /**
      * Processes a spaced repetition review for a word using SM-2.
      * Updates SM-2 fields and increments user progress stats if learned threshold is passed.
@@ -93,8 +97,24 @@ class VocabularyRepository @Inject constructor(
         if (!word.isLearned && sm2Result.isLearned) {
             userProgressRepository.incrementWordsLearned()
             userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
+            checkCategoryMastery(word.category)
         }
         return updatedWord
+    }
+
+    /**
+     * Backs the "Category Master" badge. Lives here rather than in UserProgressRepository because
+     * that would need VocabularyRepository injected there, which already depends on
+     * UserProgressRepository - a cycle Hilt can't build.
+     */
+    private suspend fun checkCategoryMastery(category: String) {
+        val words = vocabularyDao.getVocabularyByCategory(category).first()
+        if (words.isNotEmpty() && words.all { it.isLearned }) {
+            userProgressRepository.checkAchievements(
+                com.kasiguru.data.local.entity.MetricType.CATEGORY_MASTERED,
+                currentValue = 1
+            )
+        }
     }
 
     /**
@@ -114,9 +134,10 @@ class VocabularyRepository @Inject constructor(
             isLearned = true
         )
         vocabularyDao.updateVocabulary(updatedWord)
-        
+
         userProgressRepository.incrementWordsLearned()
         userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
+        checkCategoryMastery(word.category)
     }
 
     suspend fun unmarkAsLearned(id: Int) {

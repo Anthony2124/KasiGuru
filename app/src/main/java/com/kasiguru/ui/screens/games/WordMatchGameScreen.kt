@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOptionRow
 import com.kasiguru.ui.components.GameOptionState
@@ -82,7 +82,7 @@ fun WordMatchGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 
-                .padding(20.dp),
+                .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
@@ -142,7 +142,12 @@ fun WordMatchGameScreen(
             }
 
             if (hasAnswered) {
-                GameContinueButton(onClick = { viewModel.nextQuestion() })
+                GameAnswerFeedback(
+                    isCorrect = uiState.selectedOption == uiState.currentWord?.tagalog,
+                    correctAnswer = uiState.currentWord?.tagalog ?: "",
+                    word = uiState.currentWord,
+                    onContinue = { viewModel.nextQuestion() }
+                )
             }
         }
         }

@@ -17,6 +17,17 @@ interface AchievementDao {
     @Query("SELECT * FROM achievements WHERE id = :id")
     suspend fun getAchievementById(id: String): AchievementEntity?
 
+    /**
+     * The one query the generic evaluator needs: every not-yet-unlocked badge in a metric
+     * family, so UserProgressRepository.checkAchievements can compare [AchievementEntity.requiredValue]
+     * itself rather than a threshold hardcoded per badge id.
+     */
+    @Query("SELECT * FROM achievements WHERE metricType = :metricType AND isUnlocked = 0")
+    suspend fun getLockedByMetricType(metricType: String): List<AchievementEntity>
+
+    @Query("SELECT id FROM achievements")
+    suspend fun getAllIds(): List<String>
+
     @Query("SELECT COUNT(*) FROM achievements WHERE isUnlocked = 1")
     fun getUnlockedCount(): Flow<Int>
 
@@ -56,4 +67,8 @@ interface GameScoreDao {
 
     @Insert
     suspend fun insert(score: GameScoreEntity)
+
+    /** Backs the "Six for Six" badge: how many of the six modes have ever been played. */
+    @Query("SELECT COUNT(DISTINCT gameType) FROM game_scores")
+    suspend fun getDistinctGameTypesPlayed(): Int
 }

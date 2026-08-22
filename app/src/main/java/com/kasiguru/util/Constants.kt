@@ -82,6 +82,18 @@ object Constants {
         const val SEVEN_DAY_STREAK = "seven_day_streak"
         const val LEVEL_FIVE = "level_five"
         const val LEVEL_TEN = "level_ten"
+
+        // New achievements (badge redesign): submission-based, deeper streak/mastery, and
+        // social/leaderboard-based, matching the categories chosen for the roadmap.
+        const val FIRST_CONTRIBUTION = "first_contribution"
+        const val TRUSTED_VOICE = "trusted_voice"
+        const val CORPUS_BUILDER = "corpus_builder"
+        const val MOON_CYCLE = "moon_cycle"
+        const val CENTURION = "centurion"
+        const val CATEGORY_MASTER = "category_master"
+        const val PERFECT_SIX = "perfect_six"
+        const val TOP_OF_THE_WEEK = "top_of_the_week"
+        const val SIX_FOR_SIX = "six_for_six"
     }
 
     // Games

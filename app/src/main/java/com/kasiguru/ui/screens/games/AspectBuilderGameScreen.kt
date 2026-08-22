@@ -12,7 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOptionRow
 import com.kasiguru.ui.components.GameOptionState
@@ -84,7 +84,7 @@ fun AspectBuilderGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 
-                .padding(20.dp),
+                .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
@@ -148,7 +148,12 @@ fun AspectBuilderGameScreen(
             }
 
             if (hasAnswered) {
-                GameContinueButton(onClick = { viewModel.nextQuestion() })
+                GameAnswerFeedback(
+                    isCorrect = uiState.selectedAnswer == question.correctAnswer,
+                    correctAnswer = question.correctAnswer,
+                    word = question.targetVocab,
+                    onContinue = { viewModel.nextQuestion() }
+                )
             }
         }
         }

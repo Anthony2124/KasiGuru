@@ -51,6 +51,7 @@ import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.WordVerificationDialog
 import com.kasiguru.ui.theme.VioletDeep
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.clay.FloatingSearchBar
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -80,12 +81,15 @@ import com.kasiguru.util.audio.AudioPlayerManager
 fun CategoryDetailScreen(
     categoryName: String,
     onNavigateBack: () -> Unit,
+    onNavigateToWord: (Int) -> Unit = {},
     viewModel: VocabularyViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var verifyingWord by remember { mutableStateOf<VocabularyEntity?>(null) }
     var unlearningWord by remember { mutableStateOf<VocabularyEntity?>(null) }
+    var dictionaryQuery by remember { mutableStateOf("") }
+    val dictionaryResults by viewModel.dictionarySearchResults.collectAsState()
 
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -213,6 +217,28 @@ fun CategoryDetailScreen(
                     )
                 }
             }
+
+            // Overlays the list rather than pushing it. Distinct from the field above: that one
+            // filters this category's already-loaded list, this one queries every category so a
+            // word from elsewhere in the dictionary can be reached without leaving this screen.
+            FloatingSearchBar(
+                query = dictionaryQuery,
+                onQueryChange = {
+                    dictionaryQuery = it
+                    viewModel.onDictionarySearchQueryChange(it)
+                },
+                results = dictionaryResults,
+                onResultClick = { word ->
+                    dictionaryQuery = ""
+                    viewModel.onDictionarySearchQueryChange("")
+                    onNavigateToWord(word.id)
+                },
+                placeholder = "Search the whole dictionary…",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = Space.gutter)
+                    .padding(top = 64.dp)
+            )
         }
     )
 }

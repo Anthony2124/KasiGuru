@@ -3710,6 +3710,7 @@ object DatabaseSeeder {
     fun getInitialAchievements(): List<AchievementEntity> = listOf(
         AchievementEntity(
             id = "level_1",
+            metricType = "level",
             name = "Novice Explorer",
             description = "Began your Kasiguranin learning journey",
             iconEmoji = "🌱",
@@ -3720,6 +3721,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = "level_2",
+            metricType = "level",
             name = "Vocab Apprentice",
             description = "Reached Level 2 & unlocked Fill in the Blank",
             iconEmoji = "📚",
@@ -3729,6 +3731,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = "level_3",
+            metricType = "level",
             name = "Linguistic Scholar",
             description = "Reached Level 3 & unlocked Audio Listening Quiz",
             iconEmoji = "🎧",
@@ -3738,6 +3741,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = "level_4",
+            metricType = "level",
             name = "Grammar Specialist",
             description = "Reached Level 4 & unlocked Verb Aspect Builder",
             iconEmoji = "⚡",
@@ -3747,6 +3751,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = "level_5",
+            metricType = "level",
             name = "Kasiguranin Legend",
             description = "Reached Level 5 & unlocked Sentence Construction",
             iconEmoji = "👑",
@@ -3756,6 +3761,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.FIRST_WORD,
+            metricType = "wordsLearned",
             name = "Unáng Salitâ",
             description = "Learn your first Kasiguranin word",
             iconEmoji = "🌟",
@@ -3765,6 +3771,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.TEN_WORDS,
+            metricType = "wordsLearned",
             name = "Sampûng Salitâ",
             description = "Learn 10 Kasiguranin words",
             iconEmoji = "📖",
@@ -3774,6 +3781,8 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.FIFTY_WORDS,
+            metricType = "wordsLearned",
+            tier = "bronze",
             name = "Limampûng Salitâ",
             description = "Learn 50 Kasiguranin words",
             iconEmoji = "🎓",
@@ -3783,6 +3792,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.FIRST_STORY,
+            metricType = "storiesCompleted",
             name = "Mambábasa",
             description = "Complete your first story",
             iconEmoji = "📕",
@@ -3792,6 +3802,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.FIRST_GAME,
+            metricType = "gamesPlayed",
             name = "Mánlalaro",
             description = "Play your first mini-game",
             iconEmoji = "🎮",
@@ -3801,6 +3812,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.PERFECT_GAME,
+            metricType = "perfectGame",
             name = "Perpekto!",
             description = "Get a perfect score in any mini-game",
             iconEmoji = "⭐",
@@ -3810,6 +3822,7 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.THREE_DAY_STREAK,
+            metricType = "streak",
             name = "Tatlong Aldaw",
             description = "Maintain a 3-day learning streak",
             iconEmoji = "🔥",
@@ -3819,6 +3832,8 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.SEVEN_DAY_STREAK,
+            metricType = "streak",
+            tier = "bronze",
             name = "Isáng Linggo",
             description = "Maintain a 7-day learning streak",
             iconEmoji = "💪",
@@ -3828,6 +3843,8 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.LEVEL_FIVE,
+            metricType = "level",
+            tier = "silver",
             name = "Sumusulong",
             description = "Reach Level 5",
             iconEmoji = "🏅",
@@ -3837,12 +3854,138 @@ object DatabaseSeeder {
         ),
         AchievementEntity(
             id = Constants.Achievements.LEVEL_TEN,
+            metricType = "level",
+            tier = "gold",
             name = "Mæstro",
             description = "Reach Level 10 — Master of Kasiguranin!",
             iconEmoji = "👑",
             category = "Progress",
             requiredValue = 10,
             xpReward = 500
+        ),
+        // Previously defined in Constants and referenced by checkStoryAchievements, but never
+        // actually seeded - tryUnlock silently no-ops on a missing id, so this could never
+        // unlock. Fixed here as part of making unlock logic generic and metric-driven.
+        AchievementEntity(
+            id = Constants.Achievements.ALL_STORIES,
+            metricType = "storiesCompleted",
+            tier = "silver",
+            name = "Tagapagsalaysay",
+            description = "Complete 3 stories",
+            iconEmoji = "📚",
+            category = "Progress",
+            requiredValue = 3,
+            xpReward = 150
+        ),
+
+        // ── New achievements: submission-based ──────────────────────────────
+        AchievementEntity(
+            id = Constants.Achievements.FIRST_CONTRIBUTION,
+            metricType = "submissionsMade",
+            name = "First Contribution",
+            description = "Submit your first word, story, or poem",
+            iconEmoji = "✍️",
+            category = "Contribution",
+            requiredValue = 1,
+            xpReward = 30
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.TRUSTED_VOICE,
+            metricType = "submissionsApproved",
+            tier = "bronze",
+            name = "Trusted Voice",
+            description = "Have 5 submissions approved into the dictionary or Stories",
+            iconEmoji = "🗣️",
+            category = "Contribution",
+            requiredValue = 5,
+            xpReward = 150
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.CORPUS_BUILDER,
+            metricType = "submissionsApproved",
+            tier = "gold",
+            name = "Corpus Builder",
+            description = "Have 25 submissions approved into the dictionary or Stories",
+            iconEmoji = "🏛️",
+            category = "Contribution",
+            requiredValue = 25,
+            xpReward = 500
+        ),
+
+        // ── New achievements: deeper streak/mastery tiers ───────────────────
+        AchievementEntity(
+            id = Constants.Achievements.MOON_CYCLE,
+            metricType = "streak",
+            tier = "silver",
+            name = "Moon Cycle",
+            description = "Maintain a 30-day learning streak",
+            iconEmoji = "🌙",
+            category = "Streaks",
+            requiredValue = 30,
+            xpReward = 300
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.CENTURION,
+            metricType = "streak",
+            tier = "gold",
+            name = "Centurion",
+            description = "Maintain a 100-day learning streak",
+            iconEmoji = "🏛️",
+            category = "Streaks",
+            requiredValue = 100,
+            xpReward = 1000
+        ),
+        // Tracked per category as each one is completed - see
+        // UserProgressRepository.checkCategoryMastery, called after a word is learned.
+        AchievementEntity(
+            id = Constants.Achievements.CATEGORY_MASTER,
+            metricType = "categoryMastered",
+            tier = "gold",
+            name = "Category Master",
+            description = "Learn every word in one dictionary category",
+            iconEmoji = "🎯",
+            category = "Mastery",
+            requiredValue = 1,
+            xpReward = 250
+        ),
+        // Seeded so it appears in the Achievements list with real criteria; live tracking (a
+        // perfect score across all six game modes in one sitting) needs cross-screen session
+        // state this pass doesn't add yet - a follow-up, not a placeholder value.
+        AchievementEntity(
+            id = Constants.Achievements.PERFECT_SIX,
+            metricType = "perfectSixInOneSitting",
+            tier = "gold",
+            name = "Perfect Six",
+            description = "Score perfectly in all six game modes in one sitting",
+            iconEmoji = "💯",
+            category = "Games",
+            requiredValue = 1,
+            xpReward = 400
+        ),
+
+        // ── New achievements: social/leaderboard-based ──────────────────────
+        // Tracked from the live weekly leaderboard - see
+        // UserProgressRepository.checkWeeklyLeaderboardAchievement.
+        AchievementEntity(
+            id = Constants.Achievements.TOP_OF_THE_WEEK,
+            metricType = "weeklyTopTen",
+            tier = "silver",
+            name = "Top of the Week",
+            description = "Reach the top 10 of the weekly leaderboard",
+            iconEmoji = "📈",
+            category = "Social",
+            requiredValue = 1,
+            xpReward = 200
+        ),
+        AchievementEntity(
+            id = Constants.Achievements.SIX_FOR_SIX,
+            metricType = "gameModesPlayed",
+            name = "Six for Six",
+            description = "Play every one of the six mini-game modes at least once",
+            iconEmoji = "🎲",
+            category = "Games",
+            requiredValue = 6,
+            xpReward = 150
         )
     )
 

@@ -25,7 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.StoryEntity
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.StoryCoverCard
+import com.kasiguru.ui.components.clay.rememberStoryCoverRes
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -37,6 +40,7 @@ import com.kasiguru.ui.theme.Iconsax
 fun StoryListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToStory: (Int) -> Unit,
+    onNavigateToSubmitLiterature: () -> Unit = {},
     viewModel: StoriesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -61,6 +65,14 @@ fun StoryListScreen(
                 verticalArrangement = Arrangement.spacedBy(Space.md)
             ) {
                 item { GroundTitleBlock(title = "Stories", subtitle = "Folk tales with Tagalog and English alongside") }
+                item {
+                    ClayButton(
+                        label = "Submit a story or poem",
+                        onClick = onNavigateToSubmitLiterature,
+                        tone = ClayButtonTone.Reward,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 items(uiState.stories, key = { it.id }) { story ->
                     StoryCoverCard(
                         titleKasiguranin = story.titleKasiguranin,
@@ -70,7 +82,8 @@ fun StoryListScreen(
                         isCompleted = story.isCompleted,
                         requiredXp = story.requiredXp,
                         onClick = { onNavigateToStory(story.id) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        cover = rememberStoryCoverRes(story.id)
                     )
                 }
             }

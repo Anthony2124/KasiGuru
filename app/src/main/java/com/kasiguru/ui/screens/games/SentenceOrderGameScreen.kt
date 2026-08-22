@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.GameContinueButton
+import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.rememberGameExitGuard
@@ -77,7 +77,7 @@ fun SentenceOrderGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 
-                .padding(20.dp),
+                .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
@@ -170,22 +170,6 @@ fun SentenceOrderGameScreen(
                 }
             }
 
-            if (hasChecked) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = if (uiState.isCorrect == true) {
-                        "Correct!"
-                    } else {
-                        "Not quite — correct order: ${question.correctKasiguraninWords.joinToString(" ")}"
-                    },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (uiState.isCorrect == true) Success else Error,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
             // Available Word Bank
             if (!hasChecked) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -220,7 +204,11 @@ fun SentenceOrderGameScreen(
             }
 
             if (hasChecked) {
-                GameContinueButton(onClick = { viewModel.nextQuestion() })
+                GameAnswerFeedback(
+                    isCorrect = uiState.isCorrect == true,
+                    correctAnswer = question.correctKasiguraninWords.joinToString(" "),
+                    onContinue = { viewModel.nextQuestion() }
+                )
             } else {
                 ClayButton(
                     label = "Check sentence order",

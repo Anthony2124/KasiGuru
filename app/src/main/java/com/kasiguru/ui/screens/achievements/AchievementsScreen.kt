@@ -53,6 +53,10 @@ import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.GoldDeep
+import com.kasiguru.ui.theme.TierBronze
+import com.kasiguru.ui.theme.TierBronzeDeep
+import com.kasiguru.ui.theme.TierSilver
+import com.kasiguru.ui.theme.TierSilverDeep
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -188,7 +192,15 @@ private fun BadgeCard(achievement: AchievementEntity) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             if (isUnlocked) {
-                ClayCircle(size = 56.dp, face = Gold, lipColor = GoldDeep) {
+                // Wires the tier tokens to a real badge instead of leaving them unused: gold is
+                // still the default face for every untiered badge, so nothing already-shipped
+                // changes look.
+                val (tierFace, tierLip) = when (achievement.tier) {
+                    "silver" -> TierSilver to TierSilverDeep
+                    "bronze" -> TierBronze to TierBronzeDeep
+                    else -> Gold to GoldDeep
+                }
+                ClayCircle(size = 56.dp, face = tierFace, lipColor = tierLip) {
                     Icon(
                         painter = painterResource(id = achievementIcon(achievement.category)),
                         contentDescription = null,

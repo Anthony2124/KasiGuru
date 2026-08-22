@@ -3,8 +3,8 @@ package com.kasiguru.data.repository
 import com.kasiguru.data.local.dao.AchievementDao
 import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.entity.AchievementEntity
+import com.kasiguru.data.local.entity.MetricType
 import com.kasiguru.data.local.entity.UserProgressEntity
-import com.kasiguru.util.Constants
 import com.kasiguru.util.calculateLevel
 import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.Flow
@@ -130,41 +130,48 @@ class UserProgressRepository @Inject constructor(
     suspend fun updateUserName(name: String) =
         userProgressDao.updateUserName(name)
 
+    /** Called on every successful word/story/poem submission, approved or not. */
+    suspend fun incrementSubmissionsMade() {
+        userProgressDao.incrementSubmissionsMade()
+        val progress = userProgressDao.getUserProgressOnce() ?: return
+        checkAchievements(MetricType.SUBMISSIONS_MADE, progress.submissionsMade)
+    }
+
     // ─── Achievement Checks ───
+    //
+    // One generic evaluator replaces what used to be five near-identical functions, each
+    // hardcoding its own thresholds instead of reading AchievementEntity.requiredValue. Adding a
+    // badge in an existing metric family (e.g. a 30-day streak badge) is now a seeded row, not a
+    // new `if` here - see AchievementEntity's MetricType doc.
 
-    private suspend fun checkWordAchievements(wordsLearned: Int) {
-        val today = LocalDate.now().toIsoString()
-        if (wordsLearned >= 1) tryUnlock(Constants.Achievements.FIRST_WORD, today)
-        if (wordsLearned >= 10) tryUnlock(Constants.Achievements.TEN_WORDS, today)
-        if (wordsLearned >= 50) tryUnlock(Constants.Achievements.FIFTY_WORDS, today)
-    }
+    private suspend fun checkWordAchievements(wordsLearned: Int) =
+        checkAchievements(MetricType.WORDS_LEARNED, wordsLearned)
 
-    private suspend fun checkStoryAchievements(storiesCompleted: Int) {
-        val today = LocalDate.now().toIsoString()
-        if (storiesCompleted >= 1) tryUnlock(Constants.Achievements.FIRST_STORY, today)
-        if (storiesCompleted >= 3) tryUnlock(Constants.Achievements.ALL_STORIES, today)
-    }
+    private suspend fun checkStoryAchievements(storiesCompleted: Int) =
+        checkAchievements(MetricType.STORIES_COMPLETED, storiesCompleted)
 
-    private suspend fun checkGameAchievements(gamesPlayed: Int) {
-        val today = LocalDate.now().toIsoString()
-        if (gamesPlayed >= 1) tryUnlock(Constants.Achievements.FIRST_GAME, today)
-    }
+    private suspend fun checkGameAchievements(gamesPlayed: Int) =
+        checkAchievements(MetricType.GAMES_PLAYED, gamesPlayed)
 
-    suspend fun checkPerfectGameAchievement() {
-        val today = LocalDate.now().toIsoString()
-        tryUnlock(Constants.Achievements.PERFECT_GAME, today)
-    }
+    /** Not a threshold comparison - a perfect game either just happened or it didn't. */
+    suspend fun checkPerfectGameAchievement() =
+        checkAchievements(MetricType.PERFECT_GAME, currentValue = 1)
 
-    private suspend fun checkStreakAchievements(streak: Int) {
-        val today = LocalDate.now().toIsoString()
-        if (streak >= 3) tryUnlock(Constants.Achievements.THREE_DAY_STREAK, today)
-        if (streak >= 7) tryUnlock(Constants.Achievements.SEVEN_DAY_STREAK, today)
-    }
+    private suspend fun checkStreakAchievements(streak: Int) =
+        checkAchievements(MetricType.STREAK, streak)
 
-    private suspend fun checkLevelAchievements(level: Int) {
+    private suspend fun checkLevelAchievements(level: Int) =
+        checkAchievements(MetricType.LEVEL, level)
+
+    /**
+     * Unlocks every not-yet-unlocked badge in [metricType] whose requiredValue [currentValue]
+     * now meets. The single place unlock logic lives, regardless of which metric family it is.
+     */
+    suspend fun checkAchievements(metricType: String, currentValue: Int) {
         val today = LocalDate.now().toIsoString()
-        if (level >= 5) tryUnlock(Constants.Achievements.LEVEL_FIVE, today)
-        if (level >= 10) tryUnlock(Constants.Achievements.LEVEL_TEN, today)
+        achievementDao.getLockedByMetricType(metricType)
+            .filter { currentValue >= it.requiredValue }
+            .forEach { tryUnlock(it.id, today) }
     }
 
     private suspend fun tryUnlock(id: String, date: String) {
@@ -174,6 +181,18 @@ class UserProgressRepository @Inject constructor(
             // Award bonus XP for unlocking
             userProgressDao.addXp(achievement.xpReward)
         }
+    }
+
+    /**
+     * Adds any achievement DatabaseSeeder now defines that an existing install's table (seeded
+     * before this badge was added) doesn't have yet. A fresh install already gets every badge
+     * through the normal empty-table seed; this is only for upgrading installs, called once from
+     * AchievementsViewModel's init so a new badge type appears without the user reinstalling.
+     */
+    suspend fun seedNewAchievements(all: List<AchievementEntity>) {
+        val existingIds = achievementDao.getAllIds().toSet()
+        val missing = all.filter { it.id !in existingIds }
+        if (missing.isNotEmpty()) achievementDao.insertAll(missing)
     }
 
     // Achievements

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KasiGuru — direction D, Clay Canopy</title>
+<meta name="description" content="Mockup: the KasiGuru download site rebuilt in a playful clay and blob layout, on the Android app's own Violet Sheet palette and Nunito / DM Sans type.">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   KasiGuru — download site, direction D: "Clay Canopy" on the web.
+
+   Layout language is taken from the supplied reference: organic blob grounds,
+   wave section dividers, chunky pill buttons with a solid lip, staggered offset
+   cards, big outline circles and confetti, a ghost outline watermark.
+
+   Every colour and every font here is lifted verbatim from the Android app
+   (app/src/main/java/com/kasiguru/ui/theme/Color.kt, Type.kt, Dimens.kt,
+   Motion.kt). Nothing was re-picked for the web. DESIGN.md stays the authority.
+
+   Three rules from DESIGN.md shape what follows, each from a measured WCAG
+   failure rather than from taste:
+     1. Gold and Coral are FILLS carrying RewardInk. On white they measure 1.83
+        and 2.31, so neither is ever a text colour.
+     2. Clay (lip + lit top + press compression) is reserved for things you
+        press or earn. Ordinary content is a soft card. Content built out of
+        clay tips the page into a toy, and the audience includes a thesis panel.
+     3. Nothing may depend on an animation having run. Reduced motion is a
+        contract, so every revealed element is readable with motion disabled.
+
+   Measured with a WCAG calculator, both themes, worst text pairing 4.54:
+     ink/ground 14.43 light, 16.08 dark      muted/ground 5.67, 9.04
+     ink/card 16.46, 14.68                   muted/card 6.46, 8.25
+     violet/card 6.00, 6.15                  ink/band 12.46, 14.96
+     muted/band 4.89, 8.41                   violet on violet chip 4.59, 4.70
+     ink on gold chip 12.34, 8.21            ink on coral chip 11.96, 9.92
+     white/canopy-top 4.86                   white/canopy-bottom 7.60
+     reward-ink/gold 9.00                    reward-ink/coral 7.14
+     white on the glass chip 4.54 over the canopy's deep end, and 3.27 over its
+     top end, which is why the chip is placed where it is.
+   Nothing carrying text is below 4.5.
+
+   The primary button uses the canopy pair (#6C5CE7 face over #4A3FC0 lip)
+   rather than the interactive violet, because the canopy is fixed across both
+   themes while Violet lightens to #9C90F5 in dark, where white on it would
+   fail. White on the canopy top measures 4.86 and holds in either theme.
+   ───────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
+
+:root{
+  /* Ground and surfaces — theme-reactive */
+  --ground:#F1EEFF;
+  --surface:#FFFFFF;
+  --sunken:#E8E4F8;
+  --ink:#1F1B3A;
+  --muted:#5E5A80;
+  --faint:#8A86A6;
+  --hair:rgba(31,27,58,.12);
+
+  /* Interactive violet — theme-reactive */
+  --violet:#5B4CDB;
+  --violet-deep:#4034A8;
+  --violet-tint:#E7E3FF;
+  --band:#E3DCFB;
+  --shadow:rgba(91,76,219,.20);
+
+  /* Fixed in both themes: the canopy and the reward fills. The canopy is
+     already a vivid self-contained accent surface, and the reward fills carry
+     a fixed ink label, so neither may move between themes. */
+  --canopy-top:#6C5CE7;
+  --canopy-bottom:#4A3FC0;
+  --on-canopy:#FFFFFF;
+  --gold:#FFB020;
+  --gold-deep:#D98200;
+  --coral:#FF8B5E;
+  --coral-deep:#E0651F;
+  --reward-ink:#1F1B3A;
+  --white-lip:#CFC7EE;
+
+  /* Shape. One radius system, from Dimens.kt. Mixing 14/18/20/22/26 on
+     adjacent surfaces is what made the old app screens read as a pile of
+     cards rather than one designed system. */
+  --r-chip:14px;
+  --r-tile:20px;
+  --r-panel:28px;
+  --r-sheet:32px;
+  --r-pill:999px;
+
+  /* Clay geometry, from Dimens.kt object Clay */
+  --clay-lip:5px;
+  --clay-lip-pressed:1px;
+
+  /* Motion, from Motion.kt */
+  --quick:120ms;
+  --standard:240ms;
+  --emphasized:400ms;
+  --ease-out:cubic-bezier(0.05,0.7,0.1,1);
+
+  --tap:48px;
+  --wrap:1180px;
+}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#15131F;
+    --surface:#1E1B30;
+    --sunken:#282440;
+    --ink:#F1EEFF;
+    --muted:#B7B2D6;
+    --faint:#827DA0;
+    --hair:rgba(241,238,255,.14);
+    --violet:#9C90F5;
+    --violet-deep:#6C5CE7;
+    --violet-tint:#2A2660;
+    --band:#1C1930;
+    --shadow:rgba(10,7,28,.55);
+  }
+  .step-2,.m-coral{background:rgba(255,139,94,.34)}
+  .step-3,.m-gold{background:rgba(255,176,32,.36)}
+  .step-1,.m-violet{background:rgba(156,144,245,.22)}
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+h1,h2,h3,.figure b,.headword,.logotype,.step-n{font-family:'Nunito',system-ui,sans-serif}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px;position:relative;z-index:2}
+
+/* The sticky header offsets every anchor jump. Without this the header eats
+   the heading you just jumped to. */
+section[id],div[id]{scroll-margin-top:96px}
+
+a{color:var(--violet);text-decoration-thickness:1.5px;text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--violet);outline-offset:3px;border-radius:6px}
+
+/* ── Decoration ───────────────────────────────────────────────────────────────
+   Every shape below is CSS or inline SVG. The live site's CSP is
+   img-src 'self' data: blob:, so no external image can load, and the project
+   ships no decorative rasters by policy: Adrian authors all artwork, and the
+   page has to look finished with none of it present. */
+.blob{position:absolute;pointer-events:none;z-index:0}
+.blob-gold{background:var(--gold);border-radius:58% 42% 47% 53% / 51% 40% 60% 49%}
+.blob-gold-soft{background:var(--gold);opacity:.32;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%}
+.blob-coral-soft{background:var(--coral);opacity:.26;border-radius:63% 37% 41% 59% / 40% 62% 38% 60%}
+.blob-tint{background:var(--violet-tint);border-radius:52% 48% 39% 61% / 61% 37% 63% 39%}
+
+.ring{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.ring-coral{border:10px solid var(--coral);opacity:.5}
+.ring-gold{border:9px solid var(--gold);opacity:.55}
+.ring-violet{border:8px solid var(--violet);opacity:.24}
+
+.dot{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.leaf{position:absolute;border-radius:0 100% 0 100%;pointer-events:none;z-index:0}
+
+/* The reference's plus mark, built from two rounded bars. Used once. */
+.plus{position:absolute;pointer-events:none;z-index:0}
+.plus::before,.plus::after{content:"";position:absolute;background:var(--gold);border-radius:8px}
+.plus::before{left:38%;top:0;width:24%;height:100%}
+.plus::after{top:38%;left:0;height:24%;width:100%}
+
+.wave{display:block;width:100%;height:clamp(44px,5.5vw,80px);position:relative;z-index:1;line-height:0}
+.wave svg{display:block;width:100%;height:100%}
+
+/* ── Clay ─────────────────────────────────────────────────────────────────────
+   Face, a solid darker lip beneath it, and a lit gradient over the top 45% of
+   the face. Pressing compresses the lip and drops the face onto it. */
+.clay{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:var(--tap);padding:0 30px;
+  border:0;border-radius:var(--r-pill);
+  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;
+  letter-spacing:-0.2px;text-decoration:none;cursor:pointer;
+  transition:transform var(--quick) var(--ease-out),box-shadow var(--quick) var(--ease-out);
+}
+.clay:active{transform:translateY(4px)}
+/* The lit top is a background layer rather than a pseudo-element: an overlay
+   stacked behind an opaque background paints nothing and leaves a halo. */
+.clay-primary{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),var(--canopy-top);color:var(--on-canopy);box-shadow:0 var(--clay-lip) 0 var(--canopy-bottom),0 10px 20px var(--shadow)}
+.clay-primary:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--canopy-bottom),0 3px 8px var(--shadow)}
+.clay-reward{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,0) 45%),var(--gold);color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--gold-deep),0 10px 20px rgba(217,130,0,.24)}
+.clay-reward:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--gold-deep),0 3px 8px rgba(217,130,0,.24)}
+.clay-white{background:#FFFFFF;color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--white-lip),0 10px 22px rgba(20,14,60,.28)}
+.clay-white:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--white-lip),0 3px 8px rgba(20,14,60,.28)}
+.clay-sm{min-height:44px;padding:0 22px;font-size:.95rem}
+@media (prefers-reduced-motion:reduce){.clay{transition:none}}
+
+/* ── Soft card — the default surface for content ──────────────────────────── */
+.soft{
+  background:var(--surface);
+  border-radius:var(--r-tile);
+  box-shadow:0 8px 24px var(--shadow);
+  padding:26px;
+  position:relative;z-index:2;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.masthead{display:flex;align-items:center;gap:20px;height:72px}
+.brand{display:flex;align-items:center;text-decoration:none}
+.logomark{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:var(--r-pill);
+  background:var(--canopy-top);color:#fff;font-weight:900;font-size:1.15rem;
+  margin-right:10px;box-shadow:0 3px 0 var(--canopy-bottom);
+  font-family:'Nunito',system-ui,sans-serif;
+}
+.logotype{font-weight:900;font-size:1.35rem;letter-spacing:-0.6px;color:var(--ink);white-space:nowrap}
+.logotype em{font-style:normal;color:var(--violet)}
+nav{margin-left:auto;display:flex;align-items:center;gap:4px}
+nav a:not(.clay){
+  display:inline-flex;align-items:center;height:44px;padding:0 14px;
+  color:var(--muted);text-decoration:none;font-weight:500;font-size:.98rem;
+  border-radius:var(--r-chip);white-space:nowrap;
+  transition:color var(--quick) var(--ease-out),background var(--quick) var(--ease-out);
+}
+nav a:not(.clay):hover{color:var(--ink);background:var(--violet-tint)}
+nav a:not(.clay)[aria-current="true"]{color:var(--violet);font-weight:700;background:var(--violet-tint)}
+nav .clay{margin-left:10px}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero-sec{position:relative;overflow:hidden;padding:clamp(36px,5vw,68px) 0 clamp(16px,3vw,36px)}
+.hero{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr);gap:clamp(28px,4vw,52px);align-items:center}
+.ghost{
+  position:absolute;left:-4px;top:80px;z-index:0;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:'Nunito',system-ui,sans-serif;font-weight:900;
+  font-size:clamp(88px,8.5vw,128px);letter-spacing:8px;
+  color:transparent;-webkit-text-stroke:2px var(--hair);
+  user-select:none;
+}
+h1{font-size:clamp(2.2rem,4.4vw,3.05rem);font-weight:900;line-height:1.08;letter-spacing:-1.4px;margin-bottom:18px}
+h1 em{font-style:normal;color:var(--violet)}
+.lede{font-size:1.06rem;color:var(--muted);max-width:46ch;margin-bottom:30px}
+.lede strong{color:var(--ink);font-weight:700}
+
+/* Three-step row. The dotted connector is drawn on a pseudo-element so it
+   never affects layout or reflows as the fonts load. */
+.steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:32px;max-width:470px}
+.step{position:relative;text-align:center}
+.step:not(:last-child)::after{
+  content:"";position:absolute;top:28px;left:calc(50% + 36px);right:calc(-50% + 36px);
+  border-top:2px dashed var(--hair);
+}
+.step-chip{
+  width:56px;height:56px;margin:0 auto 10px;border-radius:var(--r-pill);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink);position:relative;z-index:1;
+}
+.step-1{background:rgba(91,76,219,.10);color:var(--violet)}
+.step-2{background:rgba(255,139,94,.26)}
+.step-3{background:rgba(255,176,32,.30)}
+.step span{display:block;font-size:.85rem;font-weight:500;color:var(--muted);line-height:1.35}
+.cta-row{display:flex;flex-wrap:wrap;gap:14px}
+
+/* Art slots. Each wrapper reserves its aspect ratio whether or not a file is
+   present, so dropping artwork in later shifts nothing on the page. */
+.art{position:relative;display:grid;place-items:center}
+/* The blob is part of the slot, not the section, so it tracks the slot's size
+   and reads as a deliberate ground for the artwork rather than a stray circle
+   while the slot is empty. */
+.art::before{
+  content:"";position:absolute;z-index:0;
+  background:var(--gold);
+  border-radius:64% 36% 42% 58% / 39% 62% 38% 61%;
+}
+.art-a::before{inset:16% 0 6% 10%;transform:rotate(-8deg)}
+.art-b::before{inset:8% 2% 8% 2%;background:var(--coral);opacity:.8;border-radius:52% 48% 63% 37% / 58% 41% 59% 42%}
+.art-c::before{inset:10% 4% 8% 0;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%;transform:rotate(6deg)}
+
+/* ── The art-free state ───────────────────────────────────────────────────────
+   With no artwork present the hero's right column would be a bare blob, which
+   reads as decoration with nothing to decorate. A real dictionary entry sits on
+   it instead: it is the product, it is real corpus data, and it gives the shape
+   something to hold. If artwork is later dropped into slot A, this card can
+   stay beside it or be deleted; neither choice moves anything else. */
+.specimen{
+  position:relative;z-index:3;width:min(300px,86%);
+  background:var(--surface);border-radius:var(--r-panel);
+  box-shadow:0 18px 40px var(--shadow);
+  padding:24px 26px;transform:rotate(-2.5deg);
+}
+.specimen .headword{display:block;font-size:2.3rem;line-height:1.05;margin:10px 0 2px}
+.specimen .pos{margin-bottom:16px}
+.specimen dl{display:flex;gap:26px;border-top:1px solid var(--hair);padding-top:14px;margin:0}
+.specimen dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
+.specimen dd{font-size:1.02rem;font-weight:700;margin:0}
+.specimen dd.fil{font-weight:500;color:var(--muted)}
+.verified{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(21,128,61,.14);color:var(--ink);
+  border-radius:var(--r-pill);padding:5px 12px;font-size:.76rem;font-weight:700;
+}
+.verified svg{color:#15803D}
+.art-a{aspect-ratio:1/1;max-width:500px;margin-left:auto;width:100%}
+.art-b{aspect-ratio:1/1;width:100%;max-width:290px}
+.art-c{aspect-ratio:4/5;max-width:380px;width:100%}
+.art-b:not(:has(img)),.art-c:not(:has(img)){display:none}
+.art img{position:relative;z-index:2;width:100%;height:100%;object-fit:contain;object-position:bottom}
+
+/* ── Figures band ────────────────────────────────────────────────────────── */
+.figures{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:6px 0 clamp(24px,4vw,44px)}
+.figure{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:20px 18px;text-align:center}
+.figure b{display:block;font-size:1.9rem;font-weight:900;letter-spacing:-1px;color:var(--violet);line-height:1.1;font-variant-numeric:tabular-nums}
+.figure span{display:block;font-size:.86rem;color:var(--muted);margin-top:4px}
+
+/* ── Why it matters — offset cluster + aside ─────────────────────────────── */
+.heritage-sec{position:relative;overflow:hidden;padding:clamp(24px,4vw,56px) 0}
+.heritage{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(28px,4vw,60px);align-items:center}
+/* The section heading leads in the DOM so the heading order is h1, h2, h3.
+   Above the breakpoint the cluster is placed first visually; below it the
+   order is dropped and the heading leads its own cards. */
+.heritage > .cluster{order:-1}
+.cluster{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:40px}
+.cluster .soft:nth-child(2){background:var(--violet-tint)}
+.cluster .soft:nth-child(3){background:color-mix(in srgb,var(--gold) 16%,var(--surface))}
+.card-icon{width:44px;height:44px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;background:rgba(91,76,219,.10);color:var(--violet);margin-bottom:14px}
+.cluster h3{font-size:1.08rem;font-weight:800;letter-spacing:-0.3px;margin-bottom:7px}
+.cluster p{font-size:.9rem;color:var(--muted);line-height:1.5}
+h2{font-size:clamp(1.7rem,3.2vw,2.4rem);font-weight:900;letter-spacing:-1px;line-height:1.15;margin-bottom:16px}
+.sec-lede{color:var(--muted);max-width:52ch}
+.pull{
+  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.3rem;
+  line-height:1.35;letter-spacing:-0.5px;color:var(--violet);
+  border-left:5px solid var(--gold);padding-left:18px;margin:22px 0;
+}
+
+/* ── Practice band ───────────────────────────────────────────────────────── */
+.practice-sec{background:var(--band);position:relative;overflow:hidden;padding:clamp(8px,1.5vw,20px) 0 clamp(32px,4vw,60px)}
+.practice-head{text-align:center;max-width:56ch;margin:0 auto clamp(24px,4vw,44px)}
+.practice-head .sec-lede{margin:0 auto}
+.practice{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:start;max-width:940px;margin:0 auto}
+.practice:has(img){grid-template-columns:1fr minmax(0,290px) 1fr;align-items:center;max-width:none}
+.mode-col{display:flex;flex-direction:column;gap:26px}
+.mode{display:flex;gap:14px;align-items:flex-start}
+.practice:has(img) .mode-col.right .mode{flex-direction:row-reverse;text-align:right}
+.mode-icon{flex:0 0 auto;width:48px;height:48px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.m-violet{background:rgba(91,76,219,.10);color:var(--violet)}
+.m-gold{background:rgba(255,176,32,.34)}
+.m-coral{background:rgba(255,139,94,.30)}
+.mode b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.2px;margin-bottom:2px}
+.mode span{display:block;font-size:.86rem;color:var(--muted);line-height:1.45}
+.practice-cta{text-align:center;margin-top:clamp(28px,4vw,48px)}
+
+/* ── The words ───────────────────────────────────────────────────────────── */
+.words-sec{position:relative;overflow:hidden;padding:clamp(32px,4.5vw,68px) 0}
+.words{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center}
+.words:has(img){grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr)}
+.entries{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.words:has(img) .entries{grid-template-columns:1fr}
+.entry{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:16px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.headword{font-size:1.45rem;font-weight:900;letter-spacing:-0.7px;line-height:1.15}
+.pos{display:block;font-size:.78rem;color:var(--faint);font-weight:500;margin-top:2px}
+.gloss{display:flex;gap:26px;flex-wrap:wrap;justify-content:flex-end;margin:0}
+.gloss dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
+.gloss dd{font-size:1rem;font-weight:700;color:var(--ink);margin:0}
+.gloss dd.fil{font-weight:500;color:var(--muted)}
+
+/* ── Voices — an honest empty slot ───────────────────────────────────────── */
+.voices-sec{padding:0 0 clamp(32px,4.5vw,60px)}
+.slot{
+  border:2px dashed var(--hair);border-radius:var(--r-panel);
+  background:transparent;padding:34px;text-align:center;max-width:640px;margin:0 auto;
+}
+.slot b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:8px}
+.slot p{color:var(--muted);font-size:.94rem;max-width:52ch;margin:0 auto}
+
+/* ── Download hub — the canopy ───────────────────────────────────────────── */
+.hub-sec{position:relative;background:linear-gradient(180deg,var(--canopy-top),var(--canopy-bottom));color:var(--on-canopy);overflow:hidden;padding:clamp(10px,2vw,22px) 0 clamp(40px,5vw,74px)}
+.hub{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(28px,4vw,56px);align-items:center}
+.hub h2{color:var(--on-canopy)}
+/* Text on the canopy is never faded: white at 0.70-0.90 alpha measures
+   3.23-4.27 and fails AA at every step. Secondary lines are pure white and
+   differentiated by size and weight instead. */
+.hub p{color:var(--on-canopy);font-size:1rem;font-weight:500;margin-bottom:24px}
+/* Glass is legal here and only here. It needs a genuinely vivid backdrop, and
+   the chip sits on the gradient's deep end where a white label measures 4.54
+   rather than the 3.27 it would measure on the top end. */
+.glass-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);
+  border-radius:var(--r-pill);padding:7px 16px;font-size:.85rem;font-weight:700;
+  color:#fff;margin-bottom:18px;
+}
+.qr-panel{background:#fff;border-radius:var(--r-panel);padding:20px;text-align:center;box-shadow:0 14px 34px rgba(20,14,60,.32)}
+.qr-stand-in{width:168px;height:168px;display:block;margin:0 auto;border-radius:12px;background:repeating-conic-gradient(#1F1B3A 0 25%,#fff 0 50%) 0 0/16px 16px}
+.qr-panel p{color:var(--reward-ink);font-size:.84rem;font-weight:500;margin:12px 0 0}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+/* The footer is a reward fill, fixed in both themes exactly like the canopy
+   above it, carrying RewardInk at 9.00. It does not invert with the theme
+   because the fill itself never moves. */
+footer{background:var(--gold);color:var(--reward-ink);position:relative;overflow:hidden;padding:clamp(26px,3.5vw,42px) 0}
+.foot{display:flex;flex-wrap:wrap;gap:18px 30px;align-items:center}
+.foot .logotype,.foot .logotype em{color:var(--reward-ink)}
+.foot .logomark{background:var(--reward-ink);color:var(--gold);box-shadow:none}
+.foot nav{gap:22px}
+.foot nav a{color:var(--reward-ink);font-weight:700;text-decoration:underline;text-underline-offset:3px;height:auto;padding:0;background:none}
+.foot-legal{width:100%;font-size:.85rem;border-top:1px solid rgba(31,27,58,.22);padding-top:16px;margin-top:4px;display:flex;flex-wrap:wrap;gap:6px 22px}
+
+/* ── Reveal on scroll ────────────────────────────────────────────────────── */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity var(--emphasized) var(--ease-out),transform var(--emphasized) var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width:1100px){.ghost{display:none}}
+@media (max-width:900px){
+  header{height:112px;padding-bottom:8px}
+  .masthead{height:64px}
+  nav{
+    position:absolute;left:0;right:0;top:64px;
+    margin:0;gap:6px;padding:0 20px 8px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  nav::-webkit-scrollbar{display:none}
+  nav a:not(.clay){height:38px;padding:0 12px;font-size:.9rem}
+  nav .clay{position:absolute;right:20px;top:-54px;margin:0}
+  section[id],div[id]{scroll-margin-top:124px}
+  .hero-sec{padding-top:26px}
+  .blob,.ring,.plus,.leaf,.dot{display:none}
+  .hero,.heritage,.words,.hub{grid-template-columns:1fr}
+  .heritage > .cluster{order:0}
+  .art-a{margin:0 auto;max-width:360px}
+  .art-c{margin:0 auto}
+  .figures{grid-template-columns:repeat(2,1fr)}
+  .practice{grid-template-columns:1fr;gap:28px}
+  .mode-col.right .mode{flex-direction:row;text-align:left}
+  .art-b{margin:0 auto;order:-1}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .entries{grid-template-columns:1fr}
+  .cluster{grid-template-columns:1fr}
+  .cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:0}
+  .steps{max-width:none}
+  .step:not(:last-child)::after{display:none}
+  .cta-row .clay{width:100%}
+  .entry{grid-template-columns:1fr}
+  .gloss{justify-content:flex-start}
+  .masthead{gap:12px}
+  .logotype{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap masthead">
+    <a class="brand" href="#top" aria-label="KasiGuru, home">
+      <span class="logomark" aria-hidden="true">K</span>
+      <span class="logotype">Kasi<em>Guru</em></span>
+    </a>
+    <!-- Nav order matches DOM order. It previously did not, and "How It Works"
+         jumped past a section, so scrolling back landed somewhere unexpected. -->
+    <nav id="site-nav">
+      <a href="#how-it-works">How It Works</a>
+      <a href="#heritage">Why It Matters</a>
+      <a href="#practice">Practice</a>
+      <a href="#dictionary">The Words</a>
+      <a class="clay clay-primary clay-sm" href="#download-section">Download APK</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ── 1. Hero ─────────────────────────────────────────────────────────── -->
+  <section class="hero-sec" id="how-it-works">
+    <span class="ghost" aria-hidden="true">KASI</span>
+    <div class="blob blob-tint" style="width:280px;height:280px;right:34%;top:-90px" aria-hidden="true"></div>
+    <div class="ring ring-coral" style="width:104px;height:104px;right:1.5%;bottom:8%" aria-hidden="true"></div>
+    <div class="ring ring-violet" style="width:58px;height:58px;left:3%;bottom:12%" aria-hidden="true"></div>
+    <div class="leaf" style="width:26px;height:26px;background:var(--canopy-bottom);opacity:.5;right:33%;top:16%;transform:rotate(24deg)" aria-hidden="true"></div>
+    <div class="dot" style="width:13px;height:13px;background:var(--coral);left:1.5%;top:46%" aria-hidden="true"></div>
+    <div class="dot" style="width:9px;height:9px;background:var(--violet);right:36%;bottom:18%" aria-hidden="true"></div>
+
+    <div class="wrap hero">
+      <div>
+        <h1>The language of Casiguran, <em>written down.</em></h1>
+        <p class="lede">An endangered Northern Philippine language, taught a word at a time and checked by the people who still speak it.</p>
+
+        <ol class="steps">
+          <li class="step">
+            <div class="step-chip step-1"><iconsax-icon name="document-download" size="26"></iconsax-icon></div>
+            <span>Download the APK</span>
+          </li>
+          <li class="step">
+            <div class="step-chip step-2"><iconsax-icon name="mobile" size="26"></iconsax-icon></div>
+            <span>Install and set a goal</span>
+          </li>
+          <li class="step">
+            <div class="step-chip step-3"><iconsax-icon name="game" size="26"></iconsax-icon></div>
+            <span>Learn, play, contribute</span>
+          </li>
+        </ol>
+
+        <div class="cta-row">
+          <a class="clay clay-primary" href="#download-section">
+            <iconsax-icon name="document-download" size="20"></iconsax-icon>
+            <span>Download APK</span>
+          </a>
+          <a class="clay clay-reward" href="#dictionary">Browse the words</a>
+        </div>
+      </div>
+
+      <!-- Art slot A. The wrapper already holds its 1:1 ratio, so the page lays
+           out identically with or without a file here. To fill it, drop a
+           transparent 920x920 PNG at img/hero.png and uncomment the img below.
+           The subject should be bottom-anchored so it sits on the gold blob. -->
+      <div class="art art-a">
+        <!-- <img src="img/hero.png" alt="" width="920" height="920"> -->
+        <div class="specimen">
+          <span class="verified"><iconsax-icon name="verify" size="14"></iconsax-icon> Verified entry</span>
+          <span class="headword">aldew</span>
+          <span class="pos">noun &middot; Casiguran, Aurora</span>
+          <dl>
+            <div><dt>English</dt><dd>sun</dd></div>
+            <div><dt>Filipino</dt><dd class="fil">araw</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2. Figures ──────────────────────────────────────────────────────── -->
+  <div class="wrap">
+    <div class="figures">
+      <div class="figure reveal"><b id="word-count-features">417+</b><span>Words recorded</span></div>
+      <div class="figure reveal"><b>6</b><span>Game modes</span></div>
+      <div class="figure reveal"><b>IPA</b><span>Phonetic notation</span></div>
+      <div class="figure reveal"><b>Free</b><span>No ads, ever</span></div>
+    </div>
+  </div>
+
+  <!-- ── 3. Why it matters ───────────────────────────────────────────────── -->
+  <section class="heritage-sec" id="heritage">
+    <div class="blob blob-tint" style="width:340px;height:340px;left:-150px;top:14%" aria-hidden="true"></div>
+    <div class="plus" style="width:66px;height:66px;right:3%;top:10%;opacity:.75" aria-hidden="true"></div>
+    <div class="dot" style="width:11px;height:11px;background:var(--coral);right:14%;bottom:16%" aria-hidden="true"></div>
+
+    <div class="wrap heritage">
+      <div>
+        <h2>Why it matters</h2>
+        <p class="pull">A language is not lost all at once. It goes one word at a time.</p>
+        <p class="sec-lede">Kasiguranin is spoken in Casiguran, Aurora, and the people who speak it best are the oldest people in town. It is not taught in schools. KasiGuru exists to put the language somewhere it can be found later, by a child in Casiguran or by a grandchild somewhere else entirely.</p>
+      </div>
+
+      <div class="cluster">
+        <article class="soft reveal">
+          <div class="card-icon"><iconsax-icon name="verify" size="24"></iconsax-icon></div>
+          <h3>Verified by speakers</h3>
+          <p>Entries come from published thesis documentation and from speakers in Casiguran. Community submissions are checked by a moderator before they join the corpus.</p>
+        </article>
+        <article class="soft reveal">
+          <div class="card-icon"><iconsax-icon name="document-text" size="24"></iconsax-icon></div>
+          <h3>IPA transcription</h3>
+          <p>Every entry carries phonetic notation, grammatical root tags, and both English and Filipino definitions.</p>
+        </article>
+        <article class="soft reveal">
+          <div class="card-icon"><iconsax-icon name="game" size="24"></iconsax-icon></div>
+          <h3>Practice, not flashcards</h3>
+          <p>Streaks, XP and six game modes, so the words get used rather than only read.</p>
+        </article>
+        <article class="soft reveal">
+          <div class="card-icon"><iconsax-icon name="heart" size="24"></iconsax-icon></div>
+          <h3>Free, and staying free</h3>
+          <p>No ads and no account needed to browse. The dictionary is open whether or not you ever install the app.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--ground)" aria-hidden="true">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
+      <path d="M0,34 C220,86 470,4 720,28 C970,52 1210,88 1440,42 L1440,80 L0,80 Z" fill="var(--band)"/>
+    </svg>
+  </div>
+
+  <!-- ── 4. Practice ─────────────────────────────────────────────────────── -->
+  <section class="practice-sec" id="practice">
+    <div class="blob blob-gold-soft" style="width:260px;height:260px;left:-110px;bottom:6%" aria-hidden="true"></div>
+    <div class="blob blob-coral-soft" style="width:220px;height:220px;right:-90px;top:12%" aria-hidden="true"></div>
+    <div class="ring ring-gold" style="width:82px;height:82px;left:9%;top:7%" aria-hidden="true"></div>
+    <div class="dot" style="width:12px;height:12px;background:var(--violet);right:12%;bottom:14%" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <div class="practice-head">
+        <h2>Six ways to practise</h2>
+        <p class="sec-lede">Each mode drills a different part of knowing a word: its shape, its sound, its place in a sentence.</p>
+      </div>
+
+      <div class="practice">
+        <div class="mode-col">
+          <div class="mode reveal">
+            <div class="mode-icon m-violet"><iconsax-icon name="element-3" size="24"></iconsax-icon></div>
+            <div><b>Aspect Builder</b><span>Build a verb from its root and aspect markers.</span></div>
+          </div>
+          <div class="mode reveal">
+            <div class="mode-icon m-gold"><iconsax-icon name="document-text" size="24"></iconsax-icon></div>
+            <div><b>Sentence Construction</b><span>Order scrambled words into a sentence.</span></div>
+          </div>
+          <div class="mode reveal">
+            <div class="mode-icon m-coral"><iconsax-icon name="grid-5" size="24"></iconsax-icon></div>
+            <div><b>Word Match</b><span>Pair Kasiguranin with its English or Filipino gloss.</span></div>
+          </div>
+        </div>
+
+        <!-- Art slot B. Transparent 640x640 PNG at img/practice.png, centred
+             between the two mode columns. The 1:1 ratio is already reserved. -->
+        <div class="art art-b">
+          <!-- <img src="img/practice.png" alt="" width="640" height="640"> -->
+        </div>
+
+        <div class="mode-col right">
+          <div class="mode reveal">
+            <div class="mode-icon m-coral"><iconsax-icon name="volume-high" size="24"></iconsax-icon></div>
+            <div><b>Audio Quiz</b><span>Hear a word and pick it out of four.</span></div>
+          </div>
+          <div class="mode reveal">
+            <div class="mode-icon m-violet"><iconsax-icon name="repeat" size="24"></iconsax-icon></div>
+            <div><b>Reverse Match</b><span>From the meaning back to the word.</span></div>
+          </div>
+          <div class="mode reveal">
+            <div class="mode-icon m-gold"><iconsax-icon name="edit" size="24"></iconsax-icon></div>
+            <div><b>Fill in the Blanks</b><span>Supply the missing word from context alone.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="practice-cta">
+        <a class="clay clay-primary" href="#download-section">
+          <iconsax-icon name="document-download" size="20"></iconsax-icon>
+          <span>Download APK</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--band)" aria-hidden="true">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
+      <path d="M0,46 C230,0 460,84 720,54 C980,24 1220,-6 1440,38 L1440,80 L0,80 Z" fill="var(--ground)"/>
+    </svg>
+  </div>
+
+  <!-- ── 5. The words ────────────────────────────────────────────────────── -->
+  <section class="words-sec" id="dictionary">
+    <div class="blob blob-gold-soft" style="width:300px;height:300px;right:-120px;top:8%" aria-hidden="true"></div>
+    <div class="ring ring-coral" style="width:72px;height:72px;left:5%;bottom:16%;border-width:8px" aria-hidden="true"></div>
+    <div class="leaf" style="width:26px;height:26px;background:var(--canopy-bottom);opacity:.45;left:2.5%;top:10%;transform:rotate(-18deg)" aria-hidden="true"></div>
+    <div class="dot" style="width:10px;height:10px;background:var(--gold);right:6%;top:14%" aria-hidden="true"></div>
+
+    <div class="wrap words">
+      <!-- Art slot C. Transparent 560x700 PNG at img/words.png, sitting on the
+           gold blob. The 4:5 ratio is already reserved. -->
+      <div class="art art-c">
+        <!-- <img src="img/words.png" alt="" width="560" height="700"> -->
+      </div>
+
+      <div>
+        <h2>The words</h2>
+        <p class="sec-lede">Nothing here is machine-translated. Every entry below is real corpus data, and the same data the app ships with.</p>
+        <div class="entries">
+          <article class="entry reveal">
+            <div><span class="headword">tubig</span><span class="pos">noun</span></div>
+            <dl class="gloss"><div><dt>English</dt><dd>water</dd></div><div><dt>Filipino</dt><dd class="fil">tubig</dd></div></dl>
+          </article>
+          <article class="entry reveal">
+            <div><span class="headword">sing&euml;t</span><span class="pos">noun</span></div>
+            <dl class="gloss"><div><dt>English</dt><dd>ant</dd></div><div><dt>Filipino</dt><dd class="fil">langgam</dd></div></dl>
+          </article>
+          <article class="entry reveal">
+            <div><span class="headword">kumpit</span><span class="pos">noun</span></div>
+            <dl class="gloss"><div><dt>English</dt><dd>boat</dd></div><div><dt>Filipino</dt><dd class="fil">bangka</dd></div></dl>
+          </article>
+          <article class="entry reveal">
+            <div><span class="headword">aldew</span><span class="pos">noun</span></div>
+            <dl class="gloss"><div><dt>English</dt><dd>sun</dd></div><div><dt>Filipino</dt><dd class="fil">araw</dd></div></dl>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. Voices. Deliberately empty: real quotes only. ─────────────────── -->
+  <section class="voices-sec" id="voices">
+    <div class="wrap">
+      <div class="slot">
+        <b>Reserved for real voices</b>
+        <p>Testimonials from actual users, teachers and elders belong here. This slot stays empty until those quotes exist, the same rule the project already applies to illustration. Nothing invented ships on this page.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--ground)" aria-hidden="true">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
+      <path d="M0,40 C260,88 500,8 760,32 C1000,54 1230,86 1440,36 L1440,80 L0,80 Z" fill="var(--canopy-top)"/>
+    </svg>
+  </div>
+
+  <!-- ── 7. Download ─────────────────────────────────────────────────────── -->
+  <section class="hub-sec" id="download-section">
+    <div class="ring" style="width:200px;height:200px;border:14px solid rgba(255,255,255,.14);right:-40px;top:-40px" aria-hidden="true"></div>
+    <div class="blob" style="width:210px;height:210px;left:-80px;bottom:-70px;background:rgba(255,255,255,.14);border-radius:44% 56% 63% 37% / 57% 44% 56% 43%" aria-hidden="true"></div>
+
+    <div class="wrap hub">
+      <div>
+        <span class="glass-chip"><iconsax-icon name="mobile" size="16"></iconsax-icon> Android 8.0 and newer</span>
+        <h2>Start with one word.</h2>
+        <p id="store-version-tag" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
+        <a class="clay clay-white" id="store-download-btn" href="kasiguru-latest.apk" download>
+          <iconsax-icon name="document-download" size="20"></iconsax-icon>
+          <span>Download APK</span>
+        </a>
+      </div>
+      <div class="qr-panel">
+        <!-- The live page renders a real QR onto a canvas here. -->
+        <div class="qr-stand-in" role="img" aria-label="QR code linking to the KasiGuru APK download"></div>
+        <p>Scan to download on your phone</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="blob" style="width:300px;height:300px;right:-110px;top:-130px;background:var(--gold-deep);opacity:.32;border-radius:56% 44% 38% 62% / 46% 58% 42% 54%" aria-hidden="true"></div>
+  <div class="wrap foot">
+    <a class="brand" href="#top">
+      <span class="logomark" aria-hidden="true">K</span>
+      <span class="logotype">Kasi<em>Guru</em></span>
+    </a>
+    <nav>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#heritage">Why It Matters</a>
+      <a href="#practice">Practice</a>
+      <a href="#dictionary">The Words</a>
+    </nav>
+    <div class="foot-legal">
+      <span>A language preservation project for Casiguran, Aurora.</span>
+      <span>Free APK, about 7.6 MB.</span>
+      <span>Android will ask you to allow installation from this source.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Icon registry, mirroring admin-website/download/js/iconsax.js (the official
+   2-tone Iconsax Bulk set the Android app uses via io.eyram.iconsax). The
+   shipped page loads that file; this mockup inlines only what it needs.
+   volume-high and repeat are new here and get added to the real registry when
+   this direction is ported. */
+(function () {
+  var MAP = {
+    "document-download":
+      '<rect x="4" y="2" width="16" height="20" rx="4" fill="@" opacity="0.35"/>' +
+      '<path d="M12 8V16M12 16L9 13M12 16L15 13" stroke="@" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
+    "mobile":
+      '<rect x="6" y="2" width="12" height="20" rx="4" fill="@" opacity="0.35"/>' +
+      '<path d="M10 5H14" stroke="@" stroke-width="2" stroke-linecap="round"/>' +
+      '<circle cx="12" cy="18" r="1.4" fill="@"/>',
+    "game":
+      '<rect x="2" y="6" width="20" height="12" rx="6" fill="@" opacity="0.35"/>' +
+      '<path d="M6 12H10M8 10V14" stroke="@" stroke-width="2" stroke-linecap="round"/>' +
+      '<circle cx="15" cy="11" r="1.2" fill="@"/><circle cx="17.5" cy="13" r="1.2" fill="@"/>',
+    "verify":
+      '<circle cx="12" cy="12" r="9" fill="@" opacity="0.35"/>' +
+      '<path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="@" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
+    "document-text":
+      '<path d="M5 4C5 2.9 5.9 2 7 2H14L19 7V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4Z" fill="@" opacity="0.35"/>' +
+      '<path d="M8.5 12H15.5M8.5 16H13" stroke="@" stroke-width="2" stroke-linecap="round"/>',
+    "heart":
+      '<path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z" fill="@"/>' +
+      '<path d="M12 21.35L13.45 20.04C18.6 15.36 22 12.28 22 8.5C22 5.42 19.58 3 16.5 3C14.76 3 13.09 3.81 12 5.09V21.35Z" fill="@" opacity="0.4"/>',
+    "element-3":
+      '<rect x="3" y="3" width="8" height="8" rx="3" fill="@" opacity="0.35"/>' +
+      '<rect x="13" y="3" width="8" height="8" rx="3" fill="@"/>' +
+      '<rect x="3" y="13" width="8" height="8" rx="3" fill="@"/>' +
+      '<rect x="13" y="13" width="8" height="8" rx="3" fill="@" opacity="0.35"/>',
+    "grid-5":
+      '<rect x="3" y="3" width="8" height="18" rx="3" fill="@" opacity="0.35"/>' +
+      '<rect x="13" y="3" width="8" height="8" rx="3" fill="@"/>' +
+      '<rect x="13" y="13" width="8" height="8" rx="3" fill="@"/>',
+    "edit":
+      '<path d="M4 20H8L19 9L15 5L4 16V20Z" fill="@" opacity="0.35"/>' +
+      '<path d="M15 5L19 9" stroke="@" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M17 3L21 7" stroke="@" stroke-width="2" stroke-linecap="round"/>',
+    "volume-high":
+      '<path d="M4 9H7L12 5V19L7 15H4C3.45 15 3 14.55 3 14V10C3 9.45 3.45 9 4 9Z" fill="@" opacity="0.35"/>' +
+      '<path d="M15.3 9.4C16.4 10.5 16.4 13.5 15.3 14.6" stroke="@" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M18.3 6.9C20.4 9 20.4 15 18.3 17.1" stroke="@" stroke-width="2" stroke-linecap="round"/>',
+    "repeat":
+      '<rect x="3" y="4" width="18" height="16" rx="5" fill="@" opacity="0.35"/>' +
+      '<path d="M8 10H14.5M14.5 10L12.5 8M14.5 10L12.5 12" stroke="@" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M16 14H9.5M9.5 14L11.5 12M9.5 14L11.5 16" stroke="@" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+
+  function svg(name, size) {
+    var body = MAP[name];
+    if (!body) return "";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" ' +
+      'xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
+      body.split("@").join("currentColor") + "</svg>";
+  }
+
+  /* Every icon on this page sits beside a visible label, so it is decorative in
+     the accessibility sense and is hidden from the tree rather than named. */
+  class IconsaxIcon extends HTMLElement {
+    connectedCallback() {
+      this.setAttribute("aria-hidden", "true");
+      this.style.display = "inline-flex";
+      this.innerHTML = svg(this.getAttribute("name"), this.getAttribute("size") || 24);
+    }
+  }
+  customElements.define("iconsax-icon", IconsaxIcon);
+})();
+
+/* Scroll-spy and scroll-reveal. Both use IntersectionObserver: a scroll
+   listener would run on every frame for no gain. Reveal is additive only, so
+   under reduced motion the CSS has already put every element in its final
+   state and this observer changes nothing that matters. */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll("#site-nav a[href^='#']:not(.clay)"));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+  var targets = Object.keys(byId).map(function (id) { return document.getElementById(id); }).filter(Boolean);
+
+  if (targets.length && "IntersectionObserver" in window) {
+    var visible = {};
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0; });
+      var best = null, bestRatio = 0;
+      Object.keys(visible).forEach(function (id) {
+        if (visible[id] > bestRatio) { bestRatio = visible[id]; best = id; }
+      });
+      links.forEach(function (a) { a.removeAttribute("aria-current"); });
+      if (best && byId[best]) byId[best].setAttribute("aria-current", "true");
+    }, { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5, 1] });
+    targets.forEach(function (t) { spy.observe(t); });
+  }
+
+  var revealables = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+  if (!revealables.length) return;
+  if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    revealables.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries, obs) {
+    var i = 0;
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      /* Stagger 35ms per item, capped at 8, matching Motion.kt. */
+      e.target.style.transitionDelay = Math.min(i, 7) * 35 + "ms";
+      e.target.classList.add("in");
+      obs.unobserve(e.target);
+      i++;
+    });
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
+  revealables.forEach(function (el) { io.observe(el); });
+})();
+</script>
+</body>
+</html>

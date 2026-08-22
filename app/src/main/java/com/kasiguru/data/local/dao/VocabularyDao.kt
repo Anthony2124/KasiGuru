@@ -63,6 +63,19 @@ interface VocabularyDao {
     @Query("SELECT DISTINCT category FROM vocabulary ORDER BY category")
     fun getCategories(): Flow<List<String>>
 
+    /**
+     * Backs the floating dictionary search bar. Neither existing "search" field queried this
+     * table before - VocabularyScreen's filtered only the static category list, and
+     * CategoryDetailScreen's filtered an already-loaded in-memory list for one category. This is
+     * the first real query against the word text itself, so it can search across every category.
+     */
+    @Query(
+        "SELECT * FROM vocabulary WHERE kasiguranin LIKE '%' || :query || '%' " +
+            "OR tagalog LIKE '%' || :query || '%' OR english LIKE '%' || :query || '%' " +
+            "ORDER BY kasiguranin LIMIT :limit"
+    )
+    fun searchVocabulary(query: String, limit: Int = 50): Flow<List<VocabularyEntity>>
+
     @Update
     suspend fun updateVocabulary(vocabulary: VocabularyEntity)
 

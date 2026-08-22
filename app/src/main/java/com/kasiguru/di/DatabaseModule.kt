@@ -131,4 +131,9 @@ object DatabaseModule {
     @Singleton
     fun provideLessonDao(database: KasiGuruDatabase): LessonDao =
         database.lessonDao()
+
+    @Provides
+    @Singleton
+    fun provideProfileDao(database: KasiGuruDatabase): ProfileDao =
+        database.profileDao()
 }

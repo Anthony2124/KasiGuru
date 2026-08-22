@@ -41,5 +41,7 @@ data class UserProgressEntity(
     val dailyXpDate: String = "",
     val titleBadge: String = "Kasiguranin Apprentice",
     /** Last-modified marker for cross-device sync (Phase 6). */
-    val updatedAt: Long = 0
+    val updatedAt: Long = 0,
+    /** Words, stories, or poems submitted, approved or not - backs the "First Contribution" badge. */
+    val submissionsMade: Int = 0
 )

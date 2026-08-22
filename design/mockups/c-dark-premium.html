@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup C — Dark Premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOCKUP C — "Dark Premium"
+   Dark-first and deliberately single-theme: this direction commits to one look
+   rather than shipping a weaker light variant of itself. Depth comes from
+   borders and layered surfaces, NOT from coloured glow shadows — a chromatic
+   halo on a dark ground is the default look of generated UI, and DESIGN.md's own
+   rule says translucency belongs only where content rides a vivid backdrop.
+   Measured on #0A0A12: text 17.67, muted 8.41, mint 13.07, violet 6.03.
+   Ink on mint 12.27.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root{
+  /* Type scale. Fewer steps, real ratios between them. Sizes that differ by
+     0.02rem are noise, not hierarchy. */
+  --t-xs:0.75rem;
+  --t-sm:0.875rem;
+  --t-base:1rem;
+  --t-md:1.25rem;
+  --t-lg:2rem;
+  --t-xl:3rem;
+  --bg:#0A0A12;
+  --surface:#12121C;
+  --surface-2:#1A1A27;
+  --text:#F2F2F7;
+  --muted:#A8A8B8;
+  --line:#26263A;
+  --line-bright:#39395A;
+  --mint:#6EE7C7;        /* 13.07 on bg */
+  --violet:#8B7CFF;      /* 6.03 on bg */
+  --on-mint:#08110D;     /* 12.27 on mint */
+  --sans:'Sora',-apple-system,system-ui,sans-serif;
+  --serif:'Newsreader',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px;border-radius:4px}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+header{position:sticky;top:0;z-index:10;background:rgba(10,10,18,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:24px;height:70px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:var(--t-base);letter-spacing:-0.02em;display:flex;align-items:center;gap:11px}
+.mark{width:27px;height:27px;border-radius:8px;background:var(--mint);color:var(--on-mint);display:grid;place-items:center;font-weight:800;font-size:var(--t-sm)}
+nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+nav a{font-size:var(--t-sm);font-weight:500;color:var(--muted);text-decoration:none;padding:8px 13px;border-radius:8px}
+nav a:hover{color:var(--text);background:var(--surface-2)}
+nav a[aria-current]{color:var(--text);font-weight:600}
+nav a.cta{background:var(--mint);color:var(--on-mint);font-weight:650;padding:9px 17px}
+nav a.cta:hover{background:#8AF0D6;color:var(--on-mint)}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.hero{padding:110px 0 84px;display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+h1{font-size:clamp(2.75rem,6vw,4.5rem);font-weight:800;line-height:1.02;letter-spacing:-0.045em;text-wrap:balance;margin-bottom:22px}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--mint);letter-spacing:-0.02em}
+.lede{font-size:var(--t-md);line-height:1.5;color:var(--muted);max-width:50ch;margin-bottom:34px}
+.lede strong{color:var(--text);font-weight:600}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.btn{
+  font:inherit;font-size:var(--t-base);font-weight:650;padding:14px 24px;border-radius:11px;
+  text-decoration:none;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  border:1px solid transparent;transition:background .16s ease,border-color .16s ease;
+}
+.btn-primary{background:var(--mint);color:var(--on-mint)}
+.btn-primary:hover{background:#8AF0D6}
+.btn-ghost{background:transparent;color:var(--text);border-color:var(--line-bright)}
+.btn-ghost:hover{background:var(--surface-2)}
+.meta{font-size:var(--t-sm);color:var(--muted);margin-top:18px}
+
+/* ── Specimen panel. Layered surfaces, no glow. ───────────────────────────── */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid var(--line);font-size:var(--t-sm);font-weight:600;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);display:inline-block;margin-right:8px;vertical-align:middle}
+.panel-body{padding:30px 24px 26px}
+.headword{font-family:var(--serif);font-size:var(--t-xl);line-height:1;letter-spacing:-0.03em;margin-bottom:6px}
+.phon{font-family:var(--serif);font-style:italic;color:var(--mint);font-size:var(--t-base);margin-bottom:22px}
+.pair{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line)}
+.pair:last-child{border-bottom:none}
+.pair dt{font-size:var(--t-sm);color:var(--muted);font-weight:500}
+.pair dd{font-size:var(--t-base);font-weight:600}
+
+/* ── Stats ────────────────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.stat b{display:block;font-size:var(--t-lg);font-weight:800;letter-spacing:-0.035em;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--mint)}
+.stat span{font-size:var(--t-sm);color:var(--muted);font-weight:500}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+section{padding:92px 0}
+.sec-label{font-size:var(--t-sm);font-weight:600;color:var(--violet);margin-bottom:12px}
+h2{font-size:clamp(1.9rem,3.6vw,2.6rem);font-weight:700;letter-spacing:-0.035em;margin-bottom:16px;max-width:22ch}
+.sec-lede{color:var(--muted);line-height:1.6;max-width:60ch;margin-bottom:46px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;transition:border-color .16s ease,background .16s ease}
+.card:hover{border-color:var(--line-bright);background:var(--surface-2)}
+.card h3{font-size:var(--t-md);font-weight:650;letter-spacing:-0.018em;margin-bottom:9px}
+.card p{color:var(--muted);font-size:var(--t-base)}
+.idx{font-family:var(--serif);font-size:var(--t-md);color:var(--violet);display:block;margin-bottom:14px;line-height:1}
+
+.slot{border:1px dashed var(--line-bright);border-radius:16px;padding:46px 28px;text-align:center;color:var(--muted);background:var(--surface)}
+.slot b{display:block;font-size:var(--t-md);color:var(--text);margin-bottom:8px;font-weight:650}
+.slot p{font-size:var(--t-base);max-width:56ch;margin:0 auto}
+
+/* ── Closer. The one vivid backdrop, which is where translucency is allowed. ─ */
+.closer{background:linear-gradient(135deg,#151530 0%,#0E1F1C 100%);border:1px solid var(--line-bright);border-radius:22px;padding:66px 44px;text-align:center;margin-bottom:64px}
+.closer h2{margin:0 auto 14px;max-width:18ch}
+.closer p{color:var(--muted);line-height:1.55;max-width:46ch;margin:0 auto 30px}
+footer{border-top:1px solid var(--line);padding:32px 0;font-size:var(--t-sm);color:var(--muted)}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:44px;padding:66px 0 56px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .cards{grid-template-columns:1fr}
+  section{padding:66px 0}
+}
+@media (max-width:520px){
+  .wrap{padding:0 20px}
+  .stats{grid-template-columns:1fr}
+  .closer{padding:46px 24px;border-radius:18px}
+  .headword{font-size:var(--t-lg)}  /* steps down on small screens */
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand"><span class="mark">K</span> KasiGuru</div>
+    <nav>
+      <a href="#dictionary" aria-current="true">Dictionary</a>
+      <a href="#how">How it works</a>
+      <a href="#heritage">Heritage</a>
+      <a href="#get" class="cta">Get the app</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>The dialect of Casiguran, <em>written down.</em></h1>
+        <p class="lede">Kasiguranin is spoken by fewer people every year. This is a free Android app that teaches it properly — <strong>394 verified words</strong>, daily lessons, and games that make them stick.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#get">Download for Android</a>
+          <a class="btn btn-ghost" href="#dictionary">Browse the dictionary</a>
+        </div>
+        <p class="meta">Free · No account needed to browse · 12 MB</p>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-head"><span><span class="dot"></span>Word of the day</span><span>043</span></div>
+        <div class="panel-body">
+          <div class="headword">kawayan</div>
+          <div class="phon">/ka·wa·yan/ · noun</div>
+          <dl>
+            <div class="pair"><dt>English</dt><dd>bamboo</dd></div>
+            <div class="pair"><dt>Filipino</dt><dd>kawayan</dd></div>
+            <div class="pair"><dt>Category</dt><dd>Nature &amp; Environment</dd></div>
+          </dl>
+        </div>
+      </aside>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>394</b><span>Verified words</span></div>
+      <div class="stat"><b>13</b><span>Categories</span></div>
+      <div class="stat"><b>4</b><span>Game types</span></div>
+      <div class="stat"><b>Free</b><span>No ads, ever</span></div>
+    </div>
+
+    <section id="how">
+      <div class="sec-label">How it works</div>
+      <h2>A path, not a word list</h2>
+      <p class="sec-lede">Each day gives you a short lesson, a review of what is slipping, a game and a story — built from the words you have actually met.</p>
+      <div class="cards">
+        <article class="card">
+          <span class="idx">01</span>
+          <h3>Today's path</h3>
+          <p>Four steps, ten minutes. The app decides what to review based on what you keep forgetting, not on where you left off.</p>
+        </article>
+        <article class="card">
+          <span class="idx">02</span>
+          <h3>Games that test recall</h3>
+          <p>Matching, listening and recall drills turn a vocabulary list into something you recognise when a neighbour says it out loud.</p>
+        </article>
+        <article class="card">
+          <span class="idx">03</span>
+          <h3>Add what is missing</h3>
+          <p>Know a word the dictionary does not have? Submit it. A moderator in Casiguran verifies it and it joins the record.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="heritage">
+      <div class="sec-label">Why it matters</div>
+      <h2>A language is not lost all at once</h2>
+      <p class="sec-lede">Kasiguranin sits between Tagalog and the Northern Luzon languages, and it is not taught in schools. The people who speak it best are the oldest people in town. Every entry here was collected from them, checked, and published so a child in Casiguran can still find it in twenty years. The app is free and always will be.</p>
+      <div class="slot">
+        <b>Reserved for real voices</b>
+        <p>Testimonials from actual users, teachers and elders belong here. Left deliberately empty — Adrian supplies the real quotes, the same way he supplies the artwork. Nothing invented ships.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <div class="closer" id="get">
+      <h2>Start with one word.</h2>
+      <p>Download KasiGuru free on Android. Browse all 394 entries without making an account.</p>
+      <a class="btn btn-primary" href="#">Download the APK</a>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap">KasiGuru · A language preservation project for Casiguran, Aurora · Mockup C, not a live page</div></footer>
+
+</body>
+</html>

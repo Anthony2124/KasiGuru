@@ -21,6 +21,12 @@ class AchievementsViewModel @Inject constructor(
     val uiState: StateFlow<AchievementsUiState> = _uiState.asStateFlow()
 
     init {
+        // For an install that already had an achievements table before these badges existed -
+        // onCreate's fresh-install seed already ran once, so it never runs again. Only inserts
+        // ids that are actually missing.
+        viewModelScope.launch {
+            userProgressRepository.seedNewAchievements(DatabaseSeeder.getInitialAchievements())
+        }
         loadAchievements()
     }
 

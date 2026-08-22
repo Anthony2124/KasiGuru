@@ -114,6 +114,36 @@ class AuthRepository @Inject constructor(
     }
 
     /**
+     * A lightweight identity hint, not a secret: three fixed prompts (see
+     * [SECURITY_QUESTIONS]) whose answers are stored owner-only at
+     * `security_questions/{uid}`, the same per-account access shape `users/{uid}` already uses.
+     *
+     * This is deliberately NOT wired into [sendPasswordReset] as a pre-authentication gate.
+     * Doing that would require the answers to be readable by someone who is not yet signed in as
+     * this account, which either means making them public (defeats the point) or standing up a
+     * Cloud Function to broker the check server-side (the Spark plan this project stays on
+     * cannot deploy - see functions/index.js). Firebase's own emailed reset link already does
+     * real, secure identity verification; these questions are a same-session confirmation step
+     * for a user who is already signed in, e.g. before a sensitive change, not a substitute for
+     * that link.
+     */
+    suspend fun saveSecurityQuestions(answers: List<String>): Result<Unit> = runCatching {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Not signed in.")
+        require(answers.size == SECURITY_QUESTIONS.size) { "Expected ${SECURITY_QUESTIONS.size} answers." }
+        val data = SECURITY_QUESTIONS.indices.associate { i -> "answer$i" to answers[i].trim() }
+        firestore.collection("security_questions").document(uid)
+            .set(data + mapOf("updatedAt" to System.currentTimeMillis()))
+            .await()
+    }
+
+    /** Empty strings for any question never answered yet. */
+    suspend fun getSecurityQuestionAnswers(): Result<List<String>> = runCatching {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Not signed in.")
+        val doc = firestore.collection("security_questions").document(uid).get().await()
+        SECURITY_QUESTIONS.indices.map { i -> doc.getString("answer$i") ?: "" }
+    }
+
+    /**
      * Returns to a fresh anonymous session so the app still works signed out.
      * Local Room data is deliberately left alone here; the caller decides
      * whether to clear it (see AuthViewModel.signOut).
@@ -159,6 +189,14 @@ class AuthRepository @Inject constructor(
         email = this?.email?.takeIf { it.isNotBlank() },
         providers = this?.providerData?.map { it.providerId }?.filter { it != "firebase" } ?: emptyList()
     )
+
+    companion object {
+        val SECURITY_QUESTIONS = listOf(
+            "What was the name of your barangay or hometown?",
+            "What is the name of a family member who still speaks Kasiguranin?",
+            "What was your first pet's name?"
+        )
+    }
 }
 
 private fun Exception.friendlyMessage(): String = when (this) {

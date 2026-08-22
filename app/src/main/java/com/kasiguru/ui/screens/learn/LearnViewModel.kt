@@ -5,9 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.BuildConfig
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.data.remote.model.AnnouncementDto
 import com.kasiguru.data.remote.model.AppReleaseDto
+import com.kasiguru.data.local.entity.MetricType
+import com.kasiguru.data.repository.AnnouncementRepository
 import com.kasiguru.data.repository.AppUpdateRepository
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.SubmissionRepository
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.LessonRepository
 import com.kasiguru.data.repository.StoryRepository
@@ -55,7 +59,8 @@ data class LearnUiState(
     /** Every story, locked ones included - the lock is the motivation, so the shelf shows them. */
     val stories: List<StoryEntity> = emptyList(),
     val updateRelease: AppReleaseDto? = null,
-    val showBackupPrompt: Boolean = false
+    val showBackupPrompt: Boolean = false,
+    val announcements: List<AnnouncementDto> = emptyList()
 ) {
     /**
      * XP earned today, read from the stored ledger.
@@ -85,7 +90,9 @@ class LearnViewModel @Inject constructor(
     private val gameLevelRepository: GameLevelRepository,
     private val appUpdateRepository: AppUpdateRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val announcementRepository: AnnouncementRepository,
+    private val submissionRepository: SubmissionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LearnUiState())
@@ -96,7 +103,30 @@ class LearnViewModel @Inject constructor(
         refreshPlan()
         checkForUpdate()
         observeAccountState()
+        observeAnnouncements()
+        checkSubmissionAchievements()
         viewModelScope.launch { userProgressRepository.updateStreak() }
+    }
+
+    /**
+     * Backs "Trusted Voice" / "Corpus Builder": the app has no push notification for "your
+     * submission was approved," so this checks on every Learn open instead, which is frequent
+     * enough that the badge unlocks promptly without needing new sync infrastructure.
+     */
+    private fun checkSubmissionAchievements() {
+        viewModelScope.launch {
+            submissionRepository.getApprovedSubmissionCount().onSuccess { count ->
+                userProgressRepository.checkAchievements(MetricType.SUBMISSIONS_APPROVED, count)
+            }
+        }
+    }
+
+    private fun observeAnnouncements() {
+        viewModelScope.launch {
+            announcementRepository.getAnnouncements().collect { list ->
+                _uiState.update { it.copy(announcements = list) }
+            }
+        }
     }
 
     /** Re-derives Today's Path. Called on entry and after returning from a lesson. */

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KasiGuru — redesign directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Type scale. Fewer steps, real ratios between them. Sizes that differ by
+     0.02rem are noise, not hierarchy. */
+  --t-xs:0.75rem;
+  --t-sm:0.875rem;
+  --t-base:1rem;
+  --t-md:1.25rem;
+  --t-lg:2rem;--bg:#fff;--ink:#0B0B0C;--muted:#5A5A63;--line:#E4E4E9;--accent:#3D34D6;--shell:#F7F7F9}
+@media (prefers-color-scheme:dark){:root{--bg:#0B0B0C;--ink:#F5F5F7;--muted:#A0A0AB;--line:#2A2A2F;--accent:#A99CFF;--shell:#151517}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;line-height:1.6;padding:56px 24px}
+.wrap{max-width:820px;margin:0 auto}
+h1{font-size:var(--t-lg);font-weight:800;letter-spacing:-0.035em;margin-bottom:10px}
+.sub{color:var(--muted);line-height:1.6;margin-bottom:40px;max-width:60ch}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:14px;transition:border-color .15s ease}
+a.card:hover{border-color:var(--accent)}
+a.card h2{font-size:var(--t-md);font-weight:700;letter-spacing:-0.02em;margin-bottom:5px}
+a.card p{color:var(--muted);font-size:var(--t-base)}
+.tag{display:inline-block;font-size:var(--t-xs);font-weight:600;color:var(--accent);margin-bottom:9px}
+.rec{background:var(--shell)}
+footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:var(--t-sm)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Directions for the download site</h1>
+  <p class="sub">Same real content in each — actual dictionary entries, the real count of words in the corpus — so the comparison is about the design and nothing else. Each is a throwaway mockup. Nothing in the live site or admin panel has been touched.</p>
+
+  <a class="card rec" href="a-kasiguranin-editorial.html">
+    <span class="tag">A · Recommended</span>
+    <h2>Kasiguranin Editorial</h2>
+    <p>The product is a language, so the words are the hero. Warm paper, hairline rules, a serif display face, dictionary entries set as typographic specimens. The only one of the three that could not belong to some other product.</p>
+  </a>
+
+  <a class="card" href="b-swiss-product.html">
+    <span class="tag">B</span>
+    <h2>Swiss Product</h2>
+    <p>Strict grid, generous whitespace, near-black on white with one indigo accent. Reads as credible modern software, and the same system scales straight down into the admin console.</p>
+  </a>
+
+  <a class="card" href="c-dark-premium.html">
+    <span class="tag">C</span>
+    <h2>Dark Premium</h2>
+    <p>Dark-first and deliberately single-theme. Boldest departure and the strongest "modern" signal, but the highest risk of looking like every other dark landing page.</p>
+  </a>
+
+  <a class="card rec" href="d-kasi-playful.html">
+    <span class="tag">D · New brief</span>
+    <h2>Clay Canopy</h2>
+    <p>Built from a supplied reference: organic blob grounds, wave dividers, chunky clay pill buttons, a staggered card cluster, a ghost watermark. Palette and type are not new — they are the Android app's own Violet Sheet tokens (Nunito, DM Sans, the canopy gradient) carried onto the web for the first time. No illustration is generated; three slots are documented and the page is built to look finished with all of them empty.</p>
+  </a>
+
+  <a class="card" href="admin-dense-console.html">
+    <span class="tag">Admin</span>
+    <h2>Admin as a dense console</h2>
+    <p>Built in B's system. Sidebar nav, real URLs per section, paginated and sortable table, roughly twice the rows on screen, and cards instead of a seven-column scroll on a phone. This layout stays whichever site direction wins; only its palette and type follow the choice.</p>
+  </a>
+
+  <footer>Resize the window or open these on your phone — all five are responsive, and each follows your system's light or dark setting except C, which commits to dark on purpose.</footer>
+</div>
+</body>
+</html>

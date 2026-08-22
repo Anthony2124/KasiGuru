@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.domain.lesson.Exercise
+import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayFab
@@ -271,91 +272,13 @@ private fun LessonActionArea(
                 fadeIn(tween(220)),
             exit = slideOutVertically(tween(140)) { it } + fadeOut(tween(140))
         ) {
-            AnswerFeedback(
+            GameAnswerFeedback(
                 isCorrect = isCorrect,
                 correctAnswer = correctAnswer,
                 word = word,
                 onContinue = onContinue
             )
         }
-    }
-}
-
-/**
- * The feedback panel — the layer the old mini-games never had. A wrong answer there produced one line
- * of text below the options and no way to learn from it.
- *
- * Correctness is carried by icon, heading and colour together, so it never depends on colour alone.
- */
-@Composable
-private fun AnswerFeedback(
-    isCorrect: Boolean,
-    correctAnswer: String,
-    word: com.kasiguru.data.local.entity.VocabularyEntity,
-    onContinue: () -> Unit
-) {
-    val tint = if (isCorrect) GreenTint else RedTint
-    val accent = if (isCorrect) GreenDeep else RedDeep
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.sheetTop)
-            .background(tint)
-            .navigationBarsPadding()
-            .padding(Space.gutter)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(
-                    id = if (isCorrect) Iconsax.TickCircle else Iconsax.InfoCircle
-                ),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(26.dp)
-            )
-            Spacer(Modifier.width(Space.xs))
-            Text(
-                text = if (isCorrect) "Correct" else "Not quite",
-                style = MaterialTheme.typography.headlineSmall,
-                color = accent
-            )
-        }
-
-        if (!isCorrect) {
-            Spacer(Modifier.height(Space.xs))
-            Text(
-                text = "Answer: $correctAnswer",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Ink
-            )
-        }
-
-        // A teaching line, not just a verdict: the example sentence is the only place the learner
-        // sees the word doing a job.
-        if (word.exampleSentence.isNotBlank()) {
-            Spacer(Modifier.height(Space.xs))
-            Text(
-                text = word.exampleSentence,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Ink
-            )
-            if (word.exampleTranslation.isNotBlank()) {
-                Text(
-                    text = word.exampleTranslation,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Space.md))
-        ClayButton(
-            label = if (isCorrect) "Continue" else "Got it",
-            onClick = onContinue,
-            tone = if (isCorrect) ClayButtonTone.Primary else ClayButtonTone.Reward,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
 

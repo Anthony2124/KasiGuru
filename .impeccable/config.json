@@ -209,6 +209,24 @@
         ],
         "createdAt": "2026-08-22T08:37:23.894Z",
         "reason": "This is the mockup-only QR placeholder (.qr-stand-in), explicitly commented 'the live page renders a real QR onto a canvas here'. The shipped production page uses a real canvas-drawn QR code, not this pattern -- it exists only so the throwaway mockup renders something in that slot"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T13:48:03.322Z",
+        "reason": "Editorial pull-quote (.pull), not a card — thin 5px gold rule with no background fill, standard print/blog convention; already reviewed once but the prior ignore-value entry used a plain-text value that this rule can't match on (side-tab has no extractable value), so it never actually took effect"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T13:48:19.557Z",
+        "reason": "practice-sec's vertical padding is an intentional responsive clamp() (top: 8-20px, bottom: 32-60px) that already sits at or above the 8px floor the rule itself recommends; already reviewed once but the prior ignore-value entry used a plain selector name as the value, which cramped-padding can't match on (no extractable value), so it never actually took effect"
       }
     ]
   }

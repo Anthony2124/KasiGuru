@@ -44,8 +44,90 @@ object KasiGuruMigrations {
         MIGRATION_18_19,
         MIGRATION_19_20,
         MIGRATION_20_21,
-        MIGRATION_21_22
+        MIGRATION_21_22,
+        MIGRATION_22_23,
+        MIGRATION_23_24,
+        MIGRATION_24_25,
+        MIGRATION_25_26
         )
+    }
+
+    // -- v25 -> v26 -----------------------------------------------------------
+    // New table: profiles - the identity/roster layer for shared-device multi-profile support.
+    // See ProfileEntity's doc comment for what this pass does and deliberately does not do yet
+    // (progress itself is still one shared row per device, not per profile).
+    private val MIGRATION_25_26 = object : Migration(25, 26) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `profiles` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`name` TEXT NOT NULL, `residentName` TEXT NOT NULL, " +
+                    "`createdAt` INTEGER NOT NULL, `isActive` INTEGER NOT NULL)"
+            )
+        }
+    }
+
+    // -- v24 -> v25 -----------------------------------------------------------
+    // vocabulary gains a second example sentence per meaning (kasiguranin + translation),
+    // enforcing "two sentences per meaning" going forward. Existing entries get empty strings
+    // for the new columns, same as exampleSentence/exampleTranslation already default to when
+    // unset - every consumer already treats an empty example as "none yet," not an error, so
+    // there is no migration-time backfill to do here; authoring the missing content is a corpus
+    // task tracked separately; this pass is schema only.
+    private val MIGRATION_24_25 = object : Migration(24, 25) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `exampleSentence2` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `exampleTranslation2` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    // -- v23 -> v24 -----------------------------------------------------------
+    // user_progress gains submissionsMade, backing the new "First Contribution" badge.
+    private val MIGRATION_23_24 = object : Migration(23, 24) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `submissionsMade` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+    // -- v22 -> v23 -----------------------------------------------------------
+    // Badge redesign: achievements gains metricType (unlock logic reads this instead of five
+    // hardcoded per-badge-family functions in UserProgressRepository) and tier (wires the
+    // already-existing TierGold/Silver/Bronze theme tokens to real badges).
+    //
+    // Safe with respect to progress: this only adds columns and backfills them on the eleven
+    // existing rows by id, matching MetricType's constants and UserProgressRepository's old
+    // per-family thresholds exactly. isUnlocked/unlockedDate/currentValue/xpReward on every row
+    // are untouched, so nobody's already-earned badges move. Not reseeded-from-empty like
+    // MIGRATION_21_22 used for stories, because that would discard real per-user unlock state -
+    // a badge is not interchangeable content the way a folk tale is.
+    //
+    // New achievement rows (submission-based, deeper streak/mastery, social/leaderboard) are
+    // added by DatabaseSeeder, guarded the normal way (only on an empty table) for a fresh
+    // install; an upgrading install picks them up via UserProgressRepository.seedNewAchievements,
+    // called once from AchievementsViewModel's init, which inserts only ids not already present.
+    private val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `achievements` ADD COLUMN `metricType` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `achievements` ADD COLUMN `tier` TEXT")
+
+            fun backfill(id: String, metricType: String) {
+                db.execSQL(
+                    "UPDATE `achievements` SET `metricType` = ? WHERE `id` = ?",
+                    arrayOf(metricType, id)
+                )
+            }
+            backfill("first_word", "wordsLearned")
+            backfill("ten_words", "wordsLearned")
+            backfill("fifty_words", "wordsLearned")
+            backfill("first_story", "storiesCompleted")
+            backfill("all_stories", "storiesCompleted")
+            backfill("first_game", "gamesPlayed")
+            backfill("perfect_game", "perfectGame")
+            backfill("three_day_streak", "streak")
+            backfill("seven_day_streak", "streak")
+            backfill("level_five", "level")
+            backfill("level_ten", "level")
+        }
     }
 
     /**

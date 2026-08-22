@@ -67,7 +67,7 @@ import com.kasiguru.ui.theme.VioletTint
  */
 @Composable
 fun OnboardingScreen(
-    onCompleteOnboarding: (userName: String, avatarId: Int, dailyGoalXp: Int, motivation: String, startingLevel: String, titleBadge: String) -> Unit
+    onCompleteOnboarding: (userName: String, avatarId: Int, dailyGoalXp: Int, motivation: String, startingLevel: String, titleBadge: String, residentName: String) -> Unit
 ) {
     var step by remember { mutableIntStateOf(1) }
     val haptic = LocalHapticFeedback.current
@@ -185,7 +185,8 @@ fun OnboardingScreen(
                                 dailyGoalXp,
                                 motivation,
                                 skillLevel,
-                                selectedTitleBadge
+                                selectedTitleBadge,
+                                onboardingAvatars[(selectedAvatarId - 1).coerceIn(onboardingAvatars.indices)].name
                             )
                         }
                     )
@@ -435,6 +436,10 @@ private fun Step4DailyGoal(
 
 private data class GoalOption(val xp: Int, val title: String, val time: String, val xpTarget: String, val iconRes: Int, val accentColor: Color)
 
+// This list's ORDER is load-bearing: Step5ProfileSetup stores a 1-based position in this list as
+// UserProgressEntity.profileIconId, permanently, for every onboarded user. Reordering, inserting,
+// or removing an entry here silently changes which avatar an already-onboarded install shows -
+// append new residents at the end only, never reorder or remove one already shipped.
 private val onboardingAvatars = listOf(
     CasiguranResident.STUDENT,
     CasiguranResident.TEACHER,

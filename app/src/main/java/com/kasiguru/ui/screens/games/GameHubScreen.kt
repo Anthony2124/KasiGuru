@@ -56,6 +56,8 @@ import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.WidthClass
+import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.util.gamification.GamificationEngine
 
@@ -190,10 +192,13 @@ fun GameHubScreen(
                 }
 
                 item {
+                    // Three per row at medium/expanded widths (six games divides evenly into two
+                    // full rows there); two per row on a compact phone, as before.
+                    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                        games.chunked(2).forEach { pair ->
+                        games.chunked(columns).forEach { row ->
                             Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                                pair.forEach { game ->
+                                row.forEach { game ->
                                     GameTile(
                                         entry = game,
                                         isUnlocked = uiState.totalStars >= game.unlockStars,
@@ -204,7 +209,7 @@ fun GameHubScreen(
                                         }
                                     )
                                 }
-                                if (pair.size == 1) Spacer(Modifier.weight(1f))
+                                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }

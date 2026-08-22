@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.AnnouncementBanner
 import com.kasiguru.ui.components.AppUpdateBanner
 import com.kasiguru.ui.components.CasiguranAvatarPortrait
 import com.kasiguru.ui.components.CasiguranResident
@@ -45,6 +46,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.TextButton
 import com.kasiguru.ui.components.clay.StoryCoverCard
+import com.kasiguru.ui.components.clay.rememberStoryCoverRes
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.CanopyScaffold
 import com.kasiguru.ui.components.clay.DayMark
@@ -68,6 +70,8 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.SkyReview
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.WidthClass
+import com.kasiguru.ui.theme.rememberWidthClass
 
 /**
  * The learner's home: a violet canopy carrying today's state, over a sheet carrying today's work.
@@ -110,8 +114,18 @@ fun LearnScreen(
         )
     }
 
+    // Steps down one Space tier at a wider width, same spirit as the skills grid below going
+    // from 2 to 4 columns - more width means the canopy doesn't need to claim as much height to
+    // read as a real "who you are and where you stand today" band.
+    val widthClass = rememberWidthClass()
+    val canopyHeight = when (widthClass) {
+        WidthClass.COMPACT -> 244.dp
+        WidthClass.MEDIUM -> 244.dp - 24.dp
+        WidthClass.EXPANDED -> 244.dp - 48.dp
+    }
+
     CanopyScaffold(
-        canopyHeight = 244.dp,
+        canopyHeight = canopyHeight,
         canopyContent = {
             Spacer(Modifier.height(Space.sm))
 
@@ -232,6 +246,11 @@ fun LearnScreen(
                         AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
                         Spacer(Modifier.height(Space.md))
                     }
+                }
+
+                items(uiState.announcements, key = { it.id }) { announcement ->
+                    AnnouncementBanner(announcement = announcement)
+                    Spacer(Modifier.height(Space.md))
                 }
 
                 if (uiState.showBackupPrompt) {
@@ -397,7 +416,8 @@ fun LearnScreen(
                                     isCompleted = story.isCompleted,
                                     requiredXp = story.requiredXp,
                                     onClick = { onOpenStories() },
-                                    modifier = Modifier.width(160.dp)
+                                    modifier = Modifier.width(160.dp),
+                                    cover = rememberStoryCoverRes(story.id)
                                 )
                             }
                         }
@@ -411,12 +431,15 @@ fun LearnScreen(
                     Spacer(Modifier.height(Space.md))
                 }
 
-                // Two rows of two. A LazyVerticalGrid inside a LazyColumn is not allowed, and four
-                // fixed tiles do not need one.
+                // Two rows of two on a compact width; one row of four at medium/expanded, where
+                // two rows would leave the tiles looking stretched rather than filling the space.
+                // A LazyVerticalGrid inside a LazyColumn is not allowed, and four fixed tiles do
+                // not need one.
                 item {
                     val skills = uiState.skills
+                    val columns = if (widthClass == WidthClass.COMPACT) 2 else 4
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                        skills.chunked(2).forEach { pair ->
+                        skills.chunked(columns).forEach { pair ->
                             Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
                                 pair.forEach { skill ->
                                     SkillTile(

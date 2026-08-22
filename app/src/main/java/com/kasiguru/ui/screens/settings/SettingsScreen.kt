@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAccount: () -> Unit = {},
+    onNavigateToProfiles: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -162,6 +163,55 @@ fun SettingsScreen(
                                         } else {
                                             "Guest — progress is only on this device"
                                         },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Muted
+                                )
+                            }
+                        }
+                        Icon(
+                            painter = painterResource(id = Iconsax.ArrowRight),
+                            contentDescription = null,
+                            tint = Muted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // Profiles Section
+                SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToProfiles) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(Space.sm),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = Shapes.chip,
+                                color = Violet.copy(alpha = 0.15f),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Profile2user),
+                                        contentDescription = null,
+                                        tint = Violet,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Manage profiles",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Ink
+                                )
+                                Text(
+                                    text = "Add a family member or switch who's learning",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Muted
                                 )
@@ -311,6 +361,7 @@ fun SettingsScreen(
                         Spacer(Modifier.width(Space.sm))
 
                         ClayButton(
+                            modifier = Modifier.width(IntrinsicSize.Min),
                             label = if (isSyncing) "Syncing…" else "Sync",
                             onClick = {
                                 isSyncing = true
@@ -345,6 +396,55 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = Green,
                             fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                // Recovery questions. A lightweight identity hint, not a secret - see
+                // AuthRepository.saveSecurityQuestions for why this is not a password-reset gate.
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
+                    val securityAnswers by viewModel.securityAnswers.collectAsState()
+                    val securityStatus by viewModel.securityQuestionsStatus.collectAsState()
+                    LaunchedEffect(Unit) { viewModel.loadSecurityQuestions() }
+
+                    Text(
+                        text = "Recovery Questions",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Ink
+                    )
+                    Spacer(Modifier.height(Space.xs))
+                    Text(
+                        text = "A lightweight hint to help confirm it's you, not a secret. " +
+                            "Anyone who unlocks this device can read them.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted
+                    )
+                    Spacer(Modifier.height(Space.sm))
+
+                    viewModel.securityQuestions.forEachIndexed { index, question ->
+                        OutlinedTextField(
+                            value = securityAnswers.getOrElse(index) { "" },
+                            onValueChange = { viewModel.onSecurityAnswerChanged(index, it) },
+                            label = { Text(question) },
+                            modifier = Modifier.fillMaxWidth().padding(bottom = Space.xs),
+                            singleLine = true
+                        )
+                    }
+
+                    ClayButton(
+                        label = "Save answers",
+                        onClick = { viewModel.saveSecurityQuestions() },
+                        tone = ClayButtonTone.Quiet,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    securityStatus?.let { message ->
+                        Spacer(Modifier.height(Space.xs))
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Muted
                         )
                     }
                 }

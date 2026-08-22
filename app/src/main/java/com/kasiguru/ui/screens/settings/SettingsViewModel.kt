@@ -7,8 +7,10 @@ import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -74,5 +76,42 @@ class SettingsViewModel @Inject constructor(
         progressSyncManager.syncFromCloud(uid)
         progressSyncManager.syncLearningStateFromCloud(uid)
         return true
+    }
+
+    val securityQuestions: List<String> = AuthRepository.SECURITY_QUESTIONS
+
+    private val _securityAnswers = MutableStateFlow(List(securityQuestions.size) { "" })
+    val securityAnswers: StateFlow<List<String>> = _securityAnswers.asStateFlow()
+
+    private val _securityQuestionsStatus = MutableStateFlow<String?>(null)
+    val securityQuestionsStatus: StateFlow<String?> = _securityQuestionsStatus.asStateFlow()
+
+    fun loadSecurityQuestions() {
+        viewModelScope.launch {
+            authRepository.getSecurityQuestionAnswers()
+                .onSuccess { _securityAnswers.value = it }
+        }
+    }
+
+    fun onSecurityAnswerChanged(index: Int, value: String) {
+        val current = _securityAnswers.value.toMutableList()
+        if (index !in current.indices) return
+        current[index] = value
+        _securityAnswers.value = current
+    }
+
+    fun saveSecurityQuestions() {
+        viewModelScope.launch {
+            val result = authRepository.saveSecurityQuestions(_securityAnswers.value)
+            _securityQuestionsStatus.value = if (result.isSuccess) {
+                "Saved. These are a lightweight identity hint, not a secret - anyone who unlocks this device is able to read them."
+            } else {
+                "Couldn't save right now. Please try again."
+            }
+        }
+    }
+
+    fun dismissSecurityQuestionsStatus() {
+        _securityQuestionsStatus.value = null
     }
 }

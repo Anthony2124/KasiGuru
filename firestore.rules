@@ -159,6 +159,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // System announcements: public read, admin-only writes. Read live by AnnouncementRepository
+    // (a callbackFlow, same shape as leaderboard_public) while the app is open. There is no
+    // Cloud Function watching this for a push - Spark plan sends are a local script
+    // (functions/send_push.js) run by hand, same limitation the release pipeline already has.
+    match /announcements/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     // App releases: public read (download page + in-app update), admin-only writes.
     match /app_releases/{docId} {
       allow read: if true;
@@ -169,7 +178,42 @@ service cloud.firestore {
     // Anonymous delete/update is denied so pending queue items cannot be tampered with.
     match /word_submissions/{docId} {
       allow create: if isValidSubmission();
-      allow read, update, delete: if isAdmin();
+      // A submitter may read their own submissions back (needed for the "Trusted Voice" /
+      // "Corpus Builder" badges, which count a user's own approved submissions) but never
+      // anyone else's; only an admin can read the whole queue. Still owner-only: this does not
+      // let a submitter read who else submitted what.
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // Community story/poem submissions - full literature, not a single word. Same shape as
+    // isValidSubmission(): create is open (the app has no auth), everything else admin-only.
+    // Submissions are text-only, no illustrations - Adrian authors all artwork himself, and any
+    // art for an approved piece is added afterward through the existing story-authoring flow -
+    // so pagesJson at plain text volumes is nowhere near Firestore's 1 MiB document ceiling even
+    // at the 40-page cap the app enforces client-side.
+    function isValidLiteratureSubmission() {
+      let data = request.resource.data;
+      let allowedKeys = data.keys().hasOnly([
+        'id', 'title', 'titleKasiguranin', 'pagesJson', 'contributorName', 'status', 'submittedAt', 'uid'
+      ]);
+      return allowedKeys
+        && data.title is string && data.title.size() <= 200
+        && data.titleKasiguranin is string && data.titleKasiguranin.size() <= 200
+        && (data.title.size() >= 1 || data.titleKasiguranin.size() >= 1)
+        && data.pagesJson is string && data.pagesJson.size() <= 300000
+        && data.contributorName is string && data.contributorName.size() <= 60
+        && data.status == 'pending'
+        && data.submittedAt is int
+        && data.uid is string && data.uid.size() <= 128
+        && (!('id' in data) || data.id == request.resource.id);
+    }
+
+    match /literature_submissions/{docId} {
+      allow create: if isValidLiteratureSubmission();
+      // Same owner-read exception as word_submissions, for the same badge-counting reason.
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // Admin audit log: admins append and read; no update/delete (append-only).
@@ -181,6 +225,13 @@ service cloud.firestore {
     // Per-user cloud data (cross-device progress sync).
     // Owner-only access; nothing else may read other users' documents.
     match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // A lightweight identity hint, not a secret: owner-only, exactly like users/{userId}. Never
+    // readable pre-authentication - see AuthRepository.saveSecurityQuestions for why this is not
+    // wired into password reset as a pre-auth gate.
+    match /security_questions/{userId} {
       allow read, write: if isOwner(userId);
     }
 
