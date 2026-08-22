@@ -13,7 +13,7 @@
 // means "whatever shipped last". Firestore only ever *upgrades* the buttons — to
 // the exact versioned URL and a label naming the version. If the network is down,
 // the download still works, which is the whole point of this page.
-import { db, collection, query, orderBy, onSnapshot, getCountFromServer } from './firebase-config.js';
+import { db, collection, query, orderBy, limit, onSnapshot, getCountFromServer } from './firebase-config.js';
 
 // Apply release metadata to DOM
 function applyReleaseInfo(release) {
@@ -124,14 +124,20 @@ function showCheckFailedState() {
 }
 
 try {
+  // limit(1) because only releases[0] is ever read. Without it this pulled the whole
+  // app_releases collection on every visit to a public page — one document per release
+  // ever shipped, growing forever, against the Spark plan's shared daily read quota.
+  // The Android app's AppUpdateRepository already queries this collection the same way.
   const releaseQuery = query(
     collection(db, 'app_releases'),
-    orderBy('versionCode', 'desc')
+    orderBy('versionCode', 'desc'),
+    limit(1)
   );
 
   onSnapshot(releaseQuery, (snapshot) => {
-    const releases = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    const latest = releases[0];
+    const latest = snapshot.docs.length
+      ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
+      : null;
     if (latest) {
       applyReleaseInfo(latest);
     } else {
