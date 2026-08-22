@@ -2,19 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KasiGuru — Bulk Migration Tool</title>
   <style>
+    /* Same faces and the same token names as admin/css/styles.css, rather than the
+       stray 'Inter' this page used to hardcode — it was the only file in the admin
+       site off the design system's type. Imported here instead of linking styles.css
+       wholesale: that sheet carries the full light-mode Violet Sheet treatment, which
+       would fight this tool page's dark shell. Folding this page into the dashboard
+       proper is a separate call. */
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Nunito:wght@700;800;900&display=swap');
+
+    :root {
+      --display: 'Nunito', system-ui, -apple-system, sans-serif;
+      --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #12161F; color: #fff; padding: 2rem; }
-    h1 { margin-bottom: 1rem; }
+    body { font-family: var(--sans); background: #12161F; color: #fff; padding: 2rem; }
+    h1 { font-family: var(--display); font-weight: 800; margin-bottom: 1rem; }
     .log { background: #1a1e2e; border: 1px solid #2a2e3e; border-radius: 8px; padding: 1rem; max-height: 70vh; overflow-y: auto; font-family: monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; }
     .success { color: #4ade80; }
     .skip { color: #fbbf24; }
     .error { color: #f87171; }
     .info { color: #60a5fa; }
-    button { background: #6366f1; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 1rem 0.5rem 1rem 0; }
+    /* Buttons do not inherit font-family, so they need it named explicitly or they fall
+       back to the browser's UI face regardless of what body is set to. */
+    button { font-family: var(--sans); font-weight: 500; background: #6366f1; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 1rem 0.5rem 1rem 0; }
     button:hover { background: #4f46e5; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Not opacity-dimmed: both buttons now start disabled and stay that way until the admin
+       claim is verified, so this is the page's first-paint state rather than a brief flicker
+       during a run. Half-opacity white on indigo falls under 4.5:1; a solid muted pair holds
+       contrast while still reading as unavailable. */
+    /* Class rather than an inline style so `button:disabled` (0-1-1) can out-specify it.
+       As an inline background it always won, and the disabled Run button rendered
+       #cbd5e1 on #059669 — 2.5:1. */
+    button.run { background: #059669; }
+    button.run:hover { background: #047857; }
+    button:disabled { background: #2a2e3e; color: #cbd5e1; cursor: not-allowed; }
+    button:disabled:hover { background: #2a2e3e; }
     .stats { margin: 1rem 0; padding: 1rem; background: #1a1e2e; border-radius: 8px; display: flex; gap: 2rem; flex-wrap: wrap; }
     .stat { text-align: center; }
     .stat-num { font-size: 2rem; font-weight: 800; }
@@ -32,15 +57,20 @@
     <div class="stat"><div class="stat-num" id="stat-errors">0</div><div class="stat-label">Errors</div></div>
   </div>
 
-  <button id="btn-preview" onclick="runMigration(true)">👁 Preview Changes (Dry Run)</button>
-  <button id="btn-run" onclick="runMigration(false)" style="background:#059669;">🚀 Run Migration</button>
+  <!-- Both start disabled and are only enabled once the `admin` custom claim is verified
+       (see the auth guard at the bottom of this file). Preview is gated too, not just Run:
+       vocabulary is world-readable by rule, so an ungated Preview let any signed-in user of
+       this Firebase project — which includes every KasiGuru *app* user — dump the whole
+       dictionary on demand and burn the Spark-plan read quota. -->
+  <button id="btn-preview" onclick="runMigration(true)" disabled>👁 Preview Changes (Dry Run)</button>
+  <button id="btn-run" class="run" onclick="runMigration(false)" disabled>🚀 Run Migration</button>
 
   <div class="log" id="log">Waiting for action...\n</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBIADrpzbQZpE4SoHRp9xKsh9A03RLZDlg",
@@ -151,10 +181,13 @@
       return 'Noun';
     }
 
+    // Module scope, not function scope: the auth guard below also needs these to enable
+    // the buttons once the admin claim checks out.
+    const btnPreview = document.getElementById('btn-preview');
+    const btnRun = document.getElementById('btn-run');
+
     // ── Main Migration Function ──
     window.runMigration = async function(dryRun) {
-      const btnPreview = document.getElementById('btn-preview');
-      const btnRun = document.getElementById('btn-run');
       btnPreview.disabled = true;
       btnRun.disabled = true;
       logEl.innerHTML = '';
@@ -233,15 +266,46 @@
       btnRun.disabled = false;
     };
 
-    // Auth check
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        log(`✅ Logged in as: ${user.email}`, 'success');
-        log('Ready. Click "Preview" to see what will change, or "Run Migration" to apply.\n', 'info');
-      } else {
-        log('⚠️  Not logged in! Please log in at the admin dashboard first, then refresh this page.', 'error');
-        log('   The page shares cookies with admin-wheat-nu-52-phi.vercel.app', 'skip');
+    // ── Auth guard ────────────────────────────────────────────────────────────
+    // Mirrors js/app.js: signed out -> back to login; signed in without the `admin`
+    // custom claim -> refuse and sign out. Being merely signed in is not enough. The
+    // app and this panel share Firebase project kasiguru-86042, so every KasiGuru app
+    // user is a signed-in user here; the previous check only logged who you were and
+    // left both buttons live for all of them.
+    //
+    // Firestore rules independently deny the writes (vocabulary is admin-only), but
+    // Preview is a pure read and `vocabulary` is world-readable — so an ungated page
+    // handed anyone a one-click full-dictionary scan against a 50k-reads/day quota.
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        log('⚠️  Not signed in. Redirecting to the admin login...', 'error');
+        window.location.href = 'index.html';
+        return;
       }
+
+      let isAdmin = false;
+      try {
+        const tokenResult = await user.getIdTokenResult();
+        isAdmin = tokenResult.claims?.admin === true;
+      } catch (err) {
+        // Fail closed: an unreadable claim is treated as "not an admin".
+        console.error('Failed to read admin claim:', err);
+        log('⚠️  Could not verify administrator status. Refusing to enable this tool.', 'error');
+        return;
+      }
+
+      if (!isAdmin) {
+        log(`⛔ Access denied: "${user.email}" is not an administrator.`, 'error');
+        log('   Signing out...', 'skip');
+        await signOut(auth);
+        window.location.href = 'index.html';
+        return;
+      }
+
+      btnPreview.disabled = false;
+      btnRun.disabled = false;
+      log(`✅ Signed in as administrator: ${user.email}`, 'success');
+      log('Ready. Click "Preview" to see what will change, or "Run Migration" to apply.\n', 'info');
     });
   </script>
 </body>
