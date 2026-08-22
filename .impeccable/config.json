@@ -227,6 +227,87 @@
         ],
         "createdAt": "2026-08-22T13:48:19.557Z",
         "reason": "practice-sec's vertical padding is an intentional responsive clamp() (top: 8-20px, bottom: 32-60px) that already sits at or above the 8px floor the rule itself recommends; already reviewed once but the prior ignore-value entry used a plain selector name as the value, which cramped-padding can't match on (no extractable value), so it never actually took effect"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T14:00:11.249Z",
+        "reason": "The only colored shadow is .clay-reward's gold-tinted drop shadow (10px offset, tinted to the button's own gold hue) simulating the Clay Canopy pressable-button lip from the Android app's design system, not a zero-offset neon halo; this is the deliberate ported design language, already reviewed once but the prior ignore-value entry stored a literal hex value that dark-glow can't match on (no extractable value), so it never took effect"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T14:00:11.373Z",
+        "reason": "body's overflow-x:hidden exists only to stop decorative background blobs from causing horizontal scroll; this static landing mockup has no tooltip/menu/popover UI that could be clipped, so the rule's concern doesn't apply. Already reviewed once but the prior ignore-value entry stored 'body' as a literal value that this rule can't match on (no extractable value), so it never took effect"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "design/mockups/d-kasi-playful.html"
+        ],
+        "createdAt": "2026-08-22T14:00:11.480Z",
+        "reason": "The one real instance (dark-mode --faint on --surface, 4.3:1) is now fixed by lightening --faint to #8B86AC (4.8:1). The remaining reported pairing (#1f1b3a text on #15131f bg) could not be traced to any actual element after auditing every --reward-ink/--ink usage in the file (all sit on fixed white/gold backgrounds, never on --ground) - a detector false positive, already reviewed once but the prior ignore-value entry stored a literal color-pair string that this rule can't match on (no extractable value), so it never took effect"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T14:01:02.715Z",
+        "reason": "Same pull-quote (.pull) accent as the mockup it was ported from - a 5px gold rule on a text callout, not a card. Prior ignore-value entry stored a literal CSS string that side-tab cannot match on (no extractable value)."
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T14:01:02.860Z",
+        "reason": "Same practice-sec responsive clamp() padding as the mockup (8-20px top, 32-60px bottom), already at/above the rules own 8px floor. Prior ignore-value entry stored the selector name as a value, which this rule cannot match on."
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T14:01:03.004Z",
+        "reason": "Same .clay-reward gold-tinted drop shadow as the mockup - the ported Clay Canopy pressable-button lip, tinted-to-surface per this projects own shadow guidance, not a neon glow. Prior ignore-value entry stored a literal hex that this rule cannot match on."
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T14:01:03.147Z",
+        "reason": "Same body overflow-x:hidden as the mockup, present only to stop decorative blobs causing horizontal scroll; page has no tooltip/menu/popover UI. Prior ignore-value entry stored body as a literal value that this rule cannot match on."
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "admin-website/download/index.html"
+        ],
+        "createdAt": "2026-08-22T14:01:03.288Z",
+        "reason": "The one real instance (dark-mode --faint on --surface) is fixed by lightening --faint to #8B86AC in css/styles.css. The remaining #1f1b3a-on-#15131f pairing could not be traced to any real element - same detector false positive as the mockup it was ported from. Prior ignore-value entry stored a literal color-pair string that this rule cannot match on."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "admin-website/download/css/styles.css"
+        ],
+        "createdAt": "2026-08-22T14:01:19.082Z",
+        "reason": "Same .pull editorial pull-quote accent (5px gold rule, no background fill) as index.html/the mockup - not a card. Prior ignore-value entry stored a literal CSS string that side-tab cannot match on (no extractable value)."
       }
     ]
   }
