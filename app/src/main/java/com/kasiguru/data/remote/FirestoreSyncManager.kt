@@ -22,21 +22,42 @@ class FirestoreSyncManager @Inject constructor(
     companion object {
         private const val TAG = "FirestoreSyncManager"
 
+        /** Field the admin site stamps on every vocabulary/story write, in epoch millis. */
+        const val UPDATED_AT = "updatedAt"
+
         /**
          * Minimum gap between content pulls.
          *
-         * [syncVocabulary] and [syncStories] each read their entire collection — there is
-         * no incremental query, because the documents carry no `updatedAt` to filter on.
-         * At ~400 vocabulary documents that is ~400 reads per pull, against the Spark
-         * plan's 50,000 reads/day *project-wide* ceiling shared by every user. Running
-         * that unconditionally in `MainActivity.onCreate` meant roughly 125 app opens in
-         * total, across the whole userbase, could exhaust the day's quota and take the
+         * Running the pull unconditionally in `MainActivity.onCreate` meant roughly 125
+         * app opens in total, across the whole userbase, could exhaust the Spark plan's
+         * 50,000 reads/day — a project-wide ceiling shared by every user — and take the
          * leaderboard, announcements, update check and progress sync down with it.
          *
          * Six hours keeps a same-day dictionary edit reaching users quickly while cutting
          * a heavy user's launches from dozens of pulls a day to at most four.
          */
         private val MIN_SYNC_INTERVAL_MS = TimeUnit.HOURS.toMillis(6)
+
+        /**
+         * How often to fall back to reading the whole collection.
+         *
+         * The incremental path queries `updatedAt > lastSync`, so it cannot see a document
+         * written by a path that forgot to stamp the field, or one written before the
+         * backfill. A periodic full pull picks those up and self-heals that drift. Weekly
+         * against the six-hour incremental cadence means the expensive read happens on
+         * roughly one sync in twenty-eight.
+         *
+         * It does **not** propagate deletions. A document removed upstream simply stops
+         * being returned, which is indistinguishable from "unchanged", and this class has
+         * never deleted local rows — it only inserts and updates. Making the full pull
+         * authoritative enough to delete would mean trusting that the cloud collection is
+         * the complete source of truth, but every install also ships DatabaseSeeder's
+         * bundled copy of the dictionary. If the two ever diverge, a reconcile that
+         * deleted would destroy seeded words and the SRS progress attached to them. That
+         * needs verifying against production before it can be safe, so deletion
+         * propagation stays unsolved here rather than guessed at.
+         */
+        private val FULL_RECONCILE_INTERVAL_MS = TimeUnit.DAYS.toMillis(7)
     }
 
     /**
@@ -52,9 +73,20 @@ class FirestoreSyncManager @Inject constructor(
                 Log.d(TAG, "Content sync skipped: last pull was under 6h ago")
                 return
             }
-            syncVocabulary()
-            syncStories()
-            userPreferencesRepository.setLastContentSyncAt(System.currentTimeMillis())
+
+            val now = System.currentTimeMillis()
+            val fullReconcile = force || shouldFullReconcile()
+            // 0 makes the incremental query match every document that carries the field,
+            // which is what a first sync on a device wants anyway.
+            val since = if (fullReconcile) 0L else userPreferencesRepository.lastContentSyncAtOnce()
+
+            syncVocabulary(since, fullReconcile)
+            syncStories(since, fullReconcile)
+
+            userPreferencesRepository.setLastContentSyncAt(now)
+            if (fullReconcile) {
+                userPreferencesRepository.setLastFullReconcileAt(now)
+            }
         } catch (e: Exception) {
             // Deliberately not stamping the timestamp on failure, so a failed pull retries
             // on the next launch instead of being throttled out for six hours.
@@ -65,8 +97,8 @@ class FirestoreSyncManager @Inject constructor(
     private suspend fun shouldSync(): Boolean {
         // An empty local dictionary means a fresh install (or cleared data) that has
         // nothing to read offline, so it always syncs regardless of the interval.
-        // Counted rather than fetched — syncVocabulary() already pulls the full row set
-        // when it runs, and there is no reason to pay for that when it won't.
+        // Counted rather than fetched — a full pull reads every row anyway, and there is
+        // no reason to pay for that when it won't run.
         if (vocabularyDao.getTotalCountDirect() == 0) return true
 
         val lastSync = userPreferencesRepository.lastContentSyncAtOnce()
@@ -80,10 +112,43 @@ class FirestoreSyncManager @Inject constructor(
         return elapsed >= MIN_SYNC_INTERVAL_MS
     }
 
-    private suspend fun syncVocabulary() {
-        val snapshot = firestore.collection("vocabulary").get().await()
-        // Seeding is admin-only (Firestore rules deny client writes).
-        if (snapshot.isEmpty) return
+    private suspend fun shouldFullReconcile(): Boolean {
+        if (vocabularyDao.getTotalCountDirect() == 0) return true
+
+        val lastFull = userPreferencesRepository.lastFullReconcileAtOnce()
+        if (lastFull == 0L) return true
+
+        val elapsed = System.currentTimeMillis() - lastFull
+        if (elapsed < 0) return true
+
+        return elapsed >= FULL_RECONCILE_INTERVAL_MS
+    }
+
+    /**
+     * Reads the collection, incrementally when possible.
+     *
+     * The incremental query needs `updatedAt` present on the document. Anything written
+     * before the backfill, or by a path that forgot to stamp it, is invisible here and is
+     * picked up by the next full reconcile instead — which is why [FULL_RECONCILE_INTERVAL_MS]
+     * exists rather than this being a pure incremental sync.
+     */
+    private suspend fun fetchContent(collection: String, since: Long, fullReconcile: Boolean) =
+        if (fullReconcile) {
+            firestore.collection(collection).get().await()
+        } else {
+            firestore.collection(collection)
+                .whereGreaterThan(UPDATED_AT, since)
+                .get()
+                .await()
+        }
+
+    private suspend fun syncVocabulary(since: Long, fullReconcile: Boolean) {
+        val snapshot = fetchContent("vocabulary", since, fullReconcile)
+        // Nothing changed since the last pull — the common case, and the whole point.
+        if (snapshot.isEmpty) {
+            if (fullReconcile) Log.w(TAG, "vocabulary is empty upstream; leaving local rows alone")
+            return
+        }
 
         // Mapped field by field rather than via toObjects(): documents written by
         // the admin site often omit optional fields, and reflection would leave
@@ -137,8 +202,8 @@ class FirestoreSyncManager @Inject constructor(
         vocabularyDao.deleteDuplicateWords()
     }
 
-    private suspend fun syncStories() {
-        val snapshot = firestore.collection("stories").get().await()
+    private suspend fun syncStories(since: Long, fullReconcile: Boolean) {
+        val snapshot = fetchContent("stories", since, fullReconcile)
         if (snapshot.isEmpty) return
 
         val cloudStories = snapshot.documents.mapNotNull { doc ->

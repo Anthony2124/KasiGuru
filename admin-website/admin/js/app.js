@@ -10,6 +10,24 @@ import {
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+/**
+ * Stamps a content payload with the millisecond timestamp the app syncs against.
+ *
+ * FirestoreSyncManager queries `vocabulary` and `stories` with
+ * whereGreaterThan("updatedAt", lastSync) instead of reading the whole collection on
+ * every pull, so a document written without this field is invisible to that query and
+ * simply never reaches users. Its weekly full reconcile is the backstop, but that means
+ * a missed stamp shows up as "my edit took a week to appear", which is a miserable thing
+ * to debug.
+ *
+ * Every write to those two collections goes through here so there is one place to get it
+ * right rather than eight. Milliseconds, not serverTimestamp(), to match the numeric
+ * comparison the Android query does and the `updatedAt` already stored elsewhere.
+ */
+function withUpdatedAt(payload) {
+  return { ...payload, updatedAt: Date.now() };
+}
+
 // Global state
 let submissions = [];
 let literatureSubmissions = [];
@@ -1173,7 +1191,7 @@ function initStoryForm() {
     }
 
     const existing = docId ? stories.find(s => s.docId === docId) : null;
-    const payload = {
+    const basePayload = {
       id: numericId,
       title: document.getElementById('story-input-title').value.trim(),
       titleKasiguranin: document.getElementById('story-input-title-kasiguranin').value.trim(),
@@ -1184,9 +1202,16 @@ function initStoryForm() {
       // document — so carry the existing value through rather than dropping it on every save.
       iconEmoji: existing?.iconEmoji ?? '📖',
       pagesJson: JSON.stringify(pages),
-      totalPages: pages.length,
-      updatedAt: new Date().toISOString()
+      totalPages: pages.length
     };
+    // Stamped here rather than at the three setDoc/updateDoc call sites below, which all
+    // write this same object. Millis, not the ISO string this used to store: the Android
+    // incremental query compares numerically, and Firestore never returns a string field
+    // as greater-than a number, so an ISO timestamp here would have meant the stories
+    // sync silently returned nothing on every incremental pull. Documents still carrying
+    // the old ISO value are picked up by the weekly full reconcile and rewritten as
+    // millis on their next save; the backfill script converts them in one pass.
+    const payload = withUpdatedAt(basePayload);
 
     const setBusy = (on, label) => {
       if (!submitBtn) return;
@@ -1647,7 +1672,7 @@ async function approveSubmission(id) {
 
   try {
     const newVocabRef = doc(collection(db, "vocabulary"));
-    await setDoc(newVocabRef, {
+    await setDoc(newVocabRef, withUpdatedAt({
       kasiguranin: sub.kasiguranin.trim(),
       tagalog: (sub.tagalog || "").trim(),
       english: (sub.english || "").trim(),
@@ -1660,7 +1685,7 @@ async function approveSubmission(id) {
       contemplativeForm: (sub.futureTense || "").trim(),
       verifiedByAdmin: true,
       approvedAt: Date.now()
-    });
+    }));
 
     await updateDoc(doc(db, "word_submissions", id), {
       status: "approved",
@@ -1815,7 +1840,7 @@ async function approveLiteratureSubmission(id) {
       : 0;
     const newId = maxId + 1;
 
-    await setDoc(doc(db, "stories", String(newId)), {
+    await setDoc(doc(db, "stories", String(newId)), withUpdatedAt({
       id: newId,
       title: (sub.title || sub.titleKasiguranin || '').trim(),
       titleKasiguranin: (sub.titleKasiguranin || '').trim(),
@@ -1828,7 +1853,7 @@ async function approveLiteratureSubmission(id) {
       isUnlocked: true,
       isCompleted: false,
       currentPage: 0
-    });
+    }));
 
     await updateDoc(doc(db, "literature_submissions", id), {
       status: "approved",
@@ -2025,7 +2050,9 @@ function handleSqlFile(file) {
       let count = 0;
       for (const entry of entries) {
         const newDoc = doc(collection(db, "vocabulary"));
-        await setDoc(newDoc, entry);
+        // Bulk-imported rows are stamped like any other write, or a spreadsheet import
+        // would land in Firestore invisible to the app's incremental sync.
+        await setDoc(newDoc, withUpdatedAt(entry));
         count++;
       }
 
@@ -2246,7 +2273,11 @@ function initFormListeners() {
           exampleTranslation: example1Translation || null,
           exampleSentence2: example2 || null,
           exampleTranslation2: example2Translation || null,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          // A new word needs updatedAt too, not just createdAt — the app's incremental
+          // sync filters on updatedAt, so without it a freshly added word would not
+          // reach anyone until the next weekly full reconcile.
+          updatedAt: Date.now()
         });
         await logAudit("vocabulary.create", { word });
         addVocabForm.reset();

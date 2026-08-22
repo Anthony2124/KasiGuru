@@ -27,6 +27,7 @@ class UserPreferencesRepository @Inject constructor(
         val BACKUP_PROMPT_DISMISSED = booleanPreferencesKey("backup_prompt_dismissed")
         val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
         val LAST_CONTENT_SYNC_AT = longPreferencesKey("last_content_sync_at")
+        val LAST_FULL_RECONCILE_AT = longPreferencesKey("last_full_reconcile_at")
     }
 
     /**
@@ -48,6 +49,26 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setLastContentSyncAt(epochMillis: Long) {
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.LAST_CONTENT_SYNC_AT] = epochMillis
+        }
+    }
+
+    /**
+     * When the last *full* collection read completed, as epoch millis. 0 means never.
+     *
+     * Tracked separately from [lastContentSyncAt] because the two run on different
+     * cadences: the ordinary sync is incremental and cheap, while this one re-reads
+     * everything to catch documents the incremental query cannot see (see
+     * FirestoreSyncManager.FULL_RECONCILE_INTERVAL_MS).
+     */
+    val lastFullReconcileAt: Flow<Long> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.LAST_FULL_RECONCILE_AT] ?: 0L
+    }
+
+    suspend fun lastFullReconcileAtOnce(): Long = lastFullReconcileAt.first()
+
+    suspend fun setLastFullReconcileAt(epochMillis: Long) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.LAST_FULL_RECONCILE_AT] = epochMillis
         }
     }
 
