@@ -154,6 +154,10 @@ class FirestoreSyncManager @Inject constructor(
                 audioFileName = doc.getString("audioResName").orEmpty(),
                 exampleSentence = doc.getString("exampleSentence").orEmpty(),
                 exampleTranslation = doc.getString("exampleTranslation").orEmpty(),
+                // The admin word form has written these since v25 and nothing ever read them, so a
+                // second example could be recorded in the portal and never reach a learner.
+                exampleSentence2 = doc.getString("exampleSentence2").orEmpty(),
+                exampleTranslation2 = doc.getString("exampleTranslation2").orEmpty(),
                 phoneticGlottal = doc.getBoolean("phoneticGlottal") ?: false,
                 phoneticVowelLength = doc.getBoolean("phoneticVowelLength") ?: false,
                 ipaNotation = doc.getString("ipaNotation").orEmpty()
@@ -165,20 +169,7 @@ class FirestoreSyncManager @Inject constructor(
             .associateBy { it.kasiguranin.lowercase() }
 
         val wordsToSave = cloudWords.map { cloudWord ->
-            val localWord = localByWord[cloudWord.kasiguranin.lowercase()]
-            if (localWord != null) {
-                // Preserve local ID & learning progress fields
-                cloudWord.copy(
-                    id = localWord.id,
-                    isLearned = localWord.isLearned,
-                    timesReviewed = localWord.timesReviewed,
-                    easinessFactor = localWord.easinessFactor,
-                    intervalDays = localWord.intervalDays,
-                    nextReviewDate = localWord.nextReviewDate
-                )
-            } else {
-                cloudWord.copy(id = 0)
-            }
+            VocabularyContentMerge.merge(localByWord[cloudWord.kasiguranin.lowercase()], cloudWord)
         }
 
         if (wordsToSave.isNotEmpty()) {

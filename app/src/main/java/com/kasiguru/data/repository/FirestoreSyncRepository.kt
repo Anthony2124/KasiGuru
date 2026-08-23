@@ -5,6 +5,7 @@ import com.kasiguru.data.local.dao.ConjugationDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.ConjugationEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.remote.VocabularyContentMerge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,21 +45,21 @@ class FirestoreSyncRepository @Inject constructor(
                 scope.launch {
                     try {
                         val existing = vocabularyDao.getVocabularyByWord(word)
-                        val vocabEntity = VocabularyEntity(
-                            id = existing?.id ?: 0,
+                        // This listener reads six fields under legacy names and knows nothing about
+                        // the aspect forms, the second example, the phonetic flags or the SM-2
+                        // ladder. Building a whole entity from it therefore wrote a default over
+                        // every one of those, on every launch -- how a word seeded with six lapses
+                        // came back with zero. Only what the document actually carries is applied.
+                        val fromDoc = VocabularyEntity(
                             kasiguranin = word,
                             tagalog = if (tagalog == "nan") "" else tagalog,
                             english = if (english == "nan") "" else english,
                             rootForm = if (rootForm == "nan") word else rootForm,
                             category = if (category == "nan") "General" else category,
                             ipaNotation = if (ipaNotation == "nan") "" else ipaNotation,
-                            exampleSentence = if (exampleSentence == "nan") "" else exampleSentence,
-                            isLearned = existing?.isLearned ?: false,
-                            timesReviewed = existing?.timesReviewed ?: 0,
-                            easinessFactor = existing?.easinessFactor ?: 2.5,
-                            intervalDays = existing?.intervalDays ?: 0,
-                            nextReviewDate = existing?.nextReviewDate ?: ""
+                            exampleSentence = if (exampleSentence == "nan") "" else exampleSentence
                         )
+                        val vocabEntity = VocabularyContentMerge.mergeNonBlank(existing, fromDoc)
 
                         vocabularyDao.insert(vocabEntity)
                         val fetchedWord = vocabularyDao.getVocabularyByWord(word)
