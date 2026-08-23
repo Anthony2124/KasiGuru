@@ -94,8 +94,9 @@ fun GameHubScreen(
                 com.kasiguru.util.Constants.GameUnlockStars.FILL_BLANK, uiState.highScores["fill_blank"] ?: 0),
             GameEntry("sentence_order", "Sentence Order", Iconsax.Document, violet,
                 com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER, uiState.highScores["sentence_order"] ?: 0),
-            GameEntry("audio_quiz", "Audio Quiz", Iconsax.VolumeHigh, Coral,
-                com.kasiguru.util.Constants.GameUnlockStars.AUDIO_QUIZ, uiState.highScores["audio_quiz"] ?: 0),
+            GameEntry(com.kasiguru.util.Constants.Games.RECALL, "Word Recall", Iconsax.Keyboard, Coral,
+                com.kasiguru.util.Constants.GameUnlockStars.RECALL,
+                uiState.highScores[com.kasiguru.util.Constants.Games.RECALL] ?: 0),
             GameEntry("aspect_builder", "Aspect Builder", Iconsax.Flash, Gold,
                 com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0)
         )
@@ -360,7 +361,7 @@ private fun GameScoreRow(score: GameScoreEntity) {
         "word_match" -> "Word Match"
         "reverse_match" -> "Reverse Match"
         "fill_blank" -> "Fill in the Blank"
-        "audio_quiz" -> "Audio Quiz"
+        com.kasiguru.util.Constants.Games.RECALL -> "Word Recall"
         "aspect_builder" -> "Aspect Builder"
         "sentence_order" -> "Sentence Construction"
         else -> score.gameType

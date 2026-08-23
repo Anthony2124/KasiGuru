@@ -46,7 +46,7 @@ class GamificationEngineTest {
     fun requiredLevelsMatchUnlockRules() {
         assertEquals(1, GamificationEngine.getRequiredLevelForGame("word_match"))
         assertEquals(2, GamificationEngine.getRequiredLevelForGame("fill_blank"))
-        assertEquals(3, GamificationEngine.getRequiredLevelForGame("audio_quiz"))
+        assertEquals(3, GamificationEngine.getRequiredLevelForGame(Constants.Games.RECALL))
         assertEquals(4, GamificationEngine.getRequiredLevelForGame("aspect_builder"))
         assertEquals(5, GamificationEngine.getRequiredLevelForGame("sentence_order"))
         assertEquals(1, GamificationEngine.getRequiredLevelForGame("unknown_game"))

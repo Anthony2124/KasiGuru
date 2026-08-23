@@ -42,8 +42,8 @@ sealed class Screen(val route: String) {
     data object FillBlankGame : Screen("games/fill_blank/{level}") {
         fun createRoute(level: Int) = "games/fill_blank/$level"
     }
-    data object AudioQuizGame : Screen("games/audio_quiz/{level}") {
-        fun createRoute(level: Int) = "games/audio_quiz/$level"
+    data object RecallGame : Screen("games/recall/{level}") {
+        fun createRoute(level: Int) = "games/recall/$level"
     }
     data object AspectBuilderGame : Screen("games/aspect_builder/{level}") {
         fun createRoute(level: Int) = "games/aspect_builder/$level"

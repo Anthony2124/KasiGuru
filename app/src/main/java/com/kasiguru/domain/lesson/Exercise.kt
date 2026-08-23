@@ -38,8 +38,11 @@ sealed interface Exercise {
     }
 
     /**
-     * Audio plays, learner picks the written word. Mirrors the Audio Quiz.
-     * Only generated for entries that actually carry audio.
+     * Audio plays, learner picks the written word.
+     *
+     * Only generated for entries that actually carry a recording, and no entry in the corpus does,
+     * so nothing generates this today. It is kept for the day recordings exist — the mini-game that
+     * used to lean on the same missing audio is now [TypeWord]-based Word Recall instead.
      */
     data class ListenAndChoose(
         override val word: VocabularyEntity,

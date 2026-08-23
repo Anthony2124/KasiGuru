@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
 data class GameScoreEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val gameType: String,  // "word_match", "fill_blank", "audio_quiz"
+    val gameType: String,  // "word_match", "fill_blank", Constants.Games.RECALL, ...
     val score: Int,
     val totalQuestions: Int,
     val xpEarned: Int,

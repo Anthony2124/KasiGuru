@@ -25,10 +25,39 @@ class RecallAnswerMatcherTest {
 
     @Test
     fun schwaMayBeTypedAsE() {
-        // No standard phone keyboard produces 'ə'. Requiring it would gate the exercise on the
+        // No standard phone keyboard produces a schwa. Requiring it would gate the exercise on the
         // learner's keyboard rather than their memory.
-        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("kaget", "kagət"))
-        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("kagət", "kagət"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("adeg", "adëg"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("adëg", "adëg"))
+    }
+
+    @Test
+    fun everySchwaSpellingInTheCorpusFolds() {
+        // The corpus writes the schwa three ways and they are three separate codepoints: ë in the
+        // headwords, ǝ in a handful of entries, ə in the IPA notation. Folding one is not folding
+        // the others, and the first version of this matcher only knew about ə — a character that
+        // appears in no headword at all.
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("telompulu", "tëlompulu"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("telompulu", "tǝlompulu"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("telompulu", "təlompulu"))
+    }
+
+    @Test
+    fun aWordWithTwoSchwasIsStillExactWhenTypedWithoutThem() {
+        // Reduplicated stems like bëdbëd carry two, which is more than the typo budget for a word
+        // that short — so treating the schwa as a typo rather than folding it marked a perfectly
+        // recalled word wrong. Twenty entries in the corpus have this shape.
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("bedbed", "bëdbëd"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("ennem", "ënnëm"))
+    }
+
+    @Test
+    fun accentsAreStrippedGenericallyRatherThanFromAList() {
+        // Short words get no typo slack at all, so an accent that survives normalisation is fatal
+        // rather than merely close: uló is three letters.
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("ulo", "uló"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("saan", "saân"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("kasi", "kaśi"))
     }
 
     @Test
@@ -59,6 +88,25 @@ class RecallAnswerMatcherTest {
         // One edit on a three-letter word can land on a different word entirely, so there is no
         // safe budget here — "aso" and "ako" are both real.
         assertEquals(RecallMatch.Wrong, RecallAnswerMatcher.match("ako", "aso"))
+    }
+
+    @Test
+    fun eitherOfTwoRecordedVariantsCounts() {
+        // The corpus records speaker variation in one field: buto/bungaw is two names for one thing,
+        // and the dictionary shows the learner both.
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("buto", "buto/bungaw"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("bungaw", "buto/bungaw"))
+        assertEquals(RecallMatch.Exact, RecallAnswerMatcher.match("balimbing", "koloran, balimbing"))
+    }
+
+    @Test
+    fun aTypoInOneVariantIsStillClose() {
+        assertEquals(RecallMatch.Close, RecallAnswerMatcher.match("bungow", "buto/bungaw"))
+    }
+
+    @Test
+    fun aWordThatIsNeitherVariantIsWrong() {
+        assertEquals(RecallMatch.Wrong, RecallAnswerMatcher.match("magaral", "buto/bungaw"))
     }
 
     @Test

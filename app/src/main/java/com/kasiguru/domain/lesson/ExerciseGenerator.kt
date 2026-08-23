@@ -2,6 +2,7 @@ package com.kasiguru.domain.lesson
 
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.util.RecallPrompt
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -113,8 +114,10 @@ class ExerciseGenerator @Inject constructor(
         // shapes above cannot serve — no example sentence, fewer than three aspect forms, and (for
         // the whole corpus) no audio. Those words used to appear once in pass one and never again,
         // which is the weakest possible treatment for exactly the sparsest entries.
-        val meaning = word.tagalog.ifBlank { word.english }
-        if (meaning.isNotBlank() && Exercise.TypeWord::class !in alreadyUsed) {
+        // Not simply "Tagalog, or English if blank": a gloss identical to the headword would print
+        // the answer directly above the input. See RecallPrompt.
+        val meaning = RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english)
+        if (meaning != null && Exercise.TypeWord::class !in alreadyUsed) {
             return Exercise.TypeWord(
                 word = word,
                 answer = word.kasiguranin,

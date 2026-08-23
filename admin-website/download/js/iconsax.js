@@ -22,6 +22,11 @@
         '<path d="M15 5L19 9" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
         '<path d="M17 3L21 7" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
       '</svg>',
+      'keyboard': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="2" y="5" width="20" height="14" rx="3" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M6.5 9H6.51M10 9H10.01M13.5 9H13.51M17 9H17.01M6.5 12.5H6.51M10 12.5H10.01M13.5 12.5H13.51M17 12.5H17.01" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+        '<path d="M8 16H16" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
       'volume-high': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M4 9H7L12 5V19L7 15H4C3.45 15 3 14.55 3 14V10C3 9.45 3.45 9 4 9Z" fill="' + c + '" opacity="0.35"/>' +
         '<path d="M15.3 9.4C16.4 10.5 16.4 13.5 15.3 14.6" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +

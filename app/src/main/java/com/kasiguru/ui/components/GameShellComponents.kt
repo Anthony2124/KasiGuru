@@ -178,7 +178,18 @@ fun GameAnswerFeedback(
     correctAnswer: String,
     onContinue: () -> Unit,
     word: VocabularyEntity? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * Replaces the "Correct" / "Not quite" verdict. Word Recall needs a third reading: an answer
+     * that counted but was misspelled is neither, and calling it "Correct" would quietly teach the
+     * misspelling.
+     */
+    headline: String? = null,
+    /**
+     * An extra line shown whatever the verdict. The answer is otherwise printed only when the
+     * learner got it wrong, which hides the correct spelling in exactly the case that needs it.
+     */
+    correction: String? = null
 ) {
     val tint = if (isCorrect) GreenTint else RedTint
     val accent = if (isCorrect) GreenDeep else RedDeep
@@ -202,9 +213,18 @@ fun GameAnswerFeedback(
             )
             Spacer(Modifier.width(Space.xs))
             Text(
-                text = if (isCorrect) "Correct" else "Not quite",
+                text = headline ?: if (isCorrect) "Correct" else "Not quite",
                 style = MaterialTheme.typography.headlineSmall,
                 color = accent
+            )
+        }
+
+        if (correction != null) {
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                text = correction,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Ink
             )
         }
 

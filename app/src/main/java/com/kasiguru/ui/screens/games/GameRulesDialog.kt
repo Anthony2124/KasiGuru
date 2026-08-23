@@ -103,16 +103,16 @@ object GameRulesRegistry {
             gradient = listOf(Gold, GoldDeep),
             onGradientIsInk = true
         ),
-        "audio_quiz" to GameRuleInfo(
-            gameType = "audio_quiz",
-            title = "Audio Listening Quiz",
-            description = "Listen to authentic Kasiguranin pronunciation and identify the spoken word.",
-            iconRes = Iconsax.VolumeHigh,
-            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.AUDIO_QUIZ,
+        com.kasiguru.util.Constants.Games.RECALL to GameRuleInfo(
+            gameType = com.kasiguru.util.Constants.Games.RECALL,
+            title = "Word Recall",
+            description = "The meaning is given. Write the Kasiguranin word from memory.",
+            iconRes = Iconsax.Keyboard,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.RECALL,
             rules = listOf(
-                "Tap the speaker button to hear native Kasiguranin audio.",
-                "Select the matching word from 4 choices.",
-                "Combos boost your XP payout by up to 3x!"
+                "No choices to pick from — you type the word yourself.",
+                "Type e in place of ə, and skip the accents. Neither is marked wrong.",
+                "A small typo still counts, and the correct spelling is shown afterwards."
             ),
             gradient = listOf(Coral, CoralDeep),
             onGradientIsInk = true

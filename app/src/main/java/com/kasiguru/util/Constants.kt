@@ -102,13 +102,24 @@ object Constants {
         const val REVERSE_MATCH = "reverse_match"
         const val ASPECT_BUILDER = "aspect_builder"
         const val SENTENCE_ORDER = "sentence_order"
+
+        /**
+         * The typed-recall game.
+         *
+         * Its stored key is still "audio_quiz" because Recall took that slot over rather than being
+         * added beside it. Every level row, star total and high score already keyed to "audio_quiz"
+         * -- locally and inside the synced `gameLevels` document -- keeps counting. Renaming the key
+         * would strand that progress behind a Room migration and a cloud merge shim, for nothing the
+         * learner can see.
+         */
+        const val RECALL = "audio_quiz"
     }
 
     // Mini-Game Unlock Requirements (Total Stars)
     object GameUnlockStars {
         const val WORD_MATCH = 0
         const val FILL_BLANK = 45
-        const val AUDIO_QUIZ = 90
+        const val RECALL = 90
         const val ASPECT_BUILDER = 135
         const val SENTENCE_ORDER = 180
         const val REVERSE_MATCH = 225

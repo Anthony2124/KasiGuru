@@ -12,7 +12,13 @@ object DatabaseSeeder {
 
     fun getInitialGameLevels(): List<GameLevelEntity> {
         val levels = mutableListOf<GameLevelEntity>()
-        val gameTypes = listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+        val gameTypes = listOf(
+            "word_match", "reverse_match", "fill_blank",
+            // Word Recall took this slot over from Audio Quiz and kept its key so existing levels,
+            // stars and high scores keep counting — see Constants.Games.RECALL.
+            Constants.Games.RECALL,
+            "aspect_builder", "sentence_order"
+        )
         
         for (game in gameTypes) {
             for (levelNum in 1..30) {

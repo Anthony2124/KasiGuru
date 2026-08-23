@@ -8,6 +8,7 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +68,7 @@ class GamesViewModel @Inject constructor(
                 val wmHigh = gameRepository.getHighScore("word_match")
                 val rmHigh = gameRepository.getHighScore("reverse_match")
                 val fbHigh = gameRepository.getHighScore("fill_blank")
-                val aqHigh = gameRepository.getHighScore("audio_quiz")
+                val recallHigh = gameRepository.getHighScore(Constants.Games.RECALL)
                 val abHigh = gameRepository.getHighScore("aspect_builder")
                 val soHigh = gameRepository.getHighScore("sentence_order")
                 
@@ -76,7 +77,7 @@ class GamesViewModel @Inject constructor(
                         "word_match" to (wmHigh?.score ?: 0),
                         "reverse_match" to (rmHigh?.score ?: 0),
                         "fill_blank" to (fbHigh?.score ?: 0),
-                        "audio_quiz" to (aqHigh?.score ?: 0),
+                        Constants.Games.RECALL to (recallHigh?.score ?: 0),
                         "aspect_builder" to (abHigh?.score ?: 0),
                         "sentence_order" to (soHigh?.score ?: 0)
                     )

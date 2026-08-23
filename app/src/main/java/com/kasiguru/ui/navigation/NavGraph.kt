@@ -50,6 +50,7 @@ import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
+import com.kasiguru.util.Constants
 
 @Composable
 fun KasiGuruNavGraph(initialDeepLink: String? = null) {
@@ -263,7 +264,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                             "word_match" -> navController.navigate(Screen.WordMatchGame.createRoute(level))
                             "reverse_match" -> navController.navigate(Screen.ReverseMatchGame.createRoute(level))
                             "fill_blank" -> navController.navigate(Screen.FillBlankGame.createRoute(level))
-                            "audio_quiz" -> navController.navigate(Screen.AudioQuizGame.createRoute(level))
+                            Constants.Games.RECALL -> navController.navigate(Screen.RecallGame.createRoute(level))
                             "aspect_builder" -> navController.navigate(Screen.AspectBuilderGame.createRoute(level))
                             "sentence_order" -> navController.navigate(Screen.SentenceOrderGame.createRoute(level))
                         }
@@ -290,10 +291,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 FillBlankGameScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(
-                route = Screen.AudioQuizGame.route,
+                route = Screen.RecallGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                AudioQuizGameScreen(onNavigateBack = { navController.popBackStack() })
+                RecallGameScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(
                 route = Screen.AspectBuilderGame.route,

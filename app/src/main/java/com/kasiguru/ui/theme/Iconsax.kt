@@ -70,6 +70,7 @@ object Iconsax {
     // ── UI Actions ───────────────────────────────────────────────────
     val Edit: Int get() = IconSax.Bulk.Edit
     val EditBold: Int get() = IconSax.Bulk.Edit
+    val Keyboard: Int get() = IconSax.Bulk.Keyboard
     val Search: Int get() = IconSax.Bulk.SearchNormal
     val SearchBold: Int get() = IconSax.Bulk.SearchNormal
     val Setting: Int get() = IconSax.Bulk.Setting2

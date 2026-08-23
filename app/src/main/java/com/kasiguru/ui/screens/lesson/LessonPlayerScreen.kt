@@ -28,18 +28,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,11 +49,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.ui.components.GameAnswerFeedback
+import com.kasiguru.ui.components.RecallAnswerField
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayFab
@@ -208,7 +202,7 @@ fun LessonPlayerScreen(
             Spacer(Modifier.height(Space.lg))
 
             if (exercise is Exercise.TypeWord) {
-                RecallInput(
+                RecallAnswerField(
                     value = uiState.selectedOption.orEmpty(),
                     enabled = !uiState.hasAnswered,
                     onValueChange = viewModel::updateTypedAnswer,
@@ -297,45 +291,6 @@ private fun LessonActionArea(
             )
         }
     }
-}
-
-/**
- * Text entry for a typed-recall prompt.
- *
- * Autocorrect, autocapitalisation and spell-check are all off. A phone keyboard trained on English
- * will happily rewrite a correctly recalled Kasiguranin word into an English one, which would mark
- * the learner wrong for something they did not do — and worse, teach them to distrust their own
- * recall. Suggestions would also hand them the answer.
- */
-@Composable
-private fun RecallInput(
-    value: String,
-    enabled: Boolean,
-    onValueChange: (String) -> Unit,
-    onSubmit: () -> Unit
-) {
-    val focusManager = LocalFocusManager.current
-
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        placeholder = { Text("Type the word") },
-        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center),
-        keyboardOptions = KeyboardOptions(
-            autoCorrect = false,
-            capitalization = KeyboardCapitalization.None,
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-            onDone = {
-                focusManager.clearFocus()
-                if (value.isNotBlank()) onSubmit()
-            }
-        )
-    )
 }
 
 /** The prompt, which differs by exercise type. */

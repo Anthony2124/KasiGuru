@@ -10,8 +10,10 @@ import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
-import com.kasiguru.util.srs.ReviewRating
-import com.kasiguru.util.srs.ReviewRatingMapper
+import com.kasiguru.util.RecallAnswerMatcher
+import com.kasiguru.util.RecallGrading
+import com.kasiguru.util.RecallMatch
+import com.kasiguru.util.RecallPrompt
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +24,22 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+/**
+ * Word Recall — the only game that asks the learner to *produce* a word.
+ *
+ * It replaces Audio Quiz in this slot. That game showed a speaker button and four options, but no
+ * Kasiguranin recording has ever existed in the corpus (`res/raw/` is empty and no entry carries an
+ * audio file name), so every question fell through to the device's Filipino text-to-speech voice
+ * reading a Kasiguranin headword. Practising against a synthetic Tagalog approximation of an
+ * endangered language teaches a pronunciation the language does not have, which is worse for the
+ * thesis than having one game fewer.
+ *
+ * Recall keeps the whole round, level, star and XP scaffolding of the slot it took over, including
+ * its stored key (see [Constants.Games.RECALL]), and swaps only what the learner does: the meaning
+ * is the prompt, and the Kasiguranin word must be typed from memory.
+ */
 @HiltViewModel
-class AudioQuizViewModel @Inject constructor(
+class RecallGameViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
@@ -33,8 +49,8 @@ class AudioQuizViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
-    private val _uiState = MutableStateFlow(AudioQuizUiState())
-    val uiState: StateFlow<AudioQuizUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(RecallGameUiState())
+    val uiState: StateFlow<RecallGameUiState> = _uiState.asStateFlow()
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
@@ -47,9 +63,9 @@ class AudioQuizViewModel @Inject constructor(
 
     private fun startGame() {
         viewModelScope.launch {
-            _uiState.value = AudioQuizUiState(isLoading = true)
+            _uiState.value = RecallGameUiState(isLoading = true)
 
-            val levelInfo = gameLevelRepository.getLevel("audio_quiz", levelNumber)
+            val levelInfo = gameLevelRepository.getLevel(Constants.Games.RECALL, levelNumber)
             if (levelInfo != null) {
                 totalInitialQuestions = levelInfo.questionsCount
             }
@@ -61,8 +77,11 @@ class AudioQuizViewModel @Inject constructor(
                 words = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()
             }
 
+            // A word whose only gloss is the headword itself cannot be asked for here: the
+            // meaning *is* the question, where the other games can still fall back on a headword or
+            // a sentence. See RecallPrompt.
             questionQueue.clear()
-            questionQueue.addAll(words)
+            questionQueue.addAll(words.filter { promptFor(it) != null })
             earnedXpTotal = 0
 
             if (questionQueue.isEmpty()) {
@@ -70,9 +89,16 @@ class AudioQuizViewModel @Inject constructor(
                 return@launch
             }
 
+            // The round is as long as the words that survived that filter, so the progress bar and
+            // the perfect-round bonus both measure against what the learner is actually asked.
+            totalInitialQuestions = questionQueue.size
+
             loadNextQuestion()
         }
     }
+
+    private fun promptFor(word: VocabularyEntity): String? =
+        RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english)
 
     private fun loadNextQuestion() {
         val state = _uiState.value
@@ -82,48 +108,39 @@ class AudioQuizViewModel @Inject constructor(
         }
 
         val targetWord = questionQueue[state.currentQuestionIndex]
-        
-        viewModelScope.launch {
-            val distractorEntities = vocabularyRepository.getDistractorsForWord(targetWord, 3)
-            val wrongOptions = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
-
-            val allOptions = (wrongOptions + targetWord.kasiguranin).distinct().shuffled()
-            questionStartTimeMs = System.currentTimeMillis()
-
-            _uiState.value = state.copy(
-                isLoading = false,
-                currentWord = targetWord,
-                options = allOptions,
-                selectedOption = null,
-                isCorrect = null,
-                totalQuestions = totalInitialQuestions
-            )
-        }
-    }
-
-    fun selectOption(option: String) {
-        val state = _uiState.value
-        if (state.selectedOption != null) return
-
-        val targetWord = state.currentWord ?: return
-        val isCorrect = option == targetWord.kasiguranin
-        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
-
-        val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
-        val questionXp = if (isCorrect) {
-            if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
-        } else {
-            0
-        }
-
-        earnedXpTotal += questionXp
-        val newScore = if (isCorrect) state.score + 1 else state.score
+        questionStartTimeMs = System.currentTimeMillis()
 
         _uiState.value = state.copy(
-            selectedOption = option,
-            isCorrect = isCorrect,
-            score = newScore
+            isLoading = false,
+            currentWord = targetWord,
+            promptMeaning = promptFor(targetWord).orEmpty(),
+            typedAnswer = "",
+            match = null,
+            totalQuestions = totalInitialQuestions
         )
+    }
+
+    /** Live text from the input field. Committing it is [submit]. */
+    fun updateTypedAnswer(text: String) {
+        if (_uiState.value.hasAnswered) return
+        _uiState.value = _uiState.value.copy(typedAnswer = text)
+    }
+
+    fun submit() {
+        val state = _uiState.value
+        if (state.hasAnswered) return
+
+        val targetWord = state.currentWord ?: return
+        if (state.typedAnswer.isBlank()) return
+
+        val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
+        val match = RecallAnswerMatcher.match(state.typedAnswer, targetWord.kasiguranin)
+        val rating = RecallGrading.ratingFor(match, targetWord.kasiguranin, responseTimeMs)
+
+        earnedXpTotal += RecallGrading.xpFor(match)
+        val newScore = if (RecallGrading.isCorrect(match)) state.score + 1 else state.score
+
+        _uiState.value = state.copy(match = match, score = newScore)
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
@@ -142,7 +159,7 @@ class AudioQuizViewModel @Inject constructor(
 
         viewModelScope.launch {
             val scoreEntity = GameScoreEntity(
-                gameType = "audio_quiz",
+                gameType = Constants.Games.RECALL,
                 score = state.score,
                 totalQuestions = totalInitialQuestions,
                 xpEarned = xpEarned,
@@ -157,12 +174,12 @@ class AudioQuizViewModel @Inject constructor(
                 successRate >= 0.4f -> 1
                 else -> 0
             }
-            gameLevelRepository.saveLevelResult("audio_quiz", levelNumber, starsEarned)
+            gameLevelRepository.saveLevelResult(Constants.Games.RECALL, levelNumber, starsEarned)
 
             userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
             userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
-            
+
             if (isPerfect) {
                 userProgressRepository.checkPerfectGameAchievement()
             }
@@ -177,17 +194,21 @@ class AudioQuizViewModel @Inject constructor(
     }
 }
 
-data class AudioQuizUiState(
+data class RecallGameUiState(
     val isLoading: Boolean = true,
     val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,
     val currentWord: VocabularyEntity? = null,
-    val options: List<String> = emptyList(),
-    val selectedOption: String? = null,
-    val isCorrect: Boolean? = null,
+    /** The meaning shown as the question; the headword is what must be produced. */
+    val promptMeaning: String = "",
+    val typedAnswer: String = "",
+    /** Null until the answer is committed, then how close it was. */
+    val match: RecallMatch? = null,
     val score: Int = 0,
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5
-)
+) {
+    val hasAnswered: Boolean get() = match != null
+}

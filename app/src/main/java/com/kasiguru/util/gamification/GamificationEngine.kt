@@ -28,12 +28,17 @@ object GamificationEngine {
 
     private val LEVEL_ICONS = listOf("🌱", "📚", "🎧", "⚡", "👑")
 
+    // Constants.Games.RECALL is the key Word Recall inherited from the Audio Quiz it replaced, so
+    // the tables below keep gating the same slot they always did.
     private val LEVEL_GAME_UNLOCKS = listOf(
         listOf("word_match"),
         listOf("word_match", "reverse_match", "fill_blank"),
-        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz"),
-        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder"),
-        listOf("word_match", "reverse_match", "fill_blank", "audio_quiz", "aspect_builder", "sentence_order")
+        listOf("word_match", "reverse_match", "fill_blank", Constants.Games.RECALL),
+        listOf("word_match", "reverse_match", "fill_blank", Constants.Games.RECALL, "aspect_builder"),
+        listOf(
+            "word_match", "reverse_match", "fill_blank", Constants.Games.RECALL,
+            "aspect_builder", "sentence_order"
+        )
     )
 
     val LEVELS: List<LevelInfo> =
@@ -69,7 +74,7 @@ object GamificationEngine {
             "word_match" -> 1
             "reverse_match" -> 2
             "fill_blank" -> 2
-            "audio_quiz" -> 3
+            Constants.Games.RECALL -> 3
             "aspect_builder" -> 4
             "sentence_order" -> 5
             else -> 1
@@ -83,7 +88,7 @@ object GamificationEngine {
             "word_match" -> 1
             "reverse_match" -> 2
             "fill_blank" -> 2
-            "audio_quiz" -> 3
+            Constants.Games.RECALL -> 3
             "aspect_builder" -> 4
             "sentence_order" -> 5
             else -> 1

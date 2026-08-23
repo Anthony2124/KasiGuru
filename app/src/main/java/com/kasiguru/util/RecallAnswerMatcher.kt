@@ -1,12 +1,13 @@
 package com.kasiguru.util
 
+import java.text.Normalizer
 import kotlin.math.min
 
 /**
  * How a typed answer compared to the expected word.
  *
  * Three outcomes rather than two, because "almost right" is genuinely different from both. A
- * learner who types `kagat` for `kagət` retrieved the word — they are wrong about the orthography,
+ * learner who types `adeg` for `adëg` retrieved the word — they are wrong about the orthography,
  * not about the vocabulary — and marking that a failure would reset the review schedule of a word
  * they actually knew, while marking it a clean success would let the spelling error harden.
  */
@@ -14,7 +15,7 @@ enum class RecallMatch {
     /** Exactly the expected word, once case and spacing are normalised. */
     Exact,
 
-    /** Recognisably the word, with a small slip: a typo, a missing accent, or `e` for `ə`. */
+    /** Recognisably the word, with a small slip: a typo, or a missing accent. */
     Close,
 
     /** Not the word. */
@@ -32,51 +33,72 @@ enum class RecallMatch {
 object RecallAnswerMatcher {
 
     /**
-     * Vowels that appear accented in the corpus, mapped to their bare forms.
+     * The schwa, in every spelling the corpus uses, folded to `e`.
      *
-     * Accents mark stress, and stress is not what a recall exercise is testing. Requiring them
-     * would fail learners on a diacritic most phone keyboards bury three long-presses deep.
+     * This is a concession rather than a normalisation — the schwa is a real Kasiguranin letter, not
+     * an accent — but no standard phone keyboard produces any of these characters, and demanding one
+     * the learner physically cannot type is a barrier, not a desirable difficulty. Callers show the
+     * correct spelling in feedback so the orthography is still taught; it just is not the gate.
+     *
+     * All three appear: the corpus overwhelmingly writes the schwa as `ë` (218 of its entries), with
+     * a handful of `ǝ` (turned e) entries, while `ə` is the IPA character the notation field uses.
+     * They are separate codepoints, so folding one is not folding the others.
      */
-    private val ACCENT_FOLDING = mapOf(
-        'á' to 'a', 'é' to 'e', 'í' to 'i', 'ó' to 'o', 'ú' to 'u'
-    )
+    private val SCHWA_FORMS = setOf('ë', 'ə', 'ǝ')
+
+    /** Matches the combining marks left behind by NFD decomposition. */
+    private val COMBINING_MARKS = Regex("""\p{Mn}+""")
 
     /**
-     * The schwa, folded to `e`.
+     * Separators the corpus uses to record two names for one thing.
      *
-     * `ə` is a real Kasiguranin letter, not an accent, so folding it is a genuine concession rather
-     * than a normalisation — but no standard phone keyboard produces it. Demanding a character the
-     * learner physically cannot type is a barrier, not a desirable difficulty. Callers show the
-     * correct spelling in feedback so the orthography is still taught; it just is not the gate.
+     * Forty entries carry alternates (`buto/bungaw`, `koloran, balimbing`), and both names are the
+     * word — the thesis recorded variation between speakers, not a preferred form and a rejected
+     * one. Grading against the whole string would fail a learner who typed one of the answers the
+     * dictionary itself gives them.
      */
-    private const val SCHWA = 'ə'
+    private val ALTERNATE_SEPARATORS = Regex("[/,]")
 
     fun match(typed: String, expected: String): RecallMatch {
         val a = normalise(typed)
-        val b = normalise(expected)
-
         if (a.isEmpty()) return RecallMatch.Wrong
-        if (a == b) return RecallMatch.Exact
 
-        return if (levenshtein(a, b) <= allowedSlips(b)) RecallMatch.Close else RecallMatch.Wrong
+        val alternatives = expected.split(ALTERNATE_SEPARATORS)
+            .map(::normalise)
+            .filter { it.isNotEmpty() }
+
+        var best = RecallMatch.Wrong
+        for (b in alternatives) {
+            if (a == b) return RecallMatch.Exact
+            if (levenshtein(a, b) <= allowedSlips(b)) best = RecallMatch.Close
+        }
+        return best
     }
 
     /**
-     * Lowercase, trimmed, internal whitespace collapsed, accents and schwa folded, and hyphens
-     * dropped — hyphenation in the corpus is inconsistent enough that it cannot be a correctness
-     * test.
+     * Lowercase, trimmed, internal whitespace collapsed, hyphens dropped, the schwa folded to `e`,
+     * and every remaining diacritic decomposed away.
+     *
+     * Hyphenation in the corpus is inconsistent enough that it cannot be a correctness test
+     * (`tël-lën` and `tëllën` are both recorded), and the accents mark stress, which is not what a
+     * recall exercise is testing. Stripping marks generically rather than listing the accented
+     * vowels matters: the corpus carries `á â é ë í ó ý ś`, and a hand-written list will always be
+     * one letter behind the linguists.
      */
-    fun normalise(raw: String): String = buildString {
-        for (ch in raw.trim().lowercase()) {
-            when {
-                ch == '-' -> {}
-                ch.isWhitespace() -> if (isNotEmpty() && last() != ' ') append(' ')
-                ch == SCHWA -> append('e')
-                ACCENT_FOLDING.containsKey(ch) -> append(ACCENT_FOLDING[ch])
-                else -> append(ch)
+    fun normalise(raw: String): String {
+        val folded = buildString {
+            for (ch in raw.trim().lowercase()) {
+                when {
+                    ch == '-' -> {}
+                    ch.isWhitespace() -> if (isNotEmpty() && last() != ' ') append(' ')
+                    ch in SCHWA_FORMS -> append('e')
+                    else -> append(ch)
+                }
             }
         }
-    }.trim()
+        val decomposed = Normalizer.normalize(folded, Normalizer.Form.NFD)
+        return COMBINING_MARKS.replace(decomposed, "").trim()
+    }
 
     /**
      * Edit distance tolerated, scaled to length.
