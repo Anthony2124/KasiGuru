@@ -7,7 +7,9 @@ import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.LessonRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.domain.lesson.Exercise
+import com.kasiguru.domain.lesson.ExpandingRehearsal
 import com.kasiguru.domain.lesson.LessonRef
+import com.kasiguru.domain.lesson.Remediation
 import com.kasiguru.util.RecallAnswerMatcher
 import com.kasiguru.util.RecallMatch
 import com.kasiguru.util.srs.ReviewRating
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
+import java.util.IdentityHashMap
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
@@ -35,7 +38,9 @@ data class LessonUiState(
     val isComplete: Boolean = false,
     val xpAwarded: Int = 0,
     val accuracy: Float = 0f,
-    val wordsCovered: List<VocabularyEntity> = emptyList()
+    val wordsCovered: List<VocabularyEntity> = emptyList(),
+    /** After a wrong answer, what the learner actually chose. Null when there is nothing to say. */
+    val remediation: String? = null
 ) {
     val current: Exercise? get() = queue.getOrNull(position)
     val hasAnswered: Boolean get() = isCorrect != null
@@ -46,10 +51,15 @@ data class LessonUiState(
 /**
  * Drives one lesson run.
  *
- * A wrong answer pushes the exercise back onto the end of the queue rather than moving on, so a lesson
- * is only finished when every item has been answered correctly at least once. Accuracy is measured on
- * *first* attempts, which is what separates "got through it" from "knew it" — and only a clean run
- * earns the perfect bonus.
+ * A wrong answer requeues the exercise rather than moving on, so a lesson is only finished when every
+ * item has been answered correctly at least once. Accuracy is measured on *first* attempts, which is
+ * what separates "got through it" from "knew it" — and only a clean run earns the perfect bonus.
+ *
+ * Missed items come back on an expanding schedule rather than at the very end of the run: a couple of
+ * items later, then five, then ten. Retrieval strengthens memory in proportion to how hard it was, so
+ * a retry answered while the correction is still on screen teaches almost nothing, while one deferred
+ * to the end of a long run is often simply forgotten again. Widening the gap each time is what SM-2
+ * does across days, applied within the sitting.
  */
 @HiltViewModel
 class LessonPlayerViewModel @Inject constructor(
@@ -71,6 +81,17 @@ class LessonPlayerViewModel @Inject constructor(
 
     /** Exercise identities already answered wrong once, so a retry cannot restore the perfect bonus. */
     private val missedFirstAttempt = mutableSetOf<Int>()
+
+    /**
+     * Identity of every exercise, by object reference.
+     *
+     * Requeued items are the same instances reinserted mid-queue, so position can no longer stand in
+     * for identity the way it did when misses were only ever appended to the end.
+     */
+    private val identities = IdentityHashMap<Exercise, Int>()
+
+    /** How many times each exercise has been missed, which sets how far ahead it is requeued. */
+    private val missCounts = mutableMapOf<Int, Int>()
 
     /** Exercises already solved, tracked by queue identity rather than position. */
     private val solved = mutableSetOf<Int>()
@@ -99,6 +120,8 @@ class LessonPlayerViewModel @Inject constructor(
         viewModelScope.launch {
             val exercises = lessonRepository.exercisesFor(lessonRef)
             val words = lessonRepository.wordsFor(lessonRef)
+            identities.clear()
+            exercises.forEachIndexed { index, exercise -> identities[exercise] = index }
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -143,7 +166,9 @@ class LessonPlayerViewModel @Inject constructor(
         val identity = exerciseIdentity(state.position)
         if (!correct) missedFirstAttempt += identity
 
-        _uiState.update { it.copy(isCorrect = correct) }
+        _uiState.update { it.copy(isCorrect = correct, remediation = null) }
+
+        if (!correct) explainChoice(selected, exercise)
 
         // A typed answer that was only close retrieved the word but not its spelling, so it earns
         // the conservative rating rather than the latency-derived one.
@@ -151,6 +176,22 @@ class LessonPlayerViewModel @Inject constructor(
             RecallAnswerMatcher.match(selected, exercise.answer) == RecallMatch.Close
 
         recordReview(exercise, correct, forceHard = wasApproximate)
+    }
+
+    /**
+     * Looks up what the learner actually chose and says what it means.
+     *
+     * Runs after the verdict is already on screen rather than before it, so feedback is never held
+     * up by a database read; the line appears a moment later if there is one to show.
+     */
+    private fun explainChoice(selected: String, exercise: Exercise) {
+        viewModelScope.launch {
+            val chosenEntry = vocabularyRepository.findByWrittenForm(selected)
+            val line = Remediation.contrastLine(selected, chosenEntry, exercise.word)
+            if (line != null && _uiState.value.current === exercise) {
+                _uiState.update { it.copy(remediation = line) }
+            }
+        }
     }
 
     /**
@@ -197,8 +238,14 @@ class LessonPlayerViewModel @Inject constructor(
         if (wasCorrect) {
             solved += identity
         } else {
-            // Back of the queue, so the learner meets it again before the lesson can end.
-            newQueue.add(exercise)
+            // Requeued a few items ahead rather than at the very end: near enough that the lesson
+            // still closes the loop, far enough that answering it is retrieval and not echo.
+            val misses = (missCounts[identity] ?: 0) + 1
+            missCounts[identity] = misses
+            newQueue.add(
+                ExpandingRehearsal.insertIndex(state.position, misses, newQueue.size),
+                exercise
+            )
         }
 
         val nextPosition = state.position + 1
@@ -213,6 +260,7 @@ class LessonPlayerViewModel @Inject constructor(
                     position = nextPosition,
                     selectedOption = null,
                     isCorrect = null,
+                    remediation = null,
                     solvedCount = solved.size
                 )
             }
@@ -244,13 +292,12 @@ class LessonPlayerViewModel @Inject constructor(
     /**
      * Identity of the exercise at [position] within the original run.
      *
-     * Positions past the original length are requeued repeats, so they map back to the exercise they
-     * came from — otherwise a retry would count as a new item and inflate the total.
+     * A requeued repeat is the same instance as the item it came from, so it maps back to that
+     * number — otherwise a retry would count as a new exercise and inflate the total.
      */
     private fun exerciseIdentity(position: Int): Int {
-        val state = _uiState.value
-        val exercise = state.queue.getOrNull(position) ?: return position
-        return state.queue.take(state.totalExercises).indexOfFirst { it === exercise }
-            .takeIf { it >= 0 } ?: position
+        val exercise = _uiState.value.queue.getOrNull(position) ?: return position
+        return identities[exercise] ?: position
     }
+
 }

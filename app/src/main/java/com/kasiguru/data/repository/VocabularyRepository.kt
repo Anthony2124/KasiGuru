@@ -2,6 +2,8 @@ package com.kasiguru.data.repository
 
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.domain.lesson.DistractorSelector
+import com.kasiguru.util.AnswerLabel
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.Sm2Algorithm
@@ -184,42 +186,43 @@ class VocabularyRepository @Inject constructor(
         vocabularyDao.incrementReviewCount(id)
 
     /**
-     * Fetches confusable distractors preferred in priority order:
-     * 1. Same category
-     * 2. Similar length / starting letter
-     * 3. Fallback random
+     * Fetches the wrong answers to show beside [targetWord].
+     *
+     * The old rule was fixed: same category if possible, otherwise similar length or first letter,
+     * otherwise anything. Fixed is wrong in both directions — a word met for the first time got
+     * three near-identical alternatives from its own category, and a word the learner has recalled
+     * twenty times got the same. Difficulty now follows the word's own SM-2 state, so options
+     * tighten as it becomes better known. See [DistractorSelector].
      */
     suspend fun getDistractorsForWord(targetWord: VocabularyEntity, count: Int = 3): List<VocabularyEntity> {
-        val categoryWords = vocabularyDao.getRandomWords(40)
-            .filter { it.id != targetWord.id && it.category.equals(targetWord.category, ignoreCase = true) }
+        val difficulty = DistractorSelector.difficultyFor(targetWord)
+        // Over-fetch: the selector ranks candidates rather than taking whatever arrives first, and
+        // a category can be smaller than one exercise needs.
+        val pool = count * 4
+        val sameCategory = vocabularyDao.getRandomWordsInCategory(targetWord.category, targetWord.id, pool)
+        val otherCategory = vocabularyDao.getRandomWordsOutsideCategory(targetWord.category, targetWord.id, pool)
 
-        if (categoryWords.size >= count) {
-            return categoryWords.shuffled().take(count)
+        return DistractorSelector.choose(
+            target = targetWord,
+            sameCategory = sameCategory,
+            otherCategory = otherCategory,
+            difficulty = difficulty,
+            count = count
+        )
+    }
+
+    /**
+     * Resolves the answer a learner actually chose back to the word it belongs to.
+     *
+     * Options are rendered as text, and a gloss button carries both languages ("daras · adze"), so
+     * each part is tried in turn. Returns null when the text matches nothing — a typed answer that
+     * is not a word at all is the normal case, and there is nothing to teach about it.
+     */
+    suspend fun findByWrittenForm(text: String): VocabularyEntity? {
+        for (candidate in AnswerLabel.candidates(text)) {
+            vocabularyDao.getVocabularyByAnyForm(candidate)?.let { return it }
         }
-
-        val result = categoryWords.toMutableList()
-        val allOtherWords = vocabularyDao.getRandomWords(50)
-            .filter { it.id != targetWord.id && it.id !in result.map { r -> r.id } }
-
-        val similarWords = allOtherWords.filter {
-            abs(it.kasiguranin.length - targetWord.kasiguranin.length) <= 2 ||
-                    it.kasiguranin.firstOrNull()?.lowercaseChar() == targetWord.kasiguranin.firstOrNull()?.lowercaseChar()
-        }.shuffled()
-
-        for (word in similarWords) {
-            if (result.size >= count) break
-            result.add(word)
-        }
-
-        if (result.size < count) {
-            val remaining = allOtherWords.filter { it.id !in result.map { r -> r.id } }.shuffled()
-            for (word in remaining) {
-                if (result.size >= count) break
-                result.add(word)
-            }
-        }
-
-        return result.take(count)
+        return null
     }
 }
 

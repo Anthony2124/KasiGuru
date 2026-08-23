@@ -48,6 +48,47 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 
+    /**
+     * Candidate distractors from the answer's own semantic field.
+     *
+     * Selected in the database rather than by sampling random rows and filtering in memory: the old
+     * approach drew 40 rows at random and kept the ones that happened to share a category, so a
+     * small category could silently yield nothing and quietly fall back to unrelated words.
+     */
+    @Query(
+        "SELECT * FROM vocabulary WHERE id != :excludeId AND category = :category " +
+            "ORDER BY RANDOM() LIMIT :count"
+    )
+    suspend fun getRandomWordsInCategory(
+        category: String,
+        excludeId: Int,
+        count: Int
+    ): List<VocabularyEntity>
+
+    /** Candidate distractors from outside the answer's field, for a word still being introduced. */
+    @Query(
+        "SELECT * FROM vocabulary WHERE id != :excludeId AND category != :category " +
+            "ORDER BY RANDOM() LIMIT :count"
+    )
+    suspend fun getRandomWordsOutsideCategory(
+        category: String,
+        excludeId: Int,
+        count: Int
+    ): List<VocabularyEntity>
+
+    /**
+     * Looks a word up by any of its written forms.
+     *
+     * Backs the remediation line after a wrong answer: the learner picked *something*, and saying
+     * what that something actually means is the difference between being marked wrong and being
+     * taught. The option they tapped may be a headword or a gloss, so all three columns are tried.
+     */
+    @Query(
+        "SELECT * FROM vocabulary WHERE LOWER(kasiguranin) = LOWER(:text) " +
+            "OR LOWER(tagalog) = LOWER(:text) OR LOWER(english) = LOWER(:text) LIMIT 1"
+    )
+    suspend fun getVocabularyByAnyForm(text: String): VocabularyEntity?
+
     @Query("SELECT * FROM vocabulary ORDER BY timesReviewed ASC, RANDOM() LIMIT :count")
     suspend fun getFreshWords(count: Int): List<VocabularyEntity>
 

@@ -235,6 +235,9 @@ fun LessonPlayerScreen(
             canCheck = !uiState.selectedOption.isNullOrBlank(),
             correctAnswer = exercise.answer,
             word = exercise.word,
+            // What the learner actually chose, once it has been looked up. Arrives a moment after
+            // the verdict rather than with it, so the panel is never waiting on a query.
+            remediation = uiState.remediation,
             onCheck = viewModel::check,
             onContinue = viewModel::advance
         )
@@ -252,6 +255,7 @@ private fun LessonActionArea(
     canCheck: Boolean,
     correctAnswer: String,
     word: com.kasiguru.data.local.entity.VocabularyEntity,
+    remediation: String?,
     onCheck: () -> Unit,
     onContinue: () -> Unit
 ) {
@@ -287,6 +291,7 @@ private fun LessonActionArea(
                 isCorrect = isCorrect,
                 correctAnswer = correctAnswer,
                 word = word,
+                correction = remediation,
                 onContinue = onContinue
             )
         }
