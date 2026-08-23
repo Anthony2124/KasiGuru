@@ -118,6 +118,10 @@ class VocabularyRepository @Inject constructor(
         )
         vocabularyDao.updateVocabulary(updatedWord)
 
+        // A retrieval is the smallest unit of real learning in the app, so it is what keeps the
+        // streak alive. Same-day repeats are cheap: the streak write returns early once set.
+        userProgressRepository.recordLearningActivity()
+
         if (!word.isLearned && sm2Result.isLearned) {
             userProgressRepository.incrementWordsLearned()
             userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)

@@ -25,7 +25,7 @@ object KasiGuruNotificationManager {
         }
     }
 
-    fun sendStreakReminderNotification(context: Context, currentStreak: Int) {
+    fun sendStreakReminderNotification(context: Context, currentStreak: Int, dueCount: Int = 0) {
         createNotificationChannel(context)
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -39,8 +39,8 @@ object KasiGuruNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = if (currentStreak > 0) "Keep your $currentStreak-Day Streak Alive! 🔥" else "Learn Kasiguranin Today! 📚"
-        val body = "Practice for just 2 minutes tonight to master vocabulary & verb aspects."
+        val title = StreakReminderCopy.title(currentStreak)
+        val body = StreakReminderCopy.body(dueCount)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)

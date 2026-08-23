@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.kasiguru.ui.components.AnnouncementBanner
 import com.kasiguru.ui.components.AppUpdateBanner
 import com.kasiguru.ui.components.CasiguranAvatarPortrait
@@ -95,6 +97,14 @@ fun LearnScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showStreakDialog by remember { mutableStateOf(false) }
+
+    // Today's Path and the day goal are a snapshot taken when this screen was built, and all the
+    // work that changes them -- a review session, a lesson, a game -- happens on another screen.
+    // Without this the learner clears their whole review deck and comes back to a card that still
+    // says five words are due, and a goal ring that cannot turn green until the app is restarted.
+    // The lifecycle owner inside a NavHost is the back-stack entry, so this fires on return to the
+    // tab rather than only on Activity resume.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPlan() }
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -195,7 +205,7 @@ fun LearnScreen(
                     color = if (uiState.dailyGoalMet) Green else Gold,
                     onCanopy = true,
                     contentDescription = "Daily goal: ${uiState.dailyXpEarned} of " +
-                        "${progress.dailyGoalXp} XP earned today",
+                        "${progress.dailyGoalXp} XP earned today, ${uiState.dailyGoalRemainder}",
                     modifier = Modifier.clickable(onClick = onOpenProgress)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {

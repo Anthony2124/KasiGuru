@@ -96,6 +96,8 @@ class UserProgressRepository @Inject constructor(
 
     suspend fun incrementGamesPlayed() {
         userProgressDao.incrementGamesPlayed()
+        // Finishing a game is learning, whatever the score.
+        recordLearningActivity()
         val progress = userProgressDao.getUserProgressOnce() ?: return
         checkGameAchievements(progress.gamesPlayed)
     }
@@ -109,7 +111,18 @@ class UserProgressRepository @Inject constructor(
         return (progress.totalCorrectAnswers.toFloat() / progress.totalQuestionsAnswered.toFloat()).coerceIn(0.0f, 1.0f)
     }
 
-    suspend fun updateStreak() {
+    /**
+     * Records that the learner actually learned something today.
+     *
+     * The streak used to advance from [com.kasiguru.ui.screens.learn.LearnViewModel] init, which
+     * means opening the Learn tab was enough to keep it: a number meant to say "you practised every
+     * day for 14 days" said "you opened the app for 14 days". It is the app single most visible
+     * motivator, so it has to be worth something. Every caller of this is a completed piece of
+     * learning: an answered review, a finished lesson, a finished game.
+     */
+    suspend fun recordLearningActivity() = updateStreak()
+
+    private suspend fun updateStreak() {
         val progress = userProgressDao.getUserProgressOnce() ?: return
         val today = LocalDate.now().toIsoString()
 

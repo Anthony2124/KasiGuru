@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.BuildConfig
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.remote.model.AnnouncementDto
 import com.kasiguru.data.remote.model.AppReleaseDto
 import com.kasiguru.data.local.entity.MetricType
@@ -50,6 +51,15 @@ data class Skill(val name: String, val percent: Int, val kind: ActivityKind)
 
 data class DayActivity(val label: String, val dayOfMonth: Int, val practised: Boolean, val isToday: Boolean)
 
+/**
+ * "1 word" or "5 words".
+ *
+ * The count is read aloud by TalkBack from the goal ring's description and printed on the review
+ * card, so "1 words due" is not a small thing: it is the first line of the app most learners see
+ * every morning.
+ */
+internal fun wordsToReview(count: Int): String = if (count == 1) "1 word" else "$count words"
+
 data class LearnUiState(
     val isLoading: Boolean = true,
     val progress: UserProgressEntity = UserProgressEntity(),
@@ -60,7 +70,9 @@ data class LearnUiState(
     val stories: List<StoryEntity> = emptyList(),
     val updateRelease: AppReleaseDto? = null,
     val showBackupPrompt: Boolean = false,
-    val announcements: List<AnnouncementDto> = emptyList()
+    val announcements: List<AnnouncementDto> = emptyList(),
+    /** Words still due for review right now. Part of the day goal, not just a number on a card. */
+    val wordsDue: Int = 0
 ) {
     /**
      * XP earned today, read from the stored ledger.
@@ -75,7 +87,26 @@ data class LearnUiState(
         get() = if (progress.dailyGoalXp <= 0) 0f
         else (dailyXpEarned.toFloat() / progress.dailyGoalXp).coerceIn(0f, 1f)
 
-    val dailyGoalMet: Boolean get() = dailyXpEarned >= progress.dailyGoalXp
+    /**
+     * The day is done when the XP target is met **and** nothing is still due.
+     *
+     * XP alone was gameable against the learner: reading two stories fills the ring while every word
+     * scheduled for today goes unreviewed, so the app would report a met goal on precisely the day
+     * retention was being lost. Reviews are the part of a day that spaced repetition actually needs,
+     * so they belong in the target.
+     */
+    val dailyGoalMet: Boolean
+        get() = dailyXpEarned >= progress.dailyGoalXp && wordsDue == 0
+
+    /** What is left of the day goal, for the ring description. */
+    val dailyGoalRemainder: String
+        get() = when {
+            dailyGoalMet -> "goal met"
+            dailyXpEarned < progress.dailyGoalXp && wordsDue > 0 ->
+                "${progress.dailyGoalXp - dailyXpEarned} XP to go and ${wordsToReview(wordsDue)} to review"
+            dailyXpEarned < progress.dailyGoalXp -> "${progress.dailyGoalXp - dailyXpEarned} XP to go"
+            else -> "${wordsToReview(wordsDue)} still to review"
+        }
 
     /** The first activity not yet done — the one the FAB and the raised card point at. */
     val currentActivity: PathActivity? get() = activities.firstOrNull { !it.isDone }
@@ -105,7 +136,8 @@ class LearnViewModel @Inject constructor(
         observeAccountState()
         observeAnnouncements()
         checkSubmissionAchievements()
-        viewModelScope.launch { userProgressRepository.updateStreak() }
+        // No streak call here on purpose. Opening this screen is not learning; the streak now
+        // advances from answered reviews, finished lessons and finished games instead.
     }
 
     /**
@@ -133,13 +165,15 @@ class LearnViewModel @Inject constructor(
     fun refreshPlan() {
         viewModelScope.launch {
             val progress = userProgressRepository.getUserProgressOnce() ?: UserProgressEntity()
+            val due = vocabularyRepository.getDueReviewWordsStrict(limit = 20)
             _uiState.update {
                 it.copy(
                     progress = progress,
                     week = buildWeek(progress),
-                    activities = buildActivities(),
+                    activities = buildActivities(due),
                     skills = buildSkills(progress),
                     stories = storyRepository.getAllStories().first(),
+                    wordsDue = due.size,
                     isLoading = false
                 )
             }
@@ -185,7 +219,7 @@ class LearnViewModel @Inject constructor(
         }
     }
 
-    private suspend fun buildActivities(): List<PathActivity> {
+    private suspend fun buildActivities(due: List<VocabularyEntity>): List<PathActivity> {
         val activities = mutableListOf<PathActivity>()
 
         // 1. The next lesson.
@@ -209,13 +243,19 @@ class LearnViewModel @Inject constructor(
         }
 
         // 2. Spaced-repetition review, only counted as work when something is actually due.
-        val due = vocabularyRepository.getDueReviewWordsStrict(limit = 20)
-        activities += PathActivity(
+        //
+        // Placed ahead of the lesson when anything is due, because currentActivity -- the raised
+        // card and the FAB both point at it -- is simply the first item not yet done. With the
+        // lesson always first, the app spent every session recommending new words while the ones
+        // the learner is about to forget sat behind them. Due material is the more urgent work by
+        // definition: that is what a review date means.
+        val review = PathActivity(
             kind = ActivityKind.Review,
             title = "Review",
-            subtitle = if (due.isEmpty()) "Nothing due today" else "${due.size} words due",
+            subtitle = if (due.isEmpty()) "Nothing due today" else "${wordsToReview(due.size)} due",
             isDone = due.isEmpty()
         )
+        if (due.isEmpty()) activities += review else activities.add(0, review)
 
         // 3. A game.
         activities += PathActivity(

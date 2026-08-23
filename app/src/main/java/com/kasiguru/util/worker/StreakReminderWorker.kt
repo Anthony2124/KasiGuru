@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.*
 import com.kasiguru.data.local.dao.UserProgressDao
+import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.util.notification.KasiGuruNotificationManager
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -27,6 +28,9 @@ class StreakReminderWorker(
     @InstallIn(SingletonComponent::class)
     interface StreakReminderEntryPoint {
         fun userProgressDao(): UserProgressDao
+
+        /** For naming what is waiting: a reminder that says how much is due is one worth reading. */
+        fun vocabularyDao(): VocabularyDao
     }
 
     override suspend fun doWork(): Result {
@@ -38,18 +42,20 @@ class StreakReminderWorker(
             // the app cold-starts after an upgrade had both racing the same migrations. The
             // worker's copy also lacked DatabaseModule's onCreate seeding callback, so it
             // could create an unseeded database if it happened to get there first.
-            val dao = EntryPointAccessors
+            val entryPoint = EntryPointAccessors
                 .fromApplication(applicationContext, StreakReminderEntryPoint::class.java)
-                .userProgressDao()
+            val dao = entryPoint.userProgressDao()
 
             val progress = dao.getUserProgressDirect()
             val today = LocalDate.now().toString()
 
-            // If user hasn't been active today, post a streak reminder notification
+            // If the learner has not practised today, post a streak reminder naming what is due.
             if (progress != null && progress.lastActiveDate != today) {
+                val dueCount = entryPoint.vocabularyDao().countScheduledDueWords(today)
                 KasiGuruNotificationManager.sendStreakReminderNotification(
                     applicationContext,
-                    progress.currentStreak
+                    progress.currentStreak,
+                    dueCount
                 )
             }
             Result.success()

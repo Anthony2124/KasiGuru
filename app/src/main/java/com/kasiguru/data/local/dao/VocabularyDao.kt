@@ -54,6 +54,10 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE lapses >= :minLapses ORDER BY lapses DESC LIMIT :limit")
     suspend fun getLeechWords(minLapses: Int, limit: Int): List<VocabularyEntity>
 
+    /** How many words are genuinely due, for the nightly reminder, which needs a number not a page. */
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE nextReviewDate != '' AND nextReviewDate <= :todayDate")
+    suspend fun countScheduledDueWords(todayDate: String): Int
+
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 

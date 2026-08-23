@@ -127,6 +127,7 @@ class LessonRepository @Inject constructor(
 
         val xp = LessonPlan.xpFor(accuracy)
         userProgressRepository.addXp(xp)
+        userProgressRepository.recordLearningActivity()
         return xp
     }
 
