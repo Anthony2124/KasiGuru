@@ -36,7 +36,7 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 26
+        const val CURRENT_VERSION = 27
     }
 
     private val testDbName = "migration-test"
@@ -121,6 +121,46 @@ class MigrationTest {
         // Brand-new table in v25 -> v26, so "queryable at all" is the assertion that matters.
         db.query("SELECT id, name, residentName, createdAt, isActive FROM profiles").use { cursor ->
             check(cursor.count == 0) { "profiles should start empty" }
+        }
+        db.close()
+    }
+
+    /**
+     * The v26 -> v27 tail: the memory-model columns.
+     *
+     * A learner upgrading into this version has a review history already, and it has to survive:
+     * their words join the new scheme as never-lapsed and normally-scheduled, which is exactly what
+     * they were before the columns existed.
+     */
+    @Test
+    fun migrateV26ToV27AddsLapseTrackingWithoutDisturbingReviewHistory() {
+        helper.createDatabase(testDbName, 26).apply {
+            execSQL(
+                "INSERT INTO vocabulary " +
+                    "(id, kasiguranin, tagalog, english, rootForm, neutralForm, imperfectiveForm, " +
+                    " perfectiveForm, contemplativeForm, category, audioResName, exampleSentence, " +
+                    " exampleTranslation, exampleSentence2, exampleTranslation2, phoneticGlottal, " +
+                    " phoneticVowelLength, ipaNotation, isLearned, timesReviewed, easinessFactor, " +
+                    " intervalDays, nextReviewDate) " +
+                    "VALUES (1, 'apak', 'daras', 'adze', 'apak', '', '', '', '', 'Occupations & Tools', " +
+                    " '', '', '', '', '', 0, 0, '', 1, 9, 2.36, 30, '2026-09-20')"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(testDbName, CURRENT_VERSION, true, *KasiGuruMigrations.ALL)
+
+        db.query(
+            "SELECT lapses, relearningStep, timesReviewed, intervalDays, nextReviewDate, isLearned " +
+                "FROM vocabulary WHERE id = 1"
+        ).use { cursor ->
+            check(cursor.moveToFirst()) { "seeded vocabulary row was lost during migration" }
+            check(cursor.getInt(0) == 0) { "lapses default mismatch" }
+            check(cursor.getInt(1) == 0) { "relearningStep default mismatch" }
+            check(cursor.getInt(2) == 9) { "timesReviewed was not preserved" }
+            check(cursor.getInt(3) == 30) { "intervalDays was not preserved" }
+            check(cursor.getString(4) == "2026-09-20") { "nextReviewDate was not preserved" }
+            check(cursor.getInt(5) == 1) { "isLearned was not preserved" }
         }
         db.close()
     }

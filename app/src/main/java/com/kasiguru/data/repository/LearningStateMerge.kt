@@ -32,7 +32,11 @@ data class WordState(
     val timesReviewed: Int = 0,
     val easinessFactor: Double = 2.5,
     val intervalDays: Int = 0,
-    val nextReviewDate: String = ""
+    val nextReviewDate: String = "",
+    /** Times forgotten after being known; merged as a maximum, like every other earned number. */
+    val lapses: Int = 0,
+    /** Rung of the relearning ladder, taken from whichever device has reviewed the word more. */
+    val relearningStep: Int = 0
 )
 
 internal fun mergeAchievements(
@@ -112,7 +116,13 @@ internal fun mergeWordStates(
                     timesReviewed = maxOf(l.timesReviewed, r.timesReviewed),
                     easinessFactor = authority.easinessFactor,
                     intervalDays = maxOf(l.intervalDays, r.intervalDays),
-                    nextReviewDate = authority.nextReviewDate
+                    nextReviewDate = authority.nextReviewDate,
+                    // A lapse happened on some device even if this one never saw it, so the higher
+                    // count is the true one -- the same additive rule the rest of this file follows.
+                    lapses = maxOf(l.lapses, r.lapses),
+                    // Not a maximum: the ladder is a position, not an achievement, and it belongs
+                    // with the schedule, which comes from the device that has reviewed more.
+                    relearningStep = authority.relearningStep
                 )
             }
         }

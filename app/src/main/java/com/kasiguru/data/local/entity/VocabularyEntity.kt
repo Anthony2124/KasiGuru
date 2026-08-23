@@ -65,5 +65,25 @@ data class VocabularyEntity(
     // SuperMemo-2 (SM-2) SRS Fields
     val easinessFactor: Double = 2.5,
     val intervalDays: Int = 0,
-    val nextReviewDate: String = "" // ISO format yyyy-MM-dd
+    val nextReviewDate: String = "", // ISO format yyyy-MM-dd
+    /**
+     * Times this word has been forgotten after having been known.
+     *
+     * SM-2 as implemented had no memory of failure beyond the current easiness factor, so a word
+     * failed for the tenth time looked the same as one failed for the first: interval back to a day,
+     * and around again. Counting lapses is what lets the app notice a word that is not being learned
+     * at all -- see [com.kasiguru.util.srs.Sm2Algorithm.LEECH_LAPSES] -- and treat it differently
+     * from one the learner is simply still meeting.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val lapses: Int = 0,
+    /**
+     * Position on the relearning ladder, or 0 when the word is on its normal schedule.
+     *
+     * A lapse used to send a word to a one-day interval, after which a single correct answer put it
+     * straight back to six days -- the same jump a word gets when it has never been failed at all.
+     * The ladder makes the way back proportional to the fall.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val relearningStep: Int = 0
 )

@@ -21,7 +21,7 @@ import com.kasiguru.data.local.entity.*
         LessonProgressEntity::class,
         ProfileEntity::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

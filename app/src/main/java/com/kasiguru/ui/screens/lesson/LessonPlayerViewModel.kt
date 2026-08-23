@@ -119,7 +119,9 @@ class LessonPlayerViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             val exercises = lessonRepository.exercisesFor(lessonRef)
-            val words = lessonRepository.wordsFor(lessonRef)
+            // The practised set, not the slice: a lesson that revisited two older words covered
+            // them too, and the summary is where the learner sees what they just worked on.
+            val words = lessonRepository.practiceWordsFor(lessonRef)
             identities.clear()
             exercises.forEachIndexed { index, exercise -> identities[exercise] = index }
             _uiState.update {

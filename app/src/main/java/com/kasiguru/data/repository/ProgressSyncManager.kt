@@ -275,7 +275,9 @@ class ProgressSyncManager @Inject constructor(
                 timesReviewed = (value["timesReviewed"] as? Number)?.toInt() ?: 0,
                 easinessFactor = (value["easinessFactor"] as? Number)?.toDouble() ?: 2.5,
                 intervalDays = (value["intervalDays"] as? Number)?.toInt() ?: 0,
-                nextReviewDate = value["nextReviewDate"] as? String ?: ""
+                nextReviewDate = value["nextReviewDate"] as? String ?: "",
+                lapses = (value["lapses"] as? Number)?.toInt() ?: 0,
+                relearningStep = (value["relearningStep"] as? Number)?.toInt() ?: 0
             )
         } ?: return
 
@@ -290,7 +292,9 @@ class ProgressSyncManager @Inject constructor(
                 timesReviewed = state.timesReviewed,
                 easinessFactor = state.easinessFactor,
                 intervalDays = state.intervalDays,
-                nextReviewDate = state.nextReviewDate
+                nextReviewDate = state.nextReviewDate,
+                lapses = state.lapses,
+                relearningStep = state.relearningStep
             ).takeIf { it != row }
         }
         if (updated.isNotEmpty()) vocabularyDao.insertAll(updated)
@@ -377,7 +381,9 @@ class ProgressSyncManager @Inject constructor(
                     "timesReviewed" to it.value.timesReviewed,
                     "easinessFactor" to it.value.easinessFactor,
                     "intervalDays" to it.value.intervalDays,
-                    "nextReviewDate" to it.value.nextReviewDate
+                    "nextReviewDate" to it.value.nextReviewDate,
+                    "lapses" to it.value.lapses,
+                    "relearningStep" to it.value.relearningStep
                 )
             }
         uploadLearningDoc(uid, DOC_WORD_STATES, payload)
@@ -597,5 +603,7 @@ private fun com.kasiguru.data.local.entity.VocabularyEntity.toWordState() = Word
     timesReviewed = timesReviewed,
     easinessFactor = easinessFactor,
     intervalDays = intervalDays,
-    nextReviewDate = nextReviewDate
+    nextReviewDate = nextReviewDate,
+    lapses = lapses,
+    relearningStep = relearningStep
 )

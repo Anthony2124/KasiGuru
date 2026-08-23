@@ -45,6 +45,15 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE nextReviewDate != '' AND nextReviewDate <= :todayDate ORDER BY nextReviewDate ASC LIMIT :limit")
     suspend fun getScheduledDueWords(todayDate: String, limit: Int = 20): List<VocabularyEntity>
 
+    /**
+     * Words forgotten at least [minLapses] times, hardest-hit first.
+     *
+     * Ordered by lapses rather than randomly: if only two can be woven into a lesson, they should be
+     * the two failing most.
+     */
+    @Query("SELECT * FROM vocabulary WHERE lapses >= :minLapses ORDER BY lapses DESC LIMIT :limit")
+    suspend fun getLeechWords(minLapses: Int, limit: Int): List<VocabularyEntity>
+
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 

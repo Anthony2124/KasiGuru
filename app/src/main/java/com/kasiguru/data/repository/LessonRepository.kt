@@ -5,6 +5,7 @@ import com.kasiguru.data.local.entity.LessonProgressEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.domain.lesson.ExerciseGenerator
+import com.kasiguru.domain.lesson.Interleaving
 import com.kasiguru.domain.lesson.LessonPlan
 import com.kasiguru.domain.lesson.LessonRef
 import com.kasiguru.domain.lesson.LessonUnit
@@ -61,8 +62,24 @@ class LessonRepository @Inject constructor(
         return words.slice(range)
     }
 
+    /**
+     * The words a lesson actually practises: its own slice, plus a couple of older ones.
+     *
+     * Kept separate from [wordsFor], which stays the stable definition of what the lesson *is* — the
+     * Learn screen counts it to say "Lesson 2 - 7 words", and that number should not move around
+     * with the state of the review deck.
+     */
+    suspend fun practiceWordsFor(ref: LessonRef): List<VocabularyEntity> {
+        val lessonWords = wordsFor(ref)
+        if (lessonWords.isEmpty()) return lessonWords
+
+        val leeches = vocabularyRepository.getLeechWords(limit = Interleaving.REVISITED_PER_LESSON * 2)
+        val due = vocabularyRepository.getDueReviewWordsStrict(limit = Interleaving.REVISITED_PER_LESSON * 4)
+        return Interleaving.compose(lessonWords, leeches, due)
+    }
+
     suspend fun exercisesFor(ref: LessonRef): List<Exercise> =
-        exerciseGenerator.build(wordsFor(ref))
+        exerciseGenerator.build(practiceWordsFor(ref))
 
     /**
      * The next lesson to do: the first incomplete lesson in the first incomplete unit.

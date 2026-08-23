@@ -1,6 +1,7 @@
 package com.kasiguru.domain.lesson
 
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.util.RecallPrompt
 
 /**
  * One step in a lesson.
@@ -32,7 +33,22 @@ sealed interface Exercise {
         /** True when the prompt is the Kasiguranin headword. */
         val promptIsKasiguranin: Boolean
     ) : Exercise {
-        val prompt: String get() = if (promptIsKasiguranin) word.kasiguranin else word.tagalog
+        /**
+         * What the learner reads.
+         *
+         * The meaning direction cannot simply print `tagalog`: for a borrowed or shared word the
+         * Tagalog gloss *is* the headword (`buhay` glosses as `buhay`), so the prompt would sit
+         * above an option list containing itself and the exercise would test nothing. The same rule
+         * that protects typed recall protects this. The fallback is unreachable in practice --
+         * ExerciseGenerator flips such a word to the other direction -- and exists so this getter is
+         * total rather than throwing on a corpus entry with no usable gloss at all.
+         */
+        val prompt: String
+            get() = if (promptIsKasiguranin) {
+                word.kasiguranin
+            } else {
+                RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english) ?: word.tagalog
+            }
         override val instruction: String
             get() = if (promptIsKasiguranin) "What does this mean?" else "Say this in Kasiguranin"
     }

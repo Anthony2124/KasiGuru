@@ -48,8 +48,21 @@ object KasiGuruMigrations {
         MIGRATION_22_23,
         MIGRATION_23_24,
         MIGRATION_24_25,
-        MIGRATION_25_26
+        MIGRATION_25_26,
+        MIGRATION_26_27
         )
+    }
+
+    // -- v26 -> v27 -----------------------------------------------------------
+    // vocabulary gains the two fields the memory model needs: how many times a known word has been
+    // forgotten again (lapses), and where it currently sits on the relearning ladder. Both ALTER
+    // with a default so existing rows join the new scheme as never-lapsed, normally-scheduled words,
+    // which is what they were before this shipped.
+    private val MIGRATION_26_27 = object : Migration(26, 27) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `lapses` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `relearningStep` INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     // -- v25 -> v26 -----------------------------------------------------------

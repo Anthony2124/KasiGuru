@@ -41,8 +41,14 @@ object LessonPlan {
      */
     const val WORDS_PER_LESSON = 7
 
-    /** Exercises in a lesson. Some words appear twice, in different exercise types. */
-    const val EXERCISES_PER_LESSON = 9
+    /**
+     * Exercises in a lesson. Some words appear twice, in different exercise types.
+     *
+     * Raised from nine when interleaving began adding up to two revisited words to the seven new
+     * ones: at nine, a nine-word lesson filled its whole run in the first pass and no word was ever
+     * met twice, which is the part that makes a lesson teach rather than test.
+     */
+    const val EXERCISES_PER_LESSON = 11
 
     /** XP for finishing a lesson, before the accuracy bonus. */
     const val XP_PER_LESSON = 30

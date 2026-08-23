@@ -112,7 +112,9 @@ class VocabularyRepository @Inject constructor(
             intervalDays = sm2Result.intervalDays,
             nextReviewDate = sm2Result.nextReviewDate,
             timesReviewed = sm2Result.timesReviewed,
-            isLearned = sm2Result.isLearned
+            isLearned = sm2Result.isLearned,
+            lapses = sm2Result.lapses,
+            relearningStep = sm2Result.relearningStep
         )
         vocabularyDao.updateVocabulary(updatedWord)
 
@@ -177,7 +179,11 @@ class VocabularyRepository @Inject constructor(
             isLearned = false,
             timesReviewed = 0,
             intervalDays = 0,
-            nextReviewDate = ""
+            nextReviewDate = "",
+            // The schedule is cleared, so the ladder position it referred to is meaningless. The
+            // lapse count stays: it is the honest record that this word has been forgotten before,
+            // and unmarking a word is itself an admission of that rather than a reason to forget it.
+            relearningStep = 0
         )
         vocabularyDao.updateVocabulary(resetWord)
     }
@@ -210,6 +216,17 @@ class VocabularyRepository @Inject constructor(
             count = count
         )
     }
+
+    /**
+     * Words the learner keeps forgetting.
+     *
+     * These are the ones the review deck alone will not fix: five lapses means the word has been
+     * known and lost five times, and asking it a sixth time in the same four-option shape is how a
+     * deck grinds. They are re-taught inside lessons instead -- see
+     * [com.kasiguru.domain.lesson.Interleaving].
+     */
+    suspend fun getLeechWords(limit: Int): List<VocabularyEntity> =
+        vocabularyDao.getLeechWords(Sm2Algorithm.LEECH_LAPSES, limit)
 
     /**
      * Resolves the answer a learner actually chose back to the word it belongs to.

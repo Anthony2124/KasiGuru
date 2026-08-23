@@ -3,6 +3,7 @@ package com.kasiguru.domain.lesson
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.RecallPrompt
+import com.kasiguru.util.srs.Sm2Algorithm
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,13 +55,23 @@ class ExerciseGenerator @Inject constructor(
         word: VocabularyEntity,
         preferKasiguraninPrompt: Boolean
     ): Exercise {
-        val answer = if (preferKasiguraninPrompt) meaningOf(word) else word.kasiguranin
-        val distractors = distractorStrings(word, kasiguraninAnswers = !preferKasiguraninPrompt)
+        // A leech always gets the recognition direction, whatever the alternation says. Reading a
+        // Kasiguranin word and picking its meaning is the easiest retrieval the app has, and a word
+        // forgotten five times needs to be met successfully before it can be tested harder.
+        //
+        // A word with no gloss that differs from its headword is also forced into this direction:
+        // asking "say this in Kasiguranin" above the prompt `buhay` when the answer is `buhay` hands
+        // the answer over, and roughly a tenth of the corpus glosses to itself in Tagalog.
+        val hasUsableMeaning =
+            RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english) != null
+        val kasiguraninPrompt = preferKasiguraninPrompt || Sm2Algorithm.isLeech(word) || !hasUsableMeaning
+        val answer = if (kasiguraninPrompt) meaningOf(word) else word.kasiguranin
+        val distractors = distractorStrings(word, kasiguraninAnswers = !kasiguraninPrompt)
         return Exercise.ChooseTranslation(
             word = word,
             options = (distractors + answer).distinct().shuffled(),
             answer = answer,
-            promptIsKasiguranin = preferKasiguraninPrompt
+            promptIsKasiguranin = kasiguraninPrompt
         )
     }
 
@@ -116,8 +127,11 @@ class ExerciseGenerator @Inject constructor(
         // which is the weakest possible treatment for exactly the sparsest entries.
         // Not simply "Tagalog, or English if blank": a gloss identical to the headword would print
         // the answer directly above the input. See RecallPrompt.
+        // Not for a leech: typing a word from memory is the hardest retrieval in the app, and this
+        // is the word the learner has already lost five times. It gets a second look only in a shape
+        // that shows it -- the fill-in-the-blank above -- or no second look at all.
         val meaning = RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english)
-        if (meaning != null && Exercise.TypeWord::class !in alreadyUsed) {
+        if (meaning != null && !Sm2Algorithm.isLeech(word) && Exercise.TypeWord::class !in alreadyUsed) {
             return Exercise.TypeWord(
                 word = word,
                 answer = word.kasiguranin,
