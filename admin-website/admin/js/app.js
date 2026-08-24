@@ -684,6 +684,30 @@ window.openEntryModal = function(id) {
       window.openEditVocabModal(id);
     };
   }
+  
+  const deleteBtn = document.getElementById('entry-modal-delete');
+  if (deleteBtn) {
+    deleteBtn.onclick = async () => {
+      if (!(await confirmDialog({
+        title: 'Delete Dictionary Entry?',
+        body: `Are you sure you want to delete the entry for "${item.kasiguranin}"? This action cannot be undone.`,
+        confirmLabel: 'Delete'
+      }))) return;
+
+      try {
+        await deleteDoc(doc(db, "vocabulary", id));
+        await logAudit("vocabulary.delete", { id, kasiguranin: item.kasiguranin });
+        window.closeModal('entry-modal');
+        notify(`Deleted ${item.kasiguranin}`, 'success');
+        vocabulary = vocabulary.filter(v => v.id !== id);
+        renderVocabularyTable();
+      } catch (error) {
+        console.error("Error deleting entry:", error);
+        notify("Failed to delete entry: " + error.message, 'error');
+      }
+    };
+  }
+
   window.openModal('entry-modal');
 };
 
@@ -2512,84 +2536,4 @@ async function logAudit(action, details = {}) {
     console.warn("Audit log write failed:", e);
   }
 }
-
-window.removeDuplicateWords = async function() {
-  if (!(await confirmDialog({
-    title: `Remove Duplicate Words?`,
-    body: `Are you sure you want to scan and remove all duplicate words from the dictionary? This action cannot be undone.`,
-    confirmLabel: 'Remove Duplicates'
-  }))) return;
-
-  const duplicatesToDelete = [];
-  const wordMap = new Map();
-
-  vocabulary.forEach(v => {
-    const wordClean = (v.kasiguranin || '').trim().toLowerCase();
-    if (!wordClean) return;
-    
-    if (!wordMap.has(wordClean)) {
-      wordMap.set(wordClean, [v]);
-    } else {
-      wordMap.get(wordClean).push(v);
-    }
-  });
-
-  wordMap.forEach((docs, word) => {
-    if (docs.length > 1) {
-      docs.sort((a, b) => {
-        const timeA = a.createdAt || 0;
-        const timeB = b.createdAt || 0;
-        return timeB - timeA;
-      });
-      for (let i = 1; i < docs.length; i++) {
-        duplicatesToDelete.push(docs[i].id);
-      }
-    }
-  });
-
-  if (duplicatesToDelete.length === 0) {
-    notify("No duplicates found in the dictionary.", 'success');
-    return;
-  }
-
-  if (!(await confirmDialog({
-    title: `Delete ${duplicatesToDelete.length} duplicates?`,
-    body: `Found ${duplicatesToDelete.length} duplicates. Proceed with deletion?`,
-    confirmLabel: 'Delete'
-  }))) return;
-
-  try {
-    let count = 0;
-    let batches = [];
-    let currentBatch = writeBatch(db);
-    let operations = 0;
-
-    for (const id of duplicatesToDelete) {
-      currentBatch.delete(doc(db, "vocabulary", id));
-      count++;
-      operations++;
-
-      if (operations === 490) {
-        batches.push(currentBatch);
-        currentBatch = writeBatch(db);
-        operations = 0;
-      }
-    }
-
-    if (operations > 0) {
-      batches.push(currentBatch);
-    }
-
-    notify(`Deleting ${count} duplicate entries...`, 'success');
-    for (const batch of batches) {
-      await batch.commit();
-    }
-    
-    await logAudit("vocabulary.remove_duplicates", { count });
-    notify(`Successfully removed ${count} duplicate entries!`, 'success');
-  } catch (e) {
-    console.error("Error removing duplicates:", e);
-    notify("Failed to remove duplicates: " + e.message, 'error');
-  }
-};
-
+
