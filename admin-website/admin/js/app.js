@@ -45,6 +45,11 @@ let submissionsLoaded = false;
 let vocabularyLoaded = false;
 let releasesLoaded = false;
 let storiesLoaded = false;
+let auditLogsLoaded = false;
+
+let auditLogs = [];
+let logsCurrentPage = 1;
+const LOGS_PER_PAGE = 50;
 
 // -- Dialogs ------------------------------------------------------------------------------------
 // confirm() and alert() block the whole page, cannot be styled, and some browsers suppress them
@@ -199,7 +204,8 @@ const TAB_ROUTES = {
   'tab-submissions': 'queue',
   'tab-vocabulary': 'dictionary',
   'tab-stories': 'stories',
-  'tab-releases': 'releases'
+  'tab-releases': 'releases',
+  'tab-logs': 'logs'
 };
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
@@ -241,6 +247,7 @@ function init() {
   initTopbar();
   initModalBehaviour();
   initDictionaryControls();
+  initLogsControls();
 
   // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
   const routed = ROUTE_TABS[location.hash.slice(1)];
@@ -387,6 +394,26 @@ function initRealtimeListeners() {
     unsubscribeFns.push(unsubReleases);
   } catch (e) {
     console.error("Firestore release query error:", e);
+  }
+
+  // 4. Admin Audit Logs Listener
+  try {
+    const logsQuery = query(collection(db, "admin_audit_log"), orderBy("timestamp", "desc"));
+    const unsubLogs = onSnapshot(logsQuery, (snapshot) => {
+      auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      auditLogsLoaded = true;
+      renderAuditLogs();
+    }, (error) => {
+      console.warn("Audit logs listener error:", error);
+      let msg = "Unable to connect to live Firestore audit log.";
+      if (error.code === 'permission-denied') {
+        msg = "Permission denied. Ensure Firestore Rules allow read access.";
+      }
+      renderAuditLogsError(msg);
+    });
+    unsubscribeFns.push(unsubLogs);
+  } catch (e) {
+    console.error("Firestore audit log query error:", e);
   }
 }
 
@@ -810,6 +837,143 @@ function renderReleasesList() {
                  <iconsax-icon name="document-download" type="bulk" size="15" color="currentColor"></iconsax-icon> APK
                </a>`
             : '<span class="result-count">No link</span>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+
+// ── Admin Logs Tab ──────────────────────────────────────────────────────────
+
+function initLogsControls() {
+  const searchLogs = document.getElementById('search-logs-input');
+  if (searchLogs) {
+    searchLogs.addEventListener('input', () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        logsCurrentPage = 1;
+        renderAuditLogs();
+      }, 250);
+    });
+  }
+  const filterLogs = document.getElementById('filter-logs-action');
+  if (filterLogs) {
+    filterLogs.addEventListener('change', () => {
+      logsCurrentPage = 1;
+      renderAuditLogs();
+    });
+  }
+}
+
+function filteredAuditLogs() {
+  const searchTerm = (document.getElementById('search-logs-input')?.value || '').trim().toLowerCase();
+  const filterAction = document.getElementById('filter-logs-action')?.value || '';
+
+  return auditLogs.filter(log => {
+    if (filterAction && !log.action.startsWith(filterAction)) return false;
+
+    if (searchTerm) {
+      if (log.actor && log.actor.toLowerCase().includes(searchTerm)) return true;
+      if (log.action && log.action.toLowerCase().includes(searchTerm)) return true;
+      if (log.details) {
+        const detailsStr = JSON.stringify(log.details).toLowerCase();
+        if (detailsStr.includes(searchTerm)) return true;
+      }
+      return false;
+    }
+    return true;
+  });
+}
+
+window.setLogsPage = function(n) {
+  logsCurrentPage = n;
+  renderAuditLogs();
+};
+
+function renderLogsPager(total) {
+  const pager = document.getElementById('logs-pager');
+  if (!pager) return;
+  const totalPages = Math.ceil(total / LOGS_PER_PAGE) || 1;
+  if (logsCurrentPage > totalPages) logsCurrentPage = totalPages;
+
+  if (totalPages <= 1) {
+    pager.innerHTML = '';
+    return;
+  }
+
+  let h = '';
+  h += `<button class="btn btn-outline btn-sm" ${logsCurrentPage === 1 ? 'disabled' : ''} onclick="window.setLogsPage(${logsCurrentPage - 1})">Prev</button>`;
+  h += `<span class="pager-text">Page ${logsCurrentPage} of ${totalPages}</span>`;
+  h += `<button class="btn btn-outline btn-sm" ${logsCurrentPage === totalPages ? 'disabled' : ''} onclick="window.setLogsPage(${logsCurrentPage + 1})">Next</button>`;
+  pager.innerHTML = h;
+}
+
+function renderAuditLogsError(message) {
+  const container = document.getElementById('audit-log-list');
+  if (!container) return;
+  container.innerHTML = `<div class="empty">
+    <iconsax-icon name="shield-cross" type="bulk" size="30" color="var(--status-rejected)"></iconsax-icon>
+    <b style="color:var(--status-rejected);">Access Denied</b>
+    ${escapeHtml(message)}
+  </div>`;
+  const count = document.getElementById('logs-result-count');
+  if (count) count.textContent = '';
+  renderLogsPager(0);
+}
+
+function renderAuditLogs() {
+  const container = document.getElementById('audit-log-list');
+  if (!container || !auditLogsLoaded) return;
+
+  const fLogs = filteredAuditLogs();
+  
+  const countSpan = document.getElementById('logs-result-count');
+  if (countSpan) countSpan.textContent = `${fLogs.length.toLocaleString()} log${fLogs.length === 1 ? '' : 's'}`;
+  
+  renderLogsPager(fLogs.length);
+
+  if (fLogs.length === 0) {
+    container.innerHTML = `
+      <div class="empty">
+        <iconsax-icon name="shield-tick" type="bulk" size="30" color="currentColor"></iconsax-icon>
+        <b>No logs found</b>
+        The audit log is empty or no entries match your search.
+      </div>`;
+    return;
+  }
+
+  const start = (logsCurrentPage - 1) * LOGS_PER_PAGE;
+  const pageItems = fLogs.slice(start, start + LOGS_PER_PAGE);
+
+  container.innerHTML = pageItems.map((log, i) => {
+    const ms = log.timestamp;
+    const when = ms ? new Date(ms).toLocaleString(undefined, { 
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }) : 'unknown time';
+    
+    // Extract a readable summary from details
+    let summary = '';
+    const d = log.details || {};
+    if (d.word) summary = `Word: ${d.word}`;
+    else if (d.title) summary = `Title: ${d.title}`;
+    else if (d.kasiguranin) summary = `Word: ${d.kasiguranin}`;
+    else if (d.versionName) summary = `v${d.versionName}`;
+    
+    // Format JSON details
+    const detailsStr = Object.keys(d).length ? escapeHtml(JSON.stringify(d, null, 2)) : '';
+
+    return `
+      <div class="release-row" style="grid-template-columns: auto 1fr; border-bottom: 1px solid var(--hair); padding: var(--s-4) 0;">
+        <div class="release-node"><span class="release-dot" aria-hidden="true" style="background:var(--violet-soft);"></span></div>
+        <div class="release-main">
+          <div class="release-title">
+            <span class="badge badge-category" style="margin-left:0; margin-right:var(--s-2); font-family:var(--sans); font-size:var(--t-xs); font-weight:700;">${escapeHtml(log.action)}</span>
+            <b style="font-size: var(--t-sm); font-family:var(--sans);">${escapeHtml(log.actor)}</b>
+            <small style="font-size: var(--t-xs); color: var(--muted);">${escapeHtml(when)}</small>
+            ${summary ? `<small style="margin-left: var(--s-2); color: var(--ink);"><b>${escapeHtml(summary)}</b></small>` : ''}
+          </div>
+          ${detailsStr ? `<pre class="log-details" style="font-size:11px; color:var(--muted); background:var(--sunken); padding:var(--s-2); border-radius:var(--r-ctl); margin-top:var(--s-2); overflow-x:auto;">${detailsStr}</pre>` : ''}
         </div>
       </div>`;
   }).join('');

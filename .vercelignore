@@ -1,0 +1,9 @@
+app/
+functions/
+scripts/
+.gradle/
+*.apk
+*.aab
+node_modules/
+.git/
+check_pos.js

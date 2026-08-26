@@ -73,6 +73,15 @@
         </nav>
       </div>
 
+      <div class="navgroup">
+        <div class="navlabel">System</div>
+        <nav>
+          <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
+            <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Admin logs
+          </button>
+        </nav>
+      </div>
+
       <div class="sidebar-spacer"></div>
 
       <div class="sidebar-foot">
@@ -401,6 +410,47 @@
 
       <div class="panel">
         <div class="timeline" id="releases-list-container"></div>
+      </div>
+    </section>
+
+    <!-- Tab 6: Admin Audit Logs -->
+    <section id="tab-logs" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Admin logs</h1>
+          <p>An append-only record of every admin action. Use this to verify data integrity
+             and trace who changed what.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="logs-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-logs-input">Search logs</label>
+            <input type="search" id="search-logs-input" class="form-control" placeholder="Search by action, admin, or detail&hellip;">
+          </div>
+          <label class="sr-only" for="filter-logs-action">Filter by action</label>
+          <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All actions</option>
+            <option value="vocabulary">Vocabulary</option>
+            <option value="submission">Submissions</option>
+            <option value="literature">Literature</option>
+            <option value="story">Stories</option>
+            <option value="release">Releases</option>
+            <option value="announcement">Announcements</option>
+          </select>
+        </div>
+
+        <div class="audit-timeline" id="audit-log-list">
+          <p style="color:var(--muted); padding:2.5rem; text-align:center;">Loading admin logs&hellip;</p>
+        </div>
+
+        <div class="pager" id="logs-pager"></div>
       </div>
     </section>
 
