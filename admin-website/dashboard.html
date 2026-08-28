@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>KasiGuru — Admin</title>
+  <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
+  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v3">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- Auth loading screen, shown until Firebase confirms the session -->
+  <div id="auth-loading-screen">
+    <div class="logo-badge">KasiGuru</div>
+    <div class="spinner"></div>
+    <p style="color:var(--muted);">Verifying admin session&hellip;</p>
+  </div>
+
+  <!-- Access denied: signed in, but without the admin claim -->
+  <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--ground); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;">
+    <div class="logo-badge">KasiGuru</div>
+    <h2 style="margin:0;">Access denied</h2>
+    <p style="color:var(--muted); max-width:420px; margin:0;">
+      Your account is signed in but does not have administrator access.
+      Please contact the project owner to be granted the admin role.
+    </p>
+    <p id="access-denied-email-display" style="color:var(--status-pending); font-weight:700; margin:0;"></p>
+    <button class="btn btn-danger" onclick="window.adminSignOut()">Sign out</button>
+  </div>
+
+  <div class="app">
+
+    <!-- Sidebar. A moderator alternates between the queue and the dictionary constantly, so both
+         stay visible and one click apart. Each destination has its own glyph: Dictionary and
+         Stories previously shared book-1, which made them indistinguishable at a glance. -->
+    <aside>
+      <div class="logo-container">
+        <div class="logo-mark" aria-hidden="true">K</div>
+        <div>
+          <div class="logo-badge">KasiGuru</div>
+          <div class="logo-title">Moderation console</div>
+        </div>
+      </div>
+
+      <div class="navgroup">
+        <div class="navlabel">Moderate</div>
+        <nav>
+          <button data-tab="tab-dashboard" class="active" onclick="window.switchTab('tab-dashboard')">
+            <iconsax-icon name="element-3" type="bulk" size="18" color="currentColor"></iconsax-icon> Overview
+          </button>
+          <button data-tab="tab-submissions" onclick="window.switchTab('tab-submissions')">
+            <iconsax-icon name="clock" type="bulk" size="18" color="currentColor"></iconsax-icon> Verification queue
+            <span class="nav-count" id="nav-queue-count" hidden>0</span>
+          </button>
+          <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
+            <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
+          </button>
+          <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
+            <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
+          </button>
+        </nav>
+      </div>
+
+      <div class="navgroup">
+        <div class="navlabel">Publish</div>
+        <nav>
+          <button data-tab="tab-releases" onclick="window.switchTab('tab-releases')">
+            <iconsax-icon name="box-search" type="bulk" size="18" color="currentColor"></iconsax-icon> APK releases
+          </button>
+        </nav>
+      </div>
+
+      <div class="navgroup">
+        <div class="navlabel">System</div>
+        <nav>
+          <button data-tab="tab-users" onclick="window.switchTab('tab-users')">
+            <iconsax-icon name="profile-2user" type="bulk" size="18" color="currentColor"></iconsax-icon> Users
+          </button>
+          <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
+            <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Admin logs
+          </button>
+          <button data-tab="tab-backup" onclick="window.switchTab('tab-backup')">
+            <iconsax-icon name="cloud-change" type="bulk" size="18" color="currentColor"></iconsax-icon> Backup &amp; Restore
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-foot">
+        <div id="admin-user-chip">
+          <iconsax-icon name="user" type="bulk" size="14" color="currentColor"></iconsax-icon>
+          <span id="admin-email-display">Admin</span>
+        </div>
+        <button id="logout-btn" onclick="window.adminSignOut()">
+          <iconsax-icon name="logout" type="bulk" size="14" color="currentColor"></iconsax-icon> Sign out
+        </button>
+      </div>
+    </aside>
+
+  <main>
+
+    <!-- Topbar. Search reaches the dictionary from anywhere, which is the lookup a moderator does
+         most; the bell mirrors the queue count already in the sidebar. -->
+    <div class="topbar">
+      <div class="topsearch">
+        <iconsax-icon name="search-normal-1" type="linear" size="18" color="currentColor"></iconsax-icon>
+        <label class="sr-only" for="global-search">Search the dictionary</label>
+        <input type="search" id="global-search" placeholder="Search the dictionary&hellip;" autocomplete="off">
+        <kbd aria-hidden="true">/</kbd>
+      </div>
+      <button type="button" class="icon-btn" id="topbar-queue-btn" onclick="window.switchTab('tab-submissions')">
+        <iconsax-icon name="notification" type="bulk" size="19" color="currentColor"></iconsax-icon>
+        <span class="dot" id="topbar-queue-dot" hidden>0</span>
+        <span class="sr-only" id="topbar-queue-label">Verification queue</span>
+      </button>
+      <div class="topuser">
+        <div class="avatar" id="topbar-avatar" aria-hidden="true">&hellip;</div>
+        <div class="topuser-meta">
+          <span class="topuser-name">Administrator</span>
+          <span class="topuser-mail" id="topbar-email">&hellip;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 1: Dashboard Overview -->
+    <section id="tab-dashboard" class="tab-content active" style="display: block;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Overview</h1>
+          <p>Verify community submissions, maintain the master dictionary, and publish app releases.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add word
+          </button>
+          <button class="btn btn-outline" onclick="window.switchTab('tab-vocabulary')">
+            <iconsax-icon name="document-upload" type="bulk" size="18" color="currentColor"></iconsax-icon> Import data
+          </button>
+          <button class="btn btn-outline" onclick="openModal('announcement-modal')">
+            <iconsax-icon name="notification" type="bulk" size="18" color="currentColor"></iconsax-icon> Post announcement
+          </button>
+        </div>
+      </div>
+
+      <!-- Live system announcements. Read by AnnouncementRepository (a Firestore listener) while
+           the app is open - there is no push-while-closed delivery here, that still needs
+           functions/send_push.js run by hand, the same Spark-plan limitation the release
+           pipeline already has. -->
+      <div class="panel" id="announcements-panel" style="margin-bottom:1.5rem;">
+        <div class="pagehead" style="margin-bottom:0.5rem;">
+          <div><h2 style="font-size:1rem; font-weight:800;">Active announcements</h2></div>
+        </div>
+        <div id="announcements-list">
+          <p style="color:var(--muted); padding:0.5rem 0;">Loading announcements&hellip;</p>
+        </div>
+      </div>
+
+      <!-- Four figures. The queue carries colour because it is the only one that is a claim on the
+           moderator's time; the other three are states of the corpus. Each tile is the button that
+           opens what it counts. -->
+      <div class="statgrid">
+        <button type="button" class="stat stat--queue" onclick="window.switchTab('tab-submissions')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Awaiting review</span>
+          <span class="stat-value num skeleton" id="metric-pending-sub">0</span>
+          <span class="stat-note" id="metric-pending-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-vocabulary')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Dictionary entries</span>
+          <span class="stat-value num skeleton" id="metric-total-words">0</span>
+          <span class="stat-note" id="metric-words-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-stories')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Stories</span>
+          <span class="stat-value num skeleton" id="metric-total-stories">0</span>
+          <span class="stat-note" id="metric-stories-note">&nbsp;</span>
+        </button>
+        <button type="button" class="stat" onclick="window.switchTab('tab-releases')">
+          <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
+          <span class="stat-label">Published releases</span>
+          <span class="stat-value num skeleton" id="metric-total-releases">0</span>
+          <span class="stat-note" id="metric-releases-note">&nbsp;</span>
+        </button>
+      </div>
+
+      <div class="bento">
+
+        <!-- Corpus shape. Real counts from the vocabulary collection, one bar per category. -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Dictionary by category</h2>
+              <p id="chart-caption">Where the corpus is thin, and where it is not.</p>
+            </div>
+          </div>
+          <div class="bars" id="category-bars"></div>
+        </div>
+
+        <!-- Where submissions end up. The legend states each count, so nothing rests on colour. -->
+        <div class="card span-3">
+          <div class="card-head">
+            <div>
+              <h2>Submission outcomes</h2>
+              <p>Every word the community has sent.</p>
+            </div>
+          </div>
+          <div id="outcome-figure"></div>
+        </div>
+
+        <!-- The queue itself, newest first. -->
+        <div class="card span-3 row-2">
+          <div class="card-head">
+            <div><h2>Recent submissions</h2></div>
+            <button class="text-link" onclick="window.switchTab('tab-submissions')">See all</button>
+          </div>
+          <div class="itemlist" id="recent-submissions"></div>
+        </div>
+
+        <!-- The story shelf, with the one thing about a story that decides whether it is finished. -->
+        <div class="card span-5">
+          <div class="card-head">
+            <div><h2>Story library</h2></div>
+            <button class="text-link" onclick="window.switchTab('tab-stories')">Manage</button>
+          </div>
+          <div class="itemlist" id="story-list"></div>
+        </div>
+
+        <!-- What learners are actually running. -->
+        <div class="span-4">
+          <div class="release-card" id="release-card">
+            <h2>Live app release</h2>
+            <div class="release-version num" id="metric-latest-version">&hellip;</div>
+            <div class="release-meta" id="release-meta">Loading release history&hellip;</div>
+            <button class="btn btn-on-violet" onclick="window.switchTab('tab-releases')">
+              <iconsax-icon name="send-1" type="bulk" size="17" color="currentColor"></iconsax-icon> Publish a release
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 2: User Word Submissions Verification Queue -->
+    <section id="tab-submissions" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Verification queue</h1>
+          <p>Words contributed from the app, newest first. Approving one moves it into the master
+             dictionary and it reaches every learner on the next sync.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="queue-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kasiguranin</th>
+                <th>Tagalog</th>
+                <th>English</th>
+                <th>Category</th>
+                <th>Part of speech</th>
+                <th>Contributor</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-tbody">
+              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading submissions queue&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pagehead" style="margin-top:2rem;">
+        <div>
+          <h1>Story &amp; poem submissions</h1>
+          <p>Full literature contributed from the app. Approving one copies it into Stories.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Pages</th>
+                <th>Contributor</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="literature-submissions-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading literature queue&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: The dictionary itself.
+         Read as entries, not scanned as a table: headword, pronunciation, part of speech, then the
+         glosses. The two bulk importers used to occupy the whole first screen of the page a
+         moderator opens all day; they are an occasional task and now live behind "Import". -->
+    <section id="tab-vocabulary" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Dictionary</h1>
+          <p>The master Kasiguranin corpus. Every entry here is what the app teaches, so a
+             correction made in this list is a correction on every learner's device.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add word
+          </button>
+          <button class="btn btn-outline" onclick="openModal('import-modal')">
+            <iconsax-icon name="document-upload" type="bulk" size="18" color="currentColor"></iconsax-icon> Import
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-vocab-input">Search the dictionary</label>
+            <input type="search" id="search-vocab-input" class="form-control" placeholder="Search Kasiguranin, Tagalog or English&hellip;">
+          </div>
+          <label class="sr-only" for="filter-vocab-category">Filter by category</label>
+          <select id="filter-vocab-category" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All categories</option>
+            <option value="Greetings &amp; Essentials">Greetings &amp; Essentials</option>
+            <option value="House &amp; Daily Life">House &amp; Daily Life</option>
+            <option value="Body Parts &amp; Health">Body Parts &amp; Health</option>
+            <option value="Animals &amp; Wildlife">Animals &amp; Wildlife</option>
+            <option value="Food &amp; Dining">Food &amp; Dining</option>
+            <option value="Numbers &amp; Time">Numbers &amp; Time</option>
+            <option value="Weather &amp; Climate">Weather &amp; Climate</option>
+            <option value="Nature &amp; Environment">Nature &amp; Environment</option>
+            <option value="Family &amp; People">Family &amp; People</option>
+            <option value="Emotions &amp; Feelings">Emotions &amp; Feelings</option>
+            <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
+            <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
+            <option value="General">General</option>
+          </select>
+          <label class="sr-only" for="sort-vocab">Sort by</label>
+          <select id="sort-vocab" class="form-control" style="width:auto; min-width:160px;">
+            <option value="kasiguranin">A&ndash;Z by headword</option>
+            <option value="english">A&ndash;Z by English</option>
+            <option value="category">By category</option>
+            <option value="partOfSpeech">By part of speech</option>
+          </select>
+        </div>
+
+        <!-- The alphabet index. Letters with no entry behind them stay visible but unpressable:
+             a gap in the corpus is information, not something to hide. -->
+        <div class="letter-rail" id="letter-rail" role="group" aria-label="Jump to a letter"></div>
+
+        <div class="toolbar" style="margin-bottom:0; justify-content:space-between;">
+          <span class="result-count" id="vocab-result-count">Loading&hellip;</span>
+        </div>
+
+        <div class="entry-list" id="entry-list"></div>
+        <div class="pager" id="vocab-pager"></div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Stories. Content with covers, not rows. -->
+    <section id="tab-stories" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Stories</h1>
+          <p>Published from here, a story overwrites the app's built-in copy with the same id on
+             every learner's device.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="window.openStoryEditor()">
+            <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add story
+          </button>
+        </div>
+      </div>
+
+      <div class="story-grid stagger" id="story-grid"></div>
+    </section>
+
+    <!-- Tab 5: Releases. Publishing is rare; checking what shipped is constant, so the history is
+         the page and the form is behind the primary action. -->
+    <section id="tab-releases" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>APK releases</h1>
+          <p>Every build published to the download site. The version marked live is the one the
+             app checks against when it decides whether to prompt for an update.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-primary" onclick="openModal('publish-release-modal')">
+            <iconsax-icon name="send-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Publish release
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="timeline" id="releases-list-container"></div>
+      </div>
+    </section>
+
+    <!-- Tab 6: Users -->
+    <section id="tab-users" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Registered users</h1>
+          <p>All user accounts currently registered in the KasiGuru app. Data is synchronised from the public leaderboard records.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="users-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Level Badge</th>
+                <th>Total XP</th>
+                <th>Current Streak</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 7: Admin Audit Logs -->
+    <section id="tab-logs" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Admin logs</h1>
+          <p>An append-only record of every admin action. Use this to verify data integrity
+             and trace who changed what.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="logs-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-logs-input">Search logs</label>
+            <input type="search" id="search-logs-input" class="form-control" placeholder="Search by action, admin, or detail&hellip;">
+          </div>
+          <label class="sr-only" for="filter-logs-action">Filter by action</label>
+          <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All actions</option>
+            <option value="vocabulary">Vocabulary</option>
+            <option value="submission">Submissions</option>
+            <option value="literature">Literature</option>
+            <option value="story">Stories</option>
+            <option value="release">Releases</option>
+            <option value="announcement">Announcements</option>
+          </select>
+        </div>
+
+        <div class="audit-timeline" id="audit-log-list">
+          <p style="color:var(--muted); padding:2.5rem; text-align:center;">Loading admin logs&hellip;</p>
+        </div>
+
+        <div class="pager" id="logs-pager"></div>
+      </div>
+    </section>
+
+    <!-- Tab 8: Backup & Restore -->
+    <section id="tab-backup" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Backup &amp; Restore</h1>
+          <p>Export a full JSON snapshot of dictionary entries, stories, releases, and announcements, or restore them to Firestore.</p>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Export Card -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Create System Backup</h2>
+              <p>Download a complete JSON file containing all dictionary words, stories, announcements, and releases.</p>
+            </div>
+          </div>
+          <div style="padding:1rem 0;">
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">
+              Backing up generates a timestamped snapshot of your Firestore database. Keep this file safe for data recovery or migrating environments.
+            </p>
+            <button class="btn btn-primary" id="btn-export-backup" onclick="window.exportBackup()">
+              <iconsax-icon name="document-download" type="bulk" size="18" color="currentColor"></iconsax-icon> Export JSON Backup
+            </button>
+          </div>
+        </div>
+
+        <!-- Restore Card -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Restore from Backup</h2>
+              <p>Upload a previously exported JSON backup file to restore database entries.</p>
+            </div>
+          </div>
+          <div style="padding:1rem 0;">
+            <div class="dropzone" id="backup-dropzone" style="margin-bottom:1rem;">
+              <p style="font-weight:800; margin-bottom:6px;">Drop a .json backup file, or click to choose</p>
+              <p style="color:var(--muted); font-size:0.8rem;">Restores vocabulary, stories, announcements, and releases into Firestore.</p>
+              <input type="file" id="backup-file-input" accept=".json" style="display:none;">
+            </div>
+            <div id="backup-restore-status" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  </div><!-- /.app -->
+
+
+  <!-- Modal: Add New Vocabulary Word -->
+  <div id="announcement-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="notification" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Post a system announcement</h2>
+        <button class="close-btn" onclick="closeModal('announcement-modal')">&times;</button>
+      </div>
+      <form id="announcement-form">
+        <div class="form-group">
+          <label>Title (optional)</label>
+          <input type="text" id="input-announcement-title" class="form-control" placeholder="e.g. New words this week">
+        </div>
+        <div class="form-group">
+          <label>Message *</label>
+          <textarea id="input-announcement-message" class="form-control" rows="3" required placeholder="Shown live to every learner with the app open."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('announcement-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="add-vocab-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="add-circle" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Add New Kasiguranin Entry</h2>
+        <button class="close-btn" onclick="closeModal('add-vocab-modal')">&times;</button>
+      </div>
+      <form id="add-vocab-form">
+        <div class="form-group">
+          <label>Kasiguranin Word *</label>
+          <input type="text" id="input-kasiguranin" class="form-control" required placeholder="e.g. apak">
+        </div>
+        <div class="form-group">
+          <label>Tagalog Translation</label>
+          <input type="text" id="input-tagalog" class="form-control" placeholder="e.g. daras">
+        </div>
+        <div class="form-group">
+          <label>English translation</label>
+          <input type="text" id="input-english" class="form-control" placeholder="e.g. adze">
+        </div>
+        <div class="form-group">
+          <label>Meaning (English)</label>
+          <textarea id="input-meaning-en" class="form-control" rows="2" maxlength="200" placeholder="One sentence saying what the word means, not just what it translates to."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Meaning (Tagalog)</label>
+          <textarea id="input-meaning-tl" class="form-control" rows="2" maxlength="200" placeholder="Ang parehong kahulugan, sa simpleng Filipino."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="input-category" class="form-control">
+            <option value="Greetings & Essentials">Greetings & Essentials</option>
+            <option value="House & Daily Life">House & Daily Life</option>
+            <option value="Body Parts & Health">Body Parts & Health</option>
+            <option value="Animals & Wildlife">Animals & Wildlife</option>
+            <option value="Food & Dining">Food & Dining</option>
+            <option value="Numbers & Time">Numbers & Time</option>
+            <option value="Weather & Climate">Weather & Climate</option>
+            <option value="Nature & Environment">Nature & Environment</option>
+            <option value="Family & People">Family & People</option>
+            <option value="Emotions & Feelings">Emotions & Feelings</option>
+            <option value="Colors & Shapes">Colors & Shapes</option>
+            <option value="Occupations & Tools">Occupations & Tools</option>
+
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Part of Speech</label>
+          <select id="input-part-of-speech" class="form-control">
+            <option value="">(Select Part of Speech)</option>
+            <option value="Noun">Noun</option>
+            <option value="Verb">Verb</option>
+            <option value="Adjective">Adjective</option>
+            <option value="Adverb">Adverb</option>
+            <option value="Pronoun">Pronoun</option>
+            <option value="Preposition">Preposition</option>
+            <option value="Conjunction / Connector">Conjunction / Connector</option>
+            <option value="Interjection">Interjection</option>
+            <option value="Marker & Particle">Marker & Particle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phonetic / IPA Notation</label>
+          <input type="text" id="input-ipa" class="form-control" placeholder="e.g. ˈɁaː.pak">
+        </div>
+        <div class="form-group">
+          <label>Neutral Form (Base)</label>
+          <input type="text" id="input-neutral" class="form-control" placeholder="e.g. abben">
+        </div>
+        <div class="form-group">
+          <label>Past Tense (Perfective)</label>
+          <input type="text" id="input-perfective" class="form-control" placeholder="e.g. naglakaw">
+        </div>
+        <div class="form-group">
+          <label>Present Tense (Imperfective)</label>
+          <input type="text" id="input-imperfective" class="form-control" placeholder="e.g. nagalakaw">
+        </div>
+        <div class="form-group">
+          <label>Future Tense (Contemplative)</label>
+          <input type="text" id="input-contemplative" class="form-control" placeholder="e.g. magalakaw">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence, in Kasiguranin</label>
+          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div class="form-group">
+          <label>Second Example Sentence, in Kasiguranin</label>
+          <input type="text" id="input-example2" class="form-control" placeholder="A second, different sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Second Example Translation</label>
+          <input type="text" id="input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Vocabulary Word -->
+  <div id="story-editor-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:760px;">
+      <div class="modal-header">
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="book-1" type="bulk" size="24" color="var(--violet)"></iconsax-icon> <span id="story-editor-title">Add story</span></h2>
+        <button class="close-btn" onclick="closeModal('story-editor-modal')">&times;</button>
+      </div>
+
+      <form id="story-form">
+        <input type="hidden" id="story-doc-id">
+
+        <div class="form-group">
+          <label class="form-label">Story id *</label>
+          <input type="number" id="story-input-id" class="form-control" min="1" required>
+          <small style="color:var(--muted);">The app matches its built-in stories by this number. Reusing an id replaces that story on every device.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" id="story-input-title" class="form-control" required placeholder="Si Pagong at si Matsing">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kasiguranin title</label>
+          <input type="text" id="story-input-title-kasiguranin" class="form-control" placeholder="Leave blank until the Kasiguranin is written">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="story-input-description" class="form-control" rows="2" placeholder="One sentence describing the story."></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <input type="text" id="story-input-category" class="form-control" placeholder="Fable">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unlocks at (XP)</label>
+            <input type="number" id="story-input-required-xp" class="form-control" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="panel-header" style="margin-top:8px;">
+          <h3 style="font-family:var(--display); font-weight:800; font-size:1rem;">
+            Pages <span class="result-count" id="story-page-count"></span>
+          </h3>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.addStoryPage()">
+            <iconsax-icon name="add-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Add page
+          </button>
+        </div>
+        <div id="story-pages-editor"></div>
+
+        <!-- One shared picker for every page: a file input per page would put N hidden inputs in the
+             DOM for a story with N pages, and only one can be open at a time anyway. -->
+        <input type="file" id="story-page-file" accept="image/*" style="display:none;">
+
+        <!-- Sticky, because a fifteen-page story puts this several thousand pixels down the modal's
+             own scroll region. -->
+        <div class="story-form-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('story-editor-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">
+            <iconsax-icon name="verify" type="bulk" size="18" color="currentColor"></iconsax-icon> Save story
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="edit-vocab-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 style="font-weight:800; font-size:1.25rem;"><iconsax-icon name="edit" type="bulk" size="24" color="var(--violet)"></iconsax-icon> Edit Kasiguranin Entry</h2>
+        <button class="close-btn" onclick="closeModal('edit-vocab-modal')">&times;</button>
+      </div>
+      <form id="edit-vocab-form">
+        <input type="hidden" id="edit-input-id">
+        <div class="form-group">
+          <label>Kasiguranin Word *</label>
+          <input type="text" id="edit-input-kasiguranin" class="form-control" required placeholder="e.g. apak">
+        </div>
+        <div class="form-group">
+          <label>Tagalog Translation</label>
+          <input type="text" id="edit-input-tagalog" class="form-control" placeholder="e.g. daras">
+        </div>
+        <div class="form-group">
+          <label>English translation</label>
+          <input type="text" id="edit-input-english" class="form-control" placeholder="e.g. adze">
+        </div>
+        <div class="form-group">
+          <label>Meaning (English)</label>
+          <textarea id="edit-input-meaning-en" class="form-control" rows="2" maxlength="200" placeholder="One sentence saying what the word means, not just what it translates to."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Meaning (Tagalog)</label>
+          <textarea id="edit-input-meaning-tl" class="form-control" rows="2" maxlength="200" placeholder="Ang parehong kahulugan, sa simpleng Filipino."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="edit-input-category" class="form-control">
+            <option value="Greetings & Essentials">Greetings & Essentials</option>
+            <option value="House & Daily Life">House & Daily Life</option>
+            <option value="Body Parts & Health">Body Parts & Health</option>
+            <option value="Animals & Wildlife">Animals & Wildlife</option>
+            <option value="Food & Dining">Food & Dining</option>
+            <option value="Numbers & Time">Numbers & Time</option>
+            <option value="Weather & Climate">Weather & Climate</option>
+            <option value="Nature & Environment">Nature & Environment</option>
+            <option value="Family & People">Family & People</option>
+            <option value="Emotions & Feelings">Emotions & Feelings</option>
+            <option value="Colors & Shapes">Colors & Shapes</option>
+            <option value="Occupations & Tools">Occupations & Tools</option>
+
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Part of Speech</label>
+          <select id="edit-input-part-of-speech" class="form-control">
+            <option value="">(Select Part of Speech)</option>
+            <option value="Noun">Noun</option>
+            <option value="Verb">Verb</option>
+            <option value="Adjective">Adjective</option>
+            <option value="Adverb">Adverb</option>
+            <option value="Pronoun">Pronoun</option>
+            <option value="Preposition">Preposition</option>
+            <option value="Conjunction / Connector">Conjunction / Connector</option>
+            <option value="Interjection">Interjection</option>
+            <option value="Marker & Particle">Marker & Particle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phonetic / IPA Notation</label>
+          <input type="text" id="edit-input-ipa" class="form-control" placeholder="e.g. ˈɁaː.pak">
+        </div>
+        <div class="form-group">
+          <label>Neutral Form (Base)</label>
+          <input type="text" id="edit-input-neutral" class="form-control" placeholder="e.g. abben">
+        </div>
+        <div class="form-group">
+          <label>Past Tense (Perfective)</label>
+          <input type="text" id="edit-input-perfective" class="form-control" placeholder="e.g. naglakaw">
+        </div>
+        <div class="form-group">
+          <label>Present Tense (Imperfective)</label>
+          <input type="text" id="edit-input-imperfective" class="form-control" placeholder="e.g. nagalakaw">
+        </div>
+        <div class="form-group">
+          <label>Future Tense (Contemplative)</label>
+          <input type="text" id="edit-input-contemplative" class="form-control" placeholder="e.g. magalakaw">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence, in Kasiguranin</label>
+          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div class="form-group">
+          <label>Second Example Sentence, in Kasiguranin</label>
+          <input type="text" id="edit-input-example2" class="form-control" placeholder="A second, different sentence using this word">
+        </div>
+        <div class="form-group">
+          <label>Second Example Translation</label>
+          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Update Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+
+
+  <!-- Modal: bulk import. Moved off the dictionary page, which it used to occupy the whole first
+       screen of. The dropzone ids are unchanged, so the existing SQL and Excel parsers bind to
+       exactly the elements they always did. -->
+  <div id="import-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:720px;">
+      <div class="modal-header">
+        <h2>Import entries</h2>
+        <button class="close-btn" onclick="closeModal('import-modal')" aria-label="Close">&times;</button>
+      </div>
+
+      <p class="section-desc">Both importers write straight into the master dictionary. Existing
+        entries are matched and updated rather than duplicated, and a malformed row is skipped with
+        a count reported at the end.</p>
+
+      <div class="form-group">
+        <label class="form-label">SQL migration (.sql)</label>
+        <div class="dropzone" id="sql-dropzone">
+          <p style="font-weight:800; margin-bottom:6px;">Drop a .sql file, or click to choose</p>
+          <p style="color:var(--muted); font-size:0.8rem;">Parses <code>INSERT INTO vocabulary</code>
+            and conjugation statements, sanitising NULLs.</p>
+          <input type="file" id="sql-file-input" accept=".sql" style="display:none;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Spreadsheet (.xlsx, .xls, .csv)</label>
+        <div class="dropzone" id="excel-dropzone">
+          <p style="font-weight:800; margin-bottom:6px;">Drop a spreadsheet, or click to choose</p>
+          <p style="color:var(--muted); font-size:0.8rem;">Reads the KASIGURANIN, TAGALOG, ENGLISH,
+            CATEGORY and IPA columns.</p>
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('import-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: the full dictionary entry. This is the view the old table could not give — every
+       aspect the corpus records for a word, in one place. -->
+  <div id="entry-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:620px;">
+      <div class="modal-header modal-header--bare">
+        <h2 class="sr-only">Dictionary entry</h2>
+        <button class="close-btn" onclick="closeModal('entry-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div id="entry-modal-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('entry-modal')">Close</button>
+        <button type="button" class="btn btn-danger" id="entry-modal-delete">
+          <iconsax-icon name="trash" type="bulk" size="17" color="currentColor"></iconsax-icon> Delete entry
+        </button>
+        <button type="button" class="btn btn-primary" id="entry-modal-edit">
+          <iconsax-icon name="edit" type="bulk" size="17" color="currentColor"></iconsax-icon> Edit entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: publish a release. -->
+  <div id="publish-release-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h2>Publish release</h2>
+        <button class="close-btn" onclick="closeModal('publish-release-modal')" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="publish-release-form">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--s-4);">
+          <div class="form-group">
+            <label for="rel-code">Version code</label>
+            <input type="number" id="rel-code" class="form-control" required placeholder="10">
+            <small style="color:var(--muted);">The integer the app compares. Must increase.</small>
+          </div>
+          <div class="form-group">
+            <label for="rel-name">Version name</label>
+            <input type="text" id="rel-name" class="form-control" required placeholder="1.9.0">
+            <small style="color:var(--muted);">What learners see, e.g. 1.9.0.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rel-url">APK download link</label>
+          <input type="url" id="rel-url" class="form-control" required placeholder="https://github.com/Anthony2124/KasiGuru/releases/download/v1.9.0/kasiguru-v1.9.0.apk">
+        </div>
+
+        <div class="form-group">
+          <label for="rel-notes">Release notes</label>
+          <textarea id="rel-notes" class="form-control" rows="3" placeholder="What changed in this build."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="check-label">
+            <input type="checkbox" id="rel-force">
+            <span>Required update &mdash; learners cannot dismiss the in-app banner</span>
+          </label>
+          <p style="color:var(--muted); font-size:0.82rem; margin-top:6px;">
+            Leave unchecked for optional updates. An optional banner can be dismissed once and stays
+            hidden until a newer version is published.
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('publish-release-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <iconsax-icon name="send-1" type="bulk" size="17" color="currentColor"></iconsax-icon> Publish release
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>
