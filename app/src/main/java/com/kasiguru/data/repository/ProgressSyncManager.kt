@@ -516,6 +516,9 @@ internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
     // device, or a reinstall restoring from cloud, silently wiped the user's submission count
     // and the badge progress resting on it.
     "submissionsMade" to p.submissionsMade,
+    "dailyReviewCompletedDate" to p.dailyReviewCompletedDate,
+    "dailyGamesDate" to p.dailyGamesDate,
+    "dailyGamesPlayedCount" to p.dailyGamesPlayedCount,
     "updatedAt" to System.currentTimeMillis()
     // password intentionally omitted
 )
@@ -545,6 +548,9 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
     dailyXpDate = data["dailyXpDate"] as? String ?: "",
     titleBadge = data["titleBadge"] as? String ?: "Kasiguranin Apprentice",
     submissionsMade = (data["submissionsMade"] as? Number)?.toInt() ?: 0,
+    dailyReviewCompletedDate = data["dailyReviewCompletedDate"] as? String ?: "",
+    dailyGamesDate = data["dailyGamesDate"] as? String ?: "",
+    dailyGamesPlayedCount = (data["dailyGamesPlayedCount"] as? Number)?.toInt() ?: 0,
     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
 )
 
@@ -577,6 +583,19 @@ internal fun mergeProgress(
         else -> remote.dailyXpDate to remote.dailyXpEarned
     }
 
+    val mergedReviewDate = when {
+        local.dailyReviewCompletedDate == remote.dailyReviewCompletedDate -> local.dailyReviewCompletedDate
+        local.dailyReviewCompletedDate > remote.dailyReviewCompletedDate -> local.dailyReviewCompletedDate
+        else -> remote.dailyReviewCompletedDate
+    }
+
+    val (mergedGamesDate, mergedGamesCount) = when {
+        local.dailyGamesDate == remote.dailyGamesDate ->
+            local.dailyGamesDate to maxOf(local.dailyGamesPlayedCount, remote.dailyGamesPlayedCount)
+        local.dailyGamesDate > remote.dailyGamesDate -> local.dailyGamesDate to local.dailyGamesPlayedCount
+        else -> remote.dailyGamesDate to remote.dailyGamesPlayedCount
+    }
+
     return UserProgressEntity(
         id = 1,
         userName = pick(local.userName, remote.userName, remoteNewer),
@@ -605,6 +624,9 @@ internal fun mergeProgress(
         // A lifetime total, so it takes the max like the other counters rather than the
         // newer side's value — a device that synced before a submission must not undo it.
         submissionsMade = maxOf(local.submissionsMade, remote.submissionsMade),
+        dailyReviewCompletedDate = mergedReviewDate,
+        dailyGamesDate = mergedGamesDate,
+        dailyGamesPlayedCount = mergedGamesCount,
         updatedAt = maxOf(local.updatedAt, remote.updatedAt)
     )
 }

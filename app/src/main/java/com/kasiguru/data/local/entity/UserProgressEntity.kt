@@ -43,5 +43,11 @@ data class UserProgressEntity(
     /** Last-modified marker for cross-device sync (Phase 6). */
     val updatedAt: Long = 0,
     /** Words, stories, or poems submitted, approved or not - backs the "First Contribution" badge. */
-    val submissionsMade: Int = 0
+    val submissionsMade: Int = 0,
+    /** ISO date when daily review flashcards were completed today. */
+    val dailyReviewCompletedDate: String = "",
+    /** ISO date the [dailyGamesPlayedCount] counter belongs to. */
+    val dailyGamesDate: String = "",
+    /** Number of mini games played today. */
+    val dailyGamesPlayedCount: Int = 0
 )

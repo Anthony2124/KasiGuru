@@ -50,8 +50,21 @@ object KasiGuruMigrations {
         MIGRATION_24_25,
         MIGRATION_25_26,
         MIGRATION_26_27,
-        MIGRATION_27_28
+        MIGRATION_27_28,
+        MIGRATION_28_29
         )
+    }
+
+    // -- v28 -> v29 -----------------------------------------------------------
+    // user_progress gains daily streak quota tracking fields:
+    // dailyReviewCompletedDate, dailyGamesDate, and dailyGamesPlayedCount.
+    // Syncs streak requirements with cloud progress and restores seamlessly upon sign-in.
+    private val MIGRATION_28_29 = object : Migration(28, 29) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `dailyReviewCompletedDate` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `dailyGamesDate` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `user_progress` ADD COLUMN `dailyGamesPlayedCount` INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     // -- v27 -> v28 -----------------------------------------------------------

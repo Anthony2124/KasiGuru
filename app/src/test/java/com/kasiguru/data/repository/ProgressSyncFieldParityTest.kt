@@ -78,6 +78,10 @@ class ProgressSyncFieldParityTest {
         assertEquals(original.dailyXpEarned, roundTripped.dailyXpEarned)
         assertEquals(original.dailyXpDate, roundTripped.dailyXpDate)
         assertEquals(original.titleBadge, roundTripped.titleBadge)
+        assertEquals(original.submissionsMade, roundTripped.submissionsMade)
+        assertEquals(original.dailyReviewCompletedDate, roundTripped.dailyReviewCompletedDate)
+        assertEquals(original.dailyGamesDate, roundTripped.dailyGamesDate)
+        assertEquals(original.dailyGamesPlayedCount, roundTripped.dailyGamesPlayedCount)
         // updatedAt deliberately not compared — toMap() always overwrites it with "now".
     }
 }

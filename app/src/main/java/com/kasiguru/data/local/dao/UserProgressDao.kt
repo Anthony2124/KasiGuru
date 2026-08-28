@@ -63,4 +63,15 @@ interface UserProgressDao {
 
     @Query("UPDATE user_progress SET isOnboardingCompleted = 1, userName = :userName, profileIconId = :avatarId, dailyGoalXp = :dailyGoalXp, titleBadge = :titleBadge, totalXp = totalXp + 50, currentStreak = CASE WHEN currentStreak < 1 THEN 1 ELSE currentStreak END, longestStreak = CASE WHEN longestStreak < 1 THEN 1 ELSE longestStreak END WHERE id = 1")
     suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String)
+
+    @Query("UPDATE user_progress SET dailyReviewCompletedDate = :today WHERE id = 1")
+    suspend fun recordDailyReviewCompleted(today: String)
+
+    @Query(
+        """UPDATE user_progress
+           SET dailyGamesPlayedCount = CASE WHEN dailyGamesDate = :today THEN dailyGamesPlayedCount + 1 ELSE 1 END,
+               dailyGamesDate = :today
+           WHERE id = 1"""
+    )
+    suspend fun recordDailyGamePlayed(today: String)
 }

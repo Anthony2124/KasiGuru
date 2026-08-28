@@ -151,4 +151,30 @@ class ProgressSyncTest {
         assertEquals(20, merged.dailyXpEarned)
         assertEquals("2026-08-17", merged.dailyXpDate)
     }
+
+    @Test
+    fun dailyStreakQuotaSurvivesMergeAndRoundTrips() {
+        val local = UserProgressEntity(
+            dailyReviewCompletedDate = "2026-08-28",
+            dailyGamesDate = "2026-08-28",
+            dailyGamesPlayedCount = 2,
+            updatedAt = 1
+        )
+        val remote = UserProgressEntity(
+            dailyReviewCompletedDate = "2026-08-28",
+            dailyGamesDate = "2026-08-28",
+            dailyGamesPlayedCount = 3,
+            updatedAt = 2
+        )
+
+        val merged = mergeProgress(local, remote)
+        assertEquals("2026-08-28", merged.dailyReviewCompletedDate)
+        assertEquals("2026-08-28", merged.dailyGamesDate)
+        assertEquals(3, merged.dailyGamesPlayedCount)
+
+        val roundTrip = toEntity(toMap(merged))
+        assertEquals("2026-08-28", roundTrip.dailyReviewCompletedDate)
+        assertEquals("2026-08-28", roundTrip.dailyGamesDate)
+        assertEquals(3, roundTrip.dailyGamesPlayedCount)
+    }
 }

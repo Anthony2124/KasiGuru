@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -36,6 +37,25 @@ class UserProgressRepository @Inject constructor(
 
     suspend fun getUserProgressOnce(): UserProgressEntity? =
         userProgressDao.getUserProgressOnce()
+
+    fun getDailyStreakQuota(today: String): Flow<DailyStreakQuota> =
+        userProgressDao.getUserProgress().map { progress ->
+            if (progress == null) DailyStreakQuota()
+            else DailyStreakQuota(
+                reviewCompleted = progress.dailyReviewCompletedDate == today,
+                gamesPlayed = if (progress.dailyGamesDate == today) progress.dailyGamesPlayedCount else 0,
+                requiredGames = 3
+            )
+        }
+
+    suspend fun getDailyStreakQuotaOnce(today: String): DailyStreakQuota {
+        val progress = userProgressDao.getUserProgressOnce() ?: return DailyStreakQuota()
+        return DailyStreakQuota(
+            reviewCompleted = progress.dailyReviewCompletedDate == today,
+            gamesPlayed = if (progress.dailyGamesDate == today) progress.dailyGamesPlayedCount else 0,
+            requiredGames = 3
+        )
+    }
 
     suspend fun initializeProgress(progress: UserProgressEntity) =
         userProgressDao.insertOrUpdate(progress)
@@ -101,6 +121,7 @@ class UserProgressRepository @Inject constructor(
     suspend fun incrementGamesPlayed() {
         userProgressDao.incrementGamesPlayed()
         val today = LocalDate.now().toIsoString()
+        userProgressDao.recordDailyGamePlayed(today)
         userPreferencesRepository.recordDailyGamePlayed(today)
         checkStreakQuotaAndAdvance()
         val progress = userProgressDao.getUserProgressOnce() ?: return
@@ -109,6 +130,7 @@ class UserProgressRepository @Inject constructor(
 
     suspend fun recordDailyReviewCompleted() {
         val today = LocalDate.now().toIsoString()
+        userProgressDao.recordDailyReviewCompleted(today)
         userPreferencesRepository.recordDailyReviewCompleted(today)
         checkStreakQuotaAndAdvance()
     }
@@ -128,7 +150,7 @@ class UserProgressRepository @Inject constructor(
      */
     suspend fun checkStreakQuotaAndAdvance() {
         val today = LocalDate.now().toIsoString()
-        val quota = userPreferencesRepository.getDailyStreakQuotaOnce(today)
+        val quota = getDailyStreakQuotaOnce(today)
         if (quota.isQuotaMet) {
             updateStreak()
         }

@@ -150,7 +150,7 @@ class LearnViewModel @Inject constructor(
     private fun observeStreakQuota() {
         viewModelScope.launch {
             val today = LocalDate.now().toIsoString()
-            userPreferencesRepository.getDailyStreakQuota(today).collect { quota ->
+            userProgressRepository.getDailyStreakQuota(today).collect { quota ->
                 _uiState.update { it.copy(streakQuota = quota) }
             }
         }

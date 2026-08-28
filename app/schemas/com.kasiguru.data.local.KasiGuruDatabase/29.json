@@ -1,0 +1,1055 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 29,
+    "identityHash": "5c0896bfbdf8c3a6435bce776b3a6946",
+    "entities": [
+      {
+        "tableName": "vocabulary",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kasiguranin` TEXT NOT NULL, `tagalog` TEXT NOT NULL, `english` TEXT NOT NULL, `rootForm` TEXT NOT NULL, `neutralForm` TEXT NOT NULL DEFAULT '', `imperfectiveForm` TEXT NOT NULL DEFAULT '', `perfectiveForm` TEXT NOT NULL DEFAULT '', `contemplativeForm` TEXT NOT NULL DEFAULT '', `category` TEXT NOT NULL, `partOfSpeech` TEXT NOT NULL DEFAULT '', `meaningEnglish` TEXT NOT NULL DEFAULT '', `meaningTagalog` TEXT NOT NULL DEFAULT '', `audioResName` TEXT NOT NULL DEFAULT '', `exampleSentence` TEXT NOT NULL DEFAULT '', `exampleTranslation` TEXT NOT NULL DEFAULT '', `exampleSentence2` TEXT NOT NULL DEFAULT '', `exampleTranslation2` TEXT NOT NULL DEFAULT '', `phoneticGlottal` INTEGER NOT NULL DEFAULT 0, `phoneticVowelLength` INTEGER NOT NULL DEFAULT 0, `ipaNotation` TEXT NOT NULL DEFAULT '', `isLearned` INTEGER NOT NULL DEFAULT 0, `timesReviewed` INTEGER NOT NULL, `easinessFactor` REAL NOT NULL, `intervalDays` INTEGER NOT NULL, `nextReviewDate` TEXT NOT NULL, `lapses` INTEGER NOT NULL DEFAULT 0, `relearningStep` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kasiguranin",
+            "columnName": "kasiguranin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagalog",
+            "columnName": "tagalog",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "english",
+            "columnName": "english",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rootForm",
+            "columnName": "rootForm",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "neutralForm",
+            "columnName": "neutralForm",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "imperfectiveForm",
+            "columnName": "imperfectiveForm",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "perfectiveForm",
+            "columnName": "perfectiveForm",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "contemplativeForm",
+            "columnName": "contemplativeForm",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partOfSpeech",
+            "columnName": "partOfSpeech",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "meaningEnglish",
+            "columnName": "meaningEnglish",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "meaningTagalog",
+            "columnName": "meaningTagalog",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "audioFileName",
+            "columnName": "audioResName",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "exampleSentence",
+            "columnName": "exampleSentence",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "exampleTranslation",
+            "columnName": "exampleTranslation",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "exampleSentence2",
+            "columnName": "exampleSentence2",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "exampleTranslation2",
+            "columnName": "exampleTranslation2",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "phoneticGlottal",
+            "columnName": "phoneticGlottal",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "phoneticVowelLength",
+            "columnName": "phoneticVowelLength",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "ipaNotation",
+            "columnName": "ipaNotation",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "isLearned",
+            "columnName": "isLearned",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "timesReviewed",
+            "columnName": "timesReviewed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "easinessFactor",
+            "columnName": "easinessFactor",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervalDays",
+            "columnName": "intervalDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextReviewDate",
+            "columnName": "nextReviewDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lapses",
+            "columnName": "lapses",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "relearningStep",
+            "columnName": "relearningStep",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_vocabulary_category",
+            "unique": false,
+            "columnNames": [
+              "category"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vocabulary_category` ON `${TABLE_NAME}` (`category`)"
+          },
+          {
+            "name": "index_vocabulary_isLearned",
+            "unique": false,
+            "columnNames": [
+              "isLearned"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vocabulary_isLearned` ON `${TABLE_NAME}` (`isLearned`)"
+          },
+          {
+            "name": "index_vocabulary_nextReviewDate",
+            "unique": false,
+            "columnNames": [
+              "nextReviewDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vocabulary_nextReviewDate` ON `${TABLE_NAME}` (`nextReviewDate`)"
+          },
+          {
+            "name": "index_vocabulary_timesReviewed",
+            "unique": false,
+            "columnNames": [
+              "timesReviewed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vocabulary_timesReviewed` ON `${TABLE_NAME}` (`timesReviewed`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "conjugations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vocabulary_id` INTEGER NOT NULL, `conjugated_form` TEXT NOT NULL, `tense` TEXT NOT NULL, `affix_type` TEXT, FOREIGN KEY(`vocabulary_id`) REFERENCES `vocabulary`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vocabularyId",
+            "columnName": "vocabulary_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conjugatedForm",
+            "columnName": "conjugated_form",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tense",
+            "columnName": "tense",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "affixType",
+            "columnName": "affix_type",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_conjugations_vocabulary_id",
+            "unique": false,
+            "columnNames": [
+              "vocabulary_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conjugations_vocabulary_id` ON `${TABLE_NAME}` (`vocabulary_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vocabulary",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vocabulary_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "stories",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `titleKasiguranin` TEXT NOT NULL, `description` TEXT NOT NULL, `category` TEXT NOT NULL, `iconEmoji` TEXT NOT NULL, `pagesJson` TEXT NOT NULL, `totalPages` INTEGER NOT NULL, `requiredXp` INTEGER NOT NULL, `isUnlocked` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `currentPage` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titleKasiguranin",
+            "columnName": "titleKasiguranin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconEmoji",
+            "columnName": "iconEmoji",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pagesJson",
+            "columnName": "pagesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalPages",
+            "columnName": "totalPages",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredXp",
+            "columnName": "requiredXp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUnlocked",
+            "columnName": "isUnlocked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "isCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentPage",
+            "columnName": "currentPage",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_stories_requiredXp",
+            "unique": false,
+            "columnNames": [
+              "requiredXp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_stories_requiredXp` ON `${TABLE_NAME}` (`requiredXp`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "user_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userName` TEXT NOT NULL, `password` TEXT NOT NULL, `email` TEXT NOT NULL, `fullName` TEXT NOT NULL, `age` INTEGER, `address` TEXT NOT NULL, `profileIconId` INTEGER NOT NULL, `totalXp` INTEGER NOT NULL, `level` INTEGER NOT NULL, `currentStreak` INTEGER NOT NULL, `longestStreak` INTEGER NOT NULL, `lastActiveDate` TEXT NOT NULL, `wordsLearned` INTEGER NOT NULL, `storiesCompleted` INTEGER NOT NULL, `gamesPlayed` INTEGER NOT NULL, `totalCorrectAnswers` INTEGER NOT NULL, `totalQuestionsAnswered` INTEGER NOT NULL, `lessonsCompleted` INTEGER NOT NULL, `isOnboardingCompleted` INTEGER NOT NULL, `dailyGoalXp` INTEGER NOT NULL, `dailyXpEarned` INTEGER NOT NULL, `dailyXpDate` TEXT NOT NULL, `titleBadge` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `submissionsMade` INTEGER NOT NULL, `dailyReviewCompletedDate` TEXT NOT NULL, `dailyGamesDate` TEXT NOT NULL, `dailyGamesPlayedCount` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userName",
+            "columnName": "userName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "password",
+            "columnName": "password",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "fullName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "age",
+            "columnName": "age",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileIconId",
+            "columnName": "profileIconId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalXp",
+            "columnName": "totalXp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "level",
+            "columnName": "level",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentStreak",
+            "columnName": "currentStreak",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longestStreak",
+            "columnName": "longestStreak",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastActiveDate",
+            "columnName": "lastActiveDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wordsLearned",
+            "columnName": "wordsLearned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "storiesCompleted",
+            "columnName": "storiesCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gamesPlayed",
+            "columnName": "gamesPlayed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCorrectAnswers",
+            "columnName": "totalCorrectAnswers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalQuestionsAnswered",
+            "columnName": "totalQuestionsAnswered",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lessonsCompleted",
+            "columnName": "lessonsCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isOnboardingCompleted",
+            "columnName": "isOnboardingCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyGoalXp",
+            "columnName": "dailyGoalXp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyXpEarned",
+            "columnName": "dailyXpEarned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyXpDate",
+            "columnName": "dailyXpDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titleBadge",
+            "columnName": "titleBadge",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "submissionsMade",
+            "columnName": "submissionsMade",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyReviewCompletedDate",
+            "columnName": "dailyReviewCompletedDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyGamesDate",
+            "columnName": "dailyGamesDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyGamesPlayedCount",
+            "columnName": "dailyGamesPlayedCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "achievements",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `iconEmoji` TEXT NOT NULL, `category` TEXT NOT NULL, `requiredValue` INTEGER NOT NULL, `currentValue` INTEGER NOT NULL, `isUnlocked` INTEGER NOT NULL, `unlockedDate` TEXT, `xpReward` INTEGER NOT NULL, `metricType` TEXT NOT NULL, `tier` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconEmoji",
+            "columnName": "iconEmoji",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredValue",
+            "columnName": "requiredValue",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentValue",
+            "columnName": "currentValue",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUnlocked",
+            "columnName": "isUnlocked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unlockedDate",
+            "columnName": "unlockedDate",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "xpReward",
+            "columnName": "xpReward",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metricType",
+            "columnName": "metricType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tier",
+            "columnName": "tier",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "game_scores",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gameType` TEXT NOT NULL, `score` INTEGER NOT NULL, `totalQuestions` INTEGER NOT NULL, `xpEarned` INTEGER NOT NULL, `playedAt` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gameType",
+            "columnName": "gameType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalQuestions",
+            "columnName": "totalQuestions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "xpEarned",
+            "columnName": "xpEarned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playedAt",
+            "columnName": "playedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "sync_queue",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `payloadType` TEXT NOT NULL, `payloadRef` TEXT NOT NULL, `payloadData` TEXT NOT NULL, `status` TEXT NOT NULL, `queuedAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadType",
+            "columnName": "payloadType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadRef",
+            "columnName": "payloadRef",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadData",
+            "columnName": "payloadData",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "queuedAt",
+            "columnName": "queuedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "leaderboard",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `totalXp` INTEGER NOT NULL, `currentStreak` INTEGER NOT NULL, `avatarIconId` INTEGER NOT NULL, `levelTitle` TEXT NOT NULL, `isCurrentUser` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalXp",
+            "columnName": "totalXp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentStreak",
+            "columnName": "currentStreak",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avatarIconId",
+            "columnName": "avatarIconId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "levelTitle",
+            "columnName": "levelTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCurrentUser",
+            "columnName": "isCurrentUser",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "notifications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `message` TEXT NOT NULL, `timestamp` TEXT NOT NULL, `category` TEXT NOT NULL, `isRead` INTEGER NOT NULL, `deepLinkRoute` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "message",
+            "columnName": "message",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deepLinkRoute",
+            "columnName": "deepLinkRoute",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "game_levels",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`gameType` TEXT NOT NULL, `levelNumber` INTEGER NOT NULL, `difficulty` TEXT NOT NULL, `starsEarned` INTEGER NOT NULL, `isUnlocked` INTEGER NOT NULL, `questionsCount` INTEGER NOT NULL, PRIMARY KEY(`gameType`, `levelNumber`))",
+        "fields": [
+          {
+            "fieldPath": "gameType",
+            "columnName": "gameType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "levelNumber",
+            "columnName": "levelNumber",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "difficulty",
+            "columnName": "difficulty",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "starsEarned",
+            "columnName": "starsEarned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUnlocked",
+            "columnName": "isUnlocked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionsCount",
+            "columnName": "questionsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "gameType",
+            "levelNumber"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "lesson_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unitId` TEXT NOT NULL, `lessonIndex` INTEGER NOT NULL, `isComplete` INTEGER NOT NULL, `bestAccuracy` REAL NOT NULL, `timesCompleted` INTEGER NOT NULL, `lastCompletedAt` INTEGER NOT NULL, PRIMARY KEY(`unitId`, `lessonIndex`))",
+        "fields": [
+          {
+            "fieldPath": "unitId",
+            "columnName": "unitId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lessonIndex",
+            "columnName": "lessonIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isComplete",
+            "columnName": "isComplete",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bestAccuracy",
+            "columnName": "bestAccuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timesCompleted",
+            "columnName": "timesCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastCompletedAt",
+            "columnName": "lastCompletedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "unitId",
+            "lessonIndex"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_lesson_progress_isComplete",
+            "unique": false,
+            "columnNames": [
+              "isComplete"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lesson_progress_isComplete` ON `${TABLE_NAME}` (`isComplete`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `residentName` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `isActive` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "residentName",
+            "columnName": "residentName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5c0896bfbdf8c3a6435bce776b3a6946')"
+    ]
+  }
+}
