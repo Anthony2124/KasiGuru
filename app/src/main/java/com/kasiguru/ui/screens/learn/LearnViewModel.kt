@@ -26,7 +26,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -139,6 +142,7 @@ class LearnViewModel @Inject constructor(
         observeAccountState()
         observeAnnouncements()
         checkSubmissionAchievements()
+        observeAuthForRefresh()
         // No streak call here on purpose. Opening this screen is not learning; the streak now
         // advances from answered reviews, finished lessons and finished games instead.
     }
@@ -349,6 +353,24 @@ class LearnViewModel @Inject constructor(
     fun dismissBackupPrompt() {
         _uiState.update { it.copy(showBackupPrompt = false) }
         viewModelScope.launch { userPreferencesRepository.setBackupPromptDismissed(true) }
+    }
+
+    /**
+     * Re-derives Today's Path whenever the signed-in account changes.
+     *
+     * After sign-out the UID flips from the old account to a new anonymous one.
+     * Without this, the activities list, wordsDue count, and skill percentages stay
+     * stale because refreshPlan() was a one-shot in init. drop(1) avoids doubling
+     * the initial refresh that init already performs.
+     */
+    private fun observeAuthForRefresh() {
+        viewModelScope.launch {
+            authRepository.accountState
+                .map { it.uid }
+                .distinctUntilChanged()
+                .drop(1)
+                .collect { refreshPlan() }
+        }
     }
 
     private fun observeAccountState() {
