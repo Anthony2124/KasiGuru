@@ -207,6 +207,9 @@ interface VocabularyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(vocabulary: List<VocabularyEntity>)
 
+    @Query("UPDATE vocabulary SET isLearned = 0, timesReviewed = 0, nextReviewDate = '', intervalDays = 0, easinessFactor = 2.5, lapses = 0, relearningStep = 0")
+    suspend fun resetAllLearningProgress()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vocabulary: VocabularyEntity)
 }

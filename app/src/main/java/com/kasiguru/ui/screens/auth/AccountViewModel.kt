@@ -7,6 +7,7 @@ import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthOutcome
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.UserDataResetManager
 import com.kasiguru.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,8 @@ data class AccountUiState(
 class AccountViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val preferences: UserPreferencesRepository,
-    private val database: KasiGuruDatabase
+    private val database: KasiGuruDatabase,
+    private val userDataResetManager: UserDataResetManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountUiState(account = authRepository.currentAccount()))
@@ -93,7 +95,7 @@ class AccountViewModel @Inject constructor(
     fun signOut() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBusy = true, error = null)
-            withContext(Dispatchers.IO) { database.clearAllTables() }
+            userDataResetManager.resetAllLocalUserData()
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(
                 isBusy = false,
@@ -124,7 +126,7 @@ class AccountViewModel @Inject constructor(
                 )
                 return@launch
             }
-            withContext(Dispatchers.IO) { database.clearAllTables() }
+            userDataResetManager.resetAllLocalUserData()
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(isBusy = false, didDeleteAccount = true)
         }

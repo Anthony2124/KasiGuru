@@ -205,4 +205,22 @@ class UserPreferencesRepository @Inject constructor(
         }
         return newCount
     }
+
+    suspend fun resetDailyStreakQuota() {
+        dataStore.edit { prefs ->
+            prefs.remove(PreferencesKeys.DAILY_REVIEW_COMPLETED_DATE)
+            prefs.remove(PreferencesKeys.DAILY_GAMES_DATE)
+            prefs.remove(PreferencesKeys.DAILY_GAMES_COUNT)
+        }
+    }
+
+    suspend fun clearUserSessionData() {
+        dataStore.edit { prefs ->
+            prefs.remove(PreferencesKeys.DAILY_REVIEW_COMPLETED_DATE)
+            prefs.remove(PreferencesKeys.DAILY_GAMES_DATE)
+            prefs.remove(PreferencesKeys.DAILY_GAMES_COUNT)
+            prefs.remove(PreferencesKeys.BACKUP_PROMPT_DISMISSED)
+            prefs.remove(PreferencesKeys.GAME_RULES_SEEN)
+        }
+    }
 }

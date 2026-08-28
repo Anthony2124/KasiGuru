@@ -40,4 +40,7 @@ interface LessonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(progress: List<LessonProgressEntity>)
+
+    @Query("DELETE FROM lesson_progress")
+    suspend fun clearAll()
 }

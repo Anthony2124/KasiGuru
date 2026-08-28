@@ -71,4 +71,7 @@ interface GameScoreDao {
     /** Backs the "Six for Six" badge: how many of the six modes have ever been played. */
     @Query("SELECT COUNT(DISTINCT gameType) FROM game_scores")
     suspend fun getDistinctGameTypesPlayed(): Int
+
+    @Query("DELETE FROM game_scores")
+    suspend fun clearAll()
 }

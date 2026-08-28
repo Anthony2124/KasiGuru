@@ -84,6 +84,17 @@ class ProgressSyncManager @Inject constructor(
         }
     }
 
+    /**
+     * Explicitly cleans up sync state when the user signs out.
+     */
+    fun onUserSignedOut() {
+        uploadJobs.forEach { it.cancel() }
+        uploadJobs = emptyList()
+        activeUid = null
+        lastUploaded = null
+        lastUploadedLearning.clear()
+    }
+
     private fun progressDoc(uid: String) =
         firestore.collection("users").document(uid)
             .collection("progress").document("main")
