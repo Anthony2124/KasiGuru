@@ -126,6 +126,7 @@ class FlashcardViewModel @Inject constructor(
             // 4. Advance deck
             val nextIndex = state.currentIndex + 1
             if (nextIndex >= state.cards.size) {
+                userProgressRepository.recordDailyReviewCompleted()
                 _uiState.update { it.copy(isDeckComplete = true, isRating = false) }
             } else {
                 _uiState.update { it.copy(currentIndex = nextIndex, isRating = false) }

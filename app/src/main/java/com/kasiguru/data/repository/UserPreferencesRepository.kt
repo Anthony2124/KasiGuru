@@ -6,12 +6,21 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+
+data class DailyStreakQuota(
+    val reviewCompleted: Boolean = false,
+    val gamesPlayed: Int = 0,
+    val requiredGames: Int = 3
+) {
+    val isQuotaMet: Boolean get() = reviewCompleted && gamesPlayed >= requiredGames
+}
 
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -28,6 +37,9 @@ class UserPreferencesRepository @Inject constructor(
         val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
         val LAST_CONTENT_SYNC_AT = longPreferencesKey("last_content_sync_at")
         val LAST_FULL_RECONCILE_AT = longPreferencesKey("last_full_reconcile_at")
+        val DAILY_REVIEW_COMPLETED_DATE = stringPreferencesKey("daily_review_completed_date")
+        val DAILY_GAMES_DATE = stringPreferencesKey("daily_games_date")
+        val DAILY_GAMES_COUNT = intPreferencesKey("daily_games_count")
     }
 
     /**
@@ -160,5 +172,37 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.LEADERBOARD_ALERTS] = enabled
         }
+    }
+
+    fun getDailyStreakQuota(today: String): Flow<DailyStreakQuota> = dataStore.data.map { prefs ->
+        val reviewDate = prefs[PreferencesKeys.DAILY_REVIEW_COMPLETED_DATE].orEmpty()
+        val gamesDate = prefs[PreferencesKeys.DAILY_GAMES_DATE].orEmpty()
+        val gamesCount = if (gamesDate == today) prefs[PreferencesKeys.DAILY_GAMES_COUNT] ?: 0 else 0
+        DailyStreakQuota(
+            reviewCompleted = reviewDate == today,
+            gamesPlayed = gamesCount,
+            requiredGames = 3
+        )
+    }
+
+    suspend fun getDailyStreakQuotaOnce(today: String): DailyStreakQuota =
+        getDailyStreakQuota(today).first()
+
+    suspend fun recordDailyReviewCompleted(today: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.DAILY_REVIEW_COMPLETED_DATE] = today
+        }
+    }
+
+    suspend fun recordDailyGamePlayed(today: String): Int {
+        var newCount = 1
+        dataStore.edit { prefs ->
+            val gamesDate = prefs[PreferencesKeys.DAILY_GAMES_DATE].orEmpty()
+            val currentCount = if (gamesDate == today) prefs[PreferencesKeys.DAILY_GAMES_COUNT] ?: 0 else 0
+            newCount = currentCount + 1
+            prefs[PreferencesKeys.DAILY_GAMES_DATE] = today
+            prefs[PreferencesKeys.DAILY_GAMES_COUNT] = newCount
+        }
+        return newCount
     }
 }

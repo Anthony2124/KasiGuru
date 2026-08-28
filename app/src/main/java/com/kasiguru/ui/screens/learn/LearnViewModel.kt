@@ -21,6 +21,7 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.domain.lesson.LessonRef
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,7 +73,8 @@ data class LearnUiState(
     val showBackupPrompt: Boolean = false,
     val announcements: List<AnnouncementDto> = emptyList(),
     /** Words still due for review right now. Part of the day goal, not just a number on a card. */
-    val wordsDue: Int = 0
+    val wordsDue: Int = 0,
+    val streakQuota: com.kasiguru.data.repository.DailyStreakQuota = com.kasiguru.data.repository.DailyStreakQuota()
 ) {
     /**
      * XP earned today, read from the stored ledger.
@@ -131,6 +133,7 @@ class LearnViewModel @Inject constructor(
 
     init {
         observeProgress()
+        observeStreakQuota()
         refreshPlan()
         checkForUpdate()
         observeAccountState()
@@ -138,6 +141,15 @@ class LearnViewModel @Inject constructor(
         checkSubmissionAchievements()
         // No streak call here on purpose. Opening this screen is not learning; the streak now
         // advances from answered reviews, finished lessons and finished games instead.
+    }
+
+    private fun observeStreakQuota() {
+        viewModelScope.launch {
+            val today = LocalDate.now().toIsoString()
+            userPreferencesRepository.getDailyStreakQuota(today).collect { quota ->
+                _uiState.update { it.copy(streakQuota = quota) }
+            }
+        }
     }
 
     /**

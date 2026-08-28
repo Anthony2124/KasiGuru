@@ -19,7 +19,8 @@ import javax.inject.Singleton
 @Singleton
 class UserProgressRepository @Inject constructor(
     private val userProgressDao: UserProgressDao,
-    private val achievementDao: AchievementDao
+    private val achievementDao: AchievementDao,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) {
     // A level-up is a screen-agnostic celebratory moment (LevelUpDialog): XP is earned from lessons,
     // flashcards and all six mini-games, so the event lives here at the one place that already
@@ -96,10 +97,17 @@ class UserProgressRepository @Inject constructor(
 
     suspend fun incrementGamesPlayed() {
         userProgressDao.incrementGamesPlayed()
-        // Finishing a game is learning, whatever the score.
-        recordLearningActivity()
+        val today = LocalDate.now().toIsoString()
+        userPreferencesRepository.recordDailyGamePlayed(today)
+        checkStreakQuotaAndAdvance()
         val progress = userProgressDao.getUserProgressOnce() ?: return
         checkGameAchievements(progress.gamesPlayed)
+    }
+
+    suspend fun recordDailyReviewCompleted() {
+        val today = LocalDate.now().toIsoString()
+        userPreferencesRepository.recordDailyReviewCompleted(today)
+        checkStreakQuotaAndAdvance()
     }
 
     suspend fun updateGameStats(correct: Int, total: Int) =
@@ -112,15 +120,23 @@ class UserProgressRepository @Inject constructor(
     }
 
     /**
-     * Records that the learner actually learned something today.
-     *
-     * The streak used to advance from [com.kasiguru.ui.screens.learn.LearnViewModel] init, which
-     * means opening the Learn tab was enough to keep it: a number meant to say "you practised every
-     * day for 14 days" said "you opened the app for 14 days". It is the app single most visible
-     * motivator, so it has to be worth something. Every caller of this is a completed piece of
-     * learning: an answered review, a finished lesson, a finished game.
+     * Checks if today's daily streak quota (complete review words + play 3 mini game levels) is met,
+     * advancing the streak only when all requirements are satisfied.
      */
-    suspend fun recordLearningActivity() = updateStreak()
+    suspend fun checkStreakQuotaAndAdvance() {
+        val today = LocalDate.now().toIsoString()
+        val quota = userPreferencesRepository.getDailyStreakQuotaOnce(today)
+        if (quota.isQuotaMet) {
+            updateStreak()
+        }
+    }
+
+    /**
+     * Backward-compatible hook for general learning activity.
+     */
+    suspend fun recordLearningActivity() {
+        checkStreakQuotaAndAdvance()
+    }
 
     private suspend fun updateStreak() {
         val progress = userProgressDao.getUserProgressOnce() ?: return

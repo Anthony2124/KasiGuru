@@ -120,6 +120,7 @@ fun LearnScreen(
         StreakDialog(
             currentStreak = progress.currentStreak,
             longestStreak = progress.longestStreak,
+            streakQuota = uiState.streakQuota,
             onDismiss = { showStreakDialog = false }
         )
     }
