@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "25073459164-2omk7lv3678qvfmoora34np1iu37pkjl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kasiguru",
+            "certificate_hash": "ff2fc4b29b67c89b6a445138a4106936bf1367bc"
+          }
+        },
+        {
           "client_id": "25073459164-4s9ught2nbuodu0icnrqmp6f28itvlqg.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

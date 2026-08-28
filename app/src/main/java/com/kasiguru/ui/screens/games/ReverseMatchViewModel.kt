@@ -27,6 +27,8 @@ import javax.inject.Inject
  * Kasiguranin word — the opposite direction of Word Match, which forces
  * recall of the language itself rather than recognition of its meaning.
  */
+import com.kasiguru.ui.components.GameReviewItem
+
 @HiltViewModel
 class ReverseMatchViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
@@ -45,6 +47,7 @@ class ReverseMatchViewModel @Inject constructor(
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         startGame()
@@ -59,7 +62,6 @@ class ReverseMatchViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
 
-            // Review-first, then new material — see VocabularyRepository.buildPracticeRound.
             var words = vocabularyRepository.getPracticeWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -69,6 +71,7 @@ class ReverseMatchViewModel @Inject constructor(
             questionQueue.clear()
             questionQueue.addAll(words)
             earnedXpTotal = 0
+            reviewItems.clear()
 
             if (questionQueue.isEmpty()) {
                 _uiState.value = _uiState.value.copy(
@@ -141,6 +144,16 @@ class ReverseMatchViewModel @Inject constructor(
         earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
+        reviewItems.add(
+            GameReviewItem(
+                prompt = targetWord.tagalog,
+                userAnswer = option,
+                correctAnswer = targetWord.kasiguranin,
+                isCorrect = isCorrect,
+                subPrompt = if (targetWord.english.isNotBlank()) targetWord.english else null
+            )
+        )
+
         _uiState.value = state.copy(
             selectedOption = option,
             isCorrect = isCorrect,
@@ -193,7 +206,8 @@ class ReverseMatchViewModel @Inject constructor(
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,
-                totalQuestions = totalInitialQuestions
+                totalQuestions = totalInitialQuestions,
+                reviewItems = reviewItems.toList()
             )
         }
     }
@@ -212,5 +226,6 @@ data class ReverseMatchUiState(
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 )

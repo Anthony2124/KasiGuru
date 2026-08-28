@@ -73,6 +73,21 @@
         </nav>
       </div>
 
+      <div class="navgroup">
+        <div class="navlabel">System</div>
+        <nav>
+          <button data-tab="tab-users" onclick="window.switchTab('tab-users')">
+            <iconsax-icon name="profile-2user" type="bulk" size="18" color="currentColor"></iconsax-icon> Users
+          </button>
+          <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
+            <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Admin logs
+          </button>
+          <button data-tab="tab-backup" onclick="window.switchTab('tab-backup')">
+            <iconsax-icon name="cloud-change" type="bulk" size="18" color="currentColor"></iconsax-icon> Backup &amp; Restore
+          </button>
+        </nav>
+      </div>
+
       <div class="sidebar-spacer"></div>
 
       <div class="sidebar-foot">
@@ -401,6 +416,127 @@
 
       <div class="panel">
         <div class="timeline" id="releases-list-container"></div>
+      </div>
+    </section>
+
+    <!-- Tab 6: Users -->
+    <section id="tab-users" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Registered users</h1>
+          <p>All user accounts currently registered in the KasiGuru app. Data is synchronised from the public leaderboard records.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="users-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Level Badge</th>
+                <th>Total XP</th>
+                <th>Current Streak</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 7: Admin Audit Logs -->
+    <section id="tab-logs" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Admin logs</h1>
+          <p>An append-only record of every admin action. Use this to verify data integrity
+             and trace who changed what.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="logs-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-logs-input">Search logs</label>
+            <input type="search" id="search-logs-input" class="form-control" placeholder="Search by action, admin, or detail&hellip;">
+          </div>
+          <label class="sr-only" for="filter-logs-action">Filter by action</label>
+          <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All actions</option>
+            <option value="vocabulary">Vocabulary</option>
+            <option value="submission">Submissions</option>
+            <option value="literature">Literature</option>
+            <option value="story">Stories</option>
+            <option value="release">Releases</option>
+            <option value="announcement">Announcements</option>
+          </select>
+        </div>
+
+        <div class="audit-timeline" id="audit-log-list">
+          <p style="color:var(--muted); padding:2.5rem; text-align:center;">Loading admin logs&hellip;</p>
+        </div>
+
+        <div class="pager" id="logs-pager"></div>
+      </div>
+    </section>
+
+    <!-- Tab 8: Backup & Restore -->
+    <section id="tab-backup" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Backup &amp; Restore</h1>
+          <p>Export a full JSON snapshot of dictionary entries, stories, releases, and announcements, or restore them to Firestore.</p>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Export Card -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Create System Backup</h2>
+              <p>Download a complete JSON file containing all dictionary words, stories, announcements, and releases.</p>
+            </div>
+          </div>
+          <div style="padding:1rem 0;">
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">
+              Backing up generates a timestamped snapshot of your Firestore database. Keep this file safe for data recovery or migrating environments.
+            </p>
+            <button class="btn btn-primary" id="btn-export-backup" onclick="window.exportBackup()">
+              <iconsax-icon name="document-download" type="bulk" size="18" color="currentColor"></iconsax-icon> Export JSON Backup
+            </button>
+          </div>
+        </div>
+
+        <!-- Restore Card -->
+        <div class="card span-6">
+          <div class="card-head">
+            <div>
+              <h2>Restore from Backup</h2>
+              <p>Upload a previously exported JSON backup file to restore database entries.</p>
+            </div>
+          </div>
+          <div style="padding:1rem 0;">
+            <div class="dropzone" id="backup-dropzone" style="margin-bottom:1rem;">
+              <p style="font-weight:800; margin-bottom:6px;">Drop a .json backup file, or click to choose</p>
+              <p style="color:var(--muted); font-size:0.8rem;">Restores vocabulary, stories, announcements, and releases into Firestore.</p>
+              <input type="file" id="backup-file-input" accept=".json" style="display:none;">
+            </div>
+            <div id="backup-restore-status" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>
+          </div>
+        </div>
       </div>
     </section>
 

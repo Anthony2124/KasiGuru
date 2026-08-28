@@ -1,9 +1,12 @@
 package com.kasiguru.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,6 +22,14 @@ import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
+data class GameReviewItem(
+    val prompt: String,
+    val userAnswer: String,
+    val correctAnswer: String,
+    val isCorrect: Boolean,
+    val subPrompt: String? = null
+)
+
 @Composable
 fun GameOverView(
     score: Int,
@@ -26,14 +37,15 @@ fun GameOverView(
     xpEarned: Int,
     starsEarned: Int,
     onFinish: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    reviewItems: List<GameReviewItem> = emptyList()
 ) {
     val haptic = LocalHapticFeedback.current
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         ConfettiView()
@@ -42,14 +54,17 @@ fun GameOverView(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 6.dp,
-            border = androidx.compose.foundation.BorderStroke(
+            border = BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(28.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
@@ -129,6 +144,31 @@ fun GameOverView(
                     }
                 }
 
+                if (reviewItems.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Review Results",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = CoastInk,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        reviewItems.forEachIndexed { index, item ->
+                            ReviewItemCard(index = index + 1, item = item)
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 CoastPillButton(
@@ -139,6 +179,75 @@ fun GameOverView(
                     },
                     variant = PillVariant.Purple
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewItemCard(index: Int, item: GameReviewItem) {
+    val bg = if (item.isCorrect) GreenTint else RedTint
+    val borderColor = if (item.isCorrect) Green.copy(alpha = 0.3f) else Red.copy(alpha = 0.3f)
+    val badgeIcon = if (item.isCorrect) Iconsax.TickCircleBold else Iconsax.CloseCircleBold
+    val badgeTint = if (item.isCorrect) Green else Red
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = bg,
+        border = BorderStroke(1.dp, borderColor),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = badgeIcon),
+                contentDescription = null,
+                tint = badgeTint,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$index. ${item.prompt}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = CoastInk
+                )
+
+                if (!item.subPrompt.isNullOrBlank()) {
+                    Text(
+                        text = item.subPrompt,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = CoastMuted
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (item.isCorrect) {
+                    Text(
+                        text = "Your answer: ${item.userAnswer}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Green,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                } else {
+                    Text(
+                        text = "Your answer: ${item.userAnswer.ifBlank { "(No answer)" }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Red,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Correct answer: ${item.correctAnswer}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Green,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

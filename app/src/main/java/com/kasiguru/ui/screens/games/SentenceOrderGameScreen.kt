@@ -63,6 +63,7 @@ fun SentenceOrderGameScreen(
                 total = uiState.totalQuestions,
                 xpEarned = uiState.score * 10,
                 starsEarned = uiState.starsEarned,
+                reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
                 modifier = Modifier
             )

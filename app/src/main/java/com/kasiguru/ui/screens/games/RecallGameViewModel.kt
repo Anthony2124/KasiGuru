@@ -57,6 +57,7 @@ class RecallGameViewModel @Inject constructor(
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         startGame()
@@ -84,6 +85,7 @@ class RecallGameViewModel @Inject constructor(
             questionQueue.clear()
             questionQueue.addAll(words.filter { promptFor(it) != null })
             earnedXpTotal = 0
+            reviewItems.clear()
 
             if (questionQueue.isEmpty()) {
                 _uiState.value = _uiState.value.copy(isLoading = false, isUnavailable = true)
@@ -147,9 +149,20 @@ class RecallGameViewModel @Inject constructor(
         // is weaker evidence of recall than producing it cold, and SM-2 should schedule it as such.
         val rating = RecallGrading.ratingFor(match, targetWord.kasiguranin, responseTimeMs)
             .let { if (state.hintRevealed && it == ReviewRating.EASY) ReviewRating.GOOD else it }
+        val isCorrect = RecallGrading.isCorrect(match)
 
         earnedXpTotal += RecallGrading.xpFor(match)
-        val newScore = if (RecallGrading.isCorrect(match)) state.score + 1 else state.score
+        val newScore = if (isCorrect) state.score + 1 else state.score
+
+        reviewItems.add(
+            GameReviewItem(
+                prompt = state.promptMeaning,
+                userAnswer = state.typedAnswer,
+                correctAnswer = targetWord.kasiguranin,
+                isCorrect = isCorrect,
+                subPrompt = if (targetWord.tagalog.isNotBlank()) "Tagalog: ${targetWord.tagalog}" else null
+            )
+        )
 
         _uiState.value = state.copy(match = match, score = newScore)
 
@@ -199,7 +212,8 @@ class RecallGameViewModel @Inject constructor(
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,
-                totalQuestions = totalInitialQuestions
+                totalQuestions = totalInitialQuestions,
+                reviewItems = reviewItems.toList()
             )
         }
     }
@@ -220,7 +234,8 @@ data class RecallGameUiState(
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 ) {
     val hasAnswered: Boolean get() = match != null
 }

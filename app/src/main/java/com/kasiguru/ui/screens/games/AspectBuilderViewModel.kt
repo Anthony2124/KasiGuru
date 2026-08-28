@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.kasiguru.ui.components.GameReviewItem
+
 data class AspectQuestion(
     val targetVocab: VocabularyEntity,
     val rootWord: String,
@@ -43,7 +45,8 @@ data class AspectBuilderUiState(
     val isUnavailable: Boolean = false,
     val isLoading: Boolean = true,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 )
 
 @HiltViewModel
@@ -63,12 +66,14 @@ class AspectBuilderViewModel @Inject constructor(
     private val questionQueue = mutableListOf<AspectQuestion>()
     private var questionStartTimeMs: Long = 0L
     private var totalInitialQuestions = 5
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         loadQuestions()
     }
 
     private fun loadQuestions() {
+        reviewItems.clear()
         viewModelScope.launch {
             val levelInfo = gameLevelRepository.getLevel("aspect_builder", levelNumber)
             if (levelInfo != null) {
@@ -172,6 +177,16 @@ class AspectBuilderViewModel @Inject constructor(
         val newScore = if (correct) state.score + 1 else state.score
         val newXp = state.xpEarned + questionXp
 
+        reviewItems.add(
+            GameReviewItem(
+                prompt = "${currentQ.rootWord} (${currentQ.targetAspect} Aspect)",
+                userAnswer = answer,
+                correctAnswer = currentQ.correctAnswer,
+                isCorrect = correct,
+                subPrompt = if (currentQ.translation.isNotBlank()) currentQ.translation else null
+            )
+        )
+
         _uiState.update {
             it.copy(
                 selectedAnswer = answer,
@@ -217,7 +232,15 @@ class AspectBuilderViewModel @Inject constructor(
                     userProgressRepository.checkPerfectGameAchievement()
                 }
 
-                _uiState.update { it.copy(isGameOver = true, xpEarned = finalXp, starsEarned = starsEarned, totalQuestions = totalInitialQuestions) }
+                _uiState.update {
+                    it.copy(
+                        isGameOver = true,
+                        xpEarned = finalXp,
+                        starsEarned = starsEarned,
+                        totalQuestions = totalInitialQuestions,
+                        reviewItems = reviewItems.toList()
+                    )
+                }
             }
         } else {
             questionStartTimeMs = System.currentTimeMillis()

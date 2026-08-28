@@ -73,6 +73,7 @@ fun AspectBuilderGameScreen(
                 total = uiState.totalQuestions,
                 xpEarned = uiState.xpEarned,
                 starsEarned = uiState.starsEarned,
+                reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
                 modifier = Modifier
             )

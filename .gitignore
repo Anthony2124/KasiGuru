@@ -37,3 +37,4 @@ public/downloads/
 .claude/
 skills-lock.json
 wd_tmp.xml
+.vercel/

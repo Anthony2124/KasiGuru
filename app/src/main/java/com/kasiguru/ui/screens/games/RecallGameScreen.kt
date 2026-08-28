@@ -92,6 +92,7 @@ fun RecallGameScreen(
                     total = uiState.totalQuestions,
                     xpEarned = uiState.finalXp,
                     starsEarned = uiState.starsEarned,
+                    reviewItems = uiState.reviewItems,
                     onFinish = onNavigateBack,
                     modifier = Modifier
                 )

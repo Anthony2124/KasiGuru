@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.kasiguru.ui.components.GameReviewItem
+
 data class SentenceQuestion(
     val englishSentence: String,
     val correctKasiguraninWords: List<String>,
@@ -35,7 +37,8 @@ data class SentenceOrderUiState(
     val score: Int = 0,
     val isGameFinished: Boolean = false,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 )
 
 @HiltViewModel
@@ -54,12 +57,14 @@ class SentenceOrderViewModel @Inject constructor(
 
     private val questionQueue = mutableListOf<SentenceQuestion>()
     private var questionStartTimeMs: Long = 0L
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         loadQuestions()
     }
 
     private fun loadQuestions() {
+        reviewItems.clear()
         viewModelScope.launch {
             var questionsCount = 5
             val levelInfo = gameLevelRepository.getLevel("sentence_order", levelNumber)
@@ -229,6 +234,15 @@ class SentenceOrderViewModel @Inject constructor(
 
         val newScore = currentState.score + questionXp
 
+        reviewItems.add(
+            GameReviewItem(
+                prompt = currentQuestion.englishSentence,
+                userAnswer = if (userSentence.isBlank()) "(Empty)" else userSentence,
+                correctAnswer = correctSentence,
+                isCorrect = isCorrect
+            )
+        )
+
         _uiState.update {
             it.copy(
                 isCorrect = isCorrect,
@@ -304,7 +318,14 @@ class SentenceOrderViewModel @Inject constructor(
                 userProgressRepository.addXp(currentState.score)
                 userProgressRepository.incrementGamesPlayed()
                 userProgressRepository.updateGameStats(currentState.score, totalQs)
-                _uiState.update { it.copy(isGameFinished = true, starsEarned = starsEarned, totalQuestions = totalQs) }
+                _uiState.update {
+                    it.copy(
+                        isGameFinished = true,
+                        starsEarned = starsEarned,
+                        totalQuestions = totalQs,
+                        reviewItems = reviewItems.toList()
+                    )
+                }
             }
         }
     }
