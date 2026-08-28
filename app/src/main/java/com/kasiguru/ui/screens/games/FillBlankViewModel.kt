@@ -42,6 +42,7 @@ class FillBlankViewModel @Inject constructor(
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         startGame()
@@ -56,23 +57,21 @@ class FillBlankViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
             
-            val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
-            val verbsWithAspects = list.filter { 
-                it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.exampleSentence.isNotBlank() 
-            }
-            val pool = if (verbsWithAspects.isNotEmpty()) verbsWithAspects else list
-            
-            if (pool.isEmpty()) {
-                _uiState.value = _uiState.value.copy(isLoading = false, isUnavailable = true)
-                return@launch
+            var verbs = vocabularyRepository.getPracticeWords(totalInitialQuestions)
+            if (verbs.isEmpty()) {
+                val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
+                verbs = all.sortedBy { it.timesReviewed }.take(totalInitialQuestions).shuffled()
             }
 
             questionQueue.clear()
-            // Review-first within the filtered pool, rather than plain timesReviewed order.
-            questionQueue.addAll(
-                buildPracticeRoundFromPool(pool, LocalDate.now().toString(), totalInitialQuestions)
-            )
+            questionQueue.addAll(verbs)
             earnedXpTotal = 0
+            reviewItems.clear()
+            
+            if (questionQueue.isEmpty()) {
+                _uiState.value = _uiState.value.copy(isLoading = false, isUnavailable = true)
+                return@launch
+            }
 
             loadNextQuestion()
         }
@@ -171,6 +170,16 @@ class FillBlankViewModel @Inject constructor(
         earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
+        reviewItems.add(
+            GameReviewItem(
+                prompt = state.sentenceTemplate,
+                userAnswer = option,
+                correctAnswer = state.correctAnswer,
+                isCorrect = isCorrect,
+                subPrompt = "${targetVerb.kasiguranin} (${targetVerb.tagalog})"
+            )
+        )
+
         _uiState.value = state.copy(
             selectedOption = option,
             isCorrect = isCorrect,
@@ -223,7 +232,8 @@ class FillBlankViewModel @Inject constructor(
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,
-                totalQuestions = totalInitialQuestions
+                totalQuestions = totalInitialQuestions,
+                reviewItems = reviewItems.toList()
             )
         }
     }
@@ -243,5 +253,6 @@ data class FillBlankUiState(
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 )

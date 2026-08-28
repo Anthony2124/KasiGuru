@@ -93,6 +93,7 @@ class AccountViewModel @Inject constructor(
     fun signOut() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBusy = true, error = null)
+            withContext(Dispatchers.IO) { database.clearAllTables() }
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(
                 isBusy = false,

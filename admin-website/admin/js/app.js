@@ -205,7 +205,9 @@ const TAB_ROUTES = {
   'tab-vocabulary': 'dictionary',
   'tab-stories': 'stories',
   'tab-releases': 'releases',
-  'tab-logs': 'logs'
+  'tab-users': 'users',
+  'tab-logs': 'logs',
+  'tab-backup': 'backup'
 };
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
@@ -248,6 +250,8 @@ function init() {
   initModalBehaviour();
   initDictionaryControls();
   initLogsControls();
+  initUsersListener();
+  initBackupRestore();
 
   // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
   const routed = ROUTE_TABS[location.hash.slice(1)];
@@ -2700,4 +2704,249 @@ async function logAudit(action, details = {}) {
     console.warn("Audit log write failed:", e);
   }
 }
+
+// ── Users Listener ──────────────────────────────────────────────────────────
+let usersList = [];
+
+function initUsersListener() {
+  const usersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
+  const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
+    usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderUsersTable();
+  }, (error) => {
+    console.error("Users listener error:", error);
+    const tbody = document.getElementById('users-tbody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
+    }
+  });
+  unsubscribeFns.push(unsubUsers);
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('users-tbody');
+  const countEl = document.getElementById('users-result-count');
+  
+  if (!tbody) return;
+  
+  // Filter out anonymous/guest accounts
+  const validUsers = usersList.filter(user => {
+    if (user.isAnonymous === true) return false;
+    const name = (user.displayName || '').trim().toLowerCase();
+    if (name === 'learner' || name === 'guest' || name === 'anonymous user') return false;
+    return true;
+  });
+
+  // Deduplicate accounts so each Google account is shown only ONCE (highest XP / email document kept)
+  const uniqueUserMap = new Map();
+  for (const user of validUsers) {
+    const rawEmail = (user.email || '').trim().toLowerCase();
+    const rawName = (user.displayName || '').trim().toLowerCase();
+    const key = rawEmail || rawName;
+    if (!key) continue;
+
+    if (!uniqueUserMap.has(key)) {
+      uniqueUserMap.set(key, user);
+    } else {
+      const existing = uniqueUserMap.get(key);
+      const existingXp = existing.totalXp || 0;
+      const currentXp = user.totalXp || 0;
+      if (currentXp > existingXp || (!existing.email && user.email)) {
+        uniqueUserMap.set(key, user);
+      }
+    }
+  }
+
+  const registeredUsers = Array.from(uniqueUserMap.values());
+  
+  if (countEl) {
+    countEl.textContent = `${registeredUsers.length} user account${registeredUsers.length === 1 ? '' : 's'}`;
+  }
+  
+  if (registeredUsers.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = registeredUsers.map(user => {
+    const xp = user.totalXp || 0;
+    const streak = user.currentStreak || 0;
+    
+    // Display Gmail account as the User Name
+    const gmailAccount = user.email || (user.displayName && user.displayName.includes('@') ? user.displayName : null);
+    const displayName = user.displayName && user.displayName !== gmailAccount ? user.displayName : '';
+    
+    const userLabel = gmailAccount 
+      ? `<div style="font-weight:700;">${escapeHtml(gmailAccount)}</div>${displayName ? `<div style="font-size:0.8rem; color:var(--muted);">${escapeHtml(displayName)}</div>` : ''}`
+      : `<div style="font-weight:700;">${escapeHtml(user.displayName || 'Registered User')}</div>`;
+
+    const emailDisplay = escapeHtml(user.email || gmailAccount || 'Google Account');
+    const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
+    
+    return `
+      <tr>
+        <td>${userLabel}</td>
+        <td style="color:var(--muted); font-size:0.875rem;">${emailDisplay}</td>
+        <td><span class="badge badge-outline" style="border: 1px solid var(--border); color: var(--text); background: transparent;">${badge}</span></td>
+        <td class="num">${xp.toLocaleString()} XP</td>
+        <td class="num" style="color: var(--primary); font-weight: 700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Backup & Restore ────────────────────────────────────────────────────────
+window.exportBackup = async function() {
+  const btn = document.getElementById('btn-export-backup');
+  if (btn) btn.disabled = true;
+  notify("Preparing database backup...", "info");
+
+  try {
+    const vocabSnap = await getDocs(collection(db, "vocabulary"));
+    const storiesSnap = await getDocs(collection(db, "stories"));
+    const announceSnap = await getDocs(collection(db, "system_announcements"));
+    const releasesSnap = await getDocs(collection(db, "app_releases"));
+
+    const backupData = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      timestamp: Date.now(),
+      collections: {
+        vocabulary: vocabSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        stories: storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        system_announcements: announceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        app_releases: releasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      }
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kasiguru-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    notify("Backup downloaded successfully!", "success");
+    logAudit("backup_export", { totalEntries: backupData.collections.vocabulary.length });
+  } catch (e) {
+    console.error("Backup export failed:", e);
+    notify("Backup export failed: " + e.message, "danger");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+function initBackupRestore() {
+  const dropzone = document.getElementById('backup-dropzone');
+  const fileInput = document.getElementById('backup-file-input');
+  const statusEl = document.getElementById('backup-restore-status');
+
+  if (!dropzone || !fileInput) return;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleBackupFile(files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files.length > 0) {
+      handleBackupFile(fileInput.files[0]);
+      fileInput.value = '';
+    }
+  });
+
+  async function handleBackupFile(file) {
+    if (!file.name.endsWith('.json')) {
+      notify("Please select a valid .json backup file.", "danger");
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+
+      if (!backup.collections) {
+        notify("Invalid backup file structure.", "danger");
+        return;
+      }
+
+      const counts = Object.entries(backup.collections)
+        .map(([k, v]) => `${Array.isArray(v) ? v.length : 0} ${k}`)
+        .join(', ');
+
+      const confirmed = await confirmDialog({
+        title: 'Restore Database Backup?',
+        body: `<p>Found: <strong>${escapeHtml(counts)}</strong>.</p><p style="color:var(--status-rejected); margin-top:8px;">Warning: This will write/overwrite documents in Firestore.</p>`,
+        confirmLabel: 'Restore Backup',
+        danger: true
+      });
+
+      if (!confirmed) return;
+
+      if (statusEl) statusEl.textContent = 'Restoring database records...';
+      notify("Restoring backup...", "info");
+
+      let totalRestored = 0;
+
+      for (const [collName, docs] of Object.entries(backup.collections)) {
+        if (!Array.isArray(docs)) continue;
+
+        let batch = writeBatch(db);
+        let count = 0;
+
+        for (const docData of docs) {
+          const docId = docData.id;
+          if (!docId) continue;
+
+          const dataToSave = { ...docData };
+          delete dataToSave.id;
+
+          const docRef = doc(db, collName, String(docId));
+          batch.set(docRef, dataToSave, { merge: true });
+          count++;
+          totalRestored++;
+
+          if (count >= 450) {
+            await batch.commit();
+            batch = writeBatch(db);
+            count = 0;
+          }
+        }
+
+        if (count > 0) {
+          await batch.commit();
+        }
+      }
+
+      if (statusEl) statusEl.textContent = `Restore completed! Restored ${totalRestored} documents.`;
+      notify(`Successfully restored ${totalRestored} documents from backup!`, "success");
+      logAudit("backup_restore", { totalRestored });
+
+    } catch (e) {
+      console.error("Restore failed:", e);
+      if (statusEl) statusEl.textContent = 'Restore failed: ' + e.message;
+      notify("Restore failed: " + e.message, "danger");
+    }
+  }
+}
+
 

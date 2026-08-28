@@ -157,8 +157,11 @@ class ProgressSyncManager @Inject constructor(
         val weeklyXp = (progress.totalXp - weekStartXp).coerceAtLeast(0)
 
         val displayName = progress.fullName.ifBlank { progress.userName }.ifBlank { "Learner" }
+        val isAnonymous = firebaseAuth.currentUser?.isAnonymous == true
         val payload = mapOf(
             "displayName" to displayName.take(40),
+            "email" to (progress.email.takeIf { it.isNotBlank() } ?: firebaseAuth.currentUser?.email.orEmpty()),
+            "isAnonymous" to isAnonymous,
             "totalXp" to progress.totalXp,
             "level" to progress.level,
             "currentStreak" to progress.currentStreak,

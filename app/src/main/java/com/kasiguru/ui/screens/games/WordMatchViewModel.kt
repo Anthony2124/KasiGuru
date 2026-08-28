@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+import com.kasiguru.ui.components.GameReviewItem
+
 @HiltViewModel
 class WordMatchViewModel @Inject constructor(
     private val vocabularyRepository: VocabularyRepository,
@@ -40,6 +42,7 @@ class WordMatchViewModel @Inject constructor(
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
     private var earnedXpTotal = 0
+    private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
         startGame()
@@ -54,10 +57,6 @@ class WordMatchViewModel @Inject constructor(
                 totalInitialQuestions = levelInfo.questionsCount
             }
             
-            // Review-first, then new material. Every answer below writes an SM-2 schedule via
-            // processWordReview; selecting purely by timesReviewed meant that schedule was never
-            // read back, so a word about to be forgotten was no likelier to come up than any
-            // other. See VocabularyRepository.buildPracticeRound for the mix.
             var words = vocabularyRepository.getPracticeWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -67,10 +66,9 @@ class WordMatchViewModel @Inject constructor(
             questionQueue.clear()
             questionQueue.addAll(words)
             earnedXpTotal = 0
+            reviewItems.clear()
 
             if (questionQueue.isEmpty()) {
-                // Not enough vocabulary to run a real round — a distinct "come back later" state,
-                // not a fabricated "Score: 0" loss.
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isUnavailable = true
@@ -127,6 +125,16 @@ class WordMatchViewModel @Inject constructor(
         earnedXpTotal += questionXp
         val newScore = if (isCorrect) state.score + 1 else state.score
 
+        reviewItems.add(
+            GameReviewItem(
+                prompt = targetWord.kasiguranin,
+                userAnswer = option,
+                correctAnswer = targetWord.tagalog,
+                isCorrect = isCorrect,
+                subPrompt = if (targetWord.english.isNotBlank()) targetWord.english else null
+            )
+        )
+
         _uiState.value = state.copy(
             selectedOption = option,
             isCorrect = isCorrect,
@@ -180,7 +188,8 @@ class WordMatchViewModel @Inject constructor(
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,
-                totalQuestions = totalInitialQuestions
+                totalQuestions = totalInitialQuestions,
+                reviewItems = reviewItems.toList()
             )
         }
     }
@@ -198,5 +207,6 @@ data class WordMatchUiState(
     val isGameOver: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
-    val totalQuestions: Int = 5
+    val totalQuestions: Int = 5,
+    val reviewItems: List<GameReviewItem> = emptyList()
 )
