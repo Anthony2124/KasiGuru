@@ -59,7 +59,9 @@ fun VocabularyDetailScreen(
     DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
 
     GroundScaffold(
-        title = "Word",
+        // The headword, not the literal string "Word". This screen is what a push notification
+        // deep-links into, and it used to open without ever naming the word it was about.
+        title = uiState.word?.kasiguranin ?: "Word",
         onBack = onNavigateBack,
         pattern = GroundPattern.Orbs,
         compactTitle = true,
@@ -112,6 +114,47 @@ private fun VocabularyDetailBody(vocab: VocabularyEntity, onPlayAudio: () -> Uni
                 DetailBadge("Long Vowel ː")
             }
             DetailBadge(vocab.category)
+            if (vocab.partOfSpeech.isNotEmpty()) {
+                DetailBadge(vocab.partOfSpeech)
+            }
+        }
+
+        if (vocab.ipaNotation.isNotEmpty()) {
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                text = "[${vocab.ipaNotation}]",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted
+            )
+        }
+
+        // What the word means, as opposed to what it translates to. Hidden entirely when no
+        // definition has been written yet, so an un-backfilled entry reads as a shorter card
+        // rather than an empty heading.
+        if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
+            Spacer(Modifier.height(Space.md))
+            Text(
+                text = "Meaning",
+                style = MaterialTheme.typography.titleSmall,
+                color = Violet,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.height(Space.xxs))
+            if (vocab.meaningEnglish.isNotEmpty()) {
+                Text(
+                    text = vocab.meaningEnglish,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
+                )
+            }
+            if (vocab.meaningTagalog.isNotEmpty()) {
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    text = vocab.meaningTagalog,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted
+                )
+            }
         }
 
         Spacer(Modifier.height(Space.md))
@@ -153,6 +196,21 @@ private fun VocabularyDetailBody(vocab: VocabularyEntity, onPlayAudio: () -> Uni
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted
             )
+
+            if (vocab.exampleSentence2.isNotEmpty()) {
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = "\"${vocab.exampleSentence2}\"",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontStyle = FontStyle.Italic,
+                    color = Ink
+                )
+                Text(
+                    text = vocab.exampleTranslation2,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+            }
         }
     }
 }

@@ -100,8 +100,21 @@ fun VocabularyScreen(
 
     val filterOptions = listOf("All", "Essentials", "Food", "Animals", "Body", "Numbers", "House", "Nature")
 
-    val displayedCategories = remember(searchQuery, selectedFilterCategory, CategoryRegistry.categories) {
-        CategoryRegistry.categories.filter { meta ->
+    // The registry's twelve, plus any category the corpus actually contains that the registry has
+    // never heard of. Rendering the registry alone meant a word filed under "General" -- which is
+    // what the admin portal offers and what the sync falls back to -- had no card at all and could
+    // be reached only by typing its name into the search bar. CategoryRegistry.getMeta already
+    // returns usable metadata for an unknown name, so the extra card costs nothing.
+    val allCategoryMeta = remember(uiState.categories) {
+        val known = CategoryRegistry.categories.map { it.name.lowercase() }.toSet()
+        CategoryRegistry.categories +
+            uiState.categories
+                .filter { it.isNotBlank() && it.lowercase() !in known }
+                .map { CategoryRegistry.getMeta(it) }
+    }
+
+    val displayedCategories = remember(searchQuery, selectedFilterCategory, allCategoryMeta) {
+        allCategoryMeta.filter { meta ->
             val matchesSearch = searchQuery.isBlank() ||
                 meta.name.contains(searchQuery, ignoreCase = true) ||
                 meta.description.contains(searchQuery, ignoreCase = true)

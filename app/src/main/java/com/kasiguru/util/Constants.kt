@@ -53,7 +53,15 @@ object Constants {
         const val ANIMALS = "Animals"
         const val DAILY = "Daily Activities"
 
-        // Single source of truth for the category dropdowns (Submit Word screen).
+        /**
+         * The category dropdowns (Submit Word screen).
+         *
+         * Must stay identical to the categories in
+         * [com.kasiguru.ui.theme.CategoryRegistry], which is what the Dictionary screen actually
+         * renders as cards. This list was missing "House & Daily Life" -- the second-largest
+         * category in the corpus -- so a contributor could not file a word under it, and a word
+         * that landed outside the registry got no category card and was reachable only by search.
+         */
         val ALL = listOf(
             "Greetings & Essentials",
             "Body Parts & Health",
@@ -62,6 +70,7 @@ object Constants {
             "Numbers & Time",
             "Weather & Climate",
             "Nature & Environment",
+            "House & Daily Life",
             "Family & People",
             "Emotions & Feelings",
             "Colors & Shapes",

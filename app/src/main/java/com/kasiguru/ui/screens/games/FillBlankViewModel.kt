@@ -147,10 +147,17 @@ class FillBlankViewModel @Inject constructor(
                 options = options,
                 selectedOption = null,
                 isCorrect = null,
+                hintRevealed = false,
                 correctAnswer = correctAnswer,
                 totalQuestions = totalInitialQuestions
             )
         }
+    }
+
+    /** The learner asked for the definition. Costs the speed bonus; see the rating above. */
+    fun revealHint() {
+        if (_uiState.value.selectedOption != null) return
+        _uiState.value = _uiState.value.copy(hintRevealed = true)
     }
 
     fun selectOption(option: String) {
@@ -161,7 +168,14 @@ class FillBlankViewModel @Inject constructor(
         val isCorrect = option == state.correctAnswer
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
+        // A hinted answer is graded HARD however fast it came back: it forfeits the speed bonus,
+        // and it keeps the SM-2 signal honest, since recall that needed the definition shown is not
+        // the same evidence of memory as recall that did not.
+        val rating = if (state.hintRevealed) {
+            ReviewRating.HARD
+        } else {
+            ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
+        }
         val questionXp = if (isCorrect) {
             if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
         } else {
@@ -238,6 +252,7 @@ data class FillBlankUiState(
     val correctAnswer: String = "",
     val options: List<String> = emptyList(),
     val selectedOption: String? = null,
+    val hintRevealed: Boolean = false,
     val isCorrect: Boolean? = null,
     val score: Int = 0,
     val isGameOver: Boolean = false,

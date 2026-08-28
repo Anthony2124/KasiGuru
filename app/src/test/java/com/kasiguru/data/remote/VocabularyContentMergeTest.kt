@@ -97,6 +97,53 @@ class VocabularyContentMergeTest {
         assertEquals(14, merged.timesReviewed)
     }
 
+    /**
+     * The admin word form has no input for the root form, the audio file name or the two phonetic
+     * flags, so a document it writes simply omits those keys and the parser turns them into "" and
+     * false. Copying that over the local row meant editing any word in the portal silently erased
+     * its seeded root form and its audio reference on the next full reconcile.
+     */
+    @Test
+    fun anAdminEditDoesNotEraseFieldsTheAdminFormCannotWrite() {
+        val seeded = local.copy(
+            rootForm = "singët",
+            audioFileName = "singet_audio",
+            phoneticGlottal = true,
+            phoneticVowelLength = true,
+            meaningEnglish = "A small insect that lives in large colonies.",
+            meaningTagalog = "Maliit na insektong namumuhay nang pangkat."
+        )
+        // Exactly what the portal saves: the fields it has controls for, and nothing else.
+        val adminEdit = VocabularyEntity(
+            kasiguranin = "singët",
+            tagalog = "langgam",
+            english = "ant",
+            category = "Animals & Wildlife"
+        )
+
+        val merged = VocabularyContentMerge.merge(seeded, adminEdit)
+
+        assertEquals("langgam", merged.tagalog)
+        assertEquals("singët", merged.rootForm)
+        assertEquals("singet_audio", merged.audioFileName)
+        assertTrue(merged.phoneticGlottal)
+        assertTrue(merged.phoneticVowelLength)
+        assertEquals("A small insect that lives in large colonies.", merged.meaningEnglish)
+        assertEquals("Maliit na insektong namumuhay nang pangkat.", merged.meaningTagalog)
+        assertEquals(6, merged.lapses)
+    }
+
+    /** A definition written in the portal reaches the device. */
+    @Test
+    fun aDefinitionWrittenInThePortalOverwritesTheSeededOne() {
+        val seeded = local.copy(meaningEnglish = "seeded definition")
+        val edited = cloud.copy(meaningEnglish = "definition written by a moderator")
+
+        val merged = VocabularyContentMerge.merge(seeded, edited)
+
+        assertEquals("definition written by a moderator", merged.meaningEnglish)
+    }
+
     @Test
     fun aWordThisDeviceHasNeverSeenIsInsertedFresh() {
         val merged = VocabularyContentMerge.merge(null, cloud)

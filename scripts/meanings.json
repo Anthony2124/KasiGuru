@@ -1,0 +1,4810 @@
+{
+  "abagat|southwest monsoon": {
+    "en": "The rainy wind that blows in from the southwest.",
+    "tl": "Ang maulang hanging humahampas mula sa timog-kanluran."
+  },
+  "abaga|shoulder": {
+    "en": "The joint where the arm meets the body.",
+    "tl": "Ang kasukasuan kung saan nagtatagpo ang braso at katawan."
+  },
+  "abaka|abaca fibers, hemp": {
+    "en": "The strong fibre stripped from the abaca plant.",
+    "tl": "Ang matibay na hibla na kinukuha mula sa halamang abaka."
+  },
+  "abben|sneeze": {
+    "en": "To blow air sharply out of the nose without meaning to.",
+    "tl": "Ang biglaang paglabas ng hangin sa ilong nang hindi sinasadya."
+  },
+  "abbut ng bule|anus": {
+    "en": "The opening at the end of the bowel.",
+    "tl": "Ang butas sa dulo ng bituka."
+  },
+  "abeng|boat": {
+    "en": "A small craft for travelling on water.",
+    "tl": "Maliit na sasakyang panlakbay sa tubig."
+  },
+  "abeng|canoe": {
+    "en": "A narrow boat propelled by paddling.",
+    "tl": "Makitid na bangkang pinapaandar sa pamamagitan ng pagsagwan."
+  },
+  "abo|ashes": {
+    "en": "The soft grey powder left behind after something has burned.",
+    "tl": "Ang malambot na abuhing pulbos na naiiwan matapos masunog ang bagay."
+  },
+  "abu|ash": {
+    "en": "The grey powder left in a hearth after burning.",
+    "tl": "Ang abuhing pulbos na naiiwan sa apuyan matapos masunog."
+  },
+  "abëk|mat": {
+    "en": "A woven sheet laid on the floor for sitting or sleeping.",
+    "tl": "Hinabing banig na inilalatag sa sahig para upuan o higaan."
+  },
+  "adal|study": {
+    "en": "To work at learning a subject.",
+    "tl": "Ang pagsisikap na matuto ng isang paksa."
+  },
+  "adayo|far": {
+    "en": "At a great distance away.",
+    "tl": "Malayo ang agwat."
+  },
+  "addung|nose": {
+    "en": "The part of the face used for breathing and smelling.",
+    "tl": "Ang bahagi ng mukha na ginagamit sa paghinga at pang-amoy."
+  },
+  "addyëk|don't like, not want": {
+    "en": "To have no wish for something.",
+    "tl": "Ang kawalan ng pagnanais sa isang bagay."
+  },
+  "adene|near": {
+    "en": "A short distance away.",
+    "tl": "Maikli lang ang layo."
+  },
+  "adigi|post, house pole": {
+    "en": "An upright timber that carries the weight of a house.",
+    "tl": "Patayong kahoy na nagtataglay ng bigat ng bahay."
+  },
+  "adigi|stick, pole": {
+    "en": "A long straight length of wood.",
+    "tl": "Mahaba at tuwid na piraso ng kahoy."
+  },
+  "adëg|back": {
+    "en": "The rear surface of the body, from the shoulders to the hips.",
+    "tl": "Ang likurang bahagi ng katawan mula balikat hanggang baywang."
+  },
+  "adëg|behind": {
+    "en": "At the back of something.",
+    "tl": "Nasa likuran ng isang bagay."
+  },
+  "agdenan|ladder": {
+    "en": "A set of rungs for climbing up or down.",
+    "tl": "Serye ng baitang para umakyat o bumaba."
+  },
+  "agdenan|stairs": {
+    "en": "A set of steps for going up or down.",
+    "tl": "Serye ng baitang para umakyat o bumaba."
+  },
+  "agila|eagle": {
+    "en": "A large bird of prey with keen sight.",
+    "tl": "Malaking ibong maninila na matalas ang paningin."
+  },
+  "agtay|liver": {
+    "en": "The large organ that cleans the blood and makes bile.",
+    "tl": "Ang malaking bahagi ng katawan na naglilinis ng dugo at gumagawa ng apdo."
+  },
+  "agton|transfer (another location)": {
+    "en": "To move oneself or something from one place to another.",
+    "tl": "Ang paglilipat ng sarili o ng bagay mula sa isang lugar patungo sa iba."
+  },
+  "agus|current": {
+    "en": "The steady movement of water in one direction.",
+    "tl": "Ang tuloy-tuloy na paggalaw ng tubig sa isang direksyon."
+  },
+  "agus|flow": {
+    "en": "To move steadily in a stream, as water does.",
+    "tl": "Ang tuloy-tuloy na paggalaw na parang tubig na umaagos."
+  },
+  "ahëy|don't know, i do not know": {
+    "en": "To have no knowledge of the thing asked about.",
+    "tl": "Ang kawalan ng kaalaman sa bagay na itinatanong."
+  },
+  "ahëy|i don't know": {
+    "en": "What is said when one has no answer to give.",
+    "tl": "Ang sinasabi kapag walang maibigay na sagot."
+  },
+  "akitën|invite": {
+    "en": "To ask someone to come or to join in.",
+    "tl": "Ang pag-anyaya sa iba na dumalo o sumali."
+  },
+  "akusahan|accuse": {
+    "en": "To say that someone has done wrong.",
+    "tl": "Ang pagsasabing may ginawang mali ang isang tao."
+  },
+  "aku|1sg": {
+    "en": "The word a speaker uses for themselves.",
+    "tl": "Ang salitang ginagamit ng nagsasalita para sa sarili."
+  },
+  "alapok|fog": {
+    "en": "Thick cloud at ground level that hides what is ahead.",
+    "tl": "Makapal na ulap sa lupa na tumatakip sa tanawin."
+  },
+  "aldew|day": {
+    "en": "One full turn of the sun, or the hours when it is light.",
+    "tl": "Isang buong ikot ng araw, o ang mga oras na may liwanag."
+  },
+  "aldew|sun": {
+    "en": "The star that gives the earth its light and heat.",
+    "tl": "Ang bituing nagbibigay ng liwanag at init sa mundo."
+  },
+  "alikabok|dust": {
+    "en": "Fine dry powder that settles on surfaces.",
+    "tl": "Pinong tuyong alikabok na dumadapo sa mga ibabaw."
+  },
+  "alikabuk|dust, fine earth": {
+    "en": "Fine dry particles of earth carried by the air.",
+    "tl": "Pinong tuyong butil ng lupa na dinadala ng hangin."
+  },
+  "alila|slave": {
+    "en": "A person owned by another and forced to work.",
+    "tl": "Taong pag-aari ng iba at pinipilit magtrabaho."
+  },
+  "alistu|easy": {
+    "en": "Taking little effort to do.",
+    "tl": "Kakaunting pagod lamang ang kailangan."
+  },
+  "alleg|neck": {
+    "en": "The part of the body joining the head to the shoulders.",
+    "tl": "Ang bahagi ng katawan na nag-uugnay sa ulo at balikat."
+  },
+  "alun|wave": {
+    "en": "A ridge of water moving across the surface of the sea.",
+    "tl": "Ang taas ng tubig na gumagalaw sa ibabaw ng dagat."
+  },
+  "alëp|hungry": {
+    "en": "Feeling the need to eat.",
+    "tl": "Nararamdaman ang pangangailangang kumain."
+  },
+  "ambubuyongan|wasp": {
+    "en": "A stinging flying insect with a narrow waist.",
+    "tl": "Insektong lumilipad na may kamandag at makitid na baywang."
+  },
+  "amian|monsoon wind": {
+    "en": "The seasonal wind that brings a change of weather.",
+    "tl": "Ang panahunang hangin na nagdadala ng pagbabago ng klima."
+  },
+  "ammo|kiss": {
+    "en": "To touch someone with the lips as a sign of love.",
+    "tl": "Ang paghipo sa iba gamit ang labi bilang tanda ng pagmamahal."
+  },
+  "ampas|chicken louse": {
+    "en": "A biting insect that lives on chickens.",
+    "tl": "Insektong kumakagat na naninirahan sa mga manok."
+  },
+  "ampun|adopted": {
+    "en": "Taken into a family and raised as its own child.",
+    "tl": "Tinanggap sa pamilya at pinalaking parang tunay na anak."
+  },
+  "anak|child": {
+    "en": "A son or daughter; a young person.",
+    "tl": "Ang anak na lalaki o babae; batang tao."
+  },
+  "anak|young": {
+    "en": "Early in life; not yet grown.",
+    "tl": "Bata pa sa buhay; hindi pa lumalaki."
+  },
+  "aneno|shadow": {
+    "en": "The dark outline cast by something blocking light.",
+    "tl": "Ang madilim na hugis na nabubuo kapag may humaharang sa liwanag."
+  },
+  "angay|go": {
+    "en": "To move away towards another place.",
+    "tl": "Ang paglayo patungo sa ibang lugar."
+  },
+  "angen|get, obtain, take": {
+    "en": "To come to have something.",
+    "tl": "Ang pagkakamit o pagkuha ng isang bagay."
+  },
+  "anget|smell": {
+    "en": "The sour smell of an unwashed body.",
+    "tl": "Ang maasim na amoy ng hindi nalinis na katawan."
+  },
+  "angka|ancestors": {
+    "en": "The forebears a family descends from.",
+    "tl": "Ang mga ninunong pinagmulan ng angkan."
+  },
+  "angka|own": {
+    "en": "To hold something as one's property.",
+    "tl": "Ang pagtataglay ng bagay bilang sariling ari-arian."
+  },
+  "angso|smell": {
+    "en": "The sharp smell of urine.",
+    "tl": "Ang matalim na amoy ng ihi."
+  },
+  "angës|breath": {
+    "en": "The air drawn into and pushed out of the lungs.",
+    "tl": "Ang hanging pumapasok at lumalabas sa baga."
+  },
+  "angës|breathe": {
+    "en": "To draw air into the lungs and let it out.",
+    "tl": "Ang paghinga ng hangin papasok at palabas ng baga."
+  },
+  "aninu|shadow": {
+    "en": "The dark shape cast when something blocks the light.",
+    "tl": "Ang madilim na anyong nabubuo kapag may humaharang sa liwanag."
+  },
+  "anlalawa|spider web, cobweb": {
+    "en": "The net of silk a spider spins to catch prey.",
+    "tl": "Ang sapot na hinahabi ng gagamba upang manghuli."
+  },
+  "annat|stretch": {
+    "en": "To pull something out to its full length.",
+    "tl": "Ang paghatak sa isang bagay hanggang sa buong haba nito."
+  },
+  "anod|drift with current": {
+    "en": "To be carried along by moving water.",
+    "tl": "Ang pagpapatangay sa umaagos na tubig."
+  },
+  "anteng|scared": {
+    "en": "Feeling fear of something.",
+    "tl": "Nakadarama ng takot sa isang bagay."
+  },
+  "antik|old (thing)": {
+    "en": "Worn with age, as an old house.",
+    "tl": "Gasgas na sa katagalan, gaya ng lumang bahay."
+  },
+  "anu?|do what?": {
+    "en": "The question asking what action is being taken.",
+    "tl": "Ang tanong tungkol sa kung anong ginagawa."
+  },
+  "anu|what": {
+    "en": "The word used to ask which thing is meant.",
+    "tl": "Ang salitang ginagamit upang itanong kung aling bagay ang tinutukoy."
+  },
+  "anu|what?": {
+    "en": "The word used to ask which thing is meant.",
+    "tl": "Ang salitang ginagamit upang itanong kung aling bagay ang tinutukoy."
+  },
+  "anák|offspring": {
+    "en": "One's own child, in relation to the parent.",
+    "tl": "Ang sariling anak, kaugnay ng magulang."
+  },
+  "apak|adze": {
+    "en": "A hand tool with an arched blade set across the handle, used for shaping wood.",
+    "tl": "Kasangkapang pang-ukit ng kahoy na may talim na nakabaligtad sa hawakan."
+  },
+  "apdu|bile": {
+    "en": "The bitter greenish fluid the liver makes to help digest fat.",
+    "tl": "Ang mapait na luntiang likido mula sa atay na tumutulong tunawin ang taba."
+  },
+  "apdu|gall, bile": {
+    "en": "The bitter fluid the liver makes to digest fat.",
+    "tl": "Ang mapait na likido mula sa atay na tumutunaw ng taba."
+  },
+  "apdës|stinging pain": {
+    "en": "A sharp smarting hurt, as from a cut touched by salt.",
+    "tl": "Matalim at mahapding kirot, gaya ng sugat na natamaan ng asin."
+  },
+  "aperet|short": {
+    "en": "Of little length, said of an object.",
+    "tl": "Maikli ang haba, para sa mga bagay."
+  },
+  "apilidu|family name, surname": {
+    "en": "The name shared by members of a family.",
+    "tl": "Ang pangalang magkakapareho sa mga miyembro ng pamilya."
+  },
+  "aplaya|seashore": {
+    "en": "The strip of land where the sea meets the beach.",
+    "tl": "Ang bahagi ng lupa kung saan nagtatagpo ang dagat at dalampasigan."
+  },
+  "apo sa ëttod|great-grandchild": {
+    "en": "The grandchild of one's own child.",
+    "tl": "Ang apo ng sariling anak."
+  },
+  "apog|lime": {
+    "en": "The white powder added to a betel chew.",
+    "tl": "Ang puting pulbos na idinadagdag sa nginangangang buyo."
+  },
+  "apon|afternoon": {
+    "en": "The part of the day between noon and sunset.",
+    "tl": "Ang bahagi ng araw sa pagitan ng tanghali at paglubog ng araw."
+  },
+  "apoy|fire": {
+    "en": "The burning flame that gives heat and light.",
+    "tl": "Ang nagliliyab na apoy na nagbibigay ng init at liwanag."
+  },
+  "appat|four": {
+    "en": "The number after three and before five.",
+    "tl": "Ang bilang na kasunod ng tatlo at bago ang lima."
+  },
+  "arabes|cross, ford": {
+    "en": "To go over to the other side, as of a river.",
+    "tl": "Ang pagtawid patungo sa kabilang panig, gaya ng ilog."
+  },
+  "aramusal|breakfast": {
+    "en": "The first meal of the day.",
+    "tl": "Ang unang pagkain sa maghapon."
+  },
+  "aresbu|millipede": {
+    "en": "A long many-legged creature that curls up when touched.",
+    "tl": "Mahabang nilalang na maraming paa at pumupulupot kapag nahawakan."
+  },
+  "arob|smell": {
+    "en": "To take in a scent through the nose.",
+    "tl": "Ang pag-amoy gamit ang ilong."
+  },
+  "arob|smell, general": {
+    "en": "To take in a scent through the nose.",
+    "tl": "Ang pag-amoy gamit ang ilong."
+  },
+  "aryok|find": {
+    "en": "To discover something that was looked for.",
+    "tl": "Ang pagkatuklas sa bagay na hinahanap."
+  },
+  "aryokën|look for, seek": {
+    "en": "To search for something.",
+    "tl": "Ang paghahanap sa isang bagay."
+  },
+  "asang|gills": {
+    "en": "The slits through which a fish breathes underwater.",
+    "tl": "Ang mga siwang na ginagamit ng isda sa paghinga sa tubig."
+  },
+  "asen|salt": {
+    "en": "The white grains used to season and preserve food.",
+    "tl": "Ang puting butil na ginagamit sa pampalasa at pang-imbak ng pagkain."
+  },
+  "asok|smoke": {
+    "en": "The grey cloud that rises from a fire.",
+    "tl": "Ang abuhing ulap na umaakyat mula sa apoy."
+  },
+  "aso|dog": {
+    "en": "A four-legged animal kept as a pet and a guard.",
+    "tl": "Hayop na may apat na paa, inaalagaan bilang alaga at bantay."
+  },
+  "asukar|sugar": {
+    "en": "The sweet grains used to sweeten food and drink.",
+    "tl": "Ang matamis na butil na ipinampapatamis sa pagkain at inumin."
+  },
+  "asul|blue": {
+    "en": "The colour of a clear sky.",
+    "tl": "Ang kulay ng malinaw na langit."
+  },
+  "atakdug|long": {
+    "en": "Measuring a great distance from end to end.",
+    "tl": "Malayo ang sukat mula dulo hanggang dulo."
+  },
+  "atang-atang|scorpion": {
+    "en": "A creature with pincers and a stinging tail.",
+    "tl": "Nilalang na may sipit at may kamandag na buntot."
+  },
+  "ati|older sister": {
+    "en": "A female sibling born before oneself.",
+    "tl": "Ang kapatid na babaeng mas matanda kaysa sa sarili."
+  },
+  "atong|vegetable": {
+    "en": "A plant or plant part eaten as food.",
+    "tl": "Halaman o bahagi ng halaman na kinakain bilang pagkain."
+  },
+  "atong|vegetables": {
+    "en": "Plants or their parts eaten as food.",
+    "tl": "Mga halaman o bahagi ng halaman na kinakain bilang pagkain."
+  },
+  "attëd|give": {
+    "en": "To hand something over to another person.",
+    "tl": "Ang pag-abot ng isang bagay sa ibang tao."
+  },
+  "attëd|share, distribute": {
+    "en": "To divide something out among several people.",
+    "tl": "Ang paghahati-hati ng bagay sa ilang tao."
+  },
+  "at|and": {
+    "en": "The word joining two things together.",
+    "tl": "Ang salitang nag-uugnay sa dalawang bagay."
+  },
+  "atëp|roof": {
+    "en": "The covering over the top of a building.",
+    "tl": "Ang takip sa itaas ng gusali."
+  },
+  "ayod|hammock": {
+    "en": "A hanging bed of cloth or net slung between two supports.",
+    "tl": "Nakabiting higaang tela o lambat na nakasabit sa dalawang tukod."
+  },
+  "ayubana|soursop": {
+    "en": "A large green fruit with soft white sour-sweet flesh.",
+    "tl": "Malaki at luntiang prutas na malambot at maasim-tamis ang puting laman."
+  },
+  "babad|soak": {
+    "en": "To leave something in liquid until it is saturated.",
+    "tl": "Ang pagbabad ng bagay sa likido hanggang lubos itong mabasa."
+  },
+  "babaën|carry on back": {
+    "en": "To carry a load on one's back.",
+    "tl": "Ang pagbuhat ng karga sa likod."
+  },
+  "babbi|female": {
+    "en": "Of the sex that bears young; a woman or girl.",
+    "tl": "Sa kasariang nagsisilang; babae o dalagita."
+  },
+  "babuy|pig": {
+    "en": "A farm animal kept for its meat.",
+    "tl": "Hayop na inaalagaan para sa karne nito."
+  },
+  "baddit|short": {
+    "en": "Measuring little from end to end, or low in height.",
+    "tl": "Maikli ang sukat mula dulo hanggang dulo, o mababa ang taas."
+  },
+  "baddit|small": {
+    "en": "Little in size or amount.",
+    "tl": "Maliit ang sukat o dami."
+  },
+  "badillën|shoot": {
+    "en": "To fire a weapon at something.",
+    "tl": "Ang pagpapaputok ng sandata sa isang bagay."
+  },
+  "badil|gun": {
+    "en": "A weapon that fires shot from a tube.",
+    "tl": "Sandatang nagpapaputok ng bala mula sa isang tubo."
+  },
+  "badu|clothing": {
+    "en": "The garments worn on the body.",
+    "tl": "Ang mga damit na isinusuot sa katawan."
+  },
+  "badu|dress": {
+    "en": "A garment worn on the body; to put clothing on.",
+    "tl": "Kasuotang isinusuot; ang pagbibihis."
+  },
+  "badu|garment": {
+    "en": "A piece of clothing worn on the body.",
+    "tl": "Kasuotang isinusuot sa katawan."
+  },
+  "baeg|loincloth, g-string": {
+    "en": "A strip of cloth worn around the hips.",
+    "tl": "Piraso ng telang isinusuot sa palibot ng balakang."
+  },
+  "baga|coal, ember": {
+    "en": "A piece of wood or coal still glowing red in a fire.",
+    "tl": "Piraso ng kahoy o uling na mapula pang nagbabaga sa apoy."
+  },
+  "baga|lungs": {
+    "en": "The pair of organs in the chest used for breathing.",
+    "tl": "Ang magkapares na bahagi ng dibdib na ginagamit sa paghinga."
+  },
+  "baga|swell": {
+    "en": "To grow larger and puff up, as an injured part does.",
+    "tl": "Ang paglaki at pamamaga, gaya ng nasugatang bahagi."
+  },
+  "baga|swollen": {
+    "en": "Enlarged and puffed up, usually from injury or infection.",
+    "tl": "Lumaki at namamaga, kadalasan dahil sa sugat o impeksiyon."
+  },
+  "bahay pulungan|meeting house": {
+    "en": "A building where the community gathers.",
+    "tl": "Gusaling pinagtitipunan ng pamayanan."
+  },
+  "baha|flood": {
+    "en": "Water that overflows and covers dry land.",
+    "tl": "Tubig na umaapaw at bumabalot sa tuyong lupa."
+  },
+  "bait|good": {
+    "en": "Of fine quality, or well behaved.",
+    "tl": "Mataas ang kalidad, o mabuti ang asal."
+  },
+  "bait|kind": {
+    "en": "Gentle and helpful towards others.",
+    "tl": "Mabait at matulungin sa kapwa."
+  },
+  "bakal|iron, of metal": {
+    "en": "A hard grey metal used for tools and building.",
+    "tl": "Matigas at abuhing metal na ginagamit sa kasangkapan at pagtatayo."
+  },
+  "bakas ng bësset|footprint": {
+    "en": "The mark a foot leaves on the ground.",
+    "tl": "Ang markang naiiwan ng paa sa lupa."
+  },
+  "baka|cow": {
+    "en": "A large farm animal kept for milk and meat.",
+    "tl": "Malaking hayop sa bukid na inaalagaan para sa gatas at karne."
+  },
+  "bakkës|old (person)": {
+    "en": "Far on in years; elderly.",
+    "tl": "Malaki na ang edad; matanda na."
+  },
+  "bakokol|tortoise": {
+    "en": "A shelled reptile that lives on land.",
+    "tl": "Reptilyang may talukab na naninirahan sa lupa."
+  },
+  "bakokol|turtle": {
+    "en": "A slow reptile with a hard shell over its body.",
+    "tl": "Mabagal na reptilyang may matigas na talukab sa katawan."
+  },
+  "bakud|fence": {
+    "en": "A barrier of posts or stakes marking off land.",
+    "tl": "Harang na yari sa poste o kahoy na nagmamarka ng lupain."
+  },
+  "bal-ong|well": {
+    "en": "A pit dug in the ground to reach water.",
+    "tl": "Hukay sa lupa upang makakuha ng tubig."
+  },
+  "balakubak|dandruff": {
+    "en": "Flakes of dead skin shed from the scalp.",
+    "tl": "Mga nipis ng patay na balat na nalalaglag mula sa anit."
+  },
+  "balat|skin": {
+    "en": "The outer covering of the body.",
+    "tl": "Ang panlabas na balot ng katawan."
+  },
+  "balay|house": {
+    "en": "A building people live in.",
+    "tl": "Gusaling tinitirhan ng mga tao."
+  },
+  "balbal|hit": {
+    "en": "To strike someone or something with the hand or a stick.",
+    "tl": "Ang pagpalo gamit ang kamay o kahoy."
+  },
+  "balbon|body hair": {
+    "en": "The fine hair growing on the body rather than the head.",
+    "tl": "Ang pinong balahibo sa katawan, hindi sa ulo."
+  },
+  "baliti|banyan tree": {
+    "en": "A huge spreading tree with roots dropping from its branches.",
+    "tl": "Napakalaking punong may ugat na nakalawit mula sa mga sanga."
+  },
+  "balon|provisions": {
+    "en": "Food carried along for a journey.",
+    "tl": "Pagkaing dala-dala para sa paglalakbay."
+  },
+  "balsa|raft": {
+    "en": "A flat float made of logs or bamboo lashed together.",
+    "tl": "Patag na palutang na gawa sa magkakabigkis na troso o kawayan."
+  },
+  "banagan|lobster": {
+    "en": "A large shellfish with a long body and strong tail.",
+    "tl": "Malaking hayop-dagat na mahaba ang katawan at malakas ang buntot."
+  },
+  "banga|pot": {
+    "en": "A deep clay vessel used for cooking.",
+    "tl": "Malalim na lalagyang luwad na ginagamit sa pagluluto."
+  },
+  "banga|water jar": {
+    "en": "A large clay vessel for storing water.",
+    "tl": "Malaking lalagyang luwad para sa pag-iimbak ng tubig."
+  },
+  "bangin|cliff": {
+    "en": "A steep face of rock or earth falling away sharply.",
+    "tl": "Matarik na bahagi ng bato o lupa na biglang bumababa."
+  },
+  "bangkay|corpse": {
+    "en": "The body of a person who has died.",
+    "tl": "Ang katawan ng taong namatay na."
+  },
+  "bangungut|nightmare": {
+    "en": "A frightening dream.",
+    "tl": "Nakakatakot na panaginip."
+  },
+  "banlaw|rinse": {
+    "en": "To wash with clean water to remove soap or dirt.",
+    "tl": "Ang paghugas ng malinis na tubig upang matanggal ang sabon o dumi."
+  },
+  "bansag|nickname": {
+    "en": "An informal name used in place of a real one.",
+    "tl": "Palayaw na ginagamit kapalit ng tunay na pangalan."
+  },
+  "bansaway|crab": {
+    "en": "A shellfish with a broad shell, claws, and a sideways walk.",
+    "tl": "Hayop-dagat na may malapad na talukab, sipit, at pagilid maglakad."
+  },
+  "baol|coconut shell": {
+    "en": "The hard case around the meat of a coconut.",
+    "tl": "Ang matigas na balot sa laman ng niyog."
+  },
+  "bapor|boat": {
+    "en": "A water craft larger than a canoe.",
+    "tl": "Sasakyang-tubig na mas malaki kaysa bangka."
+  },
+  "barko|ship": {
+    "en": "A large seagoing vessel.",
+    "tl": "Malaking sasakyang-dagat."
+  },
+  "basa|wet": {
+    "en": "Covered or soaked with water.",
+    "tl": "Nababalot o nababad sa tubig."
+  },
+  "bassog|full after eating": {
+    "en": "Having eaten enough to want no more.",
+    "tl": "Sapat na ang nakain kaya ayaw nang dagdagan."
+  },
+  "batikal|throw": {
+    "en": "To hurl something, as a stone.",
+    "tl": "Ang paghagis ng bagay, gaya ng bato."
+  },
+  "bato|stone": {
+    "en": "A hard piece of rock.",
+    "tl": "Matigas na piraso ng bato."
+  },
+  "batuk|nape of one's neck": {
+    "en": "The back of the neck.",
+    "tl": "Ang likurang bahagi ng leeg."
+  },
+  "bawang|garlic": {
+    "en": "A strong-smelling bulb used to flavour food.",
+    "tl": "Mabangong bombilyang ginagamit na pampalasa sa pagkain."
+  },
+  "bayad|pay": {
+    "en": "To give money in return for goods or work.",
+    "tl": "Ang pagbibigay ng salapi kapalit ng bagay o gawa."
+  },
+  "bayaw|brother-in-law": {
+    "en": "The brother of one's husband or wife, or one's sister's husband.",
+    "tl": "Ang kapatid na lalaki ng asawa, o ang asawa ng kapatid na babae."
+  },
+  "baybay|sand": {
+    "en": "The fine loose grains that make up a beach.",
+    "tl": "Ang pinong butil na bumubuo sa dalampasigan."
+  },
+  "bayu|pound": {
+    "en": "To beat grain with a heavy pole to remove the husk.",
+    "tl": "Ang pagbayo ng butil gamit ang mabigat na kahoy upang matanggal ang balat."
+  },
+  "betbet|carry": {
+    "en": "To hold something and move it from place to place.",
+    "tl": "Ang paghawak at paglilipat ng bagay sa ibang lugar."
+  },
+  "bibig|lips": {
+    "en": "The two soft edges of the mouth.",
+    "tl": "Ang dalawang malambot na gilid ng bibig."
+  },
+  "bibi|duck": {
+    "en": "A water bird with webbed feet and a broad bill.",
+    "tl": "Ibong pantubig na may sagwan na paa at malapad na tuka."
+  },
+  "biget|banana": {
+    "en": "A long curved fruit with soft flesh and a thick skin.",
+    "tl": "Mahaba at hubog na prutas na malambot ang laman at makapal ang balat."
+  },
+  "bigsëk|strong": {
+    "en": "Having great physical power.",
+    "tl": "May malaking lakas ng katawan."
+  },
+  "bigti|hang by rope, strangle": {
+    "en": "To kill by tightening a rope around the neck.",
+    "tl": "Ang pagpatay sa pamamagitan ng paghigpit ng lubid sa leeg."
+  },
+  "bigu|new": {
+    "en": "Recently made or obtained; not old.",
+    "tl": "Bagong gawa o bagong nakuha; hindi luma."
+  },
+  "biklat|python": {
+    "en": "A very large snake that kills by crushing.",
+    "tl": "Napakalaking ahas na pumapatay sa pamamagitan ng pagpisil."
+  },
+  "bilang|count": {
+    "en": "To say the numbers in order to find how many there are.",
+    "tl": "Ang pagsasabi ng mga numero upang malaman ang dami."
+  },
+  "bilug|round": {
+    "en": "Shaped like a circle or a ball.",
+    "tl": "Hugis bilog o bola."
+  },
+  "binata|adolescent male, young man": {
+    "en": "A male who has left childhood but is not yet fully grown.",
+    "tl": "Lalaking lampas na sa pagkabata ngunit hindi pa ganap na matanda."
+  },
+  "binhi|rice seed": {
+    "en": "Grain kept back to be planted as the next crop.",
+    "tl": "Butil na itinabi upang itanim bilang susunod na ani."
+  },
+  "binti|leg": {
+    "en": "The limb a person stands and walks on.",
+    "tl": "Ang bahagi ng katawan na ginagamit sa pagtayo at paglakad."
+  },
+  "biret|drunk, intoxicated": {
+    "en": "Affected in mind and body by too much alcohol.",
+    "tl": "Naapektuhan ang isip at katawan dahil sa sobrang alak."
+  },
+  "biro|charcoal": {
+    "en": "The black fuel left when wood is burned slowly without air.",
+    "tl": "Ang itim na panggatong na natitira kapag dahan-dahang sinunog ang kahoy."
+  },
+  "bisag|broken in pieces": {
+    "en": "Shattered into fragments.",
+    "tl": "Nadurog at nabasag sa maliliit na piraso."
+  },
+  "bisag|crack": {
+    "en": "A line of breakage in a jar or dish.",
+    "tl": "Ang lamat sa banga o pinggan."
+  },
+  "bisig|whole arm": {
+    "en": "The whole limb from the shoulder to the fingers.",
+    "tl": "Ang buong braso mula balikat hanggang mga daliri."
+  },
+  "bitoin sa umaga|venus": {
+    "en": "The bright planet seen near dawn.",
+    "tl": "Ang maliwanag na planetang nakikita malapit sa madaling-araw."
+  },
+  "bitoin|star": {
+    "en": "One of the small bright points of light in the night sky.",
+    "tl": "Isa sa maliliit at maliwanag na tuldok sa langit sa gabi."
+  },
+  "bituka|guts": {
+    "en": "The inner organs of the belly taken together.",
+    "tl": "Ang mga panloob na bahagi ng tiyan nang sama-sama."
+  },
+  "bituka|intestines": {
+    "en": "The long tube below the stomach that digests food.",
+    "tl": "Ang mahabang daluyan sa ilalim ng sikmura na tumutunaw ng pagkain."
+  },
+  "biyanang bëbbi|mother-in-law": {
+    "en": "The mother of one's husband or wife.",
+    "tl": "Ang ina ng asawa."
+  },
+  "biyanang lalëkke|father-in-law": {
+    "en": "The father of one's husband or wife.",
+    "tl": "Ang ama ng asawa."
+  },
+  "bobo|stupid": {
+    "en": "Slow to learn or understand.",
+    "tl": "Mabagal matuto o umunawa."
+  },
+  "botbot|pull": {
+    "en": "To draw something towards oneself.",
+    "tl": "Ang paghatak ng bagay palapit sa sarili."
+  },
+  "braso|arm": {
+    "en": "The limb from the shoulder to the hand.",
+    "tl": "Ang bahagi ng katawan mula balikat hanggang kamay."
+  },
+  "brasu|arm": {
+    "en": "The part of the arm from the elbow to the hand.",
+    "tl": "Ang bahagi ng braso mula siko hanggang kamay."
+  },
+  "bugtong|buy": {
+    "en": "To get something by paying for it.",
+    "tl": "Ang pagkuha ng bagay sa pamamagitan ng pagbabayad."
+  },
+  "buhay|alive": {
+    "en": "Still living; not dead.",
+    "tl": "May buhay pa; hindi patay."
+  },
+  "buhok|hair": {
+    "en": "The threads that grow from the skin of the head.",
+    "tl": "Ang mga hibla na tumutubo mula sa balat ng ulo."
+  },
+  "buhuk|hair": {
+    "en": "The threads growing from the skin of the head.",
+    "tl": "Ang mga hibla na tumutubo mula sa balat ng ulo."
+  },
+  "buk-buk|rice ear bug": {
+    "en": "An insect that feeds on ripening grains of rice.",
+    "tl": "Insektong kumakain sa nahihinog na butil ng palay."
+  },
+  "bukas|open": {
+    "en": "To undo something closed, as a package or a door.",
+    "tl": "Ang pagbukas ng nakasarang bagay, gaya ng balutan o pinto."
+  },
+  "buked|hill": {
+    "en": "A raised piece of land, lower than a mountain.",
+    "tl": "Nakataas na lupain, mas mababa kaysa bundok."
+  },
+  "buked|mountain": {
+    "en": "A very high piece of land rising above the country around it.",
+    "tl": "Napakataas na lupaing nakatayo sa ibabaw ng paligid nito."
+  },
+  "bukong-bukong|ankle": {
+    "en": "The joint connecting the foot to the leg.",
+    "tl": "Ang kasukasuang nag-uugnay sa paa at binti."
+  },
+  "bukong|ankle": {
+    "en": "The joint that connects the foot to the leg.",
+    "tl": "Ang kasukasuang nag-uugnay sa paa at binti."
+  },
+  "buko|young coconut": {
+    "en": "An unripe coconut with soft meat and sweet water.",
+    "tl": "Batang niyog na malambot ang laman at matamis ang tubig."
+  },
+  "bukraw|adam's apple": {
+    "en": "The lump at the front of the throat.",
+    "tl": "Ang umbok sa harapan ng lalamunan."
+  },
+  "bukraw|throat": {
+    "en": "The passage at the back of the mouth into the body.",
+    "tl": "Ang daanan sa likod ng bibig patungo sa loob ng katawan."
+  },
+  "buktet|pregnant": {
+    "en": "Carrying a child in the womb.",
+    "tl": "May dinadalang sanggol sa sinapupunan."
+  },
+  "bukël|bean": {
+    "en": "The edible seed of a pod-bearing plant.",
+    "tl": "Ang nakakaing butil ng halamang may bunga na pod."
+  },
+  "bukël|bone": {
+    "en": "One of the hard pieces that make up a skeleton.",
+    "tl": "Isa sa matitigas na bahaging bumubuo sa kalansay."
+  },
+  "bukël|seed": {
+    "en": "The small part of a plant from which a new plant grows.",
+    "tl": "Ang maliit na bahagi ng halaman na pinagmumulan ng bagong halaman."
+  },
+  "bulaklak|flower": {
+    "en": "The coloured, often scented part of a plant.",
+    "tl": "Ang makulay at madalas mabangong bahagi ng halaman."
+  },
+  "bulak|spill": {
+    "en": "To let liquid run out by accident.",
+    "tl": "Ang hindi sinasadyang pagtapon ng likido."
+  },
+  "bulan|moon": {
+    "en": "The body that shines in the night sky and circles the earth.",
+    "tl": "Ang bagay na nagliliwanag sa gabi at umiikot sa mundo."
+  },
+  "bulati|earthworm": {
+    "en": "A long soft creature that lives in the soil.",
+    "tl": "Mahaba at malambot na nilalang na naninirahan sa lupa."
+  },
+  "bula|foam": {
+    "en": "A mass of small bubbles on top of a liquid.",
+    "tl": "Kumpol ng maliliit na bulang nasa ibabaw ng likido."
+  },
+  "bulean|stern": {
+    "en": "The rear end of a boat.",
+    "tl": "Ang hulihang dulo ng bangka."
+  },
+  "bule|buttocks": {
+    "en": "The fleshy part of the body a person sits on.",
+    "tl": "Ang malamang bahagi ng katawan na inuupuan."
+  },
+  "bulol|deaf": {
+    "en": "Unable to hear.",
+    "tl": "Hindi nakakarinig."
+  },
+  "bulong|heel": {
+    "en": "The back part of the foot below the ankle.",
+    "tl": "Ang likurang bahagi ng paa sa ibaba ng bukung-bukong."
+  },
+  "bulos|river": {
+    "en": "A large stream of fresh water flowing to the sea.",
+    "tl": "Malaking agos ng tabang na tubig na dumadaloy patungong dagat."
+  },
+  "bulos|spring": {
+    "en": "Water rising naturally from the ground.",
+    "tl": "Tubig na kusang bumubukal mula sa lupa."
+  },
+  "bulung|whisper": {
+    "en": "To speak very softly so few can hear.",
+    "tl": "Ang pagsasalita nang napakahina upang iilan lang ang makarinig."
+  },
+  "bulus|diarrhea": {
+    "en": "Frequent loose and watery bowel movements.",
+    "tl": "Ang malimit at matubig na pagdumi."
+  },
+  "bunanakël|eyeball": {
+    "en": "The round body of the eye itself.",
+    "tl": "Ang bilog na bahagi ng mismong mata."
+  },
+  "bunay ng sidâ|roe, fish eggs": {
+    "en": "The mass of eggs inside a female fish.",
+    "tl": "Ang kumpol ng itlog sa loob ng babaeng isda."
+  },
+  "bunay|egg": {
+    "en": "The rounded shell a bird lays, from which a chick hatches.",
+    "tl": "Ang bilog na itinatalog ng ibon, pinagmumulan ng sisiw."
+  },
+  "bunbunan|fontanelle": {
+    "en": "The soft spot on a baby's skull before the bones close.",
+    "tl": "Ang malambot na bahagi ng bungo ng sanggol bago magsara ang buto."
+  },
+  "bungaw|testicles": {
+    "en": "The two glands in a male that make sperm.",
+    "tl": "Ang dalawang bahagi ng lalaki na gumagawa ng semilya."
+  },
+  "bunot|coconut husk": {
+    "en": "The fibrous outer layer of a coconut.",
+    "tl": "Ang mahibla at panlabas na balat ng niyog."
+  },
+  "buno|kill": {
+    "en": "To cause a living thing to die.",
+    "tl": "Ang pagpatay sa isang buhay na nilalang."
+  },
+  "buong mundu|world": {
+    "en": "The earth and everything on it.",
+    "tl": "Ang mundo at lahat ng naririto."
+  },
+  "bura-buray|remains, left overs": {
+    "en": "The food left uneaten after a meal.",
+    "tl": "Ang pagkaing natira matapos kumain."
+  },
+  "burog|monkey": {
+    "en": "A tree-climbing animal with hands and a long tail.",
+    "tl": "Hayop na umaakyat sa puno, may kamay at mahabang buntot."
+  },
+  "burëk|blind": {
+    "en": "Unable to see.",
+    "tl": "Hindi nakakakita."
+  },
+  "butale|boil, abscess": {
+    "en": "A painful swelling on the skin filled with pus.",
+    "tl": "Masakit na bukol sa balat na puno ng nana."
+  },
+  "butil|bead": {
+    "en": "A small pierced ball strung to make jewellery.",
+    "tl": "Maliit na butas na bilog na tinutuhog para gawing alahas."
+  },
+  "buto/bungaw|penis": {
+    "en": "The external sex organ of a male.",
+    "tl": "Ang panlabas na ari ng lalaki."
+  },
+  "butó|penis": {
+    "en": "The external sex organ of a male.",
+    "tl": "Ang panlabas na ari ng lalaki."
+  },
+  "buwangsina|rough bamboo, giant bamboo (dendrocalamus asper)": {
+    "en": "A very large thick-walled bamboo used in building.",
+    "tl": "Napakalaki at makapal na kawayan na ginagamit sa pagtatayo."
+  },
+  "buwaya|crocodile": {
+    "en": "A large scaly reptile that lives in rivers and eats meat.",
+    "tl": "Malaking reptilyang may kaliskis na naninirahan sa ilog at kumakain ng karne."
+  },
+  "buyok|rotten": {
+    "en": "Spoiled and decayed; no longer fit to eat.",
+    "tl": "Sira at nabulok; hindi na makakain."
+  },
+  "bëbbi|woman": {
+    "en": "An adult female person.",
+    "tl": "Taong babae na nasa hustong gulang."
+  },
+  "bëdbëd|bunch": {
+    "en": "A cluster of fruit growing or tied together.",
+    "tl": "Kumpol ng bungang magkakasama o magkakabigkis."
+  },
+  "bëdbëd|bundle": {
+    "en": "A number of things tied together to be carried as one.",
+    "tl": "Ilang bagay na sama-samang itinali upang buhatin nang sabay."
+  },
+  "bëddit|small": {
+    "en": "Little in size, said of objects.",
+    "tl": "Maliit ang sukat, para sa mga bagay."
+  },
+  "bëgges|uncooked rice": {
+    "en": "Rice with the husk removed but not yet cooked.",
+    "tl": "Bigas na tanggal na ang ipa ngunit hindi pa niluluto."
+  },
+  "bëggi|body": {
+    "en": "The whole physical form of a person or animal.",
+    "tl": "Ang buong pisikal na anyo ng tao o hayop."
+  },
+  "bëklay|carry over shoulder": {
+    "en": "To carry a load slung over the shoulder.",
+    "tl": "Ang pagpasan ng karga sa balikat."
+  },
+  "bëllet|spirit": {
+    "en": "The soul of a person, thought of as living apart from the body.",
+    "tl": "Ang kaluluwa ng tao, ipinapalagay na hiwalay sa katawan."
+  },
+  "bëng-bëng|ear": {
+    "en": "The organ on each side of the head used for hearing.",
+    "tl": "Ang bahagi sa magkabilang gilid ng ulo na ginagamit sa pandinig."
+  },
+  "bërreng|cricket": {
+    "en": "A small insect that chirps at night.",
+    "tl": "Maliit na insektong humuhuni sa gabi."
+  },
+  "bësset|foot": {
+    "en": "The part of the leg a person stands on.",
+    "tl": "Ang bahagi ng binti na ginagamit sa pagtayo."
+  },
+  "bëtten|hang up": {
+    "en": "To fasten something so it hangs from a hook.",
+    "tl": "Ang pagsabit ng bagay upang ito ay nakabitin."
+  },
+  "dagdag|increase, add": {
+    "en": "To make something greater in number or amount.",
+    "tl": "Ang pagpaparami sa bilang o dami ng isang bagay."
+  },
+  "dahil|because": {
+    "en": "The word giving the reason for something.",
+    "tl": "Ang salitang nagbibigay ng dahilan sa isang bagay."
+  },
+  "dakëp|catch": {
+    "en": "To take hold of something moving, or to trap it.",
+    "tl": "Ang paghuli sa gumagalaw na bagay, o ang pagbitag dito."
+  },
+  "dakëp|catch, apprehend": {
+    "en": "To take hold of something moving, or to seize a person.",
+    "tl": "Ang paghuli sa gumagalaw na bagay, o ang pagdakip sa tao."
+  },
+  "dalaga|adolescent female, young woman": {
+    "en": "A female who has left childhood but is not yet fully grown.",
+    "tl": "Babaeng lampas na sa pagkabata ngunit hindi pa ganap na matanda."
+  },
+  "dalan|road": {
+    "en": "A prepared way for travelling from place to place.",
+    "tl": "Inihandang daanan para sa paglalakbay mula sa isang lugar patungo sa iba."
+  },
+  "dalipot|across, opposite side": {
+    "en": "On the far side of something.",
+    "tl": "Nasa kabilang panig ng isang bagay."
+  },
+  "damong anak|firstborn child": {
+    "en": "The eldest child of a family.",
+    "tl": "Ang panganay na anak sa pamilya."
+  },
+  "damo|first": {
+    "en": "Coming before all the others.",
+    "tl": "Nauuna sa lahat ng iba."
+  },
+  "dangkal|handspan": {
+    "en": "The span measured from thumb to little finger.",
+    "tl": "Ang sukat mula hinlalaki hanggang hinliliit."
+  },
+  "danom|water": {
+    "en": "The clear liquid that falls as rain and fills rivers.",
+    "tl": "Ang malinaw na likidong bumabagsak bilang ulan at pumupuno sa ilog."
+  },
+  "dappog|water buffalo": {
+    "en": "A large horned animal used to pull ploughs.",
+    "tl": "Malaking hayop na may sungay, ginagamit sa pag-aararo."
+  },
+  "darop|sew": {
+    "en": "To join cloth with a needle and thread.",
+    "tl": "Ang pagdurugtong ng tela gamit ang karayom at sinulid."
+  },
+  "darëng-darëng|palate": {
+    "en": "The roof of the mouth.",
+    "tl": "Ang bubungan ng loob ng bibig."
+  },
+  "datag|floor": {
+    "en": "The flat surface of a house that is walked on.",
+    "tl": "Ang patag na bahagi ng bahay na tinatapakan."
+  },
+  "datton|put": {
+    "en": "To set something in a place.",
+    "tl": "Ang paglalagay ng bagay sa isang lugar."
+  },
+  "dayap|citrus": {
+    "en": "A small sour fruit of the lime and lemon family.",
+    "tl": "Maliit at maasim na prutas mula sa pamilya ng dayap at limon."
+  },
+  "dede|breast": {
+    "en": "The soft part of a woman's chest that produces milk.",
+    "tl": "Ang malambot na bahagi ng dibdib ng babae na gumagawa ng gatas."
+  },
+  "dede|suck, breastfeed": {
+    "en": "To take milk from the breast.",
+    "tl": "Ang pagsuso ng gatas mula sa dibdib."
+  },
+  "deldelan|lick": {
+    "en": "To pass the tongue over something.",
+    "tl": "Ang paghaplos ng dila sa isang bagay."
+  },
+  "demlag|bright, light": {
+    "en": "Filled with light; not dark.",
+    "tl": "Puno ng liwanag; hindi madilim."
+  },
+  "demët|arriva": {
+    "en": "To reach the place one was going to.",
+    "tl": "Ang pagdating sa pupuntahang lugar."
+  },
+  "demët|come": {
+    "en": "To move towards the speaker; to arrive.",
+    "tl": "Ang paglapit sa nagsasalita; ang pagdating."
+  },
+  "di ngani|isn't that so?": {
+    "en": "A phrase added to a statement to invite agreement.",
+    "tl": "Pariralang idinaragdag sa pahayag upang humingi ng pagsang-ayon."
+  },
+  "di pwede|cannot, can't verb": {
+    "en": "Lacking the power or permission to do something.",
+    "tl": "Walang kakayahan o pahintulot na gawin ang isang bagay."
+  },
+  "didibba|low": {
+    "en": "Close to the ground; not high.",
+    "tl": "Malapit sa lupa; hindi mataas."
+  },
+  "didëbba|downward": {
+    "en": "Moving or facing towards a lower place.",
+    "tl": "Papunta o nakaharap sa mas mababang bahagi."
+  },
+  "digdig|edge": {
+    "en": "The outermost line or border of something.",
+    "tl": "Ang pinakalabas na linya o hangganan ng isang bagay."
+  },
+  "digdig|side": {
+    "en": "The edge or surface at the outer part of something.",
+    "tl": "Ang gilid o panlabas na bahagi ng isang bagay."
+  },
+  "diget|sea": {
+    "en": "The great body of salt water that covers most of the earth.",
+    "tl": "Ang malawak na maalat na tubig na bumabalot sa halos buong mundo."
+  },
+  "digi|blood": {
+    "en": "The red fluid that flows through the body.",
+    "tl": "Ang pulang likidong umaagos sa loob ng katawan."
+  },
+  "digum|needle": {
+    "en": "A thin pointed steel pin used for sewing.",
+    "tl": "Manipis at matulis na bakal na ginagamit sa pananahi."
+  },
+  "digus|bathe": {
+    "en": "To wash one's own body with water.",
+    "tl": "Ang paghuhugas ng sariling katawan gamit ang tubig."
+  },
+  "dikkël|big": {
+    "en": "Large in size or amount.",
+    "tl": "Malaki ang sukat o dami."
+  },
+  "diklëm|dark": {
+    "en": "Without light.",
+    "tl": "Walang liwanag."
+  },
+  "dima|fight": {
+    "en": "A quarrel or physical struggle between people.",
+    "tl": "Ang alitan o away sa pagitan ng mga tao."
+  },
+  "dimodyan|last": {
+    "en": "Coming after all the others.",
+    "tl": "Dumarating matapos ang lahat ng iba."
+  },
+  "dingding|wall": {
+    "en": "The upright side of a room or building.",
+    "tl": "Ang patayong gilid ng silid o gusali."
+  },
+  "dinulaw|call out": {
+    "en": "To summon someone in a loud voice.",
+    "tl": "Ang pagtawag sa iba nang malakas."
+  },
+  "dipos|lastborn": {
+    "en": "The youngest child in a family.",
+    "tl": "Ang pinakabatang anak sa pamilya."
+  },
+  "dipos|youngest child": {
+    "en": "The last-born child of a family.",
+    "tl": "Ang bunsong anak sa pamilya."
+  },
+  "disono ng bulos|upriver": {
+    "en": "In the direction against the flow of a river.",
+    "tl": "Sa direksyong pasalungat sa agos ng ilog."
+  },
+  "disono|above": {
+    "en": "In a higher position than something else.",
+    "tl": "Nasa mas mataas na posisyon kaysa sa iba."
+  },
+  "disono|lift up": {
+    "en": "To raise something to a higher place.",
+    "tl": "Ang pag-angat ng bagay patungo sa mas mataas na lugar."
+  },
+  "disono|up": {
+    "en": "Towards a higher place.",
+    "tl": "Patungo sa mas mataas na lugar."
+  },
+  "dissëllad|below": {
+    "en": "In a lower position than something else.",
+    "tl": "Nasa mas mababang posisyon kaysa sa iba."
+  },
+  "dissëllad|deep": {
+    "en": "Reaching far down from the surface.",
+    "tl": "Malayo ang lalim mula sa ibabaw."
+  },
+  "ditu|here": {
+    "en": "In this place, where the speaker is.",
+    "tl": "Sa lugar na ito, kung nasaan ang nagsasalita."
+  },
+  "ditëngnga|between": {
+    "en": "In the space separating two things.",
+    "tl": "Nasa puwang na naghihiwalay sa dalawang bagay."
+  },
+  "ditëngnga|in the middle of": {
+    "en": "At the point equally far from the edges.",
+    "tl": "Sa puntong pantay ang layo mula sa mga gilid."
+  },
+  "ditëngnga|middle": {
+    "en": "The point at equal distance from the edges.",
+    "tl": "Ang puntong pantay ang layo mula sa magkabilang gilid."
+  },
+  "diyos|god": {
+    "en": "A being worshipped as the maker and ruler of the world.",
+    "tl": "Ang nilalang na sinasamba bilang lumikha at namumuno sa mundo."
+  },
+  "dugong|dugong": {
+    "en": "A large plant-eating sea mammal of shallow waters.",
+    "tl": "Malaking hayop-dagat na kumakain ng damo sa mababaw na tubig."
+  },
+  "dulas|slippery": {
+    "en": "So smooth or wet that the foot or grip slides.",
+    "tl": "Napakakinis o basa kaya nadudulas ang paa o hawak."
+  },
+  "dulaw|called": {
+    "en": "Summoned or named aloud.",
+    "tl": "Tinawag o pinangalanan nang malakas."
+  },
+  "dumidibba|descend a hill": {
+    "en": "To go down a slope.",
+    "tl": "Ang pagbaba sa dalisdis."
+  },
+  "duryan|durian": {
+    "en": "A large spiny fruit with a strong smell and rich flesh.",
+    "tl": "Malaki at matinik na prutas na matapang ang amoy at malinamnam."
+  },
+  "dutdut|feather": {
+    "en": "One of the light shafts covering a bird's body.",
+    "tl": "Isa sa magagaan na balahibong bumabalot sa katawan ng ibon."
+  },
+  "dutdut|fur": {
+    "en": "The soft hair covering an animal's body.",
+    "tl": "Ang malambot na balahibong bumabalot sa katawan ng hayop."
+  },
+  "duun|leaf": {
+    "en": "The flat green part that grows from a plant's stem.",
+    "tl": "Ang patag at luntiang bahagi na tumutubo sa tangkay ng halaman."
+  },
+  "duun|over there": {
+    "en": "In that place, away from the speaker.",
+    "tl": "Sa lugar na iyon, malayo sa nagsasalita."
+  },
+  "duun|there": {
+    "en": "In that place, away from the speaker.",
+    "tl": "Sa lugar na iyon, malayo sa nagsasalita."
+  },
+  "duwandaan|two hundred": {
+    "en": "Twice one hundred.",
+    "tl": "Dalawang beses ang isandaan."
+  },
+  "duwapulu|twenty": {
+    "en": "Two tens.",
+    "tl": "Dalawang sampu."
+  },
+  "duwa|two": {
+    "en": "The number after one and before three.",
+    "tl": "Ang bilang na kasunod ng isa at bago ang tatlo."
+  },
+  "dëgnen|cold": {
+    "en": "Low in temperature, said of the weather.",
+    "tl": "Mababa ang temperatura, para sa panahon."
+  },
+  "dëppa|fathom, armspan": {
+    "en": "The length measured by both arms spread wide.",
+    "tl": "Ang sukat ng haba ng dalawang braso kapag nakabuka."
+  },
+  "dëppog|carabao, water buffalo": {
+    "en": "The large horned work animal of the ricefields.",
+    "tl": "Ang malaking hayop na may sungay na ginagamit sa bukid."
+  },
+  "dëtton|put, place": {
+    "en": "To set something in a particular spot.",
+    "tl": "Ang paglalagay ng bagay sa isang tiyak na lugar."
+  },
+  "egbër|flight": {
+    "en": "Movement through the air on wings.",
+    "tl": "Ang paggalaw sa himpapawid gamit ang pakpak."
+  },
+  "egbër|fly": {
+    "en": "To move through the air on wings.",
+    "tl": "Ang paglipad sa himpapawid gamit ang pakpak."
+  },
+  "ekrab|phlegm": {
+    "en": "The thick mucus brought up from the chest.",
+    "tl": "Ang malapot na plema na inilalabas mula sa dibdib."
+  },
+  "ekrot|fish trap": {
+    "en": "A basket or cage set in water to catch fish.",
+    "tl": "Bakol o hawla na inilalagay sa tubig upang manghuli ng isda."
+  },
+  "ekrot|pitfall trap": {
+    "en": "A covered pit dug to catch an animal that walks over it.",
+    "tl": "Natatakpang hukay upang mahulog ang hayop na dumaan dito."
+  },
+  "emas|slow": {
+    "en": "Moving or done without speed.",
+    "tl": "Kumikilos o ginagawa nang hindi mabilis."
+  },
+  "enak|child": {
+    "en": "A young person; an offspring.",
+    "tl": "Batang tao; supling."
+  },
+  "engngolo|tadpole": {
+    "en": "The young of a frog, still tailed and living in water.",
+    "tl": "Ang anak ng palaka, may buntot pa at nabubuhay sa tubig."
+  },
+  "entende|understand": {
+    "en": "To grasp the meaning of something.",
+    "tl": "Ang pag-unawa sa kahulugan ng isang bagay."
+  },
+  "esan daang libu|one hundred thousand": {
+    "en": "One hundred times one thousand.",
+    "tl": "Isandaang beses ang isanlibo."
+  },
+  "esandaan|one hundred": {
+    "en": "Ten tens.",
+    "tl": "Sampung sampu."
+  },
+  "esa|one": {
+    "en": "The first and smallest counting number.",
+    "tl": "Ang una at pinakamaliit na bilang sa pagbilang."
+  },
+  "esbu|urine": {
+    "en": "The liquid waste the body passes out.",
+    "tl": "Ang likidong dumi na inilalabas ng katawan."
+  },
+  "espada|sword": {
+    "en": "A weapon with a long blade and a handle.",
+    "tl": "Sandatang may mahabang talim at hawakan."
+  },
+  "essa|one": {
+    "en": "The first and smallest counting number.",
+    "tl": "Ang una at pinakamaliit na bilang sa pagbilang."
+  },
+  "etnodan|chair": {
+    "en": "A seat with a back for one person.",
+    "tl": "Upuang may sandalan para sa isang tao."
+  },
+  "etnod|sit": {
+    "en": "To rest with the weight on the buttocks.",
+    "tl": "Ang pag-upo kung saan nakasandal ang bigat sa puwitan."
+  },
+  "gabuk|fragile": {
+    "en": "Easily broken.",
+    "tl": "Madaling mabasag o masira."
+  },
+  "gagamba|spider": {
+    "en": "An eight-legged creature that spins a web to catch insects.",
+    "tl": "Nilalang na may walong paa na gumagawa ng sapot para manghuli ng insekto."
+  },
+  "gamet|do": {
+    "en": "To carry out an action or make something.",
+    "tl": "Ang pagsasagawa ng gawain o paglikha ng isang bagay."
+  },
+  "gamet|do, make": {
+    "en": "To carry out an action, or to create something.",
+    "tl": "Ang pagsasagawa ng gawain, o ang paglikha ng bagay."
+  },
+  "gamot|medicine": {
+    "en": "A substance taken to treat illness.",
+    "tl": "Bagay na iniinom o ginagamit upang gamutin ang sakit."
+  },
+  "ganu karami|how many?": {
+    "en": "The words used to ask the number of things.",
+    "tl": "Ang salitang ginagamit upang itanong ang bilang ng mga bagay."
+  },
+  "gapang|crawl": {
+    "en": "To move along on hands and knees or on the belly.",
+    "tl": "Ang paggapang gamit ang kamay at tuhod o gamit ang tiyan."
+  },
+  "garut|scabies": {
+    "en": "A skin disease with intense itching, caused by mites.",
+    "tl": "Sakit sa balat na napakakati, dulot ng maliliit na kulisap."
+  },
+  "gasangan|coral (rock)": {
+    "en": "The hard stony material built up by coral animals.",
+    "tl": "Ang matigas na batong nabubuo mula sa mga korales."
+  },
+  "gasang|(coral) reef": {
+    "en": "A ridge of coral lying near the surface of the sea.",
+    "tl": "Ang tambak ng korales na malapit sa ibabaw ng dagat."
+  },
+  "gatas|milk": {
+    "en": "The white liquid a mother's body makes to feed her young.",
+    "tl": "Ang puting likidong gawa ng katawan ng ina para pakainin ang anak."
+  },
+  "gata|coconut milk": {
+    "en": "The rich white liquid squeezed from grated coconut.",
+    "tl": "Ang malapot na puting katas na piniga mula sa kinayod na niyog."
+  },
+  "gawëd|betel nut, areca": {
+    "en": "The nut chewed with lime and a betel leaf.",
+    "tl": "Ang bungang nginanganga kasama ng apog at dahon ng ikmo."
+  },
+  "gayat|slice": {
+    "en": "To cut something into thin flat pieces.",
+    "tl": "Ang paghiwa ng bagay sa manipis at patag na piraso."
+  },
+  "gayuma|love charm": {
+    "en": "A charm believed to make someone fall in love.",
+    "tl": "Anting-anting na pinaniniwalaang nakapagpapaibig sa iba."
+  },
+  "gera|war": {
+    "en": "Armed fighting between peoples or nations.",
+    "tl": "Ang armadong labanan sa pagitan ng mga bayan o bansa."
+  },
+  "gera|war, battle": {
+    "en": "Armed fighting between groups or nations.",
+    "tl": "Armadong labanan sa pagitan ng mga pangkat o bansa."
+  },
+  "gibi|evening": {
+    "en": "The early part of the night, after the sun sets.",
+    "tl": "Ang unang bahagi ng gabi, matapos lumubog ang araw."
+  },
+  "gibi|night": {
+    "en": "The dark hours between sunset and sunrise.",
+    "tl": "Ang madilim na oras mula paglubog hanggang pagsikat ng araw."
+  },
+  "ginan|run": {
+    "en": "To move quickly on foot.",
+    "tl": "Ang mabilis na pagtakbo gamit ang mga paa."
+  },
+  "ginto|gold": {
+    "en": "A precious yellow metal used for jewellery and money.",
+    "tl": "Mahalagang diláw na metal na ginagawang alahas at salapi."
+  },
+  "gintu|gold": {
+    "en": "A precious yellow metal used for jewellery and money.",
+    "tl": "Mahalagang diláw na metal na ginagawang alahas at salapi."
+  },
+  "giyak|bark": {
+    "en": "The sharp cry a dog makes.",
+    "tl": "Ang matinis na tunog na ginagawa ng aso."
+  },
+  "godgod|drag": {
+    "en": "To pull something heavy along the ground.",
+    "tl": "Ang paghila ng mabigat na bagay sa lupa."
+  },
+  "gulong|wheel": {
+    "en": "A round part that turns to let a vehicle move.",
+    "tl": "Bilog na bahaging umiikot upang makagalaw ang sasakyan."
+  },
+  "gulpi|many": {
+    "en": "Large in number.",
+    "tl": "Marami ang bilang."
+  },
+  "gumanti|revenge, pay back": {
+    "en": "To return a wrong done to oneself.",
+    "tl": "Ang pagganti sa masamang ginawa sa sarili."
+  },
+  "guramët sa bësset|toe": {
+    "en": "One of the five parts at the end of the foot.",
+    "tl": "Isa sa limang bahagi sa dulo ng paa."
+  },
+  "guramët|finger": {
+    "en": "One of the five parts at the end of the hand.",
+    "tl": "Isa sa limang bahagi sa dulo ng kamay."
+  },
+  "gus-gus|scratch": {
+    "en": "To rub itchy skin with the nails.",
+    "tl": "Ang pagkamot sa makating balat gamit ang kuko."
+  },
+  "gusgus|scratch": {
+    "en": "To rub the skin with the nails.",
+    "tl": "Ang pagkamot sa balat gamit ang mga kuko."
+  },
+  "gustu|want": {
+    "en": "To wish to have or do something.",
+    "tl": "Ang pagnanais na magkaroon o gumawa ng isang bagay."
+  },
+  "gërret|write": {
+    "en": "To set words down in marks on a surface.",
+    "tl": "Ang paglalagay ng mga salita bilang marka sa isang ibabaw."
+  },
+  "gëttëm|want, desire": {
+    "en": "To wish strongly to have something.",
+    "tl": "Ang matinding pagnanais na magkaroon ng isang bagay."
+  },
+  "hagaddën|chase": {
+    "en": "To run after someone or something.",
+    "tl": "Ang paghabol sa isang tao o bagay."
+  },
+  "hagut|fast": {
+    "en": "Moving or done at great speed.",
+    "tl": "Mabilis kumilos o gawin."
+  },
+  "halaman|plant": {
+    "en": "A living thing that grows in the ground and does not move.",
+    "tl": "Nilalang na tumutubo sa lupa at hindi gumagalaw."
+  },
+  "halu|pestle": {
+    "en": "The heavy pole used to pound in a mortar.",
+    "tl": "Ang mabigat na kahoy na ipinambabayo sa lusong."
+  },
+  "hambog|proud": {
+    "en": "Holding a high opinion of oneself.",
+    "tl": "Mataas ang tingin sa sarili."
+  },
+  "hamog|dew": {
+    "en": "Drops of water that settle on things overnight.",
+    "tl": "Mga patak ng tubig na dumadapo sa mga bagay sa gabi."
+  },
+  "hamug|mist, fog": {
+    "en": "Thin cloud near the ground that dims what is ahead.",
+    "tl": "Manipis na ulap malapit sa lupa na lumalabo sa tanawin."
+  },
+  "hand|press": {
+    "en": "To push down on something steadily.",
+    "tl": "Ang pagdiin pababa sa isang bagay."
+  },
+  "hating-gibi|midnight": {
+    "en": "The middle of the night, twelve o'clock.",
+    "tl": "Ang kalagitnaan ng gabi, alas-dose."
+  },
+  "hatiën|split": {
+    "en": "To divide something into two halves.",
+    "tl": "Ang paghahati ng bagay sa dalawang bahagi."
+  },
+  "hayop|animal": {
+    "en": "Any living creature that is not a plant or a person.",
+    "tl": "Anumang nilalang na hindi halaman o tao."
+  },
+  "hayup|animal": {
+    "en": "A living creature that is not a plant or a person.",
+    "tl": "Nilalang na hindi halaman o tao."
+  },
+  "hilaën|pull": {
+    "en": "To draw something towards oneself.",
+    "tl": "Ang paghatak ng bagay palapit sa sarili."
+  },
+  "hilingën|ask for, request": {
+    "en": "To say that one would like to be given something.",
+    "tl": "Ang paghiling na mabigyan ng isang bagay."
+  },
+  "hilut|massage": {
+    "en": "To press and rub the body to ease pain.",
+    "tl": "Ang paghilot sa katawan upang mabawasan ang sakit."
+  },
+  "hinde|not": {
+    "en": "The word that turns an action into its opposite.",
+    "tl": "Ang salitang nagpapasalungat sa isang kilos."
+  },
+  "hindi pwede|don't!, do not!": {
+    "en": "The word used to forbid an action.",
+    "tl": "Ang salitang ginagamit sa pagbabawal ng isang kilos."
+  },
+  "hindi tinggi|stranger": {
+    "en": "A person one does not know.",
+    "tl": "Taong hindi kilala."
+  },
+  "hindi|not": {
+    "en": "The word that turns a statement into its opposite.",
+    "tl": "Ang salitang nagpapasalungat sa isang pahayag."
+  },
+  "hintu|stop": {
+    "en": "To cease moving or acting.",
+    "tl": "Ang paghinto sa paggalaw o paggawa."
+  },
+  "hipag|sister-in-law": {
+    "en": "The sister of one's spouse, or a brother's wife.",
+    "tl": "Ang kapatid na babae ng asawa, o ang asawa ng kapatid na lalaki."
+  },
+  "hirap|difficult": {
+    "en": "Taking great effort to do.",
+    "tl": "Malaking pagod ang kailangan."
+  },
+  "hiwaën|cut": {
+    "en": "To slice something into pieces with a blade.",
+    "tl": "Ang paghiwa ng bagay sa piraso gamit ang talim."
+  },
+  "humiliya|sermon": {
+    "en": "A religious talk given during worship.",
+    "tl": "Panrelihiyong pangaral na binibigkas sa pagsamba."
+  },
+  "iagton|move-to": {
+    "en": "To shift something to another place.",
+    "tl": "Ang paglilipat ng bagay sa ibang lugar."
+  },
+  "iba|other, different": {
+    "en": "Not the same as the one already named.",
+    "tl": "Hindi katulad ng nabanggit na."
+  },
+  "ibon|bird": {
+    "en": "A feathered animal with wings and a beak.",
+    "tl": "Hayop na may balahibo, pakpak at tuka."
+  },
+  "ibugtong|sell": {
+    "en": "To hand something over in return for money.",
+    "tl": "Ang pagbibigay ng bagay kapalit ng salapi."
+  },
+  "ibun|bird": {
+    "en": "A feathered animal with wings and a beak.",
+    "tl": "Hayop na may balahibo, pakpak at tuka."
+  },
+  "ibut|throw": {
+    "en": "To send something through the air with the hand.",
+    "tl": "Ang paghagis ng bagay sa hangin gamit ang kamay."
+  },
+  "iegut|tie": {
+    "en": "To fasten with a cord or knot.",
+    "tl": "Ang pag-ugnay gamit ang tali o buhol."
+  },
+  "igut|rope": {
+    "en": "A thick strong cord of twisted strands.",
+    "tl": "Makapal at matibay na lubid na pinilipit na hibla."
+  },
+  "igut|tie": {
+    "en": "To fasten with a cord or knot.",
+    "tl": "Ang pag-ugnay gamit ang tali o buhol."
+  },
+  "ikagi|tell": {
+    "en": "To pass information on to someone in words.",
+    "tl": "Ang pagsasabi ng impormasyon sa iba."
+  },
+  "ikagkag|dry in sun": {
+    "en": "To put something in the sun so it dries.",
+    "tl": "Ang paglalagay ng bagay sa araw upang matuyo."
+  },
+  "ikagkag|dry up": {
+    "en": "To make something lose its moisture.",
+    "tl": "Ang pagpapatuyo ng bagay hanggang mawala ang basa nito."
+  },
+  "ikaw|2sg (informal)": {
+    "en": "You, one person, spoken to familiarly.",
+    "tl": "Ikaw, iisang tao, sa palagayang pananalita."
+  },
+  "ikaw|2sg (polite)": {
+    "en": "You, one person, spoken to with respect.",
+    "tl": "Kayo, iisang tao, sa magalang na pananalita."
+  },
+  "ikkër|cough": {
+    "en": "To force air out of the throat with a sharp sound.",
+    "tl": "Ang pagbuga ng hangin mula sa lalamunan nang may matinis na tunog."
+  },
+  "ikut|turn": {
+    "en": "To change direction, as at a corner.",
+    "tl": "Ang pagbabago ng direksyon, gaya sa kanto."
+  },
+  "ileng sa didibba|look down": {
+    "en": "To direct the eyes towards a lower place.",
+    "tl": "Ang pagtingin patungo sa mas mababang lugar."
+  },
+  "ileng|look": {
+    "en": "To turn the eyes towards something.",
+    "tl": "Ang pagtingin sa isang bagay."
+  },
+  "inahin|hen": {
+    "en": "An adult female chicken.",
+    "tl": "Ang manok na babae sa hustong gulang."
+  },
+  "inenak|born": {
+    "en": "Brought into the world at birth.",
+    "tl": "Isinilang sa mundo."
+  },
+  "init|hot": {
+    "en": "High in temperature, as heated water.",
+    "tl": "Mataas ang temperatura, gaya ng pinainit na tubig."
+  },
+  "inom|drink": {
+    "en": "To take liquid into the body through the mouth.",
+    "tl": "Ang paglagok ng likido sa pamamagitan ng bibig."
+  },
+  "inosente|innocent": {
+    "en": "Not having done the wrong one is charged with.",
+    "tl": "Hindi nagawa ang maling ipinaparatang."
+  },
+  "inumadi|surrender": {
+    "en": "To stop fighting and give oneself up.",
+    "tl": "Ang paghinto sa paglaban at pagsuko ng sarili."
+  },
+  "ipagtanggol|defend": {
+    "en": "To protect someone or something from attack.",
+    "tl": "Ang pagtatanggol sa tao o bagay mula sa pananalakay."
+  },
+  "ipeta|show": {
+    "en": "To let another person see something.",
+    "tl": "Ang pagpapakita ng isang bagay sa iba."
+  },
+  "ipos|tail": {
+    "en": "The part that extends from the rear of an animal.",
+    "tl": "Ang bahaging nakausli sa likuran ng hayop."
+  },
+  "ipu-ipu|whirlpool": {
+    "en": "Water turning rapidly in a circle.",
+    "tl": "Tubig na mabilis umiikot nang paikot."
+  },
+  "ipës|cockroach": {
+    "en": "A flat brown insect that lives in houses.",
+    "tl": "Patag at kayumangging insektong naninirahan sa bahay."
+  },
+  "iragëk|snore": {
+    "en": "To breathe with a rough noise while asleep.",
+    "tl": "Ang paghinga nang may magaspang na tunog habang natutulog."
+  },
+  "isabug|spread out": {
+    "en": "To scatter something over a wide area.",
+    "tl": "Ang pagkakalat ng bagay sa malawak na lugar."
+  },
+  "isaradu|close": {
+    "en": "To shut something that was open.",
+    "tl": "Ang pagsasara ng bagay na nakabukas."
+  },
+  "isipën|think": {
+    "en": "To turn something over in the mind.",
+    "tl": "Ang pag-iisip tungkol sa isang bagay."
+  },
+  "iskul|school": {
+    "en": "The place where children are taught.",
+    "tl": "Ang lugar kung saan tinuturuan ang mga bata."
+  },
+  "isla|island": {
+    "en": "A piece of land with water all around it.",
+    "tl": "Lupaing napapaligiran ng tubig sa lahat ng panig."
+  },
+  "isumpa|curse": {
+    "en": "To call down harm on someone with words.",
+    "tl": "Ang paghiling ng masamang mangyari sa iba sa pamamagitan ng salita."
+  },
+  "itiklup|fold": {
+    "en": "To bend something over on itself.",
+    "tl": "Ang pagtupi ng bagay sa sarili nito."
+  },
+  "ittëd|give": {
+    "en": "To hand something over to another person.",
+    "tl": "Ang pag-abot ng bagay sa ibang tao."
+  },
+  "itugën|escort, bring s.o. somewhere": {
+    "en": "To take someone to where they are going.",
+    "tl": "Ang paghatid sa isang tao sa kanyang pupuntahan."
+  },
+  "ituldu|point at": {
+    "en": "To aim a finger at something to show which it is.",
+    "tl": "Ang pagturo gamit ang daliri upang ipakita kung alin ito."
+  },
+  "itu|this": {
+    "en": "The thing near the speaker.",
+    "tl": "Ang bagay na malapit sa nagsasalita."
+  },
+  "iula|tether an animal": {
+    "en": "To tie an animal so it cannot wander off.",
+    "tl": "Ang pagtali sa hayop upang hindi ito makagala."
+  },
+  "iwag|move": {
+    "en": "To be in motion rather than still.",
+    "tl": "Ang paggalaw sa halip na manatiling tahimik."
+  },
+  "iyun|that": {
+    "en": "The thing away from the speaker.",
+    "tl": "Ang bagay na malayo sa nagsasalita."
+  },
+  "kaalaman|know how do something": {
+    "en": "The skill of being able to do a thing.",
+    "tl": "Ang kasanayang magawa ang isang bagay."
+  },
+  "kabayo|horse": {
+    "en": "A large animal ridden or used to pull loads.",
+    "tl": "Malaking hayop na sinasakyan o ginagamit sa paghila ng karga."
+  },
+  "kabingang bëbbi|wife": {
+    "en": "The female partner in a marriage.",
+    "tl": "Ang babaeng kabiyak sa isang pag-aasawa."
+  },
+  "kabingang lalëkke|husband": {
+    "en": "The male partner in a marriage.",
+    "tl": "Ang lalaking kabiyak sa isang pag-aasawa."
+  },
+  "kabitan|grasp": {
+    "en": "To take firm hold of something.",
+    "tl": "Ang mahigpit na paghawak sa isang bagay."
+  },
+  "kabit|hold": {
+    "en": "To keep something in the hand or grip.",
+    "tl": "Ang paghawak sa isang bagay gamit ang kamay."
+  },
+  "kabukedan|forest": {
+    "en": "A large area thickly covered with trees.",
+    "tl": "Malawak na lugar na makapal ang mga puno."
+  },
+  "kabuti|mushroom": {
+    "en": "A soft fungus with a stalk and cap, eaten as food.",
+    "tl": "Malambot na halamang-singaw na may tangkay at kalo, kinakain bilang pagkain."
+  },
+  "kadigetan|ocean": {
+    "en": "The vast open sea far from land.",
+    "tl": "Ang malawak na dagat na malayo sa lupa."
+  },
+  "kadima|enemy": {
+    "en": "A person who opposes or means harm to another.",
+    "tl": "Taong sumasalungat o may masamang balak sa iba."
+  },
+  "kadut|knife": {
+    "en": "A tool with a blade for cutting.",
+    "tl": "Kasangkapang may talim na ginagamit sa pagputol."
+  },
+  "kagbi|pity": {
+    "en": "Sorrow felt for another person's suffering.",
+    "tl": "Ang lungkot na nadarama para sa paghihirap ng iba."
+  },
+  "kagibi|last night": {
+    "en": "The night just past.",
+    "tl": "Ang gabing kalilipas lamang."
+  },
+  "kagi|language": {
+    "en": "The whole system of words a people speaks.",
+    "tl": "Ang buong sistema ng mga salitang ginagamit ng isang bayan."
+  },
+  "kagi|say": {
+    "en": "To put something into words aloud.",
+    "tl": "Ang pagsasabi ng isang bagay nang malakas."
+  },
+  "kagi|speak": {
+    "en": "To use the voice to express words.",
+    "tl": "Ang paggamit ng tinig upang magbigkas ng salita."
+  },
+  "kagi|word": {
+    "en": "A single unit of speech carrying a meaning.",
+    "tl": "Iisang yunit ng pananalita na may kahulugan."
+  },
+  "kagiën|say": {
+    "en": "To put something into words aloud.",
+    "tl": "Ang pagsasabi ng isang bagay nang malakas."
+  },
+  "kaguman|accompany, go with": {
+    "en": "To travel along with another person.",
+    "tl": "Ang pagsama sa paglalakbay ng ibang tao."
+  },
+  "kaguman|companion": {
+    "en": "A person who goes along with another.",
+    "tl": "Taong sumasama sa iba."
+  },
+  "kaguman|with": {
+    "en": "In the company of; together with.",
+    "tl": "Kasama ng; kapiling ng."
+  },
+  "kahapun|yesterday": {
+    "en": "The day before today.",
+    "tl": "Ang araw bago ang araw na ito."
+  },
+  "kaku|goodbye": {
+    "en": "What is said when parting from someone.",
+    "tl": "Ang sinasabi kapag naghihiwalay ng landas sa iba."
+  },
+  "kalabasa|pumpkin, squash": {
+    "en": "A large round vegetable with firm orange flesh.",
+    "tl": "Malaki at bilog na gulay na matigas at kahel ang laman."
+  },
+  "kalabeng|flying fox, fruit bat": {
+    "en": "A large bat that feeds on fruit.",
+    "tl": "Malaking paniki na kumakain ng prutas."
+  },
+  "kalahati|half": {
+    "en": "One of two equal parts.",
+    "tl": "Isa sa dalawang pantay na bahagi."
+  },
+  "kalapati|dove": {
+    "en": "A plump grey bird with a soft cooing call.",
+    "tl": "Mataba at abuhing ibong may malumanay na huni."
+  },
+  "kalbu|bald": {
+    "en": "Having little or no hair on the head.",
+    "tl": "Kakaunti o wala nang buhok sa ulo."
+  },
+  "kalibungbong|torch": {
+    "en": "A burning brand carried for light.",
+    "tl": "Nagliliyab na sulo na dala-dala para sa liwanag."
+  },
+  "kalitonton|dragonfly": {
+    "en": "A slender insect with two pairs of clear wings.",
+    "tl": "Payat na insektong may dalawang pares ng malinaw na pakpak."
+  },
+  "kaliwa kariwe|left": {
+    "en": "The side of the body opposite the right.",
+    "tl": "Ang panig ng katawan na katapat ng kanan."
+  },
+  "kaliwa|left (side)": {
+    "en": "The side opposite the right.",
+    "tl": "Ang panig na katapat ng kanan."
+  },
+  "kaluluwa|soul": {
+    "en": "The part of a person believed to live on after death.",
+    "tl": "Ang bahagi ng tao na pinaniniwalaang nabubuhay matapos ang kamatayan."
+  },
+  "kamalig|storehouse (food)": {
+    "en": "A building where harvested food is kept.",
+    "tl": "Gusaling pinag-iimbakan ng aning pagkain."
+  },
+  "kambal|twin": {
+    "en": "Either of two children born at the same birth.",
+    "tl": "Alinman sa dalawang anak na isinilang nang sabay."
+  },
+  "kambing|goat": {
+    "en": "A small horned farm animal that browses on leaves.",
+    "tl": "Maliit na hayop na may sungay na kumakain ng dahon."
+  },
+  "kampusanto|coffin": {
+    "en": "The box a dead person is laid in for burial.",
+    "tl": "Ang kahong pinaglalagyan ng yumao para sa libing."
+  },
+  "kamuting baging|sweet potato": {
+    "en": "A sweet root crop with orange or white flesh.",
+    "tl": "Matamis na halamang-ugat na kahel o puti ang laman."
+  },
+  "kamuting kahoy|cassava": {
+    "en": "A starchy root crop eaten boiled or made into cakes.",
+    "tl": "Halamang-ugat na almirol, nilalaga o ginagawang kakanin."
+  },
+  "kamyas|averrhoa blimbi": {
+    "en": "A small sour green fruit used to flavour dishes.",
+    "tl": "Maliit at maasim na luntiang prutas na ipinampapaasim sa ulam."
+  },
+  "kanan|right (hand)": {
+    "en": "The side of the body opposite the left.",
+    "tl": "Ang panig ng katawan na katapat ng kaliwa."
+  },
+  "kanan|right (side)": {
+    "en": "The side opposite the left.",
+    "tl": "Ang panig na katapat ng kaliwa."
+  },
+  "kanga|anger": {
+    "en": "The strong feeling of being displeased and wanting to lash out.",
+    "tl": "Ang matinding damdamin ng pagkayamot at pagnanais gumanti."
+  },
+  "kanga|angry": {
+    "en": "Feeling strong displeasure at someone or something.",
+    "tl": "Nakadarama ng matinding galit sa isang tao o bagay."
+  },
+  "kaninu|whose?": {
+    "en": "The word used to ask who owns something.",
+    "tl": "Ang salitang ginagamit upang itanong kung kanino pag-aari ang isang bagay."
+  },
+  "kanluran|west": {
+    "en": "The direction in which the sun sets.",
+    "tl": "Ang direksyon kung saan lumulubog ang araw."
+  },
+  "kanta|sing": {
+    "en": "To make music with the voice.",
+    "tl": "Ang paglikha ng musika gamit ang tinig."
+  },
+  "kanto|corner": {
+    "en": "The point where two edges or streets meet.",
+    "tl": "Ang puntong pinagtatagpo ng dalawang gilid o kalye."
+  },
+  "kapatiyaka|sibling": {
+    "en": "A brother or a sister.",
+    "tl": "Ang kapatid na lalaki o babae."
+  },
+  "kapatkakang bëbbi|sister": {
+    "en": "A female sibling.",
+    "tl": "Ang kapatid na babae."
+  },
+  "kapatkakang lalëkke|brother": {
+    "en": "A male sibling.",
+    "tl": "Ang kapatid na lalaki."
+  },
+  "kapatkaka|older sibling": {
+    "en": "A brother or sister born before oneself.",
+    "tl": "Ang kapatid na mas matanda kaysa sa sarili."
+  },
+  "kapkappën|grope, feel": {
+    "en": "To search by touch rather than by sight.",
+    "tl": "Ang paghahanap sa pamamagitan ng hipo sa halip na paningin."
+  },
+  "kapsit|semen, sperm": {
+    "en": "The fluid a male body releases in reproduction.",
+    "tl": "Ang likidong inilalabas ng katawan ng lalaki sa pagpaparami."
+  },
+  "kapëssokan|swamp, wetland": {
+    "en": "Low ground that stays soft and waterlogged.",
+    "tl": "Mababang lupain na palaging malambot at basang-basa."
+  },
+  "karabukob|throat": {
+    "en": "The passage from the mouth down into the body.",
+    "tl": "Ang daanan mula bibig patungo sa loob ng katawan."
+  },
+  "karakap|betel vine": {
+    "en": "The climbing plant whose leaf is chewed with betel nut.",
+    "tl": "Ang gumagapang na halaman na ang dahon ay nginanganga kasama ng bunga."
+  },
+  "karamay|centipede": {
+    "en": "A long many-legged creature with a painful bite.",
+    "tl": "Mahabang nilalang na maraming paa at masakit ang kagat."
+  },
+  "karon|come": {
+    "en": "To move towards the speaker.",
+    "tl": "Ang paglapit patungo sa nagsasalita."
+  },
+  "karyaw|shout": {
+    "en": "To call out in a loud voice.",
+    "tl": "Ang pagsigaw nang malakas."
+  },
+  "kasinungalingan kabulean|lie": {
+    "en": "Something said that the speaker knows is untrue.",
+    "tl": "Bagay na sinasabi kahit alam ng nagsasalita na hindi totoo."
+  },
+  "kate|lowtide": {
+    "en": "The time when the sea falls back furthest from the shore.",
+    "tl": "Ang oras na pinakamalayo ang urong ng dagat mula sa dalampasigan."
+  },
+  "katidug|lie down": {
+    "en": "To put the body down flat, as on a bed.",
+    "tl": "Ang paghiga nang patag, gaya sa higaan."
+  },
+  "katig|float outrigger": {
+    "en": "The side float that keeps a canoe from tipping over.",
+    "tl": "Ang panggilid na palutang na pumipigil sa bangkang tumaob."
+  },
+  "katre|bed": {
+    "en": "The frame and bedding a person sleeps on.",
+    "tl": "Ang kama at higaan na tinutulugan."
+  },
+  "kattël|itchy": {
+    "en": "Causing the urge to scratch.",
+    "tl": "Nagdudulot ng pagnanais kumamot."
+  },
+  "katé|shallow": {
+    "en": "Not reaching far down.",
+    "tl": "Hindi malalim; mababaw."
+  },
+  "katël|itch": {
+    "en": "The skin feeling that makes a person want to scratch.",
+    "tl": "Ang pakiramdam sa balat na nagpapagusto sa taong kumamot."
+  },
+  "kawale|frying pan": {
+    "en": "A shallow pan used for frying.",
+    "tl": "Mababaw na kawaling ginagamit sa pagprito."
+  },
+  "kawayan|bamboo": {
+    "en": "A tall hollow-stemmed grass used for building and containers.",
+    "tl": "Matangkad na damong may guwang na tangkay, ginagamit sa pagtatayo at lalagyan."
+  },
+  "kawit|hook": {
+    "en": "A bent piece of metal for hanging things on.",
+    "tl": "Hubog na bakal na pinagsasabitan ng mga bagay."
+  },
+  "kayo`|wood": {
+    "en": "The hard material a tree is made of; a length of it.",
+    "tl": "Ang matigas na sangkap ng puno; isang piraso nito."
+  },
+  "kayu|2pl": {
+    "en": "You, more than one person.",
+    "tl": "Kayo, higit sa isang tao."
+  },
+  "kayó|board": {
+    "en": "A flat length of sawn timber.",
+    "tl": "Patag at mahabang tablang kahoy."
+  },
+  "kelan|when": {
+    "en": "The word used to ask at what time something happens.",
+    "tl": "Ang salitang ginagamit upang itanong kung kailan nangyayari ang isang bagay."
+  },
+  "kelan|when?": {
+    "en": "The word used to ask at what time something happens.",
+    "tl": "Ang salitang ginagamit upang itanong kung kailan mangyayari ang isang bagay."
+  },
+  "keta|see": {
+    "en": "To take something in with the eyes.",
+    "tl": "Ang pagkakita gamit ang mga mata."
+  },
+  "kilekile|armpit": {
+    "en": "The hollow under the arm where it meets the body.",
+    "tl": "Ang lukot sa ilalim ng braso kung saan ito nakakabit sa katawan."
+  },
+  "kili-kile|armpit": {
+    "en": "The hollow underneath the arm where it meets the body.",
+    "tl": "Ang lukot sa ilalim ng braso kung saan ito nakakabit sa katawan."
+  },
+  "kinis|smooth": {
+    "en": "Even to the touch, said of a surface.",
+    "tl": "Pantay sa hipo, para sa ibabaw ng bagay."
+  },
+  "kiray|eyebrow": {
+    "en": "The line of hair above the eye.",
+    "tl": "Ang hanay ng buhok sa itaas ng mata."
+  },
+  "kiray|eyebrows": {
+    "en": "The lines of hair above the eyes.",
+    "tl": "Ang mga hanay ng buhok sa itaas ng mga mata."
+  },
+  "kiskis|grind, mill": {
+    "en": "To crush grain into meal between hard surfaces.",
+    "tl": "Ang paggiling ng butil sa pagitan ng matitigas na ibabaw."
+  },
+  "kita|1pl incl": {
+    "en": "We, counting the person being spoken to.",
+    "tl": "Tayo, kabilang ang kausap."
+  },
+  "koloran|carambola": {
+    "en": "A ridged yellow fruit that cuts into star-shaped slices.",
+    "tl": "Diláw na prutas na may gilid at nagiging hugis-bituin kapag hiniwa."
+  },
+  "kor-kor|scrape": {
+    "en": "To shave the flesh from something, as from a coconut.",
+    "tl": "Ang pagkayod ng laman mula sa isang bagay, gaya ng niyog."
+  },
+  "korkoran|coconut grater": {
+    "en": "A bench with a toothed blade for scraping meat from a coconut.",
+    "tl": "Upuang may ngiping talim para kayurin ang laman ng niyog."
+  },
+  "koskos|rub": {
+    "en": "To move the hand back and forth over the skin.",
+    "tl": "Ang pagkusot pabalik-balik sa balat."
+  },
+  "kotkot|bury": {
+    "en": "To put something under the ground and cover it.",
+    "tl": "Ang paglalagay ng bagay sa ilalim ng lupa at pagtatakip dito."
+  },
+  "kotkot|dig": {
+    "en": "To break up and lift out earth.",
+    "tl": "Ang paghukay at pag-aalis ng lupa."
+  },
+  "kubu|traditional house": {
+    "en": "A house built in the old way from local materials.",
+    "tl": "Bahay na itinayo sa lumang paraan mula sa katutubong materyales."
+  },
+  "kudal|fence": {
+    "en": "A barrier of posts or stakes marking off land.",
+    "tl": "Harang na yari sa poste o kahoy na nagmamarka ng lupain."
+  },
+  "kudëp|blink one's eyes": {
+    "en": "To shut and open the eyes quickly.",
+    "tl": "Ang mabilis na pagpikit at pagmulat ng mata."
+  },
+  "kugun|cogon grass": {
+    "en": "A tall coarse grass used for thatching roofs.",
+    "tl": "Matangkad at magaspang na damo na ginagamit sa pagbubungon."
+  },
+  "kuhul|snail": {
+    "en": "A soft creature that carries a spiral shell.",
+    "tl": "Malambot na nilalang na may pasikot na kabibe."
+  },
+  "kuko|fingernail": {
+    "en": "The hard covering at the tip of a finger.",
+    "tl": "Ang matigas na takip sa dulo ng daliri."
+  },
+  "kuko|nail": {
+    "en": "The hard plate at the tip of a finger or toe.",
+    "tl": "Ang matigas na takip sa dulo ng daliri sa kamay o paa."
+  },
+  "kulago|wart": {
+    "en": "A small hard growth on the skin.",
+    "tl": "Maliit at matigas na tubo sa balat."
+  },
+  "kulangot|snot, mucus": {
+    "en": "The sticky fluid produced inside the nose.",
+    "tl": "Ang malagkit na likidong nabubuo sa loob ng ilong."
+  },
+  "kulang|not enough": {
+    "en": "Less than what is needed.",
+    "tl": "Mas kaunti kaysa sa kailangan."
+  },
+  "kulapnet|bat": {
+    "en": "A flying animal with leathery wings, active at night.",
+    "tl": "Hayop na lumilipad gamit ang balat na pakpak, gising sa gabi."
+  },
+  "kulapnët|bat": {
+    "en": "A flying animal with leathery wings that feeds at night.",
+    "tl": "Hayop na lumilipad gamit ang balat na pakpak at kumakain sa gabi."
+  },
+  "kulet ng punu|bark (of tree)": {
+    "en": "The tough outer covering of a tree trunk.",
+    "tl": "Ang matigas na panlabas na balat ng puno."
+  },
+  "kulet|bark": {
+    "en": "The tough outer covering of a tree trunk.",
+    "tl": "Ang matigas na panlabas na balat ng puno."
+  },
+  "kulet|skin": {
+    "en": "The outer covering of a body.",
+    "tl": "Ang panlabas na balot ng katawan."
+  },
+  "kulot|curly hair": {
+    "en": "Hair that grows in curls rather than straight.",
+    "tl": "Buhok na kulot sa halip na tuwid."
+  },
+  "kulungan|pen (animal)": {
+    "en": "A fenced enclosure for keeping animals.",
+    "tl": "Nabakurang lugar na pinaglalagyan ng mga hayop."
+  },
+  "kuman|eat": {
+    "en": "To take food into the body through the mouth.",
+    "tl": "Ang pagkain sa pamamagitan ng bibig."
+  },
+  "kuneg|turmeric": {
+    "en": "A yellow root used as a spice and a dye.",
+    "tl": "Diláw na ugat na ginagamit na pampalasa at pangkulay."
+  },
+  "kung|if": {
+    "en": "The word introducing a condition.",
+    "tl": "Ang salitang nagpapasimula ng isang kundisyon."
+  },
+  "kurikët|tickle": {
+    "en": "To touch someone lightly so as to make them laugh.",
+    "tl": "Ang bahagyang paghipo sa iba upang siya ay tumawa."
+  },
+  "kuskus|rub": {
+    "en": "To move something back and forth against a surface.",
+    "tl": "Ang pagkusot pabalik-balik sa isang ibabaw."
+  },
+  "kute-kute|firefly": {
+    "en": "A night insect whose body glows.",
+    "tl": "Insektong panggabi na kumikislap ang katawan."
+  },
+  "kutoan|delouse, remove lice": {
+    "en": "To pick lice out of someone's hair.",
+    "tl": "Ang paghahanap at pagtanggal ng kuto sa buhok ng iba."
+  },
+  "kuto|head louse": {
+    "en": "A small insect that lives in the hair of the head.",
+    "tl": "Maliit na insektong naninirahan sa buhok ng ulo."
+  },
+  "kuto|louse": {
+    "en": "A small insect that lives in hair and bites the skin.",
+    "tl": "Maliit na insektong naninirahan sa buhok at kumakagat sa balat."
+  },
+  "kuwago|owl": {
+    "en": "A night bird with large eyes and a silent flight.",
+    "tl": "Ibong panggabi na may malalaking mata at tahimik na paglipad."
+  },
+  "kuwan|what-you-may-call-it (hesitation word)": {
+    "en": "A filler used when the right word will not come to mind.",
+    "tl": "Salitang pandagdag kapag hindi maalala ang tamang salita."
+  },
+  "kuwarta|money": {
+    "en": "Coins and notes used to buy and sell.",
+    "tl": "Ang barya at papel na ginagamit sa pagbili at pagbebenta."
+  },
+  "kuwentas|necklace": {
+    "en": "An ornament worn around the neck.",
+    "tl": "Palamuting isinusuot sa leeg."
+  },
+  "kuyëng|rat": {
+    "en": "A small grey animal with a long tail that lives near people.",
+    "tl": "Maliit na abuhing hayop na may mahabang buntot, naninirahan malapit sa tao."
+  },
+  "kuyëng|rat, mouse": {
+    "en": "A small long-tailed animal that lives near people.",
+    "tl": "Maliit na hayop na may mahabang buntot, naninirahan malapit sa tao."
+  },
+  "kweba|cave": {
+    "en": "A hollow space running into a hill or cliff.",
+    "tl": "Guwang na pumapasok sa loob ng burol o bangin."
+  },
+  "kwento|story": {
+    "en": "An account of events, told or written.",
+    "tl": "Salaysay ng mga pangyayari, sinasabi o isinusulat."
+  },
+  "këbkëb|embrace, hug": {
+    "en": "To hold someone close in one's arms.",
+    "tl": "Ang mahigpit na pagyakap sa isang tao."
+  },
+  "këddur|thunder": {
+    "en": "The loud noise that follows lightning.",
+    "tl": "Ang malakas na ugong na sumusunod sa kidlat."
+  },
+  "këddut|pinch": {
+    "en": "To squeeze skin between finger and thumb.",
+    "tl": "Ang pagkurot ng balat sa pagitan ng daliri at hinlalaki."
+  },
+  "këddëm|close one's eyes": {
+    "en": "To let the eyelids fall shut.",
+    "tl": "Ang pagpikit ng mga mata."
+  },
+  "këggang|scab": {
+    "en": "The hard crust that forms over a healing wound.",
+    "tl": "Ang matigas na balat na nabubuo sa gumagaling na sugat."
+  },
+  "këtteb|bite": {
+    "en": "To cut into something with the teeth.",
+    "tl": "Ang pagkagat gamit ang mga ngipin."
+  },
+  "këttol|cut": {
+    "en": "To divide something with a blade.",
+    "tl": "Ang paghahati sa bagay gamit ang matalim na kasangkapan."
+  },
+  "këttolën|cut down": {
+    "en": "To fell a tree or plant by cutting through it.",
+    "tl": "Ang pagputol ng puno o halaman hanggang sa ito ay bumagsak."
+  },
+  "laang|only, just": {
+    "en": "And nothing more than that.",
+    "tl": "Wala nang iba pa roon."
+  },
+  "labang|wide": {
+    "en": "Measuring a great distance from side to side.",
+    "tl": "Malawak ang sukat mula gilid hanggang gilid."
+  },
+  "laban|fight": {
+    "en": "To struggle against an opponent.",
+    "tl": "Ang pakikipaglaban sa kalaban."
+  },
+  "labbut|boil": {
+    "en": "To heat a liquid until it bubbles.",
+    "tl": "Ang pagpainit ng likido hanggang ito ay kumulo."
+  },
+  "labi|lip": {
+    "en": "Either of the two soft edges of the mouth.",
+    "tl": "Ang alinman sa dalawang malambot na gilid ng bibig."
+  },
+  "ladian|loom": {
+    "en": "The frame on which cloth is woven.",
+    "tl": "Ang kasangkapang pinaghahabian ng tela."
+  },
+  "ladi|weave": {
+    "en": "To make cloth or mats by crossing threads or strips.",
+    "tl": "Ang paggawa ng tela o banig sa pamamagitan ng paghahabi."
+  },
+  "ladu|fever": {
+    "en": "An unnaturally high body temperature during illness.",
+    "tl": "Ang di-pangkaraniwang taas ng init ng katawan kapag may sakit."
+  },
+  "ladëy|harvest": {
+    "en": "To gather in a crop when it is ripe.",
+    "tl": "Ang pag-ani ng pananim kapag hinog na."
+  },
+  "lagari|saw": {
+    "en": "A toothed blade for cutting wood.",
+    "tl": "Talim na may ngipin para sa pagputol ng kahoy."
+  },
+  "lakadan|leave behind, abandon": {
+    "en": "To go away and not take something along.",
+    "tl": "Ang pag-alis nang hindi dinadala ang isang bagay."
+  },
+  "lakad|walk": {
+    "en": "To move on foot at an ordinary pace.",
+    "tl": "Ang paglakad sa karaniwang bilis."
+  },
+  "lalakke|man": {
+    "en": "An adult male person.",
+    "tl": "Taong lalaki na nasa hustong gulang."
+  },
+  "lalëkke|man": {
+    "en": "An adult male person.",
+    "tl": "Taong lalaki na nasa hustong gulang."
+  },
+  "lambanug|alcohol": {
+    "en": "A strong drink distilled from palm sap.",
+    "tl": "Malakas na inuming gawa sa katas ng puno ng niyog."
+  },
+  "lamesa|table": {
+    "en": "A flat-topped piece of furniture to eat or work at.",
+    "tl": "Kasangkapang patag ang ibabaw na kinakainan o pinagtatrabahuhan."
+  },
+  "lamok|mosquito": {
+    "en": "A small biting insect that feeds on blood.",
+    "tl": "Maliit na insektong kumakagat at sumisipsip ng dugo."
+  },
+  "lamon|grass": {
+    "en": "The low green plant that covers open ground.",
+    "tl": "Ang mababang luntiang halaman na tumatakip sa bukas na lupa."
+  },
+  "lamon|grass, brush": {
+    "en": "Low wild growth covering open ground.",
+    "tl": "Mababang halamang tumutubo sa bukas na lupa."
+  },
+  "langet|sky": {
+    "en": "The space overhead where the clouds and stars appear.",
+    "tl": "Ang kalawakan sa itaas kung saan makikita ang ulap at bituin."
+  },
+  "langoy|swim": {
+    "en": "To move through water using the arms and legs.",
+    "tl": "Ang paglangoy sa tubig gamit ang braso at binti."
+  },
+  "langse|smell": {
+    "en": "The particular smell of fish.",
+    "tl": "Ang natatanging amoy ng isda."
+  },
+  "lantap|calm": {
+    "en": "Still and without waves or wind.",
+    "tl": "Tahimik at walang alon o hangin."
+  },
+  "lape|thigh": {
+    "en": "The part of the leg between the hip and the knee.",
+    "tl": "Ang bahagi ng binti sa pagitan ng balakang at tuhod."
+  },
+  "lapol|puppy": {
+    "en": "A young dog.",
+    "tl": "Batang aso."
+  },
+  "lapoyat|weak": {
+    "en": "Having little strength.",
+    "tl": "Kakaunti ang lakas."
+  },
+  "lasa|taste": {
+    "en": "The flavour of something in the mouth.",
+    "tl": "Ang lasa ng isang bagay sa bibig."
+  },
+  "lasun|poison": {
+    "en": "A substance that harms or kills when it enters the body.",
+    "tl": "Sangkap na nakakasama o nakamamatay kapag pumasok sa katawan."
+  },
+  "lasën|flesh, meat": {
+    "en": "The soft tissue of a body; meat as food.",
+    "tl": "Ang malambot na laman ng katawan; karne bilang pagkain."
+  },
+  "latak|float": {
+    "en": "To rest on the surface of water without sinking.",
+    "tl": "Ang paglutang sa ibabaw ng tubig nang hindi lumulubog."
+  },
+  "laway|saliva": {
+    "en": "The watery fluid in the mouth.",
+    "tl": "Ang malabnaw na likido sa loob ng bibig."
+  },
+  "lawin|hawk": {
+    "en": "A swift bird of prey that hunts by day.",
+    "tl": "Maliksing ibong maninila na nanghuhuli sa araw."
+  },
+  "lawá|loose": {
+    "en": "Not tight; with room to spare.",
+    "tl": "Hindi masikip; may sobrang puwang."
+  },
+  "layag|sail, sailcloth": {
+    "en": "The sheet of cloth that catches wind to drive a boat.",
+    "tl": "Ang telang sumasalo ng hangin upang paandarin ang bangka."
+  },
+  "laya|ginger": {
+    "en": "A hot-tasting root used to flavour food and drink.",
+    "tl": "Ugat na maanghang ang lasa, ginagamit sa pagkain at inumin."
+  },
+  "layâ|ginger": {
+    "en": "A hot-tasting root used to flavour food and drink.",
+    "tl": "Ugat na maanghang ang lasa, ginagamit sa pagkain at inumin."
+  },
+  "lesa|louse eggs": {
+    "en": "The tiny eggs a louse fastens to a hair.",
+    "tl": "Ang maliliit na itlog na ikinakabit ng kuto sa buhok."
+  },
+  "letratu|image": {
+    "en": "A picture or likeness of something.",
+    "tl": "Larawan o wangis ng isang bagay."
+  },
+  "libu|thousand": {
+    "en": "Ten hundreds.",
+    "tl": "Sampung daan."
+  },
+  "lima|five": {
+    "en": "The number after four and before six.",
+    "tl": "Ang bilang na kasunod ng apat at bago ang anim."
+  },
+  "lima|hand": {
+    "en": "The part of the arm below the wrist, used for holding.",
+    "tl": "Ang bahagi ng braso sa ibaba ng pulso, ginagamit sa paghawak."
+  },
+  "limaś|bail water": {
+    "en": "To scoop water out of a boat.",
+    "tl": "Ang paglimas ng tubig mula sa loob ng bangka."
+  },
+  "limës|drown": {
+    "en": "To die from being underwater and unable to breathe.",
+    "tl": "Ang pagkamatay dahil sa pagkalubog sa tubig at hindi makahinga."
+  },
+  "lindul|earthquake": {
+    "en": "A shaking of the ground.",
+    "tl": "Ang pagyanig ng lupa."
+  },
+  "linggu|week": {
+    "en": "A period of seven days.",
+    "tl": "Panahong binubuo ng pitong araw."
+  },
+  "linis|clean": {
+    "en": "Free of dirt or stains.",
+    "tl": "Walang dumi o mantsa."
+  },
+  "lipon|forget": {
+    "en": "To fail to remember something.",
+    "tl": "Ang hindi pagkaalala sa isang bagay."
+  },
+  "lipët|leech": {
+    "en": "A soft worm that fastens on and sucks blood.",
+    "tl": "Malambot na uod na kumakapit at sumisipsip ng dugo."
+  },
+  "litid|vein": {
+    "en": "One of the tubes that carry blood through the body.",
+    "tl": "Isa sa mga daluyang nagdadala ng dugo sa katawan."
+  },
+  "liyab|flame": {
+    "en": "The bright tongue of burning gas above a fire.",
+    "tl": "Ang maliwanag na dila ng apoy sa ibabaw ng sunog."
+  },
+  "loktab|spit": {
+    "en": "To force saliva out of the mouth.",
+    "tl": "Ang pagdura ng laway mula sa bibig."
+  },
+  "lolo sa ëttod|great-grandparent": {
+    "en": "The grandparent of one's own parent.",
+    "tl": "Ang lolo o lola ng sariling magulang."
+  },
+  "loplop|masturbate": {
+    "en": "To arouse oneself sexually by hand.",
+    "tl": "Ang pagpapalibog sa sarili gamit ang kamay."
+  },
+  "lubuk|gulf, bay": {
+    "en": "A wide inlet where the sea curves into the land.",
+    "tl": "Malapad na look kung saan pumapasok ang dagat sa lupa."
+  },
+  "lubuk|inland": {
+    "en": "Away from the sea, towards the interior.",
+    "tl": "Palayo sa dagat, patungo sa loob ng lupain."
+  },
+  "lubun|nest": {
+    "en": "The place a bird builds to lay its eggs.",
+    "tl": "Ang tahanang ginagawa ng ibon para pangitlugan."
+  },
+  "ludelod|squat": {
+    "en": "To crouch with the knees bent and the heels close to the body.",
+    "tl": "Ang pagtingkayad nang nakabaluktot ang tuhod at malapit ang sakong."
+  },
+  "lugso|jump": {
+    "en": "To push off the ground into the air.",
+    "tl": "Ang paglukso mula sa lupa patungo sa hangin."
+  },
+  "lugsu|jump over, leap": {
+    "en": "To spring over something.",
+    "tl": "Ang paglukso sa ibabaw ng isang bagay."
+  },
+  "lugtut|frighten": {
+    "en": "To make someone afraid.",
+    "tl": "Ang pagpapatakot sa isang tao."
+  },
+  "lugtut|surprised": {
+    "en": "Caught off guard by something unexpected.",
+    "tl": "Nagulat sa isang bagay na hindi inaasahan."
+  },
+  "luhud|kneel": {
+    "en": "To rest the body on the knees.",
+    "tl": "Ang pagluhod kung saan nakasandal ang katawan sa tuhod."
+  },
+  "lukag|awake": {
+    "en": "No longer asleep; alert and with the eyes open.",
+    "tl": "Hindi na tulog; gising at nakabukas ang mga mata."
+  },
+  "lukag|wake": {
+    "en": "To stop sleeping, or to rouse another from sleep.",
+    "tl": "Ang paggising, o ang paggising sa iba mula sa pagtulog."
+  },
+  "lukag|wake up": {
+    "en": "To stop sleeping.",
+    "tl": "Ang paggising mula sa pagtulog."
+  },
+  "lukagën|wake someone up": {
+    "en": "To rouse another person from sleep.",
+    "tl": "Ang paggising sa ibang tao mula sa pagtulog."
+  },
+  "lulud|shin": {
+    "en": "The front of the leg below the knee.",
+    "tl": "Ang harapan ng binti sa ibaba ng tuhod."
+  },
+  "luma|old": {
+    "en": "Having existed or been used for a long time.",
+    "tl": "Matagal nang umiiral o ginagamit."
+  },
+  "lumba-lumba|whale": {
+    "en": "A very large sea animal that breathes air.",
+    "tl": "Napakalaking hayop-dagat na humihinga ng hangin."
+  },
+  "lumot|moss": {
+    "en": "The soft green growth that spreads over damp stone and wood.",
+    "tl": "Ang malambot na luntiang tumutubo sa basang bato at kahoy."
+  },
+  "lungkut|sad": {
+    "en": "Feeling sorrow or low spirits.",
+    "tl": "Nakadarama ng lungkot o kawalan ng sigla."
+  },
+  "lupës|bran, rice bran": {
+    "en": "The husk rubbed off rice in milling.",
+    "tl": "Ang ipang natatanggal sa bigas kapag ginigiling."
+  },
+  "luta|earth": {
+    "en": "The soil and ground underfoot.",
+    "tl": "Ang lupa at sahig na tinatapakan."
+  },
+  "lutá|land, earth, soil": {
+    "en": "The ground, and the soil that plants grow in.",
+    "tl": "Ang lupa, at ang lupang tinutubuan ng mga halaman."
+  },
+  "lutó|ripe": {
+    "en": "Grown to full readiness for eating, as fruit.",
+    "tl": "Handa nang kainin dahil hinog na, gaya ng prutas."
+  },
+  "luwad|clay": {
+    "en": "Sticky earth that hardens when fired into pots.",
+    "tl": "Malagkit na lupa na tumitigas kapag hinurno bilang palayok."
+  },
+  "luwas|go out, exit": {
+    "en": "To leave the inside of a place.",
+    "tl": "Ang paglabas mula sa loob ng isang lugar."
+  },
+  "luwas|out": {
+    "en": "To move from the inside to the outside.",
+    "tl": "Ang paglabas mula sa loob patungo sa labas."
+  },
+  "lëbbak|valley": {
+    "en": "The low ground lying between hills or mountains.",
+    "tl": "Ang mababang lupain sa pagitan ng mga burol o bundok."
+  },
+  "lëbbut|boil": {
+    "en": "To heat water until it bubbles.",
+    "tl": "Ang pagpapainit ng tubig hanggang kumulo."
+  },
+  "lëbbëngan|grave": {
+    "en": "The pit in which a dead person is laid.",
+    "tl": "Ang hukay na pinaglilibingan sa yumao."
+  },
+  "lëbbëng|bury": {
+    "en": "To place a dead body in the ground.",
+    "tl": "Ang paglalagay ng bangkay sa lupa."
+  },
+  "lëbbëng|bury the dead": {
+    "en": "To lay a dead person in the ground with rites.",
+    "tl": "Ang paglilibing sa yumao nang may seremonya."
+  },
+  "lëbbësan|let go": {
+    "en": "To release one's hold on something.",
+    "tl": "Ang pagbitaw sa hawak na bagay."
+  },
+  "lëmmen|soft": {
+    "en": "Yielding easily to pressure, said of texture.",
+    "tl": "Madaling lumubog kapag dinidiinan, para sa hikma ng bagay."
+  },
+  "lëssong|mortar": {
+    "en": "The heavy hollow vessel grain is pounded in.",
+    "tl": "Ang mabigat at hukay na lalagyan kung saan binabayo ang butil."
+  },
+  "lëssëp|flee, run away": {
+    "en": "To escape by running from danger.",
+    "tl": "Ang pagtakas sa pamamagitan ng pagtakbo mula sa panganib."
+  },
+  "maamu|tame": {
+    "en": "Used to people and not afraid of them.",
+    "tl": "Sanay sa tao at hindi natatakot dito."
+  },
+  "maasen|salty": {
+    "en": "Tasting of salt.",
+    "tl": "May lasang asin."
+  },
+  "mabagal|slow": {
+    "en": "Moving or done without speed.",
+    "tl": "Kumikilos o ginagawa nang hindi mabilis."
+  },
+  "mabagël|thick": {
+    "en": "Large in distance between one surface and the other.",
+    "tl": "Malaki ang agwat mula sa isang ibabaw patungo sa kabila."
+  },
+  "mabigsëk|strong": {
+    "en": "Having great physical power.",
+    "tl": "May malaking lakas ng katawan."
+  },
+  "mabule|lie": {
+    "en": "To say what one knows is untrue.",
+    "tl": "Ang pagsasabi ng alam nang hindi totoo."
+  },
+  "mabuyok|foul-smelling": {
+    "en": "Having a strong unpleasant smell.",
+    "tl": "May malakas at hindi kanais-nais na amoy."
+  },
+  "mabuyok|smell bad, stink": {
+    "en": "To give off an unpleasant smell.",
+    "tl": "Ang pagbubuga ng hindi kanais-nais na amoy."
+  },
+  "madalas|often": {
+    "en": "Happening many times.",
+    "tl": "Nangyayari nang paulit-ulit."
+  },
+  "madeklëm|dark": {
+    "en": "With little or no light.",
+    "tl": "Kakaunti o walang liwanag."
+  },
+  "mademlag|bright": {
+    "en": "Giving off or filled with a lot of light.",
+    "tl": "Malakas ang liwanag o punong-puno ng liwanag."
+  },
+  "madideg|red": {
+    "en": "The colour of blood.",
+    "tl": "Ang kulay ng dugo."
+  },
+  "madidëbbaw|shallow": {
+    "en": "Not reaching far down; of little depth.",
+    "tl": "Hindi malalim; mababaw."
+  },
+  "madisalad|deep": {
+    "en": "Reaching far down from the surface.",
+    "tl": "Malayo ang lalim mula sa ibabaw."
+  },
+  "madisono|high": {
+    "en": "Reaching far up, as a mountain.",
+    "tl": "Umaabot nang mataas, gaya ng bundok."
+  },
+  "madukës ang ugali|bad": {
+    "en": "Of poor character; badly behaved.",
+    "tl": "Masama ang ugali; hindi mabuti ang asal."
+  },
+  "madukës ang ugali|evil": {
+    "en": "Deeply wicked in character and intent.",
+    "tl": "Lubhang masama sa ugali at hangarin."
+  },
+  "madukës|bad": {
+    "en": "Of poor quality, or morally wrong.",
+    "tl": "Mababa ang kalidad, o mali sa moral na paraan."
+  },
+  "madukës|ugly": {
+    "en": "Unpleasant to look at.",
+    "tl": "Hindi kaaya-aya sa paningin."
+  },
+  "madëgga|heavy": {
+    "en": "Hard to lift; of great weight.",
+    "tl": "Mahirap buhatin; malaki ang timbang."
+  },
+  "madëgnen|cold (weather)": {
+    "en": "Low in temperature, as the air on a chilly day.",
+    "tl": "Mababa ang temperatura, gaya ng hangin sa maginaw na araw."
+  },
+  "maes|corn, maize": {
+    "en": "A tall grain plant bearing cobs of yellow kernels.",
+    "tl": "Matangkad na halamang butil na may busal ng diláw na butil."
+  },
+  "mag-eesa|lonely": {
+    "en": "Sad from being without company.",
+    "tl": "Malungkot dahil walang kasama."
+  },
+  "mag-layag|sail": {
+    "en": "To travel over water using a sail.",
+    "tl": "Ang paglalayag sa tubig gamit ang layag."
+  },
+  "mag-os|chew sugarcane, bite off sugarcane": {
+    "en": "To bite and chew sugarcane for its juice.",
+    "tl": "Ang pagpangos ng tubo para sa katas nito."
+  },
+  "maganda|beautiful": {
+    "en": "Pleasing to look at.",
+    "tl": "Kaaya-aya sa paningin."
+  },
+  "magaras|rough": {
+    "en": "Coarse to the touch, or stirred up with waves.",
+    "tl": "Magaspang sa hipo, o maalon at magulo."
+  },
+  "magdigus|bathe": {
+    "en": "To wash another person, such as a child.",
+    "tl": "Ang pagpaligo sa ibang tao, gaya ng isang bata."
+  },
+  "magladi|weave": {
+    "en": "To make cloth by crossing threads on a loom.",
+    "tl": "Ang paghahabi ng tela sa pamamagitan ng paglalatag ng sinulid."
+  },
+  "magluksa|mourn, be in mourning": {
+    "en": "To grieve openly for someone who has died.",
+    "tl": "Ang hayagang pagdadalamhati para sa isang yumao."
+  },
+  "magmanu|bless": {
+    "en": "To ask or give a blessing, as by touching an elder's hand to the forehead.",
+    "tl": "Ang paghingi o pagbibigay ng basbas, gaya ng pagmamano sa nakatatanda."
+  },
+  "magsuklay|comb one's hair": {
+    "en": "To draw a comb through the hair to tidy it.",
+    "tl": "Ang pagsuklay sa buhok upang ayusin ito."
+  },
+  "magtatëddak|sorcerer, witch": {
+    "en": "A person believed to work harm by magic.",
+    "tl": "Taong pinaniniwalaang nakapagdudulot ng masama sa pamamagitan ng mahika."
+  },
+  "magtongka|sleepy": {
+    "en": "Feeling the need to sleep.",
+    "tl": "Nararamdaman ang pangangailangang matulog."
+  },
+  "magtrabahu|work": {
+    "en": "To put effort into a task, usually for a living.",
+    "tl": "Ang pagpupunyagi sa gawain, kadalasan para kumita."
+  },
+  "magtuldu|teach": {
+    "en": "To help another person learn.",
+    "tl": "Ang pagtulong sa iba upang siya ay matuto."
+  },
+  "magugas|wash": {
+    "en": "To clean something with water.",
+    "tl": "Ang paglilinis ng bagay gamit ang tubig."
+  },
+  "maguray|short (time)": {
+    "en": "Lasting only a little while.",
+    "tl": "Sandali lamang tumatagal."
+  },
+  "mahal|expensive": {
+    "en": "Costing a great deal of money.",
+    "tl": "Malaki ang halaga; magastos."
+  },
+  "mahal|love": {
+    "en": "To feel deep affection for someone.",
+    "tl": "Ang pagdama ng malalim na pagmamahal sa isang tao."
+  },
+  "mahirap|poor": {
+    "en": "Having very little money or property.",
+    "tl": "Napakakaunti ang salapi o ari-arian."
+  },
+  "maigi|good": {
+    "en": "Of fine quality, or morally right.",
+    "tl": "Mataas ang kalidad, o tama sa moral na paraan."
+  },
+  "mainam|smart, clever, intelligent": {
+    "en": "Quick to learn and understand.",
+    "tl": "Mabilis matuto at umunawa."
+  },
+  "mainit|hot": {
+    "en": "High in temperature.",
+    "tl": "Mataas ang temperatura."
+  },
+  "maistu|teacher": {
+    "en": "A person whose work is to teach.",
+    "tl": "Taong ang hanapbuhay ay magturo."
+  },
+  "makan|food": {
+    "en": "What people eat to live.",
+    "tl": "Ang kinakain ng tao upang mabuhay."
+  },
+  "makinis|smooth": {
+    "en": "Even to the touch; free of roughness.",
+    "tl": "Pantay sa hipo; walang gaspang."
+  },
+  "makipalit|trade, barter": {
+    "en": "To exchange goods for other goods.",
+    "tl": "Ang pagpapalitan ng mga bagay sa halip na salapi."
+  },
+  "makitid|narrow": {
+    "en": "Small in width from side to side.",
+    "tl": "Makipot ang lapad mula gilid hanggang gilid."
+  },
+  "maktog|hard": {
+    "en": "Firm and solid; not easily pressed in.",
+    "tl": "Matigas at siksik; hindi madaling pisilin."
+  },
+  "maktog|hard (not soft)": {
+    "en": "Firm and solid; not yielding to pressure.",
+    "tl": "Matigas at siksik; hindi lumulubog kapag dinidiinan."
+  },
+  "makwarta|rich": {
+    "en": "Having a great deal of money or property.",
+    "tl": "May malaking yaman o ari-arian."
+  },
+  "malagen|light": {
+    "en": "Easy to lift; not heavy.",
+    "tl": "Madaling buhatin; hindi mabigat."
+  },
+  "malagen|light (weight)": {
+    "en": "Easy to lift; of little weight.",
+    "tl": "Madaling buhatin; magaan ang timbang."
+  },
+  "malammen|soft": {
+    "en": "Yielding easily to pressure; not hard.",
+    "tl": "Madaling malubog kapag dinidiinan; hindi matigas."
+  },
+  "malangkaw|tall": {
+    "en": "Of great height.",
+    "tl": "Mataas ang tindig."
+  },
+  "malapat na kawayan|split bamboo": {
+    "en": "Bamboo cut lengthwise into flat strips.",
+    "tl": "Kawayang hinati nang pahaba sa patag na piraso."
+  },
+  "malapes|thin": {
+    "en": "Small in distance between one surface and the other, as cloth or paper.",
+    "tl": "Maliit ang kapal, tulad ng tela o papel."
+  },
+  "malasëm|sour": {
+    "en": "Having a sharp acid taste, like an unripe mango.",
+    "tl": "May matalim at maasim na lasa, tulad ng hilaw na mangga."
+  },
+  "malawa|loose": {
+    "en": "Not tight; with room to spare.",
+    "tl": "Hindi masikip; may sobrang puwang."
+  },
+  "malawa|wide": {
+    "en": "Measuring a great distance from side to side.",
+    "tl": "Malawak ang sukat mula gilid hanggang gilid."
+  },
+  "malekmang|clear": {
+    "en": "See-through, as water with nothing clouding it.",
+    "tl": "Naaaninag, tulad ng tubig na walang labo."
+  },
+  "malinis|clean": {
+    "en": "Free of dirt or stains.",
+    "tl": "Walang dumi o mantsa."
+  },
+  "mali|wrong": {
+    "en": "Not correct; mistaken.",
+    "tl": "Hindi tama; may kamalian."
+  },
+  "malëgga/marupet|dirty": {
+    "en": "Covered in dirt; not clean.",
+    "tl": "Puno ng dumi; hindi malinis."
+  },
+  "mamaya|later, in a while": {
+    "en": "At a time after the present, but soon.",
+    "tl": "Sa oras na kasunod ng ngayon, ngunit hindi magtatagal."
+  },
+  "mangitet|black": {
+    "en": "The darkest colour, the colour of charcoal.",
+    "tl": "Ang pinakamadilim na kulay, ang kulay ng uling."
+  },
+  "mangkuk|bowl": {
+    "en": "A round open dish for food or liquid.",
+    "tl": "Bilog at bukas na lalagyan ng pagkain o likido."
+  },
+  "mangudël|blunt": {
+    "en": "Not sharp; unable to cut well.",
+    "tl": "Hindi matalas; hindi makapuputol nang maayos."
+  },
+  "mangudël|dull": {
+    "en": "Not sharp; unable to cut well.",
+    "tl": "Hindi matalas; hindi makapuputol nang maayos."
+  },
+  "maniwang|skinny (human)": {
+    "en": "Having very little flesh on the body.",
+    "tl": "Napakakaunti ang laman ng katawan."
+  },
+  "maniwang|thin": {
+    "en": "Having little flesh on the body.",
+    "tl": "Kakaunti ang laman ng katawan."
+  },
+  "manok|chicken": {
+    "en": "A farm bird kept for its eggs and meat.",
+    "tl": "Ibong inaalagaan sa bahay para sa itlog at karne nito."
+  },
+  "manok|fowl": {
+    "en": "A bird kept for its meat and eggs.",
+    "tl": "Ibong inaalagaan para sa karne at itlog nito."
+  },
+  "manugeng|daughter-in-law": {
+    "en": "The wife of one's son.",
+    "tl": "Ang asawang babae ng anak na lalaki."
+  },
+  "manugeng|son-in-law": {
+    "en": "The husband of one's daughter.",
+    "tl": "Ang asawang lalaki ng anak na babae."
+  },
+  "mapagës|haughty": {
+    "en": "Looking down on other people.",
+    "tl": "Minamaliit ang ibang tao."
+  },
+  "maperëng|noisy": {
+    "en": "Full of loud, disturbing sound.",
+    "tl": "Puno ng malakas at nakaiistorbong tunog."
+  },
+  "mapet|bitter": {
+    "en": "Having a sharp, unsweet taste, like unripe fruit.",
+    "tl": "May matalim at hindi matamis na lasa, tulad ng hilaw na prutas."
+  },
+  "mapudew|white": {
+    "en": "The lightest colour, the colour of clean cloth.",
+    "tl": "Ang pinakamaliwanag na kulay, ang kulay ng malinis na tela."
+  },
+  "marang|spicy": {
+    "en": "Burning on the tongue, as chilli is.",
+    "tl": "Nakakapaso sa dila, gaya ng sili."
+  },
+  "marentëk|beautiful, pretty, attractive": {
+    "en": "Very pleasing to look at.",
+    "tl": "Napakakaaya-aya sa paningin."
+  },
+  "masanike|shy, ashamed": {
+    "en": "Uneasy in front of others; easily embarrassed.",
+    "tl": "Hindi mapalagay sa harap ng iba; madaling mapahiya."
+  },
+  "masapgët|rough": {
+    "en": "Uneven to the touch; not smooth.",
+    "tl": "Magaspang sa hipo; hindi makinis."
+  },
+  "masapër|rough": {
+    "en": "Uneven to the touch; not smooth.",
+    "tl": "Magaspang sa hipo; hindi makinis."
+  },
+  "masena|jealou": {
+    "en": "Resentful of what another person has.",
+    "tl": "Naiinggit sa mayroon ang ibang tao."
+  },
+  "masen|salty": {
+    "en": "Tasting of salt.",
+    "tl": "May lasang asin."
+  },
+  "masikip|tight": {
+    "en": "Fitting closely with no room to spare.",
+    "tl": "Masikip ang laki at walang puwang."
+  },
+  "masrob|fragrant": {
+    "en": "Having a sweet, pleasant smell.",
+    "tl": "May matamis at kaaya-ayang amoy."
+  },
+  "matabi|healthy": {
+    "en": "In good bodily condition; not sick.",
+    "tl": "Maayos ang kalagayan ng katawan; hindi may sakit."
+  },
+  "matablal|bland": {
+    "en": "Having little taste.",
+    "tl": "Halos walang lasa."
+  },
+  "matagal|long time": {
+    "en": "Lasting or taking many hours, days or years.",
+    "tl": "Tumatagal nang maraming oras, araw o taon."
+  },
+  "matam-is|sweet": {
+    "en": "Tasting of sugar or honey.",
+    "tl": "May lasang asukal o pulot."
+  },
+  "matapang|wild": {
+    "en": "Living free of people; not tamed.",
+    "tl": "Namumuhay nang malaya sa tao; hindi maamo."
+  },
+  "mata|eye": {
+    "en": "The organ of the face with which a person sees.",
+    "tl": "Ang bahagi ng mukha na ginagamit sa paningin."
+  },
+  "matuwid|straight": {
+    "en": "Running in one direction without bending.",
+    "tl": "Tuloy-tuloy sa isang direksyon nang walang liko."
+  },
+  "matëknag|fall down": {
+    "en": "To drop from a height to the ground.",
+    "tl": "Ang paghulog mula sa taas patungo sa lupa."
+  },
+  "matëknag|fall over": {
+    "en": "To topple from upright, as a tree or a chair.",
+    "tl": "Ang pagbagsak mula sa pagkakatayo, gaya ng puno o upuan."
+  },
+  "may kakagiën|they say, it is said": {
+    "en": "Reported as common talk, without a named source.",
+    "tl": "Sinasabi bilang usap-usapan, walang tiyak na pinagmulan."
+  },
+  "mensan|once": {
+    "en": "On a single occasion only.",
+    "tl": "Iisang beses lamang."
+  },
+  "mesmes|mote": {
+    "en": "A speck of dirt that gets into the eye.",
+    "tl": "Ang munting dumi na napapasok sa mata."
+  },
+  "minatibag|collapse, cave-in": {
+    "en": "To fall in on itself, as an undercut bank or a roof.",
+    "tl": "Ang pagguho o pagbagsak sa sarili, gaya ng pampang o bubong."
+  },
+  "monyag|sunrise": {
+    "en": "The moment the sun first appears over the horizon.",
+    "tl": "Ang sandaling unang sumisikat ang araw sa abot-tanaw."
+  },
+  "muding|forehead": {
+    "en": "The part of the face above the eyebrows.",
+    "tl": "Ang bahagi ng mukha sa itaas ng kilay."
+  },
+  "mundu|earth": {
+    "en": "The planet on which people live.",
+    "tl": "Ang planetang tinitirhan ng mga tao."
+  },
+  "mura|cheap": {
+    "en": "Costing little money.",
+    "tl": "Maliit lang ang halaga."
+  },
+  "máta|unripe": {
+    "en": "Not yet ready for eating, as green fruit.",
+    "tl": "Hindi pa handang kainin, gaya ng hilaw na prutas."
+  },
+  "mëg-ëmman|chew betel": {
+    "en": "To chew betel nut with lime and leaf.",
+    "tl": "Ang pagnganga ng bunga kasama ng apog at dahon."
+  },
+  "mëgdasal|pray": {
+    "en": "To speak to a god in worship or request.",
+    "tl": "Ang pakikipag-usap sa diyos sa pagsamba o paghiling."
+  },
+  "mëggiyan|dwell, live, stay": {
+    "en": "To make one's home in a place.",
+    "tl": "Ang paninirahan sa isang lugar."
+  },
+  "mëglakad|depart": {
+    "en": "To leave a place and set out.",
+    "tl": "Ang pag-alis mula sa isang lugar upang maglakbay."
+  },
+  "mëgliyab|blaze, shine": {
+    "en": "To burn or gleam with strong light.",
+    "tl": "Ang pagliliyab o pagkislap nang may malakas na liwanag."
+  },
+  "mëgsimba|worship": {
+    "en": "To honour a god with prayer and ceremony.",
+    "tl": "Ang pagpaparangal sa diyos sa pamamagitan ng dasal at seremonya."
+  },
+  "mëgwalis|sweep": {
+    "en": "To clear a floor with a broom.",
+    "tl": "Ang paglilinis ng sahig gamit ang walis."
+  },
+  "nagesbu|urinate": {
+    "en": "To pass urine from the body.",
+    "tl": "Ang paglabas ng ihi mula sa katawan."
+  },
+  "nagkasala|guilty": {
+    "en": "Having done the wrong one is charged with.",
+    "tl": "Nagawa ang maling ipinaparatang."
+  },
+  "nakebut|lost": {
+    "en": "No longer where it should be and not to be found.",
+    "tl": "Wala na sa dapat kinaroroonan at hindi matagpuan."
+  },
+  "nana|pus": {
+    "en": "The thick yellow fluid that forms in an infected wound.",
+    "tl": "Ang malapot na diláw na likidong nabubuo sa nahawaang sugat."
+  },
+  "natapos na|finished": {
+    "en": "Brought to an end; no longer going on.",
+    "tl": "Natapos na; hindi na nagpapatuloy."
+  },
+  "nebulak|pour": {
+    "en": "To make liquid flow out of a container.",
+    "tl": "Ang pagbuhos ng likido mula sa lalagyan."
+  },
+  "nepadaman|pass-by": {
+    "en": "To go past a place without stopping.",
+    "tl": "Ang pagdaan sa isang lugar nang hindi humihinto."
+  },
+  "neta|see": {
+    "en": "To take something in with the eyes.",
+    "tl": "Ang pagkakita gamit ang mga mata."
+  },
+  "ngaran|name": {
+    "en": "The word by which a person or thing is called.",
+    "tl": "Ang salitang itinatawag sa isang tao o bagay."
+  },
+  "ngarës|gums": {
+    "en": "The firm flesh in which the teeth are set.",
+    "tl": "Ang matigas na lamang kinalalagyan ng mga ngipin."
+  },
+  "ngarës|uvula": {
+    "en": "The small flap hanging at the back of the throat.",
+    "tl": "Ang maliit na nakabitin sa likuran ng lalamunan."
+  },
+  "ngay un|now": {
+    "en": "At this present moment.",
+    "tl": "Sa kasalukuyang sandaling ito."
+  },
+  "ngay un|today": {
+    "en": "This present day.",
+    "tl": "Ang kasalukuyang araw na ito."
+  },
+  "ngayon|now": {
+    "en": "At this present moment.",
+    "tl": "Sa kasalukuyang sandaling ito."
+  },
+  "ngidit|smile": {
+    "en": "To turn the mouth up in pleasure or friendliness.",
+    "tl": "Ang pag-angat ng bibig dahil sa saya o pagkamagiliw."
+  },
+  "ngipën|teeth": {
+    "en": "The hard white parts in the mouth used for biting and chewing.",
+    "tl": "Ang matitigas at puting bahagi ng bibig na ginagamit sa pagkagat at pagnguya."
+  },
+  "ngipën|tooth": {
+    "en": "One of the hard white parts in the mouth used for biting.",
+    "tl": "Isa sa matitigas at puting bahagi ng bibig na ginagamit sa pagnguya."
+  },
+  "nguso|mouth": {
+    "en": "The opening in the face used for eating and speaking.",
+    "tl": "Ang butas sa mukha na ginagamit sa pagkain at pagsasalita."
+  },
+  "ngëtngët|chew": {
+    "en": "To grind food with the teeth.",
+    "tl": "Ang pagnguya ng pagkain gamit ang ngipin."
+  },
+  "niilaw|tomorrow": {
+    "en": "The day after today.",
+    "tl": "Ang araw na kasunod ng araw na ito."
+  },
+  "nilëntob na maes|cooked corn": {
+    "en": "Corn boiled until it is ready to eat.",
+    "tl": "Maisi na pinakuluan hanggang maging handa nang kainin."
+  },
+  "nilëntob|stew": {
+    "en": "Food cooked slowly in liquid.",
+    "tl": "Pagkaing dahan-dahang niluto sa sabaw."
+  },
+  "niyog|coconut": {
+    "en": "The large hard-shelled nut of the coconut palm.",
+    "tl": "Ang malaki at matigas na bunga ng puno ng niyog."
+  },
+  "niyog|old coconut": {
+    "en": "A mature coconut with firm meat and little water.",
+    "tl": "Hinog na niyog na matigas ang laman at kaunti ang tubig."
+  },
+  "nung essang aldew|day before yesterday": {
+    "en": "The second day back from today.",
+    "tl": "Ang ikalawang araw bago ang araw na ito."
+  },
+  "ogsad|down": {
+    "en": "To move from a higher place to a lower one.",
+    "tl": "Ang pagbaba mula sa mataas patungo sa mababang lugar."
+  },
+  "ogsa|deer": {
+    "en": "A swift wild animal with antlers that lives in the forest.",
+    "tl": "Maliksing hayop-gubat na may sungay."
+  },
+  "oled|lay": {
+    "en": "To put the body down flat, as on a bed.",
+    "tl": "Ang paghiga nang patag, gaya sa higaan."
+  },
+  "olnat|straight": {
+    "en": "Running in one line without bending, as a stick.",
+    "tl": "Tuloy-tuloy sa isang linya nang walang liko, gaya ng kahoy."
+  },
+  "oo|yes": {
+    "en": "The word used to agree or approve.",
+    "tl": "Ang salitang ginagamit sa pagsang-ayon o pagpayag."
+  },
+  "ota|vomit": {
+    "en": "To bring the contents of the stomach up through the mouth.",
+    "tl": "Ang paglabas ng laman ng sikmura sa pamamagitan ng bibig."
+  },
+  "o|or / either ... or": {
+    "en": "The word offering a choice between things.",
+    "tl": "Ang salitang nagbibigay ng pagpipilian sa dalawang bagay."
+  },
+  "pa rin|still, yet": {
+    "en": "Going on up to now, without having stopped.",
+    "tl": "Nagpapatuloy hanggang ngayon, hindi pa humihinto."
+  },
+  "paanu|how": {
+    "en": "The word used to ask in what way something is done.",
+    "tl": "Ang salitang ginagamit upang itanong kung paano ginagawa ang isang bagay."
+  },
+  "padiget|seaward": {
+    "en": "In the direction of the sea.",
+    "tl": "Sa direksyon patungo sa dagat."
+  },
+  "padingel|cheek": {
+    "en": "The soft side of the face below the eye.",
+    "tl": "Ang malambot na gilid ng mukha sa ibaba ng mata."
+  },
+  "padi|priest (catholic)": {
+    "en": "An ordained minister of the Catholic church.",
+    "tl": "Ang orden na ministro ng simbahang Katoliko."
+  },
+  "pagbuno|murder": {
+    "en": "The deliberate killing of a person.",
+    "tl": "Ang sinadyang pagpatay sa isang tao."
+  },
+  "pagel|gasp, pant": {
+    "en": "To breathe hard and quickly after effort.",
+    "tl": "Ang mabilis at malalim na paghinga matapos magpagod."
+  },
+  "pagel|tired, weary": {
+    "en": "Needing rest after effort.",
+    "tl": "Nangangailangan ng pahinga matapos magpagod."
+  },
+  "pagi|stingray": {
+    "en": "A flat sea fish with a whip-like tail.",
+    "tl": "Patag na isda sa dagat na may buntot na parang latigo."
+  },
+  "pagmulaan|garden": {
+    "en": "A piece of ground where plants are grown.",
+    "tl": "Bahagi ng lupang tinatamnan ng mga halaman."
+  },
+  "pagsidaan|viand": {
+    "en": "The dish eaten together with rice.",
+    "tl": "Ang ulam na kinakain kasabay ng kanin."
+  },
+  "pagtutod|swidden, slash and burn agriculture": {
+    "en": "Farming by clearing and burning a patch of forest.",
+    "tl": "Pagsasakang ginagawa sa pamamagitan ng paglinis at pagsunog ng gubat."
+  },
+  "pakantengën|threaten": {
+    "en": "To warn someone that harm will follow.",
+    "tl": "Ang pagbabanta na may masamang mangyayari."
+  },
+  "pakaway|outrigger": {
+    "en": "The side float that steadies a canoe.",
+    "tl": "Ang panggilid na palutang na nagpapatatag sa bangka."
+  },
+  "pakelagip|ask (question)": {
+    "en": "To put a question to someone.",
+    "tl": "Ang paglalahad ng tanong sa iba."
+  },
+  "pakeligip|ask": {
+    "en": "To put a question to someone.",
+    "tl": "Ang paglalahad ng tanong sa iba."
+  },
+  "palad|palm (hand)": {
+    "en": "The inner surface of the hand.",
+    "tl": "Ang panloob na ibabaw ng kamay."
+  },
+  "palakul|axe": {
+    "en": "A heavy bladed tool for chopping wood.",
+    "tl": "Mabigat na kasangkapang may talim para sa pagputol ng kahoy."
+  },
+  "palamigǝn|freeze": {
+    "en": "To make something cold enough to turn to ice.",
+    "tl": "Ang pagpapalamig ng bagay hanggang ito ay maging yelo."
+  },
+  "palekpek|fin": {
+    "en": "The thin flap a fish uses to steer and swim.",
+    "tl": "Ang manipis na palikpik na ginagamit ng isda sa paglangoy."
+  },
+  "pale|spleen": {
+    "en": "The organ beside the stomach that filters blood.",
+    "tl": "Ang bahagi sa tabi ng sikmura na sumasala ng dugo."
+  },
+  "palus|eel": {
+    "en": "A long snake-like fish.",
+    "tl": "Mahabang isdang parang ahas."
+  },
+  "paluwassǝn|expel": {
+    "en": "To drive someone or something away.",
+    "tl": "Ang pagpapalayas sa tao o bagay."
+  },
+  "palëbbutën|warm oneself by a fire": {
+    "en": "To sit near a fire to get warm.",
+    "tl": "Ang pag-upo malapit sa apoy upang uminit."
+  },
+  "pamain|bait": {
+    "en": "Food put on a hook or in a trap to draw an animal.",
+    "tl": "Pagkaing inilalagay sa kawit o bitag upang maakit ang hayop."
+  },
+  "panalo|win a competition": {
+    "en": "To come first in a contest.",
+    "tl": "Ang pagiging una sa isang paligsahan."
+  },
+  "pana|bow": {
+    "en": "A bent stave and string used to shoot arrows.",
+    "tl": "Hubog na kahoy at pisi na ginagamit sa pagpapana."
+  },
+  "pandukot|firewood": {
+    "en": "Wood cut and dried to be burned as fuel.",
+    "tl": "Kahoy na pinutol at pinatuyo upang gamiting panggatong."
+  },
+  "pangangaso|hunt": {
+    "en": "To pursue wild animals for food.",
+    "tl": "Ang panghuhuli ng maiilap na hayop para sa pagkain."
+  },
+  "panga|jaw": {
+    "en": "The bone of the lower face that holds the teeth.",
+    "tl": "Ang buto sa ibabang mukha na kinalalagyan ng mga ngipin."
+  },
+  "pangkotkot|digging stick": {
+    "en": "A pointed pole used to break the ground for planting.",
+    "tl": "Matulis na kahoy na ginagamit sa paghukay para sa pagtatanim."
+  },
+  "pangpang|riverbank": {
+    "en": "The raised edge of land along a river.",
+    "tl": "Ang nakataas na gilid ng lupa sa tabi ng ilog."
+  },
+  "pantay|flat": {
+    "en": "Level and even, with no rise or dip.",
+    "tl": "Patag at pantay, walang umbok o lubak."
+  },
+  "pantug|bladder": {
+    "en": "The organ that holds urine before it is passed.",
+    "tl": "Ang bahagi ng katawan na nag-iimbak ng ihi bago ilabas."
+  },
+  "panu|how?": {
+    "en": "The word used to ask in what way something is done.",
+    "tl": "Ang salitang ginagamit upang itanong kung paano ginagawa ang isang bagay."
+  },
+  "paray|rice plant": {
+    "en": "The rice crop in the field, still in its husk.",
+    "tl": "Ang palay sa bukid na nasa ipa pa."
+  },
+  "pareho|same": {
+    "en": "Not different from the other.",
+    "tl": "Walang pagkakaiba sa isa pa."
+  },
+  "paruparo|butterfly": {
+    "en": "An insect with large, often coloured wings that flies by day.",
+    "tl": "Insektong may malalapad at madalas makukulay na pakpak, lumilipad sa araw."
+  },
+  "paruparu|butterfly": {
+    "en": "A day-flying insect with broad coloured wings.",
+    "tl": "Insektong lumilipad sa araw at may malapad at makulay na pakpak."
+  },
+  "parusa|penalty": {
+    "en": "The punishment set for a wrong.",
+    "tl": "Ang kaparusahang itinakda sa isang pagkakamali."
+  },
+  "parëk|hoarse": {
+    "en": "Having a rough, weakened voice.",
+    "tl": "Magaspang at mahina ang tinig."
+  },
+  "parës|air": {
+    "en": "The invisible mixture of gases people breathe.",
+    "tl": "Ang hindi nakikitang hanging nilalanghap ng mga tao."
+  },
+  "parës|wind": {
+    "en": "Air moving across the land or sea.",
+    "tl": "Hanging gumagalaw sa lupa o dagat."
+  },
+  "pas-pas|fast, quick": {
+    "en": "Moving or done at great speed.",
+    "tl": "Mabilis kumilos o gawin."
+  },
+  "pase|singe": {
+    "en": "To burn the surface of something lightly.",
+    "tl": "Ang bahagyang pagsunog sa ibabaw ng isang bagay."
+  },
+  "pastor|priest (protestant)": {
+    "en": "A minister who leads a Protestant congregation.",
+    "tl": "Ang namumuno sa kongregasyon ng mga Protestante."
+  },
+  "pasánget|anchor": {
+    "en": "The weight dropped to hold a boat in place.",
+    "tl": "Ang pabigat na ibinababa upang mapanatili sa lugar ang bangka."
+  },
+  "patilya|sideburns": {
+    "en": "The strips of hair growing down in front of the ears.",
+    "tl": "Ang hanay ng buhok na tumutubo pababa sa harap ng tainga."
+  },
+  "pating|shark": {
+    "en": "A large sea fish with sharp teeth.",
+    "tl": "Malaking isda sa dagat na matatalim ang ngipin."
+  },
+  "patpat|wood (stick)": {
+    "en": "A slender length of wood broken from a branch.",
+    "tl": "Manipis at mahabang kahoy na nabali mula sa sanga."
+  },
+  "pawed|nipa palm": {
+    "en": "A palm of the swamps whose leaves are used for roofing.",
+    "tl": "Palmang tumutubo sa latian na ang dahon ay ginagawang bubong."
+  },
+  "pawed|thatch, reed or grass used for making roofs": {
+    "en": "Dried leaves or grass laid in layers to roof a house.",
+    "tl": "Tuyong dahon o damo na ipinapatong nang patung-patong bilang bubong."
+  },
+  "pawis|sweat": {
+    "en": "The salty moisture the skin gives off in heat.",
+    "tl": "Ang maalat na basa na inilalabas ng balat kapag mainit."
+  },
+  "payung|umbrella": {
+    "en": "A folding cover carried against rain or sun.",
+    "tl": "Natitiklop na panakip laban sa ulan o araw."
+  },
+  "pensan|cousin": {
+    "en": "The child of one's uncle or aunt.",
+    "tl": "Ang anak ng tiyo o tiya."
+  },
+  "pensan|cousin-in-law": {
+    "en": "The cousin of one's husband or wife.",
+    "tl": "Ang pinsan ng asawa."
+  },
+  "pensan|cross-cousin": {
+    "en": "The child of a parent's opposite-sex sibling.",
+    "tl": "Ang anak ng kapatid ng magulang na kaibang kasarian."
+  },
+  "perëng|loud, noisy": {
+    "en": "Making a great deal of sound.",
+    "tl": "Malakas ang tunog na nililikha."
+  },
+  "peta|show": {
+    "en": "To let another person see something.",
+    "tl": "Ang pagpapakita ng bagay sa iba."
+  },
+  "pilak|silver": {
+    "en": "A shining white metal used for coins and ornaments.",
+    "tl": "Makintab at puting metal na ginagawang barya at palamuti."
+  },
+  "pile|choose": {
+    "en": "To pick one out of several.",
+    "tl": "Ang pagpili ng isa mula sa marami."
+  },
+  "pilikmata|eyelashes": {
+    "en": "The short hairs along the edge of the eyelid.",
+    "tl": "Ang maiikling buhok sa gilid ng talukap ng mata."
+  },
+  "pinto|door": {
+    "en": "The panel that closes the entrance to a room or house.",
+    "tl": "Ang tabla o pinid na nagsasara sa pasukan ng silid o bahay."
+  },
+  "pintu|door": {
+    "en": "The panel closing the entrance to a room or house.",
+    "tl": "Ang pinid na nagsasara sa pasukan ng silid o bahay."
+  },
+  "pinuno|chief": {
+    "en": "The person who leads a village or group.",
+    "tl": "Ang taong namumuno sa isang nayon o pangkat."
+  },
+  "piripët|twist": {
+    "en": "To turn something around on itself.",
+    "tl": "Ang pagpilipit ng bagay paikot sa sarili nito."
+  },
+  "pitukan|bee": {
+    "en": "A flying insect that gathers nectar and makes honey.",
+    "tl": "Insektong lumilipad, nangangalap ng nektar at gumagawa ng pulot."
+  },
+  "pitu|seven": {
+    "en": "The number after six and before eight.",
+    "tl": "Ang bilang na kasunod ng anim at bago ang walo."
+  },
+  "pokpok|bald": {
+    "en": "Having little or no hair on the head.",
+    "tl": "Kakaunti o wala nang buhok sa ulo."
+  },
+  "poktor|island": {
+    "en": "Land with water on every side.",
+    "tl": "Lupaing napapaligiran ng tubig sa lahat ng panig."
+  },
+  "ponan|tree": {
+    "en": "A tall plant with a woody trunk and branches.",
+    "tl": "Matangkad na halaman na may matigas na katawan at mga sanga."
+  },
+  "ponto|embers, glowing coals": {
+    "en": "Wood still glowing red after the flame has died.",
+    "tl": "Kahoy na mapula pang nagbabaga matapos mamatay ang apoy."
+  },
+  "porselas|bracelet": {
+    "en": "An ornament worn around the wrist.",
+    "tl": "Palamuting isinusuot sa pulso."
+  },
+  "pospossën|uncover": {
+    "en": "To take the covering off something.",
+    "tl": "Ang pag-aalis ng takip sa isang bagay."
+  },
+  "presyo|price": {
+    "en": "The amount of money a thing costs.",
+    "tl": "Ang halagang kailangang bayaran para sa isang bagay."
+  },
+  "pudut|pick up": {
+    "en": "To lift something from the ground.",
+    "tl": "Ang pagdampot ng bagay mula sa lupa."
+  },
+  "pudëng|nipple, teat": {
+    "en": "The raised tip of the breast through which milk passes.",
+    "tl": "Ang nakausling dulo ng suso kung saan dumadaloy ang gatas."
+  },
+  "pugadan|nest": {
+    "en": "The sheltered place an animal makes to rest or breed.",
+    "tl": "Ang lugar na ginagawa ng hayop para magpahinga o manganak."
+  },
+  "pugita|octopus": {
+    "en": "A soft sea animal with eight arms.",
+    "tl": "Malambot na hayop-dagat na may walong galamay."
+  },
+  "pugon|hearth": {
+    "en": "The place in a house where a cooking fire is built.",
+    "tl": "Ang bahagi ng bahay kung saan iniiluto sa apoy."
+  },
+  "pugu|quail": {
+    "en": "A small ground bird with speckled feathers.",
+    "tl": "Maliit na ibong panlupa na batik-batik ang balahibo."
+  },
+  "pulgas|flea": {
+    "en": "A tiny jumping insect that bites animals and people.",
+    "tl": "Maliit na insektong lumulukso at kumakagat sa hayop at tao."
+  },
+  "punas|wipe": {
+    "en": "To clean a surface by rubbing it with a cloth.",
+    "tl": "Ang paglilinis ng ibabaw sa pamamagitan ng pagpahid ng tela."
+  },
+  "punganan|pillow": {
+    "en": "The soft cushion the head rests on in sleep.",
+    "tl": "Ang malambot na sapin na pinaghihigaan ng ulo kapag natutulog."
+  },
+  "pungguk|short": {
+    "en": "Of little height, said of a person.",
+    "tl": "Mababa ang tindig, para sa tao."
+  },
+  "punu|tree": {
+    "en": "A tall plant with a woody trunk and branches.",
+    "tl": "Matangkad na halaman na may matigas na katawan at mga sanga."
+  },
+  "puropor|drizzle": {
+    "en": "Fine light rain falling steadily.",
+    "tl": "Pinong at mahinang ulan na tuloy-tuloy."
+  },
+  "puropor|shower": {
+    "en": "A brief light fall of rain.",
+    "tl": "Maikli at mahinang pag-ulan."
+  },
+  "pusit|squid": {
+    "en": "A soft sea animal with tentacles that squirts ink.",
+    "tl": "Malambot na hayop-dagat na may galamay at bumubuga ng tinta."
+  },
+  "pusot|wrap up": {
+    "en": "To cover something by folding material around it.",
+    "tl": "Ang pagbalot ng bagay sa pamamagitan ng pagtupi ng balutan dito."
+  },
+  "puso|heart": {
+    "en": "The organ in the chest that pumps blood.",
+    "tl": "Ang bahagi ng dibdib na nagbobomba ng dugo."
+  },
+  "pusu ng biget|banana heart": {
+    "en": "The purple flower bud at the end of a banana bunch.",
+    "tl": "Ang lilang bulaklak sa dulo ng buwig ng saging."
+  },
+  "pusu ng biget|coconut heart": {
+    "en": "The tender growing shoot at the top of a coconut palm.",
+    "tl": "Ang malambot na ubod sa tuktok ng puno ng niyog."
+  },
+  "pusëd|navel": {
+    "en": "The small hollow in the middle of the belly.",
+    "tl": "Ang maliit na lukot sa gitna ng tiyan."
+  },
+  "putat|full": {
+    "en": "Holding as much as it can.",
+    "tl": "Puno na hanggang sa kaya nitong lamanin."
+  },
+  "putel|break": {
+    "en": "To separate something into pieces by force.",
+    "tl": "Ang paghahati sa isang bagay sa pamamagitan ng lakas."
+  },
+  "putel|fracture": {
+    "en": "To break something rigid, as a twig or a bone.",
+    "tl": "Ang pagbali ng matigas na bagay, gaya ng sanga o buto."
+  },
+  "putik|mud": {
+    "en": "Soft wet earth.",
+    "tl": "Malambot at basang lupa."
+  },
+  "pwede|can, able": {
+    "en": "Having the power or permission to do something.",
+    "tl": "May kakayahan o pahintulot na gawin ang isang bagay."
+  },
+  "pëgmula|plant (yam)": {
+    "en": "To set a root crop into the ground to grow.",
+    "tl": "Ang pagtatanim ng halamang-ugat sa lupa."
+  },
+  "pëgtaluk|plant (rice)": {
+    "en": "To set rice seedlings into a flooded field.",
+    "tl": "Ang pagtatanim ng punla ng palay sa binabahang bukid."
+  },
+  "pëkka|split": {
+    "en": "To divide something lengthwise into parts.",
+    "tl": "Ang paghati sa bagay nang pahaba."
+  },
+  "pëkkël|squeeze": {
+    "en": "To press something hard to force liquid out.",
+    "tl": "Ang pagpiga ng bagay upang lumabas ang katas."
+  },
+  "pëkkët|stick to, adhere": {
+    "en": "To hold fast to a surface.",
+    "tl": "Ang mahigpit na pagdikit sa isang ibabaw."
+  },
+  "pëllakën|divide": {
+    "en": "To separate something into parts.",
+    "tl": "Ang paghahati ng bagay sa mga bahagi."
+  },
+  "pëllos|whistle": {
+    "en": "To make a shrill sound by blowing through the lips.",
+    "tl": "Ang paglikha ng matinis na tunog sa pamamagitan ng paghihip sa labi."
+  },
+  "pënggëd|pimple": {
+    "en": "A small raised spot on the skin.",
+    "tl": "Maliit na butlig sa balat."
+  },
+  "pëssar|grasshopper": {
+    "en": "A jumping insect with long back legs.",
+    "tl": "Insektong lumulukso na may mahahabang hulihang binti."
+  },
+  "pǝknet|tear, rip": {
+    "en": "To pull cloth or paper apart.",
+    "tl": "Ang pagpunit ng tela o papel."
+  },
+  "rakaw|chest": {
+    "en": "The front of the body between the neck and the belly.",
+    "tl": "Ang harapan ng katawan sa pagitan ng leeg at tiyan."
+  },
+  "rambat|fishnet": {
+    "en": "A mesh of knotted cord used for catching fish.",
+    "tl": "Sinulid na hinabi at binuhol, ginagamit sa panghuli ng isda."
+  },
+  "rambat|net": {
+    "en": "A mesh of knotted cord used for catching fish.",
+    "tl": "Sinulid na hinabi at binuhol, ginagamit sa panghuli ng isda."
+  },
+  "rawëd|back of the knee": {
+    "en": "The hollow behind the knee joint.",
+    "tl": "Ang lukot sa likod ng tuhod."
+  },
+  "rempës|wash": {
+    "en": "To clean something with water.",
+    "tl": "Ang paglilinis ng bagay gamit ang tubig."
+  },
+  "rupa|face": {
+    "en": "The front of the head, from forehead to chin.",
+    "tl": "Ang harapan ng ulo, mula noo hanggang baba."
+  },
+  "rupet|dirty": {
+    "en": "Covered in dirt; not clean.",
+    "tl": "Puno ng dumi; hindi malinis."
+  },
+  "ruway|repeat": {
+    "en": "To do or say something a second time.",
+    "tl": "Ang muling paggawa o pagsasabi ng isang bagay."
+  },
+  "sa esa aldew|day after tomorrow": {
+    "en": "The second day from today.",
+    "tl": "Ang ikalawang araw mula ngayon."
+  },
+  "sa lubuk|in, inside": {
+    "en": "Within the bounds of something.",
+    "tl": "Nasa loob ng isang bagay."
+  },
+  "sa luwas|outside": {
+    "en": "Beyond the bounds of something.",
+    "tl": "Nasa labas ng hangganan ng isang bagay."
+  },
+  "sabaddit|few": {
+    "en": "Small in number; not many.",
+    "tl": "Kakaunti ang bilang; hindi marami."
+  },
+  "sabik|greedy, selfish": {
+    "en": "Wanting more than one's share.",
+    "tl": "Nagnanais ng higit sa nararapat na bahagi."
+  },
+  "sabung|cockfight": {
+    "en": "A contest in which two roosters are set to fight.",
+    "tl": "Paligsahan kung saan pinaglalaban ang dalawang tandang."
+  },
+  "sabun|soap": {
+    "en": "The substance used with water for washing.",
+    "tl": "Ang sangkap na ginagamit kasama ng tubig sa paghuhugas."
+  },
+  "sabyog|blow": {
+    "en": "To send air out through the mouth.",
+    "tl": "Ang paghihip ng hangin mula sa bibig."
+  },
+  "saduk|horn": {
+    "en": "The hard pointed growth on the head of an animal.",
+    "tl": "Ang matigas at matulis na tubo sa ulo ng hayop."
+  },
+  "saet|thorn": {
+    "en": "A sharp point growing on a plant stem.",
+    "tl": "Matulis na tinik na tumutubo sa tangkay ng halaman."
+  },
+  "sagik-rom amulaldew|twilight, dawn": {
+    "en": "The dim light just before sunrise or after sunset.",
+    "tl": "Ang mahinang liwanag bago sumikat o matapos lumubog ang araw."
+  },
+  "sagu|sago": {
+    "en": "A starch taken from the pith of a palm.",
+    "tl": "Almirol na kinukuha mula sa ubod ng palma."
+  },
+  "sagwan|oar, paddle": {
+    "en": "The bladed pole used to row a boat.",
+    "tl": "Ang kahoy na may palad na ginagamit sa pagsagwan."
+  },
+  "sagwan|paddle": {
+    "en": "The bladed pole used to row a boat.",
+    "tl": "Ang kahoy na may palad na ginagamit sa pagsagwan ng bangka."
+  },
+  "sagëb|fetch water": {
+    "en": "To draw water and carry it back.",
+    "tl": "Ang pag-igib at pagdadala ng tubig pauwi."
+  },
+  "sakay|ride": {
+    "en": "To travel in or on a vehicle or animal.",
+    "tl": "Ang pagsakay sa sasakyan o hayop."
+  },
+  "saket|pain": {
+    "en": "The hurt felt when the body is injured or ill.",
+    "tl": "Ang kirot na nararamdaman kapag nasugatan o may sakit ang katawan."
+  },
+  "saket|sick": {
+    "en": "Unwell in body; suffering illness or pain.",
+    "tl": "Masama ang pakiramdam; may karamdaman o kirot."
+  },
+  "saki dëgnen|cold season": {
+    "en": "The part of the year when the weather is coolest.",
+    "tl": "Ang bahagi ng taon na pinakamalamig ang panahon."
+  },
+  "sakripisyu|sacrifice": {
+    "en": "Something given up or offered for a higher purpose.",
+    "tl": "Bagay na isinusuko o inihahandog para sa mas mataas na layunin."
+  },
+  "salaksak|kingfisher": {
+    "en": "A brightly coloured bird that dives for fish.",
+    "tl": "Makulay na ibong sumisisid upang manghuli ng isda."
+  },
+  "salaped|braid": {
+    "en": "To plait three or more strands together.",
+    "tl": "Ang paghahabi ng tatlo o higit pang hibla nang magkakasalubong."
+  },
+  "saldu|hiccough": {
+    "en": "A sharp involuntary catch of the breath.",
+    "tl": "Ang biglaan at hindi sinasadyang pagkaputol ng hininga."
+  },
+  "sampaluk|tamarind": {
+    "en": "A brown pod with sour pulp used to flavour soups.",
+    "tl": "Kayumangging bunga na maasim ang laman, ipinampapaasim sa sabaw."
+  },
+  "sampay|hang clothes on line": {
+    "en": "To hang wet clothing out to dry.",
+    "tl": "Ang pagsasampay ng basang damit upang matuyo."
+  },
+  "sampilung|slap": {
+    "en": "To strike with the open palm.",
+    "tl": "Ang pagsampal gamit ang bukas na palad."
+  },
+  "sampupu|carry with both hands": {
+    "en": "To carry something using both hands together.",
+    "tl": "Ang pagbuhat ng bagay gamit ang magkabilang kamay."
+  },
+  "sandal|lean, as on a wall": {
+    "en": "To rest one's weight against something upright.",
+    "tl": "Ang pagsandal ng bigat sa isang patayong bagay."
+  },
+  "sanduk|ladle": {
+    "en": "A deep long-handled spoon for serving.",
+    "tl": "Malalim at mahabang kutsarang pansandok."
+  },
+  "saneg|hear": {
+    "en": "To take in sound through the ears.",
+    "tl": "Ang pagtanggap ng tunog sa pamamagitan ng tainga."
+  },
+  "sanfernandu|taro": {
+    "en": "A root crop with broad leaves, eaten cooked.",
+    "tl": "Halamang-ugat na malapad ang dahon, kinakain kapag luto."
+  },
+  "sangan|how much": {
+    "en": "The words used to ask about quantity or price.",
+    "tl": "Ang salitang ginagamit upang itanong ang dami o halaga."
+  },
+  "sangan|how much?": {
+    "en": "The words used to ask the price of something.",
+    "tl": "Ang salitang ginagamit upang itanong ang halaga ng isang bagay."
+  },
+  "sangan|some": {
+    "en": "An unstated small number or amount.",
+    "tl": "Hindi tiyak na maliit na bilang o dami."
+  },
+  "sanga|branch": {
+    "en": "An arm of a tree growing out from the trunk.",
+    "tl": "Ang bahagi ng punong sumusanga mula sa katawan nito."
+  },
+  "sanget|cry": {
+    "en": "To shed tears from grief or pain.",
+    "tl": "Ang pagluha dahil sa lungkot o sakit."
+  },
+  "sanggul|baby": {
+    "en": "A very young child, not yet able to walk.",
+    "tl": "Napakabatang bata na hindi pa nakalalakad."
+  },
+  "sangkay|climb": {
+    "en": "To go up something using the hands and feet.",
+    "tl": "Ang pag-akyat gamit ang mga kamay at paa."
+  },
+  "san|where?": {
+    "en": "The word used to ask in what place something is.",
+    "tl": "Ang salitang ginagamit upang itanong kung saan naroon ang isang bagay."
+  },
+  "sapa|stream": {
+    "en": "A small flow of fresh water.",
+    "tl": "Maliit na agos ng tabang na tubig."
+  },
+  "saplëd|acrid, sharp flavor": {
+    "en": "Harsh on the tongue, drying the mouth.",
+    "tl": "Mapakla sa dila at nagpapatuyo sa bibig."
+  },
+  "sapuket|a few": {
+    "en": "A small number of things.",
+    "tl": "Kakaunting bilang ng mga bagay."
+  },
+  "sapulo|ten": {
+    "en": "The number after nine.",
+    "tl": "Ang bilang na kasunod ng siyam."
+  },
+  "sapulu|ten": {
+    "en": "The number after nine.",
+    "tl": "Ang bilang na kasunod ng siyam."
+  },
+  "sapul|begin, start": {
+    "en": "To do the first part of something.",
+    "tl": "Ang pagsisimula sa unang bahagi ng isang bagay."
+  },
+  "saraan|sieve, strainer": {
+    "en": "A meshed tool for separating solids from liquid.",
+    "tl": "Kasangkapang may lambat para ihiwalay ang solido sa likido."
+  },
+  "saradu|shut, as a door": {
+    "en": "Fastened so nothing can pass through.",
+    "tl": "Nakapinid upang walang makadaan."
+  },
+  "sarap|delicious": {
+    "en": "Very pleasant to taste.",
+    "tl": "Napakasarap sa panlasa."
+  },
+  "sarili|self": {
+    "en": "One's own person, as distinct from others.",
+    "tl": "Ang sariling katauhan, kaiba sa iba."
+  },
+  "sarok|space under a house": {
+    "en": "The open area beneath a house on posts.",
+    "tl": "Ang bukas na bahagi sa ilalim ng bahay na nakatukod."
+  },
+  "sarëm|sink": {
+    "en": "To go down below the surface of water.",
+    "tl": "Ang paglubog sa ilalim ng tubig."
+  },
+  "sasangan|some": {
+    "en": "An unstated small number.",
+    "tl": "Hindi tiyak na maliit na bilang."
+  },
+  "sayaw|dance": {
+    "en": "To move the body in time with music.",
+    "tl": "Ang paggalaw ng katawan kasabay ng musika."
+  },
+  "saya|happy, glad": {
+    "en": "Feeling pleasure and contentment.",
+    "tl": "Nakadarama ng kasiyahan at kaginhawahan."
+  },
+  "sa|at": {
+    "en": "The word marking the place or time of something.",
+    "tl": "Ang salitang nagtuturo ng lugar o oras ng isang bagay."
+  },
+  "semawa|beetle, stag beetle": {
+    "en": "A hard-shelled insect with strong jaws.",
+    "tl": "Insektong may matigas na balat at malakas na panga."
+  },
+  "senduman|shelter": {
+    "en": "A place giving cover from sun or rain.",
+    "tl": "Lugar na nagbibigay ng silong mula sa araw o ulan."
+  },
+  "sendum|shade": {
+    "en": "A cool place sheltered from direct sun.",
+    "tl": "Malamig na lugar na natatakpan mula sa sikat ng araw."
+  },
+  "sepsep|chick": {
+    "en": "A newly hatched chicken.",
+    "tl": "Bagong pisang sisiw ng manok."
+  },
+  "sibat|spear": {
+    "en": "A long shaft with a pointed head, thrown or thrust.",
+    "tl": "Mahabang kahoy na matulis ang dulo, inihahagis o itinutusok."
+  },
+  "sida ulo|insane, mentally ill": {
+    "en": "Unwell in mind.",
+    "tl": "May karamdaman sa pag-iisip."
+  },
+  "sida`|fish": {
+    "en": "An animal that lives in water and breathes through gills.",
+    "tl": "Hayop na nabubuhay sa tubig at humihinga sa hasang."
+  },
+  "sida|fish": {
+    "en": "An animal that lives in water and breathes through gills.",
+    "tl": "Hayop na nabubuhay sa tubig at humihinga sa pamamagitan ng hasang."
+  },
+  "sikat ng aldew|sunbeams": {
+    "en": "Rays of sunlight breaking through.",
+    "tl": "Ang mga sinag ng araw na tumatagos."
+  },
+  "sikatan|north": {
+    "en": "The direction to the left when facing the sunrise.",
+    "tl": "Ang direksyon sa kaliwa kapag nakaharap sa sikatan ng araw."
+  },
+  "sikat|famous": {
+    "en": "Known to a great many people.",
+    "tl": "Kilala ng napakaraming tao."
+  },
+  "sikaw|sow": {
+    "en": "To scatter seed over prepared ground.",
+    "tl": "Ang paghahasik ng binhi sa inihandang lupa."
+  },
+  "sikip|narrow": {
+    "en": "Small in width, as a road.",
+    "tl": "Makipot ang lapad, gaya ng daan."
+  },
+  "sikip|tight, taut": {
+    "en": "Stretched or fitted closely with no slack.",
+    "tl": "Hinigpit o kasyang-kasya nang walang luwag."
+  },
+  "siko|elbow": {
+    "en": "The joint in the middle of the arm.",
+    "tl": "Ang kasukasuan sa gitna ng braso."
+  },
+  "silangan|east": {
+    "en": "The direction in which the sun rises.",
+    "tl": "Ang direksyon kung saan sumisikat ang araw."
+  },
+  "sila|3pl": {
+    "en": "They; the people being spoken about.",
+    "tl": "Sila; ang mga taong pinag-uusapan."
+  },
+  "simbaan|church": {
+    "en": "A building where Christians gather to worship.",
+    "tl": "Gusaling pinagtitipunan ng mga Kristiyano upang sumamba."
+  },
+  "simbuan|lamp": {
+    "en": "A vessel that burns oil to give light.",
+    "tl": "Lalagyang sumusunog ng langis upang magbigay ng liwanag."
+  },
+  "sinanlag|fry rice": {
+    "en": "To cook rice in a pan with little or no oil.",
+    "tl": "Ang pagsangag ng kanin sa kawali nang kaunti o walang mantika."
+  },
+  "singët|ant": {
+    "en": "A small insect that lives in large colonies and marches in lines.",
+    "tl": "Maliit na insektong namumuhay nang pangkat at sunod-sunod na naglalakad."
+  },
+  "sinulid|thread": {
+    "en": "A fine strand used for sewing and weaving.",
+    "tl": "Pinong hibla na ginagamit sa pananahi at paghahabi."
+  },
+  "sinu|who?": {
+    "en": "The word used to ask which person is meant.",
+    "tl": "Ang salitang ginagamit upang itanong kung sinong tao ang tinutukoy."
+  },
+  "sipon|cold, influenza": {
+    "en": "An illness of the nose and throat with a runny nose.",
+    "tl": "Karamdaman sa ilong at lalamunan na may sipon."
+  },
+  "sireno|dew": {
+    "en": "Water that settles in drops overnight.",
+    "tl": "Tubig na dumadapo nang patak-patak sa gabi."
+  },
+  "sise|oyster": {
+    "en": "A shellfish with a rough hinged shell, eaten as food.",
+    "tl": "Hayop-dagat na may magaspang na kabibe, kinakain bilang pagkain."
+  },
+  "sisi|regret, be sorry": {
+    "en": "To wish one had acted differently.",
+    "tl": "Ang pagnanais na sana ay iba ang ginawa."
+  },
+  "siyam|nine": {
+    "en": "The number after eight and before ten.",
+    "tl": "Ang bilang na kasunod ng walo at bago ang sampu."
+  },
+  "soklong|carry on one's head": {
+    "en": "To carry a load balanced on the head.",
+    "tl": "Ang pagsunong ng karga sa ulo."
+  },
+  "sole|come back, return": {
+    "en": "To go back to where one came from.",
+    "tl": "Ang pagbalik sa pinanggalingan."
+  },
+  "sole|return": {
+    "en": "To go back to where one came from.",
+    "tl": "Ang pagbalik sa pinanggalingan."
+  },
+  "sopsop|suck": {
+    "en": "To draw something into the mouth with the lips.",
+    "tl": "Ang paghigop ng isang bagay sa bibig gamit ang labi."
+  },
+  "suleg|look back": {
+    "en": "To turn the head and look behind oneself.",
+    "tl": "Ang paglingon upang tumingin sa likuran."
+  },
+  "sumole|return": {
+    "en": "To go back to where one came from.",
+    "tl": "Ang pagbalik sa pinanggalingan."
+  },
+  "sundang|machete": {
+    "en": "A large heavy blade for cutting brush and wood.",
+    "tl": "Malaki at mabigat na talim para sa pagputol ng damo at kahoy."
+  },
+  "surod|comb for lice with a fine tooth comb": {
+    "en": "To draw a fine comb through hair to remove lice.",
+    "tl": "Ang pagsuyod ng buhok gamit ang pinong suklay upang alisin ang kuto."
+  },
+  "surut|bedbug": {
+    "en": "A small flat insect that bites people as they sleep.",
+    "tl": "Maliit at patag na insektong kumakagat sa natutulog na tao."
+  },
+  "suso|breast": {
+    "en": "Either of the two soft parts on a woman's chest that produce milk.",
+    "tl": "Ang bahagi sa dibdib ng babae na gumagawa ng gatas."
+  },
+  "syam|nine": {
+    "en": "The number after eight and before ten.",
+    "tl": "Ang bilang na kasunod ng walo at bago ang sampu."
+  },
+  "sëddëp|enter": {
+    "en": "To go into a place.",
+    "tl": "Ang pagpasok sa loob ng isang lugar."
+  },
+  "sëddëp|in": {
+    "en": "To move into the inside of a place.",
+    "tl": "Ang pagpasok sa loob ng isang lugar."
+  },
+  "sëldit|crush lice with one's fingernail": {
+    "en": "To kill a louse by pressing it with a nail.",
+    "tl": "Ang pagpatay ng kuto sa pamamagitan ng pagpisa gamit ang kuko."
+  },
+  "sëllet|lightning": {
+    "en": "The sudden flash of light in the sky during a storm.",
+    "tl": "Ang biglaang kislap ng liwanag sa langit tuwing may bagyo."
+  },
+  "sëppang|waist": {
+    "en": "The narrow part of the body above the hips.",
+    "tl": "Ang makitid na bahagi ng katawan sa itaas ng balakang."
+  },
+  "sëpsëp|sip, slurp": {
+    "en": "To drink a little at a time, often noisily.",
+    "tl": "Ang unti-unting paghigop, madalas may tunog."
+  },
+  "sëpsëp|suck": {
+    "en": "To draw liquid into the mouth by pulling with the lips.",
+    "tl": "Ang paghigop ng likido sa bibig sa pamamagitan ng paghitit."
+  },
+  "sërrëm|sunset": {
+    "en": "The moment the sun drops below the horizon.",
+    "tl": "Ang sandaling lumulubog ang araw sa abot-tanaw."
+  },
+  "sída|broken, not working or out of order": {
+    "en": "No longer working as it should.",
+    "tl": "Hindi na gumagana nang maayos."
+  },
+  "tabi|fat": {
+    "en": "The soft greasy tissue in meat and in the body.",
+    "tl": "Ang malambot at malangis na bahagi ng karne at katawan."
+  },
+  "tabí|fat": {
+    "en": "The soft greasy part of meat and of the body.",
+    "tl": "Ang malambot at malangis na bahagi ng karne at katawan."
+  },
+  "tadëm|blade/sharpness": {
+    "en": "The cutting edge of a knife or tool.",
+    "tl": "Ang matalim na gilid ng kutsilyo o kasangkapan."
+  },
+  "tag tuyu|dry season": {
+    "en": "The part of the year when little rain falls.",
+    "tl": "Ang bahagi ng taon na kakaunti ang ulan."
+  },
+  "tag-uden|rainy season": {
+    "en": "The part of the year when rain falls most.",
+    "tl": "Ang bahagi ng taon na pinakamalimit umulan."
+  },
+  "taggeb|burp, belch": {
+    "en": "To let gas out of the stomach through the mouth.",
+    "tl": "Ang paglabas ng hangin mula sikmura sa pamamagitan ng bibig."
+  },
+  "taginëp|dream": {
+    "en": "The images and stories the mind makes while asleep.",
+    "tl": "Ang mga larawan at kuwentong nabubuo sa isip habang natutulog."
+  },
+  "tagu|hide": {
+    "en": "To put something where it will not be found.",
+    "tl": "Ang pagtatago ng bagay upang hindi matagpuan."
+  },
+  "takaw|steal": {
+    "en": "To take what belongs to another without permission.",
+    "tl": "Ang pagkuha ng pag-aari ng iba nang walang pahintulot."
+  },
+  "takgeng|rib": {
+    "en": "One of the curved bones that enclose the chest.",
+    "tl": "Isa sa mga hubog na butong bumabalot sa dibdib."
+  },
+  "taklëb|cover (jar)": {
+    "en": "The lid laid over the mouth of a vessel.",
+    "tl": "Ang takip na ipinapatong sa bibig ng lalagyan."
+  },
+  "taknëg|stand": {
+    "en": "To be upright on the feet.",
+    "tl": "Ang pagkakatayo nang tuwid sa mga paa."
+  },
+  "takrang|rib": {
+    "en": "One of the curved bones enclosing the chest.",
+    "tl": "Isa sa mga hubog na butong bumabalot sa dibdib."
+  },
+  "taktak|monitor lizard": {
+    "en": "A large lizard with a long tail and forked tongue.",
+    "tl": "Malaking butiki na mahaba ang buntot at sanga ang dila."
+  },
+  "talad|sugar palm": {
+    "en": "A palm whose sap is tapped for sugar and drink.",
+    "tl": "Palmang kinukunan ng katas para sa asukal at inumin."
+  },
+  "talad|sugarcane": {
+    "en": "A tall grass with a sweet juicy stem.",
+    "tl": "Matangkad na damong may matamis at makatas na tangkay."
+  },
+  "talampakan|sole of foot": {
+    "en": "The underside of the foot.",
+    "tl": "Ang ilalim na bahagi ng paa."
+  },
+  "talas|sharp": {
+    "en": "Having an edge or point that cuts well.",
+    "tl": "May talim o tulis na mahusay pumutol."
+  },
+  "talingo|wound": {
+    "en": "A cut or break in the skin.",
+    "tl": "Ang hiwa o putok sa balat."
+  },
+  "taling|mole, birthmark": {
+    "en": "A small dark mark on the skin from birth.",
+    "tl": "Maliit at maitim na marka sa balat mula pagkasilang."
+  },
+  "talino|wise": {
+    "en": "Able to judge well from knowledge and experience.",
+    "tl": "May mahusay na pasya mula sa kaalaman at karanasan."
+  },
+  "tali|string": {
+    "en": "A thin cord used for tying.",
+    "tl": "Manipis na taling ginagamit sa pagbibigkis."
+  },
+  "talon|waterfall": {
+    "en": "A stream falling from a height over rock.",
+    "tl": "Agos ng tubig na bumabagsak mula sa taas ng bato."
+  },
+  "talung|eggplant": {
+    "en": "A long purple vegetable with soft flesh.",
+    "tl": "Mahaba at lilang gulay na may malambot na laman."
+  },
+  "tam-is|sweet": {
+    "en": "Tasting of sugar or honey.",
+    "tl": "May lasang asukal o pulot."
+  },
+  "tama|right (correct)": {
+    "en": "Free of error; as it should be.",
+    "tl": "Walang mali; ayon sa dapat."
+  },
+  "tandang|rooster, cock": {
+    "en": "An adult male chicken.",
+    "tl": "Ang manok na lalaki sa hustong gulang."
+  },
+  "tanda|remember": {
+    "en": "To keep something in mind or call it back.",
+    "tl": "Ang pagtatago sa isip o muling pag-alala sa isang bagay."
+  },
+  "tangad|look upward": {
+    "en": "To raise the eyes towards a higher place.",
+    "tl": "Ang pagtingala patungo sa mas mataas na lugar."
+  },
+  "tanghali|noon, midday": {
+    "en": "The middle of the day, twelve o'clock.",
+    "tl": "Ang kalagitnaan ng araw, alas-dose."
+  },
+  "tangkay|stem, trunk": {
+    "en": "The main upright part of a plant.",
+    "tl": "Ang pangunahing patayong bahagi ng halaman."
+  },
+  "tansu|copper": {
+    "en": "A reddish metal that bends easily and carries heat.",
+    "tl": "Mapulang metal na madaling hubugin at nagdadala ng init."
+  },
+  "tapang|brave": {
+    "en": "Able to face danger without giving way to fear.",
+    "tl": "Kayang harapin ang panganib nang hindi napapadaig ng takot."
+  },
+  "tapduk|fall": {
+    "en": "To drop from a higher place to a lower one.",
+    "tl": "Ang paghulog mula sa mataas patungo sa mababang lugar."
+  },
+  "tapos|finish (off), complete": {
+    "en": "To bring something to its end.",
+    "tl": "Ang pagdadala ng isang bagay sa katapusan nito."
+  },
+  "tasa|cup": {
+    "en": "A small vessel to drink from.",
+    "tl": "Maliit na lalagyang iniinuman."
+  },
+  "tatay|father": {
+    "en": "A man in relation to his child.",
+    "tl": "Ang lalaking magulang ng isang anak."
+  },
+  "tawed|bring": {
+    "en": "To take something along to where the speaker is.",
+    "tl": "Ang pagdadala ng bagay patungo sa kinaroroonan ng nagsasalita."
+  },
+  "tayëng|sea urchin": {
+    "en": "A round sea animal covered in sharp spines.",
+    "tl": "Bilog na hayop-dagat na balot ng matutulis na tinik."
+  },
+  "temog|south": {
+    "en": "The direction to the right when facing the sunrise.",
+    "tl": "Ang direksyon sa kanan kapag nakaharap sa sikatan ng araw."
+  },
+  "tendak|kick": {
+    "en": "To strike with the foot.",
+    "tl": "Ang pagsipa gamit ang paa."
+  },
+  "teruun|has x": {
+    "en": "To hold something as one's own.",
+    "tl": "Ang pagkakaroon ng isang bagay bilang pag-aari."
+  },
+  "teruun|have, has, own, possess, there is": {
+    "en": "To hold as one's own, or for something to exist.",
+    "tl": "Ang pagkakaroon bilang pag-aari, o ang pag-iral ng isang bagay."
+  },
+  "tibag|demolish": {
+    "en": "To pull a structure down and break it apart.",
+    "tl": "Ang pagsira at pagbagsak sa isang gusali o istruktura."
+  },
+  "tidug|sleep": {
+    "en": "To rest with the eyes closed and the mind at rest.",
+    "tl": "Ang pagpapahinga nang nakapikit at hindi gising ang isip."
+  },
+  "tiis|bear, suffer": {
+    "en": "To endure something painful or difficult without giving way.",
+    "tl": "Ang pagtitiis sa masakit o mahirap nang hindi sumusuko."
+  },
+  "timed|chin": {
+    "en": "The part of the face below the mouth.",
+    "tl": "Ang bahagi ng mukha sa ilalim ng bibig."
+  },
+  "tinarema|cooked rice": {
+    "en": "Rice boiled and ready to eat.",
+    "tl": "Kanin na niluto at handa nang kainin."
+  },
+  "tinga|particles of food stuck between teeth": {
+    "en": "Bits of food caught between the teeth.",
+    "tl": "Ang mga piraso ng pagkaing naiipit sa pagitan ng ngipin."
+  },
+  "tinggi|know someone": {
+    "en": "To be acquainted with a person.",
+    "tl": "Ang pagkakakilala sa isang tao."
+  },
+  "tiradurën|shoot with slingshot": {
+    "en": "To fire a stone from a slingshot.",
+    "tl": "Ang pagpapakawala ng bato mula sa tirador."
+  },
+  "tita|aunt": {
+    "en": "The sister of one's father or mother.",
+    "tl": "Ang kapatid na babae ng ama o ina."
+  },
+  "tita|father's sister": {
+    "en": "The sister of one's father.",
+    "tl": "Ang kapatid na babae ng ama."
+  },
+  "tito|mother's brother": {
+    "en": "The brother of one's mother.",
+    "tl": "Ang kapatid na lalaki ng ina."
+  },
+  "tito|uncle": {
+    "en": "The brother of one's father or mother.",
+    "tl": "Ang kapatid na lalaki ng ama o ina."
+  },
+  "tiyan|belly": {
+    "en": "The front of the body below the chest.",
+    "tl": "Ang harapang bahagi ng katawan sa ibaba ng dibdib."
+  },
+  "tiyan|stomach": {
+    "en": "The organ inside the belly where food is digested.",
+    "tl": "Ang bahagi sa loob ng tiyan kung saan tinutunaw ang pagkain."
+  },
+  "tiyan|stomach, belly": {
+    "en": "The front of the body below the chest, and the organ inside it.",
+    "tl": "Ang harapan ng katawan sa ibaba ng dibdib, at ang sikmura sa loob nito."
+  },
+  "togbek|barb": {
+    "en": "The backward point on a hook that stops it slipping out.",
+    "tl": "Ang pasalungat na tulis sa kawit na pumipigil dito na matanggal."
+  },
+  "togbek|fishing hook": {
+    "en": "The bent barbed point on which bait is fixed to catch fish.",
+    "tl": "Ang hubog at matinik na dulo na nilalagyan ng pain upang manghuli ng isda."
+  },
+  "toglad|push": {
+    "en": "To press something away from oneself.",
+    "tl": "Ang pagtulak ng bagay palayo sa sarili."
+  },
+  "tok-tok|ridge, ridgepole, peak, tip": {
+    "en": "The topmost line or point of a roof or height.",
+    "tl": "Ang pinakamataas na linya o dulo ng bubong o taas."
+  },
+  "tok-tok|summit, mountain top, peak": {
+    "en": "The highest point of a mountain.",
+    "tl": "Ang pinakamataas na bahagi ng bundok."
+  },
+  "tokmaw|beak": {
+    "en": "The hard projecting mouth of a bird.",
+    "tl": "Ang matigas at nakausling bibig ng ibon."
+  },
+  "tolay|person": {
+    "en": "A human being.",
+    "tl": "Isang tao."
+  },
+  "tongka|sleepy": {
+    "en": "Feeling the need to sleep.",
+    "tl": "Nararamdaman ang pangangailangang matulog."
+  },
+  "tonok|high tide": {
+    "en": "The time when the sea rises highest up the shore.",
+    "tl": "Ang oras na pinakamataas ang pag-akyat ng dagat sa dalampasigan."
+  },
+  "tonok|hightide": {
+    "en": "The time when the sea rises highest up the shore.",
+    "tl": "Ang oras na pinakamataas ang pag-akyat ng dagat sa dalampasigan."
+  },
+  "totorotot|horn, trumpet": {
+    "en": "A wind instrument blown to make a loud note.",
+    "tl": "Instrumentong hinihipan upang maglabas ng malakas na tunog."
+  },
+  "tsaka|also": {
+    "en": "In addition to what has been said.",
+    "tl": "Bukod pa sa nabanggit na."
+  },
+  "tubigan|wet rice field": {
+    "en": "A flooded field in which rice is grown.",
+    "tl": "Bukiring binabaha ng tubig na tinatamnan ng palay."
+  },
+  "tubus|redeem": {
+    "en": "To buy back something that was pawned.",
+    "tl": "Ang pagbawi sa bagay na isinanla."
+  },
+  "tubu|grow": {
+    "en": "To increase in size as a living thing does.",
+    "tl": "Ang paglaki gaya ng ginagawa ng buhay na nilalang."
+  },
+  "tukak|frog": {
+    "en": "A small jumping animal that lives in and near water.",
+    "tl": "Maliit na hayop na lumulukso, naninirahan sa tubig at paligid nito."
+  },
+  "tukoy|know": {
+    "en": "To have something firmly in mind as true.",
+    "tl": "Ang pagkakaroon ng tiyak na kaalaman tungkol sa isang bagay."
+  },
+  "tukoý|know something": {
+    "en": "To hold a fact in mind as true.",
+    "tl": "Ang pagkakaroon ng tiyak na kaalaman sa isang bagay."
+  },
+  "tulang|bone, fishbone": {
+    "en": "The hard pieces of a skeleton, including the fine bones in a fish.",
+    "tl": "Ang matitigas na bahagi ng kalansay, pati na ang tinik ng isda."
+  },
+  "tule|earwax": {
+    "en": "The soft yellow substance that forms inside the ear.",
+    "tl": "Ang malambot na diláw na nabubuo sa loob ng tainga."
+  },
+  "tulung|help": {
+    "en": "To do something that makes another's task easier.",
+    "tl": "Ang paggawa ng bagay na nagpapadali sa gawain ng iba."
+  },
+  "tulëng|deaf": {
+    "en": "Unable to hear.",
+    "tl": "Hindi nakakarinig."
+  },
+  "tumarembeg|lie-on-side": {
+    "en": "To lie down turned onto one side.",
+    "tl": "Ang paghiga nang nakatagilid."
+  },
+  "tumba|drop": {
+    "en": "To let something fall.",
+    "tl": "Ang pagbitaw sa isang bagay upang mahulog."
+  },
+  "tumuldo|handspan": {
+    "en": "The span measured from thumb to middle finger.",
+    "tl": "Ang sukat mula hinlalaki hanggang gitnang daliri."
+  },
+  "tumënnëng|stay, remain": {
+    "en": "To go on being in a place rather than leaving.",
+    "tl": "Ang pananatili sa isang lugar sa halip na umalis."
+  },
+  "tunaw|melt": {
+    "en": "To turn from solid to liquid with heat.",
+    "tl": "Ang pagiging likido ng matigas na bagay dahil sa init."
+  },
+  "tungkud|cane, walking stick": {
+    "en": "A stick leaned on for support when walking.",
+    "tl": "Kahoy na sinasandalan bilang alalay sa paglalakad."
+  },
+  "tunó|broil": {
+    "en": "To cook over an open flame.",
+    "tl": "Ang pag-ihaw sa ibabaw ng apoy."
+  },
+  "tupuan|raised platform": {
+    "en": "A floor built above the ground for sitting or drying.",
+    "tl": "Sahig na itinayo sa itaas ng lupa para upuan o patuyuan."
+  },
+  "turog|leak": {
+    "en": "To let liquid escape through a hole or crack.",
+    "tl": "Ang pagtagas ng likido sa butas o lamat."
+  },
+  "turok|string together": {
+    "en": "To thread things onto a cord, as beads.",
+    "tl": "Ang pagtuhog ng mga bagay sa tali, gaya ng butil."
+  },
+  "turokën|skewer": {
+    "en": "To pierce food and thread it on a stick for cooking.",
+    "tl": "Ang pagtuhog ng pagkain sa kahoy para lutuin."
+  },
+  "tutod|burn": {
+    "en": "To destroy or damage something with fire.",
+    "tl": "Ang pagsira sa isang bagay sa pamamagitan ng apoy."
+  },
+  "tutod|fire": {
+    "en": "The burning that gives heat, light and smoke.",
+    "tl": "Ang pagliliyab na nagbibigay ng init, liwanag at usok."
+  },
+  "tuto|learn": {
+    "en": "To come to know or be able to do something.",
+    "tl": "Ang pagkatuto o pagkakaroon ng kakayahan sa isang bagay."
+  },
+  "tutudën|burn (clear land)": {
+    "en": "To burn off growth to clear ground for planting.",
+    "tl": "Ang pagsunog ng damo upang malinis ang lupang tatamnan."
+  },
+  "tutuhanan|correct": {
+    "en": "In agreement with the truth; the right answer.",
+    "tl": "Naaayon sa katotohanan; ang tamang sagot."
+  },
+  "tutung|rice, burnt lower crust": {
+    "en": "The browned rice stuck to the bottom of the pot.",
+    "tl": "Ang tutong na kaning dumidikit sa ilalim ng kaldero."
+  },
+  "tuyo|dry": {
+    "en": "Holding no water or moisture.",
+    "tl": "Walang tubig o basa."
+  },
+  "tuyu|dry": {
+    "en": "Holding no water or moisture.",
+    "tl": "Walang tubig o basa."
+  },
+  "tápan|winnow, sift rice": {
+    "en": "To toss grain in the air so the chaff blows away.",
+    "tl": "Ang pagtahip ng butil upang matangay ng hangin ang ipa."
+  },
+  "tápan|winnowing basket": {
+    "en": "The flat tray used for tossing grain to clean it.",
+    "tl": "Ang patag na bilao na ginagamit sa pagtahip ng butil."
+  },
+  "tëbbeg|answer": {
+    "en": "To reply to a question.",
+    "tl": "Ang pagtugon sa isang tanong."
+  },
+  "tëggeb|burp": {
+    "en": "To bring up gas from the stomach through the mouth.",
+    "tl": "Ang paglabas ng hangin mula sa sikmura sa pamamagitan ng bibig."
+  },
+  "tëk-tëk|drip": {
+    "en": "To fall in separate drops.",
+    "tl": "Ang pagpatak nang isa-isa."
+  },
+  "tëkkën|punt pole, boat pole": {
+    "en": "A long pole pushed against the bottom to move a boat.",
+    "tl": "Mahabang kahoy na itinutulak sa ilalim upang paandarin ang bangka."
+  },
+  "tël-lën|swallow": {
+    "en": "To make food or drink pass down the throat.",
+    "tl": "Ang paglunok ng pagkain o inumin sa lalamunan."
+  },
+  "tëllo|three": {
+    "en": "The number after two and before four.",
+    "tl": "Ang bilang na kasunod ng dalawa at bago ang apat."
+  },
+  "tëllën|swallow": {
+    "en": "To make food or drink pass down the throat.",
+    "tl": "Ang paglunok ng pagkain o inumin sa lalamunan."
+  },
+  "tëlompulu|thirty": {
+    "en": "Three tens.",
+    "tl": "Tatlong sampu."
+  },
+  "tëngngëd|nape": {
+    "en": "The back of the neck.",
+    "tl": "Ang likurang bahagi ng leeg."
+  },
+  "tënnog|sound, noise": {
+    "en": "What is taken in by the ears.",
+    "tl": "Ang tinatanggap ng tainga."
+  },
+  "uban|gray hair": {
+    "en": "Hair that has lost its colour with age.",
+    "tl": "Buhok na nawalan ng kulay dahil sa katandaan."
+  },
+  "uba|naked, bare": {
+    "en": "Wearing no clothing.",
+    "tl": "Walang saplot na kasuotan."
+  },
+  "ubi|yam, purple yam": {
+    "en": "A purple root crop used in sweets and stews.",
+    "tl": "Lilang halamang-ugat na ginagamit sa panghimagas at ulam."
+  },
+  "ubugan|whetstone": {
+    "en": "The stone on which a blade is sharpened.",
+    "tl": "Ang batong pinaghahasaan ng talim."
+  },
+  "ubug|whet": {
+    "en": "To sharpen a blade by rubbing it on stone.",
+    "tl": "Ang paghasa ng talim sa pamamagitan ng pagkiskis sa bato."
+  },
+  "ubus|all gone, consumed": {
+    "en": "Entirely used up; nothing remaining.",
+    "tl": "Ganap nang naubos; wala nang natira."
+  },
+  "ubët|vagina": {
+    "en": "The internal sex organ of a female.",
+    "tl": "Ang panloob na ari ng babae."
+  },
+  "udeng|shrimp": {
+    "en": "A small shellfish with a curved body, eaten as food.",
+    "tl": "Maliit na hayop-dagat na may hubog na katawan, kinakain bilang pagkain."
+  },
+  "uden|rain": {
+    "en": "Water falling from the clouds in drops.",
+    "tl": "Tubig na bumabagsak mula sa ulap nang patak-patak."
+  },
+  "ugat|root": {
+    "en": "The part of a plant that grows underground and draws water.",
+    "tl": "Ang bahagi ng halaman na nasa lupa at sumisipsip ng tubig."
+  },
+  "uging|charcoal": {
+    "en": "Black fuel made by burning wood slowly without air.",
+    "tl": "Itim na panggatong na gawa sa dahan-dahang pagsunog ng kahoy."
+  },
+  "uging|soot": {
+    "en": "The black powder smoke leaves on surfaces.",
+    "tl": "Ang itim na pulbos na iniiwan ng usok sa mga ibabaw."
+  },
+  "ulag|snake": {
+    "en": "A long legless reptile that moves by sliding.",
+    "tl": "Mahabang reptilyang walang paa at gumagapang sa paggalaw."
+  },
+  "ulap|cloud": {
+    "en": "A mass of water vapour floating in the sky.",
+    "tl": "Kumpol ng singaw ng tubig na lumulutang sa langit."
+  },
+  "ulila|orphan": {
+    "en": "A child whose parents have died.",
+    "tl": "Batang namatayan ng mga magulang."
+  },
+  "ulo|head": {
+    "en": "The top part of the body, holding the face and brain.",
+    "tl": "Ang itaas na bahagi ng katawan, kinalalagyan ng mukha at utak."
+  },
+  "ulës|blanket": {
+    "en": "A thick cloth used to keep warm in sleep.",
+    "tl": "Makapal na telang ginagamit na pampainit habang natutulog."
+  },
+  "uló|head": {
+    "en": "The top part of the body, holding the face and brain.",
+    "tl": "Ang itaas na bahagi ng katawan, kinalalagyan ng mukha at utak."
+  },
+  "umadi|oppose": {
+    "en": "To stand against what someone wants to do.",
+    "tl": "Ang pagsalungat sa nais gawin ng iba."
+  },
+  "umadi|refuse": {
+    "en": "To say no to what is offered or asked.",
+    "tl": "Ang pagtanggi sa inaalok o hinihiling."
+  },
+  "umaga|daytime": {
+    "en": "The part of the day when the sun is up.",
+    "tl": "Ang bahagi ng araw na nakasikat ang araw."
+  },
+  "umaga|morning": {
+    "en": "The early part of the day, after sunrise.",
+    "tl": "Ang unang bahagi ng araw, matapos sumikat ang araw."
+  },
+  "umang|hermit crab": {
+    "en": "A crab that shelters inside an empty shell.",
+    "tl": "Alimangong nagtatago sa loob ng walang lamang kabibe."
+  },
+  "umeng|beard": {
+    "en": "The hair growing on a man's chin and jaw.",
+    "tl": "Ang buhok na tumutubo sa baba at panga ng lalaki."
+  },
+  "umeng|mustache": {
+    "en": "The hair growing on a man's upper lip.",
+    "tl": "Ang buhok na tumutubo sa itaas na labi ng lalaki."
+  },
+  "ungot|torch": {
+    "en": "A burning brand carried to give light.",
+    "tl": "Nagliliyab na sulo na dala-dala upang magbigay ng liwanag."
+  },
+  "unod|follow": {
+    "en": "To go along behind someone or something.",
+    "tl": "Ang pagsunod sa likuran ng isang tao o bagay."
+  },
+  "uray|wait": {
+    "en": "To stay where one is until something happens.",
+    "tl": "Ang paghihintay hanggang may mangyari."
+  },
+  "urëd|maggots": {
+    "en": "The pale worm-like young of flies.",
+    "tl": "Ang maputlang uod na anak ng langaw."
+  },
+  "usdong|look out": {
+    "en": "To look outwards, as from a window.",
+    "tl": "Ang pagdungaw palabas, gaya sa bintana."
+  },
+  "usek|play": {
+    "en": "To take part in a game for enjoyment.",
+    "tl": "Ang paglalaro para sa kasiyahan."
+  },
+  "utang|debt": {
+    "en": "Something owed to another person, usually money.",
+    "tl": "Ang bagay na dapat bayaran sa iba, kadalasan ay pera."
+  },
+  "utus|order": {
+    "en": "To tell someone to do something, or to send them on an errand.",
+    "tl": "Ang pag-uutos sa iba na gumawa o magtungo sa isang gawain."
+  },
+  "utëk|brain": {
+    "en": "The organ inside the head with which a person thinks.",
+    "tl": "Ang bahagi ng ulo na ginagamit sa pag-iisip."
+  },
+  "uwab|yawn": {
+    "en": "To open the mouth wide and draw breath when tired.",
+    "tl": "Ang paghikab kapag pagod o inaantok."
+  },
+  "uwak|crow": {
+    "en": "A large black bird with a harsh call.",
+    "tl": "Malaking itim na ibong may magaspang na huni."
+  },
+  "uwaw|thirsty": {
+    "en": "Feeling the need to drink.",
+    "tl": "Nararamdaman ang pangangailangang uminom."
+  },
+  "wading bëbbi|younger sister": {
+    "en": "A female sibling born after oneself.",
+    "tl": "Ang kapatid na babaeng mas bata kaysa sa sarili."
+  },
+  "wading lalëkke|younger brother": {
+    "en": "A male sibling born after oneself.",
+    "tl": "Ang kapatid na lalaking mas bata kaysa sa sarili."
+  },
+  "wadi|younger sibling": {
+    "en": "A brother or sister born after oneself.",
+    "tl": "Ang kapatid na mas bata kaysa sa sarili."
+  },
+  "wakwak|crow": {
+    "en": "A large black bird with a harsh call.",
+    "tl": "Malaking itim na ibong may magaspang na huni."
+  },
+  "wala lasën|empty": {
+    "en": "Holding nothing inside.",
+    "tl": "Walang laman sa loob."
+  },
+  "walang perëng|silent": {
+    "en": "Making no sound; saying nothing.",
+    "tl": "Walang tunog; walang sinasabi."
+  },
+  "walis|broom": {
+    "en": "A brush on a long handle for sweeping floors.",
+    "tl": "Panlinis na may mahabang hawakan para sa pagwawalis ng sahig."
+  },
+  "walo|eight": {
+    "en": "The number after seven and before nine.",
+    "tl": "Ang bilang na kasunod ng pito at bago ang siyam."
+  },
+  "walu|eight": {
+    "en": "The number after seven and before nine.",
+    "tl": "Ang bilang na kasunod ng pito at bago ang siyam."
+  },
+  "yabat|strike": {
+    "en": "To hit someone or something with force.",
+    "tl": "Ang pagpalo o pagbugbog nang may lakas."
+  },
+  "yelo|ice": {
+    "en": "Water frozen solid.",
+    "tl": "Tubig na naging matigas na yelo."
+  },
+  "yelo|snow": {
+    "en": "Frozen water falling as soft white flakes.",
+    "tl": "Nagyeyelong tubig na bumabagsak bilang malambot na puting nipis."
+  },
+  "yopyop|blow": {
+    "en": "To send air out through the mouth at something.",
+    "tl": "Ang paghihip ng hangin mula sa bibig patungo sa isang bagay."
+  },
+  "ának|child": {
+    "en": "A son or daughter, spoken of as kin.",
+    "tl": "Ang anak, tinutukoy bilang kaanak."
+  },
+  "ëbbot ng ëddong|nostril": {
+    "en": "Either of the two openings of the nose.",
+    "tl": "Alinman sa dalawang butas ng ilong."
+  },
+  "ëbbut|hole": {
+    "en": "An opening or hollow through or into something.",
+    "tl": "Butas o guwang na tumatagos o pumapasok sa isang bagay."
+  },
+  "ëddem|borrow": {
+    "en": "To take something for a time and give it back.",
+    "tl": "Ang pagkuha ng bagay pansamantala upang ibalik din."
+  },
+  "ëddong|nose": {
+    "en": "The part of the face used for breathing and smelling.",
+    "tl": "Ang bahagi ng mukha na ginagamit sa paghinga at pang-amoy."
+  },
+  "ëggik|thresh": {
+    "en": "To beat harvested grain to separate it from the stalk.",
+    "tl": "Ang paggiik ng aning butil upang ihiwalay ito sa tangkay."
+  },
+  "ëllas|primary forest": {
+    "en": "Old forest that has never been cleared or replanted.",
+    "tl": "Lumang gubat na hindi pa kailanman nalinis o natamnan muli."
+  },
+  "ëlleg|neck": {
+    "en": "The part of the body joining the head to the shoulders.",
+    "tl": "Ang bahagi ng katawan na nag-uugnay sa ulo at balikat."
+  },
+  "ëmmol|gnat, midge": {
+    "en": "A very small biting fly.",
+    "tl": "Napakaliit na langaw na kumakagat."
+  },
+  "ëmmo|kiss": {
+    "en": "To touch someone with the lips as a sign of love.",
+    "tl": "Ang paghipo sa iba gamit ang labi bilang tanda ng pagmamahal."
+  },
+  "ënnëm|six": {
+    "en": "The number after five and before seven.",
+    "tl": "Ang bilang na kasunod ng lima at bago ang pito."
+  },
+  "ëppat|four": {
+    "en": "The number after three and before five.",
+    "tl": "Ang bilang na kasunod ng tatlo at bago ang lima."
+  },
+  "ëttanan|all": {
+    "en": "The whole of a number or group, with none left out.",
+    "tl": "Ang kabuuan ng bilang o pangkat, walang naiwan."
+  },
+  "ëttay|defecate": {
+    "en": "To pass solid waste from the body.",
+    "tl": "Ang paglabas ng matigas na dumi mula sa katawan."
+  },
+  "ëttay|excrement": {
+    "en": "The solid waste the body passes out.",
+    "tl": "Ang matigas na dumi na inilalabas ng katawan."
+  },
+  "ëttod|knee": {
+    "en": "The joint in the middle of the leg.",
+    "tl": "Ang kasukasuan sa gitna ng binti."
+  },
+  "ëttog|erection": {
+    "en": "The stiffening of the penis.",
+    "tl": "Ang pagtigas ng ari ng lalaki."
+  },
+  "ëttot|flatulence": {
+    "en": "Gas passed out of the bowels.",
+    "tl": "Ang hanging inilalabas mula sa bituka."
+  },
+  "ëttot|flatulence, fart": {
+    "en": "Gas released from the bowels.",
+    "tl": "Ang hanging inilalabas mula sa bituka."
+  }
+}

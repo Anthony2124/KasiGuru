@@ -657,6 +657,13 @@ window.openEntryModal = function(id) {
     ? `<dt>${label}</dt><dd>${escapeHtml(value)}</dd>`
     : `<dt>${label}</dt><dd style="color:var(--muted); font-style:italic;">Not recorded</dd>`;
 
+  // Example sentences were editable in this portal long before they were ever shown back here, so
+  // a moderator had no way to see what a word already carried without opening the edit form.
+  const examples = [
+    [item.exampleSentence, item.exampleTranslation],
+    [item.exampleSentence2, item.exampleTranslation2]
+  ].filter(([sentence]) => (sentence || '').trim());
+
   body.innerHTML = `
     <div class="entry-detail-head">
       <span class="headword">${escapeHtml(item.kasiguranin || '—')}</span>
@@ -666,6 +673,8 @@ window.openEntryModal = function(id) {
     <dl class="deflist">
       ${row('Tagalog', item.tagalog)}
       ${row('English', item.english)}
+      ${row('Meaning (English)', item.meaningEnglish)}
+      ${row('Meaning (Tagalog)', item.meaningTagalog)}
       <dt>Category</dt><dd><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></dd>
     </dl>
     ${aspects.length ? `
@@ -675,6 +684,16 @@ window.openEntryModal = function(id) {
           ${aspects.map(([label, value]) => `
             <div class="aspect"><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join('')}
         </div>
+      </div>` : ''}
+    ${examples.length ? `
+      <div style="margin-top:var(--s-5);">
+        <dt style="font-size:var(--t-xs); font-weight:700; color:var(--muted);">Example sentences</dt>
+        ${examples.map(([sentence, translation]) => `
+          <p style="margin:var(--s-2) 0 0;"><i>${escapeHtml(sentence)}</i>${
+            (translation || '').trim()
+              ? `<br><span style="color:var(--muted);">${escapeHtml(translation)}</span>`
+              : ''
+          }</p>`).join('')}
       </div>` : ''}`;
 
   const editBtn = document.getElementById('entry-modal-edit');
@@ -1707,6 +1726,10 @@ async function approveSubmission(id) {
       perfectiveForm: (sub.pastTense || "").trim(),
       imperfectiveForm: (sub.presentTense || "").trim(),
       contemplativeForm: (sub.futureTense || "").trim(),
+      // The contributor's example sentence was collected by the in-app submit form, stored on the
+      // submission, and then dropped on the floor at approval -- the one piece of the contribution
+      // that only they could supply.
+      exampleSentence: (sub.exampleSentence || "").trim(),
       verifiedByAdmin: true,
       approvedAt: Date.now()
     }));
@@ -1991,6 +2014,8 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-english').value = item.english || '';
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-part-of-speech').value = item.partOfSpeech || '';
+  document.getElementById('edit-input-meaning-en').value = item.meaningEnglish || '';
+  document.getElementById('edit-input-meaning-tl').value = item.meaningTagalog || '';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
   document.getElementById('edit-input-neutral').value = item.neutralForm || '';
   document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
@@ -2269,6 +2294,8 @@ function initFormListeners() {
       const example1Translation = document.getElementById('input-example1-translation').value.trim();
       const example2 = document.getElementById('input-example2').value.trim();
       const example2Translation = document.getElementById('input-example2-translation').value.trim();
+      const meaningEnglish = document.getElementById('input-meaning-en').value.trim();
+      const meaningTagalog = document.getElementById('input-meaning-tl').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
@@ -2288,6 +2315,8 @@ function initFormListeners() {
           english: english || null,
           category: category,
           partOfSpeech: partOfSpeech || null,
+          meaningEnglish: meaningEnglish || null,
+          meaningTagalog: meaningTagalog || null,
           ipaNotation: ipa || null,
           neutralForm: neutral || null,
           perfectiveForm: perfective || null,
@@ -2332,6 +2361,8 @@ function initFormListeners() {
       const example1Translation = document.getElementById('edit-input-example1-translation').value.trim();
       const example2 = document.getElementById('edit-input-example2').value.trim();
       const example2Translation = document.getElementById('edit-input-example2-translation').value.trim();
+      const meaningEnglish = document.getElementById('edit-input-meaning-en').value.trim();
+      const meaningTagalog = document.getElementById('edit-input-meaning-tl').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
@@ -2342,6 +2373,8 @@ function initFormListeners() {
           english: english || null,
           category: category,
           partOfSpeech: partOfSpeech || null,
+          meaningEnglish: meaningEnglish || null,
+          meaningTagalog: meaningTagalog || null,
           ipaNotation: ipa || null,
           neutralForm: neutral || null,
           perfectiveForm: perfective || null,
@@ -2536,4 +2569,4 @@ async function logAudit(action, details = {}) {
     console.warn("Audit log write failed:", e);
   }
 }
-
+

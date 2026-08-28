@@ -35,6 +35,7 @@ data class AspectBuilderUiState(
     val questions: List<AspectQuestion> = emptyList(),
     val currentIndex: Int = 0,
     val selectedAnswer: String? = null,
+    val hintRevealed: Boolean = false,
     val isCorrect: Boolean? = null,
     val score: Int = 0,
     val xpEarned: Int = 0,
@@ -140,6 +141,12 @@ class AspectBuilderViewModel @Inject constructor(
         return result
     }
 
+    /** The learner asked for the definition. Costs the speed bonus; see the rating in submitAnswer. */
+    fun revealHint() {
+        if (_uiState.value.selectedAnswer != null) return
+        _uiState.value = _uiState.value.copy(hintRevealed = true)
+    }
+
     fun submitAnswer(answer: String) {
         val state = _uiState.value
         val currentQ = questionQueue.getOrNull(state.currentIndex) ?: return
@@ -148,7 +155,14 @@ class AspectBuilderViewModel @Inject constructor(
         val correct = answer == currentQ.correctAnswer
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
 
-        val rating = ReviewRatingMapper.ratingForAnswer(correct, responseTimeMs)
+        // A hinted answer is graded HARD however fast it came back: it forfeits the speed bonus,
+        // and it keeps the SM-2 signal honest, since recall that needed the definition shown is not
+        // the same evidence of memory as recall that did not.
+        val rating = if (state.hintRevealed) {
+            ReviewRating.HARD
+        } else {
+            ReviewRatingMapper.ratingForAnswer(correct, responseTimeMs)
+        }
         val questionXp = if (correct) {
             if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
         } else {
@@ -211,7 +225,8 @@ class AspectBuilderViewModel @Inject constructor(
                 it.copy(
                     currentIndex = it.currentIndex + 1,
                     selectedAnswer = null,
-                    isCorrect = null
+                    isCorrect = null,
+                    hintRevealed = false
                 )
             }
         }

@@ -335,3 +335,85 @@ fun GameUnavailableState(
         ClayButton(label = "Back to games", onClick = onBack)
     }
 }
+
+/**
+ * Which definitions a game may show as a hint.
+ *
+ * A hint must never contain the answer. Word Match draws its answer options from the Tagalog
+ * glosses, so the Tagalog definition would hand the round over; every other game answers in
+ * Kasiguranin, where both definitions are safe. [EnglishOnly] exists for that one case.
+ */
+enum class HintLanguages { Both, EnglishOnly }
+
+/**
+ * The definition offered as a hint, or null when this word has none written yet.
+ *
+ * Returning null rather than an empty string is what lets [GameHintButton] disappear completely on
+ * an un-backfilled corpus instead of offering a hint that turns out to be blank.
+ */
+fun hintFor(word: VocabularyEntity?, languages: HintLanguages): String? {
+    if (word == null) return null
+    val parts = buildList {
+        if (word.meaningEnglish.isNotBlank()) add(word.meaningEnglish.trim())
+        if (languages == HintLanguages.Both && word.meaningTagalog.isNotBlank()) add(word.meaningTagalog.trim())
+    }
+    return parts.joinToString("\n").ifBlank { null }
+}
+
+/**
+ * A hint the learner has to ask for.
+ *
+ * Deliberately a cost, not a freebie: revealing it forfeits the question's speed bonus but not its
+ * correctness, so a learner who is genuinely stuck can keep going without the round becoming
+ * worthless. Renders nothing at all when [hint] is null.
+ */
+@Composable
+fun GameHintButton(
+    hint: String?,
+    revealed: Boolean,
+    onReveal: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (hint == null) return
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (!revealed) {
+            TextButton(onClick = onReveal) {
+                Icon(
+                    painter = painterResource(id = Iconsax.InfoCircle),
+                    contentDescription = null,
+                    tint = Muted,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(Space.xxs))
+                Text(
+                    text = "Show a hint",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Muted
+                )
+            }
+        } else {
+            Surface(
+                shape = Shapes.tile,
+                color = Muted.copy(alpha = 0.08f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(Space.sm)) {
+                    Text(
+                        text = "Hint",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Muted
+                    )
+                    Spacer(Modifier.height(Space.xxs))
+                    Text(
+                        text = hint,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Ink
+                    )
+                }
+            }
+        }
+    }
+}

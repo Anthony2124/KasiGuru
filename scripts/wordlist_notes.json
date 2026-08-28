@@ -1,0 +1,1435 @@
+[
+  {
+    "no": 25,
+    "kasiguranin": "malekmang",
+    "english": "clear",
+    "tagalog": "linaw",
+    "notes": "as water",
+    "alternates": []
+  },
+  {
+    "no": 44,
+    "kasiguranin": "kayo`",
+    "english": "wood",
+    "tagalog": "kahoy",
+    "notes": "a stick",
+    "alternates": []
+  },
+  {
+    "no": 58,
+    "kasiguranin": "demlag",
+    "english": "bright, light",
+    "tagalog": "liwanag",
+    "notes": "not dark; bright, as light",
+    "alternates": []
+  },
+  {
+    "no": 71,
+    "kasiguranin": "puropor",
+    "english": "drizzle",
+    "tagalog": "ambon",
+    "notes": "light rain",
+    "alternates": []
+  },
+  {
+    "no": 79,
+    "kasiguranin": "abu",
+    "english": "ash",
+    "tagalog": "abo",
+    "notes": "NOT 'dust', after you have been sweeping",
+    "alternates": []
+  },
+  {
+    "no": 83,
+    "kasiguranin": "tutudën",
+    "english": "burn (clear land)",
+    "tagalog": "sunugin",
+    "notes": "",
+    "alternates": [
+      "sekraban"
+    ]
+  },
+  {
+    "no": 87,
+    "kasiguranin": "lalëkke",
+    "english": "man",
+    "tagalog": "lalaki",
+    "notes": "male person / seorang laki-laki",
+    "alternates": []
+  },
+  {
+    "no": 89,
+    "kasiguranin": "ának",
+    "english": "child",
+    "tagalog": "anak",
+    "notes": "as kin",
+    "alternates": []
+  },
+  {
+    "no": 106,
+    "kasiguranin": "anák",
+    "english": "offspring",
+    "tagalog": "supling, anak",
+    "notes": "as one's child",
+    "alternates": []
+  },
+  {
+    "no": 137,
+    "kasiguranin": "ampun",
+    "english": "adopted",
+    "tagalog": "ampon",
+    "notes": "as a child in the family",
+    "alternates": []
+  },
+  {
+    "no": 139,
+    "kasiguranin": "aku",
+    "english": "1sg",
+    "tagalog": "ako",
+    "notes": "I",
+    "alternates": []
+  },
+  {
+    "no": 141,
+    "kasiguranin": "kita",
+    "english": "1pl incl",
+    "tagalog": "tayo",
+    "notes": "we (including addressee)",
+    "alternates": [
+      "tayu"
+    ]
+  },
+  {
+    "no": 143,
+    "kasiguranin": "ikaw",
+    "english": "2sg (informal)",
+    "tagalog": "kayo",
+    "notes": "you (one person)",
+    "alternates": []
+  },
+  {
+    "no": 144,
+    "kasiguranin": "ikaw",
+    "english": "2sg (polite)",
+    "tagalog": "ikaw",
+    "notes": "you (polite)",
+    "alternates": []
+  },
+  {
+    "no": 145,
+    "kasiguranin": "kayu",
+    "english": "2pl",
+    "tagalog": "kayo",
+    "notes": "you (multiple people)",
+    "alternates": []
+  },
+  {
+    "no": 146,
+    "kasiguranin": "sila",
+    "english": "3pl",
+    "tagalog": "sila",
+    "notes": "they",
+    "alternates": []
+  },
+  {
+    "no": 165,
+    "kasiguranin": "pugadan",
+    "english": "nest",
+    "tagalog": "pugad, lungga'",
+    "notes": "as of an animal, den",
+    "alternates": []
+  },
+  {
+    "no": 194,
+    "kasiguranin": "bansaway",
+    "english": "crab",
+    "tagalog": "alimasag",
+    "notes": "",
+    "alternates": [
+      "agima"
+    ]
+  },
+  {
+    "no": 204,
+    "kasiguranin": "kuto",
+    "english": "head louse",
+    "tagalog": "kuto",
+    "notes": "louse in hair",
+    "alternates": []
+  },
+  {
+    "no": 206,
+    "kasiguranin": "lesa",
+    "english": "louse eggs",
+    "tagalog": "lisa'",
+    "notes": "eggs of headlice",
+    "alternates": []
+  },
+  {
+    "no": 209,
+    "kasiguranin": "ampas",
+    "english": "chicken louse",
+    "tagalog": "pulgas manok",
+    "notes": "of a chicken",
+    "alternates": []
+  },
+  {
+    "no": 229,
+    "kasiguranin": "bulati",
+    "english": "earthworm",
+    "tagalog": "bulate",
+    "notes": "",
+    "alternates": [
+      "alontayag"
+    ]
+  },
+  {
+    "no": 235,
+    "kasiguranin": "lipët",
+    "english": "leech",
+    "tagalog": "linta",
+    "notes": "if there is no general word, note the words for the most common kind of leeches",
+    "alternates": []
+  },
+  {
+    "no": 242,
+    "kasiguranin": "kuhul",
+    "english": "snail",
+    "tagalog": "suso'",
+    "notes": "",
+    "alternates": [
+      "pepes"
+    ]
+  },
+  {
+    "no": 249,
+    "kasiguranin": "bakokol",
+    "english": "tortoise",
+    "tagalog": "pagong",
+    "notes": "on land",
+    "alternates": []
+  },
+  {
+    "no": 255,
+    "kasiguranin": "buhuk",
+    "english": "hair",
+    "tagalog": "buhok",
+    "notes": "on head",
+    "alternates": []
+  },
+  {
+    "no": 259,
+    "kasiguranin": "balbon",
+    "english": "body hair",
+    "tagalog": "balahibo",
+    "notes": "human e.g. chest",
+    "alternates": []
+  },
+  {
+    "no": 262,
+    "kasiguranin": "litid",
+    "english": "vein",
+    "tagalog": "ugat",
+    "notes": "blood vessel (vein or artery)",
+    "alternates": []
+  },
+  {
+    "no": 265,
+    "kasiguranin": "saduk",
+    "english": "horn",
+    "tagalog": "sungay",
+    "notes": "of an animal",
+    "alternates": []
+  },
+  {
+    "no": 284,
+    "kasiguranin": "mesmes",
+    "english": "mote",
+    "tagalog": "muta'",
+    "notes": "dirt in one's eye",
+    "alternates": []
+  },
+  {
+    "no": 290,
+    "kasiguranin": "kulangot",
+    "english": "snot, mucus",
+    "tagalog": "uhog",
+    "notes": "nasal mucus",
+    "alternates": []
+  },
+  {
+    "no": 293,
+    "kasiguranin": "darëng-darëng",
+    "english": "palate",
+    "tagalog": "ngalangala",
+    "notes": "of one's mouth",
+    "alternates": []
+  },
+  {
+    "no": 306,
+    "kasiguranin": "batuk",
+    "english": "nape of one's neck",
+    "tagalog": "batok",
+    "notes": "back of the neck",
+    "alternates": []
+  },
+  {
+    "no": 311,
+    "kasiguranin": "brasu",
+    "english": "arm",
+    "tagalog": "braso",
+    "notes": "lower arm (elbow to fingers or wrist)",
+    "alternates": []
+  },
+  {
+    "no": 312,
+    "kasiguranin": "bisig",
+    "english": "whole arm",
+    "tagalog": "bisig",
+    "notes": "from shoulder to wrist/fingers",
+    "alternates": []
+  },
+  {
+    "no": 335,
+    "kasiguranin": "bulong",
+    "english": "heel",
+    "tagalog": "sakong",
+    "notes": "of foot",
+    "alternates": []
+  },
+  {
+    "no": 347,
+    "kasiguranin": "tiyan",
+    "english": "stomach, belly",
+    "tagalog": "tiyan",
+    "notes": "belly",
+    "alternates": []
+  },
+  {
+    "no": 353,
+    "kasiguranin": "pale",
+    "english": "spleen",
+    "tagalog": "pali",
+    "notes": "",
+    "alternates": [
+      "lapay"
+    ]
+  },
+  {
+    "no": 386,
+    "kasiguranin": "lukag",
+    "english": "wake up",
+    "tagalog": "gising",
+    "notes": "to wake up from sleep",
+    "alternates": []
+  },
+  {
+    "no": 395,
+    "kasiguranin": "digus",
+    "english": "bathe",
+    "tagalog": "ligo buhay",
+    "notes": "to take a shower or to take a bath to wash oneself",
+    "alternates": []
+  },
+  {
+    "no": 396,
+    "kasiguranin": "magdigus",
+    "english": "bathe",
+    "tagalog": "maligo",
+    "notes": "to bathe someone, e.g. a child",
+    "alternates": []
+  },
+  {
+    "no": 406,
+    "kasiguranin": "lëbbëng",
+    "english": "bury",
+    "tagalog": "libing",
+    "notes": "a dead body",
+    "alternates": []
+  },
+  {
+    "no": 411,
+    "kasiguranin": "saket",
+    "english": "sick",
+    "tagalog": "sakit",
+    "notes": "sick or painful",
+    "alternates": []
+  },
+  {
+    "no": 417,
+    "kasiguranin": "apdës",
+    "english": "stinging pain",
+    "tagalog": "hapdi', kirot",
+    "notes": "",
+    "alternates": [
+      "kirut"
+    ]
+  },
+  {
+    "no": 421,
+    "kasiguranin": "këggang",
+    "english": "scab",
+    "tagalog": "langib",
+    "notes": "on a wound",
+    "alternates": []
+  },
+  {
+    "no": 426,
+    "kasiguranin": "gus-gus",
+    "english": "scratch",
+    "tagalog": "kamot",
+    "notes": "e.g. when skin is itchy",
+    "alternates": []
+  },
+  {
+    "no": 431,
+    "kasiguranin": "lasun",
+    "english": "poison",
+    "tagalog": "lason",
+    "notes": "venom of a snake",
+    "alternates": []
+  },
+  {
+    "no": 439,
+    "kasiguranin": "uba",
+    "english": "naked, bare",
+    "tagalog": "hubad",
+    "notes": "",
+    "alternates": [
+      "obangël"
+    ]
+  },
+  {
+    "no": 442,
+    "kasiguranin": "lutó",
+    "english": "ripe",
+    "tagalog": "hinog",
+    "notes": "as a fruit",
+    "alternates": []
+  },
+  {
+    "no": 443,
+    "kasiguranin": "máta",
+    "english": "unripe",
+    "tagalog": "hilaw",
+    "notes": "of fruit",
+    "alternates": []
+  },
+  {
+    "no": 446,
+    "kasiguranin": "balon",
+    "english": "provisions",
+    "tagalog": "baon",
+    "notes": "as for a journey",
+    "alternates": []
+  },
+  {
+    "no": 449,
+    "kasiguranin": "ubus",
+    "english": "all gone, consumed",
+    "tagalog": "ubos",
+    "notes": "",
+    "alternates": [
+      "said"
+    ]
+  },
+  {
+    "no": 462,
+    "kasiguranin": "lëbbut",
+    "english": "boil",
+    "tagalog": "kulo",
+    "notes": "as water",
+    "alternates": []
+  },
+  {
+    "no": 470,
+    "kasiguranin": "sanduk",
+    "english": "ladle",
+    "tagalog": "sandok",
+    "notes": "as of coconut shell",
+    "alternates": []
+  },
+  {
+    "no": 473,
+    "kasiguranin": "gayat",
+    "english": "slice",
+    "tagalog": "hiwa",
+    "notes": "as meat",
+    "alternates": []
+  },
+  {
+    "no": 475,
+    "kasiguranin": "kor-kor",
+    "english": "scrape",
+    "tagalog": "kayod",
+    "notes": "as a coconut",
+    "alternates": []
+  },
+  {
+    "no": 478,
+    "kasiguranin": "bayu",
+    "english": "pound",
+    "tagalog": "bayo",
+    "notes": "as rice",
+    "alternates": []
+  },
+  {
+    "no": 498,
+    "kasiguranin": "lambanug",
+    "english": "alcohol",
+    "tagalog": "alak",
+    "notes": "palmwine",
+    "alternates": []
+  },
+  {
+    "no": 502,
+    "kasiguranin": "badu",
+    "english": "clothing",
+    "tagalog": "damit",
+    "notes": "things you wear",
+    "alternates": []
+  },
+  {
+    "no": 505,
+    "kasiguranin": "magladi",
+    "english": "weave",
+    "tagalog": "maghabi",
+    "notes": "a sarong / garment",
+    "alternates": []
+  },
+  {
+    "no": 516,
+    "kasiguranin": "butil",
+    "english": "bead",
+    "tagalog": "butil",
+    "notes": "as for jewelry",
+    "alternates": []
+  },
+  {
+    "no": 528,
+    "kasiguranin": "pintu",
+    "english": "door",
+    "tagalog": "pinto",
+    "notes": "",
+    "alternates": [
+      "pintuan"
+    ]
+  },
+  {
+    "no": 530,
+    "kasiguranin": "datag",
+    "english": "floor",
+    "tagalog": "sahig",
+    "notes": "of a house",
+    "alternates": []
+  },
+  {
+    "no": 544,
+    "kasiguranin": "simbuan",
+    "english": "lamp",
+    "tagalog": "lampara",
+    "notes": "",
+    "alternates": [
+      "gasera"
+    ]
+  },
+  {
+    "no": 552,
+    "kasiguranin": "kayó",
+    "english": "board",
+    "tagalog": "tabla",
+    "notes": "plank of wood",
+    "alternates": []
+  },
+  {
+    "no": 555,
+    "kasiguranin": "tubigan",
+    "english": "wet rice field",
+    "tagalog": "palayan",
+    "notes": "paddy",
+    "alternates": []
+  },
+  {
+    "no": 569,
+    "kasiguranin": "ladëy",
+    "english": "harvest",
+    "tagalog": "ani",
+    "notes": "as rice",
+    "alternates": []
+  },
+  {
+    "no": 576,
+    "kasiguranin": "paray",
+    "english": "rice plant",
+    "tagalog": "palay",
+    "notes": "unhusked rice",
+    "alternates": []
+  },
+  {
+    "no": 577,
+    "kasiguranin": "bëgges",
+    "english": "uncooked rice",
+    "tagalog": "bigas",
+    "notes": "husked uncooked rice",
+    "alternates": []
+  },
+  {
+    "no": 594,
+    "kasiguranin": "bëdbëd",
+    "english": "bunch",
+    "tagalog": "bungkos",
+    "notes": "as of fruit",
+    "alternates": []
+  },
+  {
+    "no": 600,
+    "kasiguranin": "punu",
+    "english": "tree",
+    "tagalog": "puno",
+    "notes": "generic",
+    "alternates": []
+  },
+  {
+    "no": 602,
+    "kasiguranin": "karakap",
+    "english": "betel vine",
+    "tagalog": "ikmo",
+    "notes": "betel leaf",
+    "alternates": []
+  },
+  {
+    "no": 604,
+    "kasiguranin": "apog",
+    "english": "lime",
+    "tagalog": "apog",
+    "notes": "for betel nut chewing",
+    "alternates": []
+  },
+  {
+    "no": 605,
+    "kasiguranin": "mëg-ëmman",
+    "english": "chew betel",
+    "tagalog": "mag-nganga",
+    "notes": "the action of chewing betel",
+    "alternates": []
+  },
+  {
+    "no": 627,
+    "kasiguranin": "niyog",
+    "english": "old coconut",
+    "tagalog": "niyog",
+    "notes": "fruit, mature",
+    "alternates": []
+  },
+  {
+    "no": 628,
+    "kasiguranin": "buko",
+    "english": "young coconut",
+    "tagalog": "buko",
+    "notes": "fruit, young",
+    "alternates": []
+  },
+  {
+    "no": 633,
+    "kasiguranin": "biget",
+    "english": "banana",
+    "tagalog": "saging",
+    "notes": "banana fruit",
+    "alternates": []
+  },
+  {
+    "no": 641,
+    "kasiguranin": "koloran",
+    "english": "carambola",
+    "tagalog": "",
+    "notes": "",
+    "alternates": [
+      "balimbing"
+    ]
+  },
+  {
+    "no": 657,
+    "kasiguranin": "sanfernandu",
+    "english": "taro",
+    "tagalog": "taro",
+    "notes": "root crop",
+    "alternates": []
+  },
+  {
+    "no": 663,
+    "kasiguranin": "sagu",
+    "english": "sago",
+    "tagalog": "sago",
+    "notes": "palm",
+    "alternates": []
+  },
+  {
+    "no": 668,
+    "kasiguranin": "kabuti",
+    "english": "mushroom",
+    "tagalog": "kabute",
+    "notes": "eatable",
+    "alternates": []
+  },
+  {
+    "no": 678,
+    "kasiguranin": "turok",
+    "english": "string together",
+    "tagalog": "tuhog",
+    "notes": "as beads",
+    "alternates": []
+  },
+  {
+    "no": 681,
+    "kasiguranin": "balbal",
+    "english": "hit",
+    "tagalog": "palo",
+    "notes": "e.g. a dog",
+    "alternates": [
+      "yabat",
+      "hablug"
+    ]
+  },
+  {
+    "no": 685,
+    "kasiguranin": "hiwaën",
+    "english": "cut",
+    "tagalog": "hiwain (hiwa)",
+    "notes": "e.g. meat or cake, to cut / slice into pieces",
+    "alternates": []
+  },
+  {
+    "no": 686,
+    "kasiguranin": "këttolën",
+    "english": "cut down",
+    "tagalog": "putulin",
+    "notes": "e.g. trees",
+    "alternates": []
+  },
+  {
+    "no": 690,
+    "kasiguranin": "sundang",
+    "english": "machete",
+    "tagalog": "bolo",
+    "notes": "cleaver",
+    "alternates": []
+  },
+  {
+    "no": 692,
+    "kasiguranin": "ubug",
+    "english": "whet",
+    "tagalog": "hasa'",
+    "notes": "sharpen a blade",
+    "alternates": []
+  },
+  {
+    "no": 695,
+    "kasiguranin": "putel",
+    "english": "fracture",
+    "tagalog": "bali'",
+    "notes": "as a twig or one's arm",
+    "alternates": []
+  },
+  {
+    "no": 698,
+    "kasiguranin": "bisag",
+    "english": "crack",
+    "tagalog": "basag",
+    "notes": "as in a jar or dish",
+    "alternates": []
+  },
+  {
+    "no": 699,
+    "kasiguranin": "hatiën",
+    "english": "split",
+    "tagalog": "biyak/biyakin",
+    "notes": "into halves",
+    "alternates": []
+  },
+  {
+    "no": 703,
+    "kasiguranin": "koskos",
+    "english": "rub",
+    "tagalog": "kuskus",
+    "notes": "as one's own skin",
+    "alternates": []
+  },
+  {
+    "no": 705,
+    "kasiguranin": "bëtten",
+    "english": "hang up",
+    "tagalog": "bitin, sabit",
+    "notes": "s on a hook",
+    "alternates": []
+  },
+  {
+    "no": 707,
+    "kasiguranin": "nebulak",
+    "english": "pour",
+    "tagalog": "buhos/bumuhos",
+    "notes": "as a liquid",
+    "alternates": [
+      "tëpwag"
+    ]
+  },
+  {
+    "no": 709,
+    "kasiguranin": "magugas",
+    "english": "wash",
+    "tagalog": "maghugas",
+    "notes": "if there are different words for washing dishes, clothes, face ect. note them",
+    "alternates": []
+  },
+  {
+    "no": 713,
+    "kasiguranin": "lagari",
+    "english": "saw",
+    "tagalog": "lagare",
+    "notes": "the tool",
+    "alternates": []
+  },
+  {
+    "no": 714,
+    "kasiguranin": "pëkkët",
+    "english": "stick to, adhere",
+    "tagalog": "kapit, dilit",
+    "notes": "",
+    "alternates": [
+      "madëkkët"
+    ]
+  },
+  {
+    "no": 723,
+    "kasiguranin": "sumole",
+    "english": "return",
+    "tagalog": "ikot",
+    "notes": "to go back",
+    "alternates": []
+  },
+  {
+    "no": 724,
+    "kasiguranin": "ikut",
+    "english": "turn",
+    "tagalog": "liko'",
+    "notes": "to turn at a corner",
+    "alternates": []
+  },
+  {
+    "no": 728,
+    "kasiguranin": "matëknag",
+    "english": "fall down",
+    "tagalog": "mahulog",
+    "notes": "from above",
+    "alternates": []
+  },
+  {
+    "no": 729,
+    "kasiguranin": "matëknag",
+    "english": "fall over",
+    "tagalog": "mahulog",
+    "notes": "e.g. a tree or a chair",
+    "alternates": []
+  },
+  {
+    "no": 732,
+    "kasiguranin": "batikal",
+    "english": "throw",
+    "tagalog": "bato, balibag",
+    "notes": "as a stone",
+    "alternates": []
+  },
+  {
+    "no": 739,
+    "kasiguranin": "yopyop",
+    "english": "blow",
+    "tagalog": "hihip",
+    "notes": "using one's mouth",
+    "alternates": []
+  },
+  {
+    "no": 751,
+    "kasiguranin": "karon",
+    "english": "come",
+    "tagalog": "punta",
+    "notes": "",
+    "alternates": [
+      "kadon"
+    ]
+  },
+  {
+    "no": 755,
+    "kasiguranin": "unod",
+    "english": "follow",
+    "tagalog": "sunud",
+    "notes": "as a trail",
+    "alternates": []
+  },
+  {
+    "no": 765,
+    "kasiguranin": "sakay",
+    "english": "ride",
+    "tagalog": "lulan",
+    "notes": "car",
+    "alternates": []
+  },
+  {
+    "no": 767,
+    "kasiguranin": "iagton",
+    "english": "move-to",
+    "tagalog": "ilipat (lipat), iurong (urong)",
+    "notes": "another location",
+    "alternates": []
+  },
+  {
+    "no": 769,
+    "kasiguranin": "iwag",
+    "english": "move",
+    "tagalog": "galaw",
+    "notes": "be in motion, not be still",
+    "alternates": []
+  },
+  {
+    "no": 774,
+    "kasiguranin": "bapor",
+    "english": "boat",
+    "tagalog": "barko, bapor, lantsa",
+    "notes": "larger than a canoe",
+    "alternates": []
+  },
+  {
+    "no": 777,
+    "kasiguranin": "bulean",
+    "english": "stern",
+    "tagalog": "hulihan ng sasakyan",
+    "notes": "back of boat",
+    "alternates": []
+  },
+  {
+    "no": 785,
+    "kasiguranin": "limaś",
+    "english": "bail water",
+    "tagalog": "limas",
+    "notes": "as from a canoe",
+    "alternates": []
+  },
+  {
+    "no": 787,
+    "kasiguranin": "angka",
+    "english": "own",
+    "tagalog": "magmay-ari",
+    "notes": "",
+    "alternates": [
+      "te ari"
+    ]
+  },
+  {
+    "no": 796,
+    "kasiguranin": "makwarta",
+    "english": "rich",
+    "tagalog": "mayaman",
+    "notes": "wealthy",
+    "alternates": []
+  },
+  {
+    "no": 806,
+    "kasiguranin": "mahal",
+    "english": "expensive",
+    "tagalog": "mahal, magastos",
+    "notes": "costs a lot of money",
+    "alternates": []
+  },
+  {
+    "no": 807,
+    "kasiguranin": "mura",
+    "english": "cheap",
+    "tagalog": "mura",
+    "notes": "costs little money",
+    "alternates": []
+  },
+  {
+    "no": 812,
+    "kasiguranin": "adëg",
+    "english": "behind",
+    "tagalog": "likod, likuran",
+    "notes": "position or place",
+    "alternates": []
+  },
+  {
+    "no": 817,
+    "kasiguranin": "dissëllad",
+    "english": "below",
+    "tagalog": "ilalim",
+    "notes": "make a sentence: the cat is underneath the table",
+    "alternates": []
+  },
+  {
+    "no": 826,
+    "kasiguranin": "itu",
+    "english": "this",
+    "tagalog": "ganiri, iri; ito",
+    "notes": "if there is more than one item, note both and make a note on the different meaning",
+    "alternates": []
+  },
+  {
+    "no": 827,
+    "kasiguranin": "iyun",
+    "english": "that",
+    "tagalog": "iyan; iyon",
+    "notes": "if there is more than one item, note both and make a note on the different meanings",
+    "alternates": []
+  },
+  {
+    "no": 840,
+    "kasiguranin": "pëllakën",
+    "english": "divide",
+    "tagalog": "hatiin",
+    "notes": "",
+    "alternates": [
+      "bëngngaën"
+    ]
+  },
+  {
+    "no": 841,
+    "kasiguranin": "bukas",
+    "english": "open",
+    "tagalog": "bukas/magbukas/buksan",
+    "notes": "as a package",
+    "alternates": [
+      "bukasan"
+    ]
+  },
+  {
+    "no": 844,
+    "kasiguranin": "saradu",
+    "english": "shut, as a door",
+    "tagalog": "sara, tikom, pinid",
+    "notes": "",
+    "alternates": [
+      "ilantëb"
+    ]
+  },
+  {
+    "no": 848,
+    "kasiguranin": "madisono",
+    "english": "high",
+    "tagalog": "taas",
+    "notes": "as a mountain",
+    "alternates": []
+  },
+  {
+    "no": 862,
+    "kasiguranin": "tumuldo",
+    "english": "handspan",
+    "tagalog": "tumuro'",
+    "notes": "from thumb to middle finger",
+    "alternates": []
+  },
+  {
+    "no": 863,
+    "kasiguranin": "dangkal",
+    "english": "handspan",
+    "tagalog": "dangkal",
+    "notes": "from thumb to little finger",
+    "alternates": []
+  },
+  {
+    "no": 865,
+    "kasiguranin": "bëddit",
+    "english": "small",
+    "tagalog": "liit",
+    "notes": "as for objects",
+    "alternates": []
+  },
+  {
+    "no": 867,
+    "kasiguranin": "pungguk",
+    "english": "short",
+    "tagalog": "pandak",
+    "notes": "person",
+    "alternates": []
+  },
+  {
+    "no": 868,
+    "kasiguranin": "aperet",
+    "english": "short",
+    "tagalog": "ikli', igsi'",
+    "notes": "object",
+    "alternates": []
+  },
+  {
+    "no": 869,
+    "kasiguranin": "maguray",
+    "english": "short (time)",
+    "tagalog": "sandali'",
+    "notes": "of time",
+    "alternates": []
+  },
+  {
+    "no": 871,
+    "kasiguranin": "sikip",
+    "english": "narrow",
+    "tagalog": "kitid",
+    "notes": "as a road",
+    "alternates": []
+  },
+  {
+    "no": 878,
+    "kasiguranin": "olnat",
+    "english": "straight",
+    "tagalog": "tuwid",
+    "notes": "as a stick",
+    "alternates": []
+  },
+  {
+    "no": 880,
+    "kasiguranin": "kawit",
+    "english": "hook",
+    "tagalog": "sabit",
+    "notes": "from which to hang something",
+    "alternates": []
+  },
+  {
+    "no": 881,
+    "kasiguranin": "togbek",
+    "english": "barb",
+    "tagalog": "sima, kawit",
+    "notes": "as of a fish hook",
+    "alternates": []
+  },
+  {
+    "no": 926,
+    "kasiguranin": "sapuket",
+    "english": "a few",
+    "tagalog": "kakaunti",
+    "notes": "",
+    "alternates": [
+      "konti",
+      "sabëddit"
+    ]
+  },
+  {
+    "no": 934,
+    "kasiguranin": "anak",
+    "english": "young",
+    "tagalog": "bata'",
+    "notes": "as a person",
+    "alternates": []
+  },
+  {
+    "no": 935,
+    "kasiguranin": "antik",
+    "english": "old (thing)",
+    "tagalog": "luma'",
+    "notes": "worn (as a house)",
+    "alternates": []
+  },
+  {
+    "no": 936,
+    "kasiguranin": "bakkës",
+    "english": "old (person)",
+    "tagalog": "tanda'",
+    "notes": "elderly (people)",
+    "alternates": [
+      "lakay"
+    ]
+  },
+  {
+    "no": 975,
+    "kasiguranin": "langse",
+    "english": "smell",
+    "tagalog": "lansa",
+    "notes": "as of fish",
+    "alternates": []
+  },
+  {
+    "no": 976,
+    "kasiguranin": "anget",
+    "english": "smell",
+    "tagalog": "anghit",
+    "notes": "as of underarm, body odor",
+    "alternates": []
+  },
+  {
+    "no": 977,
+    "kasiguranin": "angso",
+    "english": "smell",
+    "tagalog": "panghi",
+    "notes": "as of urine",
+    "alternates": []
+  },
+  {
+    "no": 987,
+    "kasiguranin": "tënnog",
+    "english": "sound, noise",
+    "tagalog": "tunog, ingay",
+    "notes": "",
+    "alternates": [
+      "perëng"
+    ]
+  },
+  {
+    "no": 993,
+    "kasiguranin": "ileng sa didibba",
+    "english": "look down",
+    "tagalog": "mata/matahin",
+    "notes": "as from a higher position",
+    "alternates": []
+  },
+  {
+    "no": 995,
+    "kasiguranin": "usdong",
+    "english": "look out",
+    "tagalog": "dungaw, dungawin",
+    "notes": "as from a window",
+    "alternates": []
+  },
+  {
+    "no": 1016,
+    "kasiguranin": "kinis",
+    "english": "smooth",
+    "tagalog": "kinis",
+    "notes": "for surface of something",
+    "alternates": []
+  },
+  {
+    "no": 1017,
+    "kasiguranin": "lëmmen",
+    "english": "soft",
+    "tagalog": "lambot",
+    "notes": "of texture",
+    "alternates": []
+  },
+  {
+    "no": 1027,
+    "kasiguranin": "ikagkag",
+    "english": "dry in sun",
+    "tagalog": "tuyo', patuyuin",
+    "notes": "to dry something in the sun",
+    "alternates": []
+  },
+  {
+    "no": 1028,
+    "kasiguranin": "init",
+    "english": "hot",
+    "tagalog": "init",
+    "notes": "as water",
+    "alternates": []
+  },
+  {
+    "no": 1030,
+    "kasiguranin": "dëgnen",
+    "english": "cold",
+    "tagalog": "lamig",
+    "notes": "of wǝther",
+    "alternates": []
+  },
+  {
+    "no": 1032,
+    "kasiguranin": "rupet",
+    "english": "dirty",
+    "tagalog": "dumi",
+    "notes": "",
+    "alternates": [
+      "lëgga"
+    ]
+  },
+  {
+    "no": 1033,
+    "kasiguranin": "bëllet",
+    "english": "spirit",
+    "tagalog": "kaluluwa, multo",
+    "notes": "soul of a person",
+    "alternates": []
+  },
+  {
+    "no": 1060,
+    "kasiguranin": "tutuhanan",
+    "english": "correct",
+    "tagalog": "totoo",
+    "notes": "true, the correct answer to question from teacher",
+    "alternates": []
+  },
+  {
+    "no": 1061,
+    "kasiguranin": "katidug",
+    "english": "lie down",
+    "tagalog": "higa'",
+    "notes": "position as on a bed",
+    "alternates": [
+      "oled"
+    ]
+  },
+  {
+    "no": 1062,
+    "kasiguranin": "mabule",
+    "english": "lie",
+    "tagalog": "sinungaling, linlang",
+    "notes": "to tell untruth",
+    "alternates": []
+  },
+  {
+    "no": 1064,
+    "kasiguranin": "bait",
+    "english": "good",
+    "tagalog": "buti, bait",
+    "notes": "",
+    "alternates": [
+      "buti"
+    ]
+  },
+  {
+    "no": 1065,
+    "kasiguranin": "madukës ang ugali",
+    "english": "bad",
+    "tagalog": "sama'",
+    "notes": "character of person",
+    "alternates": []
+  },
+  {
+    "no": 1067,
+    "kasiguranin": "bait",
+    "english": "kind",
+    "tagalog": "bait, buti",
+    "notes": "as a person",
+    "alternates": []
+  },
+  {
+    "no": 1083,
+    "kasiguranin": "ahëy",
+    "english": "don't know, I do not know",
+    "tagalog": "ewan, hindi ko alam",
+    "notes": "",
+    "alternates": [
+      "di ko tukoy"
+    ]
+  },
+  {
+    "no": 1088,
+    "kasiguranin": "bobo",
+    "english": "stupid",
+    "tagalog": "bobo, mangmang, tanga, ungas, gago",
+    "notes": "",
+    "alternates": [
+      "mangmang",
+      "tanga"
+    ]
+  },
+  {
+    "no": 1101,
+    "kasiguranin": "tsaka",
+    "english": "also",
+    "tagalog": "din",
+    "notes": "",
+    "alternates": [
+      "pati"
+    ]
+  },
+  {
+    "no": 1103,
+    "kasiguranin": "dahil",
+    "english": "because",
+    "tagalog": "dahil",
+    "notes": "make a sentence: I went to the doctor because I felt sick.",
+    "alternates": []
+  },
+  {
+    "no": 1107,
+    "kasiguranin": "oo",
+    "english": "yes",
+    "tagalog": "oo",
+    "notes": "as in agreement or approval",
+    "alternates": []
+  },
+  {
+    "no": 1108,
+    "kasiguranin": "hinde",
+    "english": "not",
+    "tagalog": "hindi",
+    "notes": "with verbs",
+    "alternates": []
+  },
+  {
+    "no": 1116,
+    "kasiguranin": "sangan",
+    "english": "how much?",
+    "tagalog": "magkano?",
+    "notes": "price",
+    "alternates": []
+  },
+  {
+    "no": 1117,
+    "kasiguranin": "ganu karami",
+    "english": "how many?",
+    "tagalog": "ilan?",
+    "notes": "e.g. children",
+    "alternates": []
+  },
+  {
+    "no": 1129,
+    "kasiguranin": "dinulaw",
+    "english": "call out",
+    "tagalog": "sigaw",
+    "notes": "to call out loudly or to shout",
+    "alternates": []
+  },
+  {
+    "no": 1137,
+    "kasiguranin": "walang perëng",
+    "english": "silent",
+    "tagalog": "tahimik",
+    "notes": "not saying anything",
+    "alternates": []
+  },
+  {
+    "no": 1144,
+    "kasiguranin": "tëbbeg",
+    "english": "answer",
+    "tagalog": "sagot",
+    "notes": "",
+    "alternates": [
+      "tombeg"
+    ]
+  },
+  {
+    "no": 1165,
+    "kasiguranin": "utus",
+    "english": "order",
+    "tagalog": "utos",
+    "notes": "to command or to send on errand",
+    "alternates": []
+  },
+  {
+    "no": 1198,
+    "kasiguranin": "paluwassǝn",
+    "english": "expel",
+    "tagalog": "palabasin",
+    "notes": "to chase away",
+    "alternates": []
+  },
+  {
+    "no": 1199,
+    "kasiguranin": "hagaddën",
+    "english": "chase",
+    "tagalog": "habulin",
+    "notes": "to run after",
+    "alternates": []
+  },
+  {
+    "no": 1218,
+    "kasiguranin": "humiliya",
+    "english": "sermon",
+    "tagalog": "seremonyas",
+    "notes": "",
+    "alternates": [
+      "sermon]"
+    ]
+  },
+  {
+    "no": 1226,
+    "kasiguranin": "tubus",
+    "english": "redeem",
+    "tagalog": "tubos",
+    "notes": "as a pawned item",
+    "alternates": []
+  }
+]

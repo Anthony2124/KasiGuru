@@ -49,8 +49,29 @@ object KasiGuruMigrations {
         MIGRATION_23_24,
         MIGRATION_24_25,
         MIGRATION_25_26,
-        MIGRATION_26_27
+        MIGRATION_26_27,
+        MIGRATION_27_28
         )
+    }
+
+    // -- v27 -> v28 -----------------------------------------------------------
+    // vocabulary gains a part of speech and a two-language definition.
+    //
+    // partOfSpeech closes a loop that was open for several versions: the admin portal, the admin
+    // word table and the in-app contribution form all wrote it to Firestore, and the device had no
+    // column to receive it, so it was collected everywhere and readable nowhere.
+    //
+    // meaningEnglish/meaningTagalog are new content. Existing rows get empty strings and every
+    // consumer treats an empty meaning as "not written yet" rather than as an error, exactly as
+    // exampleSentence already behaves - so there is no backfill to do at migration time. The
+    // definitions ship in DatabaseSeeder for a fresh install and reach existing installs through
+    // the normal content sync once functions/backfill_meanings.js has run.
+    private val MIGRATION_27_28 = object : Migration(27, 28) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `partOfSpeech` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `meaningEnglish` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `meaningTagalog` TEXT NOT NULL DEFAULT ''")
+        }
     }
 
     // -- v26 -> v27 -----------------------------------------------------------

@@ -106,6 +106,35 @@ fun WordDetailBottomSheet(
                 }
             }
 
+            // What the word means, as opposed to what it translates to. Absent entirely when no
+            // definition has been written for this entry yet.
+            if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Meaning",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = PlayPurpleStart,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.2).sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                if (vocab.meaningEnglish.isNotEmpty()) {
+                    Text(
+                        text = vocab.meaningEnglish,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = CoastInk
+                    )
+                }
+                if (vocab.meaningTagalog.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = vocab.meaningTagalog,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = CoastMuted
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
             Spacer(modifier = Modifier.height(16.dp))
@@ -149,6 +178,21 @@ fun WordDetailBottomSheet(
                     style = MaterialTheme.typography.bodySmall,
                     color = CoastMuted
                 )
+
+                if (vocab.exampleSentence2.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "\"${vocab.exampleSentence2}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = CoastInk
+                    )
+                    Text(
+                        text = vocab.exampleTranslation2,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = CoastMuted
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

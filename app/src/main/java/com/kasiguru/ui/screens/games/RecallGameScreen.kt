@@ -21,6 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameHintButton
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.RecallAnswerField
@@ -142,6 +145,17 @@ fun RecallGameScreen(
                         onValueChange = viewModel::updateTypedAnswer,
                         onSubmit = viewModel::submit
                     )
+
+                    // Safe in both languages here: the answer is the Kasiguranin headword, which
+                    // neither definition contains.
+                    if (!uiState.hasAnswered) {
+                        Spacer(Modifier.height(Space.xs))
+                        GameHintButton(
+                            hint = hintFor(word, HintLanguages.Both),
+                            revealed = uiState.hintRevealed,
+                            onReveal = { viewModel.revealHint() }
+                        )
+                    }
                 }
 
                 if (uiState.hasAnswered && word != null) {

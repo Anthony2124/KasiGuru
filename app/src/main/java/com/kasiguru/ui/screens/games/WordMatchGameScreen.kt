@@ -15,7 +15,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameHintButton
 import com.kasiguru.ui.components.GameOptionRow
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
 import com.kasiguru.ui.components.GameOptionState
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
@@ -120,6 +123,17 @@ fun WordMatchGameScreen(
                             fontSize = 32.sp
                         )
                     }
+                }
+
+                // English only: this game's answer options are the Tagalog glosses, so the Tagalog
+                // definition would hand over the round.
+                if (!hasAnswered) {
+                    GameHintButton(
+                        hint = hintFor(uiState.currentWord, HintLanguages.EnglishOnly),
+                        revealed = uiState.hintRevealed,
+                        onReveal = { viewModel.revealHint() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.kasiguru.data.local.ContentTopUp
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.KasiGuruMigrations
@@ -68,6 +69,22 @@ object DatabaseModule {
                         if (userProgressDaoProvider.get().getUserProgressDirect() == null) {
                             userProgressDaoProvider.get().insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+
+            /**
+             * onCreate above only ever runs for a database that did not exist. An upgrade needs a
+             * separate path, or a learner who already had the app keeps whatever corpus they
+             * installed with -- see [ContentTopUp].
+             */
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                    try {
+                        ContentTopUp.run(vocabularyDaoProvider.get())
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

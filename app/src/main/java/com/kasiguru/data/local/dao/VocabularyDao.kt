@@ -19,11 +19,51 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE id = :id")
     suspend fun getVocabularyById(id: Int): VocabularyEntity?
 
+    /**
+     * One entry for a headword. Kasiguranin has homonyms -- `baga` is lungs, swollen, and ember --
+     * so for those this returns an arbitrary sense. Callers that need a specific one must select on
+     * the gloss too.
+     */
     @Query("SELECT * FROM vocabulary WHERE LOWER(kasiguranin) = LOWER(:word) LIMIT 1")
     suspend fun getVocabularyByWord(word: String): VocabularyEntity?
 
-    @Query("DELETE FROM vocabulary WHERE id NOT IN (SELECT MIN(id) FROM vocabulary GROUP BY LOWER(kasiguranin))")
+    /**
+     * The one row for a given *sense* -- headword plus English gloss.
+     *
+     * Use this wherever an incoming record is being matched to an existing one. Matching on the
+     * headword alone folds `baga` (lungs) onto `baga` (ember).
+     */
+    @Query(
+        "SELECT * FROM vocabulary WHERE LOWER(kasiguranin) = LOWER(:word) " +
+            "AND LOWER(english) = LOWER(:english) LIMIT 1"
+    )
+    suspend fun getVocabularyBySense(word: String, english: String): VocabularyEntity?
+
+    /**
+     * Collapses rows that repeat the *same sense* of a word, left behind by earlier imports.
+     *
+     * Grouped by headword *and* gloss, not by headword alone. Keyed on the headword only, this
+     * deleted fourteen legitimate polysemous entries after every content sync -- `lima` (hand) and
+     * `lima` (five), `duun` (leaf) and `duun` (over there), all three senses of `baga` -- taking the
+     * learner's review history for the deleted sense with them, and shrinking the corpus from 394
+     * entries to 380 behind their back. Two rows are duplicates only when they say the same thing.
+     */
+    @Query(
+        "DELETE FROM vocabulary WHERE id NOT IN (" +
+            "SELECT MIN(id) FROM vocabulary GROUP BY LOWER(kasiguranin), LOWER(english))"
+    )
     suspend fun deleteDuplicateWords()
+
+    /**
+     * Removes specific rows by id.
+     *
+     * Used by the full reconcile to drop words that no longer exist upstream and are not in the
+     * shipped corpus either. Deliberately id-based rather than a predicate: the caller has already
+     * decided which rows are withdrawn, and encoding that judgement in SQL here would put the rule
+     * in two places.
+     */
+    @Query("DELETE FROM vocabulary WHERE id IN (:ids)")
+    suspend fun deleteWords(ids: List<Int>)
 
     @Query("SELECT * FROM vocabulary WHERE isLearned = 1 ORDER BY kasiguranin")
     fun getLearnedVocabulary(): Flow<List<VocabularyEntity>>

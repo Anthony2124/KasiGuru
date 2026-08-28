@@ -40,6 +40,9 @@ object VocabularyContentMerge {
             perfectiveForm = cloud.perfectiveForm.ifBlank { local.perfectiveForm },
             contemplativeForm = cloud.contemplativeForm.ifBlank { local.contemplativeForm },
             category = cloud.category.ifBlank { local.category },
+            partOfSpeech = cloud.partOfSpeech.ifBlank { local.partOfSpeech },
+            meaningEnglish = cloud.meaningEnglish.ifBlank { local.meaningEnglish },
+            meaningTagalog = cloud.meaningTagalog.ifBlank { local.meaningTagalog },
             audioFileName = cloud.audioFileName.ifBlank { local.audioFileName },
             exampleSentence = cloud.exampleSentence.ifBlank { local.exampleSentence },
             exampleTranslation = cloud.exampleTranslation.ifBlank { local.exampleTranslation },
@@ -49,7 +52,17 @@ object VocabularyContentMerge {
         )
     }
 
-    /** [cloud] with the learner's own history preserved, or the cloud row when this word is new. */
+    /**
+     * [cloud] with the learner's own history preserved, or the cloud row when this word is new.
+     *
+     * Fields the admin word form has no control for -- the root form, the audio file name and the
+     * two phonetic flags -- fall back to the local value rather than being overwritten. The portal
+     * cannot write those keys, so a document it saves simply omits them, and copying the cloud value
+     * unconditionally meant that *editing any word in the portal* erased its seeded root form and
+     * its audio reference on the next full reconcile: the Root row vanished from the detail screen
+     * and audio playback fell back to a slugified headword. A field nothing can author is a field
+     * nothing should be able to clear.
+     */
     fun merge(local: VocabularyEntity?, cloud: VocabularyEntity): VocabularyEntity {
         if (local == null) return cloud.copy(id = 0)
 
@@ -57,20 +70,29 @@ object VocabularyContentMerge {
             kasiguranin = cloud.kasiguranin,
             tagalog = cloud.tagalog,
             english = cloud.english,
-            rootForm = cloud.rootForm,
+            rootForm = cloud.rootForm.ifBlank { local.rootForm },
             neutralForm = cloud.neutralForm,
             imperfectiveForm = cloud.imperfectiveForm,
             perfectiveForm = cloud.perfectiveForm,
             contemplativeForm = cloud.contemplativeForm,
             category = cloud.category,
-            audioFileName = cloud.audioFileName,
+            partOfSpeech = cloud.partOfSpeech,
+            // Guarded rather than copied, because the seeder ships 394 definitions and Firestore
+            // carries none until backfill_meanings.js has run: an unguarded copy would wipe every
+            // definition off every device on the first reconcile after this version installs. The
+            // cost is that clearing a meaning in the portal does not propagate as a clear.
+            meaningEnglish = cloud.meaningEnglish.ifBlank { local.meaningEnglish },
+            meaningTagalog = cloud.meaningTagalog.ifBlank { local.meaningTagalog },
+            audioFileName = cloud.audioFileName.ifBlank { local.audioFileName },
             exampleSentence = cloud.exampleSentence,
             exampleTranslation = cloud.exampleTranslation,
             exampleSentence2 = cloud.exampleSentence2,
             exampleTranslation2 = cloud.exampleTranslation2,
-            phoneticGlottal = cloud.phoneticGlottal,
-            phoneticVowelLength = cloud.phoneticVowelLength,
-            ipaNotation = cloud.ipaNotation
+            // No admin control writes these, so `false` from the cloud means "not carried", never
+            // "turned off". Give the portal a checkbox for them and this has to become a copy.
+            phoneticGlottal = cloud.phoneticGlottal || local.phoneticGlottal,
+            phoneticVowelLength = cloud.phoneticVowelLength || local.phoneticVowelLength,
+            ipaNotation = cloud.ipaNotation.ifBlank { local.ipaNotation }
         )
     }
 }

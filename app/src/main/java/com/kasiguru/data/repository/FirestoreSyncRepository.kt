@@ -40,11 +40,17 @@ class FirestoreSyncRepository @Inject constructor(
                 val category = (data["category"] ?: "General").toString().trim()
                 val ipaNotation = (data["ipaNotation"] ?: data["ipa"] ?: "").toString().trim()
                 val exampleSentence = (data["sampleSentence"] ?: data["sample_sentence"] ?: "").toString().trim()
+                val partOfSpeech = (data["partOfSpeech"] ?: data["part_of_speech"] ?: "").toString().trim()
+                val meaningEnglish = (data["meaningEnglish"] ?: "").toString().trim()
+                val meaningTagalog = (data["meaningTagalog"] ?: "").toString().trim()
 
-                // Async Room insert/upsert (Deduplicated by word text)
+                // Async Room upsert, matched on the sense rather than the headword: keyed on the
+                // headword alone this merged the cloud's `lima` (five) onto the device's `lima`
+                // (hand), losing one sense of every homonym in the corpus.
                 scope.launch {
                     try {
-                        val existing = vocabularyDao.getVocabularyByWord(word)
+                        val cleanEnglish = if (english == "nan") "" else english
+                        val existing = vocabularyDao.getVocabularyBySense(word, cleanEnglish)
                         // This listener reads six fields under legacy names and knows nothing about
                         // the aspect forms, the second example, the phonetic flags or the SM-2
                         // ladder. Building a whole entity from it therefore wrote a default over
@@ -53,16 +59,19 @@ class FirestoreSyncRepository @Inject constructor(
                         val fromDoc = VocabularyEntity(
                             kasiguranin = word,
                             tagalog = if (tagalog == "nan") "" else tagalog,
-                            english = if (english == "nan") "" else english,
+                            english = cleanEnglish,
                             rootForm = if (rootForm == "nan") word else rootForm,
                             category = if (category == "nan") "General" else category,
                             ipaNotation = if (ipaNotation == "nan") "" else ipaNotation,
-                            exampleSentence = if (exampleSentence == "nan") "" else exampleSentence
+                            exampleSentence = if (exampleSentence == "nan") "" else exampleSentence,
+                            partOfSpeech = if (partOfSpeech == "nan") "" else partOfSpeech,
+                            meaningEnglish = if (meaningEnglish == "nan") "" else meaningEnglish,
+                            meaningTagalog = if (meaningTagalog == "nan") "" else meaningTagalog
                         )
                         val vocabEntity = VocabularyContentMerge.mergeNonBlank(existing, fromDoc)
 
                         vocabularyDao.insert(vocabEntity)
-                        val fetchedWord = vocabularyDao.getVocabularyByWord(word)
+                        val fetchedWord = vocabularyDao.getVocabularyBySense(word, cleanEnglish)
                         val vocabId = fetchedWord?.id ?: vocabEntity.id
 
                         // Parse nested conjugations array if present

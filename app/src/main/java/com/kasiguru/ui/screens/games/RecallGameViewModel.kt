@@ -14,6 +14,7 @@ import com.kasiguru.util.RecallAnswerMatcher
 import com.kasiguru.util.RecallGrading
 import com.kasiguru.util.RecallMatch
 import com.kasiguru.util.RecallPrompt
+import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.toIsoString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,8 +117,15 @@ class RecallGameViewModel @Inject constructor(
             promptMeaning = promptFor(targetWord).orEmpty(),
             typedAnswer = "",
             match = null,
+            hintRevealed = false,
             totalQuestions = totalInitialQuestions
         )
+    }
+
+    /** The learner asked for the definition of the word they are trying to produce. */
+    fun revealHint() {
+        if (_uiState.value.hasAnswered) return
+        _uiState.value = _uiState.value.copy(hintRevealed = true)
     }
 
     /** Live text from the input field. Committing it is [submit]. */
@@ -135,7 +143,10 @@ class RecallGameViewModel @Inject constructor(
 
         val responseTimeMs = System.currentTimeMillis() - questionStartTimeMs
         val match = RecallAnswerMatcher.match(state.typedAnswer, targetWord.kasiguranin)
+        // A hinted answer never grades EASY: producing a word with its definition in front of you
+        // is weaker evidence of recall than producing it cold, and SM-2 should schedule it as such.
         val rating = RecallGrading.ratingFor(match, targetWord.kasiguranin, responseTimeMs)
+            .let { if (state.hintRevealed && it == ReviewRating.EASY) ReviewRating.GOOD else it }
 
         earnedXpTotal += RecallGrading.xpFor(match)
         val newScore = if (RecallGrading.isCorrect(match)) state.score + 1 else state.score
@@ -202,6 +213,7 @@ data class RecallGameUiState(
     /** The meaning shown as the question; the headword is what must be produced. */
     val promptMeaning: String = "",
     val typedAnswer: String = "",
+    val hintRevealed: Boolean = false,
     /** Null until the answer is committed, then how close it was. */
     val match: RecallMatch? = null,
     val score: Int = 0,

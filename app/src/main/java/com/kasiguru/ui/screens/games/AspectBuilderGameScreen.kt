@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameHintButton
 import com.kasiguru.ui.components.GameOptionRow
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
 import com.kasiguru.ui.components.GameOptionState
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
@@ -127,6 +130,15 @@ fun AspectBuilderGameScreen(
                             color = Muted
                         )
                     }
+                }
+
+                if (!hasAnswered) {
+                    GameHintButton(
+                        hint = hintFor(uiState.questions.getOrNull(uiState.currentIndex)?.targetVocab, HintLanguages.Both),
+                        revealed = uiState.hintRevealed,
+                        onReveal = { viewModel.revealHint() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

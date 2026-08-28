@@ -37,6 +37,32 @@ data class VocabularyEntity(
     @ColumnInfo(defaultValue = "")
     val contemplativeForm: String = "",
     val category: String = "",
+    /**
+     * Noun, Verb, Adjective and so on, as chosen in the admin portal.
+     *
+     * Collected in three places long before it was stored in any of them: the admin add/edit forms,
+     * the admin word table, and the in-app contribution form all wrote it to Firestore, and nothing
+     * on the device had a column to receive it. A word's part of speech is the first thing a
+     * dictionary entry states, so it is worth the column.
+     */
+    @ColumnInfo(defaultValue = "")
+    val partOfSpeech: String = "",
+    /**
+     * A one-sentence English definition of the sense [english] names.
+     *
+     * The corpus glosses a word and stops: `apak` says "adze". A learner who does not already know
+     * what an adze is has learned nothing, and the six games can offer no hint beyond re-showing the
+     * translation they are asking about. These two fields say what the word *means*.
+     *
+     * They are editorial English/Tagalog prose written for this app from the existing translations
+     * -- see docs/DICTIONARY_MEANINGS.md. They assert nothing about Kasiguranin that the corpus does
+     * not already record.
+     */
+    @ColumnInfo(defaultValue = "")
+    val meaningEnglish: String = "",
+    /** The same definition in plain Filipino. See [meaningEnglish]. */
+    @ColumnInfo(defaultValue = "")
+    val meaningTagalog: String = "",
     @ColumnInfo(name = "audioResName", defaultValue = "")
     val audioFileName: String = "",
     @ColumnInfo(defaultValue = "")
@@ -46,8 +72,12 @@ data class VocabularyEntity(
     /**
      * A second example sentence, so a meaning is illustrated twice rather than once. Flat
      * columns rather than a related table: the requirement is fixed at exactly two, and every
-     * consumer (GameAnswerFeedback, the lesson player, the admin word-edit form) already reads
-     * exampleSentence/exampleTranslation as plain fields.
+     * consumer reads exampleSentence/exampleTranslation as plain fields.
+     *
+     * These shipped as write-only for several versions: the admin form wrote them, the sync parsed
+     * them, Room stored them, and no screen ever read them back, so a second sentence recorded in
+     * the portal never reached a learner. The word detail screen and the word bottom sheet render
+     * them now; the games and the lesson player still show only the first pair.
      */
     @ColumnInfo(defaultValue = "")
     val exampleSentence2: String = "",
