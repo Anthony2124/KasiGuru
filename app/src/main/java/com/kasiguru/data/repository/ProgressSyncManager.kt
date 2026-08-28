@@ -171,10 +171,16 @@ class ProgressSyncManager @Inject constructor(
         val local = userProgressDao.getUserProgressOnce()
         if (local == null) return
         val merged = if (remote != null) mergeProgress(local, remote) else local
-        if (merged != local) {
-            userProgressDao.insertOrUpdate(merged)
+        val authEmail = auth.currentUser?.email.orEmpty()
+        val authName = auth.currentUser?.displayName.orEmpty()
+        val updated = merged.copy(
+            email = if (merged.email.isBlank() && authEmail.isNotBlank()) authEmail else merged.email,
+            fullName = if (merged.fullName.isBlank() && authName.isNotBlank()) authName else merged.fullName
+        )
+        if (updated != local) {
+            userProgressDao.insertOrUpdate(updated)
         }
-        upload(uid, merged)
+        upload(uid, updated)
     }
 
     /** Watches local changes and pushes them (debounced, idempotent). */
@@ -198,20 +204,19 @@ class ProgressSyncManager @Inject constructor(
         }.onFailure { e ->
             // Reaching here means the document is NOT in the cloud, and nothing above this
             // notices. firestore.rules' isValidMainProgress() rejects the whole write when
-            // toMap() carries a key its hasOnly() list omits, so a field added on one side only
-            // turns every single sync into this one warning - and the next sign-in silently
-            // restores a document frozen at the moment the mismatch shipped. Kept honest by
-            // MainProgressRulesParityTest.
-            Log.w(TAG, "upload FAILED", e)
+            // any field is unlisted or exceeds its sanity bound (the schema is strict), so a
+            // schema mismatch that slips past the Kotlin models stops syncing permanently
+            // without a single exception escaping back to the UI.
+            Log.w(TAG, "upload FAILED (rule rejection?): check firestore.rules", e)
         }
     }
 
-    // ── Leaderboard (free-plan: client-published, rules-bounded) ────────────
+    // ── Leaderboard entry (Phase 5) ─────────────────────────────────────────
     //
-    // No Cloud Function is available on the Spark plan to aggregate rankings
-    // server-side, so the client publishes its own row directly. firestore.rules'
-    // isValidLeaderboardEntry() caps how much a single write can move totalXp,
-    // which blocks casual tampering (not a determined attacker calling the
+    // Published from here on every successful upload. The Firestore rule on
+    // leaderboard_public enforces the per-write +2000 XP cap so a compromised client
+    // cannot mint rank #1 in one shot (same bound isValidProgressDoc enforces on the
+    // progress document itself). anti-cheat still cannot prevent forging calls to the
     // Firestore API directly — that needs XP computed server-side, i.e. Blaze).
 
     private fun leaderboardDoc(uid: String) = firestore.collection("leaderboard_public").document(uid)
@@ -232,12 +237,20 @@ class ProgressSyncManager @Inject constructor(
             }
         val weeklyXp = (progress.totalXp - weekStartXp).coerceAtLeast(0)
 
-        val displayName = progress.fullName.ifBlank { progress.userName }.ifBlank { "Learner" }
+        val resolvedEmail = progress.email.ifBlank { auth.currentUser?.email.orEmpty() }
+        val displayName = progress.fullName.ifBlank { progress.userName }
+            .ifBlank { auth.currentUser?.displayName.orEmpty() }
+            .ifBlank { resolvedEmail.takeIf { it.isNotBlank() } }
+            .orEmpty()
+            .ifBlank { "Learner" }
         val isAnonymous = auth.currentUser?.isAnonymous == true
+        val creationTime = auth.currentUser?.metadata?.creationTimestamp ?: System.currentTimeMillis()
         val payload = mapOf(
             "displayName" to displayName.take(40),
-            "email" to (progress.email.takeIf { it.isNotBlank() } ?: auth.currentUser?.email.orEmpty()),
+            "email" to resolvedEmail,
             "isAnonymous" to isAnonymous,
+            "createdAt" to creationTime,
+            "registeredAt" to creationTime,
             "totalXp" to progress.totalXp,
             "level" to progress.level,
             "currentStreak" to progress.currentStreak,

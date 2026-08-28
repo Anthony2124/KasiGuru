@@ -369,7 +369,22 @@ class LearnViewModel @Inject constructor(
                 .map { it.uid }
                 .distinctUntilChanged()
                 .drop(1)
-                .collect { refreshPlan() }
+                .collect {
+                    // Immediately clear stale review/activity state so the UI shows a
+                    // clean slate while refreshPlan() re-derives from the database.
+                    // Without this, the old "review done" / wordsDue count stays visible
+                    // for the entire duration of the async refresh after a sign-out.
+                    _uiState.update {
+                        it.copy(
+                            wordsDue = 0,
+                            activities = emptyList(),
+                            skills = emptyList(),
+                            streakQuota = com.kasiguru.data.repository.DailyStreakQuota(),
+                            isLoading = true
+                        )
+                    }
+                    refreshPlan()
+                }
         }
     }
 

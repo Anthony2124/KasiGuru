@@ -33,6 +33,7 @@ import com.kasiguru.ui.theme.Ink
 @Composable
 fun WordMatchGameScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNextLevel: ((Int) -> Unit)? = null,
     viewModel: WordMatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -74,6 +75,9 @@ fun WordMatchGameScreen(
                 starsEarned = uiState.starsEarned,
                 reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
+                onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
+                    { onNavigateToNextLevel(uiState.nextLevel!!) }
+                } else null,
                 modifier = Modifier
             )
             return@GroundScaffold

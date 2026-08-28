@@ -38,7 +38,8 @@ data class SentenceOrderUiState(
     val isGameFinished: Boolean = false,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5,
-    val reviewItems: List<GameReviewItem> = emptyList()
+    val reviewItems: List<GameReviewItem> = emptyList(),
+    val nextLevel: Int? = null
 )
 
 @HiltViewModel
@@ -318,12 +319,17 @@ class SentenceOrderViewModel @Inject constructor(
                 userProgressRepository.addXp(currentState.score)
                 userProgressRepository.incrementGamesPlayed()
                 userProgressRepository.updateGameStats(currentState.score, totalQs)
+                val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("sentence_order", levelNumber + 1)?.isUnlocked == true)) {
+                    levelNumber + 1
+                } else null
+
                 _uiState.update {
                     it.copy(
                         isGameFinished = true,
                         starsEarned = starsEarned,
                         totalQuestions = totalQs,
-                        reviewItems = reviewItems.toList()
+                        reviewItems = reviewItems.toList(),
+                        nextLevel = nextLevel
                     )
                 }
             }

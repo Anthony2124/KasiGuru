@@ -38,7 +38,8 @@ fun GameOverView(
     starsEarned: Int,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
-    reviewItems: List<GameReviewItem> = emptyList()
+    reviewItems: List<GameReviewItem> = emptyList(),
+    onNextLevel: (() -> Unit)? = null
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -171,14 +172,41 @@ fun GameOverView(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                CoastPillButton(
-                    label = "Return to Games Hub",
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onFinish()
-                    },
-                    variant = PillVariant.Purple
-                )
+                if (onNextLevel != null) {
+                    CoastPillButton(
+                        label = "Next Level",
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onNextLevel()
+                        },
+                        variant = PillVariant.Purple
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    TextButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onFinish()
+                        }
+                    ) {
+                        Text(
+                            text = "Return to Games Hub",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = CoastMuted
+                        )
+                    }
+                } else {
+                    CoastPillButton(
+                        label = "Return to Games Hub",
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onFinish()
+                        },
+                        variant = PillVariant.Purple
+                    )
+                }
             }
         }
     }

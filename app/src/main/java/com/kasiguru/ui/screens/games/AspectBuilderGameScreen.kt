@@ -32,6 +32,7 @@ import com.kasiguru.ui.theme.Ink
 @Composable
 fun AspectBuilderGameScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNextLevel: ((Int) -> Unit)? = null,
     viewModel: AspectBuilderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -75,6 +76,9 @@ fun AspectBuilderGameScreen(
                 starsEarned = uiState.starsEarned,
                 reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
+                onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
+                    { onNavigateToNextLevel(uiState.nextLevel!!) }
+                } else null,
                 modifier = Modifier
             )
             return@GroundScaffold

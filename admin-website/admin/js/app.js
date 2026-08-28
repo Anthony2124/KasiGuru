@@ -2746,14 +2746,61 @@ function initUsersListener() {
   const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
     usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderUsersTable();
+    enrichUsersWithProgress();
   }, (error) => {
     console.error("Users listener error:", error);
     const tbody = document.getElementById('users-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
     }
   });
   unsubscribeFns.push(unsubUsers);
+}
+
+async function enrichUsersWithProgress() {
+  let hasUpdates = false;
+  const enriched = await Promise.all(usersList.map(async (u) => {
+    if (u.email && u.email.includes('@') && (u.registeredAt || u.createdAt)) {
+      return u;
+    }
+    try {
+      const pDoc = await getDoc(doc(db, "users", u.id, "progress", "main"));
+      if (pDoc.exists()) {
+        const pData = pDoc.data() || {};
+        const pEmail = (pData.email || '').trim();
+        const pDate = pData.registeredAt || pData.createdAt || pData.updatedAt || 0;
+        const pName = pData.fullName || pData.userName || '';
+        
+        let changed = false;
+        const updatedUser = { ...u };
+        
+        if (!updatedUser.email && pEmail) {
+          updatedUser.email = pEmail;
+          changed = true;
+        }
+        if (!updatedUser.registeredAt && !updatedUser.createdAt && pDate) {
+          updatedUser.registeredAt = pDate;
+          changed = true;
+        }
+        if ((!updatedUser.displayName || updatedUser.displayName === 'Learner' || updatedUser.displayName === 'Registered User') && pName) {
+          updatedUser.displayName = pName;
+          changed = true;
+        }
+        if (changed) {
+          hasUpdates = true;
+          return updatedUser;
+        }
+      }
+    } catch (e) {
+      // Ignore if user progress doc is not accessible
+    }
+    return u;
+  }));
+
+  if (hasUpdates) {
+    usersList = enriched;
+    renderUsersTable();
+  }
 }
 
 function renderUsersTable() {
@@ -2770,12 +2817,12 @@ function renderUsersTable() {
     return true;
   });
 
-  // Deduplicate accounts so each Google account is shown only ONCE (highest XP / email document kept)
+  // Deduplicate accounts so each user/email is shown only ONCE (highest XP / email document kept)
   const uniqueUserMap = new Map();
   for (const user of validUsers) {
-    const rawEmail = (user.email || '').trim().toLowerCase();
-    const rawName = (user.displayName || '').trim().toLowerCase();
-    const key = rawEmail || rawName;
+    const rawEmail = (user.email || (user.displayName && user.displayName.includes('@') ? user.displayName : '')).trim().toLowerCase();
+    const rawName = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
+    const key = rawEmail || rawName || user.id;
     if (!key) continue;
 
     if (!uniqueUserMap.has(key)) {
@@ -2797,7 +2844,7 @@ function renderUsersTable() {
   }
   
   if (registeredUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
     return;
   }
   
@@ -2805,21 +2852,56 @@ function renderUsersTable() {
     const xp = user.totalXp || 0;
     const streak = user.currentStreak || 0;
     
-    // Display Gmail account as the User Name
-    const gmailAccount = user.email || (user.displayName && user.displayName.includes('@') ? user.displayName : null);
-    const displayName = user.displayName && user.displayName !== gmailAccount ? user.displayName : '';
-    
-    const userLabel = gmailAccount 
-      ? `<div style="font-weight:700;">${escapeHtml(gmailAccount)}</div>${displayName ? `<div style="font-size:0.8rem; color:var(--muted);">${escapeHtml(displayName)}</div>` : ''}`
-      : `<div style="font-weight:700;">${escapeHtml(user.displayName || 'Registered User')}</div>`;
+    // Resolve email address
+    const resolvedEmail = (user.email && user.email.includes('@')) 
+      ? user.email.trim() 
+      : (user.displayName && user.displayName.includes('@')) 
+        ? user.displayName.trim() 
+        : '';
+        
+    // Resolve display name
+    let displayName = (user.displayName || user.fullName || user.userName || '').trim();
+    if (displayName.toLowerCase() === 'google account' || displayName.toLowerCase() === 'google' || displayName === resolvedEmail) {
+      displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
+    }
+    if (!displayName && resolvedEmail) {
+      displayName = resolvedEmail.split('@')[0];
+    }
+    if (!displayName) {
+      displayName = 'Registered User';
+    }
 
-    const emailDisplay = escapeHtml(user.email || gmailAccount || 'Google Account');
+    const userLabel = `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
+    const emailDisplay = resolvedEmail ? escapeHtml(resolvedEmail) : `<span style="color:var(--muted);">—</span>`;
+    
+    // Format registered/joined date
+    const dateValue = user.registeredAt || user.createdAt || user.joinedAt || user.dateJoined || user.timestamp || user.updatedAt;
+    const dateMs = toMillis(dateValue);
+    let registeredDate = '—';
+    if (dateMs > 0) {
+      registeredDate = new Date(dateMs).toLocaleDateString(undefined, { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    } else if (user.lastActiveDate) {
+      const parsed = Date.parse(user.lastActiveDate);
+      if (!Number.isNaN(parsed)) {
+        registeredDate = new Date(parsed).toLocaleDateString(undefined, { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        });
+      }
+    }
+
     const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
     
     return `
       <tr>
         <td>${userLabel}</td>
-        <td style="color:var(--muted); font-size:0.875rem;">${emailDisplay}</td>
+        <td style="color:var(--text); font-size:0.875rem;">${emailDisplay}</td>
+        <td style="color:var(--muted); font-size:0.875rem; white-space:nowrap;">${escapeHtml(registeredDate)}</td>
         <td><span class="badge badge-outline" style="border: 1px solid var(--border); color: var(--text); background: transparent;">${badge}</span></td>
         <td class="num">${xp.toLocaleString()} XP</td>
         <td class="num" style="color: var(--primary); font-weight: 700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>

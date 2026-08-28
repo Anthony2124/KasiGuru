@@ -283,37 +283,79 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 route = Screen.WordMatchGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                WordMatchGameScreen(onNavigateBack = { navController.popBackStack() })
+                WordMatchGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.WordMatchGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.WordMatchGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 route = Screen.ReverseMatchGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                ReverseMatchGameScreen(onNavigateBack = { navController.popBackStack() })
+                ReverseMatchGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.ReverseMatchGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.ReverseMatchGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 route = Screen.FillBlankGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                FillBlankGameScreen(onNavigateBack = { navController.popBackStack() })
+                FillBlankGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.FillBlankGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.FillBlankGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 route = Screen.RecallGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                RecallGameScreen(onNavigateBack = { navController.popBackStack() })
+                RecallGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.RecallGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.RecallGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 route = Screen.AspectBuilderGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                AspectBuilderGameScreen(onNavigateBack = { navController.popBackStack() })
+                AspectBuilderGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.AspectBuilderGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.AspectBuilderGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(
                 route = Screen.SentenceOrderGame.route,
                 arguments = listOf(navArgument("level") { type = NavType.IntType })
             ) {
-                SentenceOrderGameScreen(onNavigateBack = { navController.popBackStack() })
+                SentenceOrderGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.SentenceOrderGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.SentenceOrderGame.route) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             // Profile & Achievements

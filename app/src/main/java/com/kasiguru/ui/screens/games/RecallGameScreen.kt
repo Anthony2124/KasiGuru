@@ -53,6 +53,7 @@ import com.kasiguru.util.RecallMatch
 @Composable
 fun RecallGameScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNextLevel: ((Int) -> Unit)? = null,
     viewModel: RecallGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -94,6 +95,9 @@ fun RecallGameScreen(
                     starsEarned = uiState.starsEarned,
                     reviewItems = uiState.reviewItems,
                     onFinish = onNavigateBack,
+                    onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
+                        { onNavigateToNextLevel(uiState.nextLevel!!) }
+                    } else null,
                     modifier = Modifier
                 )
                 return@GroundScaffold

@@ -40,6 +40,7 @@ import com.kasiguru.ui.theme.Ink
 @Composable
 fun FillBlankGameScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNextLevel: ((Int) -> Unit)? = null,
     viewModel: FillBlankViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -81,6 +82,9 @@ fun FillBlankGameScreen(
                 starsEarned = uiState.starsEarned,
                 reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
+                onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
+                    { onNavigateToNextLevel(uiState.nextLevel!!) }
+                } else null,
                 modifier = Modifier
             )
             return@GroundScaffold

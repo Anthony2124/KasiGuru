@@ -150,7 +150,8 @@ service cloud.firestore {
       let isFirstPublish = resource == null;
       return d.keys().hasOnly([
         'displayName', 'totalXp', 'level', 'currentStreak', 'profileIconId',
-        'titleBadge', 'weeklyXp', 'weekStartXp', 'weekStartDate', 'updatedAt'
+        'titleBadge', 'weeklyXp', 'weekStartXp', 'weekStartDate', 'updatedAt',
+        'email', 'isAnonymous', 'createdAt', 'registeredAt'
       ])
         && d.displayName is string && d.displayName.size() <= 40
         && isSaneCounter(d.totalXp, maxXp())
@@ -162,6 +163,10 @@ service cloud.firestore {
         && isSaneCounter(d.weekStartXp, maxXp())
         && d.weekStartDate is string && d.weekStartDate.size() <= 20
         && d.updatedAt is int
+        && (!('email' in d) || d.email is string && d.email.size() <= 120)
+        && (!('isAnonymous' in d) || d.isAnonymous is bool)
+        && (!('createdAt' in d) || d.createdAt is int)
+        && (!('registeredAt' in d) || d.registeredAt is int || (d.registeredAt is string && d.registeredAt.size() <= 30))
         // Bounded, not exempt: deleting your own row and re-creating it used to reset
         // every cap below and mint rank #1 in two writes. See firstWriteMaxXp().
         && (!isFirstPublish || (d.totalXp <= firstWriteMaxXp() && d.weeklyXp <= firstWriteMaxXp()))
@@ -300,9 +305,10 @@ service cloud.firestore {
     }
 
     // Per-user cloud data (cross-device progress sync).
-    // Owner-only access; nothing else may read other users' documents.
+    // Owner-only access; admins can read for dashboard verification.
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId);
     }
 
     // A lightweight identity hint, not a secret: owner-only, exactly like users/{userId}. Never
@@ -316,7 +322,8 @@ service cloud.firestore {
     // cannot store absurd counters (which the leaderboard function reads) or an
     // unbounded blob. Deletes stay allowed so a user can clear their own data.
     match /users/{userId}/progress/{docId} {
-      allow read, delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidProgressDoc(docId);
     }
 

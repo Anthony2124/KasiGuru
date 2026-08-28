@@ -209,12 +209,17 @@ class RecallGameViewModel @Inject constructor(
                 userProgressRepository.checkPerfectGameAchievement()
             }
 
+            val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel(Constants.Games.RECALL, levelNumber + 1)?.isUnlocked == true)) {
+                levelNumber + 1
+            } else null
+
             _uiState.value = state.copy(
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,
                 totalQuestions = totalInitialQuestions,
-                reviewItems = reviewItems.toList()
+                reviewItems = reviewItems.toList(),
+                nextLevel = nextLevel
             )
         }
     }
@@ -236,7 +241,8 @@ data class RecallGameUiState(
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5,
-    val reviewItems: List<GameReviewItem> = emptyList()
+    val reviewItems: List<GameReviewItem> = emptyList(),
+    val nextLevel: Int? = null
 ) {
     val hasAnswered: Boolean get() = match != null
 }

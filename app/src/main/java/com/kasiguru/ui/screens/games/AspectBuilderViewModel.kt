@@ -46,7 +46,8 @@ data class AspectBuilderUiState(
     val isLoading: Boolean = true,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5,
-    val reviewItems: List<GameReviewItem> = emptyList()
+    val reviewItems: List<GameReviewItem> = emptyList(),
+    val nextLevel: Int? = null
 )
 
 @HiltViewModel
@@ -232,13 +233,18 @@ class AspectBuilderViewModel @Inject constructor(
                     userProgressRepository.checkPerfectGameAchievement()
                 }
 
+                val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("aspect_builder", levelNumber + 1)?.isUnlocked == true)) {
+                    levelNumber + 1
+                } else null
+
                 _uiState.update {
                     it.copy(
                         isGameOver = true,
                         xpEarned = finalXp,
                         starsEarned = starsEarned,
                         totalQuestions = totalInitialQuestions,
-                        reviewItems = reviewItems.toList()
+                        reviewItems = reviewItems.toList(),
+                        nextLevel = nextLevel
                     )
                 }
             }

@@ -33,6 +33,7 @@ import com.kasiguru.ui.theme.Ink
 @Composable
 fun SentenceOrderGameScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNextLevel: ((Int) -> Unit)? = null,
     viewModel: SentenceOrderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,6 +66,9 @@ fun SentenceOrderGameScreen(
                 starsEarned = uiState.starsEarned,
                 reviewItems = uiState.reviewItems,
                 onFinish = onNavigateBack,
+                onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
+                    { onNavigateToNextLevel(uiState.nextLevel!!) }
+                } else null,
                 modifier = Modifier
             )
             return@GroundScaffold
