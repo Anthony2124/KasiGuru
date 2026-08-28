@@ -28,6 +28,9 @@ class UserProgressRepository @Inject constructor(
     private val _levelUpEvents = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     val levelUpEvents: SharedFlow<Int> = _levelUpEvents.asSharedFlow()
 
+    private val _streakActivatedEvents = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val streakActivatedEvents: SharedFlow<Int> = _streakActivatedEvents.asSharedFlow()
+
     fun getUserProgress(): Flow<UserProgressEntity?> =
         userProgressDao.getUserProgress()
 
@@ -154,6 +157,7 @@ class UserProgressRepository @Inject constructor(
 
         userProgressDao.updateStreak(newStreak, today)
         checkStreakAchievements(newStreak)
+        _streakActivatedEvents.tryEmit(newStreak)
     }
 
     suspend fun updateUserName(name: String) =

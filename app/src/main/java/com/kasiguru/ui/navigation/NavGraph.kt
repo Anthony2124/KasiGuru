@@ -28,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.components.LevelUpDialog
+import com.kasiguru.ui.components.StreakCelebrationDialog
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
 import com.kasiguru.ui.screens.auth.AccountScreen
@@ -70,6 +71,12 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val pendingLevelUp by levelUpViewModel.pendingLevelUp.collectAsState()
     pendingLevelUp?.let { levelInfo ->
         LevelUpDialog(newLevelInfo = levelInfo, onDismiss = levelUpViewModel::dismiss)
+    }
+
+    val streakCelebrationViewModel: StreakCelebrationViewModel = hiltViewModel()
+    val pendingStreakActivation by streakCelebrationViewModel.pendingStreakActivation.collectAsState()
+    pendingStreakActivation?.let { streakDays ->
+        StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
     }
 
     Box(
