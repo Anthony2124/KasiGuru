@@ -4,6 +4,14 @@ import androidx.room.*
 import com.kasiguru.data.local.entity.VocabularyEntity
 import kotlinx.coroutines.flow.Flow
 
+/** The four columns a duplicate check needs. See [VocabularyDao.getAllHeadwords]. */
+data class VocabularyHeadword(
+    val kasiguranin: String,
+    val tagalog: String,
+    val english: String,
+    val category: String
+)
+
 @Dao
 interface VocabularyDao {
 
@@ -12,6 +20,20 @@ interface VocabularyDao {
 
     @Query("SELECT * FROM vocabulary")
     suspend fun getAllVocabularyOnce(): List<VocabularyEntity>
+
+    /**
+     * Headword, glosses and category for every entry — nothing else.
+     *
+     * Backs the duplicate check on the contribution form, which compares a typed word against the
+     * whole corpus on every keystroke. That comparison cannot be expressed in SQL: it has to fold
+     * the three spellings of the schwa, stress accents and hyphenation before anything matches (see
+     * [com.kasiguru.domain.contribute.DuplicateWordCheck]), so the corpus is read once and matched
+     * in memory. A projection rather than [getAllVocabularyOnce] because pulling the SM-2 schedule,
+     * aspect forms and meanings of twelve hundred rows to compare four columns is waste the form
+     * pays for on open.
+     */
+    @Query("SELECT kasiguranin, tagalog, english, category FROM vocabulary ORDER BY kasiguranin")
+    suspend fun getAllHeadwords(): List<VocabularyHeadword>
 
     @Query("SELECT * FROM vocabulary WHERE category = :category ORDER BY kasiguranin")
     fun getVocabularyByCategory(category: String): Flow<List<VocabularyEntity>>

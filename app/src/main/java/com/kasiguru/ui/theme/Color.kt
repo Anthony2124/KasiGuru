@@ -50,6 +50,8 @@ private object Light {
 
     val GreenTint = Color(0xFFE3F5E9)
     val RedTint   = Color(0xFFFDEAEC)
+    val Amber     = Color(0xFF8A5A00)
+    val AmberTint = Color(0xFFFFF1D6)
 
     val NodeLocked    = Color(0xFFDCD8EE)
     val NodeLockedInk = Color(0xFF8A86A6)
@@ -80,6 +82,8 @@ private object Dark {
 
     val GreenTint = Color(0xFF1B3324)
     val RedTint   = Color(0xFF3A1E20)
+    val Amber     = Color(0xFFF5C86A)
+    val AmberTint = Color(0xFF3A2E12)
 
     val NodeLocked    = Color(0xFF332E4D)
     val NodeLockedInk = Color(0xFF8983A8)
@@ -157,6 +161,24 @@ val GreenTint: Color @Composable get() = if (LocalDarkMode.current) Dark.GreenTi
 val Red       = Color(0xFFDC2626)  // white 4.83
 val RedDeep   = Color(0xFFA81B1B)
 val RedTint: Color @Composable get() = if (LocalDarkMode.current) Dark.RedTint else Light.RedTint
+
+/**
+ * Caution — a third feedback level between [Green] and [Red].
+ *
+ * Green says done and red says wrong, and between them the palette had nothing for "this is
+ * probably not what you meant, but it is your call". The duplicate-word notice on the contribution
+ * form is exactly that: a contributor adding a word the dictionary already carries is usually
+ * repeating an entry, but Kasiguranin has genuine homonyms — `baga` is lungs, swollen, and ember —
+ * so the form must be able to caution without refusing. Painting that in [Red] would read as a
+ * rejection of a submission the app actually wants.
+ *
+ * Unlike [Gold], which is a fixed reward fill carrying [RewardInk], this is ordinary themed ink:
+ * a deep ochre on light, a warm sand on dark. Measured on [AmberTint] it is 5.31 (light) and 8.45
+ * (dark); on [Surface], 5.93 and 10.6.
+ */
+val Amber: Color @Composable get() = if (LocalDarkMode.current) Dark.Amber else Light.Amber
+/** Soft fill behind an [Amber] caution notice. */
+val AmberTint: Color @Composable get() = if (LocalDarkMode.current) Dark.AmberTint else Light.AmberTint
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lesson-path node states

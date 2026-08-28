@@ -24,6 +24,8 @@ import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.domain.contribute.DuplicateLevel
+import com.kasiguru.domain.contribute.DuplicateMatch
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -58,6 +60,36 @@ fun SubmitWordScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep editing") }
+            }
+        )
+    }
+
+    if (uiState.showDuplicateConfirm) {
+        val alreadyRecorded = uiState.duplicateMatches
+            .any { it.level == DuplicateLevel.SameSense }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissDuplicateConfirm() },
+            title = { Text(if (alreadyRecorded) "This entry already exists" else "This word already exists") },
+            text = {
+                Text(
+                    if (alreadyRecorded) {
+                        "KasiGuru already carries this word with this meaning. Submitting it again " +
+                            "gives the reviewers a duplicate to reject. Check the entry shown on the " +
+                            "form first."
+                    } else {
+                        "KasiGuru already carries this word with a different meaning. If you are " +
+                            "recording a separate sense of it, please continue — that is a word the " +
+                            "dictionary is missing."
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.submitWord(confirmedDuplicate = true) }) {
+                    Text("Submit anyway", color = Amber)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissDuplicateConfirm() }) { Text("Go back") }
             }
         )
     }
@@ -222,6 +254,11 @@ fun SubmitWordScreen(
                         color = Muted,
                         lineHeight = 15.sp
                     )
+
+                    if (uiState.duplicateMatches.isNotEmpty()) {
+                        Spacer(Modifier.height(Space.sm))
+                        DuplicateNotice(matches = uiState.duplicateMatches)
+                    }
                 }
 
                 // Section 2: Category & Usage Details
@@ -433,3 +470,107 @@ private fun submitFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Violet,
     unfocusedBorderColor = SurfaceSunken
 )
+
+/**
+ * Warns that the dictionary may already carry the word being contributed.
+ *
+ * Sits inside the Core Translations card rather than between the fields so that it cannot shove
+ * the Tagalog and English inputs down the screen mid-sentence, and in [Amber] rather than [Red]
+ * because it is not an error: the contributor may well be recording a homonym, and the form is
+ * built to let them.
+ *
+ * Shows the matching entries themselves rather than just a count. "This word already exists" tells
+ * a contributor nothing they can act on — seeing that the recorded sense of `baga` is *ember* while
+ * theirs is *lungs* is what lets them decide in a glance whether to carry on.
+ */
+@Composable
+private fun DuplicateNotice(matches: List<DuplicateMatch>) {
+    val exact = matches.filter { it.level != DuplicateLevel.SimilarSpelling }
+    val similar = matches.filter { it.level == DuplicateLevel.SimilarSpelling }
+    val sameSense = matches.any { it.level == DuplicateLevel.SameSense }
+
+    val heading = when {
+        sameSense -> "This entry is already in the dictionary"
+        exact.isNotEmpty() -> "This word is already in the dictionary"
+        else -> "Similar words are already in the dictionary"
+    }
+    val guidance = when {
+        sameSense -> "KasiGuru already records this word with this meaning, so this would be a duplicate."
+        exact.isNotEmpty() -> "If you are recording a different meaning of the same word, please carry on — that is an entry KasiGuru is missing."
+        else -> "Only the spelling is close. Carry on if yours is a different word."
+    }
+
+    Surface(color = AmberTint, shape = Shapes.tile, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Space.sm)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Space.xs)
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.InfoCircle),
+                    contentDescription = null,
+                    tint = Amber,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = heading,
+                    color = Amber,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    lineHeight = 17.sp
+                )
+            }
+
+            exact.forEach { match ->
+                Spacer(Modifier.height(Space.xs))
+                ExistingEntryRow(match)
+            }
+
+            if (similar.isNotEmpty()) {
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = if (exact.isEmpty()) "CLOSE SPELLINGS" else "ALSO CLOSE IN SPELLING",
+                    color = Amber,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
+                )
+                similar.forEach { match ->
+                    Spacer(Modifier.height(Space.xs))
+                    ExistingEntryRow(match)
+                }
+            }
+
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                text = guidance,
+                color = Muted,
+                fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
+        }
+    }
+}
+
+/** One existing dictionary entry: the headword, what it means, and where it is filed. */
+@Composable
+private fun ExistingEntryRow(match: DuplicateMatch) {
+    val entry = match.entry
+    // Both glosses, because a contributor who wrote only Tagalog cannot judge an English-only line.
+    val meaning = listOf(entry.english, entry.tagalog).filter { it.isNotBlank() }.joinToString(" · ")
+    Surface(color = Surface, shape = Shapes.tile, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(horizontal = Space.sm, vertical = Space.xs)) {
+            Text(
+                text = entry.kasiguranin,
+                color = Ink,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 13.sp
+            )
+            if (meaning.isNotBlank()) {
+                Text(text = meaning, color = Ink, fontSize = 12.sp, lineHeight = 16.sp)
+            }
+            if (entry.category.isNotBlank()) {
+                Text(text = entry.category, color = Muted, fontSize = 10.sp)
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 package com.kasiguru.data.repository
 
 import com.kasiguru.data.local.dao.VocabularyDao
+import com.kasiguru.data.local.dao.VocabularyHeadword
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.domain.lesson.DistractorSelector
 import com.kasiguru.util.AnswerLabel
@@ -25,6 +26,13 @@ class VocabularyRepository @Inject constructor(
     /** One-shot read of the whole corpus, for callers that must not hold a subscription. */
     suspend fun getAllVocabularyOnce(): List<VocabularyEntity> =
         vocabularyDao.getAllVocabularyOnce()
+
+    /**
+     * Every headword with its glosses and category, for the contribution form's duplicate check.
+     * See [VocabularyDao.getAllHeadwords].
+     */
+    suspend fun getAllHeadwords(): List<VocabularyHeadword> =
+        vocabularyDao.getAllHeadwords()
 
     fun getVocabularyByCategory(category: String): Flow<List<VocabularyEntity>> =
         vocabularyDao.getVocabularyByCategory(category)
