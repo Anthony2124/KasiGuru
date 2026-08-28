@@ -170,7 +170,10 @@ class AuthRepository @Inject constructor(
         val user = auth.currentUser ?: throw IllegalStateException("Not signed in.")
         val uid = user.uid
         val progress = firestore.collection("users").document(uid).collection("progress")
-        for (docId in listOf("main", "achievements", "gameLevels", "wordStates")) {
+        // Taken from the shared list rather than spelled out here. Written out, this loop
+        // omitted `lessonProgress` — added to the sync manager long after this was written —
+        // so every deleted account left its lesson history behind in the cloud.
+        for (docId in ProgressDocuments.ALL) {
             progress.document(docId).delete().await()
         }
         firestore.collection("leaderboard_public").document(uid).delete().await()

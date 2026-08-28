@@ -65,16 +65,25 @@ service cloud.firestore {
     function isValidMainProgress() {
       let d = request.resource.data;
       let isFirstWrite = resource == null;
-      // Mirrors ProgressSyncManager.toMap() exactly (ProgressSyncManager.kt:466-495).
-      // `password` is deliberately absent there and must stay absent here. Adding a field
-      // to the entity means touching toMap, toEntity, mergeProgress AND this list — the
-      // same parity ProgressSyncFieldParityTest already guards on the Kotlin side.
+      // Mirrors ProgressSyncManager.toMap() exactly. `password` is deliberately absent
+      // there and must stay absent here. Adding a field to the entity means touching
+      // toMap, toEntity, mergeProgress AND this list — the same parity
+      // ProgressSyncFieldParityTest already guards on the Kotlin side.
+      //
+      // hasOnly() rejects the WHOLE document when it carries a key this list omits, and a
+      // rejected write is only a warning in the client log — so a field added to toMap()
+      // without being added here does not degrade sync, it silently stops the main progress
+      // document from ever being written again. That is exactly what happened to the three
+      // daily-quota fields below: streaks and daily requirements stopped reaching the cloud,
+      // and signing out (which clears local data) then back in restored a stale document.
+      // MainProgressRulesParityTest now fails the build on this mismatch.
       return d.keys().hasOnly([
         'id', 'userName', 'email', 'fullName', 'age', 'address', 'profileIconId',
         'totalXp', 'level', 'currentStreak', 'longestStreak', 'lastActiveDate',
         'wordsLearned', 'storiesCompleted', 'gamesPlayed', 'totalCorrectAnswers',
         'totalQuestionsAnswered', 'lessonsCompleted', 'isOnboardingCompleted',
         'dailyGoalXp', 'dailyXpEarned', 'dailyXpDate', 'titleBadge', 'submissionsMade',
+        'dailyReviewCompletedDate', 'dailyGamesDate', 'dailyGamesPlayedCount',
         'updatedAt'
       ])
         && isSaneCounter(d.totalXp, maxXp())
@@ -86,6 +95,14 @@ service cloud.firestore {
         && (!('fullName' in d) || d.fullName is string && d.fullName.size() <= 100)
         && (!('titleBadge' in d) || d.titleBadge is string && d.titleBadge.size() <= 100)
         && (!('lastActiveDate' in d) || d.lastActiveDate is string && d.lastActiveDate.size() <= 20)
+        // The daily streak quota: which ISO day the "review words" task was cleared on, and
+        // how many mini-game levels were finished on the day the counter belongs to. Bounded
+        // like every other counter rather than delta-capped — the count resets each day, so a
+        // day-over-day diff is meaningless, and an inflated value buys nothing beyond one
+        // day's streak tick that isValidMainProgress already caps at +1 per write.
+        && (!('dailyReviewCompletedDate' in d) || d.dailyReviewCompletedDate is string && d.dailyReviewCompletedDate.size() <= 20)
+        && (!('dailyGamesDate' in d) || d.dailyGamesDate is string && d.dailyGamesDate.size() <= 20)
+        && (!('dailyGamesPlayedCount' in d) || isSaneCounter(d.dailyGamesPlayedCount, 1000))
         && (!('updatedAt' in d) || d.updatedAt is int)
         // A first write is bounded rather than exempt — otherwise delete-then-create
         // resets every delta cap below. The other counters are already held by their

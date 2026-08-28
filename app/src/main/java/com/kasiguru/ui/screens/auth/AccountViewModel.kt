@@ -95,6 +95,9 @@ class AccountViewModel @Inject constructor(
     fun signOut() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBusy = true, error = null)
+            // Flushes the local state to the account first: the promise in the message below
+            // is only true if today's quota and review work actually reached the cloud before
+            // this wipes them.
             userDataResetManager.resetAllLocalUserData()
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(
@@ -126,7 +129,9 @@ class AccountViewModel @Inject constructor(
                 )
                 return@launch
             }
-            userDataResetManager.resetAllLocalUserData()
+            // No flush here: deleteAccount() has already removed the cloud documents, and
+            // re-uploading would resurrect the very data the user asked to be deleted.
+            userDataResetManager.resetAllLocalUserData(uploadPendingChanges = false)
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(isBusy = false, didDeleteAccount = true)
         }

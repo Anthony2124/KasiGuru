@@ -30,8 +30,22 @@ class UserDataResetManager @Inject constructor(
 
     /**
      * Completely resets all local user progress, daily goals/quota, and review states.
+     *
+     * @param uploadPendingChanges whether to push the local state to the signed-in account
+     *   first. True on sign-out, so nothing earned in the last few minutes is lost. False on
+     *   account deletion, where the cloud documents have already been removed and re-creating
+     *   them would leave the deleted account's data behind.
      */
-    suspend fun resetAllLocalUserData() = withContext(Dispatchers.IO) {
+    suspend fun resetAllLocalUserData(uploadPendingChanges: Boolean = true) = withContext(Dispatchers.IO) {
+        // 0. Everything below is destructive and the uploaders are debounced, so the last few
+        //    minutes of play exist only in Room right now. Push them, and wait, before wiping.
+        //    Without this, completing the day's review or the third mini-game and signing out
+        //    within the debounce window destroyed both, and the next sign-in restored the
+        //    quota and streak from before them.
+        if (uploadPendingChanges) {
+            progressSyncManager.get().flushToCloud()
+        }
+
         // 1. Tell SyncManager to cancel active uploads and clear cached sync hashes
         progressSyncManager.get().onUserSignedOut()
 

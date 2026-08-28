@@ -48,13 +48,28 @@ class ProgressSyncManager @Inject constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    // Both caches are keyed by uid, not by document alone. Keyed by document alone, the
+    // previous account's still-running sync could mark a payload as "already uploaded" and
+    // make the new account's identical payload be skipped entirely - the anonymous session
+    // that signOutToAnonymous() creates between a sign-out and the next sign-in did exactly
+    // that, so the account signed in afterwards never had its own document written.
     @Volatile
-    private var lastUploaded: String? = null
+    private var lastUploaded: Pair<String, String>? = null
 
     private val lastUploadedLearning = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     /** Uploader jobs for the signed-in uid; cancelled when the account changes. */
     private var uploadJobs: List<Job> = emptyList()
+
+    /**
+     * The initial download-and-merge for the signed-in uid.
+     *
+     * Tracked, and cancelled on an account change, because it outlives the listener callback
+     * that starts it: it is what assigns [uploadJobs], so a stale one belonging to the previous
+     * account would overwrite the new account's uploader list - keeping the old observers alive
+     * and leaving the new ones untracked and uncancellable.
+     */
+    private var sessionJob: Job? = null
 
     @Volatile
     private var activeUid: String? = null
@@ -66,11 +81,12 @@ class ProgressSyncManager @Inject constructor(
             if (uid == activeUid) return@addAuthStateListener
             // The account changed (sign-in, link, sign-out): stop uploading to the
             // previous uid before touching local data, so nothing leaks across accounts.
+            sessionJob?.cancel()
             uploadJobs.forEach { it.cancel() }
             activeUid = uid
             lastUploaded = null
             lastUploadedLearning.clear()
-            scope.launch {
+            sessionJob = scope.launch {
                 syncFromCloud(uid)
                 syncLearningStateFromCloud(uid)
                 uploadJobs = listOf(
@@ -88,11 +104,54 @@ class ProgressSyncManager @Inject constructor(
      * Explicitly cleans up sync state when the user signs out.
      */
     fun onUserSignedOut() {
+        sessionJob?.cancel()
+        sessionJob = null
         uploadJobs.forEach { it.cancel() }
         uploadJobs = emptyList()
         activeUid = null
         lastUploaded = null
         lastUploadedLearning.clear()
+    }
+
+    /**
+     * Pushes everything currently in Room to the signed-in account's documents and waits for
+     * it to land.
+     *
+     * Signing out wipes the local tables (see [UserDataResetManager]), and the observers that
+     * would otherwise have carried the last few minutes of play are debounced by [DEBOUNCE_MS].
+     * Anything done inside that window - finishing the third mini-game, clearing the day's
+     * review - was therefore destroyed locally without ever reaching the cloud, and signing
+     * back in restored the state from before it. Uploading synchronously here, before any local
+     * row is touched, closes that window.
+     *
+     * A no-op when nobody is signed in, which is the case on the account-deletion path: the
+     * cloud documents are already gone there and must not be recreated.
+     */
+    suspend fun flushToCloud() {
+        val uid = auth.currentUser?.uid ?: return
+        userProgressDao.getUserProgressOnce()?.let { upload(uid, it) }
+
+        uploadAchievements(
+            uid,
+            achievementDao.getAllAchievementsOnce()
+                .associate { it.id to AchievementState(it.isUnlocked, it.currentValue, it.unlockedDate) }
+        )
+        uploadGameLevels(
+            uid,
+            gameLevelDao.getAllLevelsOnce()
+                .associate { levelKey(it.gameType, it.levelNumber) to GameLevelState(it.starsEarned, it.isUnlocked) }
+        )
+        uploadLessonProgress(
+            uid,
+            lessonDao.getAllOnce().associate {
+                lessonKey(it.unitId, it.lessonIndex) to
+                    LessonState(it.isComplete, it.bestAccuracy, it.timesCompleted, it.lastCompletedAt)
+            }
+        )
+        uploadWordStates(
+            uid,
+            vocabularyDao.getAllVocabularyOnce().associate { wordKey(it.kasiguranin) to it.toWordState() }
+        )
     }
 
     private fun progressDoc(uid: String) =
@@ -129,7 +188,7 @@ class ProgressSyncManager @Inject constructor(
     }
 
     suspend fun upload(uid: String, progress: UserProgressEntity) {
-        val key = progress.toString()
+        val key = uid to progress.toString()
         if (key == lastUploaded) return
         runCatching {
             progressDoc(uid).set(toMap(progress)).await()
@@ -137,6 +196,12 @@ class ProgressSyncManager @Inject constructor(
             lastUploaded = key
             publishLeaderboardEntry(uid, progress)
         }.onFailure { e ->
+            // Reaching here means the document is NOT in the cloud, and nothing above this
+            // notices. firestore.rules' isValidMainProgress() rejects the whole write when
+            // toMap() carries a key its hasOnly() list omits, so a field added on one side only
+            // turns every single sync into this one warning - and the next sign-in silently
+            // restores a document frozen at the moment the mismatch shipped. Kept honest by
+            // MainProgressRulesParityTest.
             Log.w(TAG, "upload FAILED", e)
         }
     }
@@ -405,12 +470,13 @@ class ProgressSyncManager @Inject constructor(
 
     private suspend fun uploadLearningDoc(uid: String, name: String, payload: Map<String, Any?>) {
         if (payload.isEmpty()) return
+        val cacheKey = uid + "/" + name
         val key = payload.toString()
-        if (lastUploadedLearning[name] == key) return
+        if (lastUploadedLearning[cacheKey] == key) return
         runCatching {
             learningDoc(uid, name).set(mapOf("entries" to payload, "updatedAt" to System.currentTimeMillis())).await()
         }.onSuccess {
-            lastUploadedLearning[name] = key
+            lastUploadedLearning[cacheKey] = key
         }.onFailure { e ->
             Log.w(TAG, "upload $name FAILED", e)
         }
@@ -438,10 +504,10 @@ class ProgressSyncManager @Inject constructor(
     private companion object {
         const val TAG = "ProgressSync"
         const val DEBOUNCE_MS = 5_000L
-        const val DOC_ACHIEVEMENTS = "achievements"
-        const val DOC_GAME_LEVELS = "gameLevels"
-        const val DOC_LESSON_PROGRESS = "lessonProgress"
-        const val DOC_WORD_STATES = "wordStates"
+        const val DOC_ACHIEVEMENTS = ProgressDocuments.ACHIEVEMENTS
+        const val DOC_GAME_LEVELS = ProgressDocuments.GAME_LEVELS
+        const val DOC_LESSON_PROGRESS = ProgressDocuments.LESSON_PROGRESS
+        const val DOC_WORD_STATES = ProgressDocuments.WORD_STATES
 
         fun levelKey(gameType: String, levelNumber: Int) = "${gameType}_$levelNumber"
 
@@ -643,3 +709,29 @@ private fun com.kasiguru.data.local.entity.VocabularyEntity.toWordState() = Word
     lapses = lapses,
     relearningStep = relearningStep
 )
+
+/**
+ * Every document under `users/{uid}/progress`.
+ *
+ * One list, because three places have to agree on it and none of them fails loudly when they
+ * drift: this manager (which writes them), [AuthRepository.deleteAccount] (which must remove
+ * every one of them, or deleting an account leaves data behind), and `firestore.rules`'
+ * isValidProgressDoc(). `lessonProgress` was added to the first and missed by the second, so
+ * a deleted account kept its lesson history in the cloud indefinitely — the same drift that
+ * silently broke main-progress sync when a field was added to toMap() but not to the rules.
+ *
+ * MainProgressRulesParityTest checks this list against the rules.
+ */
+internal object ProgressDocuments {
+    const val MAIN = "main"
+    const val ACHIEVEMENTS = "achievements"
+    const val GAME_LEVELS = "gameLevels"
+    const val LESSON_PROGRESS = "lessonProgress"
+    const val WORD_STATES = "wordStates"
+
+    /** The learning-state documents: everything except [MAIN], which has its own schema. */
+    val LEARNING = listOf(ACHIEVEMENTS, GAME_LEVELS, LESSON_PROGRESS, WORD_STATES)
+
+    /** Every progress document, for callers that must touch all of them (deletion). */
+    val ALL = listOf(MAIN) + LEARNING
+}
