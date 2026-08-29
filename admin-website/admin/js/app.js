@@ -32,6 +32,8 @@ function withUpdatedAt(payload) {
 let submissions = [];
 let literatureSubmissions = [];
 let literatureSubmissionsLoaded = false;
+let reports = [];
+let reportsLoaded = false;
 let announcements = [];
 let vocabulary = [];
 let releases = [];
@@ -202,6 +204,7 @@ window.adminSignOut = async function () {
 const TAB_ROUTES = {
   'tab-dashboard': 'overview',
   'tab-submissions': 'queue',
+  'tab-reports': 'reports',
   'tab-vocabulary': 'dictionary',
   'tab-stories': 'stories',
   'tab-releases': 'releases',
@@ -335,7 +338,40 @@ function initRealtimeListeners() {
     console.error("Firestore literature submission query error:", e);
   }
 
-  // 1c. Announcements Listener - the admin's own view of what AnnouncementRepository serves live.
+  // 1c. User Issue & Word Reports Listener (bugs, wrong words, photo evidence)
+  try {
+    const reportsQuery = query(collection(db, "issue_reports"), orderBy("submittedAt", "desc"));
+    const unsubReports = onSnapshot(reportsQuery, (snapshot) => {
+      reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      reportsLoaded = true;
+      renderReportsTable();
+      updateDashboardMetrics();
+    }, (error) => {
+      console.warn("Primary reports query failed, attempting plain fallback query:", error);
+      try {
+        const reportsFallback = query(collection(db, "issue_reports"));
+        const unsubFallback = onSnapshot(reportsFallback, (snapshot) => {
+          reports = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => (b.submittedAt || b.createdAt || 0) - (a.submittedAt || a.createdAt || 0));
+          reportsLoaded = true;
+          renderReportsTable();
+          updateDashboardMetrics();
+        }, (fallbackErr) => {
+          console.error("Reports fallback listener error:", fallbackErr);
+          renderReportsError("Unable to connect to live issue reports queue.");
+        });
+        unsubscribeFns.push(unsubFallback);
+      } catch (e) {
+        renderReportsError("Unable to connect to live issue reports queue.");
+      }
+    });
+    unsubscribeFns.push(unsubReports);
+  } catch (e) {
+    console.error("Firestore reports query error:", e);
+  }
+
+  // 1d. Announcements Listener - the admin's own view of what AnnouncementRepository serves live.
   try {
     const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
     const unsubAnn = onSnapshot(annQuery, (snapshot) => {
@@ -1589,6 +1625,12 @@ function updateDashboardMetrics() {
     navCount.textContent = pending.length;
     navCount.hidden = pending.length === 0;
   }
+  const pendingReports = reports.filter(r => (r.status || 'pending') === 'pending');
+  const navReportsCount = document.getElementById('nav-reports-count');
+  if (navReportsCount) {
+    navReportsCount.textContent = pendingReports.length;
+    navReportsCount.hidden = pendingReports.length === 0;
+  }
   const dot = document.getElementById('topbar-queue-dot');
   if (dot) {
     dot.textContent = pending.length > 99 ? '99+' : pending.length;
@@ -1931,6 +1973,165 @@ async function rejectSubmission(id) {
     await logAudit("submission.reject", { submissionId: id, word: sub ? sub.kasiguranin : "" });
   } catch (error) {
     console.error("Error rejecting submission:", error);
+  }
+}
+
+// ── User Issue & Word Reports ────────────────────────────────────────────────
+function renderReportsTable() {
+  const tbody = document.getElementById('reports-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (reports.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">
+          <iconsax-icon name="tick-circle" type="bulk" size="32" color="var(--status-approved)"></iconsax-icon>
+          <div style="margin-top:8px;">No issue reports submitted. All clear!</div>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  const reportsCountElem = document.getElementById('reports-result-count');
+  if (reportsCountElem) {
+    const pending = reports.filter(r => (r.status || 'pending') === 'pending').length;
+    reportsCountElem.textContent = pending === 0
+      ? `${reports.length} total, none pending`
+      : `${pending} pending of ${reports.length}`;
+  }
+
+  reports.forEach(rep => {
+    const tr = document.createElement('tr');
+    const status = rep.status || 'pending';
+    const statusBadgeClass = status === 'resolved' ? 'badge-approved' : (status === 'dismissed' ? 'badge-rejected' : 'badge-pending');
+    const dateFormatted = rep.submittedAt ? new Date(rep.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+    const hasPhoto = (rep.photoBase64 && rep.photoBase64.length > 50) || (rep.photoUrl && rep.photoUrl.length > 0);
+    const photoSrc = rep.photoBase64 || rep.photoUrl;
+
+    tr.innerHTML = `
+      <td data-label="Date" style="white-space:nowrap; font-size:0.85rem; color:var(--muted);">${dateFormatted}</td>
+      <td data-label="Category"><span class="badge badge-category">${escapeHtml(rep.category || 'Bug / Issue')}</span></td>
+      <td data-label="Title & Target">
+        <strong>${escapeHtml(rep.title || 'Report')}</strong>
+        ${rep.targetWord ? `<div style="font-size:0.85rem; color:var(--primary); font-weight:600; margin-top:2px;">Word: ${escapeHtml(rep.targetWord)}</div>` : ''}
+        ${rep.targetScreen ? `<div style="font-size:0.8rem; color:var(--muted);">Screen: ${escapeHtml(rep.targetScreen)}</div>` : ''}
+      </td>
+      <td data-label="Description" style="max-width:260px; font-size:0.88rem; line-height:1.4;">
+        ${escapeHtml(rep.description || '-')}
+      </td>
+      <td data-label="Evidence">
+        ${hasPhoto ? `
+          <div style="cursor:pointer; display:inline-block;" onclick="window.viewReportEvidence('${photoSrc}', '${escapeHtml(rep.title || 'Evidence')}')" title="Click to enlarge">
+            <img src="${photoSrc}" alt="Evidence Thumbnail" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm);" />
+            <div style="font-size:0.75rem; color:var(--primary); font-weight:600; text-align:center;">Enlarge</div>
+          </div>
+        ` : `<span style="color:var(--muted); font-size:0.82rem;">None</span>`}
+      </td>
+      <td data-label="Reporter & Device" style="font-size:0.82rem;">
+        <div><strong>${escapeHtml(rep.reporterName || 'Anonymous')}</strong></div>
+        ${rep.reporterEmail ? `<div style="color:var(--muted);">${escapeHtml(rep.reporterEmail)}</div>` : ''}
+        ${rep.deviceInfo || rep.appVersion ? `<div style="color:var(--muted); margin-top:4px; font-size:0.78rem;">v${escapeHtml(rep.appVersion || '')} • ${escapeHtml(rep.deviceInfo || '')}</div>` : ''}
+      </td>
+      <td data-label="Status"><span class="badge ${statusBadgeClass}">${status.toUpperCase()}</span></td>
+      <td data-label="Actions">
+        <div class="row-actions">
+          ${status === 'pending' ? `
+            <button class="btn btn-success btn-sm resolve-report-btn" data-id="${rep.id}"><iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Resolve</button>
+            <button class="btn btn-danger btn-sm dismiss-report-btn" data-id="${rep.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Dismiss</button>
+          ` : `
+            <button class="btn btn-outline btn-sm delete-report-btn" data-id="${rep.id}"><iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon></button>
+          `}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.resolve-report-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      resolveReport(btn.getAttribute('data-id'));
+    });
+  });
+  tbody.querySelectorAll('.dismiss-report-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      dismissReport(btn.getAttribute('data-id'));
+    });
+  });
+  tbody.querySelectorAll('.delete-report-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      deleteReport(btn.getAttribute('data-id'));
+    });
+  });
+
+  applyTableSemantics();
+}
+
+function renderReportsError(message) {
+  const tbody = document.getElementById('reports-tbody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
+  }
+}
+
+window.viewReportEvidence = function(imgSrc, title) {
+  const modalImg = document.getElementById('evidence-modal-img');
+  const modalTitle = document.getElementById('evidence-modal-title');
+  if (modalImg) modalImg.src = imgSrc;
+  if (modalTitle) modalTitle.textContent = title || "Photo Evidence";
+  const modal = document.getElementById('evidence-modal');
+  if (modal) modal.classList.add('active');
+};
+
+async function resolveReport(id) {
+  try {
+    await updateDoc(doc(db, "issue_reports", id), {
+      status: "resolved",
+      resolvedAt: Date.now()
+    });
+    const rep = reports.find(r => r.id === id);
+    await logAudit("report.resolve", { reportId: id, category: rep?.category, title: rep?.title });
+    notify("Report marked as resolved.", "success");
+  } catch (error) {
+    console.error("Error resolving report:", error);
+    notify("Failed to resolve report: " + error.message, "error");
+  }
+}
+
+async function dismissReport(id) {
+  try {
+    await updateDoc(doc(db, "issue_reports", id), {
+      status: "dismissed",
+      dismissedAt: Date.now()
+    });
+    const rep = reports.find(r => r.id === id);
+    await logAudit("report.dismiss", { reportId: id, category: rep?.category, title: rep?.title });
+    notify("Report dismissed.", "info");
+  } catch (error) {
+    console.error("Error dismissing report:", error);
+    notify("Failed to dismiss report: " + error.message, "error");
+  }
+}
+
+async function deleteReport(id) {
+  if (!(await confirmDialog({
+    title: 'Delete this report record?',
+    body: 'This will permanently remove the report and attached photo evidence from the database.',
+    confirmLabel: 'Delete', danger: true
+  }))) return;
+
+  try {
+    await deleteDoc(doc(db, "issue_reports", id));
+    await logAudit("report.delete", { reportId: id });
+    notify("Report deleted.", "info");
+  } catch (error) {
+    console.error("Error deleting report:", error);
+    notify("Failed to delete report: " + error.message, "error");
   }
 }
 

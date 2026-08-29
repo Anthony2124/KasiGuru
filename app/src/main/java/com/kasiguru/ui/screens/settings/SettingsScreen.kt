@@ -37,6 +37,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAccount: () -> Unit = {},
     onNavigateToProfiles: () -> Unit = {},
+    onNavigateToReport: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -445,6 +446,55 @@ fun SettingsScreen(
                             text = message,
                             style = MaterialTheme.typography.bodySmall,
                             color = Muted
+                        )
+                    }
+                }
+
+                // Support & Feedback Section
+                SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToReport) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(Space.sm),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = Shapes.chip,
+                                color = Red.copy(alpha = 0.12f),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.InfoCircle),
+                                        contentDescription = null,
+                                        tint = Red,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Report Bug or Wrong Word",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Ink
+                                )
+                                Text(
+                                    text = "Submit a glitch, wrong translation, or attach photo evidence",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Muted
+                                )
+                            }
+                        }
+                        Icon(
+                            painter = painterResource(id = Iconsax.ArrowRight),
+                            contentDescription = null,
+                            tint = Muted,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

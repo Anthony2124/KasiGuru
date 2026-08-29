@@ -23,7 +23,8 @@ import com.kasiguru.ui.theme.Iconsax
 fun WordDetailBottomSheet(
     vocab: VocabularyEntity,
     onDismissRequest: () -> Unit,
-    onPlayAudio: (String) -> Unit = {}
+    onPlayAudio: (String) -> Unit = {},
+    onReportWord: ((String) -> Unit)? = null
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -192,6 +193,39 @@ fun WordDetailBottomSheet(
                         style = MaterialTheme.typography.bodySmall,
                         color = CoastMuted
                     )
+                }
+            }
+
+            if (onReportWord != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = Faint.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    TextButton(
+                        onClick = {
+                            onDismissRequest()
+                            onReportWord(vocab.kasiguranin)
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.InfoCircle),
+                            contentDescription = null,
+                            tint = Muted,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Report an issue with this word",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Muted,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 

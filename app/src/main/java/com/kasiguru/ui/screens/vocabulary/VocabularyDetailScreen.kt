@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.vocabulary
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -43,6 +45,12 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.util.audio.AudioPlayerManager
 
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.painterResource
+import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Red
+
 /**
  * A single word, as its own pushed destination. Reached from `vocabulary/{wordId}` — the route a
  * backend push notification links into (functions/send_push.js) — as well as any other future
@@ -51,6 +59,7 @@ import com.kasiguru.util.audio.AudioPlayerManager
 @Composable
 fun VocabularyDetailScreen(
     onNavigateBack: () -> Unit,
+    onReportWord: ((String) -> Unit)? = null,
     viewModel: VocabularyDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -74,9 +83,13 @@ fun VocabularyDetailScreen(
                     Text("This word couldn't be found.", color = Muted, style = MaterialTheme.typography.bodyLarge)
                 }
                 else -> uiState.word?.let { vocab ->
-                    VocabularyDetailBody(vocab = vocab, onPlayAudio = {
-                        audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
-                    })
+                    VocabularyDetailBody(
+                        vocab = vocab,
+                        onPlayAudio = {
+                            audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
+                        },
+                        onReportWord = onReportWord
+                    )
                 }
             }
         }
@@ -84,7 +97,11 @@ fun VocabularyDetailScreen(
 }
 
 @Composable
-private fun VocabularyDetailBody(vocab: VocabularyEntity, onPlayAudio: () -> Unit) {
+private fun VocabularyDetailBody(
+    vocab: VocabularyEntity,
+    onPlayAudio: () -> Unit,
+    onReportWord: ((String) -> Unit)? = null
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -210,6 +227,36 @@ private fun VocabularyDetailBody(vocab: VocabularyEntity, onPlayAudio: () -> Uni
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted
                 )
+            }
+        }
+
+        if (onReportWord != null) {
+            Spacer(Modifier.height(Space.lg))
+            HorizontalDivider(color = Faint.copy(alpha = 0.5f))
+            Spacer(Modifier.height(Space.sm))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TextButton(
+                    onClick = { onReportWord(vocab.kasiguranin) },
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.InfoCircle),
+                        contentDescription = null,
+                        tint = Muted,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Report an issue with this word",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

@@ -61,6 +61,10 @@
           <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
             <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
           </button>
+          <button data-tab="tab-reports" onclick="window.switchTab('tab-reports')">
+            <iconsax-icon name="info-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Issue &amp; word reports
+            <span class="nav-count" id="nav-reports-count" hidden>0</span>
+          </button>
         </nav>
       </div>
 
@@ -304,6 +308,41 @@
             </thead>
             <tbody id="literature-submissions-tbody">
               <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading literature queue&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: User Bug & Wrong Word Reports with Photo Evidence -->
+    <section id="tab-reports" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Issue &amp; word reports</h1>
+          <p>Bugs, glitches, and incorrect words reported from the mobile app, with photo evidence and device diagnostics.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="reports-result-count"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Title &amp; Target</th>
+                <th>Description</th>
+                <th>Evidence</th>
+                <th>Reporter &amp; Device</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reports-tbody">
+              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading issue reports&hellip;</td></tr>
             </tbody>
           </table>
         </div>
@@ -963,6 +1002,22 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Image / Photo Evidence Lightbox -->
+  <div id="evidence-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:800px; text-align:center;">
+      <div class="modal-header">
+        <h2 id="evidence-modal-title">Photo Evidence</h2>
+        <button class="close-btn" onclick="closeModal('evidence-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div style="padding:16px 0; max-height:75vh; overflow-y:auto; display:flex; justify-content:center; align-items:center;">
+        <img id="evidence-modal-img" src="" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px; box-shadow:var(--shadow-md); object-fit:contain;" />
+      </div>
+      <div class="modal-actions" style="justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>
+      </div>
     </div>
   </div>
 

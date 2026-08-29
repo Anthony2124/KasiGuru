@@ -61,4 +61,17 @@ sealed class Screen(val route: String) {
     data object About : Screen("about")
     data object SubmitWord : Screen("submit_word")
     data object SubmitLiterature : Screen("submit_literature")
+    data object ReportIssue : Screen("report_issue?category={category}&word={word}&screenContext={screenContext}") {
+        fun createRoute(
+            category: String? = null,
+            word: String? = null,
+            screenContext: String? = null
+        ): String {
+            val params = mutableListOf<String>()
+            category?.let { params.add("category=${java.net.URLEncoder.encode(it, "UTF-8")}") }
+            word?.let { params.add("word=${java.net.URLEncoder.encode(it, "UTF-8")}") }
+            screenContext?.let { params.add("screenContext=${java.net.URLEncoder.encode(it, "UTF-8")}") }
+            return if (params.isEmpty()) "report_issue" else "report_issue?${params.joinToString("&")}"
+        }
+    }
 }

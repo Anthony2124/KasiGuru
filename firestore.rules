@@ -298,6 +298,39 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // User-submitted issue & bug reports (system glitches, wrong word corrections, with photo evidence).
+    function isValidIssueReport() {
+      let data = request.resource.data;
+      let allowedKeys = data.keys().hasOnly([
+        'id', 'category', 'title', 'description', 'targetWord', 'targetScreen',
+        'photoBase64', 'photoUrl', 'reporterName', 'reporterEmail', 'appVersion',
+        'deviceInfo', 'status', 'adminNotes', 'submittedAt', 'uid'
+      ]);
+      return allowedKeys
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 250
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 5000
+        && (!('targetWord' in data) || data.targetWord is string && data.targetWord.size() <= 150)
+        && (!('targetScreen' in data) || data.targetScreen is string && data.targetScreen.size() <= 100)
+        && (!('photoBase64' in data) || data.photoBase64 is string && data.photoBase64.size() <= 700000)
+        && (!('photoUrl' in data) || data.photoUrl is string && data.photoUrl.size() <= 2000)
+        && (!('reporterName' in data) || data.reporterName is string && data.reporterName.size() <= 100)
+        && (!('reporterEmail' in data) || data.reporterEmail is string && data.reporterEmail.size() <= 150)
+        && (!('appVersion' in data) || data.appVersion is string && data.appVersion.size() <= 100)
+        && (!('deviceInfo' in data) || data.deviceInfo is string && data.deviceInfo.size() <= 200)
+        && data.status == 'pending'
+        && (!('adminNotes' in data) || data.adminNotes is string && data.adminNotes.size() <= 2000)
+        && data.submittedAt is int
+        && data.uid is string && data.uid.size() <= 128
+        && (!('id' in data) || data.id == request.resource.id);
+    }
+
+    match /issue_reports/{docId} {
+      allow create: if isValidIssueReport();
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
     // Admin audit log: admins append and read; no update/delete (append-only).
     match /admin_audit_log/{docId} {
       allow create, read: if isAdmin();

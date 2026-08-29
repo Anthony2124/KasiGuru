@@ -45,6 +45,7 @@ import com.kasiguru.ui.screens.contribute.SubmitLiteratureScreen
 import com.kasiguru.ui.screens.contribute.SubmitWordScreen
 import com.kasiguru.ui.screens.profile.EditProfileScreen
 import com.kasiguru.ui.screens.profile.ProfileScreen
+import com.kasiguru.ui.screens.report.ReportIssueScreen
 import com.kasiguru.ui.screens.settings.SettingsScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
@@ -228,7 +229,16 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 arguments = listOf(navArgument("wordId") { type = NavType.IntType })
             ) {
                 VocabularyDetailScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onReportWord = { word ->
+                        navController.navigate(
+                            Screen.ReportIssue.createRoute(
+                                category = "Wrong Word / Translation",
+                                word = word,
+                                screenContext = "Vocabulary"
+                            )
+                        )
+                    }
                 )
             }
 
@@ -373,7 +383,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToAccount = { navController.navigate(Screen.Account.route) },
-                    onNavigateToProfiles = { navController.navigate(Screen.ProfileSelection.route) }
+                    onNavigateToProfiles = { navController.navigate(Screen.ProfileSelection.route) },
+                    onNavigateToReport = { navController.navigate(Screen.ReportIssue.createRoute()) }
                 )
             }
             composable(Screen.Account.route) {
@@ -401,6 +412,37 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
             composable(Screen.SubmitLiterature.route) {
                 SubmitLiteratureScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(
+                route = Screen.ReportIssue.route,
+                arguments = listOf(
+                    navArgument("category") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("word") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("screenContext") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category")
+                val word = backStackEntry.arguments?.getString("word")
+                val screenContext = backStackEntry.arguments?.getString("screenContext")
+                ReportIssueScreen(
+                    prefilledCategory = category,
+                    prefilledWord = word,
+                    prefilledScreenContext = screenContext,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
 
