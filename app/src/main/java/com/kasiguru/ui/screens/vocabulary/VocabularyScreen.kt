@@ -42,6 +42,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -143,6 +144,20 @@ fun VocabularyScreen(
         uiState.totalLearnedCount.toFloat() / uiState.allVocabulary.size.toFloat()
     } else 0f
 
+    var verifyingWordOfDay by remember { mutableStateOf<com.kasiguru.data.local.entity.VocabularyEntity?>(null) }
+
+    verifyingWordOfDay?.let { word ->
+        com.kasiguru.ui.components.WordVerificationDialog(
+            targetWord = word,
+            allWords = uiState.allVocabulary,
+            onSuccess = {
+                viewModel.markWordAsLearned(word.id)
+                verifyingWordOfDay = null
+            },
+            onDismiss = { verifyingWordOfDay = null }
+        )
+    }
+
     GroundScaffold(
         title = "Dictionary",
         subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
@@ -205,9 +220,22 @@ fun VocabularyScreen(
                 item(span = { GridItemSpan(2) }) {
                     WordOfTheDayCard(
                         kasiguranin = featuredWord?.kasiguranin ?: "singët",
-                        translation = if (featuredWord != null) {
-                            "${featuredWord.tagalog} · ${featuredWord.english}"
-                        } else "langgam · ant",
+                        translation = when {
+                            featuredWord == null -> "langgam · ant"
+                            featuredWord.isLearned -> "${featuredWord.tagalog} · ${featuredWord.english}"
+                            else -> "🔒 Take quiz to unlock meaning"
+                        },
+                        isLearned = featuredWord?.isLearned ?: false,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (featuredWord != null) {
+                                if (featuredWord.isLearned) {
+                                    onNavigateToWord(featuredWord.id)
+                                } else {
+                                    verifyingWordOfDay = featuredWord
+                                }
+                            }
+                        },
                         onPlayClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             if (featuredWord != null) {
@@ -346,14 +374,45 @@ private fun SubmitWordBanner(onClick: () -> Unit) {
     }
 }
 @Composable
-private fun WordOfTheDayCard(kasiguranin: String, translation: String, onPlayClick: () -> Unit) {
-    SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.panel) {
+private fun WordOfTheDayCard(
+    kasiguranin: String,
+    translation: String,
+    isLearned: Boolean = true,
+    onClick: () -> Unit = {},
+    onPlayClick: () -> Unit
+) {
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.panel,
+        onClick = onClick
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(text = "Word of the day", style = MaterialTheme.typography.labelMedium, color = Muted)
                 Spacer(Modifier.height(2.dp))
                 Text(text = kasiguranin, style = KasiguraninHeadword.copy(fontSize = 26.sp, lineHeight = 30.sp), color = Violet)
-                Text(text = translation, style = MaterialTheme.typography.bodySmall, color = Faint)
+                if (isLearned) {
+                    Text(text = translation, style = MaterialTheme.typography.bodySmall, color = Faint)
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.Lock),
+                            contentDescription = null,
+                            tint = Violet,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Text(
+                            text = translation,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Violet
+                        )
+                    }
+                }
             }
             Box(
                 modifier = Modifier

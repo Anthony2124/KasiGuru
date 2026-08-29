@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.vocabulary
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,41 +16,48 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.AudioPlayButton
+import com.kasiguru.ui.components.WordVerificationDialog
+import com.kasiguru.ui.components.clay.ClaySurface
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
+import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.VioletDeep
 import com.kasiguru.util.audio.AudioPlayerManager
-
-import androidx.compose.material3.Icon
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.res.painterResource
-import com.kasiguru.ui.theme.Iconsax
-import com.kasiguru.ui.theme.Red
 
 /**
  * A single word, as its own pushed destination. Reached from `vocabulary/{wordId}` — the route a
@@ -63,13 +71,26 @@ fun VocabularyDetailScreen(
     viewModel: VocabularyDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val allWords by viewModel.allWords.collectAsState()
+    var isVerifying by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val audioPlayerManager = remember { AudioPlayerManager(context) }
     DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
 
+    if (isVerifying && uiState.word != null) {
+        WordVerificationDialog(
+            targetWord = uiState.word!!,
+            allWords = allWords,
+            onSuccess = {
+                viewModel.markWordAsLearned()
+                isVerifying = false
+            },
+            onDismiss = { isVerifying = false }
+        )
+    }
+
     GroundScaffold(
-        // The headword, not the literal string "Word". This screen is what a push notification
-        // deep-links into, and it used to open without ever naming the word it was about.
         title = uiState.word?.kasiguranin ?: "Word",
         onBack = onNavigateBack,
         pattern = GroundPattern.Orbs,
@@ -88,6 +109,7 @@ fun VocabularyDetailScreen(
                         onPlayAudio = {
                             audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
                         },
+                        onTakeQuiz = { isVerifying = true },
                         onReportWord = onReportWord
                     )
                 }
@@ -100,6 +122,7 @@ fun VocabularyDetailScreen(
 private fun VocabularyDetailBody(
     vocab: VocabularyEntity,
     onPlayAudio: () -> Unit,
+    onTakeQuiz: () -> Unit,
     onReportWord: ((String) -> Unit)? = null
 ) {
     Column(
@@ -112,13 +135,34 @@ private fun VocabularyDetailBody(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "${vocab.english} • ${vocab.tagalog}",
-                style = MaterialTheme.typography.titleMedium,
-                color = Muted,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f)
-            )
+            if (vocab.isLearned) {
+                Text(
+                    text = "${vocab.english} • ${vocab.tagalog}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Muted,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.Lock),
+                        contentDescription = null,
+                        tint = Violet,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Verification Quiz Required",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Violet,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
             AudioPlayButton(onClick = onPlayAudio)
         }
 
@@ -145,88 +189,156 @@ private fun VocabularyDetailBody(
             )
         }
 
-        // What the word means, as opposed to what it translates to. Hidden entirely when no
-        // definition has been written yet, so an un-backfilled entry reads as a shorter card
-        // rather than an empty heading.
-        if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
-            Spacer(Modifier.height(Space.md))
-            Text(
-                text = "Meaning",
-                style = MaterialTheme.typography.titleSmall,
-                color = Violet,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Spacer(Modifier.height(Space.xxs))
-            if (vocab.meaningEnglish.isNotEmpty()) {
-                Text(
-                    text = vocab.meaningEnglish,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Ink
-                )
+        if (!vocab.isLearned) {
+            Spacer(Modifier.height(Space.lg))
+            SoftCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = Shapes.panel
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(Space.md),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(Shapes.chip)
+                            .background(Violet.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.Lock),
+                            contentDescription = null,
+                            tint = Violet,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(Space.sm))
+                    Text(
+                        text = "Meaning is Locked",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Ink
+                    )
+                    Spacer(Modifier.height(Space.xs))
+                    Text(
+                        text = "Take the verification quiz to verify this word and unlock its full definition, translations, and example sentences.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(Space.md))
+                    ClaySurface(
+                        face = Violet,
+                        lipColor = VioletDeep,
+                        shape = Shapes.pill,
+                        onClick = onTakeQuiz,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = Space.xs),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.TickCircle),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Take Verification Quiz",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
             }
-            if (vocab.meaningTagalog.isNotEmpty()) {
+        } else {
+            // What the word means, as opposed to what it translates to.
+            if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
+                Spacer(Modifier.height(Space.md))
+                Text(
+                    text = "Meaning",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Violet,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(Modifier.height(Space.xxs))
+                if (vocab.meaningEnglish.isNotEmpty()) {
+                    Text(
+                        text = vocab.meaningEnglish,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Ink
+                    )
+                }
+                if (vocab.meaningTagalog.isNotEmpty()) {
+                    Spacer(Modifier.height(Space.xxs))
+                    Text(
+                        text = vocab.meaningTagalog,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(Space.md))
+            HorizontalDivider(color = Faint)
+            Spacer(Modifier.height(Space.md))
+
+            if (vocab.neutralForm.isNotEmpty()) {
+                Text(
+                    text = "Verb Aspect Inflections",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Violet,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(Modifier.height(Space.xs))
+                DetailRow("Root", vocab.rootForm)
+                DetailRow("Neutral", vocab.neutralForm)
+                DetailRow("Imperfective (Present)", vocab.imperfectiveForm)
+                DetailRow("Perfective (Past)", vocab.perfectiveForm)
+                DetailRow("Contemplative (Future)", vocab.contemplativeForm)
+            }
+
+            if (vocab.exampleSentence.isNotEmpty()) {
+                Spacer(Modifier.height(Space.md))
+                Text(
+                    text = "Example Sentence",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Violet,
+                    fontWeight = FontWeight.ExtraBold
+                )
                 Spacer(Modifier.height(Space.xxs))
                 Text(
-                    text = vocab.meaningTagalog,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Muted
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Space.md))
-        HorizontalDivider(color = Faint)
-        Spacer(Modifier.height(Space.md))
-
-        if (vocab.neutralForm.isNotEmpty()) {
-            Text(
-                text = "Verb Aspect Inflections",
-                style = MaterialTheme.typography.titleSmall,
-                color = Violet,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Spacer(Modifier.height(Space.xs))
-            DetailRow("Root", vocab.rootForm)
-            DetailRow("Neutral", vocab.neutralForm)
-            DetailRow("Imperfective (Present)", vocab.imperfectiveForm)
-            DetailRow("Perfective (Past)", vocab.perfectiveForm)
-            DetailRow("Contemplative (Future)", vocab.contemplativeForm)
-        }
-
-        if (vocab.exampleSentence.isNotEmpty()) {
-            Spacer(Modifier.height(Space.md))
-            Text(
-                text = "Example Sentence",
-                style = MaterialTheme.typography.titleSmall,
-                color = Violet,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Spacer(Modifier.height(Space.xxs))
-            Text(
-                text = "\"${vocab.exampleSentence}\"",
-                style = MaterialTheme.typography.bodyMedium,
-                fontStyle = FontStyle.Italic,
-                color = Ink
-            )
-            Text(
-                text = vocab.exampleTranslation,
-                style = MaterialTheme.typography.bodySmall,
-                color = Muted
-            )
-
-            if (vocab.exampleSentence2.isNotEmpty()) {
-                Spacer(Modifier.height(Space.sm))
-                Text(
-                    text = "\"${vocab.exampleSentence2}\"",
+                    text = "\"${vocab.exampleSentence}\"",
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     color = Ink
                 )
                 Text(
-                    text = vocab.exampleTranslation2,
+                    text = vocab.exampleTranslation,
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted
                 )
+
+                if (vocab.exampleSentence2.isNotEmpty()) {
+                    Spacer(Modifier.height(Space.sm))
+                    Text(
+                        text = "\"${vocab.exampleSentence2}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = Ink
+                    )
+                    Text(
+                        text = vocab.exampleTranslation2,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted
+                    )
+                }
             }
         }
 

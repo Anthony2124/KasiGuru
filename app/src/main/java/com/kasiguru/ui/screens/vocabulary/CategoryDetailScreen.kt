@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
@@ -257,18 +259,44 @@ private fun CategoryWordCard(
         shape = Shapes.tile,
         onClick = {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            isExpanded = !isExpanded
+            if (vocab.isLearned) {
+                isExpanded = !isExpanded
+            } else {
+                onMarkLearned()
+            }
         }
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(text = vocab.kasiguranin, style = MaterialTheme.typography.titleLarge, color = Ink)
-                Text(text = "${vocab.english} · ${vocab.tagalog}", style = MaterialTheme.typography.bodySmall, color = Faint)
+                if (vocab.isLearned) {
+                    Text(
+                        text = "${vocab.english} · ${vocab.tagalog}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Faint
+                    )
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = Iconsax.Lock),
+                            contentDescription = null,
+                            tint = Violet,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Text(
+                            text = "Take verification quiz to reveal meaning",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Violet
+                        )
+                    }
+                }
             }
-            // Both icons previously had only a 22dp clickable — under the 48dp minimum touch target
-            // and sitting inside a card that's itself clickable (to expand), which made mis-taps
-            // between "play audio," "mark learned," and "expand the card" easy. Each now gets its own
-            // properly-sized tap target instead of just its visible glyph.
+            // Both icons have properly-sized touch targets
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -290,49 +318,79 @@ private fun CategoryWordCard(
                 modifier = Modifier.size(44.dp).clickable(onClick = onMarkLearned),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.TickCircle),
-                    contentDescription = if (vocab.isLearned) "Learned" else "Mark as learned",
-                    tint = if (vocab.isLearned) Green else Faint,
-                    modifier = Modifier.size(22.dp)
-                )
+                if (vocab.isLearned) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.TickCircle),
+                        contentDescription = "Learned",
+                        tint = Green,
+                        modifier = Modifier.size(22.dp)
+                    )
+                } else {
+                    Surface(
+                        shape = Shapes.pill,
+                        color = Violet.copy(alpha = 0.12f),
+                        modifier = Modifier.padding(horizontal = 2.dp)
+                    ) {
+                        Text(
+                            text = "Quiz",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Violet
+                        )
+                    }
+                }
             }
         }
 
-        AnimatedVisibility(visible = isExpanded) {
-            Column(modifier = Modifier.padding(top = Space.sm)) {
-                HorizontalDivider(color = SurfaceSunken)
-                Spacer(Modifier.height(Space.sm))
+        if (vocab.isLearned) {
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(top = Space.sm)) {
+                    HorizontalDivider(color = SurfaceSunken)
+                    Spacer(Modifier.height(Space.sm))
 
-                if (vocab.phoneticGlottal || vocab.phoneticVowelLength || vocab.ipaNotation.isNotEmpty()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-                        if (vocab.phoneticGlottal) TagChip(label = "Glottal stop ʔ")
-                        if (vocab.phoneticVowelLength) TagChip(label = "Long vowel ː")
-                        if (vocab.ipaNotation.isNotEmpty()) TagChip(label = "[${vocab.ipaNotation}]")
+                    if (vocab.phoneticGlottal || vocab.phoneticVowelLength || vocab.ipaNotation.isNotEmpty()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                            if (vocab.phoneticGlottal) TagChip(label = "Glottal stop ʔ")
+                            if (vocab.phoneticVowelLength) TagChip(label = "Long vowel ː")
+                            if (vocab.ipaNotation.isNotEmpty()) TagChip(label = "[${vocab.ipaNotation}]")
+                        }
+                        Spacer(Modifier.height(Space.sm))
                     }
-                    Spacer(Modifier.height(Space.sm))
-                }
 
-                if (vocab.neutralForm.isNotEmpty()) {
-                    Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Violet)
-                    Spacer(Modifier.height(Space.xs))
-                    AspectRow("Neutral (infinitive)", vocab.neutralForm)
-                    AspectRow("Imperfective (present)", vocab.imperfectiveForm)
-                    AspectRow("Perfective (past)", vocab.perfectiveForm)
-                    AspectRow("Contemplative (future)", vocab.contemplativeForm)
-                    Spacer(Modifier.height(Space.sm))
-                }
+                    if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
+                        Text(text = "Meaning", style = MaterialTheme.typography.labelLarge, color = Violet)
+                        Spacer(Modifier.height(Space.xxs))
+                        if (vocab.meaningEnglish.isNotEmpty()) {
+                            Text(text = vocab.meaningEnglish, style = MaterialTheme.typography.bodyMedium, color = Ink)
+                        }
+                        if (vocab.meaningTagalog.isNotEmpty()) {
+                            Text(text = vocab.meaningTagalog, style = MaterialTheme.typography.bodySmall, color = Muted)
+                        }
+                        Spacer(Modifier.height(Space.sm))
+                    }
 
-                if (vocab.exampleSentence.isNotEmpty()) {
-                    Text(text = "Example sentence", style = MaterialTheme.typography.labelLarge, color = Ink)
-                    Text(
-                        text = "\"${vocab.exampleSentence}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = Muted
-                    )
-                    if (vocab.exampleTranslation.isNotEmpty()) {
-                        Text(text = vocab.exampleTranslation, style = MaterialTheme.typography.bodySmall, color = Faint)
+                    if (vocab.neutralForm.isNotEmpty()) {
+                        Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Violet)
+                        Spacer(Modifier.height(Space.xs))
+                        AspectRow("Neutral (infinitive)", vocab.neutralForm)
+                        AspectRow("Imperfective (present)", vocab.imperfectiveForm)
+                        AspectRow("Perfective (past)", vocab.perfectiveForm)
+                        AspectRow("Contemplative (future)", vocab.contemplativeForm)
+                        Spacer(Modifier.height(Space.sm))
+                    }
+
+                    if (vocab.exampleSentence.isNotEmpty()) {
+                        Text(text = "Example sentence", style = MaterialTheme.typography.labelLarge, color = Ink)
+                        Text(
+                            text = "\"${vocab.exampleSentence}\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontStyle = FontStyle.Italic,
+                            color = Muted
+                        )
+                        if (vocab.exampleTranslation.isNotEmpty()) {
+                            Text(text = vocab.exampleTranslation, style = MaterialTheme.typography.bodySmall, color = Faint)
+                        }
                     }
                 }
             }
