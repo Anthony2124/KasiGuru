@@ -2809,72 +2809,86 @@ function renderUsersTable() {
   
   if (!tbody) return;
   
-  // Filter out anonymous/guest accounts
+  // ── Step 1: Filter ───────────────────────────────────────────────
+  // Many leaderboard docs were created by anonymous users who never signed in
+  // with Google/email and never changed their display name. These accounts have
+  // isAnonymous: undefined (field absent) and use the app default name.
+  //
+  // Rule: show an account only if it has EITHER
+  //   (a) a real email address, OR
+  //   (b) a display name that is NOT one of the default/generic app values.
+  const GENERIC_NAMES = new Set([
+    'learner', 'guest', 'anonymous user', 'registered user',
+    'kasiguranin learner', 'kasiguru learner'
+  ]);
+
   const validUsers = usersList.filter(user => {
     if (user.isAnonymous === true) return false;
-    const name = (user.displayName || '').trim().toLowerCase();
-    if (name === 'learner' || name === 'guest' || name === 'anonymous user') return false;
-    return true;
+    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
+    const hasRealEmail = user.email && user.email.includes('@');
+    const hasRealName  = name && !GENERIC_NAMES.has(name);
+    return hasRealEmail || hasRealName;
   });
 
-  // ── Deduplication ─────────────────────────────────────────────────────────
-  // Problem: after the email backfill, the same real person may have two
-  // leaderboard docs — one anonymous (no email, keyed by name) and one linked
-  // (has email, keyed by email). A single-key dedup misses them.
-  //
-  // Two-pass fix:
-  //   Pass 1 – index every entry by its Firestore doc uid (always unique).
-  //   Pass 2 – merge entries that share the same normalised display name:
-  //             keep the one with email; carry over the higher XP.
+  // ── Step 2: Deduplicate ────────────────────────────────────────────
+  // A real person may have two leaderboard docs if they used the app while
+  // anonymous then later signed in with Google (two Firebase UIDs). Merge them
+  // by display name: keep the one with a real email and the higher total XP.
+  const uniqueUserMap = new Map(); // normalisedKey → merged user object
 
-  // Pass 1: uid → user
-  const byUid = new Map();
   for (const user of validUsers) {
-    byUid.set(user.id, user);
-  }
+    const name  = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
+    const email = (user.email || '').trim().toLowerCase();
+    // Primary key: email when present, otherwise display name
+    const key = email || name || user.id;
 
-  // Pass 2: merge by normalised display name
-  const byName = new Map(); // normalisedName → uid chosen to represent this person
-  for (const [uid, user] of byUid) {
-    const rawName = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    if (!rawName || rawName === 'kasiguranin learner') {
-      // Generic / default names — don't merge across accounts; keep each one
-      continue;
-    }
-    if (!byName.has(rawName)) {
-      byName.set(rawName, uid);
+    if (!uniqueUserMap.has(key)) {
+      uniqueUserMap.set(key, { ...user });
     } else {
-      // Another entry with the same name exists — decide which to keep
-      const existingUid = byName.get(rawName);
-      const existing = byUid.get(existingUid);
-      const current  = user;
-      const existingXp = existing.totalXp || 0;
-      const currentXp  = current.totalXp  || 0;
-      const existingHasEmail = existing.email && existing.email.includes('@');
-      const currentHasEmail  = current.email  && current.email.includes('@');
-
-      // Winner: prefer the entry that has an email; on a tie prefer higher XP
-      let winnerUid, loserUid;
-      if (!existingHasEmail && currentHasEmail) {
-        winnerUid = uid; loserUid = existingUid;
-      } else if (existingHasEmail && !currentHasEmail) {
-        winnerUid = existingUid; loserUid = uid;
-      } else {
-        winnerUid = currentXp > existingXp ? uid : existingUid;
-        loserUid  = currentXp > existingXp ? existingUid : uid;
-      }
-
-      const winner = byUid.get(winnerUid);
-      const loser  = byUid.get(loserUid);
-      // Carry over the higher XP into the winner (accounts may have split XP)
-      const mergedXp = Math.max(winner.totalXp || 0, loser.totalXp || 0);
-      byUid.set(winnerUid, { ...winner, totalXp: mergedXp });
-      byUid.delete(loserUid);
-      byName.set(rawName, winnerUid);
+      const existing = uniqueUserMap.get(key);
+      // Merge: prefer email, keep the higher XP
+      const merged = { ...existing };
+      if (!existing.email && user.email) merged.email = user.email;
+      if ((user.totalXp || 0) > (existing.totalXp || 0)) merged.totalXp = user.totalXp;
+      if (!existing.registeredAt && user.registeredAt) merged.registeredAt = user.registeredAt;
+      uniqueUserMap.set(key, merged);
     }
   }
 
-  const uniqueUserMap = byUid; // alias for the code below
+  // Also cross-link by name: if we have two keys (one = email, one = name) that
+  // resolve to accounts with the same display name, merge them too.
+  const byNameIndex = new Map(); // lowercaseName → key in uniqueUserMap
+  for (const [key, user] of uniqueUserMap) {
+    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
+    if (!name) continue;
+    if (!byNameIndex.has(name)) {
+      byNameIndex.set(name, key);
+    } else {
+      // Same name, different key — merge the two entries
+      const otherKey = byNameIndex.get(name);
+      const other = uniqueUserMap.get(otherKey);
+      if (!other) continue;
+      const current = user;
+      // Winner = entry that has email; tie-break = higher XP
+      const currentHasEmail = current.email && current.email.includes('@');
+      const otherHasEmail   = other.email   && other.email.includes('@');
+      let keepKey, dropKey;
+      if (currentHasEmail && !otherHasEmail) { keepKey = key;      dropKey = otherKey; }
+      else if (otherHasEmail && !currentHasEmail) { keepKey = otherKey; dropKey = key; }
+      else { keepKey = (current.totalXp||0) >= (other.totalXp||0) ? key : otherKey;
+             dropKey = keepKey === key ? otherKey : key; }
+
+      const winner = uniqueUserMap.get(keepKey);
+      const loser  = uniqueUserMap.get(dropKey);
+      const merged = { ...winner };
+      if (!winner.email && loser.email) merged.email = loser.email;
+      merged.totalXp = Math.max(winner.totalXp||0, loser.totalXp||0);
+      if (!winner.registeredAt && loser.registeredAt) merged.registeredAt = loser.registeredAt;
+      uniqueUserMap.set(keepKey, merged);
+      uniqueUserMap.delete(dropKey);
+      byNameIndex.set(name, keepKey);
+    }
+  }
 
   const registeredUsers = Array.from(uniqueUserMap.values());
   
