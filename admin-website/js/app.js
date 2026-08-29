@@ -2857,6 +2857,8 @@ function renderUsersTable() {
 
   // Also cross-link by name: if we have two keys (one = email, one = name) that
   // resolve to accounts with the same display name, merge them too.
+  // IMPORTANT: only merge when at most ONE entry has a real email — if both
+  // have different emails they are different people who happen to share a name.
   const byNameIndex = new Map(); // lowercaseName → key in uniqueUserMap
   for (const [key, user] of uniqueUserMap) {
     const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
@@ -2864,14 +2866,20 @@ function renderUsersTable() {
     if (!byNameIndex.has(name)) {
       byNameIndex.set(name, key);
     } else {
-      // Same name, different key — merge the two entries
+      // Same name, different key
       const otherKey = byNameIndex.get(name);
       const other = uniqueUserMap.get(otherKey);
       if (!other) continue;
       const current = user;
-      // Winner = entry that has email; tie-break = higher XP
       const currentHasEmail = current.email && current.email.includes('@');
       const otherHasEmail   = other.email   && other.email.includes('@');
+
+      // If BOTH have real but DIFFERENT emails — different people, don't merge
+      if (currentHasEmail && otherHasEmail && current.email.toLowerCase() !== other.email.toLowerCase()) {
+        continue;
+      }
+
+      // Winner = entry that has email; tie-break = higher XP
       let keepKey, dropKey;
       if (currentHasEmail && !otherHasEmail) { keepKey = key;      dropKey = otherKey; }
       else if (otherHasEmail && !currentHasEmail) { keepKey = otherKey; dropKey = key; }
