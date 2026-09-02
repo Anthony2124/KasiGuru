@@ -67,7 +67,7 @@ fun FillBlankGameScreen(
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
-                accentColor = QuestsCardEnd,
+                accentColor = GoldDeep,
                 onBack = onNavigateBack,
                 modifier = Modifier
             )
@@ -105,8 +105,8 @@ fun FillBlankGameScreen(
                 label = "Question $questionNumber/${uiState.totalQuestions}",
                 progress = questionNumber.toFloat() / uiState.totalQuestions.toFloat(),
                 score = uiState.score,
-                accentStart = QuestsCardStart,
-                accentEnd = QuestsCardEnd
+                accentStart = Gold,
+                accentEnd = GoldDeep
             )
 
             // Sentence Card

@@ -45,7 +45,7 @@ fun WordDetailBottomSheet(
                     Text(
                         text = vocab.kasiguranin,
                         style = MaterialTheme.typography.headlineMedium,
-                        color = CoastInk,
+                        color = Ink,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = (-0.4).sp
                     )
@@ -68,28 +68,28 @@ fun WordDetailBottomSheet(
                 if (vocab.phoneticGlottal) {
                     Surface(
                         shape = RoundedCornerShape(999.dp),
-                        color = PlayPurpleStart.copy(alpha = 0.12f)
+                        color = CanopyTop.copy(alpha = 0.12f)
                     ) {
                         Text(
                             text = "Glottal Stop ʔ",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.ExtraBold,
-                            color = PlayPurpleStart
+                            color = CanopyTop
                         )
                     }
                 }
                 if (vocab.phoneticVowelLength) {
                     Surface(
                         shape = RoundedCornerShape(999.dp),
-                        color = XpGold.copy(alpha = 0.15f)
+                        color = Gold.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = "Long Vowel ː",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.ExtraBold,
-                            color = XpGoldDark
+                            color = GoldDeep
                         )
                     }
                 }
@@ -114,7 +114,7 @@ fun WordDetailBottomSheet(
                 Text(
                     text = "Meaning",
                     style = MaterialTheme.typography.titleSmall,
-                    color = PlayPurpleStart,
+                    color = CanopyTop,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.2).sp
                 )
@@ -123,7 +123,7 @@ fun WordDetailBottomSheet(
                     Text(
                         text = vocab.meaningEnglish,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = CoastInk
+                        color = Ink
                     )
                 }
                 if (vocab.meaningTagalog.isNotEmpty()) {
@@ -131,7 +131,7 @@ fun WordDetailBottomSheet(
                     Text(
                         text = vocab.meaningTagalog,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = CoastMuted
+                        color = Muted
                     )
                 }
             }
@@ -145,7 +145,7 @@ fun WordDetailBottomSheet(
                 Text(
                     text = "Verb Aspect Inflections",
                     style = MaterialTheme.typography.titleSmall,
-                    color = PlayPurpleStart,
+                    color = CanopyTop,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.2).sp
                 )
@@ -163,7 +163,7 @@ fun WordDetailBottomSheet(
                 Text(
                     text = "Example Sentence",
                     style = MaterialTheme.typography.titleSmall,
-                    color = PlayPurpleStart,
+                    color = CanopyTop,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.2).sp
                 )
@@ -172,12 +172,12 @@ fun WordDetailBottomSheet(
                     text = "\"${vocab.exampleSentence}\"",
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
-                    color = CoastInk
+                    color = Ink
                 )
                 Text(
                     text = vocab.exampleTranslation,
                     style = MaterialTheme.typography.bodySmall,
-                    color = CoastMuted
+                    color = Muted
                 )
 
                 if (vocab.exampleSentence2.isNotEmpty()) {
@@ -186,12 +186,12 @@ fun WordDetailBottomSheet(
                         text = "\"${vocab.exampleSentence2}\"",
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = FontStyle.Italic,
-                        color = CoastInk
+                        color = Ink
                     )
                     Text(
                         text = vocab.exampleTranslation2,
                         style = MaterialTheme.typography.bodySmall,
-                        color = CoastMuted
+                        color = Muted
                     )
                 }
             }
@@ -243,8 +243,8 @@ private fun AspectDetailRow(label: String, value: String) {
                 .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = CoastMuted)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = CoastInk, fontWeight = FontWeight.SemiBold)
+            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = Ink, fontWeight = FontWeight.SemiBold)
         }
     }
 }

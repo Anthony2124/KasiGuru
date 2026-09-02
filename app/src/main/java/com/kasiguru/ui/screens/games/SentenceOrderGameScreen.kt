@@ -90,8 +90,8 @@ fun SentenceOrderGameScreen(
                 label = "Sentence $qIndex/${uiState.totalQuestions}",
                 progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
                 score = uiState.score,
-                accentStart = StoriesCardStart,
-                accentEnd = StoriesCardEnd
+                accentStart = CanopyTop,
+                accentEnd = CanopyBottom
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -125,13 +125,13 @@ fun SentenceOrderGameScreen(
             // Selected Words Slot Box — the border and fill carry the result, not colour alone: the
             // icon-free but explicit "Correct!"/"Not quite" line right below it backs it up in text.
             val slotColor = when (uiState.isCorrect) {
-                true -> Success.copy(alpha = 0.16f)
-                false -> Error.copy(alpha = 0.16f)
-                null -> StoriesCardStart.copy(alpha = 0.3f)
+                true -> Green.copy(alpha = 0.16f)
+                false -> Red.copy(alpha = 0.16f)
+                null -> CanopyTop.copy(alpha = 0.3f)
             }
             val slotBorder = when (uiState.isCorrect) {
-                true -> BorderStroke(2.dp, Success)
-                false -> BorderStroke(2.dp, Error)
+                true -> BorderStroke(2.dp, Green)
+                false -> BorderStroke(2.dp, Red)
                 null -> null
             }
             Surface(
@@ -197,7 +197,7 @@ fun SentenceOrderGameScreen(
                                 onClick = { viewModel.selectWord(word) },
                                 label = { Text(word, fontWeight = FontWeight.SemiBold) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = HeroCardStart,
+                                    containerColor = CanopyTop,
                                     labelColor = Ink
                                 ),
                                 shape = RoundedCornerShape(16.dp)

@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.util.audio.AudioPlayerManager
@@ -89,7 +91,7 @@ fun WordVerificationDialog(
                     Icon(
                         painter = painterResource(id = Iconsax.CloseCircle),
                         contentDescription = "Cancel",
-                        tint = CoastMuted,
+                        tint = Muted,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -100,22 +102,6 @@ fun WordVerificationDialog(
                         .padding(22.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Header Title
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = PlayPurpleStart.copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            text = "VERIFICATION QUIZ",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = PlayPurpleStart,
-                            letterSpacing = 0.8.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Target Kasiguranin Word Card
                     Surface(
@@ -134,13 +120,13 @@ fun WordVerificationDialog(
                                 Text(
                                     text = "Target Word:",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = CoastMuted
+                                    color = Muted
                                 )
                                 Text(
                                     text = targetWord.kasiguranin,
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = CoastInk,
+                                    color = Ink,
                                     letterSpacing = (-0.3).sp
                                 )
                             }
@@ -161,7 +147,7 @@ fun WordVerificationDialog(
                     Text(
                         text = "Select the correct translation below:",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = CoastInk,
+                        color = Ink,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center
                     )
@@ -176,8 +162,8 @@ fun WordVerificationDialog(
                             val isChoiceWrong = isChoiceSelected && !isChoiceCorrect
 
                             val optionBg = when {
-                                isChoiceCorrect -> Success.copy(alpha = 0.15f)
-                                isChoiceWrong -> Error.copy(alpha = 0.15f)
+                                isChoiceCorrect -> Green.copy(alpha = 0.15f)
+                                isChoiceWrong -> Red.copy(alpha = 0.15f)
                                 else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                             }
 
@@ -201,7 +187,7 @@ fun WordVerificationDialog(
                                 shape = RoundedCornerShape(16.dp),
                                 color = optionBg,
                                 border = if (isChoiceSelected) {
-                                    androidx.compose.foundation.BorderStroke(2.dp, if (isChoiceCorrect) Success else Error)
+                                    androidx.compose.foundation.BorderStroke(2.dp, if (isChoiceCorrect) Green else Red)
                                 } else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
                             ) {
                                 Row(
@@ -213,14 +199,14 @@ fun WordVerificationDialog(
                                         text = option,
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Bold,
-                                        color = CoastInk
+                                        color = Ink
                                     )
 
                                     if (isChoiceCorrect) {
                                         Icon(
                                             painter = painterResource(id = Iconsax.TickCircle),
                                             contentDescription = "Correct",
-                                            tint = Success,
+                                            tint = Green,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -235,7 +221,7 @@ fun WordVerificationDialog(
                     if (isCorrect == true) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = Success.copy(alpha = 0.12f),
+                            color = Green.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
@@ -249,38 +235,38 @@ fun WordVerificationDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.TickCircle),
                                         contentDescription = null,
-                                        tint = Success,
+                                        tint = Green,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
                                         text = "Correct! +100 XP",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Success
+                                        color = Green
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Word successfully verified and marked as Learned!",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = CoastInk,
+                                    color = Ink,
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
-                                CoastPillButton(
+                                ClayButton(
                                     label = "Done",
                                     onClick = {
                                         onSuccess()
                                         onDismiss()
                                     },
-                                    variant = PillVariant.Purple
+                                    tone = ClayButtonTone.Primary
                                 )
                             }
                         }
                     } else if (isCorrect == false) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = Error.copy(alpha = 0.12f),
+                            color = Red.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
@@ -294,21 +280,21 @@ fun WordVerificationDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.InfoCircle),
                                         contentDescription = null,
-                                        tint = Error,
+                                        tint = Red,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
                                         text = "Incorrect! Try again",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Error
+                                        color = Red
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Review this word in Flashcards or Vocabulary to master its meaning.",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = CoastInk,
+                                    color = Ink,
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -317,15 +303,15 @@ fun WordVerificationDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     TextButton(onClick = onDismiss) {
-                                        Text("Cancel", color = CoastMuted, fontWeight = FontWeight.Bold)
+                                        Text("Cancel", color = Muted, fontWeight = FontWeight.Bold)
                                     }
-                                    CoastPillButton(
+                                    ClayButton(
                                         label = "Try Again",
                                         onClick = {
                                             selectedOption = null
                                             isCorrect = null
                                         },
-                                        variant = PillVariant.Gold
+                                        tone = ClayButtonTone.Reward
                                     )
                                 }
                             }

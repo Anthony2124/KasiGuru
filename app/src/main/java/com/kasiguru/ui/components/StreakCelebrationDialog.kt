@@ -72,7 +72,7 @@ fun StreakCelebrationDialog(
             shadowElevation = 16.dp,
             border = BorderStroke(
                 1.5.dp,
-                StreakEmber.copy(alpha = 0.35f)
+                Coral.copy(alpha = 0.35f)
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -91,7 +91,7 @@ fun StreakCelebrationDialog(
                     // Tag Badge
                     Surface(
                         shape = RoundedCornerShape(999.dp),
-                        color = StreakEmber.copy(alpha = 0.15f)
+                        color = Coral.copy(alpha = 0.15f)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -101,14 +101,14 @@ fun StreakCelebrationDialog(
                             Icon(
                                 painter = painterResource(id = Iconsax.FlashBold),
                                 contentDescription = null,
-                                tint = StreakEmber,
+                                tint = Coral,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = "STREAK ACTIVATED 🔥",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = StreakEmber,
+                                color = Coral,
                                 letterSpacing = 1.sp
                             )
                         }
@@ -131,8 +131,8 @@ fun StreakCelebrationDialog(
                                 .background(
                                     Brush.radialGradient(
                                         colors = listOf(
-                                            StreakEmber.copy(alpha = glowAlpha),
-                                            PlayGoldStart.copy(alpha = glowAlpha * 0.4f),
+                                            Coral.copy(alpha = glowAlpha),
+                                            Gold.copy(alpha = glowAlpha * 0.4f),
                                             Color.Transparent
                                         )
                                     )
@@ -146,8 +146,8 @@ fun StreakCelebrationDialog(
                                 .background(
                                     Brush.verticalGradient(
                                         colors = listOf(
-                                            StreakEmber,
-                                            PlayGoldStart
+                                            Coral,
+                                            Gold
                                         )
                                     )
                                 ),
@@ -168,7 +168,7 @@ fun StreakCelebrationDialog(
                         text = "$streakDays Day Streak!",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
+                        color = Ink,
                         letterSpacing = (-0.5).sp
                     )
 
@@ -177,7 +177,7 @@ fun StreakCelebrationDialog(
                     Text(
                         text = "You completed all daily goals! Your learning momentum is on fire today.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = CoastMuted,
+                        color = Muted,
                         textAlign = TextAlign.Center,
                         lineHeight = 20.sp
                     )
@@ -210,7 +210,7 @@ fun StreakCelebrationDialog(
                                     text = "Completed Review Words",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = CoastInk
+                                    color = Ink
                                 )
                             }
                             Row(
@@ -228,7 +228,7 @@ fun StreakCelebrationDialog(
                                     text = "Played 3 Mini-Game Levels",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = CoastInk
+                                    color = Ink
                                 )
                             }
                         }

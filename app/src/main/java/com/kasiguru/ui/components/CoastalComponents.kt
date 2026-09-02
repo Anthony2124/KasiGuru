@@ -29,67 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.kasiguru.ui.theme.*
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CoastPillButton — primary CTA pill with trailing arrow circle
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-fun CoastPillButton(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    variant: PillVariant = PillVariant.Purple,
-    enabled: Boolean = true
-) {
-    val gradientColors = when (variant) {
-        PillVariant.Purple -> listOf(PlayPurpleStart, PlayPurpleEnd)
-        PillVariant.Gold   -> listOf(XpGold, XpGoldDark)
-    }
-    // Gold is a fill that carries dark ink, never white — see DESIGN.md. Purple's own gradient is
-    // deep enough to keep carrying white.
-    val labelColor = if (variant == PillVariant.Gold) RewardInk else Color.White
-
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(Brush.linearGradient(gradientColors))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                enabled = enabled,
-                role = Role.Button,
-                onClick = onClick
-            )
-            .padding(start = 22.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = label,
-                color = labelColor,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 15.sp,
-                letterSpacing = (-0.3).sp
-            )
-            // Arrow circle
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(labelColor.copy(alpha = 0.22f)),
-                contentAlignment = Alignment.Center
-            ) {
-                ArrowRightIcon(tint = labelColor, size = 16.dp)
-            }
-        }
-    }
-}
-
-enum class PillVariant { Purple, Gold }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MascotOwlSlot — Canvas-drawn Kasiguranin owl mascot
@@ -182,7 +121,7 @@ fun OnboardingDotStepper(
     total: Int,
     current: Int,
     modifier: Modifier = Modifier,
-    activeColor: Color = PlayPurpleStart,
+    activeColor: Color = CanopyTop,
     inactiveColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
 ) {
     Row(

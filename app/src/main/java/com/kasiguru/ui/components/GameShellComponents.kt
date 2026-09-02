@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
-import com.kasiguru.ui.theme.Error
+import com.kasiguru.ui.theme.Red
 import com.kasiguru.ui.theme.GreenDeep
 import com.kasiguru.ui.theme.GreenTint
 import com.kasiguru.ui.theme.Iconsax
@@ -46,7 +46,7 @@ import com.kasiguru.ui.theme.RedDeep
 import com.kasiguru.ui.theme.RedTint
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Success
+import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 
@@ -109,8 +109,8 @@ fun GameOptionRow(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = when (state) {
-        GameOptionState.Correct -> Success.copy(alpha = 0.18f)
-        GameOptionState.Wrong -> Error.copy(alpha = 0.18f)
+        GameOptionState.Correct -> Green.copy(alpha = 0.18f)
+        GameOptionState.Wrong -> Red.copy(alpha = 0.18f)
         GameOptionState.Idle -> MaterialTheme.colorScheme.surface
     }
 
@@ -138,13 +138,13 @@ fun GameOptionRow(
                 GameOptionState.Correct -> Icon(
                     painter = painterResource(id = Iconsax.TickCircle),
                     contentDescription = "Correct",
-                    tint = Success,
+                    tint = Green,
                     modifier = Modifier.size(22.dp)
                 )
                 GameOptionState.Wrong -> Icon(
                     painter = painterResource(id = Iconsax.CloseCircle),
                     contentDescription = "Your answer, incorrect",
-                    tint = Error,
+                    tint = Red,
                     modifier = Modifier.size(22.dp)
                 )
                 GameOptionState.Idle -> {}
@@ -281,7 +281,7 @@ fun rememberGameExitGuard(active: Boolean, onExit: () -> Unit): () -> Unit {
             text = { Text("Your progress in this round won't be saved.") },
             confirmButton = {
                 TextButton(onClick = { showConfirm = false; onExit() }) {
-                    Text("Quit", color = Error)
+                    Text("Quit", color = Red)
                 }
             },
             dismissButton = {

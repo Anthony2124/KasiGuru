@@ -46,11 +46,11 @@ fun CasiguranAvatarPortrait(
 ) {
     val ringGradient = Brush.sweepGradient(
         listOf(
-            NudgeBurple,
-            NudgeBink,
-            NudgeFlame,
-            NudgeGold,
-            NudgeBurple
+            Violet,
+            Coral,
+            Coral,
+            Gold,
+            Violet
         )
     )
 
@@ -65,7 +65,7 @@ fun CasiguranAvatarPortrait(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(CircleShape)
-                .background(if (showLevelRing) ringGradient else Brush.linearGradient(listOf(NudgeBurple, NudgeBink)))
+                .background(if (showLevelRing) ringGradient else Brush.linearGradient(listOf(Violet, Coral)))
                 .padding(3.dp)
         ) {
             // Inner Avatar Surface
@@ -79,7 +79,7 @@ fun CasiguranAvatarPortrait(
                 Icon(
                     painter = painterResource(id = resident.iconRes),
                     contentDescription = resident.title,
-                    tint = NudgeBurple,
+                    tint = Violet,
                     modifier = Modifier.size(size * 0.55f)
                 )
             }
@@ -94,7 +94,7 @@ fun CasiguranAvatarPortrait(
                     .offset(x = 2.dp, y = 2.dp)
                     .size(18.dp)
                     .clip(CircleShape)
-                    .background(NudgeFlame)
+                    .background(Coral)
                     .border(1.5.dp, Color.White, CircleShape)
             ) {
                 Text(

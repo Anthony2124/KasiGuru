@@ -275,17 +275,6 @@ fun FlashcardDeckScreen(
                             modifier = Modifier.graphicsLayer { rotationY = 180f },
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Surface(shape = Shapes.pill, color = Color.White.copy(alpha = 0.22f)) {
-                                Text(
-                                    text = "TRANSLATION",
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                            Spacer(Modifier.height(Space.md))
                             Text(
                                 text = currentCard.tagalog,
                                 style = MaterialTheme.typography.headlineMedium,

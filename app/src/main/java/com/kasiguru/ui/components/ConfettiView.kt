@@ -25,7 +25,7 @@ fun ConfettiView(
     modifier: Modifier = Modifier,
     particleCount: Int = 45
 ) {
-    val colors = listOf(HeroCardStart, VocabCardStart, StoriesCardStart, MiniGamesCardStart, QuestsCardStart, XpGold)
+    val colors = listOf(CanopyTop, Gold, CanopyTop, Coral, Gold, Gold)
     
     val particles = remember {
         List(particleCount) {

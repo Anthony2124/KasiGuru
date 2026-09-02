@@ -19,6 +19,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -72,13 +74,13 @@ fun GameOverView(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
-                        .background(XpGold.copy(alpha = 0.18f)),
+                        .background(Gold.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.CupBold),
                         contentDescription = "Complete",
-                        tint = XpGoldDark,
+                        tint = GoldDeep,
                         modifier = Modifier.size(38.dp)
                     )
                 }
@@ -89,7 +91,7 @@ fun GameOverView(
                     text = "Challenge Complete!",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = CoastInk,
+                    color = Ink,
                     letterSpacing = (-0.3).sp
                 )
 
@@ -98,7 +100,7 @@ fun GameOverView(
                 Text(
                     text = "Score: $score / $total",
                     style = MaterialTheme.typography.titleMedium,
-                    color = CoastInk,
+                    color = Ink,
                     fontWeight = FontWeight.ExtraBold
                 )
 
@@ -113,7 +115,7 @@ fun GameOverView(
                         Icon(
                             painter = painterResource(id = Iconsax.StarBold),
                             contentDescription = null,
-                            tint = if (isEarned) XpGold else Color(0xFFE2E8F0),
+                            tint = if (isEarned) Gold else Color(0xFFE2E8F0),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -123,7 +125,7 @@ fun GameOverView(
 
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = XpGold.copy(alpha = 0.15f)
+                    color = Gold.copy(alpha = 0.15f)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -133,13 +135,13 @@ fun GameOverView(
                         Icon(
                             painter = painterResource(id = Iconsax.FlashBold),
                             contentDescription = null,
-                            tint = XpGoldDark,
+                            tint = GoldDeep,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = "+$xpEarned XP Earned!",
                             style = MaterialTheme.typography.labelMedium,
-                            color = XpGoldDark,
+                            color = GoldDeep,
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
@@ -154,7 +156,7 @@ fun GameOverView(
                         text = "Review Results",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
+                        color = Ink,
                         modifier = Modifier.align(Alignment.Start)
                     )
 
@@ -173,13 +175,13 @@ fun GameOverView(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (onNextLevel != null) {
-                    CoastPillButton(
+                    ClayButton(
                         label = "Next Level",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onNextLevel()
                         },
-                        variant = PillVariant.Purple
+                        tone = ClayButtonTone.Primary
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -194,17 +196,17 @@ fun GameOverView(
                             text = "Return to Games Hub",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = CoastMuted
+                            color = Muted
                         )
                     }
                 } else {
-                    CoastPillButton(
+                    ClayButton(
                         label = "Return to Games Hub",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFinish()
                         },
-                        variant = PillVariant.Purple
+                        tone = ClayButtonTone.Primary
                     )
                 }
             }
@@ -242,14 +244,14 @@ private fun ReviewItemCard(index: Int, item: GameReviewItem) {
                     text = "$index. ${item.prompt}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = CoastInk
+                    color = Ink
                 )
 
                 if (!item.subPrompt.isNullOrBlank()) {
                     Text(
                         text = item.subPrompt,
                         style = MaterialTheme.typography.bodySmall,
-                        color = CoastMuted
+                        color = Muted
                     )
                 }
 

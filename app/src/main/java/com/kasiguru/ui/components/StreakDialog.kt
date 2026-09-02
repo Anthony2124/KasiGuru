@@ -54,13 +54,13 @@ fun StreakDialog(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
-                        .background(StreakEmber.copy(alpha = 0.15f)),
+                        .background(Coral.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.FlashBold),
                         contentDescription = "Streak Flame",
-                        tint = StreakEmber,
+                        tint = Coral,
                         modifier = Modifier.size(40.dp)
                     )
                 }
@@ -71,7 +71,7 @@ fun StreakDialog(
                     text = "$currentStreak Day Streak",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    color = CoastInk,
+                    color = Ink,
                     letterSpacing = (-0.3).sp
                 )
 
@@ -80,7 +80,7 @@ fun StreakDialog(
                 Text(
                     text = if (streakQuota.isQuotaMet) "Your streak is active for today! Keep up the momentum!" else "Complete your daily goals below to activate today's streak!",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = CoastMuted,
+                    color = Muted,
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp
                 )
@@ -110,7 +110,7 @@ fun StreakDialog(
                                 text = "Daily Requirements",
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = CoastInk
+                                color = Ink
                             )
                             Surface(
                                 shape = RoundedCornerShape(999.dp),
@@ -140,13 +140,13 @@ fun StreakDialog(
                                     modifier = Modifier
                                         .size(28.dp)
                                         .clip(CircleShape)
-                                        .background(if (streakQuota.reviewCompleted) Green.copy(alpha = 0.15f) else CoastMuted.copy(alpha = 0.12f)),
+                                        .background(if (streakQuota.reviewCompleted) Green.copy(alpha = 0.15f) else Muted.copy(alpha = 0.12f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = if (streakQuota.reviewCompleted) Iconsax.TickCircleBold else Iconsax.Refresh),
                                         contentDescription = null,
-                                        tint = if (streakQuota.reviewCompleted) Green else CoastMuted,
+                                        tint = if (streakQuota.reviewCompleted) Green else Muted,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -155,12 +155,12 @@ fun StreakDialog(
                                         text = "Complete Review Words",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = CoastInk
+                                        color = Ink
                                     )
                                     Text(
                                         text = if (streakQuota.reviewCompleted) "Daily review completed" else "Finish flashcard review deck",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = CoastMuted
+                                        color = Muted
                                     )
                                 }
                             }
@@ -168,7 +168,7 @@ fun StreakDialog(
                                 text = if (streakQuota.reviewCompleted) "Done" else "Pending",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (streakQuota.reviewCompleted) Green else CoastMuted
+                                color = if (streakQuota.reviewCompleted) Green else Muted
                             )
                         }
 
@@ -188,13 +188,13 @@ fun StreakDialog(
                                     modifier = Modifier
                                         .size(28.dp)
                                         .clip(CircleShape)
-                                        .background(if (isGamesDone) Green.copy(alpha = 0.15f) else PlayPurpleStart.copy(alpha = 0.12f)),
+                                        .background(if (isGamesDone) Green.copy(alpha = 0.15f) else CanopyTop.copy(alpha = 0.12f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = if (isGamesDone) Iconsax.TickCircleBold else Iconsax.PlayCircle),
                                         contentDescription = null,
-                                        tint = if (isGamesDone) Green else PlayPurpleStart,
+                                        tint = if (isGamesDone) Green else CanopyTop,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -203,12 +203,12 @@ fun StreakDialog(
                                         text = "Play 3 Mini Game Levels",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = CoastInk
+                                        color = Ink
                                     )
                                     Text(
                                         text = if (isGamesDone) "3 of 3 levels played" else "$gamesClamped of ${streakQuota.requiredGames} played today",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = CoastMuted
+                                        color = Muted
                                     )
                                 }
                             }
@@ -216,7 +216,7 @@ fun StreakDialog(
                                 text = "$gamesClamped/${streakQuota.requiredGames}",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isGamesDone) Green else PlayPurpleStart
+                                color = if (isGamesDone) Green else CanopyTop
                             )
                         }
                     }
@@ -243,7 +243,7 @@ fun StreakDialog(
                                 text = dayName,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (dayNumber == todayDayOfWeek) CoastInk else CoastMuted
+                                color = if (dayNumber == todayDayOfWeek) Ink else Muted
                             )
                             Box(
                                 modifier = Modifier
@@ -251,8 +251,8 @@ fun StreakDialog(
                                     .clip(CircleShape)
                                     .background(
                                         when {
-                                            isActiveStreak -> StreakEmber
-                                            dayNumber == todayDayOfWeek -> PlayPurpleStart
+                                            isActiveStreak -> Coral
+                                            dayNumber == todayDayOfWeek -> CanopyTop
                                             else -> MaterialTheme.colorScheme.surfaceVariant
                                         }
                                     ),
@@ -269,7 +269,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.TickSquare),
                                         contentDescription = null,
-                                        tint = CoastMuted,
+                                        tint = Muted,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -283,7 +283,7 @@ fun StreakDialog(
                 // Longest Streak Info Pill
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = XpGold.copy(alpha = 0.15f)
+                    color = Gold.copy(alpha = 0.15f)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -293,14 +293,14 @@ fun StreakDialog(
                         Icon(
                             painter = painterResource(id = Iconsax.CupBold),
                             contentDescription = null,
-                            tint = XpGoldDark,
+                            tint = GoldDeep,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = "Longest Streak: $longestStreak Days",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = XpGoldDark
+                            color = GoldDeep
                         )
                     }
                 }

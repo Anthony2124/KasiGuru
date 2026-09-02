@@ -30,7 +30,7 @@ fun KasiGuruProgressBar(
     modifier: Modifier = Modifier,
     height: Dp = 12.dp,
     backgroundColor: Color = TrackNeutral,
-    gradientColors: List<Color> = listOf(Primary, PrimaryContainer),
+    gradientColors: List<Color> = listOf(Violet, VioletTint),
     showLabel: Boolean = false,
     animated: Boolean = true
 ) {

@@ -59,7 +59,7 @@ fun AspectBuilderGameScreen(
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
-                accentColor = HeroCardStart,
+                accentColor = CanopyTop,
                 onBack = onNavigateBack,
                 modifier = Modifier,
                 title = "Aspect Builder is coming soon",
@@ -100,8 +100,8 @@ fun AspectBuilderGameScreen(
                     label = "Question $qIndex/${uiState.totalQuestions}",
                     progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
                     score = uiState.score,
-                    accentStart = HeroCardStart,
-                    accentEnd = HeroCardEnd
+                    accentStart = CanopyTop,
+                    accentEnd = CanopyBottom
                 )
 
                 // Prompt Card

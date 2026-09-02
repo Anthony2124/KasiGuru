@@ -60,7 +60,7 @@ fun ReverseMatchGameScreen(
 
         if (uiState.isUnavailable) {
             GameUnavailableState(
-                accentColor = VocabCardEnd,
+                accentColor = GoldDeep,
                 onBack = onNavigateBack,
                 modifier = Modifier
             )
@@ -98,8 +98,8 @@ fun ReverseMatchGameScreen(
                     label = "Round $roundNum/${uiState.totalQuestions}",
                     progress = roundNum.toFloat() / uiState.totalQuestions.toFloat(),
                     score = uiState.score,
-                    accentStart = VocabCardStart,
-                    accentEnd = VocabCardEnd
+                    accentStart = Gold,
+                    accentEnd = GoldDeep
                 )
 
                 // Prompt Card: Tagalog meaning, English hint

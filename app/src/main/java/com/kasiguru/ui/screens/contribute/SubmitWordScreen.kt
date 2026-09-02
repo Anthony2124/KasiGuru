@@ -528,11 +528,14 @@ private fun DuplicateNotice(matches: List<DuplicateMatch>) {
 
             if (similar.isNotEmpty()) {
                 Spacer(Modifier.height(Space.sm))
+                // Not an eyebrow: with no heading above them, this line is the only thing telling
+                // the two groups of matches apart. Kept as information, in sentence case at a
+                // readable size rather than shouted in 10sp caps.
                 Text(
-                    text = if (exact.isEmpty()) "CLOSE SPELLINGS" else "ALSO CLOSE IN SPELLING",
+                    text = if (exact.isEmpty()) "Close spellings" else "Also close in spelling",
                     color = Amber,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 similar.forEach { match ->
                     Spacer(Modifier.height(Space.xs))

@@ -34,8 +34,8 @@ import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.KasiguraninHeadword
-import com.kasiguru.ui.theme.MiniGamesCardEnd
-import com.kasiguru.ui.theme.MiniGamesCardStart
+import com.kasiguru.ui.theme.CoralDeep
+import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
@@ -80,7 +80,7 @@ fun RecallGameScreen(
 
             if (uiState.isUnavailable) {
                 GameUnavailableState(
-                    accentColor = MiniGamesCardEnd,
+                    accentColor = CoralDeep,
                     onBack = onNavigateBack,
                     modifier = Modifier
                 )
@@ -117,8 +117,8 @@ fun RecallGameScreen(
                         label = "Word $questionNum/${uiState.totalQuestions}",
                         progress = questionNum.toFloat() / uiState.totalQuestions.toFloat(),
                         score = uiState.score,
-                        accentStart = MiniGamesCardStart,
-                        accentEnd = MiniGamesCardEnd
+                        accentStart = Coral,
+                        accentEnd = CoralDeep
                     )
 
                     Spacer(Modifier.height(Space.lg))

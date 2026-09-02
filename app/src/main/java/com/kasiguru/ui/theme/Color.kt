@@ -197,79 +197,30 @@ val TierSilverDeep = Color(0xFF8E96AA)
 val TierBronze = Color(0xFFD08A55)
 val TierBronzeDeep = Color(0xFF9C5F2E)
 
-// ═════════════════════════════════════════════════════════════════════════════
-// Compatibility layer.
-// Screens not yet rebuilt still reference the old names. Each is remapped onto a Clay Canopy token
-// so nothing renders off-system in the meantime, and each disappears as its screen is rewritten.
-// Do not reference anything below this line in new code.
-// ═════════════════════════════════════════════════════════════════════════════
-val Primary: Color @Composable get() = Violet
-val PrimaryDark: Color @Composable get() = VioletDeep
-val PrimaryContainer: Color @Composable get() = VioletTint
-val Secondary = Gold
-val SecondaryDark = GoldDeep
-val SecondaryContainer = Color(0xFFFFE8BF)
-val Accent = Coral
-val AccentContainer = Color(0xFFFFDCCB)
+// ══════════════════════════════════════════════════════════════════════════════
+// Off-palette colours.
+//
+// What is left of a compatibility layer that once carried sixty-three aliases for two superseded
+// systems, "Casiguran Coast" and an earlier "Play" palette. Every alias that merely renamed a
+// current token has been migrated to that token and deleted; these three are the ones with no
+// canonical equivalent, so deleting them would have changed what the app looks like.
+//
+// They are not shims. They are real colours the palette never documented, and each needs a design
+// decision rather than a rename: fold it into the palette properly, or replace it with a token that
+// is already there. Until then they stay here, named honestly, so the palette above can be read as
+// complete and this list can be read as the exception.
+// ══════════════════════════════════════════════════════════════════════════════
 
-val LightThemeBackground: Color @Composable get() = Ground
-val LightSurfaceCard: Color @Composable get() = Surface
-val LightSurfaceVariant: Color @Composable get() = SurfaceSunken
-val SandBg: Color @Composable get() = Ground
-
-val StaticInk: Color @Composable get() = Ink
-val StaticMuted: Color @Composable get() = Muted
-val CoastInk: Color @Composable get() = Ink
-val CoastMuted: Color @Composable get() = Muted
-val CoastFaint: Color @Composable get() = Faint
-val TextWhite  = Color(0xFFFFFFFF)
-val TextDark: Color @Composable get() = Ink
-
-val PlayPurpleStart: Color @Composable get() = CanopyTop
-val PlayPurpleEnd   = Color(0xFF8C7CF0)
-val PlayGoldStart   = Gold
-val PlayGoldEnd     = GoldDeep
-val PlayPinkStart   = Coral
-val PlayPinkEnd     = CoralDeep
-val PlayChipTranslucent: Color @Composable get() = ChipOnCanopy
-val PlayNavDark: Color @Composable get() = CanopyBottom
-
-val XpGold       = Gold
-val XpGoldDark   = GoldDeep
-val StreakEmber  = Coral
-val StreakOrange = Coral
-val VocabSea        = Color(0xFF0F9C91)
-val VocabSeaDark    = Color(0xFF0A756E)
-val GamesCoral      = Coral
-val GamesCoralLight = Color(0xFFFFA47C)
-val StoriesDusk: Color @Composable get() = CanopyTop
-val SkyReview       = Color(0xFF2C7BE5)
-val SkyReviewDark   = Color(0xFF1E5DB8)
-
-val Success: Color @Composable get() = Green
+/**
+ * Amber for a state the learner should attend to but has not broken: guest progress at risk, a
+ * flashcard deck about to be reset. Static rather than theme-reactive, and its exact value carries a
+ * measured contrast note at FlashcardDeckScreen's call site, so do not swap it for [Amber] without
+ * re-measuring.
+ */
 val Warning = Color(0xFF9A6700)
-val Error: Color @Composable get() = Red
-val Info    = Color(0xFF2C7BE5)
-val ErrorLight: Color @Composable get() = RedTint
 
-val BadgeGold   = TierGold
-val BadgeSilver = TierSilver
-val BadgeBronze = TierBronze
-val BadgeWood        = Color(0xFFA87954)
-val BadgeEmerald: Color @Composable get() = Green
-val BadgeCrownPurple: Color @Composable get() = Violet
+/** The Review activity's accent on Learn's Today's Path. The one blue in the app. */
+val SkyReview = Color(0xFF2C7BE5)
 
-val HeroCardStart: Color @Composable get() = CanopyTop
-val HeroCardEnd: Color @Composable get() = CanopyBottom
-val VocabCardStart = Gold
-val VocabCardEnd   = GoldDeep
-val StoriesCardStart: Color @Composable get() = CanopyTop
-val StoriesCardEnd: Color @Composable get() = CanopyBottom
-val MiniGamesCardStart = Coral
-val MiniGamesCardEnd   = CoralDeep
-val QuestsCardStart = Gold
-val QuestsCardEnd   = GoldDeep
-val NudgeBurple: Color @Composable get() = Violet
-val NudgeBink   = Coral
-val NudgeFlame  = Coral
-val NudgeGold   = Gold
+/** The dictionary's accent in the word detail sheet. The one teal in the app. */
+val VocabSea = Color(0xFF0F9C91)

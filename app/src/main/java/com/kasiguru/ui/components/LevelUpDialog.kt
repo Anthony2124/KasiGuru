@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.util.gamification.LevelInfo
@@ -52,38 +54,12 @@ fun LevelUpDialog(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = XpGold.copy(alpha = 0.18f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = Iconsax.CupBold),
-                                contentDescription = null,
-                                tint = XpGoldDark,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "LEVEL UP",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = XpGoldDark,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
 
                     Box(
                         modifier = Modifier
                             .size(76.dp)
                             .clip(CircleShape)
-                            .background(PlayPurpleStart.copy(alpha = 0.15f)),
+                            .background(CanopyTop.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         MascotOwlSlot(size = 54.dp)
@@ -95,7 +71,7 @@ fun LevelUpDialog(
                         text = "Level ${newLevelInfo.level}",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = CoastInk,
+                        color = Ink,
                         letterSpacing = (-0.3).sp
                     )
 
@@ -103,7 +79,7 @@ fun LevelUpDialog(
                         text = newLevelInfo.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = PlayPurpleStart
+                        color = CanopyTop
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -117,17 +93,9 @@ fun LevelUpDialog(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "NEW UNLOCKS",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = CoastInk,
-                                letterSpacing = 0.5.sp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
                                 text = "You unlocked new mini-game modes & badges!",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CoastMuted,
+                                color = Muted,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 18.sp
                             )
@@ -136,13 +104,13 @@ fun LevelUpDialog(
 
                     Spacer(modifier = Modifier.height(22.dp))
 
-                    CoastPillButton(
+                    ClayButton(
                         label = "Awesome!",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onDismiss()
                         },
-                        variant = PillVariant.Purple
+                        tone = ClayButtonTone.Primary
                     )
                 }
             }
