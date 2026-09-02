@@ -159,10 +159,18 @@ jobs:
         working-directory: admin-website/download
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          # Not secret — just identifiers for which Vercel project this is, the same
-          # ones `vercel link` already wrote locally to the (gitignored) .vercel/project.json.
-          VERCEL_ORG_ID: team_IxFhfgNVYDhTPMcSQOATHnKj
-          VERCEL_PROJECT_ID: prj_CBpxCvC3RwQryEkGMIYhAm2DJOWi
+          # Not secret — just identifiers for which Vercel project this is, the same ones
+          # `vercel link` already wrote locally to the (gitignored) .vercel/project.json.
+          #
+          # Overridable by secrets, with today's values as the fallback, because KasiGuru's
+          # hosting is moving to Anthony's Vercel account and both identifiers change with it.
+          # Hard-coded, that transfer silently breaks the next tagged release: this step would
+          # deploy to a project the token can no longer reach, and the workflow's own guard would
+          # then refuse to announce the release. Set VERCEL_ORG_ID and VERCEL_PROJECT_ID as repo
+          # secrets when the projects move, alongside the new VERCEL_TOKEN, and nothing here has
+          # to be edited.
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_IxFhfgNVYDhTPMcSQOATHnKj' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_CBpxCvC3RwQryEkGMIYhAm2DJOWi' }}
         run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
 
       # Confirms the deploy actually serves this build before Firestore is told it exists.
