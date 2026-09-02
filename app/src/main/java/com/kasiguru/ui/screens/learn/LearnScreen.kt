@@ -56,7 +56,6 @@ import com.kasiguru.ui.components.clay.DayState
 import com.kasiguru.ui.components.clay.ProgressRing
 import com.kasiguru.ui.components.clay.SectionCaption
 import com.kasiguru.ui.components.clay.SectionHeading
-import com.kasiguru.ui.components.clay.SkillTile
 import com.kasiguru.ui.components.clay.TimelineItem
 import com.kasiguru.ui.components.clay.WeekStrip
 import com.kasiguru.ui.theme.Coral
@@ -70,6 +69,7 @@ import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.SkyReview
+import com.kasiguru.ui.screens.learn.tree.learningPath
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.WidthClass
@@ -437,54 +437,19 @@ fun LearnScreen(
 
                 item {
                     Spacer(Modifier.height(Space.lg))
-                    SectionHeading(text = "Your skills")
-                    SectionCaption(text = "Everything here is measured from real progress")
-                    Spacer(Modifier.height(Space.md))
+                    SectionHeading(text = "Your path")
+                    SectionCaption(text = "A journey through Casiguran, one section at a time")
                 }
 
-                // Two rows of two on a compact width; one row of four at medium/expanded, where
-                // two rows would leave the tiles looking stretched rather than filling the space.
-                // A LazyVerticalGrid inside a LazyColumn is not allowed, and four fixed tiles do
-                // not need one.
-                item {
-                    val skills = uiState.skills
-                    val columns = if (widthClass == WidthClass.COMPACT) 2 else 4
-                    Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                        skills.chunked(columns).forEach { pair ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                                pair.forEach { skill ->
-                                    SkillTile(
-                                        title = skill.name,
-                                        percent = skill.percent,
-                                        accent = skill.kind.accent(),
-                                        onClick = {
-                                            when (skill.kind) {
-                                                ActivityKind.Lesson -> onOpenDictionary()
-                                                ActivityKind.Review -> onOpenReview()
-                                                ActivityKind.Game -> onOpenGames()
-                                                ActivityKind.Story -> onOpenStories()
-                                            }
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        artwork = {
-                                            // Adrian supplies the real illustrations. Until they
-                                            // land the tile shows its own icon, so an empty slot
-                                            // reads as restraint rather than as a missing asset.
-                                            Icon(
-                                                painter = painterResource(id = skill.kind.iconRes()),
-                                                contentDescription = null,
-                                                tint = skill.kind.accent(),
-                                                modifier = Modifier.size(22.dp).align(Alignment.Center)
-                                            )
-                                        }
-                                    )
-                                }
-                                // Keeps a lone tile at half width rather than letting it stretch.
-                                if (pair.size == 1) Spacer(Modifier.weight(1f))
-                            }
-                        }
-                    }
-                }
+                // The learning tree, in place of the four skill tiles that used to sit here. The
+                // tiles were a summary of progress; this is the thing progress is made of, and it
+                // answers "what do I do next" with a single node instead of a percentage.
+                learningPath(
+                    sections = uiState.tree,
+                    onOpenLesson = onStartLesson,
+                    onOpenMastery = { /* Section mastery test: wired with the test itself. */ }
+                )
+
             }
         }
     )

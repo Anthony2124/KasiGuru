@@ -36,7 +36,26 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 27
+        const val CURRENT_VERSION = 30
+    }
+
+    /**
+     * The ceiling above is only useful if it actually tracks the database.
+     *
+     * It did not: it sat at 27 while [KasiGuruDatabase] moved to 29, so two whole migrations shipped
+     * without this suite ever running them. The comment above claimed a stale ceiling would "fail
+     * loudly", but nothing compared the two numbers, so it failed silently instead. Now it is
+     * checked, and the annotation is the source of truth.
+     */
+    @Test
+    fun testCeilingTracksTheDatabaseVersion() {
+        val declared = KasiGuruDatabase::class.java
+            .getAnnotation(androidx.room.Database::class.java)!!
+            .version
+        check(declared == CURRENT_VERSION) {
+            "KasiGuruDatabase is at v$declared but this suite only migrates to v$CURRENT_VERSION - " +
+                "bump CURRENT_VERSION and add a case for the new migration."
+        }
     }
 
     private val testDbName = "migration-test"
@@ -161,6 +180,42 @@ class MigrationTest {
             check(cursor.getInt(3) == 30) { "intervalDays was not preserved" }
             check(cursor.getString(4) == "2026-09-20") { "nextReviewDate was not preserved" }
             check(cursor.getInt(5) == 1) { "isLearned was not preserved" }
+        }
+        db.close()
+    }
+
+    /**
+     * v29 -> v30 adds `vocabulary.theme`, the learning tree's second home for a word.
+     *
+     * The whole design of the tree rests on this being additive: an existing corpus reads as
+     * untagged and keeps being taught under its dictionary category, so the tree works on the day it
+     * ships and gets richer as words are tagged. If this migration ever dropped a category, or a
+     * learner's review state, the tree would silently re-teach words they already know.
+     */
+    @Test
+    fun migrateV29ToV30AddsThemeWithoutDisturbingTheCorpusOrReviewHistory() {
+        helper.createDatabase(testDbName, 29).apply {
+            execSQL(
+                "INSERT INTO vocabulary " +
+                    "(id, kasiguranin, tagalog, english, rootForm, category, partOfSpeech, " +
+                    " isLearned, timesReviewed, easinessFactor, intervalDays, nextReviewDate, lapses) " +
+                    "VALUES (1, 'dalaga', 'dalaga', 'young woman', 'dalaga', 'Family & People', " +
+                    " 'Noun', 1, 4, 2.5, 12, '2026-09-20', 0)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(testDbName, CURRENT_VERSION, true, *KasiGuruMigrations.ALL)
+
+        db.query(
+            "SELECT theme, category, isLearned, timesReviewed, intervalDays FROM vocabulary WHERE id = 1"
+        ).use { cursor ->
+            check(cursor.moveToFirst()) { "seeded vocabulary row was lost during migration" }
+            check(cursor.getString(0) == "") { "theme should default to blank, meaning untagged" }
+            check(cursor.getString(1) == "Family & People") { "category was not preserved" }
+            check(cursor.getInt(2) == 1) { "isLearned was not preserved" }
+            check(cursor.getInt(3) == 4) { "timesReviewed was not preserved" }
+            check(cursor.getInt(4) == 12) { "intervalDays was not preserved" }
         }
         db.close()
     }

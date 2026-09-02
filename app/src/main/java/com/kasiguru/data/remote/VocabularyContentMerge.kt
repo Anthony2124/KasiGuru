@@ -40,6 +40,7 @@ object VocabularyContentMerge {
             perfectiveForm = cloud.perfectiveForm.ifBlank { local.perfectiveForm },
             contemplativeForm = cloud.contemplativeForm.ifBlank { local.contemplativeForm },
             category = cloud.category.ifBlank { local.category },
+            theme = cloud.theme.ifBlank { local.theme },
             partOfSpeech = cloud.partOfSpeech.ifBlank { local.partOfSpeech },
             meaningEnglish = cloud.meaningEnglish.ifBlank { local.meaningEnglish },
             meaningTagalog = cloud.meaningTagalog.ifBlank { local.meaningTagalog },
@@ -76,6 +77,13 @@ object VocabularyContentMerge {
             perfectiveForm = cloud.perfectiveForm,
             contemplativeForm = cloud.contemplativeForm,
             category = cloud.category,
+            // Guarded, not copied, for the same reason as the meanings below: every vocabulary
+            // document written before the theme field existed omits it, and so does the word-
+            // submission approval path, so an unguarded copy would strip a learning-tree tag off
+            // every word the next time anything reconciled. Re-tagging still propagates, because
+            // that writes a non-blank value; only clearing a tag has to be done in the portal and
+            // does not travel. Give every writer a theme key and this can become a plain copy.
+            theme = cloud.theme.ifBlank { local.theme },
             partOfSpeech = cloud.partOfSpeech,
             // Guarded rather than copied, because the seeder ships 394 definitions and Firestore
             // carries none until backfill_meanings.js has run: an unguarded copy would wipe every

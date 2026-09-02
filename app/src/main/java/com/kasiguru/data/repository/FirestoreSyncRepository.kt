@@ -43,6 +43,9 @@ class FirestoreSyncRepository @Inject constructor(
                 val partOfSpeech = (data["partOfSpeech"] ?: data["part_of_speech"] ?: "").toString().trim()
                 val meaningEnglish = (data["meaningEnglish"] ?: "").toString().trim()
                 val meaningTagalog = (data["meaningTagalog"] ?: "").toString().trim()
+                // Which learning-tree section claims the word. Set in the admin portal and absent
+                // from every document written before it existed, so blank is the normal case.
+                val theme = (data["theme"] ?: "").toString().trim()
 
                 // Async Room upsert, matched on the sense rather than the headword: keyed on the
                 // headword alone this merged the cloud's `lima` (five) onto the device's `lima`
@@ -66,7 +69,8 @@ class FirestoreSyncRepository @Inject constructor(
                             exampleSentence = if (exampleSentence == "nan") "" else exampleSentence,
                             partOfSpeech = if (partOfSpeech == "nan") "" else partOfSpeech,
                             meaningEnglish = if (meaningEnglish == "nan") "" else meaningEnglish,
-                            meaningTagalog = if (meaningTagalog == "nan") "" else meaningTagalog
+                            meaningTagalog = if (meaningTagalog == "nan") "" else meaningTagalog,
+                            theme = if (theme == "nan") "" else theme
                         )
                         val vocabEntity = VocabularyContentMerge.mergeNonBlank(existing, fromDoc)
 

@@ -51,8 +51,21 @@ object KasiGuruMigrations {
         MIGRATION_25_26,
         MIGRATION_26_27,
         MIGRATION_27_28,
-        MIGRATION_28_29
+        MIGRATION_28_29,
+        MIGRATION_29_30
         )
+    }
+
+    // -- v29 -> v30 -----------------------------------------------------------
+    // vocabulary gains `theme`: which learning-tree section claims the word.
+    //
+    // Additive and defaulted, so every existing row reads as untagged and falls through to its
+    // category-backed section. The tree therefore works on an un-migrated corpus and gets richer as
+    // words are tagged through the admin portal, with no release in between.
+    private val MIGRATION_29_30 = object : Migration(29, 30) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `theme` TEXT NOT NULL DEFAULT ''")
+        }
     }
 
     // -- v28 -> v29 -----------------------------------------------------------

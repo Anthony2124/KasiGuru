@@ -15,6 +15,7 @@ import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.SubmissionRepository
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.LessonRepository
+import com.kasiguru.domain.lesson.TreeSection
 import com.kasiguru.data.repository.StoryRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
@@ -51,8 +52,6 @@ data class PathActivity(
 )
 
 /** One of the four things a KasiGuru learner can actually make measurable progress in. */
-data class Skill(val name: String, val percent: Int, val kind: ActivityKind)
-
 data class DayActivity(val label: String, val dayOfMonth: Int, val practised: Boolean, val isToday: Boolean)
 
 /**
@@ -69,7 +68,14 @@ data class LearnUiState(
     val progress: UserProgressEntity = UserProgressEntity(),
     val week: List<DayActivity> = emptyList(),
     val activities: List<PathActivity> = emptyList(),
-    val skills: List<Skill> = emptyList(),
+    /**
+     * The learning tree: the corpus arranged as a journey, with this learner's state applied.
+     *
+     * Re-derived on every [refreshPlan] rather than observed, for the same reason Today's Path is:
+     * the work that changes it happens on the lesson player, and a stale path would show a node the
+     * learner has just finished as still waiting for them.
+     */
+    val tree: List<TreeSection> = emptyList(),
     /** Every story, locked ones included - the lock is the motivation, so the shelf shows them. */
     val stories: List<StoryEntity> = emptyList(),
     val updateRelease: AppReleaseDto? = null,
@@ -187,7 +193,7 @@ class LearnViewModel @Inject constructor(
                     progress = progress,
                     week = buildWeek(progress),
                     activities = buildActivities(due),
-                    skills = buildSkills(progress),
+                    tree = lessonRepository.treeSections(),
                     stories = storyRepository.getAllStories().first(),
                     wordsDue = due.size,
                     isLoading = false
@@ -296,37 +302,6 @@ class LearnViewModel @Inject constructor(
         return activities
     }
 
-    /**
-     * Skill percentages, each backed by a number the app really tracks.
-     *
-     * The reference designs show Reading / Listening / Speaking / Conversation, but KasiGuru cannot
-     * measure speaking, so inventing that tile would be a lie drawn on a dashboard. These four map to
-     * data that exists.
-     */
-    private suspend fun buildSkills(progress: UserProgressEntity): List<Skill> {
-        val allWords = vocabularyRepository.getAllVocabularyOnce()
-        val learned = allWords.count { it.isLearned }
-        val vocabularyPercent = percent(learned, allWords.size)
-
-        val units = lessonRepository.units()
-        val lessonPercent = percent(
-            units.sumOf { it.completedLessons },
-            units.sumOf { it.lessonCount }
-        )
-
-        val stars = gameLevelRepository.getTotalStars()
-        // Six games x 30 levels x 3 stars is the ceiling the level seeder creates.
-        val gamePercent = percent(stars, 6 * 30 * 3)
-
-        return listOf(
-            Skill("Vocabulary", vocabularyPercent, ActivityKind.Lesson),
-            Skill("Lessons", lessonPercent, ActivityKind.Review),
-            Skill("Games", gamePercent, ActivityKind.Game)
-            // Stories used to be a fourth tile here. The shelf below Today's Path carries them with
-            // covers, page counts and lock state, which is strictly more than a percentage.
-        )
-    }
-
     private fun percent(part: Int, whole: Int): Int =
         if (whole <= 0) 0 else ((part.toFloat() / whole) * 100).toInt().coerceIn(0, 100)
 
@@ -378,7 +353,7 @@ class LearnViewModel @Inject constructor(
                         it.copy(
                             wordsDue = 0,
                             activities = emptyList(),
-                            skills = emptyList(),
+                            tree = emptyList(),
                             streakQuota = com.kasiguru.data.repository.DailyStreakQuota(),
                             isLoading = true
                         )

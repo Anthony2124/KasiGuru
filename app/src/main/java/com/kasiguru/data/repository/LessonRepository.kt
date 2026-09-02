@@ -6,9 +6,16 @@ import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.domain.lesson.ExerciseGenerator
 import com.kasiguru.domain.lesson.Interleaving
+import com.kasiguru.domain.lesson.LearningTree
 import com.kasiguru.domain.lesson.LessonPlan
 import com.kasiguru.domain.lesson.LessonRef
 import com.kasiguru.domain.lesson.LessonUnit
+import com.kasiguru.domain.lesson.Mastery
+import com.kasiguru.domain.lesson.SectionDefinition
+import com.kasiguru.domain.lesson.SectionSource
+import com.kasiguru.domain.lesson.TreeNode
+import com.kasiguru.domain.lesson.TreeNodeState
+import com.kasiguru.domain.lesson.TreeSection
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,31 +39,130 @@ class LessonRepository @Inject constructor(
 
     fun observeCompletedCount(): Flow<Int> = lessonDao.observeCompletedCount()
 
-    /**
-     * Every unit with its completion state, ordered by the corpus's own category order so the
-     * sequence matches what the Dictionary shows.
-     */
+    /** Every unit with its completion state, in the order the tree walks them. */
     suspend fun units(): List<LessonUnit> {
-        val wordsByCategory = allWordsByCategory()
+        val wordsByUnit = allWordsByUnit()
         val completed = lessonDao.getAllOnce()
             .filter { it.isComplete }
             .groupingBy { it.unitId }
             .eachCount()
 
-        return wordsByCategory.map { (category, words) ->
+        return wordsByUnit.map { (unitId, words) ->
             LessonUnit(
-                id = category,
-                title = category,
+                id = unitId,
+                title = unitId,
                 wordCount = words.size,
                 lessonCount = LessonPlan.lessonCountFor(words.size),
-                completedLessons = completed[category] ?: 0
+                completedLessons = completed[unitId] ?: 0
             )
         }
     }
 
-    /** The words belonging to one lesson, in corpus order so lessons stay stable between runs. */
+    /**
+     * The tree: every viable section, with the learner's state applied.
+     *
+     * Sections are assembled, never stored. A section's lesson nodes are its theme's [LessonPlan]
+     * slices, so a node's identity is the same `(unitId, lessonIndex)` the lesson player and
+     * [LessonProgressEntity] already use - the tree is a route through existing lessons, not a
+     * parallel set of them.
+     *
+     * Sections below [LearningTree.MIN_WORDS_FOR_SECTION] are dropped rather than shown as a stub the
+     * learner cannot finish. Their words are not lost with them: [allWordsByUnit] hands anything a
+     * shipping section does not claim to the closing remainder section.
+     */
+    suspend fun treeSections(): List<TreeSection> {
+        val wordsByUnit = allWordsByUnit()
+        val progress = lessonDao.getAllOnce().associateBy { it.unitId to it.lessonIndex }
+
+        var previousOpensNext = true
+        return LearningTree.sections.mapNotNull { definition ->
+            val units = unitIdsFor(definition)
+            val words = units.flatMap { wordsByUnit[it].orEmpty() }
+            if (!LearningTree.isViable(words.size)) return@mapNotNull null
+
+            val isUnlocked = previousOpensNext
+            val nodes = buildNodes(definition, units, wordsByUnit, progress, isUnlocked)
+            val earnedXp = units.sumOf { unitId ->
+                progress.values
+                    .filter { it.unitId == unitId && it.isComplete }
+                    .sumOf { LessonPlan.xpFor(it.bestAccuracy) }
+            }
+
+            val section = TreeSection(
+                definition = definition,
+                wordCount = words.size,
+                nodes = nodes,
+                earnedXp = earnedXp,
+                requiredXp = LearningTree.requiredXpToOpenNext(nodes.count { it.node is TreeNode.Lesson }),
+                isUnlocked = isUnlocked
+            )
+            // A locked section cannot open the one after it, or a single unreachable section would
+            // cascade the whole rest of the tree open.
+            previousOpensNext = isUnlocked && section.opensNext
+            section
+        }
+    }
+
+    /**
+     * One section's nodes: a lesson per [LessonPlan] slice, then the section's mastery test.
+     *
+     * `isCurrent` marks the first unfinished lesson, which is the single node the path should draw
+     * the eye to. The mastery test unlocks only once every lesson in the section is complete - it
+     * tests the section, so it has nothing to test until the section has been taught.
+     */
+    private fun buildNodes(
+        definition: SectionDefinition,
+        units: List<String>,
+        wordsByUnit: Map<String, List<VocabularyEntity>>,
+        progress: Map<Pair<String, Int>, LessonProgressEntity>,
+        isSectionUnlocked: Boolean
+    ): List<TreeNodeState> {
+        val nodes = mutableListOf<TreeNodeState>()
+        var currentMarked = false
+        var position = 0
+
+        units.forEach { unitId ->
+            val unitWords = wordsByUnit[unitId].orEmpty()
+            for (index in 0 until LessonPlan.lessonCountFor(unitWords.size)) {
+                val ref = LessonRef(unitId, index)
+                val isComplete = progress[unitId to index]?.isComplete == true
+                val range = LessonPlan.wordIndicesFor(index, unitWords.size)
+                val lessonWords = if (range.isEmpty()) emptyList() else unitWords.slice(range)
+                val isCurrent = isSectionUnlocked && !isComplete && !currentMarked
+                if (isCurrent) currentMarked = true
+
+                position++
+                nodes += TreeNodeState(
+                    node = TreeNode.Lesson(ref, position),
+                    title = "Lesson $position",
+                    mastery = LearningTree.nodeMastery(isComplete, lessonWords),
+                    isUnlocked = isSectionUnlocked,
+                    isCurrent = isCurrent
+                )
+            }
+        }
+
+        val allLessonsDone = nodes.isNotEmpty() && nodes.all { it.mastery >= Mastery.FAMILIAR }
+        nodes += TreeNodeState(
+            node = TreeNode.MasteryTest(definition.id),
+            title = "Mastery",
+            mastery = Mastery.NONE,
+            isUnlocked = isSectionUnlocked && allLessonsDone,
+            isCurrent = isSectionUnlocked && allLessonsDone && !currentMarked
+        )
+        return nodes
+    }
+
+    /** The unit key a section draws on: its theme, or the closing remainder. */
+    private fun unitIdsFor(definition: SectionDefinition): List<String> =
+        when (val source = definition.source) {
+            is SectionSource.Theme -> listOf(themeUnitId(source.tag))
+            SectionSource.Remainder -> listOf(REMAINDER_UNIT_ID)
+        }
+
+    /** The words belonging to one lesson, in teaching order so lessons stay stable between runs. */
     suspend fun wordsFor(ref: LessonRef): List<VocabularyEntity> {
-        val words = allWordsByCategory()[ref.unitId] ?: return emptyList()
+        val words = allWordsByUnit()[ref.unitId] ?: return emptyList()
         val range = LessonPlan.wordIndicesFor(ref.lessonIndex, words.size)
         if (range.isEmpty()) return emptyList()
         return words.slice(range)
@@ -91,7 +197,7 @@ class LessonRepository @Inject constructor(
         val completed = lessonDao.getAllOnce().filter { it.isComplete }
             .map { it.unitId to it.lessonIndex }.toSet()
 
-        allWordsByCategory().forEach { (category, words) ->
+        allWordsByUnit().forEach { (category, words) ->
             val lessonCount = LessonPlan.lessonCountFor(words.size)
             for (index in 0 until lessonCount) {
                 if (category to index !in completed) return LessonRef(category, index)
@@ -146,8 +252,63 @@ class LessonRepository @Inject constructor(
      * Read fresh on each call rather than cached: the realtime Firestore listener can add words while
      * the app is open, and a stale unit list would silently hide the new content.
      */
-    private suspend fun allWordsByCategory(): Map<String, List<VocabularyEntity>> =
-        vocabularyRepository.getAllVocabularyOnce()
-            .filter { it.category.isNotBlank() }
-            .groupBy { it.category }
+    /**
+     * The corpus grouped by the unit key a lesson is recorded against.
+     *
+     * Grouped by `theme`, not by the dictionary's `category`. The categories are loose import bins -
+     * "Greetings & Essentials" holds *adëg* (behind) and *at* (and) - so a section built on them
+     * teaches something other than its title, which is the defect this grouping exists to fix.
+     *
+     * Two kinds of word end up in the remainder unit, and both would otherwise be unreachable: one
+     * that carries no theme, and one whose theme is too thin to ship as a section. A word the corpus
+     * records but no section teaches has been quietly hidden from the learner, which is the opposite
+     * of what an app for an endangered language is for.
+     *
+     * Read fresh on each call rather than cached: the realtime Firestore listener can add words while
+     * the app is open, and a stale unit list would silently hide the new content.
+     */
+    private suspend fun allWordsByUnit(): Map<String, List<VocabularyEntity>> {
+        val all = vocabularyRepository.getAllVocabularyOnce()
+
+        val byTheme = all
+            .filter { it.theme.isNotBlank() }
+            .groupBy { it.theme.trim().lowercase() }
+
+        val shippingThemes = LearningTree.sections
+            .mapNotNull { (it.source as? SectionSource.Theme)?.tag }
+            .filter { LearningTree.isViable(byTheme[it].orEmpty().size) }
+            .toSet()
+
+        val units = mutableMapOf<String, List<VocabularyEntity>>()
+        shippingThemes.forEach { tag ->
+            units[themeUnitId(tag)] = LearningTree.teachingOrder(byTheme[tag].orEmpty())
+        }
+
+        val remainder = all.filter {
+            val tag = it.theme.trim().lowercase()
+            tag.isBlank() || tag !in shippingThemes
+        }
+        units[REMAINDER_UNIT_ID] = LearningTree.teachingOrder(remainder)
+
+        return units
+    }
+
+    companion object {
+        /**
+         * Unit key for a theme-sourced section.
+         *
+         * Namespaced so a theme can never collide with a dictionary category, and stable, because it
+         * is written into `lesson_progress.unitId` the moment a learner finishes one of its lessons.
+         * Renaming a theme tag after the fact would orphan that history.
+         */
+        fun themeUnitId(tag: String): String = "theme:${tag.trim().lowercase()}"
+
+        /**
+         * Unit key for the closing section.
+         *
+         * Namespaced like a theme so the two can never collide, and fixed, because it is written
+         * into `lesson_progress.unitId` the moment a learner finishes one of its lessons.
+         */
+        const val REMAINDER_UNIT_ID = "theme:_remainder"
+    }
 }

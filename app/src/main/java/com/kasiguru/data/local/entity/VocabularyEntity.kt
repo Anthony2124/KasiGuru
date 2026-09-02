@@ -38,6 +38,20 @@ data class VocabularyEntity(
     val contemplativeForm: String = "",
     val category: String = "",
     /**
+     * Which learning-tree section claims this word, or blank.
+     *
+     * A second, journey-facing home that leaves [category] alone: the dictionary keeps filing words
+     * the way a dictionary should, while the tree can group them by situation. It exists because the
+     * situational sections cannot be derived from category at all - the travel words are scattered
+     * across all thirteen categories, and so are the coastal ones.
+     *
+     * A tagged word is claimed by its theme section and leaves the category section, so tagging moves
+     * a word rather than duplicating it. Blank means untagged, which is the overwhelming majority and
+     * simply falls through to the category-backed section.
+     */
+    @ColumnInfo(defaultValue = "")
+    val theme: String = "",
+    /**
      * Noun, Verb, Adjective and so on, as chosen in the admin portal.
      *
      * Collected in three places long before it was stored in any of them: the admin add/edit forms,
