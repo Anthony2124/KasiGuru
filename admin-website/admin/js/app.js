@@ -594,6 +594,10 @@ function filteredVocabulary() {
   const rawSearch = document.getElementById('search-vocab-input')?.value || '';
   const term = rawSearch.trim().toLowerCase();
   const cat = document.getElementById('filter-vocab-category')?.value || '';
+  // The two gaps worth working through in bulk. A sentence unlocks the lesson system's
+  // build-the-sentence exercise for that word; a theme decides which section of the learning path
+  // teaches it. Both are filled in the edit form below, so this filter is how you find the queue.
+  const gap = document.getElementById('filter-vocab-gap')?.value || '';
 
   return vocabulary.filter(item => {
     const matchesSearch = !term ||
@@ -603,7 +607,11 @@ function filteredVocabulary() {
     const matchesCat = !cat || item.category === cat;
     const matchesLetter = !vocabLetter ||
       (item.kasiguranin || '').trim().charAt(0).toUpperCase() === vocabLetter;
-    return matchesSearch && matchesCat && matchesLetter;
+    const matchesGap =
+      !gap ||
+      (gap === 'sentence' && !(item.exampleSentence || '').trim()) ||
+      (gap === 'theme' && !(item.theme || '').trim());
+    return matchesSearch && matchesCat && matchesLetter && matchesGap;
   });
 }
 
@@ -2383,6 +2391,7 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-english').value = item.english || '';
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-part-of-speech').value = item.partOfSpeech || '';
+  document.getElementById('edit-input-theme').value = item.theme || '';
   document.getElementById('edit-input-meaning-en').value = item.meaningEnglish || '';
   document.getElementById('edit-input-meaning-tl').value = item.meaningTagalog || '';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
@@ -2653,6 +2662,7 @@ function initFormListeners() {
       const tagalog = document.getElementById('input-tagalog').value.trim();
       const english = document.getElementById('input-english').value.trim();
       const category = document.getElementById('input-category').value;
+      const theme = document.getElementById('input-theme').value;
       const partOfSpeech = document.getElementById('input-part-of-speech').value;
       const ipa = document.getElementById('input-ipa').value.trim();
       const neutral = document.getElementById('input-neutral').value.trim();
@@ -2683,6 +2693,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
+          theme: theme || "",
           partOfSpeech: partOfSpeech || null,
           meaningEnglish: meaningEnglish || null,
           meaningTagalog: meaningTagalog || null,
@@ -2720,6 +2731,7 @@ function initFormListeners() {
       const tagalog = document.getElementById('edit-input-tagalog').value.trim();
       const english = document.getElementById('edit-input-english').value.trim();
       const category = document.getElementById('edit-input-category').value;
+      const theme = document.getElementById('edit-input-theme').value;
       const partOfSpeech = document.getElementById('edit-input-part-of-speech').value;
       const ipa = document.getElementById('edit-input-ipa').value.trim();
       const neutral = document.getElementById('edit-input-neutral').value.trim();
@@ -2741,6 +2753,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
+          theme: theme || "",
           partOfSpeech: partOfSpeech || null,
           meaningEnglish: meaningEnglish || null,
           meaningTagalog: meaningTagalog || null,
@@ -2815,6 +2828,14 @@ function initFormListeners() {
         vocabLetter = '';
         renderVocabularyTable();
       }, 300);
+    });
+  }
+
+  const gapFilter = document.getElementById('filter-vocab-gap');
+  if (gapFilter) {
+    gapFilter.addEventListener('change', () => {
+      vocabPage = 1;
+      renderVocabularyTable();
     });
   }
 
@@ -3324,4 +3345,4 @@ function initBackupRestore() {
   }
 }
 
-
+

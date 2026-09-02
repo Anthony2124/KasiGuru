@@ -39,8 +39,14 @@ holds product truth and the mode assignments. Read both first — they are short
 
 ## Where things stand
 
-The last release shipped is **v1.8.0 (versionCode 9)**, live on all three surfaces. HEAD is `89cf9d8`,
-which landed a large part of this redesign. The working tree is clean.
+The last release shipped is **v1.10.0 (versionCode 11)**. HEAD is `cae88a1`.
+
+**The admin portal is not up to date on the web.** Nothing deploys automatically — no Vercel project has
+a Git link, so the site only changes when a person runs `vercel --prod`. The last production deploy of the
+`admin` project was 2026-08-25, so the bug-report moderation UI, the user email and registration-date
+columns, and the account-deduplication fixes are all in the repo and not on the live site. Check before
+assuming: `curl -s https://kasiguru-admin.vercel.app/js/app.js | wc -l` against
+`wc -l admin-website/admin/js/app.js`.
 
 ### Already done and committed
 
@@ -56,16 +62,17 @@ which landed a large part of this redesign. The working tree is clean.
 
 ### Outstanding — your work
 
-Verify each before starting; the counts below were measured at handoff.
+Re-measured 2026-09-02. Items 1, 2, 3 and 6 from the previous handoff are **done** — the users table is
+6 columns and its `colspan="6"` is correct, only 3 `alert`/`confirm` call sites remain (down from 26, and
+the survivors are in comments), 22 `data-label` attributes are in place, and no `--play-` / `--vocab-` /
+`--coast-` / `--sand-bg` aliases remain. What is genuinely still open:
 
 | # | Task | Evidence it is still open |
 |---|---|---|
-| 1 | **`colspan="6"` on a 7-column table** | 2 hits in `admin/js/app.js` |
-| 2 | **Replace 26 `alert()`/`confirm()` sites** with the toast + confirm-dialog in `components.css`. DESIGN.md: "snackbars for transient feedback; dialogs only for decisions that must interrupt". One `confirm()` builds a multi-hundred-character string containing ✅⚪❌ — emoji-as-interface, explicitly refused | 26 hits |
-| 3 | **Mobile table→card transform.** Plan is one markup source: keep `<table>`, transform with CSS below 760px, and give every `<td>` a `data-label`. **Critical:** `display:block` on table elements silently drops the implicit `table`/`row`/`cell` ARIA roles — add them explicitly or the pattern is inaccessible on exactly the devices it is built for | 0 `data-label` attributes |
-| 4 | **CI staleness check** for the shared layer — `node scripts/sync-web-shared.js --check` as a job in `.github/workflows/ci.yml`. Without it the two copies drift silently, which is how the stylesheets became 80%-identical-but-different in the first place | 0 references in ci.yml |
-| 5 | **Finish the release pipeline** (see below) | `release.yml` has 1 marker; needs verification end to end |
-| 6 | Legacy token aliases still in markup — migrate references, then delete the alias block at the foot of `tokens.css` | grep for `--play-`, `--vocab-`, `--coast-`, `--sand-bg` |
+| 1 | **The shared CSS layer is gone.** The previous handoff asked for a CI staleness check on `scripts/sync-web-shared.js`; that script and `admin-website/shared/` were both deleted by `db24c80` ("Revert the web redesign and its follow-up fixes"). `admin/css/styles.css` and `download/css/styles.css` are now independent copies again with nothing keeping them in step. Decide deliberately: reinstate a shared layer plus its check, or accept the two surfaces as separate and say so here | `scripts/sync-web-shared.js` does not exist |
+| 2 | **Old release downloads all 404.** `functions/backfill_app_releases.js` was written to fix this and has never been run: 7 of 9 `app_releases` docs still carry versioned `apkUrl`s, 6 have empty `releaseNotes`, 5 have no `releasedAt`. `kasiguru-v1.1.0.apk` and `kasiguru-v1.6.0.apk` both return 404 live; only `kasiguru-latest.apk` returns 200 | run the script with `--apply` |
+| 3 | **Two legacy Vercel projects publish a stale admin portal to the public.** `kasi-guru-iota.vercel.app/admin/js/app.js` and `admin-website-sandy.vercel.app/admin/js/app.js` both return 200; the first is a 1,235-line copy against the current 3,326. `.vercelignore` now stops a *future* root deploy carrying them, but the already-published deployments have to be taken down in the Vercel dashboard | both URLs return 200 |
+| 4 | **Report photos have no client-side size budget.** `firestore.rules:315` caps `photoBase64` at 700,000 chars; `ImageCompressor.kt` compresses to 1024px at quality 75 and never checks the result, so an oversized photo fails as a generic permission error | no size check in `ImageCompressor.kt` |
 
 ## The release pipeline — the one thing that can break distribution
 
@@ -147,10 +154,21 @@ with XP above zero, so **the UI must say so**, or someone will read it as a full
 
 ## Shipping
 
+**Hosting belongs to Anthony Cordial**, matching the GitHub repository (`github.com/Anthony2124/KasiGuru`).
+Anthony runs the deploys; do not deploy from Adrian's account, and do not treat a logged-in Vercel CLI
+session as permission to. `scripts/deploy_web.ps1` now reads the owning account slug from `$env:VERCEL_SCOPE`
+rather than hard-coding one, and refuses to deploy a folder whose `.vercel/project.json` names a different
+project than the one that entry is for.
+
 `git push origin main` runs CI, which deploys `firestore.rules`. Pushing a `vX.Y.Z` tag runs the release
 workflow: builds and signs the APK, deploys the download site to Vercel, writes the `app_releases` doc.
 **The admin panel is a separate Vercel project that the workflow does not touch** — deploy it with
-`npx vercel deploy --prod --yes` from `admin-website/admin/`.
+`npx vercel deploy --prod --yes` from `admin-website/admin/`, and only from that folder: the repo root's
+`admin-website/` is a public placeholder, not a second copy of the portal.
+
+If the Vercel projects move between accounts, `release.yml` breaks silently: lines 164-165 hard-code
+`VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`, and `secrets.VERCEL_TOKEN` belongs to whoever issued it. Update
+all three, or the next tagged release fails at the deploy step and the workflow then refuses to announce it.
 
 **Main is shared.** Another contributor pushes to it regularly; three commits landed mid-session once. Always
 `git fetch` and rebase rather than force-pushing, and verify both sides survived a clean rebase — a clean

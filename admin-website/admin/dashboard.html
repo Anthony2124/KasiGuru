@@ -395,6 +395,12 @@
             <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
             <option value="General">General</option>
           </select>
+          <label class="sr-only" for="filter-vocab-gap">Show only</label>
+          <select id="filter-vocab-gap" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All words</option>
+            <option value="sentence">Needs an example sentence</option>
+            <option value="theme">Needs a learning-tree theme</option>
+          </select>
           <label class="sr-only" for="sort-vocab">Sort by</label>
           <select id="sort-vocab" class="form-control" style="width:auto; min-width:160px;">
             <option value="kasiguranin">A&ndash;Z by headword</option>
@@ -655,6 +661,16 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Learning-tree theme</label>
+          <select id="input-theme" class="form-control">
+            <option value="">None &mdash; taught under its category</option>
+            <option value="paglalakbay">Paglalakbay &mdash; travel, directions, transport</option>
+            <option value="baybayin">Buhay sa Baybayin &mdash; coastal life and fishing</option>
+          </select>
+          <p class="form-hint">A themed word leaves its category section and is taught in the theme's
+          section instead. A theme needs 35 words before its section appears in the app.</p>
+        </div>
+        <div class="form-group">
           <label>Part of Speech</label>
           <select id="input-part-of-speech" class="form-control">
             <option value="">(Select Part of Speech)</option>
@@ -828,6 +844,16 @@
 
             <option value="General">General</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Learning-tree theme</label>
+          <select id="edit-input-theme" class="form-control">
+            <option value="">None &mdash; taught under its category</option>
+            <option value="paglalakbay">Paglalakbay &mdash; travel, directions, transport</option>
+            <option value="baybayin">Buhay sa Baybayin &mdash; coastal life and fishing</option>
+          </select>
+          <p class="form-hint">A themed word leaves its category section and is taught in the theme's
+          section instead. A theme needs 35 words before its section appears in the app.</p>
         </div>
         <div class="form-group">
           <label>Part of Speech</label>
