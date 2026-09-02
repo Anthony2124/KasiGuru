@@ -1,5 +1,6 @@
 package com.kasiguru.data.local
 
+import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -44,14 +45,23 @@ class MigrationTest {
      *
      * It did not: it sat at 27 while [KasiGuruDatabase] moved to 29, so two whole migrations shipped
      * without this suite ever running them. The comment above claimed a stale ceiling would "fail
-     * loudly", but nothing compared the two numbers, so it failed silently instead. Now it is
-     * checked, and the annotation is the source of truth.
+     * loudly", but nothing compared the two numbers, so it failed silently instead.
+     *
+     * The version is read from a real database rather than from the `@Database` annotation: Room
+     * compiles that annotation with CLASS retention, so it is not there to reflect over at runtime
+     * and the first version of this test failed on the emulator against a null. What SQLite reports
+     * having opened is the number that actually governs migrations anyway.
      */
     @Test
     fun testCeilingTracksTheDatabaseVersion() {
-        val declared = KasiGuruDatabase::class.java
-            .getAnnotation(androidx.room.Database::class.java)!!
-            .version
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.inMemoryDatabaseBuilder(context, KasiGuruDatabase::class.java).build()
+        val declared = try {
+            database.openHelper.readableDatabase.version
+        } finally {
+            database.close()
+        }
+
         check(declared == CURRENT_VERSION) {
             "KasiGuruDatabase is at v$declared but this suite only migrates to v$CURRENT_VERSION - " +
                 "bump CURRENT_VERSION and add a case for the new migration."
