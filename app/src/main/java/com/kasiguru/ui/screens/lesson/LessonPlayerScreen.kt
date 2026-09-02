@@ -178,52 +178,88 @@ fun LessonPlayerScreen(
         }
 
         // ── Question ──
+        //
+        // Two regions, not one scrolling stack. The prompt takes the free space and centres itself
+        // in it; the answers sit directly above the Check button. Previously everything was
+        // top-anchored inside one scroller, which left roughly half the screen empty below the last
+        // option on every ordinary question, and put the thing the learner reaches for -- the
+        // options -- as far from the thumb as it could be.
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
                 .padding(horizontal = Space.gutter)
         ) {
-            Spacer(Modifier.height(Space.md))
-            Text(
-                text = exercise.instruction,
-                style = MaterialTheme.typography.titleMedium,
-                color = Muted
-            )
-            Spacer(Modifier.height(Space.md))
-
-            ExercisePrompt(
-                exercise = exercise,
-                onPlayAudio = {
-                    audioPlayer.playAudio(exercise.word.kasiguranin, exercise.word.audioFileName)
-                }
-            )
-
-            Spacer(Modifier.height(Space.lg))
-
-            if (exercise is Exercise.TypeWord) {
-                RecallAnswerField(
-                    value = uiState.selectedOption.orEmpty(),
-                    enabled = !uiState.hasAnswered,
-                    onValueChange = viewModel::updateTypedAnswer,
-                    onSubmit = viewModel::check
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = exercise.instruction,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Muted
                 )
-            } else {
-                exercise.options.forEach { option ->
-                    AnswerOption(
-                        label = option,
-                        isSelected = uiState.selectedOption == option,
-                        isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
-                        isRevealedWrong = uiState.hasAnswered &&
-                            uiState.selectedOption == option &&
-                            option != exercise.answer,
-                        enabled = !uiState.hasAnswered,
-                        onClick = { viewModel.selectOption(option) }
-                    )
-                    Spacer(Modifier.height(Space.sm))
-                }
+                Spacer(Modifier.height(Space.md))
+
+                ExercisePrompt(
+                    exercise = exercise,
+                    onPlayAudio = {
+                        audioPlayer.playAudio(exercise.word.kasiguranin, exercise.word.audioFileName)
+                    }
+                )
             }
+
             Spacer(Modifier.height(Space.lg))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                if (exercise is Exercise.TypeWord) {
+                    RecallAnswerField(
+                        value = uiState.selectedOption.orEmpty(),
+                        enabled = !uiState.hasAnswered,
+                        onValueChange = viewModel::updateTypedAnswer,
+                        onSubmit = viewModel::check
+                    )
+                } else if (exercise is Exercise.SentenceBuild) {
+                    SentenceBuilder(
+                        exercise = exercise,
+                        enabled = !uiState.hasAnswered,
+                        // The built sentence lands in the same slot a chosen option would, so
+                        // checking and grading need no special case for this shape.
+                        onSentenceChanged = viewModel::updateTypedAnswer
+                    )
+                } else if (exercise is Exercise.MatchPairs) {
+                    MatchPairsBoard(
+                        exercise = exercise,
+                        enabled = !uiState.hasAnswered,
+                        // Self-grading: finishing the board *is* the correct answer, so it fills the
+                        // answer slot with what the grader expects rather than inventing a second
+                        // path through checking.
+                        onSolved = { viewModel.selectOption(exercise.answer) }
+                    )
+                } else {
+                    exercise.options.forEach { option ->
+                        AnswerOption(
+                            label = option,
+                            isSelected = uiState.selectedOption == option,
+                            isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
+                            isRevealedWrong = uiState.hasAnswered &&
+                                uiState.selectedOption == option &&
+                                option != exercise.answer,
+                            enabled = !uiState.hasAnswered,
+                            onClick = { viewModel.selectOption(option) }
+                        )
+                        Spacer(Modifier.height(Space.sm))
+                    }
+                }
+                Spacer(Modifier.height(Space.sm))
+            }
         }
 
         // ── Action area: the check button, replaced by feedback once answered ──
@@ -361,6 +397,20 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
                     color = Muted
                 )
             }
+        }
+
+        is Exercise.SentenceBuild -> {
+            // The meaning is the prompt; the Kasiguranin is what the learner assembles below.
+            Text(
+                text = exercise.translation,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Ink
+            )
+        }
+
+        is Exercise.MatchPairs -> {
+            // No prompt: the two columns below are the whole exercise, and a line of text above them
+            // would only repeat the instruction already shown.
         }
 
         is Exercise.ChooseAspect -> {

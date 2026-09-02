@@ -124,4 +124,52 @@ sealed interface Exercise {
         override val options: List<String> = emptyList()
         override val instruction: String get() = "Type this in Kasiguranin"
     }
+
+    /**
+     * Build the sentence: the meaning is given, and the learner taps Kasiguranin word chips into
+     * order.
+     *
+     * The shape a learner recognises from Duolingo, and the only one in this lesson system that
+     * tests word order rather than vocabulary alone. It is built strictly from a sentence somebody
+     * actually recorded on the word ([VocabularyEntity.exampleSentence]) - never from a sentence
+     * assembled here. Inventing a Kasiguranin sentence to fill a lesson would put fabricated data
+     * into the record this app exists to preserve.
+     *
+     * Because of that rule this exercise is dormant on a corpus without sentences, and switches on
+     * for a word the moment one is authored in the admin portal. [options] is the shuffled chip
+     * bank: the sentence's own words plus a few plausible intruders.
+     */
+    data class SentenceBuild(
+        override val word: VocabularyEntity,
+        override val options: List<String>,
+        /** The sentence, exactly as recorded, which is what a correct arrangement must equal. */
+        override val answer: String,
+        /** The meaning shown as the prompt - the recorded translation of [answer]. */
+        val translation: String,
+        /** The words of [answer] in their correct order, for grading and for the reveal. */
+        val correctOrder: List<String>
+    ) : Exercise {
+        override val instruction: String get() = "Build the sentence"
+    }
+
+    /**
+     * Match each Kasiguranin word to its meaning.
+     *
+     * The one new shape that needs no data beyond a headword and a gloss, which is why it matters
+     * here: with no audio in the corpus, five example sentences and eight sets of aspect forms,
+     * every other alternative shape stays dormant and a lesson falls through to multiple choice and
+     * typing on repeat. This one always fires.
+     *
+     * [pairs] is authored order - Kasiguranin to meaning; the screen shuffles each column
+     * independently. [word] is the first pair's word, carried only to satisfy the interface and to
+     * give the completion screen something to list.
+     */
+    data class MatchPairs(
+        override val word: VocabularyEntity,
+        val pairs: List<Pair<VocabularyEntity, String>>
+    ) : Exercise {
+        override val options: List<String> = pairs.map { it.second }
+        override val answer: String = pairs.joinToString("|") { "${it.first.kasiguranin}=${it.second}" }
+        override val instruction: String get() = "Match each word to its meaning"
+    }
 }

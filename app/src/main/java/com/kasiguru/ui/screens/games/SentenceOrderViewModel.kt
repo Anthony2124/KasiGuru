@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.kasiguru.domain.lesson.SentenceBank
 import com.kasiguru.ui.components.GameReviewItem
 
 data class SentenceQuestion(
@@ -73,83 +74,15 @@ class SentenceOrderViewModel @Inject constructor(
                 questionsCount = levelInfo.questionsCount
             }
 
-            val rawSentences = listOf(
+            // One copy of these sentences, shared with the lesson system. They used to be a literal
+            // here, which meant the lessons could not reach the only running Kasiguranin the app has.
+            val rawSentences = SentenceBank.sentences.map { authored ->
                 SentenceQuestion(
-                    englishSentence = "Good day to you all!",
-                    correctKasiguraninWords = listOf("Magandang", "aldaw", "ha", "iyo", "'ttanan!"),
-                    shuffledWords = listOf("Magandang", "aldaw", "ha", "iyo", "'ttanan!").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "How is your life?",
-                    correctKasiguraninWords = listOf("Kumusta", "na", "ing", "buhay", "mo?"),
-                    shuffledWords = listOf("Kumusta", "na", "ing", "buhay", "mo?").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "The child stood up.",
-                    correctKasiguraninWords = listOf("Tinumáknəg", "ang", "anák."),
-                    shuffledWords = listOf("Tinumáknəg", "ang", "anák.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "I will leave tomorrow.",
-                    correctKasiguraninWords = listOf("Maglákad", "akú", "niiláw."),
-                    shuffledWords = listOf("Maglákad", "akú", "niiláw.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "Kendy's child is a girl.",
-                    correctKasiguraninWords = listOf("Bəbbi", "ang", "anak", "ni", "Kendy."),
-                    shuffledWords = listOf("Bəbbi", "ang", "anak", "ni", "Kendy.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "The wind was strong last night.",
-                    correctKasiguraninWords = listOf("Mabigsək", "ang", "parəs", "kagibi."),
-                    shuffledWords = listOf("Mabigsək", "ang", "parəs", "kagibi.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "Let's go, let's eat!",
-                    correctKasiguraninWords = listOf("Karon", "na,", "kuman", "tayo!"),
-                    shuffledWords = listOf("Karon", "na,", "kuman", "tayo!").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "There is a person in the house.",
-                    correctKasiguraninWords = listOf("Me", "tólay", "sa", "baláy."),
-                    shuffledWords = listOf("Me", "tólay", "sa", "baláy.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "There is no person in the house.",
-                    correctKasiguraninWords = listOf("Walang", "tólay", "sa", "baláy."),
-                    shuffledWords = listOf("Walang", "tólay", "sa", "baláy.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "It is raining now.",
-                    correctKasiguraninWords = listOf("Mag-uden", "ngayon."),
-                    shuffledWords = listOf("Mag-uden", "ngayon.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "The river is deep.",
-                    correctKasiguraninWords = listOf("Madisalad", "ang", "bulos."),
-                    shuffledWords = listOf("Madisalad", "ang", "bulos.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "Where are you going?",
-                    correctKasiguraninWords = listOf("Saan", "ka", "umangay?"),
-                    shuffledWords = listOf("Saan", "ka", "umangay?").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "I bought a mango.",
-                    correctKasiguraninWords = listOf("Namúgtong", "ang", "anák", "ng", "mángga."),
-                    shuffledWords = listOf("Namúgtong", "ang", "anák", "ng", "mángga.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "I already ate rice.",
-                    correctKasiguraninWords = listOf("Kinumán", "na", "ku'", "ng", "kanən."),
-                    shuffledWords = listOf("Kinumán", "na", "ku'", "ng", "kanən.").shuffled()
-                ),
-                SentenceQuestion(
-                    englishSentence = "Our viand is chicken.",
-                    correctKasiguraninWords = listOf("Ang", "sida", "me", "ay", "manok."),
-                    shuffledWords = listOf("Ang", "sida", "me", "ay", "manok.").shuffled()
+                    englishSentence = authored.english,
+                    correctKasiguraninWords = authored.kasiguranin,
+                    shuffledWords = authored.kasiguranin.shuffled()
                 )
-            )
+            }
 
             val allVocabRaw = vocabularyRepository.getAllVocabulary().first()
             val allVocab = if (allVocabRaw.isNotEmpty()) allVocabRaw else emptyList<VocabularyEntity>()

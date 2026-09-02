@@ -40,6 +40,13 @@ class ExerciseGenerator @Inject constructor(
             exercises += primaryExercise(word, preferKasiguraninPrompt = index % 2 == 0)
         }
 
+        // One matching round per lesson, placed after the introductions so every word in it has been
+        // met once. It is here because it is the only alternative shape this corpus can always feed:
+        // with no audio, five example sentences and eight sets of aspect forms in 1,246 words, every
+        // other second-pass shape is usually dormant and a run collapses into multiple choice and
+        // typing on repeat.
+        matchPairsExercise(words)?.let { exercises += it }
+
         // Second pass: revisit words in a different shape until the run is long enough.
         var cursor = 0
         while (exercises.size < LessonPlan.EXERCISES_PER_LESSON && cursor < words.size) {
@@ -95,6 +102,10 @@ class ExerciseGenerator @Inject constructor(
             )
         }
 
+        if (Exercise.SentenceBuild::class !in alreadyUsed) {
+            sentenceBuildExercise(word)?.let { return it }
+        }
+
         val sentence = word.exampleSentence
         if (sentence.isNotBlank() &&
             sentence.contains(word.kasiguranin, ignoreCase = true) &&
@@ -143,6 +154,67 @@ class ExerciseGenerator @Inject constructor(
     }
 
     /**
+     * A matching round over the lesson's own words, or null when too few of them carry a usable gloss.
+     *
+     * Capped at [MATCH_PAIRS_SIZE]: more than that and the exercise stops being a quick check and
+     * becomes a puzzle, on a screen that has to fit two columns side by side on a small phone.
+     */
+    private fun matchPairsExercise(words: List<VocabularyEntity>): Exercise? {
+        val usable = words
+            .filter { RecallPrompt.meaningFor(it.kasiguranin, it.tagalog, it.english) != null }
+            .distinctBy { it.kasiguranin.lowercase() }
+            .take(MATCH_PAIRS_SIZE)
+        if (usable.size < MATCH_PAIRS_MIN) return null
+
+        return Exercise.MatchPairs(
+            word = usable.first(),
+            pairs = usable.map { it to meaningOf(it) }
+        )
+    }
+
+    /**
+     * Build-the-sentence for [word], or null when the word carries no sentence worth building.
+     *
+     * The sentence has to be one somebody recorded on the word. Assembling one here from the
+     * corpus - stringing plausible words together - would put invented Kasiguranin in front of a
+     * learner and, worse, into a thesis artifact, so a word without a real sentence simply does not
+     * get this shape. Today that is nearly the whole corpus; each sentence authored in the admin
+     * portal switches it on for one more word, with no app release.
+     */
+    private suspend fun sentenceBuildExercise(word: VocabularyEntity): Exercise? {
+        // Two sources, both authored by people: a sentence recorded on this very word, and the
+        // project's own sentence bank. Never a sentence assembled here out of corpus words -- that
+        // would be invented Kasiguranin in front of a learner and inside a thesis artifact.
+        val ownSentence = word.exampleSentence.trim()
+        val (parts, translation) = when {
+            ownSentence.isNotBlank() && word.exampleTranslation.isNotBlank() ->
+                ownSentence.split(" ").filter { it.isNotBlank() } to word.exampleTranslation
+
+            else -> {
+                val authored = SentenceBank.sentenceUsing(word.kasiguranin) ?: return null
+                authored.kasiguranin to authored.english
+            }
+        }
+        if (parts.size < SENTENCE_BUILD_MIN_WORDS) return null
+
+        // Intruder chips, so arranging the bank is a choice rather than a sort. Drawn from the same
+        // distractor pool the multiple choice uses, and never a word already in the sentence.
+        val inSentence = parts.map { SentenceBank.normalise(it) }.toSet()
+        val intruders = vocabularyRepository.getDistractorsForWord(word, count = 4)
+            .map { it.kasiguranin }
+            .filter { it.isNotBlank() && SentenceBank.normalise(it) !in inSentence }
+            .take(SENTENCE_BUILD_INTRUDERS)
+
+        return Exercise.SentenceBuild(
+            word = word,
+            options = (parts + intruders).shuffled(),
+            answer = parts.joinToString(" "),
+            translation = translation,
+            correctOrder = parts
+        )
+    }
+
+    /**
      * How a word's meaning is written on an answer button.
      *
      * Tagalog and English together, because the audience reads both and one gloss alone is often
@@ -178,5 +250,17 @@ class ExerciseGenerator @Inject constructor(
 
     private companion object {
         const val BLANK = "____"
+
+        /** Pairs in one matching round. */
+        const val MATCH_PAIRS_SIZE = 4
+
+        /** Below this a matching round is not worth the screen it takes. */
+        const val MATCH_PAIRS_MIN = 3
+
+        /** A "sentence" of two words is a phrase; arranging it tests nothing. */
+        const val SENTENCE_BUILD_MIN_WORDS = 3
+
+        /** Wrong chips offered beside the sentence's own words. */
+        const val SENTENCE_BUILD_INTRUDERS = 2
     }
 }
