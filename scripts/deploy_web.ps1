@@ -32,6 +32,16 @@ if (-not $env:VERCEL_TOKEN) {
     }
 }
 
+# The Vercel account these projects belong to. KasiGuru's hosting is owned by Anthony
+# Cordial, matching the GitHub repository (github.com/Anthony2124/KasiGuru), so the scope
+# is no longer hard-coded to whoever wrote this script. Set VERCEL_SCOPE to the owning
+# account's slug; it is only consulted when a folder has no .vercel link yet.
+$scope = $env:VERCEL_SCOPE
+if (-not $scope) {
+    Write-Error "VERCEL_SCOPE is not set. Set it to the Vercel account slug that owns the KasiGuru projects before deploying, e.g. `$env:VERCEL_SCOPE = 'anthonys-account-slug'."
+    exit 1
+}
+
 $projects = @(
     @{ Name = 'kasi-guru (root placeholder)'; Path = Join-Path $repoRoot 'admin-website';       VercelProject = 'kasi-guru' },
     @{ Name = 'admin (login + dashboard)';    Path = Join-Path $repoRoot 'admin-website\admin';   VercelProject = 'admin' },
@@ -57,9 +67,22 @@ foreach ($p in $projects) {
 
     Push-Location $p.Path
     try {
-        # Ensure the folder is linked to the right Vercel project (auto-link on fresh clones).
-        if (-not (Test-Path (Join-Path $p.Path '.vercel'))) {
-            vercel link --yes --project $p.VercelProject --scope 'adrianmiras13-8259s-projects'
+        # Ensure the folder is linked to the right Vercel project.
+        #
+        # This used to link only when .vercel was ABSENT, which meant a wrong existing
+        # link was trusted forever. That is exactly what happened: admin-website/ ended
+        # up linked to the `admin` project — the live admin portal — so a run of this
+        # script would have deployed the root placeholder over the real dashboard before
+        # deploying the real one. Only the loop order hid it. Verify the link instead of
+        # assuming it, and refuse on mismatch rather than deploying to the wrong project.
+        $linkFile = Join-Path $p.Path '.vercel\project.json'
+        if (Test-Path $linkFile) {
+            $linked = (Get-Content $linkFile -Raw | ConvertFrom-Json).projectName
+            if ($linked -ne $p.VercelProject) {
+                throw "$($p.Path) is linked to Vercel project '$linked' but this entry deploys '$($p.VercelProject)'. Delete that folder's .vercel directory and re-run so it links correctly; deploying now would overwrite the wrong site."
+            }
+        } else {
+            vercel link --yes --project $p.VercelProject --scope $scope
             if ($LASTEXITCODE -ne 0) { throw "vercel link failed in $($p.Path)" }
         }
 
@@ -73,7 +96,7 @@ foreach ($p in $projects) {
 
 Write-Host ""
 if ($anyFailed) {
-    Write-Host "Done, but at least one portal was skipped or failed — see above." -ForegroundColor Yellow
+    Write-Host "Done, but at least one portal was skipped or failed - see above." -ForegroundColor Yellow
     exit 1
 } else {
     Write-Host "All three portals deployed." -ForegroundColor Green

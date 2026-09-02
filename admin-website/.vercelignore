@@ -1,0 +1,11 @@
+# This folder deploys as the public "Restricted Area" placeholder, and its
+# vercel.json sets outputDirectory "." — which means a deploy from here ships
+# EVERY subfolder too. That is how kasi-guru-iota.vercel.app and
+# admin-website-sandy.vercel.app both ended up serving a full, years-stale copy
+# of the admin portal at /admin/js/app.js (1,235 lines against the current
+# 3,326) to anyone who guessed the path.
+#
+# The portals are deployed from their own directories, as their own Vercel
+# projects. Nothing here may carry them.
+admin
+download

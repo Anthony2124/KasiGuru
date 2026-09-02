@@ -96,13 +96,43 @@ jobs:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
   admin-web:
-    name: Admin portal placeholder check
+    name: One admin portal, in admin-website/admin
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Ensure root portal has no admin script reference
+      # This check used to grep only admin-website/index.html for the admin script, so it
+      # passed while a full duplicate portal sat at the root loading its script from
+      # dashboard.html instead. That copy drifted 199 lines behind the real one and lost
+      # the whole report-moderation feature. Check for the copy itself, not one filename.
+      - name: Refuse a second copy of the admin portal
         run: |
-          if grep -q "js/app.js" admin-website/index.html; then
-            echo "ERROR: root index.html must not load the admin CRUD script" && exit 1
-          fi
-          echo "root portal is neutralized"
+          set -euo pipefail
+          fail=0
+
+          for path in admin-website/js/app.js admin-website/dashboard.html admin-website/css; do
+            if [ -e "$path" ]; then
+              echo "ERROR: $path exists. The admin portal lives only in admin-website/admin/." >&2
+              fail=1
+            fi
+          done
+
+          for f in admin-website/*.html; do
+            [ -e "$f" ] || continue
+            if grep -q "js/app.js" "$f"; then
+              echo "ERROR: $f loads the admin CRUD script; the root deploys as a public placeholder." >&2
+              fail=1
+            fi
+          done
+
+          # The placeholder's vercel.json sets outputDirectory ".", so a deploy from the
+          # root ships every subfolder with it. That is how two legacy Vercel projects
+          # ended up serving a stale admin portal at /admin/js/app.js to the public.
+          for dir in admin download; do
+            if ! grep -qx "$dir" admin-website/.vercelignore 2>/dev/null; then
+              echo "ERROR: admin-website/.vercelignore must exclude '$dir', or a root deploy republishes it." >&2
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then exit 1; fi
+          echo "one admin portal, and the root placeholder carries nothing with it"

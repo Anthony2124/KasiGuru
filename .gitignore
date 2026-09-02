@@ -38,3 +38,10 @@ public/downloads/
 skills-lock.json
 wd_tmp.xml
 .vercel/
+
+# Firebase Auth exports and service-account keys. auth_users.json was sitting
+# untracked but un-ignored in the repo root with 13 real user email addresses in it,
+# one `git add -A` away from being public and permanent. Neither of these belongs in
+# the source tree at all -- the real copies live outside the repo, in C:\KasiGuru\private.
+auth_users.json
+*firebase-adminsdk*.json
