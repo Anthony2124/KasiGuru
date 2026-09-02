@@ -207,22 +207,29 @@ dictionary, games, the long tail.
 
 This list stands whichever path is chosen, and should come first either way.
 
-1. **Migrate the 104 legacy token references** to their current names. Mechanical; concentrated in
-   nine shared components.
-2. **Delete the 19 dead aliases**, then the alias block itself once §5.1 lands. The block is what
-   allows the drift.
-3. **Retire `CoastPillButton`** to `ClayButton` across its five call sites; delete the component.
-4. **Migrate the mini-games** — `HeroCardStart`/`HeroCardEnd` and the raw `FilterChip`s.
-5. **Widen responsive coverage** beyond the two screens that have it, starting with the screens a
-   panel would open on a tablet.
-6. **Delete the six kicker labels** in §1.7 and let the headings carry themselves, then correct
-   DESIGN.md, which currently claims they are already gone.
-7. **Read the 103 null descriptions** and give one to every icon that carries meaning rather than
-   decoration.
+**Done (2026-09-02, commit `605a45f`):**
 
-Items 1–3 are the ones that make the design system single-valued again, and they are the cheapest.
+1. ~~Migrate the legacy token references.~~ **104 to 0.** Every alias that merely renamed a current
+   token was substituted with that token, which is provably identical since each was defined as
+   `= <token>`. Verified on the emulator: the answer feedback panel is pixel-identical.
+2. ~~Delete the dead aliases and the alias block.~~ **63 aliases to 3.** `Color.kt` drops from 275
+   lines to 226. The three survivors — `Warning`, `SkyReview`, `VocabSea` — had no canonical
+   equivalent, so they are documented as off-palette colours needing a design decision rather than
+   silently deleted or silently kept.
+3. ~~Retire `CoastPillButton`.~~ **5 call sites to 0**, component deleted.
+4. ~~Delete the kicker labels.~~ **5 to 0.** Four removed; `SubmitWordScreen`'s was kept as
+   information and set in sentence case, because with no heading above it that line is the only
+   thing distinguishing two lists of matches. DESIGN.md still needs correcting: it claims these were
+   already gone.
 
----
+**Still open:**
+
+5. **Two raw `FilterChip`s** in `SentenceOrderGameScreen`, the last raw Material components in the
+   games. Small.
+6. **Responsive coverage: 2 of 31 screens.** Unchanged. The largest remaining item, and the one a
+   thesis panel on a tablet would notice first.
+7. **102 null content descriptions** to read. Many are legitimately decorative; the work is the
+   reading, not the typing.
 
 ## Provenance
 
