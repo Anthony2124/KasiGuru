@@ -129,10 +129,14 @@ fun LearnScreen(
     // from 2 to 4 columns - more width means the canopy doesn't need to claim as much height to
     // read as a real "who you are and where you stand today" band.
     val widthClass = rememberWidthClass()
+    // Was 244dp. The canopy is pinned, so every dp of it is spent on every screenful the learner
+    // ever scrolls -- roughly a quarter of the screen, to say hello and show a week that on day one
+    // is empty. It now carries only who you are and today's streak; the week strip moved into the
+    // sheet, where it scrolls away like the history it is.
     val canopyHeight = when (widthClass) {
-        WidthClass.COMPACT -> 244.dp
-        WidthClass.MEDIUM -> 244.dp - 24.dp
-        WidthClass.EXPANDED -> 244.dp - 48.dp
+        WidthClass.COMPACT -> 168.dp
+        WidthClass.MEDIUM -> 160.dp
+        WidthClass.EXPANDED -> 152.dp
     }
 
     CanopyScaffold(
@@ -224,23 +228,6 @@ fun LearnScreen(
                 }
             }
 
-            Spacer(Modifier.height(Space.md))
-
-            WeekStrip(
-                days = uiState.week.map { day ->
-                    DayMark(
-                        label = day.label,
-                        dayOfMonth = day.dayOfMonth,
-                        state = when {
-                            day.isToday && day.practised -> DayState.TodayDone
-                            day.isToday -> DayState.Today
-                            day.practised -> DayState.Done
-                            else -> DayState.Missed
-                        }
-                    )
-                },
-                onCanopy = true
-            )
         },
         sheetContent = {
             LazyColumn(
@@ -315,130 +302,51 @@ fun LearnScreen(
                         }
                     }
 
-                    ClayButton(
+                    // One action, not three. The screen used to answer "what do I do now?" with a
+                    // Continue button, then a list of four cards, then the path below -- so none of
+                    // them read as the answer. The card is now the only call to action above the
+                    // path, and it leads with a Kasiguranin word rather than a verb.
+                    uiState.continueCard?.let { card ->
+                        ContinueCard(
+                            card = card,
+                            onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) }
+                        )
+                    } ?: ClayButton(
                         label = label,
                         onClick = onContinue,
                         modifier = Modifier.fillMaxWidth(),
                         leading = {
                             Icon(
                                 painter = painterResource(id = iconRes),
-                                contentDescription = null, // the label already names the action
+                                contentDescription = null,
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                     )
-                    Spacer(Modifier.height(Space.lg))
-                }
 
-                item {
-                    SectionHeading(text = "Today")
-                    SectionCaption(
-                        text = if (progress.currentStreak > 0) {
-                            "Day ${progress.currentStreak} of your streak"
-                        } else {
-                            "Finish one activity to start a streak"
-                        }
-                    )
-                    Spacer(Modifier.height(Space.md))
-                }
-
-                itemsIndexed(uiState.activities) { index, activity ->
-                    val state = when {
-                        activity.isDone -> ActivityState.Done
-                        uiState.currentActivity === activity -> ActivityState.Current
-                        else -> ActivityState.Upcoming
-                    }
-                    TimelineItem(state = state, isLast = index == uiState.activities.lastIndex) {
+                    // Due review is the one thing urgent enough to sit above the path: a word due
+                    // today is a word about to be forgotten, which outranks meeting a new one.
+                    if (uiState.wordsDue > 0) {
+                        Spacer(Modifier.height(Space.sm))
                         ActivityRow(
-                            title = activity.title,
-                            subtitle = activity.subtitle,
-                            accent = activity.kind.accent(),
-                            state = state,
-                            onClick = {
-                                when (activity.kind) {
-                                    ActivityKind.Lesson -> activity.lessonRef?.let {
-                                        onStartLesson(it.unitId, it.lessonIndex)
-                                    } ?: onOpenDictionary()
-                                    ActivityKind.Review -> onOpenReview()
-                                    ActivityKind.Game -> onOpenGames()
-                                    ActivityKind.Story -> onOpenStories()
-                                }
-                            },
+                            title = "Review",
+                            subtitle = "${wordsToReview(uiState.wordsDue)} due today",
+                            accent = SkyReview,
+                            state = ActivityState.Current,
+                            onClick = onOpenReview,
                             leading = {
                                 Icon(
-                                    painter = painterResource(id = activity.kind.iconRes()),
+                                    painter = painterResource(id = Iconsax.Repeat),
                                     contentDescription = null,
-                                    tint = if (state == ActivityState.Locked) NodeLockedInk
-                                    else activity.kind.accent(),
-                                    modifier = Modifier.size(22.dp)
+                                    tint = SkyReview,
+                                    modifier = Modifier.size(20.dp).align(Alignment.Center)
                                 )
-                            },
-                            trailing = {
-                                if (activity.isDone) {
-                                    Icon(
-                                        painter = painterResource(id = Iconsax.TickCircle),
-                                        contentDescription = "Done",
-                                        tint = Green,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                } else {
-                                    Icon(
-                                        painter = painterResource(id = Iconsax.ArrowRight),
-                                        contentDescription = null,
-                                        tint = Muted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
                             }
                         )
                     }
-                }
 
-                // Story mode. Fully built since v1.2 and reachable only from a tile in the skills
-                // grid, which is why it read as missing. A shelf of covers says what it is.
-                if (uiState.stories.isNotEmpty()) {
-                    item {
-                        Spacer(Modifier.height(Space.lg))
-                        SectionHeading(
-                            text = "Story mode",
-                            action = {
-                                TextButton(onClick = onOpenStories) {
-                                    Text(
-                                        "All stories",
-                                        color = Violet,
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
-                            }
-                        )
-                        SectionCaption(
-                            text = uiState.stories.count { it.isCompleted }.toString() + " of " +
-                                uiState.stories.size + " read, with Tagalog and English alongside"
-                        )
-                        Spacer(Modifier.height(Space.sm))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                            items(uiState.stories, key = { it.id }) { story ->
-                                StoryCoverCard(
-                                    titleKasiguranin = story.titleKasiguranin,
-                                    title = story.title,
-                                    totalPages = story.totalPages,
-                                    isUnlocked = story.isUnlocked,
-                                    isCompleted = story.isCompleted,
-                                    requiredXp = story.requiredXp,
-                                    onClick = { onOpenStories() },
-                                    modifier = Modifier.width(160.dp),
-                                    cover = rememberStoryCoverRes(story.id)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                item {
                     Spacer(Modifier.height(Space.lg))
-                    SectionHeading(text = "Your path")
-                    SectionCaption(text = "A journey through Casiguran, one section at a time")
                 }
 
                 // The learning tree, in place of the four skill tiles that used to sit here. The
@@ -450,6 +358,70 @@ fun LearnScreen(
                     onOpenMastery = { /* Section mastery test: wired with the test itself. */ }
                 )
 
+                // Below the path: the things that are genuinely secondary. They used to sit above
+                // it as four same-size cards, which made a game and a story look exactly as
+                // important as the lesson the learner came to do.
+                item {
+                    Spacer(Modifier.height(Space.xl))
+                    SectionHeading(text = "Also today")
+                    Spacer(Modifier.height(Space.sm))
+
+                    ActivityRow(
+                        title = "Practice game",
+                        subtitle = "Earn stars and XP",
+                        accent = Coral,
+                        state = ActivityState.Upcoming,
+                        onClick = onOpenGames,
+                        leading = {
+                            Icon(
+                                painter = painterResource(id = Iconsax.Game),
+                                contentDescription = null,
+                                tint = Coral,
+                                modifier = Modifier.size(20.dp).align(Alignment.Center)
+                            )
+                        }
+                    )
+
+                    if (uiState.wordsDue == 0) {
+                        Spacer(Modifier.height(Space.sm))
+                        ActivityRow(
+                            title = "Review",
+                            subtitle = "Nothing due today",
+                            accent = SkyReview,
+                            state = ActivityState.Done,
+                            onClick = onOpenReview,
+                            leading = {
+                                Icon(
+                                    painter = painterResource(id = Iconsax.Repeat),
+                                    contentDescription = null,
+                                    tint = SkyReview,
+                                    modifier = Modifier.size(20.dp).align(Alignment.Center)
+                                )
+                            }
+                        )
+                    }
+
+                    Spacer(Modifier.height(Space.xl))
+
+                    // The week, where history belongs: below the work, not pinned above it.
+                    SectionHeading(text = "This week")
+                    Spacer(Modifier.height(Space.sm))
+                    WeekStrip(
+                        days = uiState.week.map { day ->
+                            DayMark(
+                                label = day.label,
+                                dayOfMonth = day.dayOfMonth,
+                                state = when {
+                                    day.isToday && day.practised -> DayState.TodayDone
+                                    day.isToday -> DayState.Today
+                                    day.practised -> DayState.Done
+                                    else -> DayState.Missed
+                                }
+                            )
+                        },
+                        onCanopy = false
+                    )
+                }
             }
         }
     )

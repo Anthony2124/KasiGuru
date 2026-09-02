@@ -15,6 +15,8 @@ import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.SubmissionRepository
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.LessonRepository
+import com.kasiguru.domain.lesson.LearningTree
+import com.kasiguru.util.RecallPrompt
 import com.kasiguru.domain.lesson.TreeSection
 import com.kasiguru.data.repository.StoryRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
@@ -52,6 +54,23 @@ data class PathActivity(
 )
 
 /** One of the four things a KasiGuru learner can actually make measurable progress in. */
+/**
+ * The one thing the Learn screen asks the learner to do next.
+ *
+ * [heroWord] is a real Kasiguranin headword from the lesson about to start, and it is the reason
+ * this model exists rather than a title string: DESIGN.md makes the headword the loudest thing on
+ * any screen that shows one, because the language is the product, and the Learn screen was showing
+ * none of it at all.
+ */
+data class ContinueCard(
+    val heroWord: String,
+    val heroMeaning: String,
+    val sectionTitle: String,
+    val journeyLine: String,
+    val lessonLabel: String,
+    val lessonRef: LessonRef
+)
+
 data class DayActivity(val label: String, val dayOfMonth: Int, val practised: Boolean, val isToday: Boolean)
 
 /**
@@ -76,6 +95,8 @@ data class LearnUiState(
      * learner has just finished as still waiting for them.
      */
     val tree: List<TreeSection> = emptyList(),
+    /** The single next action, or null once every lesson is finished. */
+    val continueCard: ContinueCard? = null,
     /** Every story, locked ones included - the lock is the motivation, so the shelf shows them. */
     val stories: List<StoryEntity> = emptyList(),
     val updateRelease: AppReleaseDto? = null,
@@ -194,6 +215,7 @@ class LearnViewModel @Inject constructor(
                     week = buildWeek(progress),
                     activities = buildActivities(due),
                     tree = lessonRepository.treeSections(),
+                    continueCard = buildContinueCard(),
                     stories = storyRepository.getAllStories().first(),
                     wordsDue = due.size,
                     isLoading = false
@@ -241,6 +263,29 @@ class LearnViewModel @Inject constructor(
         }
     }
 
+    /**
+     * The next lesson, resolved for a human.
+     *
+     * Returns null when the corpus is exhausted, which the screen renders as a real finished state
+     * rather than an empty card.
+     */
+    private suspend fun buildContinueCard(): ContinueCard? {
+        val ref = lessonRepository.nextLesson() ?: return null
+        val words = lessonRepository.wordsFor(ref)
+        val hero = words.firstOrNull() ?: return null
+        val section = LearningTree.sectionForUnit(ref.unitId)
+
+        return ContinueCard(
+            heroWord = hero.kasiguranin,
+            heroMeaning = RecallPrompt.meaningFor(hero.kasiguranin, hero.tagalog, hero.english)
+                ?: hero.english,
+            sectionTitle = section?.title ?: ref.unitId,
+            journeyLine = section?.journeyLine.orEmpty(),
+            lessonLabel = "Lesson ${ref.lessonIndex + 1} · ${words.size} words",
+            lessonRef = ref
+        )
+    }
+
     private suspend fun buildActivities(due: List<VocabularyEntity>): List<PathActivity> {
         val activities = mutableListOf<PathActivity>()
 
@@ -250,7 +295,9 @@ class LearnViewModel @Inject constructor(
             val words = lessonRepository.wordsFor(nextLesson)
             activities += PathActivity(
                 kind = ActivityKind.Lesson,
-                title = nextLesson.unitId,
+                // Never the raw unit key: `theme:pamilya` is storage, "Pamilya at Mga Tao" is what
+                // a learner is owed.
+                title = LearningTree.sectionForUnit(nextLesson.unitId)?.title ?: nextLesson.unitId,
                 subtitle = "Lesson ${nextLesson.lessonIndex + 1} · ${words.size} words",
                 isDone = false,
                 lessonRef = nextLesson

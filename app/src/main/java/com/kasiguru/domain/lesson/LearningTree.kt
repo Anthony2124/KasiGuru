@@ -110,6 +110,33 @@ object LearningTree {
         else -> 4
     }
 
+    /**
+     * Unit key for the closing section.
+     *
+     * Namespaced like a theme so the two can never collide, and fixed, because it is written into
+     * `lesson_progress.unitId` the moment a learner finishes one of its lessons.
+     */
+    const val REMAINDER_UNIT_ID = "theme:_remainder"
+
+    /** Unit key for a theme-sourced section. */
+    fun themeUnitId(tag: String): String = "theme:${tag.trim().lowercase()}"
+
+    /** The unit key a section's lessons are recorded against. */
+    fun unitIdFor(source: SectionSource): String = when (source) {
+        is SectionSource.Theme -> themeUnitId(source.tag)
+        SectionSource.Remainder -> REMAINDER_UNIT_ID
+    }
+
+    /**
+     * The section a unit key belongs to, or null when it belongs to none.
+     *
+     * Exists because a unit key is a storage detail and must never reach a learner. It did: Today's
+     * Path printed `theme:pamilya` as a lesson's title, which is the internal key for "Pamilya at
+     * Mga Tao". Anything showing a lesson to a person resolves the key through here first.
+     */
+    fun sectionForUnit(unitId: String): SectionDefinition? =
+        sections.firstOrNull { unitIdFor(it.source).equals(unitId, ignoreCase = true) }
+
     /** True when [wordCount] is enough for the section to be worth walking through. */
     fun isViable(wordCount: Int): Boolean = wordCount >= MIN_WORDS_FOR_SECTION
 

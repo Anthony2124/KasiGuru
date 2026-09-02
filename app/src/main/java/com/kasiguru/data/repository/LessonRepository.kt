@@ -294,21 +294,9 @@ class LessonRepository @Inject constructor(
     }
 
     companion object {
-        /**
-         * Unit key for a theme-sourced section.
-         *
-         * Namespaced so a theme can never collide with a dictionary category, and stable, because it
-         * is written into `lesson_progress.unitId` the moment a learner finishes one of its lessons.
-         * Renaming a theme tag after the fact would orphan that history.
-         */
-        fun themeUnitId(tag: String): String = "theme:${tag.trim().lowercase()}"
+        /** Kept as delegates so the key format has exactly one definition, in [LearningTree]. */
+        fun themeUnitId(tag: String): String = LearningTree.themeUnitId(tag)
 
-        /**
-         * Unit key for the closing section.
-         *
-         * Namespaced like a theme so the two can never collide, and fixed, because it is written
-         * into `lesson_progress.unitId` the moment a learner finishes one of its lessons.
-         */
-        const val REMAINDER_UNIT_ID = "theme:_remainder"
+        const val REMAINDER_UNIT_ID = LearningTree.REMAINDER_UNIT_ID
     }
 }
