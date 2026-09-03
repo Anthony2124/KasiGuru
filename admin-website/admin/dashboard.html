@@ -58,6 +58,10 @@
           <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
             <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
           </button>
+          <button data-tab="tab-stages" onclick="window.switchTab('tab-stages')">
+            <iconsax-icon name="hierarchy-square-2" type="bulk" size="18" color="currentColor"></iconsax-icon> Stage review
+            <span class="nav-count" id="nav-stages-count" hidden>0</span>
+          </button>
           <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
             <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
           </button>
@@ -461,6 +465,59 @@
 
       <div class="panel">
         <div class="timeline" id="releases-list-container"></div>
+      </div>
+    </section>
+
+    <!-- Stage review: accept or correct the learning-tree stage proposed by functions/tag_themes.js -->
+    <section id="tab-stages" class="tab-content" style="display: none;">
+
+      <div class="pagehead">
+        <div>
+          <h1>Stage review</h1>
+          <p>Words the tagger has proposed a learning-tree stage for, read from their English gloss.
+             Nothing here is live until you accept it &mdash; the app still reads the old value.</p>
+        </div>
+        <div class="pagehead-actions">
+          <button class="btn btn-outline" id="stages-accept-confident">
+            <iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon>
+            Accept all gloss matches
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <label class="sr-only" for="stages-filter">Filter by stage</label>
+          <select id="stages-filter" class="form-control" style="width:auto; min-width:190px;">
+            <option value="">All stages</option>
+          </select>
+          <label class="sr-only" for="stages-confidence">Filter by confidence</label>
+          <select id="stages-confidence" class="form-control" style="width:auto; min-width:210px;">
+            <option value="">Any confidence</option>
+            <option value="high">Gloss match only (0.9)</option>
+            <option value="low">Definition match only (0.6)</option>
+          </select>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:0; justify-content:space-between;">
+          <span class="result-count" id="stages-result-count">Loading&hellip;</span>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Word</th>
+                <th>English</th>
+                <th>Stage</th>
+                <th>Part of speech</th>
+                <th>Why</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stages-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1079,7 +1136,9 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
         <button class="close-btn" onclick="closeModal('evidence-modal')" aria-label="Close">&times;</button>
       </div>
       <div style="padding:16px 0; max-height:75vh; overflow-y:auto; display:flex; justify-content:center; align-items:center;">
-        <img id="evidence-modal-img" src="" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px; box-shadow:var(--shadow-md); object-fit:contain;" />
+        <!-- No src attribute: viewReportEvidence() assigns it when a report is opened. An empty
+             src="" makes some browsers re-request the current page as an image. -->
+        <img id="evidence-modal-img" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px; box-shadow:var(--shadow-md); object-fit:contain;" />
       </div>
       <div class="modal-actions" style="justify-content:flex-end;">
         <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>

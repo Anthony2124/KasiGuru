@@ -207,6 +207,7 @@ const TAB_ROUTES = {
   'tab-submissions': 'queue',
   'tab-reports': 'reports',
   'tab-vocabulary': 'dictionary',
+  'tab-stages': 'stages',
   'tab-stories': 'stories',
   'tab-releases': 'releases',
   'tab-users': 'users',
@@ -253,6 +254,7 @@ function init() {
   initTopbar();
   initModalBehaviour();
   initDictionaryControls();
+  initStageReview();
   initLogsControls();
   initUsersListener();
   initBackupRestore();
@@ -393,6 +395,7 @@ function initRealtimeListeners() {
       vocabulary = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       vocabularyLoaded = true;
       renderVocabularyTable();
+      renderStageReview();
       updateDashboardMetrics();
     }, (error) => {
       console.warn("Vocabulary listener error:", error);
@@ -2968,6 +2971,273 @@ function escapeHtml(str) {
 
 
 
+
+// ── Stage review ────────────────────────────────────────────────────────────
+// Where a proposal from functions/tag_themes.js becomes a fact, and the only place it can.
+//
+// The tagger reads a word's English gloss and proposes which learning-tree stage should teach it and
+// what part of speech it is, because both stored fields are demonstrably wrong: `category` files
+// "flight" and "fragile" under Colors & Shapes, and `partOfSpeech` marks 1,010 of 1,246 words Noun,
+// including *angay* (go) and *saneg* (hear). But a script reading glosses is a guess, and this corpus
+// is the primary record of an endangered language, so nothing it proposes reaches a learner until a
+// person here agrees with it. The tagger writes only to `themeProposed` / `partOfSpeechProposed`;
+// this screen is what copies a proposal into the live `theme` and `partOfSpeech`.
+//
+// Confidence is shown rather than hidden because the two passes are not equally trustworthy: a gloss
+// match (0.9) *is* the word's meaning, while a definition match (0.6) merely mentions it. Accepting a
+// hundred gloss matches at once is reasonable; accepting definition matches unread is not, which is
+// why the bulk button only ever takes the former.
+
+let stageFilter = '';
+let stageConfidenceFilter = '';
+
+/** A proposal worth showing: one that exists and would actually change something. */
+function stageProposals() {
+  return vocabulary.filter(w => {
+    const themeChanges = (w.themeProposed || '') && (w.themeProposed !== (w.theme || ''));
+    const posChanges = (w.partOfSpeechProposed || '') && (w.partOfSpeechProposed !== (w.partOfSpeech || ''));
+    return themeChanges || posChanges;
+  });
+}
+
+/**
+ * How far a word's proposals can be trusted: the strongest evidence behind any of them.
+ *
+ * Taken across both proposals rather than from the stage alone, because a word can be proposed a
+ * part of speech and no stage — *kagi* (word) is a noun by its definition but belongs to no stage in
+ * the map. Reading only the stage's confidence left those rows at `undefined`, which filtered them
+ * out of the gloss-match view and out of bulk accept, so they could only ever be found by clearing
+ * every filter. A proposal you cannot see is a proposal that never gets reviewed.
+ */
+function proposalConfidence(word) {
+  return Math.max(
+    Number(word.themeProposedConfidence) || 0,
+    Number(word.partOfSpeechProposedConfidence) || 0
+  );
+}
+
+function stageProposalsFiltered() {
+  return stageProposals().filter(w => {
+    if (stageFilter && w.themeProposed !== stageFilter) return false;
+    const confidence = proposalConfidence(w);
+    if (stageConfidenceFilter === 'high' && confidence < 0.9) return false;
+    if (stageConfidenceFilter === 'low' && confidence >= 0.9) return false;
+    return true;
+  });
+}
+
+function initStageReview() {
+  const filter = document.getElementById('stages-filter');
+  const confidence = document.getElementById('stages-confidence');
+  const acceptAll = document.getElementById('stages-accept-confident');
+
+  if (filter) filter.addEventListener('change', () => { stageFilter = filter.value; renderStageReview(); });
+  if (confidence) confidence.addEventListener('change', () => { stageConfidenceFilter = confidence.value; renderStageReview(); });
+  if (acceptAll) acceptAll.addEventListener('click', acceptConfidentStageProposals);
+}
+
+function renderStageReview() {
+  const tbody = document.getElementById('stages-tbody');
+  if (!tbody) return;
+
+  const all = stageProposals();
+  const rows = stageProposalsFiltered();
+
+  // Keep the stage filter's options in step with whatever the tagger actually proposed, so a stage
+  // that was renamed or dropped from the map never lingers as a dead option.
+  const filter = document.getElementById('stages-filter');
+  if (filter) {
+    const stages = [...new Set(all.map(w => w.themeProposed).filter(Boolean))].sort();
+    const current = filter.value;
+    filter.innerHTML = '<option value="">All stages</option>' +
+      stages.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    filter.value = current;
+  }
+
+  const navCount = document.getElementById('nav-stages-count');
+  if (navCount) {
+    navCount.textContent = all.length;
+    navCount.hidden = all.length === 0;
+  }
+
+  const count = document.getElementById('stages-result-count');
+  if (count) {
+    const confident = all.filter(w => proposalConfidence(w) >= 0.9).length;
+    count.textContent = all.length === 0
+      ? 'No proposals waiting'
+      : `${rows.length} shown of ${all.length} waiting · ${confident} from the gloss`;
+  }
+
+  tbody.innerHTML = '';
+  if (rows.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">
+          <iconsax-icon name="tick-circle" type="bulk" size="32" color="var(--gold-ink)"></iconsax-icon>
+          <div style="margin-top:8px;">${all.length === 0
+            ? 'Nothing to review. Run <code>node functions/tag_themes.js &lt;key.json&gt; --apply</code> to propose stages.'
+            : 'No proposals match this filter.'}</div>
+        </td>
+      </tr>`;
+    applyTableSemantics();
+    return;
+  }
+
+  rows.forEach(w => {
+    const tr = document.createElement('tr');
+    const confident = proposalConfidence(w) >= 0.9;
+    const themeCell = w.themeProposed && w.themeProposed !== (w.theme || '')
+      ? `<span style="color:var(--muted);">${escapeHtml(w.theme || 'none')}</span> &rarr;
+         <strong>${escapeHtml(w.themeProposed)}</strong>`
+      : `<span style="color:var(--muted);">${escapeHtml(w.theme || 'none')}</span>`;
+    const posCell = w.partOfSpeechProposed && w.partOfSpeechProposed !== (w.partOfSpeech || '')
+      ? `<span style="color:var(--muted);">${escapeHtml(w.partOfSpeech || 'none')}</span> &rarr;
+         <strong>${escapeHtml(w.partOfSpeechProposed)}</strong>`
+      : `<span style="color:var(--muted);">${escapeHtml(w.partOfSpeech || 'none')}</span>`;
+
+    tr.innerHTML = `
+      <td data-label="Word"><strong>${escapeHtml(w.kasiguranin || '')}</strong></td>
+      <td data-label="English">${escapeHtml(w.english || '-')}</td>
+      <td data-label="Stage">${themeCell}</td>
+      <td data-label="Part of speech">${posCell}</td>
+      <td data-label="Why">
+        <span class="badge ${confident ? 'badge-approved' : 'badge-pending'}">
+          ${confident ? 'gloss' : 'definition'}
+        </span>
+        <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">
+          ${escapeHtml(w.themeProposedEvidence || w.partOfSpeechProposedEvidence || '')}
+        </div>
+      </td>
+      <td data-label="Actions">
+        <div class="row-actions">
+          <button class="btn btn-success btn-sm stage-accept-btn" data-id="${w.id}">
+            <iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Accept
+          </button>
+          <button class="btn btn-outline btn-sm stage-reject-btn" data-id="${w.id}">
+            <iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.stage-accept-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      acceptStageProposal(btn.getAttribute('data-id'));
+    });
+  });
+  tbody.querySelectorAll('.stage-reject-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      rejectStageProposal(btn.getAttribute('data-id'));
+    });
+  });
+
+  applyTableSemantics();
+}
+
+/**
+ * The patch that turns one word's proposal into its live value.
+ *
+ * Proposal fields are blanked rather than left in place, so a word never sits in the queue twice and
+ * a re-run of the tagger can tell an unreviewed word from a settled one. Blanked, not deleted, to
+ * match how every other optional field in this corpus is cleared.
+ */
+function acceptedStagePatch(word) {
+  const patch = {
+    themeProposed: '',
+    themeProposedConfidence: '',
+    themeProposedEvidence: '',
+    partOfSpeechProposed: '',
+    partOfSpeechProposedConfidence: '',
+    partOfSpeechProposedEvidence: ''
+  };
+  if (word.themeProposed) patch.theme = word.themeProposed;
+  if (word.partOfSpeechProposed) patch.partOfSpeech = word.partOfSpeechProposed;
+  return withUpdatedAt(patch);
+}
+
+async function acceptStageProposal(id) {
+  const word = vocabulary.find(w => w.id === id);
+  if (!word) return;
+  try {
+    await updateDoc(doc(db, 'vocabulary', id), acceptedStagePatch(word));
+    await logAudit('stage.accept', {
+      word: word.kasiguranin,
+      theme: word.themeProposed || null,
+      partOfSpeech: word.partOfSpeechProposed || null,
+      confidence: word.themeProposedConfidence || null
+    });
+    notify(`"${word.kasiguranin}" moved to ${word.themeProposed || word.partOfSpeech}.`, 'success');
+  } catch (e) {
+    console.error('Stage accept failed:', e);
+    notify('Could not save that change. Check your connection and try again.', 'error');
+    renderStageReview();
+  }
+}
+
+async function rejectStageProposal(id) {
+  const word = vocabulary.find(w => w.id === id);
+  if (!word) return;
+  try {
+    await updateDoc(doc(db, 'vocabulary', id), withUpdatedAt({
+      themeProposed: '',
+      themeProposedConfidence: '',
+      themeProposedEvidence: '',
+      partOfSpeechProposed: '',
+      partOfSpeechProposedConfidence: '',
+      partOfSpeechProposedEvidence: ''
+    }));
+    await logAudit('stage.reject', { word: word.kasiguranin, rejected: word.themeProposed || null });
+    notify(`Proposal for "${word.kasiguranin}" discarded. The word keeps its current stage.`, 'success');
+  } catch (e) {
+    console.error('Stage reject failed:', e);
+    notify('Could not discard that proposal. Check your connection and try again.', 'error');
+    renderStageReview();
+  }
+}
+
+/**
+ * Accepts every gloss-matched proposal currently in view, in batches.
+ *
+ * Only the 0.9 pass, and only what the filter is already showing, so "accept all" can never reach
+ * further than what the reviewer is looking at. Definition matches are excluded by design — they are
+ * the ones worth reading one at a time.
+ */
+async function acceptConfidentStageProposals() {
+  const rows = stageProposalsFiltered().filter(w => proposalConfidence(w) >= 0.9);
+  if (rows.length === 0) {
+    notify('No gloss-matched proposals in view to accept.', 'error');
+    return;
+  }
+
+  const proceed = await confirmDialog({
+    title: `Accept ${rows.length} proposal${rows.length === 1 ? '' : 's'}?`,
+    body:
+      `<p>This sets the learning-tree stage and part of speech for ${rows.length} word` +
+      `${rows.length === 1 ? '' : 's'} from the tagger's gloss match.</p>` +
+      `<p style="margin-top:10px;">Words matched from their written definition are not included — ` +
+      `those are worth reading one at a time.</p>`,
+    confirmLabel: 'Accept them'
+  });
+  if (!proceed) return;
+
+  try {
+    for (let i = 0; i < rows.length; i += 400) {
+      const chunk = rows.slice(i, i + 400);
+      const batch = writeBatch(db);
+      chunk.forEach(w => batch.update(doc(db, 'vocabulary', w.id), acceptedStagePatch(w)));
+      await batch.commit();
+    }
+    await logAudit('stage.accept_bulk', { count: rows.length, stage: stageFilter || 'all' });
+    notify(`Accepted ${rows.length} proposal${rows.length === 1 ? '' : 's'}.`, 'success');
+  } catch (e) {
+    console.error('Bulk stage accept failed:', e);
+    notify('Could not save those changes. Some may have been applied — reload to see the current state.', 'error');
+  }
+}
 
 // ── Admin Audit Log ─────────────────────────────────────────────────────────
 // Append-only record of admin actions (rules: admins create/read, never update/delete).

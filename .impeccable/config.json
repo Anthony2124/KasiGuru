@@ -308,6 +308,15 @@
         ],
         "createdAt": "2026-08-22T14:01:19.082Z",
         "reason": "Same .pull editorial pull-quote accent (5px gold rule, no background fill) as index.html/the mockup - not a card. Prior ignore-value entry stored a literal CSS string that side-tab cannot match on (no extractable value)."
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "admin-website/admin/dashboard.html"
+        ],
+        "createdAt": "2026-09-03T17:17:32.415Z",
+        "reason": "Claude decided: #evidence-modal-img is a hidden modal placeholder whose src is assigned at runtime by viewReportEvidence() (js/app.js:2117). The tag must exist in markup for getElementById; it has no src by design, and src=\"\" was removed because it makes some browsers re-request the page."
       }
     ]
   }
