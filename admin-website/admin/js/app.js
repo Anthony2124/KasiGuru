@@ -2507,14 +2507,40 @@ function handleSqlFile(file) {
         return;
       }
 
+      // Deduplicated on the shared normalisation, like every other way a word enters the
+      // dictionary. This path had no check at all: each row was written to a freshly generated
+      // document id, so importing the same file twice simply doubled the corpus. The dialog said
+      // "existing entries with the same id are overwritten", which was never true of a random id.
+      const existingWords = new Set(
+        vocabulary.map(v => normaliseWord(v.kasiguranin || '')).filter(Boolean)
+      );
+      const seenInThisImport = new Set();
+      const fresh = [];
+      let skipped = 0;
+      for (const entry of entries) {
+        const key = normaliseWord(entry.kasiguranin || '');
+        if (!key || existingWords.has(key) || seenInThisImport.has(key)) { skipped++; continue; }
+        seenInThisImport.add(key);
+        fresh.push(entry);
+      }
+
+      if (fresh.length === 0) {
+        notify(`Nothing to import from "${file.name}" — all ${entries.length} entries are already in the dictionary.`, 'error');
+        return;
+      }
+
       if (!(await confirmDialog({
-        title: `Import ${entries.length} records?`,
-        body: `Parsed from <strong>${escapeHtml(file.name)}</strong>. Existing entries with the same id are overwritten.`,
+        title: `Import ${fresh.length} new record${fresh.length === 1 ? '' : 's'}?`,
+        body:
+          `Parsed from <strong>${escapeHtml(file.name)}</strong>.` +
+          (skipped > 0
+            ? ` ${skipped} of ${entries.length} are already in the dictionary and will be skipped.`
+            : ''),
         confirmLabel: 'Import'
       }))) return;
 
       let count = 0;
-      for (const entry of entries) {
+      for (const entry of fresh) {
         const newDoc = doc(collection(db, "vocabulary"));
         // Bulk-imported rows are stamped like any other write, or a spreadsheet import
         // would land in Firestore invisible to the app's incremental sync.
@@ -2522,7 +2548,8 @@ function handleSqlFile(file) {
         count++;
       }
 
-      notify(`Successfully imported ${count} entries from SQL migration script into Firestore!`, 'success');
+      await logAudit("vocabulary.import_sql", { file: file.name, imported: count, skipped });
+      notify(`Imported ${count} new entr${count === 1 ? 'y' : 'ies'} from ${escapeHtml(file.name)}. Skipped ${skipped} already in the dictionary.`, 'success');
     } catch (err) {
       console.error("SQL Parsing Error:", err);
       notify("Failed to parse SQL file: " + err.message, 'error');
@@ -2594,7 +2621,17 @@ function handleExcelFile(file) {
       let currentBatch = writeBatch(db);
       let operationsInCurrentBatch = 0;
       
-      const existingWords = new Set(vocabulary.map(v => (v.kasiguranin || '').toLowerCase()));
+      // Compared on the shared normalisation, not a bare toLowerCase().
+      //
+      // This importer was the one path into `vocabulary` that did not use it, and it is the path
+      // every word in the corpus arrived through. The cost is measurable: of the seven entries the
+      // dictionary carries twice with the same meaning, all seven are pairs this rule sees as one
+      // word and toLowerCase() saw as two -- "tëllën"/"tël-lën", "uló"/"ulo", "laya"/"layâ",
+      // "kulapnet"/"kulapnët". word-normalize.js says the contributor-facing and moderator-facing
+      // checks must agree on what "the same word" means; an importer that disagrees undoes both.
+      const existingWords = new Set(
+        vocabulary.map(v => normaliseWord(v.kasiguranin || '')).filter(Boolean)
+      );
       const wordsInThisImport = new Set(); 
 
       for (const rawRow of rawRows) {
@@ -2609,14 +2646,17 @@ function handleExcelFile(file) {
         const wordClean = String(kasiguranin).trim();
         if (!wordClean) continue;
         
-        const wordLower = wordClean.toLowerCase();
-        
-        if (existingWords.has(wordLower) || wordsInThisImport.has(wordLower)) {
+        // A row whose headword folds to nothing (punctuation only) is not comparable, so it is
+        // skipped rather than imported under an empty key that would then match every other such row.
+        const wordKey = normaliseWord(wordClean);
+        if (!wordKey) { skipped++; continue; }
+
+        if (existingWords.has(wordKey) || wordsInThisImport.has(wordKey)) {
           skipped++;
           continue;
         }
-        
-        wordsInThisImport.add(wordLower);
+
+        wordsInThisImport.add(wordKey);
 
         const newDoc = doc(collection(db, "vocabulary"));
         currentBatch.set(newDoc, {
