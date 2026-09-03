@@ -12,10 +12,11 @@ KasiGuru is an Android app (`com.kasiguru`, Jetpack Compose, minSdk 26) for lear
 endangered Northern Philippine language spoken in Casiguran, Aurora. It is the software artifact of an
 undergraduate thesis. It ships alongside two web surfaces in the same repo:
 
-- `admin-website/download/` — the public APK download site. **Persuade** mode. Vercel project `download`,
-  live at `https://download-woad-iota.vercel.app`.
-- `admin-website/admin/` — the internal moderation portal. **Operate** mode. Vercel project `admin`,
-  live at `https://kasiguru-admin.vercel.app`.
+- `admin-website/download/` — the public APK download site. **Persuade** mode. Vercel project
+  `kasi-guru/kasiguru-download` (Anthony Cordial's account, moved 2026-09-04), live at
+  `https://kasiguru-download.vercel.app`.
+- `admin-website/admin/` — the internal moderation portal. **Operate** mode. Vercel project
+  `kasi-guru/admin-wheat-nu-52` (Anthony's account), live at `https://admin-wheat-nu-52-phi.vercel.app`.
 
 `DESIGN.md` at the repo root is the design authority for the app **and** both web surfaces. `PRODUCT.md`
 holds product truth and the mode assignments. Read both first — they are short and they are binding.

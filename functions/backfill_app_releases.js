@@ -39,7 +39,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
-const LATEST_APK_URL = 'https://download-woad-iota.vercel.app/kasiguru-latest.apk';
+const LATEST_APK_URL = 'https://kasiguru-download.vercel.app/kasiguru-latest.apk';
 
 async function main() {
   const snapshot = await db.collection('app_releases').get();

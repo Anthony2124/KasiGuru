@@ -162,15 +162,16 @@ jobs:
           # Not secret — just identifiers for which Vercel project this is, the same ones
           # `vercel link` already wrote locally to the (gitignored) .vercel/project.json.
           #
-          # Overridable by secrets, with today's values as the fallback, because KasiGuru's
-          # hosting is moving to Anthony's Vercel account and both identifiers change with it.
-          # Hard-coded, that transfer silently breaks the next tagged release: this step would
-          # deploy to a project the token can no longer reach, and the workflow's own guard would
-          # then refuse to announce the release. Set VERCEL_ORG_ID and VERCEL_PROJECT_ID as repo
-          # secrets when the projects move, alongside the new VERCEL_TOKEN, and nothing here has
-          # to be edited.
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_IxFhfgNVYDhTPMcSQOATHnKj' }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_CBpxCvC3RwQryEkGMIYhAm2DJOWi' }}
+          # Overridable by secrets, with today's values as the fallback. KasiGuru's hosting
+          # moved to Anthony's Vercel account (team kasi-guru) on 2026-09-04 — the download
+          # project is now kasi-guru/kasiguru-download, not Adrian's old "download" project.
+          # Hard-coded, a future transfer would silently break the next tagged release: this
+          # step would deploy to a project the token can no longer reach, and the workflow's
+          # own guard would then refuse to announce the release. Set VERCEL_ORG_ID and
+          # VERCEL_PROJECT_ID as repo secrets if the projects ever move again, alongside a new
+          # VERCEL_TOKEN, and nothing here has to be edited.
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_i73rboyOEhnvrzQexyvfsHyR' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_iVOI7ueqHNurVNtHYHcS2ynNzLYY' }}
         run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
 
       # Confirms the deploy actually serves this build before Firestore is told it exists.
@@ -179,7 +180,7 @@ jobs:
       - name: Verify the published APK is reachable
         run: |
           set -euo pipefail
-          URL="https://download-woad-iota.vercel.app/kasiguru-latest.apk"
+          URL="https://kasiguru-download.vercel.app/kasiguru-latest.apk"
           for attempt in 1 2 3 4 5; do
             CODE=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 60 "$URL" || echo "000")
             if [ "$CODE" = "200" ]; then
@@ -208,7 +209,7 @@ jobs:
           node publish_release.js \
             "${{ steps.version.outputs.code }}" \
             "${{ steps.version.outputs.name }}" \
-            "https://download-woad-iota.vercel.app/kasiguru-latest.apk"
+            "https://kasiguru-download.vercel.app/kasiguru-latest.apk"
 
       # Only when the site actually went live — a lint or build failure never deployed
       # anything and must not be reported as half-published. Nothing here can roll Vercel
@@ -221,4 +222,4 @@ jobs:
           written. The in-app update check will report 'up to date' until it is. Re-run \
           this job, or from functions/ run: node publish_release.js \
           ${{ steps.version.outputs.code }} ${{ steps.version.outputs.name }} \
-          https://download-woad-iota.vercel.app/kasiguru-latest.apk"
+          https://kasiguru-download.vercel.app/kasiguru-latest.apk"
