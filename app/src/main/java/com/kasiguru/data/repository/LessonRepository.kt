@@ -210,11 +210,10 @@ class LessonRepository @Inject constructor(
         val wordsByUnit = allWordsByUnit()
         val coreWordCount = LearningTree.CORE_LESSONS_PER_STAGE * LessonPlan.WORDS_PER_LESSON
 
-        return unitIdsFor(definition)
+        val coreWords = unitIdsFor(definition)
             .flatMap { wordsByUnit[it].orEmpty() }
             .take(coreWordCount)
-            .sortedBy { LearningTree.masteryOf(it).ordinal }
-            .take(LearningTree.MASTERY_WORD_COUNT)
+        return LearningTree.masterySelection(coreWords)
     }
 
     /**

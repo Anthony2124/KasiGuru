@@ -265,6 +265,51 @@ class LearningTreeTest {
         )
     }
 
+    // -- what a checkpoint actually asks --------------------------------------
+
+    @Test
+    fun aCheckpointRunIsCappedEvenWhenTheStageIsLarge() {
+        // A stage's core is 42 words. Handing all of them to ExerciseGenerator would build a
+        // 42-exercise run, because it introduces every word it is given.
+        val core = (1..42).map { word(it, timesReviewed = 1) }
+        assertEquals(LearningTree.MASTERY_WORD_COUNT, LearningTree.masterySelection(core).size)
+    }
+
+    @Test
+    fun aCheckpointAsksTheWordsTheLearnerKnowsLeastWell() {
+        // Five retained words and five never touched: the checkpoint must reach for the untouched
+        // ones. Testing what is already held cold is the failure mode that makes a checkpoint
+        // decorative.
+        val retained = (1..5).map { word(it, timesReviewed = 9, isLearned = true) }
+        val forgotten = (6..10).map { word(it, timesReviewed = 0) }
+
+        val chosen = LearningTree.masterySelection(retained + forgotten)
+        val chosenIds = chosen.map { it.id }.toSet()
+
+        assertTrue("the untouched words must all be asked", chosenIds.containsAll((6..10).toList()))
+    }
+
+    @Test
+    fun aCheckpointIsStableBetweenAttempts() {
+        // Ties break on teaching order rather than at random, so a retry asks the same questions
+        // instead of reshuffling under the learner.
+        val core = (1..20).map { word(it, timesReviewed = 1) }
+        assertEquals(
+            LearningTree.masterySelection(core).map { it.id },
+            LearningTree.masterySelection(core).map { it.id }
+        )
+    }
+
+    @Test
+    fun aStageTooSmallForAFullCheckpointStillProducesOne() {
+        // The empty-run risk: a stage whose core is thinner than the checkpoint length must still
+        // return the words it has, not nothing. A checkpoint that silently returns an empty list
+        // reaches the learner as a lesson that closes the instant it opens.
+        val core = (1..4).map { word(it) }
+        assertEquals(4, LearningTree.masterySelection(core).size)
+        assertTrue(LearningTree.masterySelection(emptyList()).isEmpty())
+    }
+
     @Test
     fun sectionOpensNextOnlyOnceItsGateIsMet() {
         fun section(earned: Int) = TreeSection(

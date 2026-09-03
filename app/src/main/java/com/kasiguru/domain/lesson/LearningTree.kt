@@ -161,6 +161,24 @@ object LearningTree {
     /** The unit key a stage's checkpoint records against. */
     fun masteryUnitId(sectionId: String): String = "$MASTERY_UNIT_PREFIX$sectionId"
 
+    /**
+     * The words one checkpoint run tests, chosen from a stage's core.
+     *
+     * Weakest first, then teaching order. Two reasons for the ordering, both about what a checkpoint
+     * is *for*: a run made of the ten words the learner already had cold measures nothing, and the
+     * whole value of testing a stage days after finishing it is that it finds what has decayed.
+     * Teaching order breaks ties so a second attempt asks the same questions as the first rather
+     * than reshuffling under the learner.
+     *
+     * Pure, and separated from the repository that feeds it, because this is the part that would
+     * quietly do the wrong thing: silently returning nothing, or testing words the stage never
+     * taught, are both invisible until a learner reaches the end of a stage.
+     */
+    fun masterySelection(coreWords: List<VocabularyEntity>): List<VocabularyEntity> =
+        coreWords
+            .sortedBy { masteryOf(it).ordinal }
+            .take(MASTERY_WORD_COUNT)
+
     /** The stage a checkpoint unit key belongs to, or null when [unitId] is not a checkpoint. */
     fun sectionIdForMasteryUnit(unitId: String): String? =
         if (unitId.startsWith(MASTERY_UNIT_PREFIX)) {
