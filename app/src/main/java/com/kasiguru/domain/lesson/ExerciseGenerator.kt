@@ -257,8 +257,8 @@ class ExerciseGenerator @Inject constructor(
         /** Below this a matching round is not worth the screen it takes. */
         const val MATCH_PAIRS_MIN = 3
 
-        /** A "sentence" of two words is a phrase; arranging it tests nothing. */
-        const val SENTENCE_BUILD_MIN_WORDS = 3
+        /** The shared floor; see [SentenceBank.MIN_WORDS] for why a two-word sentence is refused. */
+        const val SENTENCE_BUILD_MIN_WORDS = SentenceBank.MIN_WORDS
 
         /** Wrong chips offered beside the sentence's own words. */
         const val SENTENCE_BUILD_INTRUDERS = 2

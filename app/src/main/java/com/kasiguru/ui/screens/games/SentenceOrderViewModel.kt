@@ -74,18 +74,45 @@ class SentenceOrderViewModel @Inject constructor(
                 questionsCount = levelInfo.questionsCount
             }
 
-            // One copy of these sentences, shared with the lesson system. They used to be a literal
-            // here, which meant the lessons could not reach the only running Kasiguranin the app has.
-            val rawSentences = SentenceBank.sentences.map { authored ->
+            val allVocabRaw = vocabularyRepository.getAllVocabulary().first()
+            val allVocab = if (allVocabRaw.isNotEmpty()) allVocabRaw else emptyList<VocabularyEntity>()
+
+            // Two sources of running Kasiguranin, both authored by people.
+            //
+            // The bank is the project's own fifteen sentences, shared with the lesson system -- they
+            // used to be a literal here, which meant the lessons could not reach them. The corpus
+            // sentences are the ones recorded on a word in the admin portal, and they are the half
+            // that grows: every sentence collected from a speaker widens this game with no app
+            // release, which is the whole point of collecting them.
+            //
+            // A corpus sentence without a gloss is skipped, because the gloss is the prompt the
+            // learner reads. Nothing here can tell which *language* a gloss is in, though, and the
+            // admin field was labelled "Its Tagalog or English translation" until recently, so the
+            // handful recorded so far hold Tagalog and will read as such. That is repaired in the
+            // admin, not here -- see its "Sentence needs an English translation" filter.
+            val bankSentences = SentenceBank.sentences.map { authored ->
                 SentenceQuestion(
                     englishSentence = authored.english,
                     correctKasiguraninWords = authored.kasiguranin,
                     shuffledWords = authored.kasiguranin.shuffled()
                 )
             }
-
-            val allVocabRaw = vocabularyRepository.getAllVocabulary().first()
-            val allVocab = if (allVocabRaw.isNotEmpty()) allVocabRaw else emptyList<VocabularyEntity>()
+            val corpusSentences = allVocab.mapNotNull { word ->
+                val sentence = word.exampleSentence.trim()
+                val gloss = word.exampleTranslation.trim()
+                if (sentence.isBlank() || gloss.isBlank()) return@mapNotNull null
+                val parts = sentence.split(" ").filter { it.isNotBlank() }
+                // The same floor the lesson's sentence-building exercise uses. One definition, two readers.
+                if (parts.size < SentenceBank.MIN_WORDS) return@mapNotNull null
+                SentenceQuestion(
+                    englishSentence = gloss,
+                    correctKasiguraninWords = parts,
+                    shuffledWords = parts.shuffled()
+                )
+            }
+            // Distinct, because one sentence can be recorded on more than one of the words it uses.
+            val rawSentences = (bankSentences + corpusSentences)
+                .distinctBy { it.correctKasiguraninWords.joinToString(" ").lowercase() }
             val vocabMap = allVocab.associateBy { it.kasiguranin.lowercase() }
             val vocabNeutralMap = allVocab.associateBy { it.neutralForm.lowercase() }
 

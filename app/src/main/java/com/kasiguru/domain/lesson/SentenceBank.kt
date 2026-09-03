@@ -15,6 +15,16 @@ package com.kasiguru.domain.lesson
  */
 object SentenceBank {
 
+    /**
+     * The shortest sentence worth asking a learner to arrange.
+     *
+     * A "sentence" of two words is a phrase, and putting it in order tests nothing. It lives here
+     * rather than beside either of its readers because both the lesson's sentence-building exercise
+     * and the sentence-order game apply the same floor to the same sentences, and the two drifting
+     * apart would mean a sentence the game offers but a lesson silently refuses.
+     */
+    const val MIN_WORDS = 3
+
     val sentences: List<AuthoredSentence> = listOf(
     AuthoredSentence(
         kasiguranin = listOf("Magandang", "aldaw", "ha", "iyo", "'ttanan!"),

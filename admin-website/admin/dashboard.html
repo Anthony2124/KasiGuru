@@ -404,6 +404,7 @@
             <option value="">All words</option>
             <option value="sentence">Needs an example sentence</option>
             <option value="theme">Needs a learning-tree theme</option>
+            <option value="sentence-english">Sentence needs an English translation</option>
           </select>
           <label class="sr-only" for="sort-vocab">Sort by</label>
           <select id="sort-vocab" class="form-control" style="width:auto; min-width:160px;">
@@ -804,19 +805,32 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
         </div>
         <div class="form-group">
           <label>Example Sentence, in Kasiguranin</label>
-          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word">
+          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word, exactly as it was said">
         </div>
         <div class="form-group">
-          <label>Example Sentence Translation</label>
-          <input type="text" id="input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+          <label>What it means, in English</label>
+          <input type="text" id="input-example1-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
+        </div>
+        <div class="form-group">
+          <label>What it means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <input type="text" id="input-example1-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangungusap, sa Filipino">
         </div>
         <div class="form-group">
           <label>Second Example Sentence, in Kasiguranin</label>
           <input type="text" id="input-example2" class="form-control" placeholder="A second, different sentence using this word">
         </div>
         <div class="form-group">
-          <label>Second Example Translation</label>
-          <input type="text" id="input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
+          <label>What the second one means, in English</label>
+          <input type="text" id="input-example2-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
+        </div>
+        <div class="form-group">
+          <label>What the second one means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <input type="text" id="input-example2-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangalawang pangungusap">
+        </div>
+        <div class="form-group">
+          <label>Where these sentences came from</label>
+          <input type="text" id="input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
+          <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
@@ -989,19 +1003,32 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
         </div>
         <div class="form-group">
           <label>Example Sentence, in Kasiguranin</label>
-          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word">
+          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word, exactly as it was said">
         </div>
         <div class="form-group">
-          <label>Example Sentence Translation</label>
-          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
+          <label>What it means, in English</label>
+          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
+        </div>
+        <div class="form-group">
+          <label>What it means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <input type="text" id="edit-input-example1-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangungusap, sa Filipino">
         </div>
         <div class="form-group">
           <label>Second Example Sentence, in Kasiguranin</label>
           <input type="text" id="edit-input-example2" class="form-control" placeholder="A second, different sentence using this word">
         </div>
         <div class="form-group">
-          <label>Second Example Translation</label>
-          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
+          <label>What the second one means, in English</label>
+          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
+        </div>
+        <div class="form-group">
+          <label>What the second one means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <input type="text" id="edit-input-example2-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangalawang pangungusap">
+        </div>
+        <div class="form-group">
+          <label>Where these sentences came from</label>
+          <input type="text" id="edit-input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
+          <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>

@@ -614,7 +614,15 @@ function filteredVocabulary() {
     const matchesGap =
       !gap ||
       (gap === 'sentence' && !(item.exampleSentence || '').trim()) ||
-      (gap === 'theme' && !(item.theme || '').trim());
+      (gap === 'theme' && !(item.theme || '').trim()) ||
+      // A sentence whose English translation is missing. The lesson's sentence-building exercise
+      // reads exampleTranslation and shows it to the learner as what the sentence means, so a row
+      // with a Kasiguranin sentence and no English gloss either shows nothing or, worse, shows
+      // whatever language happened to be typed into that box. The field used to be labelled
+      // "Its Tagalog or English translation", and the five sentences recorded so far all hold
+      // Tagalog, so this filter is how they get found and repaired.
+      (gap === 'sentence-english' &&
+        (item.exampleSentence || '').trim() && !(item.exampleTranslation || '').trim());
     return matchesSearch && matchesCat && matchesLetter && matchesGap;
   });
 }
@@ -2431,6 +2439,9 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-example1-translation').value = item.exampleTranslation || '';
   document.getElementById('edit-input-example2').value = item.exampleSentence2 || '';
   document.getElementById('edit-input-example2-translation').value = item.exampleTranslation2 || '';
+  document.getElementById('edit-input-example1-translation-tl').value = item.exampleTranslationTagalog || '';
+  document.getElementById('edit-input-example2-translation-tl').value = item.exampleTranslation2Tagalog || '';
+  document.getElementById('edit-input-example-source').value = item.exampleSource || '';
 
   window.openModal('edit-vocab-modal');
 };
@@ -2701,6 +2712,9 @@ function initFormListeners() {
       const example1Translation = document.getElementById('input-example1-translation').value.trim();
       const example2 = document.getElementById('input-example2').value.trim();
       const example2Translation = document.getElementById('input-example2-translation').value.trim();
+      const example1TranslationTl = document.getElementById('input-example1-translation-tl').value.trim();
+      const example2TranslationTl = document.getElementById('input-example2-translation-tl').value.trim();
+      const exampleSource = document.getElementById('input-example-source').value.trim();
       const meaningEnglish = document.getElementById('input-meaning-en').value.trim();
       const meaningTagalog = document.getElementById('input-meaning-tl').value.trim();
 
@@ -2734,6 +2748,11 @@ function initFormListeners() {
           exampleTranslation: example1Translation || null,
           exampleSentence2: example2 || null,
           exampleTranslation2: example2Translation || null,
+          // Firestore-only: the app reads neither, so no Room migration. The Tagalog gloss is for
+          // the written record, and the source is what lets a sentence be cited in the thesis.
+          exampleTranslationTagalog: example1TranslationTl || null,
+          exampleTranslation2Tagalog: example2TranslationTl || null,
+          exampleSource: exampleSource || null,
           createdAt: Date.now(),
           // A new word needs updatedAt too, not just createdAt — the app's incremental
           // sync filters on updatedAt, so without it a freshly added word would not
@@ -2770,6 +2789,9 @@ function initFormListeners() {
       const example1Translation = document.getElementById('edit-input-example1-translation').value.trim();
       const example2 = document.getElementById('edit-input-example2').value.trim();
       const example2Translation = document.getElementById('edit-input-example2-translation').value.trim();
+      const example1TranslationTl = document.getElementById('edit-input-example1-translation-tl').value.trim();
+      const example2TranslationTl = document.getElementById('edit-input-example2-translation-tl').value.trim();
+      const exampleSource = document.getElementById('edit-input-example-source').value.trim();
       const meaningEnglish = document.getElementById('edit-input-meaning-en').value.trim();
       const meaningTagalog = document.getElementById('edit-input-meaning-tl').value.trim();
 
@@ -2794,6 +2816,11 @@ function initFormListeners() {
           exampleTranslation: example1Translation || null,
           exampleSentence2: example2 || null,
           exampleTranslation2: example2Translation || null,
+          // Firestore-only: the app reads neither, so no Room migration. The Tagalog gloss is for
+          // the written record, and the source is what lets a sentence be cited in the thesis.
+          exampleTranslationTagalog: example1TranslationTl || null,
+          exampleTranslation2Tagalog: example2TranslationTl || null,
+          exampleSource: exampleSource || null,
           updatedAt: Date.now()
         });
         await logAudit("vocabulary.update", { id, word });
