@@ -162,12 +162,15 @@ class LessonRepository @Inject constructor(
         // The checkpoint tests the core, so it opens when the core is done rather than waiting on an
         // optional tail the learner may never walk.
         val coreDone = core.isNotEmpty() && core.all { it.mastery >= Mastery.FAMILIAR }
+        // Recorded like any other lesson, at (mastery:<stageId>, 0). See LearningTree.masteryUnitId.
+        val checkpointDone =
+            progress[LearningTree.masteryUnitId(definition.id) to 0]?.isComplete == true
         val checkpoint = TreeNodeState(
             node = TreeNode.MasteryTest(definition.id),
             title = "Mastery",
-            mastery = Mastery.NONE,
+            mastery = if (checkpointDone) Mastery.MASTERED else Mastery.NONE,
             isUnlocked = isSectionUnlocked && coreDone,
-            isCurrent = isSectionUnlocked && coreDone && !currentMarked
+            isCurrent = isSectionUnlocked && coreDone && !checkpointDone && !currentMarked
         )
 
         return core + checkpoint + deepDive
@@ -182,10 +185,36 @@ class LessonRepository @Inject constructor(
 
     /** The words belonging to one lesson, in teaching order so lessons stay stable between runs. */
     suspend fun wordsFor(ref: LessonRef): List<VocabularyEntity> {
+        LearningTree.sectionIdForMasteryUnit(ref.unitId)?.let { return masteryWordsFor(it) }
+
         val words = allWordsByUnit()[ref.unitId] ?: return emptyList()
         val range = LessonPlan.wordIndicesFor(ref.lessonIndex, words.size)
         if (range.isEmpty()) return emptyList()
         return words.slice(range)
+    }
+
+    /**
+     * The words a stage's checkpoint tests: the ten from its core the learner knows least well.
+     *
+     * Drawn from the core tier only, because the checkpoint's job is to ask whether the stage was
+     * learned, and the core is the part the stage actually asked of the learner — testing optional
+     * deep-dive words nobody was told to do would make the checkpoint a trap.
+     *
+     * Weakest-first rather than at random. A checkpoint the learner passes by being shown the ten
+     * words they already had cold measures nothing; the value of testing a whole stage days later is
+     * that it finds what has decayed, so it should look there first. Ties keep teaching order, so a
+     * run is stable between attempts rather than reshuffling under the learner.
+     */
+    private suspend fun masteryWordsFor(sectionId: String): List<VocabularyEntity> {
+        val definition = LearningTree.sections.firstOrNull { it.id == sectionId } ?: return emptyList()
+        val wordsByUnit = allWordsByUnit()
+        val coreWordCount = LearningTree.CORE_LESSONS_PER_STAGE * LessonPlan.WORDS_PER_LESSON
+
+        return unitIdsFor(definition)
+            .flatMap { wordsByUnit[it].orEmpty() }
+            .take(coreWordCount)
+            .sortedBy { LearningTree.masteryOf(it).ordinal }
+            .take(LearningTree.MASTERY_WORD_COUNT)
     }
 
     /**
@@ -198,6 +227,11 @@ class LessonRepository @Inject constructor(
     suspend fun practiceWordsFor(ref: LessonRef): List<VocabularyEntity> {
         val lessonWords = wordsFor(ref)
         if (lessonWords.isEmpty()) return lessonWords
+
+        // A checkpoint tests its stage and nothing else. Interleaving exists to fold older words
+        // into a lesson about new ones; folding another stage's leeches into this stage's checkpoint
+        // would make a learner's result depend on words the stage never taught.
+        if (LearningTree.sectionIdForMasteryUnit(ref.unitId) != null) return lessonWords
 
         val leeches = vocabularyRepository.getLeechWords(limit = Interleaving.REVISITED_PER_LESSON * 2)
         val due = vocabularyRepository.getDueReviewWordsStrict(limit = Interleaving.REVISITED_PER_LESSON * 4)

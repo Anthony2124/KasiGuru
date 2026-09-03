@@ -4,6 +4,7 @@ import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.util.srs.Sm2Algorithm
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -213,6 +214,54 @@ class LearningTreeTest {
         assertTrue(
             "the tree must keep a home for words no stage claims",
             LearningTree.sections.any { it.source is SectionSource.Remainder }
+        )
+    }
+
+    // -- the checkpoint -------------------------------------------------------
+
+    @Test
+    fun aCheckpointUnitKeyRoundTripsToItsStage() {
+        val unit = LearningTree.masteryUnitId("pagbati")
+        assertEquals("mastery:pagbati", unit)
+        assertEquals("pagbati", LearningTree.sectionIdForMasteryUnit(unit))
+    }
+
+    @Test
+    fun aCheckpointKeyCanNeverBeMistakenForALessonUnit() {
+        // The two namespaces share one table, so a collision would merge a stage's lessons with its
+        // checkpoint and silently corrupt both.
+        LearningTree.sections.forEach { section ->
+            val lessonUnit = LearningTree.unitIdFor(section.source)
+            assertNull(
+                "a lesson unit key must not parse as a checkpoint",
+                LearningTree.sectionIdForMasteryUnit(lessonUnit)
+            )
+        }
+    }
+
+    @Test
+    fun aCheckpointNeverShowsItsRawKeyToALearner() {
+        // The bug this guards is one this project has already shipped once: "theme:pamilya" reached
+        // a learner as a lesson title. A checkpoint's key must resolve to its stage's real name.
+        val resolved = LearningTree.sectionForUnit(LearningTree.masteryUnitId("pagbati"))
+        assertEquals("Pagbati at Sarili", resolved?.title)
+    }
+
+    @Test
+    fun anEmptyOrPlainKeyIsNotACheckpoint() {
+        assertNull(LearningTree.sectionIdForMasteryUnit("theme:pagbati"))
+        assertNull(LearningTree.sectionIdForMasteryUnit(LearningTree.MASTERY_UNIT_PREFIX))
+        assertNull(LearningTree.sectionIdForMasteryUnit(""))
+    }
+
+    @Test
+    fun aCheckpointIsShortEnoughToFinish() {
+        // ExerciseGenerator introduces every word it is given, so this count is the length of the
+        // run. A stage's whole core would be forty-two exercises, which is where learners stop.
+        assertTrue(
+            "a checkpoint must be shorter than a stage's core",
+            LearningTree.MASTERY_WORD_COUNT <
+                LearningTree.CORE_LESSONS_PER_STAGE * LessonPlan.WORDS_PER_LESSON
         )
     }
 

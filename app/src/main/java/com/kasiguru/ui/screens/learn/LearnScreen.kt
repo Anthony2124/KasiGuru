@@ -69,6 +69,7 @@ import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.SkyReview
+import com.kasiguru.domain.lesson.LearningTree
 import com.kasiguru.ui.screens.learn.tree.learningPath
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
@@ -370,7 +371,11 @@ fun LearnScreen(
                 learningPath(
                     sections = uiState.tree,
                     onOpenLesson = onStartLesson,
-                    onOpenMastery = { /* Section mastery test: wired with the test itself. */ }
+                    // A checkpoint is a lesson over a different set of words, so it opens the same
+                    // player by the same route -- see LearningTree.masteryUnitId.
+                    onOpenMastery = { sectionId ->
+                        onStartLesson(LearningTree.masteryUnitId(sectionId), 0)
+                    }
                 )
 
                 // Below the path: the things that are genuinely secondary. They used to sit above

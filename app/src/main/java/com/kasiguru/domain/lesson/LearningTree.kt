@@ -138,6 +138,37 @@ object LearningTree {
     /** Unit key for a theme-sourced section. */
     fun themeUnitId(tag: String): String = "theme:${tag.trim().lowercase()}"
 
+    /**
+     * Words a stage's checkpoint tests.
+     *
+     * Ten, not the whole core. [ExerciseGenerator] introduces every word it is given, so handing it
+     * a stage's forty-two core words would build a forty-two exercise run — a quarter of an hour of
+     * uninterrupted testing at the end of every stage, which is how a checkpoint becomes the thing
+     * learners quit at.
+     */
+    const val MASTERY_WORD_COUNT = 10
+
+    /**
+     * Namespace for a checkpoint's progress row.
+     *
+     * A checkpoint is recorded exactly like a lesson — one `lesson_progress` row at
+     * `(mastery:<stageId>, 0)`. That is why the checkpoint needs no table, no migration, no second
+     * player screen and no route of its own: it *is* a lesson, over a different set of words. The
+     * prefix keeps it from ever colliding with a theme unit key.
+     */
+    const val MASTERY_UNIT_PREFIX = "mastery:"
+
+    /** The unit key a stage's checkpoint records against. */
+    fun masteryUnitId(sectionId: String): String = "$MASTERY_UNIT_PREFIX$sectionId"
+
+    /** The stage a checkpoint unit key belongs to, or null when [unitId] is not a checkpoint. */
+    fun sectionIdForMasteryUnit(unitId: String): String? =
+        if (unitId.startsWith(MASTERY_UNIT_PREFIX)) {
+            unitId.removePrefix(MASTERY_UNIT_PREFIX).takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+
     /** The unit key a section's lessons are recorded against. */
     fun unitIdFor(source: SectionSource): String = when (source) {
         is SectionSource.Theme -> themeUnitId(source.tag)
@@ -151,8 +182,15 @@ object LearningTree {
      * Path printed `theme:pamilya` as a lesson's title, which is the internal key for "Pamilya at
      * Mga Tao". Anything showing a lesson to a person resolves the key through here first.
      */
-    fun sectionForUnit(unitId: String): SectionDefinition? =
-        sections.firstOrNull { unitIdFor(it.source).equals(unitId, ignoreCase = true) }
+    fun sectionForUnit(unitId: String): SectionDefinition? {
+        // A checkpoint's unit key resolves to the stage it tests, so "mastery:pagbati" reads as
+        // "Pagbati at Sarili" wherever a lesson's stage is shown. Without this the key itself
+        // reaches the learner, which is the bug that once printed "theme:pamilya" as a title.
+        sectionIdForMasteryUnit(unitId)?.let { sectionId ->
+            return sections.firstOrNull { it.id.equals(sectionId, ignoreCase = true) }
+        }
+        return sections.firstOrNull { unitIdFor(it.source).equals(unitId, ignoreCase = true) }
+    }
 
     /** True when [wordCount] is enough for the section to be worth walking through. */
     fun isViable(wordCount: Int): Boolean = wordCount >= MIN_WORDS_FOR_SECTION
