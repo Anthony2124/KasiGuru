@@ -162,10 +162,18 @@ async function writeAllDocsByPath(db, collectionName, entries) {
  */
 async function deleteCollectionDeep(db, colRef, onProgress) {
   let deleted = 0;
+  // The same guard readAllDocsDeep already applies: checking every document in every collection
+  // for subcollections it can never have is a real, avoidable cost against a live database - one
+  // extra round trip per document, for six of the seven collections a learner reset touches, none
+  // of which ever have children. Found by running this for real: the dry-run count against
+  // production took over four minutes and was still on its first collection when this was added.
+  const mightHaveChildren = DEEP_COLLECTIONS.includes(colRef.id);
 
   for (const ref of await colRef.listDocuments()) {
-    for (const sub of await ref.listCollections()) {
-      deleted += await deleteCollectionDeep(db, sub, onProgress);
+    if (mightHaveChildren) {
+      for (const sub of await ref.listCollections()) {
+        deleted += await deleteCollectionDeep(db, sub, onProgress);
+      }
     }
     await ref.delete();
     deleted++;
@@ -178,9 +186,12 @@ async function deleteCollectionDeep(db, colRef, onProgress) {
 /** Counts documents the same way [deleteCollectionDeep] would remove them, without deleting. */
 async function countCollectionDeep(db, colRef) {
   let total = 0;
+  const mightHaveChildren = DEEP_COLLECTIONS.includes(colRef.id);
   for (const ref of await colRef.listDocuments()) {
-    for (const sub of await ref.listCollections()) {
-      total += await countCollectionDeep(db, sub);
+    if (mightHaveChildren) {
+      for (const sub of await ref.listCollections()) {
+        total += await countCollectionDeep(db, sub);
+      }
     }
     total++;
   }
