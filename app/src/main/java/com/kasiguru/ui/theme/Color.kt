@@ -143,6 +143,16 @@ val Faint: Color @Composable get() = if (LocalDarkMode.current) Dark.Faint else 
  */
 val RewardInk = Color(0xFF1F1B3A)
 
+/**
+ * The full-screen dim behind the guided tour, used at roughly 0.72 alpha.
+ *
+ * Fixed across themes for the same reason as [RewardInk]: a scrim's whole job is to darken what is
+ * behind it, and [Ink] — which carries this same hex in light mode — resolves to near-white in dark
+ * mode, which would turn the dim into a wash. Anything that must darken in both themes belongs here
+ * rather than reading [LocalDarkMode].
+ */
+val Scrim = Color(0xFF1F1B3A)
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Reward and callout fills. These carry [RewardInk]; never a foreground on light or dark.
 // Fixed across themes on purpose — see the file doc comment.

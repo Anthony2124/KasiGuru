@@ -60,6 +60,8 @@ import com.kasiguru.ui.theme.WidthClass
 import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.util.gamification.GamificationEngine
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * Practice: the mini-game hub. A violet canopy carrying level, XP and stars, over a sheet listing the
@@ -159,6 +161,7 @@ fun GameHubScreen(
                         lead = {
                             SoftCard(modifier = Modifier.fillMaxWidth()) {
                                 StatStrip(
+                        modifier = Modifier.tourAnchor(TourAnchor.PracticeStats),
                                     stats = listOf(
                                         Stat("XP", "$totalXp"),
                                         Stat("Stars", "${uiState.totalStars}"),
@@ -175,6 +178,7 @@ fun GameHubScreen(
                         SectionHeading(text = "Continue practicing")
                         Spacer(Modifier.height(Space.sm))
                         FeaturedGameCard(
+                        modifier = Modifier.tourAnchor(TourAnchor.PracticeFeatured),
                             entry = game,
                             isUnlocked = uiState.totalStars >= game.unlockStars,
                             onClick = {
@@ -238,9 +242,14 @@ fun GameHubScreen(
  * differentiated recommendation to act on before the grid takes over as reference.
  */
 @Composable
-private fun FeaturedGameCard(entry: GameEntry, isUnlocked: Boolean, onClick: () -> Unit) {
+private fun FeaturedGameCard(
+    entry: GameEntry,
+    isUnlocked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val isRewardFill = isUnlocked && (entry.accent == Gold || entry.accent == Coral)
-    SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.panel, onClick = onClick) {
+    SoftCard(modifier = modifier.fillMaxWidth(), shape = Shapes.panel, onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier

@@ -35,6 +35,12 @@ class UserPreferencesRepository @Inject constructor(
         val DISMISSED_UPDATE_VERSION = intPreferencesKey("dismissed_update_version")
         val BACKUP_PROMPT_DISMISSED = booleanPreferencesKey("backup_prompt_dismissed")
         val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
+        val TUTORIAL_PENDING = booleanPreferencesKey("tutorial_pending")
+        val TOUR_COMPLETED_CHAPTERS = stringSetPreferencesKey("tour_completed_chapters")
+        val TOUR_SKIPPED_CHAPTERS = stringSetPreferencesKey("tour_skipped_chapters")
+        val TOUR_RESUME_CHAPTER = stringPreferencesKey("tour_resume_chapter")
+        val TOUR_RESUME_STEP = intPreferencesKey("tour_resume_step")
+        val TOUR_BASELINE_VERSION = intPreferencesKey("tour_baseline_version")
         val LAST_CONTENT_SYNC_AT = longPreferencesKey("last_content_sync_at")
         val LAST_FULL_RECONCILE_AT = longPreferencesKey("last_full_reconcile_at")
         val DAILY_REVIEW_COMPLETED_DATE = stringPreferencesKey("daily_review_completed_date")
@@ -96,6 +102,117 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun markGameRulesSeen(gameType: String) {
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.GAME_RULES_SEEN] = (prefs[PreferencesKeys.GAME_RULES_SEEN] ?: emptySet()) + gameType
+        }
+    }
+
+    /**
+     * Whether the learner is owed the guided tour of the interface.
+     *
+     * Deliberately "pending" rather than "seen". A `seen` flag defaults to false for everyone, so
+     * shipping one would have ambushed every *existing* install with a tour on the first launch after
+     * updating — a fresh preference key is indistinguishable from a learner who never took the tour.
+     * This is set by [com.kasiguru.ui.screens.onboarding.OnboardingViewModel] when the wizard
+     * finishes, and cleared when the tour is completed or skipped, so only someone who actually just
+     * joined is owed one.
+     *
+     * It needs no entry in [clearUserSessionData]: signing out runs
+     * [com.kasiguru.data.UserDataResetManager.resetAllLocalUserData], which reseeds `user_progress`
+     * with `isOnboardingCompleted = false`, so the next person on the device goes through the wizard
+     * again and is marked pending on the way out.
+     */
+    val tutorialPending: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TUTORIAL_PENDING] ?: false
+    }
+
+    suspend fun setTutorialPending(pending: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TUTORIAL_PENDING] = pending
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Chaptered tutorial.
+    //
+    // [tutorialPending] above still means exactly one thing: this learner is owed the *core* chapter.
+    // Every other chapter is opt-in from the help page, which is what keeps an app update from
+    // ambushing anyone - a new chapter is offered, never started.
+    //
+    // Strings in, strings out. The "Dictionary:2" encoding and the rules about what counts as new
+    // live in ui/tour/TourProgress.kt, so this repository keeps knowing nothing about the UI layer.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Stamps of chapters finished, as `"<ChapterId>:<version>"`. */
+    val tourCompletedChapters: Flow<Set<String>> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TOUR_COMPLETED_CHAPTERS] ?: emptySet()
+    }
+
+    /** Chapter ids the learner started and skipped. Offered again, but never badged. */
+    val tourSkippedChapters: Flow<Set<String>> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TOUR_SKIPPED_CHAPTERS] ?: emptySet()
+    }
+
+    /** Where a chapter was left, as a raw id and step for [com.kasiguru.ui.tour.sanitizeResume]. */
+    val tourResumePoint: Flow<Pair<String, Int>?> = dataStore.data.map { prefs ->
+        val chapter = prefs[PreferencesKeys.TOUR_RESUME_CHAPTER]
+        val step = prefs[PreferencesKeys.TOUR_RESUME_STEP]
+        if (chapter.isNullOrBlank() || step == null) null else chapter to step
+    }
+
+    /**
+     * The highest chapter version that already existed when this install first ran.
+     *
+     * Written once. Without it, an existing learner updating from a build that had no chapters would
+     * see every chapter badged as new at once, which is noise rather than guidance.
+     */
+    val tourBaselineVersion: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.TOUR_BASELINE_VERSION] ?: 0
+    }
+
+    suspend fun markTourChapterCompleted(stamp: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TOUR_COMPLETED_CHAPTERS] =
+                (prefs[PreferencesKeys.TOUR_COMPLETED_CHAPTERS] ?: emptySet()) + stamp
+            prefs.remove(PreferencesKeys.TOUR_RESUME_CHAPTER)
+            prefs.remove(PreferencesKeys.TOUR_RESUME_STEP)
+        }
+    }
+
+    suspend fun markTourChapterSkipped(chapterId: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TOUR_SKIPPED_CHAPTERS] =
+                (prefs[PreferencesKeys.TOUR_SKIPPED_CHAPTERS] ?: emptySet()) + chapterId
+            prefs.remove(PreferencesKeys.TOUR_RESUME_CHAPTER)
+            prefs.remove(PreferencesKeys.TOUR_RESUME_STEP)
+        }
+    }
+
+    /**
+     * Checkpoints the in-flight position.
+     *
+     * Deliberately not called on every Next: the position lives in the view model for responsiveness
+     * and is flushed when the app is backgrounded and on a short debounce, so a ten-stop chapter
+     * costs one or two writes rather than ten.
+     */
+    suspend fun setTourResumePoint(chapterId: String, step: Int) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.TOUR_RESUME_CHAPTER] = chapterId
+            prefs[PreferencesKeys.TOUR_RESUME_STEP] = step
+        }
+    }
+
+    suspend fun clearTourResumePoint() {
+        dataStore.edit { prefs ->
+            prefs.remove(PreferencesKeys.TOUR_RESUME_CHAPTER)
+            prefs.remove(PreferencesKeys.TOUR_RESUME_STEP)
+        }
+    }
+
+    /** Write-once. A second call on an install that already has a baseline is a no-op. */
+    suspend fun ensureTourBaseline(version: Int) {
+        dataStore.edit { prefs ->
+            if (prefs[PreferencesKeys.TOUR_BASELINE_VERSION] == null) {
+                prefs[PreferencesKeys.TOUR_BASELINE_VERSION] = version
+            }
         }
     }
 
@@ -221,6 +338,15 @@ class UserPreferencesRepository @Inject constructor(
             prefs.remove(PreferencesKeys.DAILY_GAMES_COUNT)
             prefs.remove(PreferencesKeys.BACKUP_PROMPT_DISMISSED)
             prefs.remove(PreferencesKeys.GAME_RULES_SEEN)
+            // Chapter progress belongs to the person, not the device. Sign-out reseeds user_progress
+            // so the next learner runs the wizard and takes the core tour again; without these four
+            // removals they would inherit the previous person's history and be told they had already
+            // done Dictionary. TOUR_BASELINE_VERSION deliberately stays - it is a property of the
+            // install, and clearing it would re-badge every chapter as new for the next profile.
+            prefs.remove(PreferencesKeys.TOUR_COMPLETED_CHAPTERS)
+            prefs.remove(PreferencesKeys.TOUR_SKIPPED_CHAPTERS)
+            prefs.remove(PreferencesKeys.TOUR_RESUME_CHAPTER)
+            prefs.remove(PreferencesKeys.TOUR_RESUME_STEP)
         }
     }
 }

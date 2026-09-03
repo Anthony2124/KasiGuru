@@ -9,13 +9,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Ground
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +35,13 @@ import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.components.LevelUpDialog
 import com.kasiguru.ui.components.StreakCelebrationDialog
 import com.kasiguru.ui.screens.about.AboutScreen
+import com.kasiguru.ui.screens.help.HowToUseScreen
+import com.kasiguru.ui.tour.LocalTourAnchors
+import com.kasiguru.ui.tour.SpotlightOverlay
+import com.kasiguru.ui.tour.TourAnchorRegistry
+import com.kasiguru.ui.tour.TourViewModel
+import com.kasiguru.ui.tour.TourChapterId
+import com.kasiguru.ui.tour.TourTarget
 import com.kasiguru.ui.screens.achievements.AchievementsScreen
 import com.kasiguru.ui.screens.auth.AccountScreen
 import com.kasiguru.ui.screens.auth.SplashViewModel
@@ -60,13 +72,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute in listOf(
-        Screen.Learn.route,
-        Screen.GameHub.route,
-        Screen.VocabularyList.route,
-        Screen.Achievements.route,
-        Screen.Profile.route
-    )
+    val showBottomBar = currentRoute in Screen.tabRoots
 
     val levelUpViewModel: LevelUpViewModel = hiltViewModel()
     val pendingLevelUp by levelUpViewModel.pendingLevelUp.collectAsState()
@@ -80,6 +86,99 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
     }
 
+    // Moving between the five tab roots. Hoisted out of the bottom bar's own call site because the
+    // guided tour drives the same navigation, and it must do it with exactly these options: a bare
+    // navigate() would leave Learn→Practice→Words→Progress→Profile on the back stack, so the first
+    // Back after a tour would walk the learner backwards through five screens they never chose.
+    val switchTab: (String) -> Unit = { route ->
+        if (currentRoute != route) {
+            navController.navigate(route) {
+                popUpTo(Screen.Learn.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
+    val tourViewModel: TourViewModel = hiltViewModel()
+    val activeTour by tourViewModel.active.collectAsState()
+    val tourAnchors = remember { TourAnchorRegistry() }
+
+    // Chapters visit pushed screens - Settings, the dictionary, Submit Word - where showBottomBar is
+    // false, so the tour cannot be gated on it. What must stay excluded is the pre-app routing:
+    // running while Splash is still resolving its start destination puts two navigations in flight at
+    // once and empties the back stack, which shows up as a blank Ground screen rather than an error.
+    val tourAllowed = currentRoute != null && currentRoute !in setOf(
+        Screen.Splash.route,
+        Screen.Onboarding.route,
+        Screen.ProfileSelection.route
+    )
+    val activeStop = activeTour?.takeIf { tourAllowed }?.current
+    SideEffect { tourAnchors.active = activeStop != null }
+    SideEffect { tourAnchors.requestReveal(activeStop?.stop?.anchor) }
+
+    /**
+     * Moves to wherever a stop lives. Tab roots switch; anything else is pushed.
+     *
+     * The pushed case is a bare navigate rather than a popUpTo: a chapter is a linear walk, so the
+     * stack it builds is the one the learner would have built by hand, and the tour's own Back has to
+     * be able to walk back down it.
+     */
+    val tourNavigate: (String) -> Unit = { route ->
+        when {
+            route == currentRoute -> Unit
+            route in Screen.tabRoots -> switchTab(route)
+            else -> navController.navigate(route) { launchSingleTop = true }
+        }
+    }
+
+    // Each stop names the destination it describes, so the caption is always talking about something
+    // the learner can see behind the dim. Back across a stop boundary comes through here too.
+    LaunchedEffect(activeTour?.chapter?.id, activeTour?.index, tourAllowed) {
+        if (tourAllowed) activeStop?.let { tourNavigate(it.route) }
+    }
+
+    // A crash or a low-memory kill never delivers this, which is what the view model's debounced
+    // checkpoint is for; this is the clean-exit path and costs one write per backgrounding.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { tourViewModel.checkpoint() }
+
+    /**
+     * Ends a chapter and puts the learner back where it started.
+     *
+     * popUpTo the entry route unwinds everything the chapter pushed in one transaction, so someone
+     * who skips halfway through the Settings chapter lands back on the help page rather than three
+     * screens deep in a flow they did not choose.
+     */
+    val returnFromTour: (String) -> Unit = { entryRoute ->
+        navController.navigate(entryRoute) {
+            popUpTo(entryRoute) { inclusive = false }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    // Hoisted so startChapter (below) can resume a chapter where it was left, not only replay it
+    // from the top: the Help page shows "Continue - step N of M" for exactly this reason, and until
+    // this was threaded through, tapping that row silently restarted at step 0 regardless of what the
+    // text said.
+    val resumePoint by tourViewModel.resumePoint.collectAsState()
+
+    val startChapter: (TourChapterId) -> Unit = { id ->
+        val resumeStep = resumePoint?.takeIf { it.chapterId == id }?.step
+        tourViewModel.startChapter(id, entryRoute = currentRoute, at = resumeStep ?: 0)
+    }
+
+    /** Replays the core chapter. Learn is rebuilt rather than restored, so stop 1's anchor is on
+     *  screen instead of wherever the learner had last scrolled to. */
+    val replayTour: () -> Unit = {
+        tourViewModel.restart()
+        navController.navigate(Screen.Learn.route) {
+            popUpTo(Screen.Learn.route) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+    CompositionLocalProvider(LocalTourAnchors provides tourAnchors) {
     Box(
         modifier = Modifier.fillMaxSize().background(Ground)
     ) {
@@ -95,7 +194,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
-            modifier = Modifier.fillMaxSize().padding(bottom = if (showBottomBar) navClusterHeight else 0.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = if (showBottomBar) navClusterHeight else 0.dp)
+                // While the tour is up, everything behind the dim is out of reach for a pointer, so
+                // it must be out of reach for TalkBack too - otherwise swipe traversal wanders
+                // through controls the learner cannot actually activate.
+                .then(if (activeStop != null) Modifier.clearAndSetSemantics { } else Modifier)
         ) {
             // Splash Screen for routing
             composable(Screen.Splash.route) {
@@ -186,7 +291,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
                     onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                    onNavigateToHelp = { navController.navigate(Screen.Help.route) }
                 )
             }
             
@@ -384,7 +490,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToAccount = { navController.navigate(Screen.Account.route) },
                     onNavigateToProfiles = { navController.navigate(Screen.ProfileSelection.route) },
-                    onNavigateToReport = { navController.navigate(Screen.ReportIssue.createRoute()) }
+                    onNavigateToReport = { navController.navigate(Screen.ReportIssue.createRoute()) },
+                    onReplayTutorial = replayTour
                 )
             }
             composable(Screen.Account.route) {
@@ -404,6 +511,21 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             }
             composable(Screen.About.route) {
                 AboutScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(Screen.Help.route) {
+                val chapterStates by tourViewModel.chapterStates.collectAsState()
+                HowToUseScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onReplayTour = replayTour,
+                    chapterStates = chapterStates,
+                    resumePoint = resumePoint,
+                    onStartChapter = startChapter,
+                    onNavigateToSubmitWord = { navController.navigate(Screen.SubmitWord.route) },
+                    onNavigateToReport = {
+                        navController.navigate(Screen.ReportIssue.createRoute(screenContext = "Help"))
+                    }
+                )
             }
 
             composable(Screen.SubmitWord.route) {
@@ -449,15 +571,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         if (showBottomBar) {
             KasiGuruBottomBar(
                 currentRoute = currentRoute,
-                onNavigateToRoute = { route ->
-                    if (currentRoute != route) {
-                        navController.navigate(route) {
-                            popUpTo(Screen.Learn.route) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
+                onNavigateToRoute = switchTab,
                 // Still measured, and still worth measuring: the cluster is shorter without the docked
                 // FAB, so every screen's bottom inset shrinks with it rather than being hardcoded.
                 modifier = Modifier
@@ -465,7 +579,43 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     .onSizeChanged { size ->
                         navClusterHeight = with(density) { size.height.toDp() }
                     }
+                    .then(if (activeStop != null) Modifier.clearAndSetSemantics { } else Modifier)
             )
         }
+
+        // Last child of the Box on purpose: it has to dim and cut through the floating bar as well
+        // as the nav host, and it shares their coordinate space, which a Dialog would not.
+        activeTour?.takeIf { tourAllowed }?.let { tour ->
+            val stop = tour.current ?: return@let
+            SpotlightOverlay(
+                stop = stop.stop,
+                chapterTitle = tour.chapter.title,
+                stepIndex = tour.index,
+                stepCount = tour.stops.size,
+                // The registry is handed over rather than read here. Reading it in this scope would
+                // make every anchor measurement recompose the whole navigation graph, and a relayout
+                // that re-reports its bounds turns that into a loop.
+                anchors = tourAnchors,
+                // Only trust the anchor once the destination it lives on is actually showing;
+                // otherwise a hole would be cut at coordinates the previous screen reported.
+                anchorVisible = currentRoute == stop.route,
+                bottomBlocked = if (showBottomBar) navClusterHeight else 0.dp,
+                onBack = {
+                    val wasFirst = tour.index == 0
+                    tourViewModel.back()
+                    if (wasFirst) returnFromTour(tour.entryRoute)
+                },
+                onSkip = {
+                    tourViewModel.skip()
+                    returnFromTour(tour.entryRoute)
+                },
+                onNext = {
+                    val wasLast = tour.isLast
+                    tourViewModel.next()
+                    if (wasLast) returnFromTour(tour.entryRoute)
+                }
+            )
+        }
+    }
     }
 }

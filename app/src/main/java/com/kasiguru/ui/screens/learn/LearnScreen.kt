@@ -74,6 +74,8 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.WidthClass
 import com.kasiguru.ui.theme.rememberWidthClass
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * The learner's home: a violet canopy carrying today's state, over a sheet carrying today's work.
@@ -151,6 +153,7 @@ fun LearnScreen(
                 // flame's original look.
                 Row(
                     modifier = Modifier
+                        .tourAnchor(TourAnchor.StreakBadge)
                         .clip(Shapes.pill)
                         .background(Gold)
                         .clickable { showStreakDialog = true }
@@ -172,6 +175,7 @@ fun LearnScreen(
                 }
                 Spacer(Modifier.width(Space.xs))
                 CanopyIconButton(
+                    modifier = Modifier.tourAnchor(TourAnchor.NotificationBell),
                     iconRes = Iconsax.Notification,
                     contentDescription = "Notifications",
                     onClick = onOpenNotifications
@@ -211,7 +215,9 @@ fun LearnScreen(
                     onCanopy = true,
                     contentDescription = "Daily goal: ${uiState.dailyXpEarned} of " +
                         "${progress.dailyGoalXp} XP earned today, ${uiState.dailyGoalRemainder}",
-                    modifier = Modifier.clickable(onClick = onOpenProgress)
+                    modifier = Modifier
+                        .clickable(onClick = onOpenProgress)
+                        .tourAnchor(TourAnchor.DailyGoalRing)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -306,24 +312,33 @@ fun LearnScreen(
                     // Continue button, then a list of four cards, then the path below -- so none of
                     // them read as the answer. The card is now the only call to action above the
                     // path, and it leads with a Kasiguranin word rather than a verb.
-                    uiState.continueCard?.let { card ->
-                        ContinueCard(
-                            card = card,
-                            onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) }
-                        )
-                    } ?: ClayButton(
-                        label = label,
-                        onClick = onContinue,
-                        modifier = Modifier.fillMaxWidth(),
-                        leading = {
-                            Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                    // Wrapped so the guided tour can spotlight the primary action without either
+                    // branch needing to know about it -- the card and the button are alternatives for
+                    // the same job, and the tour points at whichever one is showing.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .tourAnchor(TourAnchor.ContinueAction)
+                    ) {
+                        uiState.continueCard?.let { card ->
+                            ContinueCard(
+                                card = card,
+                                onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) }
                             )
-                        }
-                    )
+                        } ?: ClayButton(
+                            label = label,
+                            onClick = onContinue,
+                            modifier = Modifier.fillMaxWidth(),
+                            leading = {
+                                Icon(
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        )
+                    }
 
                     // Due review is the one thing urgent enough to sit above the path: a word due
                     // today is a word about to be forgotten, which outranks meeting a new one.

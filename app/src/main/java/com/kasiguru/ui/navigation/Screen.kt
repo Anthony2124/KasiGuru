@@ -27,7 +27,16 @@ sealed class Screen(val route: String) {
         fun createRoute(wordId: Int) = "vocabulary/$wordId"
     }
     data object VocabularyCategory : Screen("vocabulary/category/{category}") {
-        fun createRoute(category: String) = "vocabulary/category/$category"
+        /**
+         * Category names are display strings - "Body Parts & Health", "Food & Dining" - so the
+         * argument has to be encoded for the same reason [LessonPlayer.createRoute] encodes its unit
+         * id. Harmless while the only caller passes a name straight from the registry; a broken route
+         * the moment anything resolves a category at runtime.
+         */
+        fun createRoute(category: String): String {
+            val encoded = java.net.URLEncoder.encode(category, "UTF-8")
+            return "vocabulary/category/$encoded"
+        }
     }
     data object GameHub : Screen("games")
     data object LevelSelection : Screen("games/levels/{gameType}") {
@@ -59,6 +68,7 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object Account : Screen("account")
     data object About : Screen("about")
+    data object Help : Screen("help")
     data object SubmitWord : Screen("submit_word")
     data object SubmitLiterature : Screen("submit_literature")
     data object ReportIssue : Screen("report_issue?category={category}&word={word}&screenContext={screenContext}") {
@@ -73,5 +83,33 @@ sealed class Screen(val route: String) {
             screenContext?.let { params.add("screenContext=${java.net.URLEncoder.encode(it, "UTF-8")}") }
             return if (params.isEmpty()) "report_issue" else "report_issue?${params.joinToString("&")}"
         }
+    }
+
+    companion object {
+        /**
+         * The five destinations the bottom bar shows, and the only routes that may be reached by
+         * switching tabs rather than by pushing.
+         *
+         * Declared once here because three places need to agree on it - the navigation graph's
+         * bottom-bar visibility, the guided tour's navigator, and the tour's own tests - and they
+         * each kept a private copy of the list until now.
+         */
+        /**
+         * Computed on access, not stored.
+         *
+         * A `val` here would be evaluated while `Screen` itself is still initialising, and reading
+         * `Learn.route` at that moment re-enters the very class initialiser that is running - the
+         * nested object's INSTANCE is still null, and the whole class fails to load with a
+         * NoClassDefFoundError that names nothing useful. Deferring to a getter sidesteps it, and a
+         * five-element set is not worth caching.
+         */
+        val tabRoots: Set<String>
+            get() = setOf(
+                Learn.route,
+                GameHub.route,
+                VocabularyList.route,
+                Achievements.route,
+                Profile.route
+            )
     }
 }

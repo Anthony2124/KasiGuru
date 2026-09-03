@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +25,8 @@ import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 import kotlinx.coroutines.launch
 
 /**
@@ -38,6 +41,7 @@ fun SettingsScreen(
     onNavigateToAccount: () -> Unit = {},
     onNavigateToProfiles: () -> Unit = {},
     onNavigateToReport: () -> Unit = {},
+    onReplayTutorial: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -115,7 +119,10 @@ fun SettingsScreen(
                 )
 
                 // Account Section
-                SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToAccount) {
+                SoftCard(
+                    modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SettingsAccount),
+                    onClick = onNavigateToAccount
+                ) {
                     Text(
                         text = "Account",
                         style = MaterialTheme.typography.titleMedium,
@@ -303,7 +310,7 @@ fun SettingsScreen(
                 }
 
                 // Preferences Section
-                SoftCard(modifier = Modifier.fillMaxWidth()) {
+                SoftCard(modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SettingsPreferences)) {
                     Text(
                         text = "App Preferences",
                         style = MaterialTheme.typography.titleMedium,
@@ -328,6 +335,18 @@ fun SettingsScreen(
                         checked = soundEnabled,
                         iconRes = Iconsax.VolumeHigh,
                         onCheckedChange = { viewModel.toggleSoundEnabled(it) }
+                    )
+
+                    Spacer(Modifier.height(Space.sm))
+
+                    // Belongs with theme and audio rather than in a card of its own: "show me how
+                    // this works again" is an app preference, and one row does not earn a section.
+                    SettingActionRow(
+                        modifier = Modifier.tourAnchor(TourAnchor.SettingsReplayTutorial),
+                        title = "Replay tutorial",
+                        subtitle = "Walk through the app again",
+                        iconRes = Iconsax.Teacher,
+                        onClick = onReplayTutorial
                     )
                 }
 
@@ -535,6 +554,61 @@ fun SettingsScreen(
             }
         }
     )
+}
+
+/**
+ * A settings row that performs an action rather than holding a state, laid out to match
+ * [SettingSwitchRow] exactly so a card can mix the two without the rhythm breaking.
+ */
+@Composable
+fun SettingActionRow(
+    title: String,
+    subtitle: String,
+    iconRes: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Radius.chip))
+            .clickable(onClick = onClick)
+            .heightIn(min = Touch.minTarget),
+        horizontalArrangement = Arrangement.spacedBy(Space.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = Violet,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ink
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted
+            )
+        }
+
+        Icon(
+            painter = painterResource(id = Iconsax.ArrowRight),
+            contentDescription = null,
+            tint = Faint,
+            modifier = Modifier.size(18.dp)
+        )
+    }
 }
 
 @Composable

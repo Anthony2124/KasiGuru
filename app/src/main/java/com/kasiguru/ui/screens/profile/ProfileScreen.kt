@@ -60,6 +60,8 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletTint
 import com.kasiguru.util.gamification.GamificationEngine
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * Profile: a tall canopy carrying the avatar and headline stats, over a sheet of personal details, a
@@ -77,6 +79,7 @@ fun ProfileScreen(
     onNavigateToLeaderboard: () -> Unit = {},
     onNavigateToCultural: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
+    onNavigateToHelp: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -101,7 +104,12 @@ fun ProfileScreen(
         // bar it is visible on arrival rather than only after a scroll that may never happen.
         compactTitle = true,
         actions = {
-            GroundIconButton(Iconsax.Setting, "Settings", onNavigateToSettings)
+            GroundIconButton(
+                Iconsax.Setting,
+                "Settings",
+                onNavigateToSettings,
+                modifier = Modifier.tourAnchor(TourAnchor.ProfileSettingsIcon)
+            )
             GroundIconButton(Iconsax.Edit, "Edit profile", onNavigateToEditProfile)
         },
         content = {
@@ -303,8 +311,12 @@ fun ProfileScreen(
                     Spacer(Modifier.height(Space.xs))
                     SectionHeading(text = "Explore")
                     Spacer(Modifier.height(Space.sm))
-                    SoftCard(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = Space.xs)) {
+                    SoftCard(
+                        modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.ProfileExplore),
+                        contentPadding = PaddingValues(vertical = Space.xs)
+                    ) {
                         Column {
+                            ProfileLinkRow(Iconsax.Teacher, Violet, "How to use KasiGuru", "A short guide to every tab", onNavigateToHelp)
                             ProfileLinkRow(Iconsax.MedalStar, Violet, "Leaderboard", "See how you rank this week", onNavigateToLeaderboard)
                             ProfileLinkRow(Iconsax.Courthouse, Coral, "Cultural heritage", "Stories and context from Casiguran", onNavigateToCultural)
                             ProfileLinkRow(Iconsax.InfoCircle, Gold, "About KasiGuru", "The project, the team, the mission", onNavigateToAbout)

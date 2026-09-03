@@ -70,6 +70,8 @@ import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletDeep
 import com.kasiguru.util.audio.AudioPlayerManager
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * Dictionary: a short canopy stating the corpus and how much of it is learned, over a sheet of
@@ -189,7 +191,8 @@ fun VocabularyScreen(
                 }
 
                 item(span = { GridItemSpan(2) }) {
-                    SubmitWordBanner(onClick = {
+                    SubmitWordBanner(
+                        modifier = Modifier.tourAnchor(TourAnchor.DictSubmitBanner),onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onNavigateToSubmitWord()
                     })
@@ -219,6 +222,7 @@ fun VocabularyScreen(
 
                 item(span = { GridItemSpan(2) }) {
                     WordOfTheDayCard(
+                        modifier = Modifier.tourAnchor(TourAnchor.DictWordOfDay),
                         kasiguranin = featuredWord?.kasiguranin ?: "singët",
                         translation = when {
                             featuredWord == null -> "langgam · ant"
@@ -330,13 +334,13 @@ fun VocabularyScreen(
  * translucent because, unlike anything else on this screen, it has a genuinely vivid backdrop.
  */
 @Composable
-private fun SubmitWordBanner(onClick: () -> Unit) {
+private fun SubmitWordBanner(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ClaySurface(
         face = Violet,
         lipColor = VioletDeep,
         shape = Shapes.panel,
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(
@@ -375,6 +379,7 @@ private fun SubmitWordBanner(onClick: () -> Unit) {
 }
 @Composable
 private fun WordOfTheDayCard(
+    modifier: Modifier = Modifier,
     kasiguranin: String,
     translation: String,
     isLearned: Boolean = true,
@@ -382,7 +387,7 @@ private fun WordOfTheDayCard(
     onPlayClick: () -> Unit
 ) {
     SoftCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = Shapes.panel,
         onClick = onClick
     ) {

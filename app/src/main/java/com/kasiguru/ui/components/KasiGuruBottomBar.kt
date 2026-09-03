@@ -40,12 +40,16 @@ import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.Touch
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletShadow
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 data class BottomNavItem(
     val route: String,
     val title: String,
     @DrawableRes val iconOutline: Int,
-    @DrawableRes val iconBold: Int
+    @DrawableRes val iconBold: Int,
+    /** Lets the guided tour cut its spotlight around this exact cell. */
+    val tourAnchor: TourAnchor
 )
 
 /**
@@ -68,11 +72,11 @@ fun KasiGuruBottomBar(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        BottomNavItem(Screen.Learn.route, "Learn", Iconsax.HomeOutline, Iconsax.HomeBold),
-        BottomNavItem(Screen.GameHub.route, "Practice", Iconsax.Element4Outline, Iconsax.Element4Bold),
-        BottomNavItem(Screen.VocabularyList.route, "Words", Iconsax.BookOutline, Iconsax.BookBold),
-        BottomNavItem(Screen.Achievements.route, "Progress", Iconsax.MedalStar, Iconsax.MedalStarBold),
-        BottomNavItem(Screen.Profile.route, "Profile", Iconsax.ProfileOutline, Iconsax.ProfileBold)
+        BottomNavItem(Screen.Learn.route, "Learn", Iconsax.HomeOutline, Iconsax.HomeBold, TourAnchor.NavLearn),
+        BottomNavItem(Screen.GameHub.route, "Practice", Iconsax.Element4Outline, Iconsax.Element4Bold, TourAnchor.NavPractice),
+        BottomNavItem(Screen.VocabularyList.route, "Words", Iconsax.BookOutline, Iconsax.BookBold, TourAnchor.NavWords),
+        BottomNavItem(Screen.Achievements.route, "Progress", Iconsax.MedalStar, Iconsax.MedalStarBold, TourAnchor.NavProgress),
+        BottomNavItem(Screen.Profile.route, "Profile", Iconsax.ProfileOutline, Iconsax.ProfileBold, TourAnchor.NavProfile)
     )
 
     Row(
@@ -87,12 +91,23 @@ fun KasiGuruBottomBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        items.forEach { NavIconItem(it, currentRoute == it.route) { onNavigateToRoute(it.route) } }
+        items.forEach {
+            NavIconItem(
+                item = it,
+                isSelected = currentRoute == it.route,
+                modifier = Modifier.tourAnchor(it.tourAnchor)
+            ) { onNavigateToRoute(it.route) }
+        }
     }
 }
 
 @Composable
-private fun NavIconItem(item: BottomNavItem, isSelected: Boolean, onClick: () -> Unit) {
+private fun NavIconItem(
+    item: BottomNavItem,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     val iconScale by animateFloatAsState(
         targetValue = if (isSelected) 1.08f else 1f,
         animationSpec = tween(200),
@@ -105,7 +120,7 @@ private fun NavIconItem(item: BottomNavItem, isSelected: Boolean, onClick: () ->
     )
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .defaultMinSize(minWidth = Touch.minTarget, minHeight = Touch.minTarget)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

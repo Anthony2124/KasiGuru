@@ -69,6 +69,8 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * Progress: a tall canopy carrying the badge count, with a translucent glass panel riding at the
@@ -118,7 +120,7 @@ fun AchievementsScreen(
                             face = Gold,
                             lipColor = GoldDeep,
                             shape = Shapes.panel,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.ProgressBadgePanel)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
@@ -154,6 +156,7 @@ fun AchievementsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Space.gutter, vertical = Space.md)
+                        .tourAnchor(TourAnchor.ProgressFilter)
                 )
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),

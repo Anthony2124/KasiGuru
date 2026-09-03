@@ -31,6 +31,8 @@ import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 @Composable
 fun NotificationInboxScreen(
@@ -129,6 +131,7 @@ fun NotificationInboxScreen(
                 )
                 // Filter Categories Row
                 LazyRow(
+                    modifier = Modifier.tourAnchor(TourAnchor.InboxFilters),
                     contentPadding = PaddingValues(horizontal = Space.gutter, vertical = Space.sm),
                     horizontalArrangement = Arrangement.spacedBy(Space.xs)
                 ) {

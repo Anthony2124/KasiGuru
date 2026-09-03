@@ -28,6 +28,8 @@ import com.kasiguru.domain.contribute.DuplicateLevel
 import com.kasiguru.domain.contribute.DuplicateMatch
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -211,7 +213,7 @@ fun SubmitWordScreen(
                         leadingIcon = {
                             Icon(painter = painterResource(id = Iconsax.Book), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SubmitWordField),
                         singleLine = true,
                         shape = Shapes.tile,
                         colors = submitFieldColors()
@@ -442,7 +444,7 @@ fun SubmitWordScreen(
                     onClick = { viewModel.submitWord() },
                     enabled = !uiState.isLoading,
                     tone = ClayButtonTone.Primary,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SubmitButton),
                     leading = if (uiState.isLoading) {
                         { CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp) }
                     } else {

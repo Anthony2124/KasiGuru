@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -35,6 +35,8 @@ import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 
 @Composable
 fun StoryListScreen(
@@ -73,7 +75,7 @@ fun StoryListScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                items(uiState.stories, key = { it.id }) { story ->
+                itemsIndexed(uiState.stories, key = { _, story -> story.id }) { index, story ->
                     StoryCoverCard(
                         titleKasiguranin = story.titleKasiguranin,
                         title = story.title,
@@ -82,7 +84,13 @@ fun StoryListScreen(
                         isCompleted = story.isCompleted,
                         requiredXp = story.requiredXp,
                         onClick = { onNavigateToStory(story.id) },
-                        modifier = Modifier.fillMaxWidth(),
+                        // Only the first card carries the anchor. The tour points at "the story
+                        // shelf" as one idea; attaching this to every card would have each one
+                        // overwrite the registry's entry for the same key as it (re)composes,
+                        // leaving whichever story happened to compose last as the actual target.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .tourAnchor(if (index == 0) TourAnchor.StoryShelf else null),
                         cover = rememberStoryCoverRes(story.id)
                     )
                 }
