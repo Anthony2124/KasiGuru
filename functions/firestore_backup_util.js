@@ -87,4 +87,114 @@ async function writeAllDocs(db, collectionName, entries) {
   return count;
 }
 
-module.exports = { serialize, deserialize, readAllDocs, writeAllDocs };
+/**
+ * Collections whose documents own subcollections and must therefore be walked, not just listed.
+ *
+ * This list exists because recursion is not free: discovering a document's subcollections costs one
+ * metadata call per document, so walking `vocabulary` would cost ~1,250 calls to find nothing. Only
+ * `users` has subcollections in this schema (users/{uid}/progress/{doc}). Override with
+ * KASIGURU_DEEP_COLLECTIONS="users,something_else" if that ever changes.
+ */
+const DEEP_COLLECTIONS = (process.env.KASIGURU_DEEP_COLLECTIONS || 'users')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/**
+ * Every document under a collection, including documents nested in subcollections.
+ *
+ * Uses `listDocuments()` rather than a query for the parent level, which is the whole point: a
+ * Firestore document that has never been written but owns a subcollection is a *missing* document.
+ * It does not come back from a query, so `users` read as zero documents while holding every
+ * learner's synced progress underneath it — which is exactly how a year of backups can contain no
+ * user data and still look successful in the manifest.
+ *
+ * Returned entries carry a full `path` so a restore can address them at any depth.
+ */
+async function readAllDocsDeep(colRef) {
+  const out = [];
+
+  // Fast path for the data itself: one paginated query beats N individual gets.
+  for (const doc of await readAllDocs(colRef)) {
+    out.push({ path: `${colRef.path}/${doc.id}`, id: doc.id, data: doc.data });
+  }
+
+  if (!DEEP_COLLECTIONS.includes(colRef.id)) return out;
+
+  const seen = new Set(out.map((d) => d.path));
+  for (const ref of await colRef.listDocuments()) {
+    // A missing parent has no fields to back up, but its subcollections must still be walked.
+    if (!seen.has(ref.path)) {
+      out.push({ path: ref.path, id: ref.id, data: null, missing: true });
+    }
+    for (const sub of await ref.listCollections()) {
+      for (const nested of await readAllDocsDeep(sub)) out.push(nested);
+    }
+  }
+
+  return out;
+}
+
+/** Writes entries addressed by full `path`, falling back to `id` for backups made before paths. */
+async function writeAllDocsByPath(db, collectionName, entries) {
+  let batch = db.batch();
+  let count = 0;
+  for (const entry of entries) {
+    // A missing parent was never a real document; recreating it would invent data that never existed.
+    if (entry.missing || entry.data === null) continue;
+    const ref = entry.path ? db.doc(entry.path) : db.collection(collectionName).doc(entry.id);
+    batch.set(ref, entry.data);
+    count++;
+    if (count % 400 === 0) {
+      await batch.commit();
+      batch = db.batch();
+    }
+  }
+  if (count % 400 !== 0) await batch.commit();
+  return count;
+}
+
+/**
+ * Deletes every document in a collection, including anything in its subcollections.
+ *
+ * Depth-first: a document is removed only after its subcollections are, so an interrupted run can
+ * be re-run without leaving orphaned nested documents that nothing can reach or list.
+ */
+async function deleteCollectionDeep(db, colRef, onProgress) {
+  let deleted = 0;
+
+  for (const ref of await colRef.listDocuments()) {
+    for (const sub of await ref.listCollections()) {
+      deleted += await deleteCollectionDeep(db, sub, onProgress);
+    }
+    await ref.delete();
+    deleted++;
+    if (onProgress && deleted % 100 === 0) onProgress(colRef.path, deleted);
+  }
+
+  return deleted;
+}
+
+/** Counts documents the same way [deleteCollectionDeep] would remove them, without deleting. */
+async function countCollectionDeep(db, colRef) {
+  let total = 0;
+  for (const ref of await colRef.listDocuments()) {
+    for (const sub of await ref.listCollections()) {
+      total += await countCollectionDeep(db, sub);
+    }
+    total++;
+  }
+  return total;
+}
+
+module.exports = {
+  serialize,
+  deserialize,
+  readAllDocs,
+  readAllDocsDeep,
+  writeAllDocs,
+  writeAllDocsByPath,
+  deleteCollectionDeep,
+  countCollectionDeep,
+  DEEP_COLLECTIONS
+};

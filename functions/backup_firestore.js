@@ -29,7 +29,7 @@
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-const { serialize, readAllDocs } = require('./firestore_backup_util');
+const { serialize, readAllDocsDeep } = require('./firestore_backup_util');
 
 const keyFile = process.argv[2];
 const outDir =
@@ -71,21 +71,37 @@ const projectId = require(keyFile).project_id;
   const manifest = {
     projectId,
     createdAt: new Date().toISOString(),
+    format: 2,
     collections: {}
   };
 
   for (const col of collections) {
-    const docs = await readAllDocs(col);
+    // Deep, not flat. listCollections() returns root collections only, and a document that owns a
+    // subcollection but has no fields of its own does not come back from a query at all - which is
+    // why `users` reported 0 while holding every learner's synced progress. See readAllDocsDeep.
+    const docs = await readAllDocsDeep(col);
     const payload = {
       collection: col.id,
       count: docs.length,
-      documents: docs.map((d) => ({ id: d.id, data: serialize(d.data) }))
+      documents: docs.map((d) => ({
+        id: d.id,
+        path: d.path,
+        missing: d.missing || undefined,
+        data: d.data === null ? null : serialize(d.data)
+      }))
     };
     fs.writeFileSync(
       path.join(runDir, col.id + '.json'),
       JSON.stringify(payload, null, 2)
     );
-    manifest.collections[col.id] = docs.length;
+    // Report real documents separately from missing parents, so a manifest can never again read as
+    // healthy while the thing it was meant to protect is absent.
+    const real = docs.filter((d) => !d.missing).length;
+    manifest.collections[col.id] = real;
+    if (real !== docs.length) {
+      manifest.nestedParents = manifest.nestedParents || {};
+      manifest.nestedParents[col.id] = docs.length - real;
+    }
   }
 
   fs.writeFileSync(

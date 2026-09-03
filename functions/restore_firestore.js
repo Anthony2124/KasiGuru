@@ -4,14 +4,22 @@
  * Usage:
  *   node restore_firestore.js <service-account.json> <backup-dir>
  *
- * Writes every document back. Documents with the same ID are overwritten.
+ * Writes every document back, addressed by its full path so nested documents
+ * (users/{uid}/progress/{doc}) land where they came from. Documents with the same
+ * path are overwritten; documents created since the backup are left alone, so this
+ * is a roll-forward, not a point-in-time rollback. Use reset_firestore.js when the
+ * database must be returned to exactly the state of a backup.
+ *
+ * Backups written before format 2 carry no paths; those restore by id at the root,
+ * exactly as they did before.
+ *
  * Test restore on a scratch project before relying on it in production.
  */
 
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-const { deserialize, writeAllDocs } = require('./firestore_backup_util');
+const { deserialize, writeAllDocsByPath } = require('./firestore_backup_util');
 
 const keyFile = process.argv[2];
 const backupDir = process.argv[3];
@@ -40,10 +48,16 @@ admin.initializeApp({
     const parsed = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
     const entries = parsed.documents.map((d) => ({
       id: d.id,
-      data: deserialize(db, d.data)
+      path: d.path,
+      missing: d.missing,
+      data: d.data === null ? null : deserialize(db, d.data)
     }));
-    const n = await writeAllDocs(db, parsed.collection, entries);
-    console.log(`Restored ${parsed.collection}: ${n} documents`);
+    const n = await writeAllDocsByPath(db, parsed.collection, entries);
+    const skipped = entries.length - n;
+    console.log(
+      `Restored ${parsed.collection}: ${n} documents` +
+        (skipped ? ` (${skipped} nested parents skipped - they hold subcollections, not fields)` : '')
+    );
   }
 
   console.log('Restore complete.');

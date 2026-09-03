@@ -542,8 +542,8 @@
     <section id="tab-backup" class="tab-content" style="display: none;">
       <div class="pagehead">
         <div>
-          <h1>Backup &amp; Restore</h1>
-          <p>Export a full JSON snapshot of dictionary entries, stories, releases, and announcements, or restore them to Firestore.</p>
+          <h1>Backup &amp; Reset</h1>
+          <p>Export and restore the curated content and moderation queues, or clear the queues. Full-database backup and reset, including learner progress, run from the operator scripts.</p>
         </div>
       </div>
 
@@ -552,13 +552,18 @@
         <div class="card span-6">
           <div class="card-head">
             <div>
-              <h2>Create System Backup</h2>
-              <p>Download a complete JSON file containing all dictionary words, stories, announcements, and releases.</p>
+              <h2>Export content backup</h2>
+              <p>Dictionary, stories, story images, announcements, releases, and the moderation queues.</p>
             </div>
           </div>
           <div style="padding:1rem 0;">
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">
-              Backing up generates a timestamped snapshot of your Firestore database. Keep this file safe for data recovery or migrating environments.
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
+              A timestamped JSON snapshot of everything this dashboard can read. Keep it private &mdash; it contains community submissions.
+            </p>
+            <p style="color:var(--muted); font-size:0.85rem; margin-bottom:1.5rem; border-left:3px solid var(--rule, #ddd); padding-left:10px;">
+              <strong>Does not include learner progress.</strong> A browser cannot enumerate <code>users/{uid}</code> documents that hold a
+              progress subcollection but no fields of their own, which is all of them. For a full backup run
+              <code>node functions/backup_firestore.js &lt;service-account.json&gt;</code>.
             </p>
             <button class="btn btn-primary" id="btn-export-backup" onclick="window.exportBackup()">
               <iconsax-icon name="document-download" type="bulk" size="18" color="currentColor"></iconsax-icon> Export JSON Backup
@@ -577,10 +582,45 @@
           <div style="padding:1rem 0;">
             <div class="dropzone" id="backup-dropzone" style="margin-bottom:1rem;">
               <p style="font-weight:800; margin-bottom:6px;">Drop a .json backup file, or click to choose</p>
-              <p style="color:var(--muted); font-size:0.8rem;">Restores vocabulary, stories, announcements, and releases into Firestore.</p>
+              <p style="color:var(--muted); font-size:0.8rem;">Merges the file's documents back into Firestore. Existing documents with the same id are overwritten; documents added since the backup are left in place.</p>
               <input type="file" id="backup-file-input" accept=".json" style="display:none;">
             </div>
             <div id="backup-restore-status" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>
+          </div>
+        </div>
+
+        <!-- Reset Card -->
+        <div class="card span-12">
+          <div class="card-head">
+            <div>
+              <h2>Reset</h2>
+              <p>Return the database to a known state. Take a backup first.</p>
+            </div>
+          </div>
+          <div style="padding:1rem 0;">
+            <p style="font-weight:700; margin-bottom:4px;">Clear moderation queues</p>
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
+              Deletes every pending and rejected word submission, literature submission, and issue report.
+              Words already approved into the dictionary are unaffected.
+            </p>
+            <button class="btn btn-danger" id="btn-reset-queues" onclick="window.resetModerationQueues()">
+              <iconsax-icon name="trash" type="bulk" size="18" color="currentColor"></iconsax-icon> Clear moderation queues
+            </button>
+
+            <hr style="border:none; border-top:1px solid var(--rule, #e5e5e5); margin:1.5rem 0;">
+
+            <p style="font-weight:700; margin-bottom:4px;">Full database reset</p>
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:0.75rem;">
+              Clearing learner progress, leaderboard rows, device tokens and security questions is deliberately not available here.
+              Those documents are owner-writable only, so that a compromised admin session cannot rewrite anyone's learning record.
+              A full reset runs from the operator machine with the service-account key:
+            </p>
+            <pre style="background:var(--sunken, #f3f3f3); padding:12px 14px; border-radius:6px; overflow-x:auto; font-size:0.82rem; margin:0;"><code>node functions/backup_firestore.js &lt;service-account.json&gt;
+node functions/reset_firestore.js &lt;service-account.json&gt; --mode=learner
+node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --from=&lt;backup-dir&gt;</code></pre>
+            <p style="color:var(--muted); font-size:0.85rem; margin-top:0.75rem;">
+              Both modes are a dry run until <code>--confirm=&lt;projectId&gt;</code> is passed. See <code>docs/BACKUP_AND_RESET.md</code>.
+            </p>
           </div>
         </div>
       </div>

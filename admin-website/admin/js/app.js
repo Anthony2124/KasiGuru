@@ -9,6 +9,7 @@ import {
 import { 
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { normaliseWord, findExistingWord } from './word-normalize.js';
 
 /**
  * Stamps a content payload with the millisecond timestamp the app syncs against.
@@ -1931,6 +1932,30 @@ async function approveSubmission(id) {
   const sub = submissions.find(s => s.id === id);
   if (!sub) return;
 
+  // The last gate before a word enters the dictionary, and until now the only path into `vocabulary`
+  // without one. The in-app form warns the contributor while they type, but a warning they can tap
+  // past is advisory - this is where a duplicate is actually stopped or knowingly allowed.
+  //
+  // Compared with the app's own normalisation, not toLowerCase(): "singët" and "singet" are the same
+  // word, and a moderator should not have to spot that by eye.
+  const existing = findExistingWord(sub.kasiguranin, vocabulary);
+  if (existing.length > 0) {
+    const senses = existing
+      .map(e => `"${escapeHtml(e.kasiguranin)}" — ${escapeHtml(e.english || e.tagalog || 'no gloss')}`)
+      .join('<br>');
+    const proceed = await confirmDialog({
+      title: `"${escapeHtml(sub.kasiguranin)}" is already in the dictionary`,
+      body:
+        `<p>The master dictionary already has:</p><p style="margin-top:6px;">${senses}</p>` +
+        `<p style="margin-top:10px;">Approving adds a second entry. Do that only if this is a genuine ` +
+        `homonym — a different word that happens to be spelled the same. If it is the same word, reject ` +
+        `the submission instead.</p>`,
+      confirmLabel: 'Approve as a separate sense',
+      danger: true
+    });
+    if (!proceed) return;
+  }
+
   try {
     const newVocabRef = doc(collection(db, "vocabulary"));
     await setDoc(newVocabRef, withUpdatedAt({
@@ -2678,7 +2703,7 @@ function initFormListeners() {
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
-      const isDuplicate = vocabulary.some(v => (v.kasiguranin || '').toLowerCase() === word.toLowerCase());
+      const isDuplicate = findExistingWord(word, vocabulary).length > 0;
       if (isDuplicate) {
         if (!(await confirmDialog({
           title: `"${word}" already exists`,
@@ -3198,21 +3223,38 @@ window.exportBackup = async function() {
   notify("Preparing database backup...", "info");
 
   try {
-    const vocabSnap = await getDocs(collection(db, "vocabulary"));
-    const storiesSnap = await getDocs(collection(db, "stories"));
-    const announceSnap = await getDocs(collection(db, "system_announcements"));
-    const releasesSnap = await getDocs(collection(db, "app_releases"));
+    // Collections this page can completely enumerate. Deliberately does NOT include learner data:
+    // the browser SDK has no listDocuments(), so it cannot see a `users/{uid}` document that owns a
+    // progress subcollection but has no fields of its own - and that is every user. A backup that
+    // silently omitted learner progress is the exact failure this scope note exists to prevent.
+    // Full-fidelity backup is functions/backup_firestore.js, which runs on the Admin SDK.
+    const SCOPE = [
+      "vocabulary",
+      "stories",
+      "story_page_images",
+      // Was "system_announcements" - a name no collection has ever had. AnnouncementRepository.kt
+      // and firestore.rules both say `announcements`, so every export before this quietly wrote an
+      // empty array, and a restore would have been denied by the rules.
+      "announcements",
+      "app_releases",
+      "word_submissions",
+      "literature_submissions",
+      "issue_reports"
+    ];
+
+    const collections = {};
+    for (const name of SCOPE) {
+      const snap = await getDocs(collection(db, name));
+      collections[name] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
 
     const backupData = {
-      version: 1,
+      version: 2,
+      scope: "content-and-moderation",
+      note: "Learner progress (users/*/progress) is not included; use functions/backup_firestore.js for a full backup.",
       exportedAt: new Date().toISOString(),
       timestamp: Date.now(),
-      collections: {
-        vocabulary: vocabSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-        stories: storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-        system_announcements: announceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-        app_releases: releasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      }
+      collections
     };
 
     const jsonStr = JSON.stringify(backupData, null, 2);
@@ -3222,17 +3264,94 @@ window.exportBackup = async function() {
     const dateStr = new Date().toISOString().split('T')[0];
     const a = document.createElement('a');
     a.href = url;
-    a.download = `kasiguru-backup-${dateStr}.json`;
+    a.download = `kasiguru-content-backup-${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    notify("Backup downloaded successfully!", "success");
-    logAudit("backup_export", { totalEntries: backupData.collections.vocabulary.length });
+    const summary = Object.entries(backupData.collections)
+      .map(([k, v]) => `${v.length} ${k}`)
+      .join(', ');
+    notify(`Backup downloaded: ${summary}.`, "success");
+    logAudit("backup_export", {
+      scope: backupData.scope,
+      counts: Object.fromEntries(Object.entries(backupData.collections).map(([k, v]) => [k, v.length]))
+    });
   } catch (e) {
     console.error("Backup export failed:", e);
     notify("Backup export failed: " + e.message, "danger");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+/**
+ * Clears the moderation queues: pending word and literature submissions, and issue reports.
+ *
+ * Scoped to exactly the collections `firestore.rules` lets an admin delete. Learner progress,
+ * leaderboard rows, device tokens and security questions are owner-writable only by design, so a
+ * full database reset is deliberately not a button here - it runs from functions/reset_firestore.js
+ * with the service-account key. Weakening the rules to make this button do more would give every
+ * admin session the power to rewrite any learner's data.
+ */
+window.resetModerationQueues = async function () {
+  const btn = document.getElementById('btn-reset-queues');
+  const QUEUES = ['word_submissions', 'literature_submissions', 'issue_reports'];
+
+  try {
+    if (btn) btn.disabled = true;
+
+    const snaps = {};
+    let total = 0;
+    for (const name of QUEUES) {
+      const snap = await getDocs(collection(db, name));
+      snaps[name] = snap.docs;
+      total += snap.docs.length;
+    }
+
+    if (total === 0) {
+      notify('Moderation queues are already empty.', 'info');
+      return;
+    }
+
+    const breakdown = QUEUES.map((n) => `${snaps[n].length} ${n.replace(/_/g, ' ')}`).join(', ');
+    const confirmed = await confirmDialog({
+      title: 'Clear moderation queues?',
+      body:
+        `<p>This permanently deletes <strong>${escapeHtml(breakdown)}</strong>.</p>` +
+        `<p style="color:var(--status-rejected); margin-top:8px;">Approved words already merged into the dictionary are not affected. ` +
+        `Pending and rejected items are gone for good. Export a backup first if you have not.</p>`,
+      confirmLabel: `Delete ${total} items`,
+      danger: true
+    });
+    if (!confirmed) return;
+
+    notify('Clearing moderation queues...', 'info');
+
+    let removed = 0;
+    for (const name of QUEUES) {
+      let batch = writeBatch(db);
+      let n = 0;
+      for (const d of snaps[name]) {
+        batch.delete(doc(db, name, d.id));
+        n++;
+        removed++;
+        if (n % 400 === 0) {
+          await batch.commit();
+          batch = writeBatch(db);
+        }
+      }
+      if (n % 400 !== 0) await batch.commit();
+    }
+
+    await logAudit('reset_moderation_queues', {
+      counts: Object.fromEntries(QUEUES.map((n) => [n, snaps[n].length]))
+    });
+    notify(`Cleared ${removed} items from the moderation queues.`, 'success');
+  } catch (e) {
+    console.error('Queue reset failed:', e);
+    notify('Reset failed: ' + e.message, 'danger');
   } finally {
     if (btn) btn.disabled = false;
   }
