@@ -14,7 +14,8 @@ job is to find and report real problems, not to fix them yet.
 
 SYSTEM CONTEXT (do not re-derive, use as ground truth):
 - app/            Kotlin + Jetpack Compose Android app. Hilt DI, Room (SQLite,
-                   migrations v1-v19), Firebase Auth/Firestore/FCM/Crashlytics.
+                   migrations v1-v30), Firebase Auth/Firestore/FCM/Crashlytics.
+                   Currently v1.10.0 / versionCode 11.
 - admin-website/  Vanilla HTML/CSS/JS, no framework. Three separate deploy
                    targets: root/ (placeholder), admin/ (login + CRUD
                    dashboard), download/ (public APK download page).
@@ -36,7 +37,7 @@ SYSTEM CONTEXT (do not re-derive, use as ground truth):
   main) and release.yml (tag-triggered signed APK build, validates tag
   matches versionName/versionCode, deploys download site, writes an
   app_releases Firestore doc via functions/publish_release.js).
-- Test coverage is thin: ~9 test files against ~160 Kotlin source files,
+- Test coverage is thin: ~31 test files against ~191 Kotlin source files,
   and no visible test suite for admin-website or functions/.
 
 AUDIT SCOPE — go through each area and actually read the relevant files,
@@ -80,7 +81,7 @@ don't guess from names alone:
      shapes the app and functions write (check app/src/.../data/remote and
      functions/*.js against the rules' field-level validators).
    - Room migrations (app/schemas, app/src/.../data/local): every version
-     bump 1->19 has a corresponding migration object, migrations are tested
+     bump 1->30 has a corresponding migration object, migrations are tested
      (check app/src/androidTest), no destructive fallback migration is used
      in production build config.
    - Free-tier (Spark) cost/quota risk: any query pattern doing unbounded
