@@ -93,7 +93,12 @@ class LessonRepository @Inject constructor(
                 wordCount = words.size,
                 nodes = nodes,
                 earnedXp = earnedXp,
-                requiredXp = LearningTree.requiredXpToOpenNext(nodes.count { it.node is TreeNode.Lesson }),
+                // Measured against the core only. Gating on every lesson made a large stage a wall
+                // purely for being large -- the reason GATE_XP_CAP had to exist -- and would now
+                // also demand the optional tail the deep-dive tier exists to make optional.
+                requiredXp = LearningTree.requiredXpToOpenNext(
+                    nodes.count { it.node is TreeNode.Lesson && !it.isDeepDive }
+                ),
                 isUnlocked = isUnlocked
             )
             // A locked section cannot open the one after it, or a single unreachable section would
@@ -117,7 +122,8 @@ class LessonRepository @Inject constructor(
         progress: Map<Pair<String, Int>, LessonProgressEntity>,
         isSectionUnlocked: Boolean
     ): List<TreeNodeState> {
-        val nodes = mutableListOf<TreeNodeState>()
+        val core = mutableListOf<TreeNodeState>()
+        val deepDive = mutableListOf<TreeNodeState>()
         var currentMarked = false
         var position = 0
 
@@ -128,29 +134,43 @@ class LessonRepository @Inject constructor(
                 val isComplete = progress[unitId to index]?.isComplete == true
                 val range = LessonPlan.wordIndicesFor(index, unitWords.size)
                 val lessonWords = if (range.isEmpty()) emptyList() else unitWords.slice(range)
-                val isCurrent = isSectionUnlocked && !isComplete && !currentMarked
-                if (isCurrent) currentMarked = true
 
                 position++
-                nodes += TreeNodeState(
+                // Everything past the core tier is a deep dive. The lesson itself is unchanged --
+                // same slice, same `(unitId, lessonIndex)`, same progress row -- so a learner who
+                // already finished lesson 12 of a large stage keeps it; it simply now sits after the
+                // checkpoint instead of before it.
+                val isDeepDive = position > LearningTree.CORE_LESSONS_PER_STAGE
+
+                // Only a core lesson can be the one node the path points at. Pointing the learner
+                // into the optional tail is precisely what the two tiers exist to stop.
+                val isCurrent = isSectionUnlocked && !isComplete && !currentMarked && !isDeepDive
+                if (isCurrent) currentMarked = true
+
+                val state = TreeNodeState(
                     node = TreeNode.Lesson(ref, position),
                     title = "Lesson $position",
                     mastery = LearningTree.nodeMastery(isComplete, lessonWords),
                     isUnlocked = isSectionUnlocked,
-                    isCurrent = isCurrent
+                    isCurrent = isCurrent,
+                    isDeepDive = isDeepDive
                 )
+                if (isDeepDive) deepDive += state else core += state
             }
         }
 
-        val allLessonsDone = nodes.isNotEmpty() && nodes.all { it.mastery >= Mastery.FAMILIAR }
-        nodes += TreeNodeState(
+        // The checkpoint tests the core, so it opens when the core is done rather than waiting on an
+        // optional tail the learner may never walk.
+        val coreDone = core.isNotEmpty() && core.all { it.mastery >= Mastery.FAMILIAR }
+        val checkpoint = TreeNodeState(
             node = TreeNode.MasteryTest(definition.id),
             title = "Mastery",
             mastery = Mastery.NONE,
-            isUnlocked = isSectionUnlocked && allLessonsDone,
-            isCurrent = isSectionUnlocked && allLessonsDone && !currentMarked
+            isUnlocked = isSectionUnlocked && coreDone,
+            isCurrent = isSectionUnlocked && coreDone && !currentMarked
         )
-        return nodes
+
+        return core + checkpoint + deepDive
     }
 
     /** The unit key a section draws on: its theme, or the closing remainder. */

@@ -132,6 +132,90 @@ class LearningTreeTest {
         assertEquals(LearningTree.GATE_XP_CAP, LearningTree.requiredXpToOpenNext(lessonNodeCount = 30))
     }
 
+    // -- the two tiers --------------------------------------------------------
+
+    private fun lessonNode(
+        position: Int,
+        mastery: Mastery,
+        isDeepDive: Boolean
+    ) = TreeNodeState(
+        node = TreeNode.Lesson(LessonRef("theme:pagbati", position - 1), position),
+        title = "Lesson $position",
+        mastery = mastery,
+        isUnlocked = true,
+        isCurrent = false,
+        isDeepDive = isDeepDive
+    )
+
+    /** A stage of [core] core lessons and [deep] deep-dive ones, every core lesson finished. */
+    private fun stage(core: Int, deep: Int, coreMastery: Mastery = Mastery.FAMILIAR): TreeSection {
+        val nodes = (1..core).map { lessonNode(it, coreMastery, isDeepDive = false) } +
+            (1..deep).map { lessonNode(core + it, Mastery.NONE, isDeepDive = true) }
+        return TreeSection(
+            definition = LearningTree.sections.first(),
+            wordCount = (core + deep) * LessonPlan.WORDS_PER_LESSON,
+            nodes = nodes,
+            earnedXp = 0,
+            requiredXp = 108,
+            isUnlocked = true
+        )
+    }
+
+    @Test
+    fun aStageIsCompleteOnceItsCoreIsDoneEvenWithDeepDiveLessonsLeft() {
+        // The case the two tiers exist for: Paglalarawan carries 140 words, so 20 lessons. Before
+        // the split a learner who moved on after the core would have seen that stage read as
+        // unfinished forever.
+        val stage = stage(core = LearningTree.CORE_LESSONS_PER_STAGE, deep = 14)
+
+        assertTrue("core is finished, so the stage is", stage.isComplete)
+        assertEquals(LearningTree.CORE_LESSONS_PER_STAGE, stage.coreLessonNodeCount)
+        assertEquals(14, stage.deepDiveNodeCount)
+    }
+
+    @Test
+    fun anUnfinishedCoreLeavesTheStageIncompleteHoweverMuchDeepDiveIsDone() {
+        val stage = stage(core = 6, deep = 4, coreMastery = Mastery.NONE)
+        assertFalse(stage.isComplete)
+    }
+
+    @Test
+    fun theGateIsSizedForTheCoreNotForHowLargeTheStageHappensToBe() {
+        // Six core lessons at 30 XP is 180 available; 60% is 108. The same number whether the stage
+        // carries fifty words or two hundred and fifty, which is the point: before this, the biggest
+        // stage set the hardest gate purely for being biggest.
+        assertEquals(108, LearningTree.requiredXpToOpenNext(LearningTree.CORE_LESSONS_PER_STAGE))
+    }
+
+    @Test
+    fun everyStageInTheTreeIsDistinctAndLowercaseKeyed() {
+        // A duplicate id would collide in `lesson_progress`, silently merging two stages' history.
+        val ids = LearningTree.sections.map { it.id }
+        assertEquals("stage ids must be unique", ids.size, ids.toSet().size)
+
+        val units = LearningTree.sections.map { LearningTree.unitIdFor(it.source) }
+        assertEquals("unit keys must be unique", units.size, units.toSet().size)
+    }
+
+    @Test
+    fun theJourneyOpensAtGreetings() {
+        // The failure this guards is the one measured in the corpus: pagbati carried 14 words,
+        // under the section floor, so it was dropped and the path opened at Family instead. The
+        // stage list must at least still *lead* with it.
+        assertEquals("pagbati", LearningTree.sections.first().id)
+    }
+
+    @Test
+    fun everyWordStillHasSomewhereToBeTaught() {
+        // The remainder stage is the safety net: a word no theme claims is a word the app has
+        // hidden. 209 words are unplaced even after reclassification, so this must not be removed
+        // until every one of them carries a theme.
+        assertTrue(
+            "the tree must keep a home for words no stage claims",
+            LearningTree.sections.any { it.source is SectionSource.Remainder }
+        )
+    }
+
     @Test
     fun sectionOpensNextOnlyOnceItsGateIsMet() {
         fun section(earned: Int) = TreeSection(

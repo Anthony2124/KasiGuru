@@ -90,26 +90,59 @@ fun LazyListScope.learningPath(
         // buries the section the learner *can* work on under a screen of dead ends.
         if (!section.isUnlocked) return@forEachIndexed
 
-        pathNodes(section.nodes) { nodeIndex, node ->
-            PathRow(
-                node = node,
-                positionInPath = nodeIndex,
-                isFirstInSection = nodeIndex == 0,
-                previousMastery = section.nodes.getOrNull(nodeIndex - 1)?.mastery,
-                onOpenLesson = onOpenLesson,
-                onOpenMastery = onOpenMastery
-            )
+        // One lazy item per node, keyed so a completed lesson does not re-key the rows after it.
+        section.nodes.forEachIndexed { nodeIndex, node ->
+            // The optional tail announces itself once, where it begins. Without this the deep-dive
+            // lessons are indistinguishable from the required ones and the two tiers may as well not
+            // exist -- the learner would read a fourteen-node stage as fourteen nodes of homework.
+            if (node.isDeepDive && section.nodes.getOrNull(nodeIndex - 1)?.isDeepDive != true) {
+                item(key = "deepdive-${section.id}") {
+                    DeepDiveHeader(remaining = section.deepDiveNodeCount)
+                }
+            }
+            item(key = "node-${nodeKey(node)}") {
+                PathRow(
+                    node = node,
+                    positionInPath = nodeIndex,
+                    isFirstInSection = nodeIndex == 0,
+                    previousMastery = section.nodes.getOrNull(nodeIndex - 1)?.mastery,
+                    onOpenLesson = onOpenLesson,
+                    onOpenMastery = onOpenMastery
+                )
+            }
         }
     }
 }
 
-/** Emits one lazy item per node, keyed so a completed lesson does not re-key the rows after it. */
-private fun LazyListScope.pathNodes(
-    nodes: List<TreeNodeState>,
-    content: @Composable (Int, TreeNodeState) -> Unit
-) {
-    nodes.forEachIndexed { index, node ->
-        item(key = "node-${nodeKey(node)}") { content(index, node) }
+/**
+ * The line between what a stage asks of a learner and what it offers them.
+ *
+ * Stated in words rather than drawn as a subtler node, because "you may stop here" is the single
+ * most useful thing this screen can tell someone looking at a stage with fourteen lessons in it.
+ */
+@Composable
+private fun DeepDiveHeader(remaining: Int) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = Space.lg, bottom = Space.sm)
+    ) {
+        Text(
+            text = "Going deeper",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.W800,
+            color = Ink
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            text = if (remaining == 1) {
+                "One more lesson in this stage, whenever you want it. The next stage is already open."
+            } else {
+                "$remaining more lessons in this stage, whenever you want them. The next stage is already open."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted
+        )
     }
 }
 

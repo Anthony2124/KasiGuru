@@ -26,6 +26,23 @@ object LearningTree {
      */
     const val MIN_WORDS_FOR_SECTION = 35
 
+    /**
+     * Lessons in a stage's core tier — the part every learner is expected to walk.
+     *
+     * A stage carries whatever the corpus gives it, and the corpus is lopsided: the describing words
+     * run to 140 and the household to 50. Teaching all of both in sequence made the tree roughly 180
+     * nodes long, and a path that takes a hundred sittings to finish is one nobody finishes; the
+     * learner who quits in the middle of lesson 19 of "Paglalarawan" has not been taught more than
+     * the one who finished a shorter stage, they have just been marched further.
+     *
+     * So a stage is two tiers. Six lessons — 42 words, about a quarter of an hour — is the core, and
+     * it is what the gate to the next stage is measured against. Everything past it is a deep dive:
+     * the same lessons, the same `(unitId, lessonIndex)` identity, drawn after the checkpoint and
+     * optional. Nothing is dropped from the corpus; the learner is simply no longer required to walk
+     * all of it in one line before seeing the next stage.
+     */
+    const val CORE_LESSONS_PER_STAGE = 6
+
     /** Fraction of a section's lesson XP that opens the next one. */
     const val GATE_FRACTION = 0.6f
 
@@ -57,7 +74,7 @@ object LearningTree {
      * they are still taught somewhere. See learning_tree.md for the measured counts.
      */
     val sections: List<SectionDefinition> = listOf(
-        SectionDefinition("pagbati", "Pagbati at Pakikipagkapwa", "Greetings and everyday exchange",
+        SectionDefinition("pagbati", "Pagbati at Sarili", "Greetings, courtesy and how you feel",
             "Say hello, and be understood", SectionSource.Theme("pagbati")),
         SectionDefinition("pamilya", "Pamilya at Mga Tao", "Family and people",
             "Meet the household", SectionSource.Theme("pamilya")),
@@ -65,22 +82,22 @@ object LearningTree {
             "Step inside a Casiguran home", SectionSource.Theme("tahanan")),
         SectionDefinition("pagkain", "Pagkain at Kainan", "Food and eating",
             "Share a meal", SectionSource.Theme("pagkain")),
+        SectionDefinition("paglalakbay", "Paglalakbay at Direksyon", "Travel, direction and position",
+            "Find your way, and say where things are", SectionSource.Theme("paglalakbay")),
         SectionDefinition("katawan", "Katawan at Kalusugan", "The body and health",
             "Say how you feel, and where it hurts", SectionSource.Theme("katawan")),
+        SectionDefinition("kalikasan", "Kalikasan at Panahon", "Land, sea, sky and weather",
+            "Read the land, the sea and the sky", SectionSource.Theme("kalikasan")),
         SectionDefinition("hayop", "Mga Hayop", "Animals and wildlife",
             "Name what lives here", SectionSource.Theme("hayop")),
-        SectionDefinition("kalikasan", "Kalikasan", "Land, sea, sky and weather",
-            "Read the land, the sea and the sky", SectionSource.Theme("kalikasan")),
         SectionDefinition("bilang", "Bilang at Oras", "Numbers and time",
             "Count, and tell the time", SectionSource.Theme("bilang")),
-        SectionDefinition("paglalarawan", "Paglalarawan", "Describing words",
-            "Describe what you see", SectionSource.Theme("paglalarawan")),
-        SectionDefinition("kilos", "Mga Kilos", "Actions and doing",
-            "Say what people do", SectionSource.Theme("kilos")),
-        SectionDefinition("damdamin", "Damdamin", "Feelings",
-            "Say what you feel", SectionSource.Theme("damdamin")),
         SectionDefinition("kabuhayan", "Kabuhayan", "Work, tools and livelihood",
             "Learn how people live", SectionSource.Theme("kabuhayan")),
+        SectionDefinition("kilos", "Mga Kilos", "Actions and doing",
+            "Say what people do", SectionSource.Theme("kilos")),
+        SectionDefinition("paglalarawan", "Paglalarawan", "Describing words",
+            "Describe what you see", SectionSource.Theme("paglalarawan")),
         SectionDefinition("araw_araw", "Pang-araw-araw", "Everything else people say",
             "Everything else people actually say", SectionSource.Remainder)
     )
@@ -246,7 +263,15 @@ data class TreeNodeState(
     val mastery: Mastery,
     val isUnlocked: Boolean,
     /** True for the single node the learner should tap next. */
-    val isCurrent: Boolean
+    val isCurrent: Boolean,
+    /**
+     * True for a lesson past the stage's core tier: still taught, no longer required.
+     *
+     * See [LearningTree.CORE_LESSONS_PER_STAGE]. A deep-dive node is drawn after the checkpoint and
+     * does not count toward the gate, so a learner can move on to the next stage and come back for
+     * the rest of a large stage's words later.
+     */
+    val isDeepDive: Boolean = false
 )
 
 /** A section with the learner's state applied. */
@@ -265,7 +290,24 @@ data class TreeSection(
     /** Lesson nodes only - the mastery test is not a lesson and does not count toward the gate. */
     val lessonNodeCount: Int get() = nodes.count { it.node is TreeNode.Lesson }
 
-    val isComplete: Boolean get() = nodes.isNotEmpty() && nodes.all { it.mastery >= Mastery.FAMILIAR }
+    /** The lessons a learner is actually asked to walk. See [LearningTree.CORE_LESSONS_PER_STAGE]. */
+    val coreLessonNodeCount: Int get() = nodes.count { it.node is TreeNode.Lesson && !it.isDeepDive }
+
+    /** Lessons past the core tier: optional, and drawn after the checkpoint. */
+    val deepDiveNodeCount: Int get() = nodes.count { it.isDeepDive }
+
+    /**
+     * Complete when the core is complete.
+     *
+     * Deep-dive lessons are deliberately excluded. A stage carrying 140 words would otherwise never
+     * read as finished for any learner who moved on after its core, which is exactly the behaviour
+     * the two tiers exist to permit.
+     */
+    val isComplete: Boolean
+        get() {
+            val core = nodes.filter { !it.isDeepDive }
+            return core.isNotEmpty() && core.all { it.mastery >= Mastery.FAMILIAR }
+        }
 
     /** Whether this section has been worked hard enough to open the next one. */
     val opensNext: Boolean get() = earnedXp >= requiredXp
