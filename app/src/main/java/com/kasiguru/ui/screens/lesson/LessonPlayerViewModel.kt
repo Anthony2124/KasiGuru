@@ -20,9 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.net.URLDecoder
 import java.util.IdentityHashMap
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 data class LessonUiState(
@@ -69,10 +67,10 @@ class LessonPlayerViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val lessonRef: LessonRef = LessonRef(
-        unitId = URLDecoder.decode(
-            savedStateHandle.get<String>("unitId").orEmpty(),
-            StandardCharsets.UTF_8.name()
-        ),
+        // Navigation has already decoded this: Screen.LessonPlayer.createRoute percent-encodes the
+        // unit id, and the argument arrives at the handle in plain text. Decoding it a second time
+        // here would turn any literal "+" in a unit id into a space.
+        unitId = savedStateHandle.get<String>("unitId").orEmpty(),
         lessonIndex = savedStateHandle.get<Int>("lessonIndex") ?: 0
     )
 
