@@ -258,6 +258,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onOpenReview = { navController.navigate(Screen.FlashcardDeck.route) },
                     onOpenGames = { navController.navigate(Screen.GameHub.route) },
                     onOpenStories = { navController.navigate(Screen.StoryList.route) },
+                    onOpenStory = { storyId ->
+                        navController.navigate(Screen.StoryReader.createRoute(storyId))
+                    },
                     onOpenDictionary = { navController.navigate(Screen.VocabularyList.route) },
                     onOpenProgress = { navController.navigate(Screen.Achievements.route) },
                     onOpenNotifications = { navController.navigate(Screen.Notifications.route) },
