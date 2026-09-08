@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.onboarding
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +51,7 @@ import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.KasiguraninHeadword
 import com.kasiguru.ui.theme.LocalDarkMode
+import com.kasiguru.ui.theme.LocalReducedMotion
 import com.kasiguru.ui.theme.Motion
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.OnCanopy
@@ -62,7 +64,6 @@ import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.Touch
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletTint
-import com.kasiguru.ui.theme.motionTween
 
 /**
  * First-run setup. Four steps, ~45 seconds, and the learner can leave after the first one.
@@ -92,6 +93,12 @@ fun OnboardingScreen(
     var dailyGoalXp by remember { mutableIntStateOf(DEFAULT_GOAL_XP) }
     var userName by remember { mutableStateOf(DEFAULT_NAME) }
     var tasteChoice by remember { mutableStateOf<String?>(null) }
+
+    // Step transition durations, resolved here so the AnimatedContent transitionSpec below — which is
+    // a plain lambda, not a @Composable one — can close over them. Reduced motion collapses them to
+    // an instant cut.
+    val stepEnterMs = if (LocalReducedMotion.current) 0 else Motion.Standard
+    val stepExitMs = if (LocalReducedMotion.current) 0 else Motion.exit(Motion.Standard)
 
     fun finish() {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -159,10 +166,10 @@ fun OnboardingScreen(
                     targetState = step,
                     transitionSpec = {
                         val dir = if (targetState >= initialState) 1 else -1
-                        (slideInHorizontally(motionTween(Motion.Standard)) { w -> dir * w / 5 } +
-                            fadeIn(motionTween(Motion.Standard))) togetherWith
-                            (slideOutHorizontally(motionTween(Motion.exit(Motion.Standard))) { w -> -dir * w / 5 } +
-                                fadeOut(motionTween(Motion.exit(Motion.Standard))))
+                        (slideInHorizontally(tween(stepEnterMs)) { w -> dir * w / 5 } +
+                            fadeIn(tween(stepEnterMs))) togetherWith
+                            (slideOutHorizontally(tween(stepExitMs)) { w -> -dir * w / 5 } +
+                                fadeOut(tween(stepExitMs)))
                     },
                     label = "OnboardingStep"
                 ) { current ->
