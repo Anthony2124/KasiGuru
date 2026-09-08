@@ -891,34 +891,111 @@ function renderReleasesList() {
     return;
   }
 
-  container.innerHTML = releases.map((rel, i) => {
+  // "Live" is the newest release the app and the download page will actually offer: the highest
+  // versionCode that has not been yanked. releases is already ordered versionCode-desc.
+  const live = releases.find(rel => !rel.yanked) || null;
+
+  container.innerHTML = releases.map((rel) => {
     const ms = toMillis(rel.releasedAt);
     const when = ms
       ? new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
       : 'date not recorded';
     const notes = (rel.releaseNotes || '').trim();
+    const isLive = live && rel.id === live.id;
+    const id = escapeHtml(rel.id);
 
     return `
-      <div class="release-row${i === 0 ? ' is-live' : ''}">
+      <div class="release-row${isLive ? ' is-live' : ''}${rel.yanked ? ' is-yanked' : ''}"${rel.yanked ? ' style="opacity:.55;"' : ''}>
         <div class="release-node"><span class="release-dot" aria-hidden="true"></span></div>
         <div class="release-main">
           <div class="release-title">
             <b>v${escapeHtml(String(rel.versionName || '?'))}</b>
             <small>Build ${escapeHtml(String(rel.versionCode ?? '—'))} · ${escapeHtml(when)}</small>
-            ${i === 0 ? '<span class="badge badge-approved">Live</span>' : ''}
+            ${isLive ? '<span class="badge badge-approved">Live</span>' : ''}
+            ${rel.yanked ? '<span class="badge badge-rejected">Yanked</span>' : ''}
             ${rel.forceUpdate ? '<span class="badge badge-pending">Required</span>' : ''}
           </div>
           <p class="release-notes${notes ? '' : ' is-empty'}">${notes ? escapeHtml(notes) : 'No release notes were recorded for this build.'}</p>
         </div>
-        <div class="release-side">
+        <div class="release-side" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           ${rel.apkUrl
             ? `<a href="${escapeHtml(rel.apkUrl)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
                  <iconsax-icon name="document-download" type="bulk" size="15" color="currentColor"></iconsax-icon> APK
                </a>`
             : '<span class="result-count">No link</span>'}
+          <button type="button" class="btn btn-outline btn-sm" onclick="editRelease('${id}')">Edit</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="toggleReleaseYank('${id}')">${rel.yanked ? 'Restore' : 'Yank'}</button>
         </div>
       </div>`;
   }).join('');
+}
+
+// Roll installs back to the previous good build by pulling a bad release. The app and the download
+// page skip yanked releases when they pick "the latest one"; someone already on the yanked build is
+// not downgraded — Android will not install an older APK over a newer one — so a real fix still
+// needs a fresh release.
+window.toggleReleaseYank = async function(id) {
+  const rel = releases.find(r => r.id === id);
+  if (!rel) return;
+  const yank = !rel.yanked;
+
+  const proceed = await confirmDialog(yank ? {
+    title: `Yank v${rel.versionName}?`,
+    body: 'The app and the download page stop offering this build and fall back to the previous ' +
+          'release. Anyone already on it stays on it until you publish a fixed version.',
+    confirmLabel: 'Yank this build', danger: true
+  } : {
+    title: `Restore v${rel.versionName}?`,
+    body: 'It becomes available again. If it is the highest version code, it goes back to being the ' +
+          'one the app and download page offer.',
+    confirmLabel: 'Restore'
+  });
+  if (!proceed) return;
+
+  try {
+    await updateDoc(doc(db, 'app_releases', id), { yanked: yank });
+    await logAudit(yank ? 'release.yank' : 'release.restore', {
+      versionName: rel.versionName, versionCode: rel.versionCode
+    });
+    notify(yank ? `v${rel.versionName} yanked.` : `v${rel.versionName} restored.`, 'success');
+  } catch (err) {
+    notify('Could not update that release: ' + err.message, 'error');
+  }
+};
+
+// Opens the publish modal in edit mode for an existing release. versionName is the doc id, so it is
+// shown read-only; everything else is editable.
+window.editRelease = function(id) {
+  const rel = releases.find(r => r.id === id);
+  if (!rel) return;
+  // openModal resets the form to "publish" state; populate for editing straight after.
+  window.openModal('publish-release-modal');
+  document.getElementById('rel-editing-id').value = id;
+  document.getElementById('rel-code').value = rel.versionCode ?? '';
+  document.getElementById('rel-name').value = rel.versionName || '';
+  document.getElementById('rel-name').disabled = true;
+  document.getElementById('rel-url').value = rel.apkUrl || '';
+  document.getElementById('rel-notes').value = rel.releaseNotes || '';
+  const force = document.getElementById('rel-force');
+  if (force) force.checked = !!rel.forceUpdate;
+  const title = document.getElementById('rel-modal-title');
+  if (title) title.textContent = `Edit v${rel.versionName}`;
+  const btn = document.getElementById('rel-submit-btn');
+  if (btn) btn.textContent = 'Save changes';
+};
+
+// Back to a blank "publish" state. Called when the modal opens for a new release and after a save.
+function resetReleaseForm() {
+  const form = document.getElementById('publish-release-form');
+  if (form) form.reset();
+  const editId = document.getElementById('rel-editing-id');
+  if (editId) editId.value = '';
+  const name = document.getElementById('rel-name');
+  if (name) name.disabled = false;
+  const title = document.getElementById('rel-modal-title');
+  if (title) title.textContent = 'Publish release';
+  const btn = document.getElementById('rel-submit-btn');
+  if (btn) btn.textContent = 'Publish release';
 }
 
 
@@ -1669,7 +1746,8 @@ function updateDashboardMetrics() {
     : `${written} with Kasiguranin text`);
 
   setFigure('metric-total-releases', releases.length, releasesLoaded);
-  const latest = releases[0];
+  // The build actually being offered: newest that has not been yanked.
+  const latest = releases.find(r => !r.yanked) || releases[0];
   setNote('metric-releases-note', !releasesLoaded ? '&nbsp;'
     : latest ? `Latest build ${escapeHtml(String(latest.versionCode ?? '—'))}` : 'None published yet');
 
@@ -2895,6 +2973,8 @@ function initAudioEditors() {
   const openModalInner = window.openModal;
   window.openModal = function(id) {
     if (id === 'add-vocab-modal') resetAudioEditor('input');
+    // Always open the release modal in "publish" state; editRelease() populates it right after.
+    if (id === 'publish-release-modal') resetReleaseForm();
     return openModalInner.call(window, id);
   };
 }
@@ -3087,33 +3167,49 @@ function initFormListeners() {
       const notes = document.getElementById('rel-notes').value.trim();
       const forceUpdate = document.getElementById('rel-force')?.checked || false;
 
+      const editingId = document.getElementById('rel-editing-id')?.value || '';
+
       if (isNaN(code) || code <= 0) { notify("Please enter a valid positive integer version code (e.g. 1, 2, 3).", 'error'); return; }
       if (!name) { notify("Please enter a version name (e.g. 1.0.0).", 'error'); return; }
       if (!url.startsWith('http://') && !url.startsWith('https://')) { notify("Direct APK Download link must start with http:// or https://", 'error'); return; }
       if (forceUpdate && !(await confirmDialog({
-        title: `Publish v${name} as a required update?`,
+        title: `Mark v${name} as a required update?`,
         body: 'Every user sees a banner they cannot dismiss until they update.',
-        confirmLabel: 'Publish required update', danger: true
+        confirmLabel: 'Confirm required update', danger: true
       }))) return;
 
       try {
-        // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
-        // same version — setDoc + merge means republishing a version CI already wrote only
-        // overwrites these six known fields instead of creating a second, duplicate doc via
-        // addDoc's random id.
-        await setDoc(doc(db, "app_releases", `v${name}`), {
-          versionCode: code,
-          versionName: name,
-          apkUrl: url,
-          releaseNotes: notes,
-          forceUpdate: forceUpdate,
-          releasedAt: Date.now()
-        }, { merge: true });
-        await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
-        releaseForm.reset();
-        notify(`Successfully published KasiGuru v${name} APK release!`, 'success');
+        if (editingId) {
+          // Editing an existing release: leave versionName (the doc id) and releasedAt alone, and
+          // never touch `yanked` here — that is the Yank/Restore control's job.
+          await updateDoc(doc(db, 'app_releases', editingId), {
+            versionCode: code,
+            apkUrl: url,
+            releaseNotes: notes,
+            forceUpdate: forceUpdate
+          });
+          await logAudit('release.edit', { versionName: name, versionCode: code, apkUrl: url, forceUpdate });
+          notify(`Saved changes to v${name}.`, 'success');
+        } else {
+          // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
+          // same version — setDoc + merge means republishing a version CI already wrote only
+          // overwrites these known fields instead of creating a second, duplicate doc via
+          // addDoc's random id.
+          await setDoc(doc(db, "app_releases", `v${name}`), {
+            versionCode: code,
+            versionName: name,
+            apkUrl: url,
+            releaseNotes: notes,
+            forceUpdate: forceUpdate,
+            releasedAt: Date.now()
+          }, { merge: true });
+          await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
+          notify(`Successfully published KasiGuru v${name} APK release!`, 'success');
+        }
+        resetReleaseForm();
+        closeModal('publish-release-modal');
       } catch (err) {
-        notify("Failed to publish release: " + err.message, 'error');
+        notify("Failed to save release: " + err.message, 'error');
       }
     });
   }

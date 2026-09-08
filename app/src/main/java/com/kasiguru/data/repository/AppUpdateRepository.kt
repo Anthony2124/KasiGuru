@@ -14,18 +14,21 @@ class AppUpdateRepository @Inject constructor(
 
     suspend fun getLatestRelease(): Result<AppReleaseDto?> {
         return try {
+            // Fetch a small window of recent releases rather than just the top one, and return the
+            // newest that has not been yanked in the admin release manager. A composite index would
+            // be needed to filter `yanked` server-side; there is never a long run of yanked builds,
+            // so filtering client-side over a bounded window is simpler and costs a handful of reads.
             val snapshot = releasesCollection
                 .orderBy("versionCode", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .limit(1)
+                .limit(15)
                 .get()
                 .await()
 
-            if (snapshot.isEmpty) {
-                Result.success(null)
-            } else {
-                val release = snapshot.documents.first().toObject(AppReleaseDto::class.java)
-                Result.success(release)
-            }
+            val release = snapshot.documents
+                .asSequence()
+                .mapNotNull { it.toObject(AppReleaseDto::class.java) }
+                .firstOrNull { !it.yanked }
+            Result.success(release)
         } catch (e: Exception) {
             Result.failure(e)
         }
