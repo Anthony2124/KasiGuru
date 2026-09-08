@@ -1,8 +1,9 @@
 name: Release
 
 # Triggered by pushing a tag like v1.5.0 (must match app/build.gradle.kts's versionName).
-# Builds the signed release APK, publishes it to the download site, and writes the
-# app_releases doc — the four manual steps a release previously required by hand.
+# Builds the signed release APK, attaches it to the GitHub Release, refreshes the download
+# site, and writes the app_releases doc — the four manual steps a release previously
+# required by hand.
 on:
   push:
     tags:
@@ -12,6 +13,10 @@ jobs:
   release:
     name: Build, sign, and publish a release
     runs-on: ubuntu-latest
+    # Creating the GitHub Release and uploading APK assets to it writes to the repository,
+    # which the workflow's default read-only GITHUB_TOKEN cannot do.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,8 +61,12 @@ jobs:
             exit 1
           fi
 
+          # The one place this release's permanent download URL is spelled out. Every later
+          # step and the app_releases doc read it from here, so the asset filename and the
+          # published URL cannot drift apart.
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "apk_url=https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/kasiguru-v${NAME}.apk" >> "$GITHUB_OUTPUT"
           echo "Releasing $NAME (versionCode $CODE)"
 
       - name: Check versionCode was bumped
@@ -115,8 +124,8 @@ jobs:
       # app/build.gradle.kts resolves the release signingConfig with
       # signingConfigs.findByName("release"), which returns null — yielding an *unsigned*
       # APK rather than a build failure — if keystore.properties is missing or unusable.
-      # Nothing downstream checked, so an unsigned artifact would have been copied to the
-      # download site and announced in app_releases. Users cannot install it.
+      # Nothing downstream checked, so an unsigned artifact would have been published and
+      # announced in app_releases. Users cannot install it.
       - name: Verify the APK is signed
         run: |
           set -euo pipefail
@@ -134,28 +143,74 @@ jobs:
         if: always()
         run: rm -f release.jks keystore.properties
 
-      - name: Copy APK into the download site
-        # Two names for one file. The versioned copy is what app_releases points at
-        # and what a user's download history will show. The unversioned alias is what
-        # the page's buttons link to before Firestore answers — the site is deployed
-        # fresh on every release and carries only this build's APK, so a link to the
-        # newest one is the only static href that cannot 404.
+      - name: Stage the APK under its release asset names
+        # Two names for one file, both attached to the GitHub Release:
+        #   kasiguru-v<name>.apk — permanent and version-specific. This is what
+        #     app_releases points at; GitHub keeps release assets for the life of the repo.
+        #   kasiguru-latest.apk  — a *fixed* asset name, which is what makes
+        #     /releases/latest/download/kasiguru-latest.apk resolve to whatever shipped
+        #     last. That URL is the download page's static href, the one that has to work
+        #     before Firestore answers.
         run: |
-          cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-v${{ steps.version.outputs.name }}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "admin-website/download/kasiguru-latest.apk"
+          set -euo pipefail
+          mkdir -p release-assets
+          cp app/build/outputs/apk/release/app-release.apk \
+            "release-assets/kasiguru-v${{ steps.version.outputs.name }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk \
+            "release-assets/kasiguru-latest.apk"
 
-      # Dependencies are installed *before* the Vercel deploy on purpose. This step and
-      # the publish below are the two halves of a release that can disagree: once the
-      # site is live, an npm failure here would leave the download page serving the new
-      # APK while app_releases still names the old version — the in-app update check
-      # reporting "up to date" against a build users can already download. Doing the
-      # fallible, side-effect-free half first shrinks that window to the Firestore write.
+      # Installed *before* anything is published on purpose. This step and the app_releases
+      # write are the two halves of a release that can disagree: once the APK is public, an
+      # npm failure here would leave users able to download a build the in-app update check
+      # still reports as "up to date". Doing the fallible, side-effect-free half first
+      # shrinks that window to the Firestore write itself.
       - name: Install publish dependencies
         working-directory: functions
         run: npm install --omit=dev
 
+      # APKs live on the GitHub Release, not on the download site. The site is redeployed
+      # from a fresh checkout every release and *.apk is gitignored, so a deployment can
+      # only ever carry the single APK CI just built — which is why every older versioned
+      # URL on that host used to 404 the moment the next release shipped. GitHub keeps
+      # release assets permanently, so a version's download URL stays valid forever.
+      - name: Attach the APKs to the GitHub Release
+        id: gh_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: KasiGuru v${{ steps.version.outputs.name }}
+          files: |
+            release-assets/kasiguru-v${{ steps.version.outputs.name }}.apk
+            release-assets/kasiguru-latest.apk
+          fail_on_unmatched_files: true
+
+      # Confirms the asset actually serves before Firestore is told it exists. Announcing a
+      # release whose APK 404s is the one ordering mistake worse than mislabelling, because
+      # the app would then prompt users toward a broken download.
+      - name: Verify the published APK is reachable
+        run: |
+          set -euo pipefail
+          URL="${{ steps.version.outputs.apk_url }}"
+          for attempt in 1 2 3 4 5; do
+            CODE=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 60 "$URL" || echo "000")
+            if [ "$CODE" = "200" ]; then
+              echo "$URL is live (HTTP $CODE)"
+              exit 0
+            fi
+            echo "attempt $attempt: HTTP $CODE — waiting for the asset to propagate"
+            sleep 15
+          done
+          echo "$URL never returned 200; refusing to announce this release." >&2
+          exit 1
+
+      # Deliberately non-blocking, and deliberately *after* the APK is published. The site
+      # no longer carries the binary — it only reads app_releases — so a failed deploy dates
+      # the marketing copy, it does not withhold the release. This step failing while
+      # everything else succeeded is exactly what stranded v1.14.0 (a VERCEL_TOKEN belonging
+      # to an account that no longer owns the project), and it must not strand one again.
       - name: Deploy download site to Vercel
         id: deploy
+        continue-on-error: true
         working-directory: admin-website/download
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -164,62 +219,47 @@ jobs:
           #
           # Overridable by secrets, with today's values as the fallback. KasiGuru's hosting
           # moved to Anthony's Vercel account (team kasi-guru) on 2026-09-04 — the download
-          # project is now kasi-guru/kasiguru-download, not Adrian's old "download" project.
-          # Hard-coded, a future transfer would silently break the next tagged release: this
-          # step would deploy to a project the token can no longer reach, and the workflow's
-          # own guard would then refuse to announce the release. Set VERCEL_ORG_ID and
-          # VERCEL_PROJECT_ID as repo secrets if the projects ever move again, alongside a new
-          # VERCEL_TOKEN, and nothing here has to be edited.
+          # project is now kasi-guru/kasiguru-download. VERCEL_TOKEN has to belong to that
+          # account too: the org and project ids alone are not enough, and a token issued by
+          # the old account fails here with "Could not retrieve Project Settings".
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_i73rboyOEhnvrzQexyvfsHyR' }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_iVOI7ueqHNurVNtHYHcS2ynNzLYY' }}
         run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
 
-      # Confirms the deploy actually serves this build before Firestore is told it exists.
-      # Announcing a release whose APK 404s is the one ordering mistake worse than the
-      # mislabelling above, because the app would prompt users toward a broken download.
-      - name: Verify the published APK is reachable
+      - name: Note a skipped site deploy
+        if: steps.deploy.outcome == 'failure'
         run: |
-          set -euo pipefail
-          URL="https://kasiguru-download.vercel.app/kasiguru-latest.apk"
-          for attempt in 1 2 3 4 5; do
-            CODE=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 60 "$URL" || echo "000")
-            if [ "$CODE" = "200" ]; then
-              echo "$URL is live (HTTP $CODE)"
-              exit 0
-            fi
-            echo "attempt $attempt: HTTP $CODE — waiting for the deploy to propagate"
-            sleep 15
-          done
-          echo "$URL never returned 200; refusing to announce this release." >&2
-          exit 1
+          echo "::warning title=Download site not redeployed::The release itself published \
+          fine — the APK is attached to the GitHub Release and app_releases is written. \
+          Only https://kasiguru-download.vercel.app is still serving its previous build. \
+          Usually a stale VERCEL_TOKEN: it has to belong to the account that owns \
+          kasi-guru/kasiguru-download."
 
       - name: Publish app_releases doc
         working-directory: functions
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          # Dependencies were installed in an earlier step, before the site went live.
+          # Dependencies were installed in an earlier step, before anything went public.
           #
-          # apkUrl points at the unversioned alias, not this release's own versioned
-          # filename. Every deploy of the download site carries only the newest APK, so
-          # a versioned URL stored today is guaranteed to 404 the moment the *next*
-          # release ships and redeploys. The alias always resolves to whatever shipped
-          # last, which is what "download this release" means in practice anyway once a
-          # newer version exists.
+          # apkUrl is this release's own versioned GitHub asset, not a moving "latest"
+          # alias. That is only safe because GitHub keeps assets permanently: the URL
+          # stored today still resolves to *this* build after ten more releases, so the
+          # download history and the admin panel's yank/rollback stay meaningful.
           node publish_release.js \
             "${{ steps.version.outputs.code }}" \
             "${{ steps.version.outputs.name }}" \
-            "https://kasiguru-download.vercel.app/kasiguru-latest.apk"
+            "${{ steps.version.outputs.apk_url }}"
 
-      # Only when the site actually went live — a lint or build failure never deployed
-      # anything and must not be reported as half-published. Nothing here can roll Vercel
-      # back, but a release that got this far must not fail without naming the fix.
+      # Only once the APK is actually public — a lint or build failure published nothing and
+      # must not be reported as half-published. Nothing here can unpublish a release asset,
+      # but a release that got this far must not fail without naming the fix.
       - name: Report a half-published release
-        if: failure() && steps.deploy.outcome == 'success'
+        if: failure() && steps.gh_release.outcome == 'success'
         run: |
-          echo "::error title=Release is half-published::The download site is serving \
-          v${{ steps.version.outputs.name }} but the app_releases document was not \
-          written. The in-app update check will report 'up to date' until it is. Re-run \
-          this job, or from functions/ run: node publish_release.js \
+          echo "::error title=Release is half-published::v${{ steps.version.outputs.name }} \
+          is downloadable at ${{ steps.version.outputs.apk_url }} but the app_releases \
+          document was not written. The in-app update check will report 'up to date' until \
+          it is. Re-run this job, or from functions/ run: node publish_release.js \
           ${{ steps.version.outputs.code }} ${{ steps.version.outputs.name }} \
-          https://kasiguru-download.vercel.app/kasiguru-latest.apk"
+          ${{ steps.version.outputs.apk_url }}"
