@@ -733,6 +733,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
       </div>
       <form id="add-vocab-form">
        <div class="modal-scroll">
+        <div class="form-sections-grid">
 
         <div class="form-section">
           <h3>The word</h3>
@@ -843,7 +844,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section form-section--full">
           <h3>Example sentences</h3>
           <div class="form-group">
             <label>Example Sentence, in Kasiguranin</label>
@@ -880,7 +881,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section form-section--full">
           <h3>Pronunciation audio <span class="form-section-note">&mdash; optional</span></h3>
           <div class="form-group">
             <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -893,6 +894,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
+        </div>
        </div>
        <div class="modal-actions">
          <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
@@ -980,6 +982,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
       <form id="edit-vocab-form">
         <input type="hidden" id="edit-input-id">
        <div class="modal-scroll">
+        <div class="form-sections-grid">
 
         <div class="form-section">
           <h3>The word</h3>
@@ -1090,7 +1093,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section form-section--full">
           <h3>Example sentences</h3>
           <div class="form-group">
             <label>Example Sentence, in Kasiguranin</label>
@@ -1127,7 +1130,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section form-section--full">
           <h3>Pronunciation audio <span class="form-section-note">&mdash; optional</span></h3>
           <div class="form-group">
             <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -1140,6 +1143,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </div>
         </div>
 
+        </div>
        </div>
        <div class="modal-actions">
          <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
