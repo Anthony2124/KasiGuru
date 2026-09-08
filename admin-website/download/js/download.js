@@ -7,13 +7,22 @@
 // a thing someone has to remember to update on every release, and the two *will*
 // eventually disagree.
 //
-// The buttons, however, are never dead. Their static href is `kasiguru-latest.apk`,
-// an unversioned alias the release workflow writes alongside the versioned file on
-// every publish. It carries no version information, so it cannot drift; it just
-// means "whatever shipped last". Firestore only ever *upgrades* the buttons — to
-// the exact versioned URL and a label naming the version. If the network is down,
-// the download still works, which is the whole point of this page.
+// The buttons, however, are never dead. Their static href is the GitHub Release's
+// `kasiguru-latest.apk` asset — a fixed asset name under /releases/latest/download,
+// which GitHub resolves to whichever release is newest. It carries no version
+// information, so it cannot drift; it just means "whatever shipped last". Firestore
+// only ever *upgrades* the buttons — to that release's own permanent versioned URL
+// and a label naming the version. If the network is down, the download still works,
+// which is the whole point of this page.
+//
+// APKs are not served from this site. It is redeployed from a checkout where *.apk is
+// gitignored, so any binary hosted here would silently disappear on the next deploy.
 import { db, collection, query, orderBy, limit, onSnapshot, getCountFromServer } from './firebase-config.js';
+
+// Kept in sync by hand with the three static hrefs in index.html; there is no build step
+// here to generate one from the other.
+const FALLBACK_APK_URL =
+  'https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk';
 
 // Apply release metadata to DOM
 function applyReleaseInfo(release) {
@@ -114,13 +123,13 @@ function renderQR(url) {
 function showCheckFailedState() {
   const tag = document.getElementById('store-version-tag');
   if (!tag) return;
-  // The buttons still work — they point at the latest-APK alias. What failed is
+  // The buttons still work — they point at the latest-release asset. What failed is
   // only the version *lookup*, so the message says that rather than implying the
   // download is unavailable.
   tag.textContent = "Couldn't check the version number, but the download below still works.";
 
-  // The QR encodes the same alias, so a phone hop survives the failure too.
-  renderQR(new URL('kasiguru-latest.apk', window.location.href).href);
+  // The QR encodes the same asset, so a phone hop survives the failure too.
+  renderQR(FALLBACK_APK_URL);
 }
 
 try {

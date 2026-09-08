@@ -77,28 +77,43 @@ the survivors are in comments), 22 `data-label` attributes are in place, and no 
 
 ## The release pipeline — the one thing that can break distribution
 
-**The defect:** `.gitignore` excludes `*.apk`, so CI checks out a tree with zero APKs and copies in only the
-one it just built. Every production deploy of the download site contains exactly one APK, so **every older
-`apkUrl` in `app_releases` 404s.**
+**The defect (fixed 2026-09-08, not yet migrated):** `.gitignore` excludes `*.apk`, so CI checks out a tree
+with zero APKs and copies in only the one it just built. Every production deploy of the download site
+contained exactly one APK, so **every older `apkUrl` in `app_releases` 404ed.**
 
-**The agreed fix:** stop hosting APKs on the Vercel deployment. Attach them as **GitHub Release assets**
-(`softprops/action-gh-release@v2`, needs `permissions: contents: write`), and point `apkUrl` at
-`https://github.com/Anthony2124/KasiGuru/releases/download/v<name>/kasiguru-v<name>.apk`. GitHub keeps assets
-permanently. Keep the Vercel deploy — the site still changes per release, it just stops carrying binaries.
+**The fix, now implemented in `release.yml`:** APKs are no longer hosted on the Vercel deployment. They are
+attached as **GitHub Release assets** (`softprops/action-gh-release@v2`, `permissions: contents: write`), two
+per release — `kasiguru-v<name>.apk`, the permanent versioned asset `app_releases.apkUrl` points at, and
+`kasiguru-latest.apk`, a fixed asset name so `/releases/latest/download/kasiguru-latest.apk` always resolves.
+That second URL is the download page's static href. The Vercel deploy still runs so the site's copy stays
+current, but it is now `continue-on-error` — the site no longer carries the binary, so a failed deploy must
+not withhold a release. (That is precisely what stranded v1.14.0: a `VERCEL_TOKEN` issued by Adrian's
+account, which cannot reach the project after hosting moved to Anthony's.)
 
 **Do not** commit APKs to git instead: ~8 MB per release forever, and this audience is on poor connectivity.
 
-**Also unify the two writers.** `app_releases` currently has two: CI writes only
-`versionCode/versionName/apkUrl`, while the admin writes those plus `releaseNotes/forceUpdate/releasedAt`.
-CI-published releases therefore render "Invalid Date" and "No release notes provided". Target contract:
+**The migration is still outstanding.** Existing `app_releases` docs still point at
+`kasiguru-download.vercel.app`, and the pre-v1.14.0 APKs exist only in one local `admin-website/download/`
+folder. Until both are moved, the new static href 404s (GitHub's current "latest release" is v1.2.0, which
+has no `kasiguru-latest.apk` asset). Two steps, in this order:
+
+1. `scripts/archive-apks-to-releases.sh --apply` — uploads every archived APK to its GitHub Release,
+   creating archival releases for the versions that were never tagged, then marks the newest as Latest.
+2. `functions/backfill_app_releases.js <service-account.json> --apply` — repoints each doc at its own
+   version's asset, but only after confirming that asset is reachable, and reports the ones that are not.
+
+**The two writers are unified.** Both `functions/publish_release.js` and the admin dashboard's publish form
+write the deterministic id `app_releases/v<versionName>` with `set(..., { merge: true })`:
 
 ```
-app_releases/v<versionName>     // deterministic id in BOTH writers; the admin used addDoc, allowing duplicates
+app_releases/v<versionName>
   versionCode, versionName, apkUrl, releaseNotes, forceUpdate, releasedAt
 ```
 
-Use `set(..., { merge: true })` and only set `releasedAt`/`releaseNotes` when the doc does not already exist,
-so re-running a workflow cannot clobber notes an admin edited afterwards.
+CI always writes the build facts (`versionCode`, `versionName`, `apkUrl`) and seeds `releaseNotes` /
+`forceUpdate` / `releasedAt` only when the doc does not already carry them. `merge: true` alone was not
+enough for that — merge only protects fields absent from the payload, and the old unconditional
+`releaseNotes: ''` meant a re-run blanked notes an admin had typed.
 
 **Verify on a throwaway tag before a real release.** The workflow hard-fails if the tag does not match
 `versionName` in `app/build.gradle.kts`.
