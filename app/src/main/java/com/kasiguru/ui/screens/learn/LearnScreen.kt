@@ -91,6 +91,8 @@ fun LearnScreen(
     onOpenReview: () -> Unit,
     onOpenGames: () -> Unit,
     onOpenStories: () -> Unit,
+    /** Opens one story straight from the shelf, without the detour through the Stories list. */
+    onOpenStory: (storyId: Int) -> Unit,
     onOpenDictionary: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -419,6 +421,51 @@ fun LearnScreen(
                                 )
                             }
                         )
+                    }
+
+                    // The story shelf. Until now Stories had no door: the only way in was the primary
+                    // action at the top of this screen, and only on the days today's path happened to
+                    // schedule a story — every other day the feature did not exist as far as a learner
+                    // could tell, since no tab leads to it either. Nothing else was missing; the
+                    // ViewModel has been loading `stories` all along (locked ones included, because
+                    // the lock is the motivation) and this file still imported StoryCoverCard. Only
+                    // the shelf itself had gone.
+                    if (uiState.stories.isNotEmpty()) {
+                        Spacer(Modifier.height(Space.xl))
+                        SectionHeading(
+                            text = "Stories",
+                            action = {
+                                TextButton(onClick = onOpenStories) {
+                                    Text(
+                                        "See all",
+                                        color = Violet,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                        )
+                        Spacer(Modifier.height(Space.sm))
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(Space.sm),
+                            // The cards carry their own shadow, so the row needs a little vertical
+                            // room or the shadow is clipped by the item bounds.
+                            contentPadding = PaddingValues(vertical = 2.dp)
+                        ) {
+                            items(uiState.stories, key = { it.id }) { story ->
+                                StoryCoverCard(
+                                    titleKasiguranin = story.titleKasiguranin,
+                                    title = story.title,
+                                    totalPages = story.totalPages,
+                                    isUnlocked = story.isUnlocked,
+                                    isCompleted = story.isCompleted,
+                                    requiredXp = story.requiredXp,
+                                    onClick = { onOpenStory(story.id) },
+                                    // DESIGN.md sizes a cover at roughly 160x107 dp on this shelf.
+                                    modifier = Modifier.width(160.dp),
+                                    cover = rememberStoryCoverRes(story.id)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(Modifier.height(Space.xl))

@@ -97,6 +97,23 @@ enum class GroundPattern {
 }
 
 /**
+ * Just the Ground texture, as a modifier, for the rare surface that needs the shell's *look* without
+ * its 56 dp bar and scroll-title machinery — the first-run wizard being the one real case. It reads
+ * the same theme tokens [GroundScaffold] does, so a screen built with this is the same lavender with
+ * the same drawn pattern as every screen built with the scaffold.
+ *
+ * Apply over a [Ground] background; [seed] varies the arrangement the same way a screen title does.
+ */
+@Composable
+fun Modifier.groundTexture(pattern: GroundPattern, seed: String): Modifier {
+    val orbA = Violet
+    val orbB = Coral
+    val orbC = Gold
+    val dot = Ink
+    return this.drawBehind { drawGroundPattern(pattern, seed, orbA, orbB, orbC, dot) }
+}
+
+/**
  * The app's second shell, and the counterpart to [CanopyScaffold].
  *
  * The canopy's identity is a violet block plus a white sheet riding up into it. This is the deliberate

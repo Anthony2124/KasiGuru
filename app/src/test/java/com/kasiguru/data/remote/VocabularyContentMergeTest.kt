@@ -98,10 +98,11 @@ class VocabularyContentMergeTest {
     }
 
     /**
-     * The admin word form has no input for the root form, the audio file name or the two phonetic
-     * flags, so a document it writes simply omits those keys and the parser turns them into "" and
-     * false. Copying that over the local row meant editing any word in the portal silently erased
-     * its seeded root form and its audio reference on the next full reconcile.
+     * The admin word form has no input for the root form or the two phonetic flags, so a document it
+     * writes simply omits those keys and the parser turns them into "" and false. Copying that over
+     * the local row meant editing any word in the portal silently erased its seeded root form on the
+     * next full reconcile. The audio field is a controlled field now, but an edit that does not touch
+     * it carries `audioUpdatedAt == 0` and must still leave a local clip alone.
      */
     @Test
     fun anAdminEditDoesNotEraseFieldsTheAdminFormCannotWrite() {
@@ -131,6 +132,37 @@ class VocabularyContentMergeTest {
         assertEquals("A small insect that lives in large colonies.", merged.meaningEnglish)
         assertEquals("Maliit na insektong namumuhay nang pangkat.", merged.meaningTagalog)
         assertEquals(6, merged.lapses)
+    }
+
+    /**
+     * The audio field is the exception to the rule above: the word form owns it. A non-zero
+     * `audioUpdatedAt` marks an admin-authored change, and then the cloud value wins - a clip
+     * uploaded in the portal reaches the device on the next sync.
+     */
+    @Test
+    fun anUploadedClipReachesTheDevice() {
+        val seeded = local // audioFileName = "", audioUpdatedAt = 0
+        val withAudio = cloud.copy(
+            audioFileName = "singet__ant",
+            audioUpdatedAt = 1_725_000_000_000L
+        )
+
+        val merged = VocabularyContentMerge.merge(seeded, withAudio)
+
+        assertEquals("singet__ant", merged.audioFileName)
+        assertEquals(1_725_000_000_000L, merged.audioUpdatedAt)
+    }
+
+    /** Removing a clip in the portal propagates as a clear rather than being ignored. */
+    @Test
+    fun removingAClipInThePortalClearsItOnTheDevice() {
+        val seeded = local.copy(audioFileName = "singet__ant", audioUpdatedAt = 1_725_000_000_000L)
+        val removed = cloud.copy(audioFileName = "", audioUpdatedAt = 1_725_100_000_000L)
+
+        val merged = VocabularyContentMerge.merge(seeded, removed)
+
+        assertEquals("", merged.audioFileName)
+        assertEquals(1_725_100_000_000L, merged.audioUpdatedAt)
     }
 
     /** A definition written in the portal reaches the device. */

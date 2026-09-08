@@ -107,7 +107,7 @@ fun VocabularyDetailScreen(
                     VocabularyDetailBody(
                         vocab = vocab,
                         onPlayAudio = {
-                            audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
+                            audioPlayerManager.playWord(vocab)
                         },
                         onTakeQuiz = { isVerifying = true },
                         onReportWord = onReportWord

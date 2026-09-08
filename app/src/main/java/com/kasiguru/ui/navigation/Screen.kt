@@ -12,7 +12,7 @@ sealed class Screen(val route: String) {
     data object LessonPlayer : Screen("lesson/{unitId}/{lessonIndex}") {
         /** Unit ids are category names and contain spaces and ampersands, so they must be encoded. */
         fun createRoute(unitId: String, lessonIndex: Int): String {
-            val encoded = java.net.URLEncoder.encode(unitId, "UTF-8")
+            val encoded = encodeRouteArg(unitId)
             return "lesson/$encoded/$lessonIndex"
         }
     }
@@ -34,7 +34,7 @@ sealed class Screen(val route: String) {
          * the moment anything resolves a category at runtime.
          */
         fun createRoute(category: String): String {
-            val encoded = java.net.URLEncoder.encode(category, "UTF-8")
+            val encoded = encodeRouteArg(category)
             return "vocabulary/category/$encoded"
         }
     }
@@ -78,9 +78,9 @@ sealed class Screen(val route: String) {
             screenContext: String? = null
         ): String {
             val params = mutableListOf<String>()
-            category?.let { params.add("category=${java.net.URLEncoder.encode(it, "UTF-8")}") }
-            word?.let { params.add("word=${java.net.URLEncoder.encode(it, "UTF-8")}") }
-            screenContext?.let { params.add("screenContext=${java.net.URLEncoder.encode(it, "UTF-8")}") }
+            category?.let { params.add("category=${encodeRouteArg(it)}") }
+            word?.let { params.add("word=${encodeRouteArg(it)}") }
+            screenContext?.let { params.add("screenContext=${encodeRouteArg(it)}") }
             return if (params.isEmpty()) "report_issue" else "report_issue?${params.joinToString("&")}"
         }
     }
@@ -113,3 +113,19 @@ sealed class Screen(val route: String) {
             )
     }
 }
+
+/**
+ * Percent-encodes one route argument.
+ *
+ * [java.net.URLEncoder] writes *form* encoding, in which a space becomes `+`. Navigation decodes a
+ * route argument with `Uri.decode`, which follows RFC 3986 and leaves `+` exactly as it found it, so
+ * a display string round-tripped through URLEncoder alone arrives at the screen as
+ * `Greetings+&+Essentials`. Every one of the twelve category names contains spaces, which meant every
+ * category screen matched on a name no word in the corpus has and rendered "0 words" — the dictionary
+ * looked empty from the inside while holding twelve hundred entries.
+ *
+ * Rewriting `+` as `%20` is what makes the two halves agree. Deliberately not `android.net.Uri.encode`,
+ * which would do the same job: this file is read by a JVM unit test, and `Uri` is unimplemented there.
+ */
+private fun encodeRouteArg(value: String): String =
+    java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20")

@@ -207,7 +207,7 @@ fun LessonPlayerScreen(
                 ExercisePrompt(
                     exercise = exercise,
                     onPlayAudio = {
-                        audioPlayer.playAudio(exercise.word.kasiguranin, exercise.word.audioFileName)
+                        audioPlayer.playWord(exercise.word)
                     }
                 )
             }

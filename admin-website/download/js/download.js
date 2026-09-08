@@ -124,20 +124,20 @@ function showCheckFailedState() {
 }
 
 try {
-  // limit(1) because only releases[0] is ever read. Without it this pulled the whole
-  // app_releases collection on every visit to a public page — one document per release
-  // ever shipped, growing forever, against the Spark plan's shared daily read quota.
-  // The Android app's AppUpdateRepository already queries this collection the same way.
+  // A small window, not the whole collection: pulling every release on every visit to a
+  // public page grew forever against the Spark plan's shared daily read quota. 15 is enough
+  // to skip past any run of yanked builds and land on the newest good one — the same choice
+  // the Android app's AppUpdateRepository makes.
   const releaseQuery = query(
     collection(db, 'app_releases'),
     orderBy('versionCode', 'desc'),
-    limit(1)
+    limit(15)
   );
 
   onSnapshot(releaseQuery, (snapshot) => {
-    const latest = snapshot.docs.length
-      ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
-      : null;
+    const latest = snapshot.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .find((r) => !r.yanked) || null;
     if (latest) {
       applyReleaseInfo(latest);
     } else {

@@ -891,34 +891,111 @@ function renderReleasesList() {
     return;
   }
 
-  container.innerHTML = releases.map((rel, i) => {
+  // "Live" is the newest release the app and the download page will actually offer: the highest
+  // versionCode that has not been yanked. releases is already ordered versionCode-desc.
+  const live = releases.find(rel => !rel.yanked) || null;
+
+  container.innerHTML = releases.map((rel) => {
     const ms = toMillis(rel.releasedAt);
     const when = ms
       ? new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
       : 'date not recorded';
     const notes = (rel.releaseNotes || '').trim();
+    const isLive = live && rel.id === live.id;
+    const id = escapeHtml(rel.id);
 
     return `
-      <div class="release-row${i === 0 ? ' is-live' : ''}">
+      <div class="release-row${isLive ? ' is-live' : ''}${rel.yanked ? ' is-yanked' : ''}"${rel.yanked ? ' style="opacity:.55;"' : ''}>
         <div class="release-node"><span class="release-dot" aria-hidden="true"></span></div>
         <div class="release-main">
           <div class="release-title">
             <b>v${escapeHtml(String(rel.versionName || '?'))}</b>
             <small>Build ${escapeHtml(String(rel.versionCode ?? '—'))} · ${escapeHtml(when)}</small>
-            ${i === 0 ? '<span class="badge badge-approved">Live</span>' : ''}
+            ${isLive ? '<span class="badge badge-approved">Live</span>' : ''}
+            ${rel.yanked ? '<span class="badge badge-rejected">Yanked</span>' : ''}
             ${rel.forceUpdate ? '<span class="badge badge-pending">Required</span>' : ''}
           </div>
           <p class="release-notes${notes ? '' : ' is-empty'}">${notes ? escapeHtml(notes) : 'No release notes were recorded for this build.'}</p>
         </div>
-        <div class="release-side">
+        <div class="release-side" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           ${rel.apkUrl
             ? `<a href="${escapeHtml(rel.apkUrl)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
                  <iconsax-icon name="document-download" type="bulk" size="15" color="currentColor"></iconsax-icon> APK
                </a>`
             : '<span class="result-count">No link</span>'}
+          <button type="button" class="btn btn-outline btn-sm" onclick="editRelease('${id}')">Edit</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="toggleReleaseYank('${id}')">${rel.yanked ? 'Restore' : 'Yank'}</button>
         </div>
       </div>`;
   }).join('');
+}
+
+// Roll installs back to the previous good build by pulling a bad release. The app and the download
+// page skip yanked releases when they pick "the latest one"; someone already on the yanked build is
+// not downgraded — Android will not install an older APK over a newer one — so a real fix still
+// needs a fresh release.
+window.toggleReleaseYank = async function(id) {
+  const rel = releases.find(r => r.id === id);
+  if (!rel) return;
+  const yank = !rel.yanked;
+
+  const proceed = await confirmDialog(yank ? {
+    title: `Yank v${rel.versionName}?`,
+    body: 'The app and the download page stop offering this build and fall back to the previous ' +
+          'release. Anyone already on it stays on it until you publish a fixed version.',
+    confirmLabel: 'Yank this build', danger: true
+  } : {
+    title: `Restore v${rel.versionName}?`,
+    body: 'It becomes available again. If it is the highest version code, it goes back to being the ' +
+          'one the app and download page offer.',
+    confirmLabel: 'Restore'
+  });
+  if (!proceed) return;
+
+  try {
+    await updateDoc(doc(db, 'app_releases', id), { yanked: yank });
+    await logAudit(yank ? 'release.yank' : 'release.restore', {
+      versionName: rel.versionName, versionCode: rel.versionCode
+    });
+    notify(yank ? `v${rel.versionName} yanked.` : `v${rel.versionName} restored.`, 'success');
+  } catch (err) {
+    notify('Could not update that release: ' + err.message, 'error');
+  }
+};
+
+// Opens the publish modal in edit mode for an existing release. versionName is the doc id, so it is
+// shown read-only; everything else is editable.
+window.editRelease = function(id) {
+  const rel = releases.find(r => r.id === id);
+  if (!rel) return;
+  // openModal resets the form to "publish" state; populate for editing straight after.
+  window.openModal('publish-release-modal');
+  document.getElementById('rel-editing-id').value = id;
+  document.getElementById('rel-code').value = rel.versionCode ?? '';
+  document.getElementById('rel-name').value = rel.versionName || '';
+  document.getElementById('rel-name').disabled = true;
+  document.getElementById('rel-url').value = rel.apkUrl || '';
+  document.getElementById('rel-notes').value = rel.releaseNotes || '';
+  const force = document.getElementById('rel-force');
+  if (force) force.checked = !!rel.forceUpdate;
+  const title = document.getElementById('rel-modal-title');
+  if (title) title.textContent = `Edit v${rel.versionName}`;
+  const btn = document.getElementById('rel-submit-btn');
+  if (btn) btn.textContent = 'Save changes';
+};
+
+// Back to a blank "publish" state. Called when the modal opens for a new release and after a save.
+function resetReleaseForm() {
+  const form = document.getElementById('publish-release-form');
+  if (form) form.reset();
+  const editId = document.getElementById('rel-editing-id');
+  if (editId) editId.value = '';
+  const name = document.getElementById('rel-name');
+  if (name) name.disabled = false;
+  const title = document.getElementById('rel-modal-title');
+  if (title) title.textContent = 'Publish release';
+  const btn = document.getElementById('rel-submit-btn');
+  if (btn) btn.textContent = 'Publish release';
 }
 
 
@@ -1669,7 +1746,8 @@ function updateDashboardMetrics() {
     : `${written} with Kasiguranin text`);
 
   setFigure('metric-total-releases', releases.length, releasesLoaded);
-  const latest = releases[0];
+  // The build actually being offered: newest that has not been yanked.
+  const latest = releases.find(r => !r.yanked) || releases[0];
   setNote('metric-releases-note', !releasesLoaded ? '&nbsp;'
     : latest ? `Latest build ${escapeHtml(String(latest.versionCode ?? '—'))}` : 'None published yet');
 
@@ -2482,6 +2560,7 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-example1-translation-tl').value = item.exampleTranslationTagalog || '';
   document.getElementById('edit-input-example2-translation-tl').value = item.exampleTranslation2Tagalog || '';
   document.getElementById('edit-input-example-source').value = item.exampleSource || '';
+  loadAudioEditorForWord('edit-input', item);
 
   window.openModal('edit-vocab-modal');
 };
@@ -2743,8 +2822,181 @@ function handleExcelFile(file) {
 // ── Render Releases List ────────────────────────────────────────────────────
 
 
+// ── Word pronunciation audio ───────────────────────────────────────────────
+// Clips live in Firestore at word_audio/{key} as raw bytes, one document per word sense — the same
+// pattern story_page_images uses, and for the same reason: no Firebase Storage on the Spark plan.
+// The vocabulary doc carries only a pointer (audioResName = key) plus audioUpdatedAt as a
+// cache-buster; the Android app fetches the bytes on first play and caches them to disk, falling
+// back to text-to-speech when a word has none.
+
+const AUDIO_MAX_BYTES = 400 * 1024;               // must match the firestore.rules word_audio cap
+const AUDIO_MIME_OK = new Set([
+  'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/aac', 'audio/x-m4a',
+  'audio/ogg', 'audio/opus', 'audio/webm'
+]);
+const AUDIO_DEFAULT_STATUS =
+  'Optional. A short m4a / mp3 / ogg clip, under 400 KB. Without it the app speaks the word with text-to-speech.';
+
+// key = slug(kasiguranin)__slug(english). Kept in exact step with the app's WordAudioRepository /
+// AudioPlayerManager: both sides lowercase, collapse every run of non-[a-z0-9] to "_", trim "_".
+function audioKey(kasiguranin, english) {
+  const slug = s => (s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  return `${slug(kasiguranin)}__${slug(english)}`;
+}
+
+// prefix ('input' | 'edit-input') -> { blob, mimeType, name, remove, url }
+const audioEditors = new Map();
+
+function audioEls(prefix) {
+  return {
+    file:    document.getElementById(`${prefix}-audio-file`),
+    pick:    document.getElementById(`${prefix}-audio-pick-btn`),
+    preview: document.getElementById(`${prefix}-audio-preview`),
+    remove:  document.getElementById(`${prefix}-audio-remove-btn`),
+    status:  document.getElementById(`${prefix}-audio-status`)
+  };
+}
+
+function resetAudioEditor(prefix) {
+  const st = audioEditors.get(prefix);
+  if (st?.url) URL.revokeObjectURL(st.url);
+  audioEditors.delete(prefix);
+  const el = audioEls(prefix);
+  if (!el.file) return;
+  el.file.value = '';
+  if (el.preview) { el.preview.removeAttribute('src'); el.preview.style.display = 'none'; }
+  if (el.remove)  el.remove.style.display = 'none';
+  if (el.status)  { el.status.textContent = AUDIO_DEFAULT_STATUS; el.status.style.color = 'var(--muted)'; }
+}
+
+// Populate the edit editor from a word's stored state.
+function loadAudioEditorForWord(prefix, item) {
+  resetAudioEditor(prefix);
+  const el = audioEls(prefix);
+  if (!el.status) return;
+  if (item && item.audioResName) {
+    const when = item.audioUpdatedAt ? new Date(item.audioUpdatedAt).toLocaleDateString() : 'earlier';
+    el.status.textContent = `This word has a recording (uploaded ${when}). Choose a file to replace it, or remove it.`;
+    if (el.remove) el.remove.style.display = '';
+  }
+}
+
+function initAudioEditor(prefix) {
+  const el = audioEls(prefix);
+  if (!el.file || !el.pick) return;
+
+  el.pick.addEventListener('click', () => el.file.click());
+
+  el.file.addEventListener('change', () => {
+    const f = el.file.files && el.file.files[0];
+    if (!f) return;
+    const okType = AUDIO_MIME_OK.has(f.type) || /\.(m4a|mp3|ogg|oga|aac|opus)$/i.test(f.name);
+    if (!okType) {
+      notify('That is not an audio file the app can play. Use m4a, mp3 or ogg.', 'error');
+      el.file.value = '';
+      return;
+    }
+    if (f.size > AUDIO_MAX_BYTES) {
+      notify(`That clip is ${Math.round(f.size / 1024)} KB, over the ${Math.round(AUDIO_MAX_BYTES / 1024)} KB limit. Trim it or re-export it smaller and try again.`, 'error');
+      el.file.value = '';
+      return;
+    }
+    const prev = audioEditors.get(prefix);
+    if (prev?.url) URL.revokeObjectURL(prev.url);
+    const url = URL.createObjectURL(f);
+    audioEditors.set(prefix, { blob: f, mimeType: f.type || 'audio/mp4', name: f.name, remove: false, url });
+    if (el.preview) { el.preview.src = url; el.preview.style.display = ''; }
+    if (el.remove)  el.remove.style.display = '';
+    if (el.status)  {
+      el.status.textContent = `New clip: ${f.name} (${Math.round(f.size / 1024)} KB). It uploads when you save.`;
+      el.status.style.color = 'var(--violet)';
+    }
+  });
+
+  if (el.remove) {
+    el.remove.addEventListener('click', () => {
+      const prev = audioEditors.get(prefix);
+      if (prev?.url) URL.revokeObjectURL(prev.url);
+      audioEditors.set(prefix, { blob: null, mimeType: '', name: '', remove: true, url: null });
+      el.file.value = '';
+      if (el.preview) { el.preview.removeAttribute('src'); el.preview.style.display = 'none'; }
+      if (el.status)  {
+        el.status.textContent = 'The recording will be removed on save — the app goes back to text-to-speech for this word.';
+        el.status.style.color = 'var(--violet)';
+      }
+    });
+  }
+}
+
+// { kind: 'set', blob, mimeType } | { kind: 'remove' } | null
+function pendingAudio(prefix) {
+  const st = audioEditors.get(prefix);
+  if (!st) return null;
+  if (st.remove) return { kind: 'remove' };
+  if (st.blob)   return { kind: 'set', blob: st.blob, mimeType: st.mimeType };
+  return null;
+}
+
+// Writes / removes word_audio/{key} for a word and returns the vocab-doc fields to merge into the
+// write ({} when there is nothing to do, or when the audio write failed).
+//
+// The audio write is best-effort: it must never block the word save. If word_audio is denied
+// (the security rule not yet deployed) or the upload fails for any other reason, the word still
+// saves — just without an audio pointer — and the admin is told the clip did not go through.
+async function commitWordAudio(prefix, kasiguranin, english) {
+  const pending = pendingAudio(prefix);
+  if (!pending) return {};
+  const key = audioKey(kasiguranin, english);
+
+  if (pending.kind === 'set') {
+    try {
+      const buf = new Uint8Array(await pending.blob.arrayBuffer());
+      await setDoc(doc(db, 'word_audio', key), {
+        data: Bytes.fromUint8Array(buf),
+        mimeType: pending.mimeType || 'audio/mp4',
+        byteSize: buf.length,
+        kasiguranin,
+        english: english || '',
+        updatedAt: new Date().toISOString()
+      });
+      await logAudit('vocabulary.audio', { word: kasiguranin, action: 'set', bytes: buf.length });
+      return { audioResName: key, audioUpdatedAt: Date.now() };
+    } catch (err) {
+      console.warn('word_audio upload failed', key, err);
+      notify('The word was saved, but the audio clip could not be uploaded: ' + (err.message || err), 'error');
+      return {};
+    }
+  }
+
+  // remove
+  try {
+    await deleteDoc(doc(db, 'word_audio', key));
+    await logAudit('vocabulary.audio', { word: kasiguranin, action: 'remove' });
+    return { audioResName: '', audioUpdatedAt: Date.now() };
+  } catch (err) {
+    console.warn('word_audio delete failed', key, err);
+    notify('The word was saved, but the audio clip could not be removed: ' + (err.message || err), 'error');
+    return {};
+  }
+}
+
+function initAudioEditors() {
+  initAudioEditor('input');
+  initAudioEditor('edit-input');
+  // The add modal has no JS open handler (inline onclick), so clear stale pending state on open.
+  const openModalInner = window.openModal;
+  window.openModal = function(id) {
+    if (id === 'add-vocab-modal') resetAudioEditor('input');
+    // Always open the release modal in "publish" state; editRelease() populates it right after.
+    if (id === 'publish-release-modal') resetReleaseForm();
+    return openModalInner.call(window, id);
+  };
+}
+
 // ── Form Listeners ──────────────────────────────────────────────────────────
 function initFormListeners() {
+  initAudioEditors();
+
   const announcementForm = document.getElementById('announcement-form');
   if (announcementForm) {
     announcementForm.addEventListener('submit', async (e) => {
@@ -2810,6 +3062,7 @@ function initFormListeners() {
       }
 
       try {
+        const audioFields = await commitWordAudio('input', word, english);
         await addDoc(collection(db, "vocabulary"), {
           kasiguranin: word,
           tagalog: tagalog || null,
@@ -2837,10 +3090,12 @@ function initFormListeners() {
           // A new word needs updatedAt too, not just createdAt — the app's incremental
           // sync filters on updatedAt, so without it a freshly added word would not
           // reach anyone until the next weekly full reconcile.
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          ...audioFields
         });
         await logAudit("vocabulary.create", { word });
         addVocabForm.reset();
+        resetAudioEditor('input');
         closeModal('add-vocab-modal');
         notify(`Successfully added "${word}" to dictionary!`, 'success');
       } catch (error) {
@@ -2878,6 +3133,7 @@ function initFormListeners() {
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
       try {
+        const audioFields = await commitWordAudio('edit-input', word, english);
         await updateDoc(doc(db, "vocabulary", id), {
           kasiguranin: word,
           tagalog: tagalog || null,
@@ -2901,10 +3157,12 @@ function initFormListeners() {
           exampleTranslationTagalog: example1TranslationTl || null,
           exampleTranslation2Tagalog: example2TranslationTl || null,
           exampleSource: exampleSource || null,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          ...audioFields
         });
         await logAudit("vocabulary.update", { id, word });
         editVocabForm.reset();
+        resetAudioEditor('edit-input');
         closeModal('edit-vocab-modal');
         notify(`Successfully updated "${word}"!`, 'success');
       } catch (error) {
@@ -2923,33 +3181,49 @@ function initFormListeners() {
       const notes = document.getElementById('rel-notes').value.trim();
       const forceUpdate = document.getElementById('rel-force')?.checked || false;
 
+      const editingId = document.getElementById('rel-editing-id')?.value || '';
+
       if (isNaN(code) || code <= 0) { notify("Please enter a valid positive integer version code (e.g. 1, 2, 3).", 'error'); return; }
       if (!name) { notify("Please enter a version name (e.g. 1.0.0).", 'error'); return; }
       if (!url.startsWith('http://') && !url.startsWith('https://')) { notify("Direct APK Download link must start with http:// or https://", 'error'); return; }
       if (forceUpdate && !(await confirmDialog({
-        title: `Publish v${name} as a required update?`,
+        title: `Mark v${name} as a required update?`,
         body: 'Every user sees a banner they cannot dismiss until they update.',
-        confirmLabel: 'Publish required update', danger: true
+        confirmLabel: 'Confirm required update', danger: true
       }))) return;
 
       try {
-        // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
-        // same version — setDoc + merge means republishing a version CI already wrote only
-        // overwrites these six known fields instead of creating a second, duplicate doc via
-        // addDoc's random id.
-        await setDoc(doc(db, "app_releases", `v${name}`), {
-          versionCode: code,
-          versionName: name,
-          apkUrl: url,
-          releaseNotes: notes,
-          forceUpdate: forceUpdate,
-          releasedAt: Date.now()
-        }, { merge: true });
-        await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
-        releaseForm.reset();
-        notify(`Successfully published KasiGuru v${name} APK release!`, 'success');
+        if (editingId) {
+          // Editing an existing release: leave versionName (the doc id) and releasedAt alone, and
+          // never touch `yanked` here — that is the Yank/Restore control's job.
+          await updateDoc(doc(db, 'app_releases', editingId), {
+            versionCode: code,
+            apkUrl: url,
+            releaseNotes: notes,
+            forceUpdate: forceUpdate
+          });
+          await logAudit('release.edit', { versionName: name, versionCode: code, apkUrl: url, forceUpdate });
+          notify(`Saved changes to v${name}.`, 'success');
+        } else {
+          // Deterministic doc id (vX.Y.Z), matching what CI's publish_release.js writes for the
+          // same version — setDoc + merge means republishing a version CI already wrote only
+          // overwrites these known fields instead of creating a second, duplicate doc via
+          // addDoc's random id.
+          await setDoc(doc(db, "app_releases", `v${name}`), {
+            versionCode: code,
+            versionName: name,
+            apkUrl: url,
+            releaseNotes: notes,
+            forceUpdate: forceUpdate,
+            releasedAt: Date.now()
+          }, { merge: true });
+          await logAudit("release.publish", { versionCode: code, versionName: name, apkUrl: url, forceUpdate: forceUpdate });
+          notify(`Successfully published KasiGuru v${name} APK release!`, 'success');
+        }
+        resetReleaseForm();
+        closeModal('publish-release-modal');
       } catch (err) {
-        notify("Failed to publish release: " + err.message, 'error');
+        notify("Failed to save release: " + err.message, 'error');
       }
     });
   }

@@ -19,8 +19,8 @@ android {
         applicationId = "com.kasiguru"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.12.0"
+        versionCode = 15
+        versionName = "1.14.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

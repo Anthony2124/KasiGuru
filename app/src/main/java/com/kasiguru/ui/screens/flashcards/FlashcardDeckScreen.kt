@@ -238,7 +238,7 @@ fun FlashcardDeckScreen(
                                 AudioPlayButton(
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        audioPlayerManager.playAudio(currentCard.kasiguranin, currentCard.audioFileName)
+                                        audioPlayerManager.playWord(currentCard)
                                     },
                                     size = 38.dp,
                                     contentDescription = "Listen"

@@ -56,13 +56,17 @@ object VocabularyContentMerge {
     /**
      * [cloud] with the learner's own history preserved, or the cloud row when this word is new.
      *
-     * Fields the admin word form has no control for -- the root form, the audio file name and the
-     * two phonetic flags -- fall back to the local value rather than being overwritten. The portal
-     * cannot write those keys, so a document it saves simply omits them, and copying the cloud value
-     * unconditionally meant that *editing any word in the portal* erased its seeded root form and
-     * its audio reference on the next full reconcile: the Root row vanished from the detail screen
-     * and audio playback fell back to a slugified headword. A field nothing can author is a field
-     * nothing should be able to clear.
+     * Fields the admin word form has no control for -- the root form and the two phonetic flags --
+     * fall back to the local value rather than being overwritten. The portal cannot write those
+     * keys, so a document it saves simply omits them, and copying the cloud value unconditionally
+     * meant that *editing any word in the portal* erased its seeded root form on the next full
+     * reconcile. A field nothing can author is a field nothing should be able to clear.
+     *
+     * The audio fields are the exception now that the word form owns them: `audioUpdatedAt > 0`
+     * means an admin uploaded, replaced or removed the clip, and in that case the cloud value wins
+     * -- including a cleared `audioResName`, so removing a recording actually propagates. A legacy
+     * document that predates the feature carries `audioUpdatedAt == 0` and still cannot touch a
+     * local value.
      */
     fun merge(local: VocabularyEntity?, cloud: VocabularyEntity): VocabularyEntity {
         if (local == null) return cloud.copy(id = 0)
@@ -91,7 +95,8 @@ object VocabularyContentMerge {
             // cost is that clearing a meaning in the portal does not propagate as a clear.
             meaningEnglish = cloud.meaningEnglish.ifBlank { local.meaningEnglish },
             meaningTagalog = cloud.meaningTagalog.ifBlank { local.meaningTagalog },
-            audioFileName = cloud.audioFileName.ifBlank { local.audioFileName },
+            audioFileName = if (cloud.audioUpdatedAt > 0L) cloud.audioFileName else local.audioFileName,
+            audioUpdatedAt = if (cloud.audioUpdatedAt > 0L) cloud.audioUpdatedAt else local.audioUpdatedAt,
             exampleSentence = cloud.exampleSentence,
             exampleTranslation = cloud.exampleTranslation,
             exampleSentence2 = cloud.exampleSentence2,

@@ -37,7 +37,7 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 30
+        const val CURRENT_VERSION = 31
     }
 
     /**
@@ -226,6 +226,45 @@ class MigrationTest {
             check(cursor.getInt(2) == 1) { "isLearned was not preserved" }
             check(cursor.getInt(3) == 4) { "timesReviewed was not preserved" }
             check(cursor.getInt(4) == 12) { "intervalDays was not preserved" }
+        }
+        db.close()
+    }
+
+    /**
+     * v30 -> v31 adds `vocabulary.audioUpdatedAt`, the millis stamp the admin portal bumps when a
+     * word's pronunciation clip changes.
+     *
+     * Additive and defaulted like `theme` before it: an existing corpus reads as "no clip" (0) and
+     * keeps falling back to text-to-speech until an admin uploads one. A learner's review state on a
+     * word must not be touched by the column being added.
+     */
+    @Test
+    fun migrateV30ToV31AddsAudioUpdatedAtWithoutDisturbingReviewHistory() {
+        helper.createDatabase(testDbName, 30).apply {
+            execSQL(
+                "INSERT INTO vocabulary " +
+                    "(id, kasiguranin, tagalog, english, rootForm, category, partOfSpeech, theme, " +
+                    " audioResName, isLearned, timesReviewed, easinessFactor, intervalDays, " +
+                    " nextReviewDate, lapses) " +
+                    "VALUES (1, 'aldew', 'araw', 'sun', 'aldew', 'Nature & Environment', 'Noun', '', " +
+                    " '', 1, 6, 2.4, 15, '2026-09-20', 1)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(testDbName, CURRENT_VERSION, true, *KasiGuruMigrations.ALL)
+
+        db.query(
+            "SELECT audioUpdatedAt, audioResName, isLearned, timesReviewed, intervalDays, lapses " +
+                "FROM vocabulary WHERE id = 1"
+        ).use { cursor ->
+            check(cursor.moveToFirst()) { "seeded vocabulary row was lost during migration" }
+            check(cursor.getLong(0) == 0L) { "audioUpdatedAt should default to 0, meaning no clip" }
+            check(cursor.getString(1) == "") { "audioResName was not preserved" }
+            check(cursor.getInt(2) == 1) { "isLearned was not preserved" }
+            check(cursor.getInt(3) == 6) { "timesReviewed was not preserved" }
+            check(cursor.getInt(4) == 15) { "intervalDays was not preserved" }
+            check(cursor.getInt(5) == 1) { "lapses was not preserved" }
         }
         db.close()
     }
