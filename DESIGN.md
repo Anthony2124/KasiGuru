@@ -234,3 +234,32 @@ cover, not a placeholder — which is the state every story ships in today.
 
 **Ground pattern overlay.** An optional tileable motif drawn over the pattern layer at 0.05–0.08 alpha,
 1080x1080, PNG or vector. Every screen must look finished with it null.
+
+## The two web surfaces
+
+**They are separate stylesheets, and that is the decision.** `admin-website/download/` is Persuade
+mode and `admin-website/admin/` is Operate mode. Their vocabularies reflect it: the admin defines a
+spacing and type scale (`--s-1`..`--s-12`, `--t-xs`..`--t-xl`) and the status colours a moderation
+queue needs; the download site defines clay lips, the violet band and page wrappers the admin has no
+use for. Of 62 and 46 tokens, only 17 names are common. An earlier attempt to unify them behind
+`admin-website/shared/` plus a sync script was reverted in `db24c80`; do not reintroduce it.
+
+**What may never drift is the brand core**: `--violet`, `--canopy-top`, `--canopy-bottom`, `--ink`,
+`--muted`, `--faint`, `--ground`, `--surface`, `--gold`, `--coral`, and the four radii `--r-chip`,
+`--r-tile`, `--r-panel`, `--r-pill`. Fourteen tokens, the ones a visitor would notice differing
+between the two sites in a single session. `scripts/check-web-tokens.js` asserts they agree and CI
+runs it.
+
+**Three shared names differ on purpose.** They are recorded in that script rather than left as a trap
+for anyone copying a rule from one stylesheet to the other:
+
+- `--hair` — the download site draws hairlines over the violet band as well as over cards, so it
+  needs a translucent rule; the admin only ever draws them on white.
+- `--sunken` — a recessed area is tinted against the surface it sits in, and the two surfaces do not
+  share a ground.
+- `--ease-out` — the download page overshoots for emphasis; the admin settles quickly because its
+  animations run during data entry.
+
+Any *other* token defined on both surfaces with different values is a mistake, and the check fails on
+it. Resolve it by making the values agree and adding the token to the core, or by recording why it
+differs.

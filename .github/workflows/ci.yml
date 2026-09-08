@@ -96,7 +96,7 @@ jobs:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
   admin-web:
-    name: One admin portal, in admin-website/admin
+    name: Web surface guards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,3 +136,10 @@ jobs:
 
           if [ "$fail" -ne 0 ]; then exit 1; fi
           echo "one admin portal, and the root placeholder carries nothing with it"
+
+      # The two surfaces keep separate stylesheets on purpose — only 17 of their token
+      # names are even common. What must not drift is the brand core underneath: the
+      # colours and radii a visitor would notice differing between the two sites in one
+      # session. This asserts that core still agrees; it moves no CSS and writes nothing.
+      - name: Brand tokens agree across both web surfaces
+        run: node scripts/check-web-tokens.js
