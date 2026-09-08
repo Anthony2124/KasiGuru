@@ -225,7 +225,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.Onboarding.route) {
                 val viewModel: com.kasiguru.ui.screens.onboarding.OnboardingViewModel = hiltViewModel()
                 OnboardingScreen(
-                    onCompleteOnboarding = { userName, avatarId, dailyGoalXp, motivation, startingLevel, titleBadge, residentName ->
+                    onCompleteOnboarding = { userName, avatarId, dailyGoalXp, titleBadge, residentName ->
                         viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge, residentName)
                         navController.navigate(Screen.Learn.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
