@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.vocabulary
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.remote.FirestoreSyncManager
 import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,11 +37,33 @@ data class VocabularyUiState(
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class VocabularyViewModel @Inject constructor(
-    private val vocabularyRepository: VocabularyRepository
+    private val vocabularyRepository: VocabularyRepository,
+    private val firestoreSyncManager: FirestoreSyncManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VocabularyUiState())
     val uiState: StateFlow<VocabularyUiState> = _uiState.asStateFlow()
+
+    /** True while a user-initiated cloud refresh is running, so the Dictionary bar can show a spinner. */
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+    /**
+     * Pulls the latest corpus from the cloud right now, bypassing the six-hour throttle that governs
+     * automatic launches. The Room flows in [loadData] deliver the result to the UI, so an admin's
+     * word edit — a new definition, a pronunciation clip — shows without waiting for the next window.
+     */
+    fun refreshFromCloud() {
+        if (_isSyncing.value) return
+        viewModelScope.launch {
+            _isSyncing.value = true
+            try {
+                firestoreSyncManager.syncWithFirestore(force = true)
+            } finally {
+                _isSyncing.value = false
+            }
+        }
+    }
 
     // Backs the floating dictionary search bar, separate from selectCategory's in-memory filter:
     // this one queries Room directly (VocabularyDao.searchVocabulary) so it can find a word in any

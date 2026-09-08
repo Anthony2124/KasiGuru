@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.clay.ClaySurface
 import com.kasiguru.ui.components.clay.FloatingSearchBar
+import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -89,6 +91,7 @@ fun VocabularyScreen(
     viewModel: VocabularyViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterCategory by remember { mutableStateOf("All") }
     var dictionaryQuery by remember { mutableStateOf("") }
@@ -164,6 +167,26 @@ fun VocabularyScreen(
         title = "Dictionary",
         subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
         pattern = GroundPattern.Grid,
+        actions = {
+            if (isSyncing) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(end = Space.sm)
+                        .size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = Violet
+                )
+            } else {
+                GroundIconButton(
+                    iconRes = Iconsax.Refresh,
+                    contentDescription = "Refresh the dictionary from the cloud",
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        viewModel.refreshFromCloud()
+                    }
+                )
+            }
+        },
         content = {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
