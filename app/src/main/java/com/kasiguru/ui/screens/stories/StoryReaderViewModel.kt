@@ -11,6 +11,7 @@ import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.remote.StoryImageRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
+import com.kasiguru.util.LearningAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -83,6 +84,7 @@ class StoryReaderViewModel @Inject constructor(
                     isLoading = false
                 )
                 ensureImagesAround(_uiState.value.currentPageIndex)
+                LearningAnalytics.storyOpened(storyId, pages.size)
             } else {
                 _uiState.value = _uiState.value.copy(error = "Story not found", isLoading = false)
             }
@@ -151,6 +153,8 @@ class StoryReaderViewModel @Inject constructor(
                 storyRepository.markAsCompleted(storyId)
                 userProgressRepository.addXp(Constants.XP_PER_STORY_COMPLETE)
                 userProgressRepository.incrementStoriesCompleted()
+                // Inside the !isCompleted guard: a reread is not a second completion.
+                LearningAnalytics.storyFinished(storyId)
             }
             _uiState.value = _uiState.value.copy(isFinished = true)
         }

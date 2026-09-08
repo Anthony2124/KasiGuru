@@ -3,11 +3,15 @@ package com.kasiguru.data.repository
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.dao.GameLevelDao
 import com.kasiguru.data.local.entity.GameLevelEntity
+import com.kasiguru.util.LearningAnalytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** A level is scored out of three stars everywhere in the game system. */
+private const val STARS_PER_LEVEL = 3
 
 @Singleton
 class GameLevelRepository @Inject constructor(
@@ -49,6 +53,9 @@ class GameLevelRepository @Inject constructor(
      * Saves the stars earned for a level. If it's a new high score, it saves it and unlocks the next level.
      */
     suspend fun saveLevelResult(gameType: String, levelNumber: Int, starsEarned: Int) {
+        // Every mini-game routes its result through here, so this is the one place that knows
+        // which game finished. Logging in the six ViewModels instead would be six chances to miss one.
+        LearningAnalytics.gameFinished(gameType, starsEarned, STARS_PER_LEVEL)
         ensureLevelsSeeded()
         val currentLevel = gameLevelDao.getLevel(gameType, levelNumber)
         

@@ -5,6 +5,7 @@ import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.MetricType
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.util.LearningAnalytics
 import com.kasiguru.util.calculateLevel
 import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.Flow
@@ -102,6 +103,7 @@ class UserProgressRepository @Inject constructor(
             userProgressDao.updateLevel(newLevel)
             // Check level achievements
             checkLevelAchievements(newLevel)
+            LearningAnalytics.levelReached(newLevel)
             _levelUpEvents.tryEmit(newLevel)
         }
     }

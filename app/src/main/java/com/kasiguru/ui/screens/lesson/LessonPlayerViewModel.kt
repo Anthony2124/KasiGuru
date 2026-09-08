@@ -10,6 +10,7 @@ import com.kasiguru.domain.lesson.Exercise
 import com.kasiguru.domain.lesson.ExpandingRehearsal
 import com.kasiguru.domain.lesson.LessonRef
 import com.kasiguru.domain.lesson.Remediation
+import com.kasiguru.util.LearningAnalytics
 import com.kasiguru.util.RecallAnswerMatcher
 import com.kasiguru.util.RecallMatch
 import com.kasiguru.util.srs.ReviewRating
@@ -276,6 +277,13 @@ class LessonPlayerViewModel @Inject constructor(
 
         viewModelScope.launch {
             val xp = lessonRepository.completeLesson(lessonRef, accuracy)
+            // Recorded after the award, so a lesson that failed to save is not counted as finished.
+            LearningAnalytics.lessonCompleted(
+                stageId = lessonRef.unitId,
+                accuracy = accuracy,
+                exercises = total,
+                xpAwarded = xp
+            )
             _uiState.update {
                 it.copy(
                     isComplete = true,
