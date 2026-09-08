@@ -134,7 +134,7 @@ fun WordVerificationDialog(
                             AudioPlayButton(
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    audioPlayerManager.playAudio(targetWord.kasiguranin, targetWord.audioFileName)
+                                    audioPlayerManager.playWord(targetWord)
                                 },
                                 size = 44.dp,
                                 contentDescription = "Listen"

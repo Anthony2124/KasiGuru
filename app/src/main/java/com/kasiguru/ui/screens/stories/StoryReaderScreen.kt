@@ -203,7 +203,7 @@ fun StoryReaderScreen(
                         WordDetailBottomSheet(
                             vocab = vocab,
                             onDismissRequest = { selectedWord = null },
-                            onPlayAudio = { audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName) }
+                            onPlayAudio = { audioPlayerManager.playWord(vocab) }
                         )
                     }
                 }

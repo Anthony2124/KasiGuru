@@ -2482,6 +2482,7 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-example1-translation-tl').value = item.exampleTranslationTagalog || '';
   document.getElementById('edit-input-example2-translation-tl').value = item.exampleTranslation2Tagalog || '';
   document.getElementById('edit-input-example-source').value = item.exampleSource || '';
+  loadAudioEditorForWord('edit-input', item);
 
   window.openModal('edit-vocab-modal');
 };
@@ -2743,8 +2744,165 @@ function handleExcelFile(file) {
 // ── Render Releases List ────────────────────────────────────────────────────
 
 
+// ── Word pronunciation audio ───────────────────────────────────────────────
+// Clips live in Firestore at word_audio/{key} as raw bytes, one document per word sense — the same
+// pattern story_page_images uses, and for the same reason: no Firebase Storage on the Spark plan.
+// The vocabulary doc carries only a pointer (audioResName = key) plus audioUpdatedAt as a
+// cache-buster; the Android app fetches the bytes on first play and caches them to disk, falling
+// back to text-to-speech when a word has none.
+
+const AUDIO_MAX_BYTES = 400 * 1024;               // must match the firestore.rules word_audio cap
+const AUDIO_MIME_OK = new Set([
+  'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/aac', 'audio/x-m4a',
+  'audio/ogg', 'audio/opus', 'audio/webm'
+]);
+const AUDIO_DEFAULT_STATUS =
+  'Optional. A short m4a / mp3 / ogg clip, under 400 KB. Without it the app speaks the word with text-to-speech.';
+
+// key = slug(kasiguranin)__slug(english). Kept in exact step with the app's WordAudioRepository /
+// AudioPlayerManager: both sides lowercase, collapse every run of non-[a-z0-9] to "_", trim "_".
+function audioKey(kasiguranin, english) {
+  const slug = s => (s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  return `${slug(kasiguranin)}__${slug(english)}`;
+}
+
+// prefix ('input' | 'edit-input') -> { blob, mimeType, name, remove, url }
+const audioEditors = new Map();
+
+function audioEls(prefix) {
+  return {
+    file:    document.getElementById(`${prefix}-audio-file`),
+    pick:    document.getElementById(`${prefix}-audio-pick-btn`),
+    preview: document.getElementById(`${prefix}-audio-preview`),
+    remove:  document.getElementById(`${prefix}-audio-remove-btn`),
+    status:  document.getElementById(`${prefix}-audio-status`)
+  };
+}
+
+function resetAudioEditor(prefix) {
+  const st = audioEditors.get(prefix);
+  if (st?.url) URL.revokeObjectURL(st.url);
+  audioEditors.delete(prefix);
+  const el = audioEls(prefix);
+  if (!el.file) return;
+  el.file.value = '';
+  if (el.preview) { el.preview.removeAttribute('src'); el.preview.style.display = 'none'; }
+  if (el.remove)  el.remove.style.display = 'none';
+  if (el.status)  { el.status.textContent = AUDIO_DEFAULT_STATUS; el.status.style.color = 'var(--muted)'; }
+}
+
+// Populate the edit editor from a word's stored state.
+function loadAudioEditorForWord(prefix, item) {
+  resetAudioEditor(prefix);
+  const el = audioEls(prefix);
+  if (!el.status) return;
+  if (item && item.audioResName) {
+    const when = item.audioUpdatedAt ? new Date(item.audioUpdatedAt).toLocaleDateString() : 'earlier';
+    el.status.textContent = `This word has a recording (uploaded ${when}). Choose a file to replace it, or remove it.`;
+    if (el.remove) el.remove.style.display = '';
+  }
+}
+
+function initAudioEditor(prefix) {
+  const el = audioEls(prefix);
+  if (!el.file || !el.pick) return;
+
+  el.pick.addEventListener('click', () => el.file.click());
+
+  el.file.addEventListener('change', () => {
+    const f = el.file.files && el.file.files[0];
+    if (!f) return;
+    const okType = AUDIO_MIME_OK.has(f.type) || /\.(m4a|mp3|ogg|oga|aac|opus)$/i.test(f.name);
+    if (!okType) {
+      notify('That is not an audio file the app can play. Use m4a, mp3 or ogg.', 'error');
+      el.file.value = '';
+      return;
+    }
+    if (f.size > AUDIO_MAX_BYTES) {
+      notify(`That clip is ${Math.round(f.size / 1024)} KB, over the ${Math.round(AUDIO_MAX_BYTES / 1024)} KB limit. Trim it or re-export it smaller and try again.`, 'error');
+      el.file.value = '';
+      return;
+    }
+    const prev = audioEditors.get(prefix);
+    if (prev?.url) URL.revokeObjectURL(prev.url);
+    const url = URL.createObjectURL(f);
+    audioEditors.set(prefix, { blob: f, mimeType: f.type || 'audio/mp4', name: f.name, remove: false, url });
+    if (el.preview) { el.preview.src = url; el.preview.style.display = ''; }
+    if (el.remove)  el.remove.style.display = '';
+    if (el.status)  {
+      el.status.textContent = `New clip: ${f.name} (${Math.round(f.size / 1024)} KB). It uploads when you save.`;
+      el.status.style.color = 'var(--violet)';
+    }
+  });
+
+  if (el.remove) {
+    el.remove.addEventListener('click', () => {
+      const prev = audioEditors.get(prefix);
+      if (prev?.url) URL.revokeObjectURL(prev.url);
+      audioEditors.set(prefix, { blob: null, mimeType: '', name: '', remove: true, url: null });
+      el.file.value = '';
+      if (el.preview) { el.preview.removeAttribute('src'); el.preview.style.display = 'none'; }
+      if (el.status)  {
+        el.status.textContent = 'The recording will be removed on save — the app goes back to text-to-speech for this word.';
+        el.status.style.color = 'var(--violet)';
+      }
+    });
+  }
+}
+
+// { kind: 'set', blob, mimeType } | { kind: 'remove' } | null
+function pendingAudio(prefix) {
+  const st = audioEditors.get(prefix);
+  if (!st) return null;
+  if (st.remove) return { kind: 'remove' };
+  if (st.blob)   return { kind: 'set', blob: st.blob, mimeType: st.mimeType };
+  return null;
+}
+
+// Writes / removes word_audio/{key} for a word and returns the vocab-doc fields to merge into the
+// write ({} when there is nothing to do). Called before the vocabulary write, mirroring the
+// story-editor's "pictures first" order: an orphaned audio doc is invisible, a vocab doc pointing
+// at a missing clip would just fall back to TTS.
+async function commitWordAudio(prefix, kasiguranin, english) {
+  const pending = pendingAudio(prefix);
+  if (!pending) return {};
+  const key = audioKey(kasiguranin, english);
+
+  if (pending.kind === 'set') {
+    const buf = new Uint8Array(await pending.blob.arrayBuffer());
+    await setDoc(doc(db, 'word_audio', key), {
+      data: Bytes.fromUint8Array(buf),
+      mimeType: pending.mimeType || 'audio/mp4',
+      byteSize: buf.length,
+      kasiguranin,
+      english: english || '',
+      updatedAt: new Date().toISOString()
+    });
+    await logAudit('vocabulary.audio', { word: kasiguranin, action: 'set', bytes: buf.length });
+    return { audioResName: key, audioUpdatedAt: Date.now() };
+  }
+
+  try { await deleteDoc(doc(db, 'word_audio', key)); }
+  catch (err) { console.warn('Could not delete word_audio', key, err); }
+  await logAudit('vocabulary.audio', { word: kasiguranin, action: 'remove' });
+  return { audioResName: '', audioUpdatedAt: Date.now() };
+}
+
+function initAudioEditors() {
+  initAudioEditor('input');
+  initAudioEditor('edit-input');
+  // The add modal has no JS open handler (inline onclick), so clear stale pending state on open.
+  const openModalInner = window.openModal;
+  window.openModal = function(id) {
+    if (id === 'add-vocab-modal') resetAudioEditor('input');
+    return openModalInner.call(window, id);
+  };
+}
+
 // ── Form Listeners ──────────────────────────────────────────────────────────
 function initFormListeners() {
+  initAudioEditors();
+
   const announcementForm = document.getElementById('announcement-form');
   if (announcementForm) {
     announcementForm.addEventListener('submit', async (e) => {
@@ -2810,6 +2968,7 @@ function initFormListeners() {
       }
 
       try {
+        const audioFields = await commitWordAudio('input', word, english);
         await addDoc(collection(db, "vocabulary"), {
           kasiguranin: word,
           tagalog: tagalog || null,
@@ -2837,10 +2996,12 @@ function initFormListeners() {
           // A new word needs updatedAt too, not just createdAt — the app's incremental
           // sync filters on updatedAt, so without it a freshly added word would not
           // reach anyone until the next weekly full reconcile.
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          ...audioFields
         });
         await logAudit("vocabulary.create", { word });
         addVocabForm.reset();
+        resetAudioEditor('input');
         closeModal('add-vocab-modal');
         notify(`Successfully added "${word}" to dictionary!`, 'success');
       } catch (error) {
@@ -2878,6 +3039,7 @@ function initFormListeners() {
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
       try {
+        const audioFields = await commitWordAudio('edit-input', word, english);
         await updateDoc(doc(db, "vocabulary", id), {
           kasiguranin: word,
           tagalog: tagalog || null,
@@ -2901,10 +3063,12 @@ function initFormListeners() {
           exampleTranslationTagalog: example1TranslationTl || null,
           exampleTranslation2Tagalog: example2TranslationTl || null,
           exampleSource: exampleSource || null,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          ...audioFields
         });
         await logAudit("vocabulary.update", { id, word });
         editVocabForm.reset();
+        resetAudioEditor('edit-input');
         closeModal('edit-vocab-modal');
         notify(`Successfully updated "${word}"!`, 'success');
       } catch (error) {

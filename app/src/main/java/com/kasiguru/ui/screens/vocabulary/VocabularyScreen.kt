@@ -243,7 +243,7 @@ fun VocabularyScreen(
                         onPlayClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             if (featuredWord != null) {
-                                audioPlayer.playAudio(featuredWord.kasiguranin, featuredWord.audioFileName)
+                                audioPlayer.playWord(featuredWord)
                             } else {
                                 audioPlayer.playAudio("singët", "")
                             }

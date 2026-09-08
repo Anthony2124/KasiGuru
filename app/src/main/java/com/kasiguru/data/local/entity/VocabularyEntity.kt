@@ -79,6 +79,16 @@ data class VocabularyEntity(
     val meaningTagalog: String = "",
     @ColumnInfo(name = "audioResName", defaultValue = "")
     val audioFileName: String = "",
+    /**
+     * Epoch millis of the last change to this word's pronunciation clip in the admin portal, or 0
+     * when it has none. The clip itself lives in Firestore at `word_audio/{audioFileName}` (bytes,
+     * one document, [com.kasiguru.data.remote.WordAudioRepository] fetches and caches it); this is the
+     * cache-buster the app keys the on-disk file on, and the signal
+     * [com.kasiguru.data.remote.VocabularyContentMerge.merge] uses to tell an admin-authored audio
+     * field from a legacy document that simply omits it.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val audioUpdatedAt: Long = 0,
     @ColumnInfo(defaultValue = "")
     val exampleSentence: String = "",
     @ColumnInfo(defaultValue = "")

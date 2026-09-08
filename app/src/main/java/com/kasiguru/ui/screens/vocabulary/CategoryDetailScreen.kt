@@ -302,7 +302,7 @@ private fun CategoryWordCard(
                     .size(44.dp)
                     .clickable {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        audioPlayerManager.playAudio(vocab.kasiguranin, vocab.audioFileName)
+                        audioPlayerManager.playWord(vocab)
                     },
                 contentAlignment = Alignment.Center
             ) {

@@ -52,8 +52,23 @@ object KasiGuruMigrations {
         MIGRATION_26_27,
         MIGRATION_27_28,
         MIGRATION_28_29,
-        MIGRATION_29_30
+        MIGRATION_29_30,
+        MIGRATION_30_31
         )
+    }
+
+    // -- v30 -> v31 -----------------------------------------------------------
+    // vocabulary gains `audioUpdatedAt`: epoch millis of the last pronunciation-clip change made in
+    // the admin portal, 0 for a word with no clip.
+    //
+    // Additive and defaulted, so every existing row reads as "no clip" and keeps falling back to
+    // text-to-speech until an admin uploads one. The clip bytes are never in the database or the APK
+    // - they live in Firestore at word_audio/{audioResName} and WordAudioRepository caches them to
+    // filesDir - so this is the only schema cost of the feature.
+    private val MIGRATION_30_31 = object : Migration(30, 31) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vocabulary` ADD COLUMN `audioUpdatedAt` INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     // -- v29 -> v30 -----------------------------------------------------------

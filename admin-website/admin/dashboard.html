@@ -845,6 +845,16 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           <input type="text" id="input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
           <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
         </div>
+        <div class="form-group">
+          <label>Pronunciation audio <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline" id="input-audio-pick-btn">Choose audio file&hellip;</button>
+            <audio id="input-audio-preview" controls style="display:none; max-width:220px; height:36px;"></audio>
+            <button type="button" class="btn btn-outline" id="input-audio-remove-btn" style="display:none;">Remove audio</button>
+          </div>
+          <input type="file" id="input-audio-file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/x-m4a,.m4a,.mp3,.ogg" style="display:none;">
+          <small id="input-audio-status" style="color:var(--muted);">Optional. A short m4a / mp3 / ogg clip, under 400&nbsp;KB. Without it the app speaks the word with text-to-speech.</small>
+        </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
           <button type="submit" class="btn btn-primary"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Save Entry</button>
@@ -1042,6 +1052,16 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           <label>Where these sentences came from</label>
           <input type="text" id="edit-input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
           <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
+        </div>
+        <div class="form-group">
+          <label>Pronunciation audio <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline" id="edit-input-audio-pick-btn">Choose audio file&hellip;</button>
+            <audio id="edit-input-audio-preview" controls style="display:none; max-width:220px; height:36px;"></audio>
+            <button type="button" class="btn btn-outline" id="edit-input-audio-remove-btn" style="display:none;">Remove audio</button>
+          </div>
+          <input type="file" id="edit-input-audio-file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/x-m4a,.m4a,.mp3,.ogg" style="display:none;">
+          <small id="edit-input-audio-status" style="color:var(--muted);">No audio &mdash; the app speaks the word with text-to-speech. Upload a short m4a / mp3 / ogg clip, under 400&nbsp;KB.</small>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
