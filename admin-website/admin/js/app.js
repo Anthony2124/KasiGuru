@@ -9,7 +9,6 @@ import {
 import { 
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { normaliseWord, findExistingWord } from './word-normalize.js';
 
 /**
  * Stamps a content payload with the millisecond timestamp the app syncs against.
@@ -33,8 +32,6 @@ function withUpdatedAt(payload) {
 let submissions = [];
 let literatureSubmissions = [];
 let literatureSubmissionsLoaded = false;
-let reports = [];
-let reportsLoaded = false;
 let announcements = [];
 let vocabulary = [];
 let releases = [];
@@ -205,9 +202,7 @@ window.adminSignOut = async function () {
 const TAB_ROUTES = {
   'tab-dashboard': 'overview',
   'tab-submissions': 'queue',
-  'tab-reports': 'reports',
   'tab-vocabulary': 'dictionary',
-  'tab-stages': 'stages',
   'tab-stories': 'stories',
   'tab-releases': 'releases',
   'tab-users': 'users',
@@ -254,7 +249,6 @@ function init() {
   initTopbar();
   initModalBehaviour();
   initDictionaryControls();
-  initStageReview();
   initLogsControls();
   initUsersListener();
   initBackupRestore();
@@ -341,40 +335,7 @@ function initRealtimeListeners() {
     console.error("Firestore literature submission query error:", e);
   }
 
-  // 1c. User Issue & Word Reports Listener (bugs, wrong words, photo evidence)
-  try {
-    const reportsQuery = query(collection(db, "issue_reports"), orderBy("submittedAt", "desc"));
-    const unsubReports = onSnapshot(reportsQuery, (snapshot) => {
-      reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      reportsLoaded = true;
-      renderReportsTable();
-      updateDashboardMetrics();
-    }, (error) => {
-      console.warn("Primary reports query failed, attempting plain fallback query:", error);
-      try {
-        const reportsFallback = query(collection(db, "issue_reports"));
-        const unsubFallback = onSnapshot(reportsFallback, (snapshot) => {
-          reports = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => (b.submittedAt || b.createdAt || 0) - (a.submittedAt || a.createdAt || 0));
-          reportsLoaded = true;
-          renderReportsTable();
-          updateDashboardMetrics();
-        }, (fallbackErr) => {
-          console.error("Reports fallback listener error:", fallbackErr);
-          renderReportsError("Unable to connect to live issue reports queue.");
-        });
-        unsubscribeFns.push(unsubFallback);
-      } catch (e) {
-        renderReportsError("Unable to connect to live issue reports queue.");
-      }
-    });
-    unsubscribeFns.push(unsubReports);
-  } catch (e) {
-    console.error("Firestore reports query error:", e);
-  }
-
-  // 1d. Announcements Listener - the admin's own view of what AnnouncementRepository serves live.
+  // 1c. Announcements Listener - the admin's own view of what AnnouncementRepository serves live.
   try {
     const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
     const unsubAnn = onSnapshot(annQuery, (snapshot) => {
@@ -395,7 +356,6 @@ function initRealtimeListeners() {
       vocabulary = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       vocabularyLoaded = true;
       renderVocabularyTable();
-      renderStageReview();
       updateDashboardMetrics();
     }, (error) => {
       console.warn("Vocabulary listener error:", error);
@@ -598,10 +558,6 @@ function filteredVocabulary() {
   const rawSearch = document.getElementById('search-vocab-input')?.value || '';
   const term = rawSearch.trim().toLowerCase();
   const cat = document.getElementById('filter-vocab-category')?.value || '';
-  // The two gaps worth working through in bulk. A sentence unlocks the lesson system's
-  // build-the-sentence exercise for that word; a theme decides which section of the learning path
-  // teaches it. Both are filled in the edit form below, so this filter is how you find the queue.
-  const gap = document.getElementById('filter-vocab-gap')?.value || '';
 
   return vocabulary.filter(item => {
     const matchesSearch = !term ||
@@ -611,19 +567,7 @@ function filteredVocabulary() {
     const matchesCat = !cat || item.category === cat;
     const matchesLetter = !vocabLetter ||
       (item.kasiguranin || '').trim().charAt(0).toUpperCase() === vocabLetter;
-    const matchesGap =
-      !gap ||
-      (gap === 'sentence' && !(item.exampleSentence || '').trim()) ||
-      (gap === 'theme' && !(item.theme || '').trim()) ||
-      // A sentence whose English translation is missing. The lesson's sentence-building exercise
-      // reads exampleTranslation and shows it to the learner as what the sentence means, so a row
-      // with a Kasiguranin sentence and no English gloss either shows nothing or, worse, shows
-      // whatever language happened to be typed into that box. The field used to be labelled
-      // "Its Tagalog or English translation", and the five sentences recorded so far all hold
-      // Tagalog, so this filter is how they get found and repaired.
-      (gap === 'sentence-english' &&
-        (item.exampleSentence || '').trim() && !(item.exampleTranslation || '').trim());
-    return matchesSearch && matchesCat && matchesLetter && matchesGap;
+    return matchesSearch && matchesCat && matchesLetter;
   });
 }
 
@@ -744,13 +688,6 @@ window.openEntryModal = function(id) {
     ? `<dt>${label}</dt><dd>${escapeHtml(value)}</dd>`
     : `<dt>${label}</dt><dd style="color:var(--muted); font-style:italic;">Not recorded</dd>`;
 
-  // Example sentences were editable in this portal long before they were ever shown back here, so
-  // a moderator had no way to see what a word already carried without opening the edit form.
-  const examples = [
-    [item.exampleSentence, item.exampleTranslation],
-    [item.exampleSentence2, item.exampleTranslation2]
-  ].filter(([sentence]) => (sentence || '').trim());
-
   body.innerHTML = `
     <div class="entry-detail-head">
       <span class="headword">${escapeHtml(item.kasiguranin || '—')}</span>
@@ -760,8 +697,6 @@ window.openEntryModal = function(id) {
     <dl class="deflist">
       ${row('Tagalog', item.tagalog)}
       ${row('English', item.english)}
-      ${row('Meaning (English)', item.meaningEnglish)}
-      ${row('Meaning (Tagalog)', item.meaningTagalog)}
       <dt>Category</dt><dd><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></dd>
     </dl>
     ${aspects.length ? `
@@ -771,16 +706,6 @@ window.openEntryModal = function(id) {
           ${aspects.map(([label, value]) => `
             <div class="aspect"><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join('')}
         </div>
-      </div>` : ''}
-    ${examples.length ? `
-      <div style="margin-top:var(--s-5);">
-        <dt style="font-size:var(--t-xs); font-weight:700; color:var(--muted);">Example sentences</dt>
-        ${examples.map(([sentence, translation]) => `
-          <p style="margin:var(--s-2) 0 0;"><i>${escapeHtml(sentence)}</i>${
-            (translation || '').trim()
-              ? `<br><span style="color:var(--muted);">${escapeHtml(translation)}</span>`
-              : ''
-          }</p>`).join('')}
       </div>` : ''}`;
 
   const editBtn = document.getElementById('entry-modal-edit');
@@ -1031,16 +956,13 @@ function renderAuditLogs() {
       hour: '2-digit', minute: '2-digit'
     }) : 'unknown time';
     
-    // Extract a readable summary from details
+    // Extract a readable summary from details (no raw code or IDs displayed for privacy)
     let summary = '';
     const d = log.details || {};
     if (d.word) summary = `Word: ${d.word}`;
     else if (d.title) summary = `Title: ${d.title}`;
     else if (d.kasiguranin) summary = `Word: ${d.kasiguranin}`;
     else if (d.versionName) summary = `v${d.versionName}`;
-    
-    // Format JSON details
-    const detailsStr = Object.keys(d).length ? escapeHtml(JSON.stringify(d, null, 2)) : '';
 
     return `
       <div class="release-row" style="grid-template-columns: auto 1fr; border-bottom: 1px solid var(--hair); padding: var(--s-4) 0;">
@@ -1052,11 +974,54 @@ function renderAuditLogs() {
             <small style="font-size: var(--t-xs); color: var(--muted);">${escapeHtml(when)}</small>
             ${summary ? `<small style="margin-left: var(--s-2); color: var(--ink);"><b>${escapeHtml(summary)}</b></small>` : ''}
           </div>
-          ${detailsStr ? `<pre class="log-details" style="font-size:11px; color:var(--muted); background:var(--sunken); padding:var(--s-2); border-radius:var(--r-ctl); margin-top:var(--s-2); overflow-x:auto;">${detailsStr}</pre>` : ''}
         </div>
       </div>`;
   }).join('');
 }
+
+window.exportAuditLogs = function() {
+  const rangeEl = document.getElementById('export-logs-range');
+  const rangeVal = rangeEl ? rangeEl.value : '7';
+
+  let targetLogs = auditLogs;
+  let label = 'all';
+
+  if (rangeVal !== 'all') {
+    const days = parseInt(rangeVal, 10) || 7;
+    const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+    targetLogs = auditLogs.filter(log => (log.timestamp || 0) >= cutoff);
+    label = `past-${days}-days`;
+  }
+
+  if (!targetLogs || targetLogs.length === 0) {
+    notify(`No audit logs found for the selected time range (${label.replace(/-/g, ' ')}).`, "info");
+    return;
+  }
+
+  const exportPayload = {
+    exportType: "kasiguru_admin_audit_logs",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    filterRange: label,
+    totalLogs: targetLogs.length,
+    logs: targetLogs
+  };
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kasiguru-audit-logs-${label}-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  notify(`Exported ${targetLogs.length} audit logs (${label.replace(/-/g, ' ')}) successfully!`, "success");
+};
 
 
 
@@ -1645,12 +1610,6 @@ function updateDashboardMetrics() {
     navCount.textContent = pending.length;
     navCount.hidden = pending.length === 0;
   }
-  const pendingReports = reports.filter(r => (r.status || 'pending') === 'pending');
-  const navReportsCount = document.getElementById('nav-reports-count');
-  if (navReportsCount) {
-    navReportsCount.textContent = pendingReports.length;
-    navReportsCount.hidden = pendingReports.length === 0;
-  }
   const dot = document.getElementById('topbar-queue-dot');
   if (dot) {
     dot.textContent = pending.length > 99 ? '99+' : pending.length;
@@ -1943,30 +1902,6 @@ async function approveSubmission(id) {
   const sub = submissions.find(s => s.id === id);
   if (!sub) return;
 
-  // The last gate before a word enters the dictionary, and until now the only path into `vocabulary`
-  // without one. The in-app form warns the contributor while they type, but a warning they can tap
-  // past is advisory - this is where a duplicate is actually stopped or knowingly allowed.
-  //
-  // Compared with the app's own normalisation, not toLowerCase(): "singët" and "singet" are the same
-  // word, and a moderator should not have to spot that by eye.
-  const existing = findExistingWord(sub.kasiguranin, vocabulary);
-  if (existing.length > 0) {
-    const senses = existing
-      .map(e => `"${escapeHtml(e.kasiguranin)}" — ${escapeHtml(e.english || e.tagalog || 'no gloss')}`)
-      .join('<br>');
-    const proceed = await confirmDialog({
-      title: `"${escapeHtml(sub.kasiguranin)}" is already in the dictionary`,
-      body:
-        `<p>The master dictionary already has:</p><p style="margin-top:6px;">${senses}</p>` +
-        `<p style="margin-top:10px;">Approving adds a second entry. Do that only if this is a genuine ` +
-        `homonym — a different word that happens to be spelled the same. If it is the same word, reject ` +
-        `the submission instead.</p>`,
-      confirmLabel: 'Approve as a separate sense',
-      danger: true
-    });
-    if (!proceed) return;
-  }
-
   try {
     const newVocabRef = doc(collection(db, "vocabulary"));
     await setDoc(newVocabRef, withUpdatedAt({
@@ -1980,10 +1915,6 @@ async function approveSubmission(id) {
       perfectiveForm: (sub.pastTense || "").trim(),
       imperfectiveForm: (sub.presentTense || "").trim(),
       contemplativeForm: (sub.futureTense || "").trim(),
-      // The contributor's example sentence was collected by the in-app submit form, stored on the
-      // submission, and then dropped on the floor at approval -- the one piece of the contribution
-      // that only they could supply.
-      exampleSentence: (sub.exampleSentence || "").trim(),
       verifiedByAdmin: true,
       approvedAt: Date.now()
     }));
@@ -2017,165 +1948,6 @@ async function rejectSubmission(id) {
     await logAudit("submission.reject", { submissionId: id, word: sub ? sub.kasiguranin : "" });
   } catch (error) {
     console.error("Error rejecting submission:", error);
-  }
-}
-
-// ── User Issue & Word Reports ────────────────────────────────────────────────
-function renderReportsTable() {
-  const tbody = document.getElementById('reports-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = '';
-
-  if (reports.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">
-          <iconsax-icon name="tick-circle" type="bulk" size="32" color="var(--status-approved)"></iconsax-icon>
-          <div style="margin-top:8px;">No issue reports submitted. All clear!</div>
-        </td>
-      </tr>`;
-    return;
-  }
-
-  const reportsCountElem = document.getElementById('reports-result-count');
-  if (reportsCountElem) {
-    const pending = reports.filter(r => (r.status || 'pending') === 'pending').length;
-    reportsCountElem.textContent = pending === 0
-      ? `${reports.length} total, none pending`
-      : `${pending} pending of ${reports.length}`;
-  }
-
-  reports.forEach(rep => {
-    const tr = document.createElement('tr');
-    const status = rep.status || 'pending';
-    const statusBadgeClass = status === 'resolved' ? 'badge-approved' : (status === 'dismissed' ? 'badge-rejected' : 'badge-pending');
-    const dateFormatted = rep.submittedAt ? new Date(rep.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-
-    const hasPhoto = (rep.photoBase64 && rep.photoBase64.length > 50) || (rep.photoUrl && rep.photoUrl.length > 0);
-    const photoSrc = rep.photoBase64 || rep.photoUrl;
-
-    tr.innerHTML = `
-      <td data-label="Date" style="white-space:nowrap; font-size:0.85rem; color:var(--muted);">${dateFormatted}</td>
-      <td data-label="Category"><span class="badge badge-category">${escapeHtml(rep.category || 'Bug / Issue')}</span></td>
-      <td data-label="Title & Target">
-        <strong>${escapeHtml(rep.title || 'Report')}</strong>
-        ${rep.targetWord ? `<div style="font-size:0.85rem; color:var(--primary); font-weight:600; margin-top:2px;">Word: ${escapeHtml(rep.targetWord)}</div>` : ''}
-        ${rep.targetScreen ? `<div style="font-size:0.8rem; color:var(--muted);">Screen: ${escapeHtml(rep.targetScreen)}</div>` : ''}
-      </td>
-      <td data-label="Description" style="max-width:260px; font-size:0.88rem; line-height:1.4;">
-        ${escapeHtml(rep.description || '-')}
-      </td>
-      <td data-label="Evidence">
-        ${hasPhoto ? `
-          <div style="cursor:pointer; display:inline-block;" onclick="window.viewReportEvidence('${photoSrc}', '${escapeHtml(rep.title || 'Evidence')}')" title="Click to enlarge">
-            <img src="${photoSrc}" alt="Evidence Thumbnail" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm);" />
-            <div style="font-size:0.75rem; color:var(--primary); font-weight:600; text-align:center;">Enlarge</div>
-          </div>
-        ` : `<span style="color:var(--muted); font-size:0.82rem;">None</span>`}
-      </td>
-      <td data-label="Reporter & Device" style="font-size:0.82rem;">
-        <div><strong>${escapeHtml(rep.reporterName || 'Anonymous')}</strong></div>
-        ${rep.reporterEmail ? `<div style="color:var(--muted);">${escapeHtml(rep.reporterEmail)}</div>` : ''}
-        ${rep.deviceInfo || rep.appVersion ? `<div style="color:var(--muted); margin-top:4px; font-size:0.78rem;">v${escapeHtml(rep.appVersion || '')} • ${escapeHtml(rep.deviceInfo || '')}</div>` : ''}
-      </td>
-      <td data-label="Status"><span class="badge ${statusBadgeClass}">${status.toUpperCase()}</span></td>
-      <td data-label="Actions">
-        <div class="row-actions">
-          ${status === 'pending' ? `
-            <button class="btn btn-success btn-sm resolve-report-btn" data-id="${rep.id}"><iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Resolve</button>
-            <button class="btn btn-danger btn-sm dismiss-report-btn" data-id="${rep.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Dismiss</button>
-          ` : `
-            <button class="btn btn-outline btn-sm delete-report-btn" data-id="${rep.id}"><iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon></button>
-          `}
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('.resolve-report-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      markRowLeaving(btn);
-      resolveReport(btn.getAttribute('data-id'));
-    });
-  });
-  tbody.querySelectorAll('.dismiss-report-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      markRowLeaving(btn);
-      dismissReport(btn.getAttribute('data-id'));
-    });
-  });
-  tbody.querySelectorAll('.delete-report-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      markRowLeaving(btn);
-      deleteReport(btn.getAttribute('data-id'));
-    });
-  });
-
-  applyTableSemantics();
-}
-
-function renderReportsError(message) {
-  const tbody = document.getElementById('reports-tbody');
-  if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
-  }
-}
-
-window.viewReportEvidence = function(imgSrc, title) {
-  const modalImg = document.getElementById('evidence-modal-img');
-  const modalTitle = document.getElementById('evidence-modal-title');
-  if (modalImg) modalImg.src = imgSrc;
-  if (modalTitle) modalTitle.textContent = title || "Photo Evidence";
-  const modal = document.getElementById('evidence-modal');
-  if (modal) modal.classList.add('active');
-};
-
-async function resolveReport(id) {
-  try {
-    await updateDoc(doc(db, "issue_reports", id), {
-      status: "resolved",
-      resolvedAt: Date.now()
-    });
-    const rep = reports.find(r => r.id === id);
-    await logAudit("report.resolve", { reportId: id, category: rep?.category, title: rep?.title });
-    notify("Report marked as resolved.", "success");
-  } catch (error) {
-    console.error("Error resolving report:", error);
-    notify("Failed to resolve report: " + error.message, "error");
-  }
-}
-
-async function dismissReport(id) {
-  try {
-    await updateDoc(doc(db, "issue_reports", id), {
-      status: "dismissed",
-      dismissedAt: Date.now()
-    });
-    const rep = reports.find(r => r.id === id);
-    await logAudit("report.dismiss", { reportId: id, category: rep?.category, title: rep?.title });
-    notify("Report dismissed.", "info");
-  } catch (error) {
-    console.error("Error dismissing report:", error);
-    notify("Failed to dismiss report: " + error.message, "error");
-  }
-}
-
-async function deleteReport(id) {
-  if (!(await confirmDialog({
-    title: 'Delete this report record?',
-    body: 'This will permanently remove the report and attached photo evidence from the database.',
-    confirmLabel: 'Delete', danger: true
-  }))) return;
-
-  try {
-    await deleteDoc(doc(db, "issue_reports", id));
-    await logAudit("report.delete", { reportId: id });
-    notify("Report deleted.", "info");
-  } catch (error) {
-    console.error("Error deleting report:", error);
-    notify("Failed to delete report: " + error.message, "error");
   }
 }
 
@@ -2427,9 +2199,6 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-english').value = item.english || '';
   document.getElementById('edit-input-category').value = item.category || 'Greetings & Essentials';
   document.getElementById('edit-input-part-of-speech').value = item.partOfSpeech || '';
-  document.getElementById('edit-input-theme').value = item.theme || '';
-  document.getElementById('edit-input-meaning-en').value = item.meaningEnglish || '';
-  document.getElementById('edit-input-meaning-tl').value = item.meaningTagalog || '';
   document.getElementById('edit-input-ipa').value = item.ipaNotation || '';
   document.getElementById('edit-input-neutral').value = item.neutralForm || '';
   document.getElementById('edit-input-perfective').value = item.perfectiveForm || '';
@@ -2439,9 +2208,6 @@ window.openEditVocabModal = function(id) {
   document.getElementById('edit-input-example1-translation').value = item.exampleTranslation || '';
   document.getElementById('edit-input-example2').value = item.exampleSentence2 || '';
   document.getElementById('edit-input-example2-translation').value = item.exampleTranslation2 || '';
-  document.getElementById('edit-input-example1-translation-tl').value = item.exampleTranslationTagalog || '';
-  document.getElementById('edit-input-example2-translation-tl').value = item.exampleTranslation2Tagalog || '';
-  document.getElementById('edit-input-example-source').value = item.exampleSource || '';
 
   window.openModal('edit-vocab-modal');
 };
@@ -2507,40 +2273,14 @@ function handleSqlFile(file) {
         return;
       }
 
-      // Deduplicated on the shared normalisation, like every other way a word enters the
-      // dictionary. This path had no check at all: each row was written to a freshly generated
-      // document id, so importing the same file twice simply doubled the corpus. The dialog said
-      // "existing entries with the same id are overwritten", which was never true of a random id.
-      const existingWords = new Set(
-        vocabulary.map(v => normaliseWord(v.kasiguranin || '')).filter(Boolean)
-      );
-      const seenInThisImport = new Set();
-      const fresh = [];
-      let skipped = 0;
-      for (const entry of entries) {
-        const key = normaliseWord(entry.kasiguranin || '');
-        if (!key || existingWords.has(key) || seenInThisImport.has(key)) { skipped++; continue; }
-        seenInThisImport.add(key);
-        fresh.push(entry);
-      }
-
-      if (fresh.length === 0) {
-        notify(`Nothing to import from "${file.name}" — all ${entries.length} entries are already in the dictionary.`, 'error');
-        return;
-      }
-
       if (!(await confirmDialog({
-        title: `Import ${fresh.length} new record${fresh.length === 1 ? '' : 's'}?`,
-        body:
-          `Parsed from <strong>${escapeHtml(file.name)}</strong>.` +
-          (skipped > 0
-            ? ` ${skipped} of ${entries.length} are already in the dictionary and will be skipped.`
-            : ''),
+        title: `Import ${entries.length} records?`,
+        body: `Parsed from <strong>${escapeHtml(file.name)}</strong>. Existing entries with the same id are overwritten.`,
         confirmLabel: 'Import'
       }))) return;
 
       let count = 0;
-      for (const entry of fresh) {
+      for (const entry of entries) {
         const newDoc = doc(collection(db, "vocabulary"));
         // Bulk-imported rows are stamped like any other write, or a spreadsheet import
         // would land in Firestore invisible to the app's incremental sync.
@@ -2548,8 +2288,7 @@ function handleSqlFile(file) {
         count++;
       }
 
-      await logAudit("vocabulary.import_sql", { file: file.name, imported: count, skipped });
-      notify(`Imported ${count} new entr${count === 1 ? 'y' : 'ies'} from ${escapeHtml(file.name)}. Skipped ${skipped} already in the dictionary.`, 'success');
+      notify(`Successfully imported ${count} entries from SQL migration script into Firestore!`, 'success');
     } catch (err) {
       console.error("SQL Parsing Error:", err);
       notify("Failed to parse SQL file: " + err.message, 'error');
@@ -2621,17 +2360,7 @@ function handleExcelFile(file) {
       let currentBatch = writeBatch(db);
       let operationsInCurrentBatch = 0;
       
-      // Compared on the shared normalisation, not a bare toLowerCase().
-      //
-      // This importer was the one path into `vocabulary` that did not use it, and it is the path
-      // every word in the corpus arrived through. The cost is measurable: of the seven entries the
-      // dictionary carries twice with the same meaning, all seven are pairs this rule sees as one
-      // word and toLowerCase() saw as two -- "tëllën"/"tël-lën", "uló"/"ulo", "laya"/"layâ",
-      // "kulapnet"/"kulapnët". word-normalize.js says the contributor-facing and moderator-facing
-      // checks must agree on what "the same word" means; an importer that disagrees undoes both.
-      const existingWords = new Set(
-        vocabulary.map(v => normaliseWord(v.kasiguranin || '')).filter(Boolean)
-      );
+      const existingWords = new Set(vocabulary.map(v => (v.kasiguranin || '').toLowerCase()));
       const wordsInThisImport = new Set(); 
 
       for (const rawRow of rawRows) {
@@ -2646,17 +2375,14 @@ function handleExcelFile(file) {
         const wordClean = String(kasiguranin).trim();
         if (!wordClean) continue;
         
-        // A row whose headword folds to nothing (punctuation only) is not comparable, so it is
-        // skipped rather than imported under an empty key that would then match every other such row.
-        const wordKey = normaliseWord(wordClean);
-        if (!wordKey) { skipped++; continue; }
-
-        if (existingWords.has(wordKey) || wordsInThisImport.has(wordKey)) {
+        const wordLower = wordClean.toLowerCase();
+        
+        if (existingWords.has(wordLower) || wordsInThisImport.has(wordLower)) {
           skipped++;
           continue;
         }
-
-        wordsInThisImport.add(wordKey);
+        
+        wordsInThisImport.add(wordLower);
 
         const newDoc = doc(collection(db, "vocabulary"));
         currentBatch.set(newDoc, {
@@ -2741,7 +2467,6 @@ function initFormListeners() {
       const tagalog = document.getElementById('input-tagalog').value.trim();
       const english = document.getElementById('input-english').value.trim();
       const category = document.getElementById('input-category').value;
-      const theme = document.getElementById('input-theme').value;
       const partOfSpeech = document.getElementById('input-part-of-speech').value;
       const ipa = document.getElementById('input-ipa').value.trim();
       const neutral = document.getElementById('input-neutral').value.trim();
@@ -2752,15 +2477,10 @@ function initFormListeners() {
       const example1Translation = document.getElementById('input-example1-translation').value.trim();
       const example2 = document.getElementById('input-example2').value.trim();
       const example2Translation = document.getElementById('input-example2-translation').value.trim();
-      const example1TranslationTl = document.getElementById('input-example1-translation-tl').value.trim();
-      const example2TranslationTl = document.getElementById('input-example2-translation-tl').value.trim();
-      const exampleSource = document.getElementById('input-example-source').value.trim();
-      const meaningEnglish = document.getElementById('input-meaning-en').value.trim();
-      const meaningTagalog = document.getElementById('input-meaning-tl').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
-      const isDuplicate = findExistingWord(word, vocabulary).length > 0;
+      const isDuplicate = vocabulary.some(v => (v.kasiguranin || '').toLowerCase() === word.toLowerCase());
       if (isDuplicate) {
         if (!(await confirmDialog({
           title: `"${word}" already exists`,
@@ -2775,10 +2495,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
-          theme: theme || "",
           partOfSpeech: partOfSpeech || null,
-          meaningEnglish: meaningEnglish || null,
-          meaningTagalog: meaningTagalog || null,
           ipaNotation: ipa || null,
           neutralForm: neutral || null,
           perfectiveForm: perfective || null,
@@ -2788,11 +2505,6 @@ function initFormListeners() {
           exampleTranslation: example1Translation || null,
           exampleSentence2: example2 || null,
           exampleTranslation2: example2Translation || null,
-          // Firestore-only: the app reads neither, so no Room migration. The Tagalog gloss is for
-          // the written record, and the source is what lets a sentence be cited in the thesis.
-          exampleTranslationTagalog: example1TranslationTl || null,
-          exampleTranslation2Tagalog: example2TranslationTl || null,
-          exampleSource: exampleSource || null,
           createdAt: Date.now(),
           // A new word needs updatedAt too, not just createdAt — the app's incremental
           // sync filters on updatedAt, so without it a freshly added word would not
@@ -2818,7 +2530,6 @@ function initFormListeners() {
       const tagalog = document.getElementById('edit-input-tagalog').value.trim();
       const english = document.getElementById('edit-input-english').value.trim();
       const category = document.getElementById('edit-input-category').value;
-      const theme = document.getElementById('edit-input-theme').value;
       const partOfSpeech = document.getElementById('edit-input-part-of-speech').value;
       const ipa = document.getElementById('edit-input-ipa').value.trim();
       const neutral = document.getElementById('edit-input-neutral').value.trim();
@@ -2829,11 +2540,6 @@ function initFormListeners() {
       const example1Translation = document.getElementById('edit-input-example1-translation').value.trim();
       const example2 = document.getElementById('edit-input-example2').value.trim();
       const example2Translation = document.getElementById('edit-input-example2-translation').value.trim();
-      const example1TranslationTl = document.getElementById('edit-input-example1-translation-tl').value.trim();
-      const example2TranslationTl = document.getElementById('edit-input-example2-translation-tl').value.trim();
-      const exampleSource = document.getElementById('edit-input-example-source').value.trim();
-      const meaningEnglish = document.getElementById('edit-input-meaning-en').value.trim();
-      const meaningTagalog = document.getElementById('edit-input-meaning-tl').value.trim();
 
       if (!word) { notify("Please enter the Kasiguranin word.", 'error'); return; }
 
@@ -2843,10 +2549,7 @@ function initFormListeners() {
           tagalog: tagalog || null,
           english: english || null,
           category: category,
-          theme: theme || "",
           partOfSpeech: partOfSpeech || null,
-          meaningEnglish: meaningEnglish || null,
-          meaningTagalog: meaningTagalog || null,
           ipaNotation: ipa || null,
           neutralForm: neutral || null,
           perfectiveForm: perfective || null,
@@ -2856,11 +2559,6 @@ function initFormListeners() {
           exampleTranslation: example1Translation || null,
           exampleSentence2: example2 || null,
           exampleTranslation2: example2Translation || null,
-          // Firestore-only: the app reads neither, so no Room migration. The Tagalog gloss is for
-          // the written record, and the source is what lets a sentence be cited in the thesis.
-          exampleTranslationTagalog: example1TranslationTl || null,
-          exampleTranslation2Tagalog: example2TranslationTl || null,
-          exampleSource: exampleSource || null,
           updatedAt: Date.now()
         });
         await logAudit("vocabulary.update", { id, word });
@@ -2923,14 +2621,6 @@ function initFormListeners() {
         vocabLetter = '';
         renderVocabularyTable();
       }, 300);
-    });
-  }
-
-  const gapFilter = document.getElementById('filter-vocab-gap');
-  if (gapFilter) {
-    gapFilter.addEventListener('change', () => {
-      vocabPage = 1;
-      renderVocabularyTable();
     });
   }
 
@@ -3039,273 +2729,6 @@ function escapeHtml(str) {
 
 
 
-// ── Stage review ────────────────────────────────────────────────────────────
-// Where a proposal from functions/tag_themes.js becomes a fact, and the only place it can.
-//
-// The tagger reads a word's English gloss and proposes which learning-tree stage should teach it and
-// what part of speech it is, because both stored fields are demonstrably wrong: `category` files
-// "flight" and "fragile" under Colors & Shapes, and `partOfSpeech` marks 1,010 of 1,246 words Noun,
-// including *angay* (go) and *saneg* (hear). But a script reading glosses is a guess, and this corpus
-// is the primary record of an endangered language, so nothing it proposes reaches a learner until a
-// person here agrees with it. The tagger writes only to `themeProposed` / `partOfSpeechProposed`;
-// this screen is what copies a proposal into the live `theme` and `partOfSpeech`.
-//
-// Confidence is shown rather than hidden because the two passes are not equally trustworthy: a gloss
-// match (0.9) *is* the word's meaning, while a definition match (0.6) merely mentions it. Accepting a
-// hundred gloss matches at once is reasonable; accepting definition matches unread is not, which is
-// why the bulk button only ever takes the former.
-
-let stageFilter = '';
-let stageConfidenceFilter = '';
-
-/** A proposal worth showing: one that exists and would actually change something. */
-function stageProposals() {
-  return vocabulary.filter(w => {
-    const themeChanges = (w.themeProposed || '') && (w.themeProposed !== (w.theme || ''));
-    const posChanges = (w.partOfSpeechProposed || '') && (w.partOfSpeechProposed !== (w.partOfSpeech || ''));
-    return themeChanges || posChanges;
-  });
-}
-
-/**
- * How far a word's proposals can be trusted: the strongest evidence behind any of them.
- *
- * Taken across both proposals rather than from the stage alone, because a word can be proposed a
- * part of speech and no stage — *kagi* (word) is a noun by its definition but belongs to no stage in
- * the map. Reading only the stage's confidence left those rows at `undefined`, which filtered them
- * out of the gloss-match view and out of bulk accept, so they could only ever be found by clearing
- * every filter. A proposal you cannot see is a proposal that never gets reviewed.
- */
-function proposalConfidence(word) {
-  return Math.max(
-    Number(word.themeProposedConfidence) || 0,
-    Number(word.partOfSpeechProposedConfidence) || 0
-  );
-}
-
-function stageProposalsFiltered() {
-  return stageProposals().filter(w => {
-    if (stageFilter && w.themeProposed !== stageFilter) return false;
-    const confidence = proposalConfidence(w);
-    if (stageConfidenceFilter === 'high' && confidence < 0.9) return false;
-    if (stageConfidenceFilter === 'low' && confidence >= 0.9) return false;
-    return true;
-  });
-}
-
-function initStageReview() {
-  const filter = document.getElementById('stages-filter');
-  const confidence = document.getElementById('stages-confidence');
-  const acceptAll = document.getElementById('stages-accept-confident');
-
-  if (filter) filter.addEventListener('change', () => { stageFilter = filter.value; renderStageReview(); });
-  if (confidence) confidence.addEventListener('change', () => { stageConfidenceFilter = confidence.value; renderStageReview(); });
-  if (acceptAll) acceptAll.addEventListener('click', acceptConfidentStageProposals);
-}
-
-function renderStageReview() {
-  const tbody = document.getElementById('stages-tbody');
-  if (!tbody) return;
-
-  const all = stageProposals();
-  const rows = stageProposalsFiltered();
-
-  // Keep the stage filter's options in step with whatever the tagger actually proposed, so a stage
-  // that was renamed or dropped from the map never lingers as a dead option.
-  const filter = document.getElementById('stages-filter');
-  if (filter) {
-    const stages = [...new Set(all.map(w => w.themeProposed).filter(Boolean))].sort();
-    const current = filter.value;
-    filter.innerHTML = '<option value="">All stages</option>' +
-      stages.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-    filter.value = current;
-  }
-
-  const navCount = document.getElementById('nav-stages-count');
-  if (navCount) {
-    navCount.textContent = all.length;
-    navCount.hidden = all.length === 0;
-  }
-
-  const count = document.getElementById('stages-result-count');
-  if (count) {
-    const confident = all.filter(w => proposalConfidence(w) >= 0.9).length;
-    count.textContent = all.length === 0
-      ? 'No proposals waiting'
-      : `${rows.length} shown of ${all.length} waiting · ${confident} from the gloss`;
-  }
-
-  tbody.innerHTML = '';
-  if (rows.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">
-          <iconsax-icon name="tick-circle" type="bulk" size="32" color="var(--gold-ink)"></iconsax-icon>
-          <div style="margin-top:8px;">${all.length === 0
-            ? 'Nothing to review. Run <code>node functions/tag_themes.js &lt;key.json&gt; --apply</code> to propose stages.'
-            : 'No proposals match this filter.'}</div>
-        </td>
-      </tr>`;
-    applyTableSemantics();
-    return;
-  }
-
-  rows.forEach(w => {
-    const tr = document.createElement('tr');
-    const confident = proposalConfidence(w) >= 0.9;
-    const themeCell = w.themeProposed && w.themeProposed !== (w.theme || '')
-      ? `<span style="color:var(--muted);">${escapeHtml(w.theme || 'none')}</span> &rarr;
-         <strong>${escapeHtml(w.themeProposed)}</strong>`
-      : `<span style="color:var(--muted);">${escapeHtml(w.theme || 'none')}</span>`;
-    const posCell = w.partOfSpeechProposed && w.partOfSpeechProposed !== (w.partOfSpeech || '')
-      ? `<span style="color:var(--muted);">${escapeHtml(w.partOfSpeech || 'none')}</span> &rarr;
-         <strong>${escapeHtml(w.partOfSpeechProposed)}</strong>`
-      : `<span style="color:var(--muted);">${escapeHtml(w.partOfSpeech || 'none')}</span>`;
-
-    tr.innerHTML = `
-      <td data-label="Word"><strong>${escapeHtml(w.kasiguranin || '')}</strong></td>
-      <td data-label="English">${escapeHtml(w.english || '-')}</td>
-      <td data-label="Stage">${themeCell}</td>
-      <td data-label="Part of speech">${posCell}</td>
-      <td data-label="Why">
-        <span class="badge ${confident ? 'badge-approved' : 'badge-pending'}">
-          ${confident ? 'gloss' : 'definition'}
-        </span>
-        <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">
-          ${escapeHtml(w.themeProposedEvidence || w.partOfSpeechProposedEvidence || '')}
-        </div>
-      </td>
-      <td data-label="Actions">
-        <div class="row-actions">
-          <button class="btn btn-success btn-sm stage-accept-btn" data-id="${w.id}">
-            <iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Accept
-          </button>
-          <button class="btn btn-outline btn-sm stage-reject-btn" data-id="${w.id}">
-            <iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject
-          </button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('.stage-accept-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      markRowLeaving(btn);
-      acceptStageProposal(btn.getAttribute('data-id'));
-    });
-  });
-  tbody.querySelectorAll('.stage-reject-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      markRowLeaving(btn);
-      rejectStageProposal(btn.getAttribute('data-id'));
-    });
-  });
-
-  applyTableSemantics();
-}
-
-/**
- * The patch that turns one word's proposal into its live value.
- *
- * Proposal fields are blanked rather than left in place, so a word never sits in the queue twice and
- * a re-run of the tagger can tell an unreviewed word from a settled one. Blanked, not deleted, to
- * match how every other optional field in this corpus is cleared.
- */
-function acceptedStagePatch(word) {
-  const patch = {
-    themeProposed: '',
-    themeProposedConfidence: '',
-    themeProposedEvidence: '',
-    partOfSpeechProposed: '',
-    partOfSpeechProposedConfidence: '',
-    partOfSpeechProposedEvidence: ''
-  };
-  if (word.themeProposed) patch.theme = word.themeProposed;
-  if (word.partOfSpeechProposed) patch.partOfSpeech = word.partOfSpeechProposed;
-  return withUpdatedAt(patch);
-}
-
-async function acceptStageProposal(id) {
-  const word = vocabulary.find(w => w.id === id);
-  if (!word) return;
-  try {
-    await updateDoc(doc(db, 'vocabulary', id), acceptedStagePatch(word));
-    await logAudit('stage.accept', {
-      word: word.kasiguranin,
-      theme: word.themeProposed || null,
-      partOfSpeech: word.partOfSpeechProposed || null,
-      confidence: word.themeProposedConfidence || null
-    });
-    notify(`"${word.kasiguranin}" moved to ${word.themeProposed || word.partOfSpeech}.`, 'success');
-  } catch (e) {
-    console.error('Stage accept failed:', e);
-    notify('Could not save that change. Check your connection and try again.', 'error');
-    renderStageReview();
-  }
-}
-
-async function rejectStageProposal(id) {
-  const word = vocabulary.find(w => w.id === id);
-  if (!word) return;
-  try {
-    await updateDoc(doc(db, 'vocabulary', id), withUpdatedAt({
-      themeProposed: '',
-      themeProposedConfidence: '',
-      themeProposedEvidence: '',
-      partOfSpeechProposed: '',
-      partOfSpeechProposedConfidence: '',
-      partOfSpeechProposedEvidence: ''
-    }));
-    await logAudit('stage.reject', { word: word.kasiguranin, rejected: word.themeProposed || null });
-    notify(`Proposal for "${word.kasiguranin}" discarded. The word keeps its current stage.`, 'success');
-  } catch (e) {
-    console.error('Stage reject failed:', e);
-    notify('Could not discard that proposal. Check your connection and try again.', 'error');
-    renderStageReview();
-  }
-}
-
-/**
- * Accepts every gloss-matched proposal currently in view, in batches.
- *
- * Only the 0.9 pass, and only what the filter is already showing, so "accept all" can never reach
- * further than what the reviewer is looking at. Definition matches are excluded by design — they are
- * the ones worth reading one at a time.
- */
-async function acceptConfidentStageProposals() {
-  const rows = stageProposalsFiltered().filter(w => proposalConfidence(w) >= 0.9);
-  if (rows.length === 0) {
-    notify('No gloss-matched proposals in view to accept.', 'error');
-    return;
-  }
-
-  const proceed = await confirmDialog({
-    title: `Accept ${rows.length} proposal${rows.length === 1 ? '' : 's'}?`,
-    body:
-      `<p>This sets the learning-tree stage and part of speech for ${rows.length} word` +
-      `${rows.length === 1 ? '' : 's'} from the tagger's gloss match.</p>` +
-      `<p style="margin-top:10px;">Words matched from their written definition are not included — ` +
-      `those are worth reading one at a time.</p>`,
-    confirmLabel: 'Accept them'
-  });
-  if (!proceed) return;
-
-  try {
-    for (let i = 0; i < rows.length; i += 400) {
-      const chunk = rows.slice(i, i + 400);
-      const batch = writeBatch(db);
-      chunk.forEach(w => batch.update(doc(db, 'vocabulary', w.id), acceptedStagePatch(w)));
-      await batch.commit();
-    }
-    await logAudit('stage.accept_bulk', { count: rows.length, stage: stageFilter || 'all' });
-    notify(`Accepted ${rows.length} proposal${rows.length === 1 ? '' : 's'}.`, 'success');
-  } catch (e) {
-    console.error('Bulk stage accept failed:', e);
-    notify('Could not save those changes. Some may have been applied — reload to see the current state.', 'error');
-  }
-}
-
 // ── Admin Audit Log ─────────────────────────────────────────────────────────
 // Append-only record of admin actions (rules: admins create/read, never update/delete).
 async function logAudit(action, details = {}) {
@@ -3330,61 +2753,14 @@ function initUsersListener() {
   const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
     usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderUsersTable();
-    enrichUsersWithProgress();
   }, (error) => {
     console.error("Users listener error:", error);
     const tbody = document.getElementById('users-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
     }
   });
   unsubscribeFns.push(unsubUsers);
-}
-
-async function enrichUsersWithProgress() {
-  let hasUpdates = false;
-  const enriched = await Promise.all(usersList.map(async (u) => {
-    if (u.email && u.email.includes('@') && (u.registeredAt || u.createdAt)) {
-      return u;
-    }
-    try {
-      const pDoc = await getDoc(doc(db, "users", u.id, "progress", "main"));
-      if (pDoc.exists()) {
-        const pData = pDoc.data() || {};
-        const pEmail = (pData.email || '').trim();
-        const pDate = pData.registeredAt || pData.createdAt || pData.updatedAt || 0;
-        const pName = pData.fullName || pData.userName || '';
-        
-        let changed = false;
-        const updatedUser = { ...u };
-        
-        if (!updatedUser.email && pEmail) {
-          updatedUser.email = pEmail;
-          changed = true;
-        }
-        if (!updatedUser.registeredAt && !updatedUser.createdAt && pDate) {
-          updatedUser.registeredAt = pDate;
-          changed = true;
-        }
-        if ((!updatedUser.displayName || updatedUser.displayName === 'Learner' || updatedUser.displayName === 'Registered User') && pName) {
-          updatedUser.displayName = pName;
-          changed = true;
-        }
-        if (changed) {
-          hasUpdates = true;
-          return updatedUser;
-        }
-      }
-    } catch (e) {
-      // Ignore if user progress doc is not accessible
-    }
-    return u;
-  }));
-
-  if (hasUpdates) {
-    usersList = enriched;
-    renderUsersTable();
-  }
 }
 
 function renderUsersTable() {
@@ -3393,90 +2769,31 @@ function renderUsersTable() {
   
   if (!tbody) return;
   
-  // ── Step 1: Filter ───────────────────────────────────────────────
-  // Many leaderboard docs were created by anonymous users who never signed in
-  // with Google/email and never changed their display name. These accounts have
-  // isAnonymous: undefined (field absent) and use the app default name.
-  //
-  // Rule: show an account only if it has EITHER
-  //   (a) a real email address, OR
-  //   (b) a display name that is NOT one of the default/generic app values.
-  const GENERIC_NAMES = new Set([
-    'learner', 'guest', 'anonymous user', 'registered user',
-    'kasiguranin learner', 'kasiguru learner'
-  ]);
-
+  // Filter out anonymous/guest accounts
   const validUsers = usersList.filter(user => {
     if (user.isAnonymous === true) return false;
-    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    const hasRealEmail = user.email && user.email.includes('@');
-    const hasRealName  = name && !GENERIC_NAMES.has(name);
-    return hasRealEmail || hasRealName;
+    const name = (user.displayName || '').trim().toLowerCase();
+    if (name === 'learner' || name === 'guest' || name === 'anonymous user') return false;
+    return true;
   });
 
-  // ── Step 2: Deduplicate ────────────────────────────────────────────
-  // A real person may have two leaderboard docs if they used the app while
-  // anonymous then later signed in with Google (two Firebase UIDs). Merge them
-  // by display name: keep the one with a real email and the higher total XP.
-  const uniqueUserMap = new Map(); // normalisedKey → merged user object
-
+  // Deduplicate accounts so each Google account is shown only ONCE (highest XP / email document kept)
+  const uniqueUserMap = new Map();
   for (const user of validUsers) {
-    const name  = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    const email = (user.email || '').trim().toLowerCase();
-    // Primary key: email when present, otherwise display name
-    const key = email || name || user.id;
+    const rawEmail = (user.email || '').trim().toLowerCase();
+    const rawName = (user.displayName || '').trim().toLowerCase();
+    const key = rawEmail || rawName;
+    if (!key) continue;
 
     if (!uniqueUserMap.has(key)) {
-      uniqueUserMap.set(key, { ...user });
+      uniqueUserMap.set(key, user);
     } else {
       const existing = uniqueUserMap.get(key);
-      // Merge: prefer email, keep the higher XP
-      const merged = { ...existing };
-      if (!existing.email && user.email) merged.email = user.email;
-      if ((user.totalXp || 0) > (existing.totalXp || 0)) merged.totalXp = user.totalXp;
-      if (!existing.registeredAt && user.registeredAt) merged.registeredAt = user.registeredAt;
-      uniqueUserMap.set(key, merged);
-    }
-  }
-
-  // Also cross-link by name: if we have two keys (one = email, one = name) that
-  // resolve to accounts with the same display name, merge them too.
-  const byNameIndex = new Map(); // lowercaseName → key in uniqueUserMap
-  for (const [key, user] of uniqueUserMap) {
-    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    if (!name) continue;
-    if (!byNameIndex.has(name)) {
-      byNameIndex.set(name, key);
-    } else {
-      // Same name, different key
-      const otherKey = byNameIndex.get(name);
-      const other = uniqueUserMap.get(otherKey);
-      if (!other) continue;
-      const current = user;
-      const currentHasEmail = current.email && current.email.includes('@');
-      const otherHasEmail   = other.email   && other.email.includes('@');
-
-      // If BOTH have real but DIFFERENT emails — different people, don't merge
-      if (currentHasEmail && otherHasEmail && current.email.toLowerCase() !== other.email.toLowerCase()) {
-        continue;
+      const existingXp = existing.totalXp || 0;
+      const currentXp = user.totalXp || 0;
+      if (currentXp > existingXp || (!existing.email && user.email)) {
+        uniqueUserMap.set(key, user);
       }
-
-      // Winner = entry that has email; tie-break = higher XP
-      let keepKey, dropKey;
-      if (currentHasEmail && !otherHasEmail) { keepKey = key;      dropKey = otherKey; }
-      else if (otherHasEmail && !currentHasEmail) { keepKey = otherKey; dropKey = key; }
-      else { keepKey = (current.totalXp||0) >= (other.totalXp||0) ? key : otherKey;
-             dropKey = keepKey === key ? otherKey : key; }
-
-      const winner = uniqueUserMap.get(keepKey);
-      const loser  = uniqueUserMap.get(dropKey);
-      const merged = { ...winner };
-      if (!winner.email && loser.email) merged.email = loser.email;
-      merged.totalXp = Math.max(winner.totalXp||0, loser.totalXp||0);
-      if (!winner.registeredAt && loser.registeredAt) merged.registeredAt = loser.registeredAt;
-      uniqueUserMap.set(keepKey, merged);
-      uniqueUserMap.delete(dropKey);
-      byNameIndex.set(name, keepKey);
     }
   }
 
@@ -3487,7 +2804,7 @@ function renderUsersTable() {
   }
   
   if (registeredUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
     return;
   }
   
@@ -3495,56 +2812,21 @@ function renderUsersTable() {
     const xp = user.totalXp || 0;
     const streak = user.currentStreak || 0;
     
-    // Resolve email address
-    const resolvedEmail = (user.email && user.email.includes('@')) 
-      ? user.email.trim() 
-      : (user.displayName && user.displayName.includes('@')) 
-        ? user.displayName.trim() 
-        : '';
-        
-    // Resolve display name
-    let displayName = (user.displayName || user.fullName || user.userName || '').trim();
-    if (displayName.toLowerCase() === 'google account' || displayName.toLowerCase() === 'google' || displayName === resolvedEmail) {
-      displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
-    }
-    if (!displayName && resolvedEmail) {
-      displayName = resolvedEmail.split('@')[0];
-    }
-    if (!displayName) {
-      displayName = 'Registered User';
-    }
-
-    const userLabel = `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
-    const emailDisplay = resolvedEmail ? escapeHtml(resolvedEmail) : `<span style="color:var(--muted);">—</span>`;
+    // Display Gmail account as the User Name
+    const gmailAccount = user.email || (user.displayName && user.displayName.includes('@') ? user.displayName : null);
+    const displayName = user.displayName && user.displayName !== gmailAccount ? user.displayName : '';
     
-    // Format registered/joined date
-    const dateValue = user.registeredAt || user.createdAt || user.joinedAt || user.dateJoined || user.timestamp || user.updatedAt;
-    const dateMs = toMillis(dateValue);
-    let registeredDate = '—';
-    if (dateMs > 0) {
-      registeredDate = new Date(dateMs).toLocaleDateString(undefined, { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-    } else if (user.lastActiveDate) {
-      const parsed = Date.parse(user.lastActiveDate);
-      if (!Number.isNaN(parsed)) {
-        registeredDate = new Date(parsed).toLocaleDateString(undefined, { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
-        });
-      }
-    }
+    const userLabel = gmailAccount 
+      ? `<div style="font-weight:700;">${escapeHtml(gmailAccount)}</div>${displayName ? `<div style="font-size:0.8rem; color:var(--muted);">${escapeHtml(displayName)}</div>` : ''}`
+      : `<div style="font-weight:700;">${escapeHtml(user.displayName || 'Registered User')}</div>`;
 
+    const emailDisplay = escapeHtml(user.email || gmailAccount || 'Google Account');
     const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
     
     return `
       <tr>
         <td>${userLabel}</td>
-        <td style="color:var(--text); font-size:0.875rem;">${emailDisplay}</td>
-        <td style="color:var(--muted); font-size:0.875rem; white-space:nowrap;">${escapeHtml(registeredDate)}</td>
+        <td style="color:var(--muted); font-size:0.875rem;">${emailDisplay}</td>
         <td><span class="badge badge-outline" style="border: 1px solid var(--border); color: var(--text); background: transparent;">${badge}</span></td>
         <td class="num">${xp.toLocaleString()} XP</td>
         <td class="num" style="color: var(--primary); font-weight: 700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
@@ -3560,38 +2842,23 @@ window.exportBackup = async function() {
   notify("Preparing database backup...", "info");
 
   try {
-    // Collections this page can completely enumerate. Deliberately does NOT include learner data:
-    // the browser SDK has no listDocuments(), so it cannot see a `users/{uid}` document that owns a
-    // progress subcollection but has no fields of its own - and that is every user. A backup that
-    // silently omitted learner progress is the exact failure this scope note exists to prevent.
-    // Full-fidelity backup is functions/backup_firestore.js, which runs on the Admin SDK.
-    const SCOPE = [
-      "vocabulary",
-      "stories",
-      "story_page_images",
-      // Was "system_announcements" - a name no collection has ever had. AnnouncementRepository.kt
-      // and firestore.rules both say `announcements`, so every export before this quietly wrote an
-      // empty array, and a restore would have been denied by the rules.
-      "announcements",
-      "app_releases",
-      "word_submissions",
-      "literature_submissions",
-      "issue_reports"
-    ];
-
-    const collections = {};
-    for (const name of SCOPE) {
-      const snap = await getDocs(collection(db, name));
-      collections[name] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
+    const vocabSnap = await getDocs(collection(db, "vocabulary"));
+    const storiesSnap = await getDocs(collection(db, "stories"));
+    const announceSnap = await getDocs(collection(db, "system_announcements"));
+    const releasesSnap = await getDocs(collection(db, "app_releases"));
+    const auditLogsSnap = await getDocs(collection(db, "admin_audit_log"));
 
     const backupData = {
-      version: 2,
-      scope: "content-and-moderation",
-      note: "Learner progress (users/*/progress) is not included; use functions/backup_firestore.js for a full backup.",
+      version: 1,
       exportedAt: new Date().toISOString(),
       timestamp: Date.now(),
-      collections
+      collections: {
+        vocabulary: vocabSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        stories: storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        system_announcements: announceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        app_releases: releasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        admin_audit_log: auditLogsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      }
     };
 
     const jsonStr = JSON.stringify(backupData, null, 2);
@@ -3601,94 +2868,20 @@ window.exportBackup = async function() {
     const dateStr = new Date().toISOString().split('T')[0];
     const a = document.createElement('a');
     a.href = url;
-    a.download = `kasiguru-content-backup-${dateStr}.json`;
+    a.download = `kasiguru-backup-${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    const summary = Object.entries(backupData.collections)
-      .map(([k, v]) => `${v.length} ${k}`)
-      .join(', ');
-    notify(`Backup downloaded: ${summary}.`, "success");
-    logAudit("backup_export", {
-      scope: backupData.scope,
-      counts: Object.fromEntries(Object.entries(backupData.collections).map(([k, v]) => [k, v.length]))
+    notify("Backup downloaded successfully!", "success");
+    logAudit("backup_export", { 
+      vocabulary: backupData.collections.vocabulary.length,
+      auditLogs: backupData.collections.admin_audit_log.length 
     });
   } catch (e) {
     console.error("Backup export failed:", e);
     notify("Backup export failed: " + e.message, "danger");
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-};
-
-/**
- * Clears the moderation queues: pending word and literature submissions, and issue reports.
- *
- * Scoped to exactly the collections `firestore.rules` lets an admin delete. Learner progress,
- * leaderboard rows, device tokens and security questions are owner-writable only by design, so a
- * full database reset is deliberately not a button here - it runs from functions/reset_firestore.js
- * with the service-account key. Weakening the rules to make this button do more would give every
- * admin session the power to rewrite any learner's data.
- */
-window.resetModerationQueues = async function () {
-  const btn = document.getElementById('btn-reset-queues');
-  const QUEUES = ['word_submissions', 'literature_submissions', 'issue_reports'];
-
-  try {
-    if (btn) btn.disabled = true;
-
-    const snaps = {};
-    let total = 0;
-    for (const name of QUEUES) {
-      const snap = await getDocs(collection(db, name));
-      snaps[name] = snap.docs;
-      total += snap.docs.length;
-    }
-
-    if (total === 0) {
-      notify('Moderation queues are already empty.', 'info');
-      return;
-    }
-
-    const breakdown = QUEUES.map((n) => `${snaps[n].length} ${n.replace(/_/g, ' ')}`).join(', ');
-    const confirmed = await confirmDialog({
-      title: 'Clear moderation queues?',
-      body:
-        `<p>This permanently deletes <strong>${escapeHtml(breakdown)}</strong>.</p>` +
-        `<p style="color:var(--status-rejected); margin-top:8px;">Approved words already merged into the dictionary are not affected. ` +
-        `Pending and rejected items are gone for good. Export a backup first if you have not.</p>`,
-      confirmLabel: `Delete ${total} items`,
-      danger: true
-    });
-    if (!confirmed) return;
-
-    notify('Clearing moderation queues...', 'info');
-
-    let removed = 0;
-    for (const name of QUEUES) {
-      let batch = writeBatch(db);
-      let n = 0;
-      for (const d of snaps[name]) {
-        batch.delete(doc(db, name, d.id));
-        n++;
-        removed++;
-        if (n % 400 === 0) {
-          await batch.commit();
-          batch = writeBatch(db);
-        }
-      }
-      if (n % 400 !== 0) await batch.commit();
-    }
-
-    await logAudit('reset_moderation_queues', {
-      counts: Object.fromEntries(QUEUES.map((n) => [n, snaps[n].length]))
-    });
-    notify(`Cleared ${removed} items from the moderation queues.`, 'success');
-  } catch (e) {
-    console.error('Queue reset failed:', e);
-    notify('Reset failed: ' + e.message, 'danger');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3736,6 +2929,13 @@ function initBackupRestore() {
       const text = await file.text();
       const backup = JSON.parse(text);
 
+      // Support both full database backup files and audit-log-specific export files
+      if (backup.exportType === "kasiguru_admin_audit_logs" && Array.isArray(backup.logs)) {
+        backup.collections = {
+          admin_audit_log: backup.logs
+        };
+      }
+
       if (!backup.collections) {
         notify("Invalid backup file structure.", "danger");
         return;
@@ -3764,6 +2964,33 @@ function initBackupRestore() {
 
         let batch = writeBatch(db);
         let count = 0;
+
+        // Firestore security rules enforce append-only for admin_audit_log (update/delete denied).
+        // Only insert audit logs that do not already exist in Firestore to prevent update rejections.
+        if (collName === 'admin_audit_log') {
+          const existingIds = new Set(auditLogs.map(l => l.id));
+          const newDocs = docs.filter(d => d && d.id && !existingIds.has(d.id));
+
+          for (const docData of newDocs) {
+            const dataToSave = { ...docData };
+            delete dataToSave.id;
+
+            const docRef = doc(db, collName, String(docData.id));
+            batch.set(docRef, dataToSave);
+            count++;
+            totalRestored++;
+
+            if (count >= 450) {
+              await batch.commit();
+              batch = writeBatch(db);
+              count = 0;
+            }
+          }
+          if (count > 0) {
+            await batch.commit();
+          }
+          continue;
+        }
 
         for (const docData of docs) {
           const docId = docData.id;
@@ -3801,4 +3028,4 @@ function initBackupRestore() {
   }
 }
 
-
+

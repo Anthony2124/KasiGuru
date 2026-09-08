@@ -58,16 +58,8 @@
           <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
             <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
           </button>
-          <button data-tab="tab-stages" onclick="window.switchTab('tab-stages')">
-            <iconsax-icon name="hierarchy-square-2" type="bulk" size="18" color="currentColor"></iconsax-icon> Stage review
-            <span class="nav-count" id="nav-stages-count" hidden>0</span>
-          </button>
           <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
             <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
-          </button>
-          <button data-tab="tab-reports" onclick="window.switchTab('tab-reports')">
-            <iconsax-icon name="info-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Issue &amp; word reports
-            <span class="nav-count" id="nav-reports-count" hidden>0</span>
           </button>
         </nav>
       </div>
@@ -318,41 +310,6 @@
       </div>
     </section>
 
-    <!-- Tab: User Bug & Wrong Word Reports with Photo Evidence -->
-    <section id="tab-reports" class="tab-content" style="display: none;">
-      <div class="pagehead">
-        <div>
-          <h1>Issue &amp; word reports</h1>
-          <p>Bugs, glitches, and incorrect words reported from the mobile app, with photo evidence and device diagnostics.</p>
-        </div>
-        <div class="pagehead-actions">
-          <span class="result-count" id="reports-result-count"></span>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Title &amp; Target</th>
-                <th>Description</th>
-                <th>Evidence</th>
-                <th>Reporter &amp; Device</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="reports-tbody">
-              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading issue reports&hellip;</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <!-- Tab 3: The dictionary itself.
          Read as entries, not scanned as a table: headword, pronunciation, part of speech, then the
          glosses. The two bulk importers used to occupy the whole first screen of the page a
@@ -398,13 +355,6 @@
             <option value="Colors &amp; Shapes">Colors &amp; Shapes</option>
             <option value="Occupations &amp; Tools">Occupations &amp; Tools</option>
             <option value="General">General</option>
-          </select>
-          <label class="sr-only" for="filter-vocab-gap">Show only</label>
-          <select id="filter-vocab-gap" class="form-control" style="width:auto; min-width:190px;">
-            <option value="">All words</option>
-            <option value="sentence">Needs an example sentence</option>
-            <option value="theme">Needs a learning-tree theme</option>
-            <option value="sentence-english">Sentence needs an English translation</option>
           </select>
           <label class="sr-only" for="sort-vocab">Sort by</label>
           <select id="sort-vocab" class="form-control" style="width:auto; min-width:160px;">
@@ -469,59 +419,6 @@
       </div>
     </section>
 
-    <!-- Stage review: accept or correct the learning-tree stage proposed by functions/tag_themes.js -->
-    <section id="tab-stages" class="tab-content" style="display: none;">
-
-      <div class="pagehead">
-        <div>
-          <h1>Stage review</h1>
-          <p>Words the tagger has proposed a learning-tree stage for, read from their English gloss.
-             Nothing here is live until you accept it &mdash; the app still reads the old value.</p>
-        </div>
-        <div class="pagehead-actions">
-          <button class="btn btn-outline" id="stages-accept-confident">
-            <iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon>
-            Accept all gloss matches
-          </button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="toolbar">
-          <label class="sr-only" for="stages-filter">Filter by stage</label>
-          <select id="stages-filter" class="form-control" style="width:auto; min-width:190px;">
-            <option value="">All stages</option>
-          </select>
-          <label class="sr-only" for="stages-confidence">Filter by confidence</label>
-          <select id="stages-confidence" class="form-control" style="width:auto; min-width:210px;">
-            <option value="">Any confidence</option>
-            <option value="high">Gloss match only (0.9)</option>
-            <option value="low">Definition match only (0.6)</option>
-          </select>
-        </div>
-
-        <div class="toolbar" style="margin-bottom:0; justify-content:space-between;">
-          <span class="result-count" id="stages-result-count">Loading&hellip;</span>
-        </div>
-
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Word</th>
-                <th>English</th>
-                <th>Stage</th>
-                <th>Part of speech</th>
-                <th>Why</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="stages-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <!-- Tab 6: Users -->
     <section id="tab-users" class="tab-content" style="display: none;">
       <div class="pagehead">
@@ -541,14 +438,13 @@
               <tr>
                 <th>User</th>
                 <th>Email</th>
-                <th>Date Registered</th>
                 <th>Level Badge</th>
                 <th>Total XP</th>
                 <th>Current Streak</th>
               </tr>
             </thead>
             <tbody id="users-tbody">
-              <tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
+              <tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
             </tbody>
           </table>
         </div>
@@ -564,8 +460,21 @@
           <p>An append-only record of every admin action. Use this to verify data integrity
              and trace who changed what.</p>
         </div>
-        <div class="pagehead-actions">
+        <div class="pagehead-actions" style="display:flex; align-items:center; gap:var(--s-3); flex-wrap:wrap;">
           <span class="result-count" id="logs-result-count"></span>
+          <div style="display:inline-flex; align-items:center; gap:var(--s-2);">
+            <label class="sr-only" for="export-logs-range">Export time range</label>
+            <select id="export-logs-range" class="form-control" style="width:auto; height:36px; padding:0 var(--s-3); font-size:var(--t-xs);">
+              <option value="3">Past 3 days</option>
+              <option value="7" selected>Past 7 days</option>
+              <option value="30">Past 30 days</option>
+              <option value="all">All logs</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="btn-export-logs" onclick="window.exportAuditLogs()" style="height:36px; display:inline-flex; align-items:center; gap:6px;">
+              <iconsax-icon name="document-download" type="bulk" size="16" color="currentColor"></iconsax-icon>
+              Export logs
+            </button>
+          </div>
         </div>
       </div>
 
@@ -600,8 +509,8 @@
     <section id="tab-backup" class="tab-content" style="display: none;">
       <div class="pagehead">
         <div>
-          <h1>Backup &amp; Reset</h1>
-          <p>Export and restore the curated content and moderation queues, or clear the queues. Full-database backup and reset, including learner progress, run from the operator scripts.</p>
+          <h1>Backup &amp; Restore</h1>
+          <p>Export a full JSON snapshot of dictionary entries, stories, releases, announcements, and audit logs, or restore them to Firestore.</p>
         </div>
       </div>
 
@@ -610,18 +519,13 @@
         <div class="card span-6">
           <div class="card-head">
             <div>
-              <h2>Export content backup</h2>
-              <p>Dictionary, stories, story images, announcements, releases, and the moderation queues.</p>
+              <h2>Create System Backup</h2>
+              <p>Download a complete JSON file containing all dictionary words, stories, announcements, releases, and admin audit logs.</p>
             </div>
           </div>
           <div style="padding:1rem 0;">
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-              A timestamped JSON snapshot of everything this dashboard can read. Keep it private &mdash; it contains community submissions.
-            </p>
-            <p style="color:var(--muted); font-size:0.85rem; margin-bottom:1.5rem; border-left:3px solid var(--rule, #ddd); padding-left:10px;">
-              <strong>Does not include learner progress.</strong> A browser cannot enumerate <code>users/{uid}</code> documents that hold a
-              progress subcollection but no fields of their own, which is all of them. For a full backup run
-              <code>node functions/backup_firestore.js &lt;service-account.json&gt;</code>.
+            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">
+              Backing up generates a timestamped snapshot of your Firestore database. Keep this file safe for data recovery or migrating environments.
             </p>
             <button class="btn btn-primary" id="btn-export-backup" onclick="window.exportBackup()">
               <iconsax-icon name="document-download" type="bulk" size="18" color="currentColor"></iconsax-icon> Export JSON Backup
@@ -634,51 +538,16 @@
           <div class="card-head">
             <div>
               <h2>Restore from Backup</h2>
-              <p>Upload a previously exported JSON backup file to restore database entries.</p>
+              <p>Upload a previously exported JSON backup or audit logs file to restore database entries.</p>
             </div>
           </div>
           <div style="padding:1rem 0;">
             <div class="dropzone" id="backup-dropzone" style="margin-bottom:1rem;">
               <p style="font-weight:800; margin-bottom:6px;">Drop a .json backup file, or click to choose</p>
-              <p style="color:var(--muted); font-size:0.8rem;">Merges the file's documents back into Firestore. Existing documents with the same id are overwritten; documents added since the backup are left in place.</p>
+              <p style="color:var(--muted); font-size:0.8rem;">Restores vocabulary, stories, announcements, releases, and audit logs into Firestore.</p>
               <input type="file" id="backup-file-input" accept=".json" style="display:none;">
             </div>
             <div id="backup-restore-status" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>
-          </div>
-        </div>
-
-        <!-- Reset Card -->
-        <div class="card span-12">
-          <div class="card-head">
-            <div>
-              <h2>Reset</h2>
-              <p>Return the database to a known state. Take a backup first.</p>
-            </div>
-          </div>
-          <div style="padding:1rem 0;">
-            <p style="font-weight:700; margin-bottom:4px;">Clear moderation queues</p>
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-              Deletes every pending and rejected word submission, literature submission, and issue report.
-              Words already approved into the dictionary are unaffected.
-            </p>
-            <button class="btn btn-danger" id="btn-reset-queues" onclick="window.resetModerationQueues()">
-              <iconsax-icon name="trash" type="bulk" size="18" color="currentColor"></iconsax-icon> Clear moderation queues
-            </button>
-
-            <hr style="border:none; border-top:1px solid var(--rule, #e5e5e5); margin:1.5rem 0;">
-
-            <p style="font-weight:700; margin-bottom:4px;">Full database reset</p>
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:0.75rem;">
-              Clearing learner progress, leaderboard rows, device tokens and security questions is deliberately not available here.
-              Those documents are owner-writable only, so that a compromised admin session cannot rewrite anyone's learning record.
-              A full reset runs from the operator machine with the service-account key:
-            </p>
-            <pre style="background:var(--sunken, #f3f3f3); padding:12px 14px; border-radius:6px; overflow-x:auto; font-size:0.82rem; margin:0;"><code>node functions/backup_firestore.js &lt;service-account.json&gt;
-node functions/reset_firestore.js &lt;service-account.json&gt; --mode=learner
-node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --from=&lt;backup-dir&gt;</code></pre>
-            <p style="color:var(--muted); font-size:0.85rem; margin-top:0.75rem;">
-              Both modes are a dry run until <code>--confirm=&lt;projectId&gt;</code> is passed. See <code>docs/BACKUP_AND_RESET.md</code>.
-            </p>
           </div>
         </div>
       </div>
@@ -728,16 +597,8 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           <input type="text" id="input-tagalog" class="form-control" placeholder="e.g. daras">
         </div>
         <div class="form-group">
-          <label>English translation</label>
+          <label>English Definition</label>
           <input type="text" id="input-english" class="form-control" placeholder="e.g. adze">
-        </div>
-        <div class="form-group">
-          <label>Meaning (English)</label>
-          <textarea id="input-meaning-en" class="form-control" rows="2" maxlength="200" placeholder="One sentence saying what the word means, not just what it translates to."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Meaning (Tagalog)</label>
-          <textarea id="input-meaning-tl" class="form-control" rows="2" maxlength="200" placeholder="Ang parehong kahulugan, sa simpleng Filipino."></textarea>
         </div>
         <div class="form-group">
           <label>Category</label>
@@ -757,16 +618,6 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
 
             <option value="General">General</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>Learning-tree theme</label>
-          <select id="input-theme" class="form-control">
-            <option value="">None &mdash; taught under its category</option>
-            <option value="paglalakbay">Paglalakbay &mdash; travel, directions, transport</option>
-            <option value="baybayin">Buhay sa Baybayin &mdash; coastal life and fishing</option>
-          </select>
-          <p class="form-hint">A themed word leaves its category section and is taught in the theme's
-          section instead. A theme needs 35 words before its section appears in the app.</p>
         </div>
         <div class="form-group">
           <label>Part of Speech</label>
@@ -805,32 +656,19 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
         </div>
         <div class="form-group">
           <label>Example Sentence, in Kasiguranin</label>
-          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word, exactly as it was said">
+          <input type="text" id="input-example1" class="form-control" placeholder="A sentence using this word">
         </div>
         <div class="form-group">
-          <label>What it means, in English</label>
-          <input type="text" id="input-example1-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
-        </div>
-        <div class="form-group">
-          <label>What it means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
-          <input type="text" id="input-example1-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangungusap, sa Filipino">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div class="form-group">
           <label>Second Example Sentence, in Kasiguranin</label>
           <input type="text" id="input-example2" class="form-control" placeholder="A second, different sentence using this word">
         </div>
         <div class="form-group">
-          <label>What the second one means, in English</label>
-          <input type="text" id="input-example2-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
-        </div>
-        <div class="form-group">
-          <label>What the second one means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
-          <input type="text" id="input-example2-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangalawang pangungusap">
-        </div>
-        <div class="form-group">
-          <label>Where these sentences came from</label>
-          <input type="text" id="input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
-          <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
+          <label>Second Example Translation</label>
+          <input type="text" id="input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('add-vocab-modal')">Cancel</button>
@@ -926,16 +764,8 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           <input type="text" id="edit-input-tagalog" class="form-control" placeholder="e.g. daras">
         </div>
         <div class="form-group">
-          <label>English translation</label>
+          <label>English Definition</label>
           <input type="text" id="edit-input-english" class="form-control" placeholder="e.g. adze">
-        </div>
-        <div class="form-group">
-          <label>Meaning (English)</label>
-          <textarea id="edit-input-meaning-en" class="form-control" rows="2" maxlength="200" placeholder="One sentence saying what the word means, not just what it translates to."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Meaning (Tagalog)</label>
-          <textarea id="edit-input-meaning-tl" class="form-control" rows="2" maxlength="200" placeholder="Ang parehong kahulugan, sa simpleng Filipino."></textarea>
         </div>
         <div class="form-group">
           <label>Category</label>
@@ -955,16 +785,6 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
 
             <option value="General">General</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>Learning-tree theme</label>
-          <select id="edit-input-theme" class="form-control">
-            <option value="">None &mdash; taught under its category</option>
-            <option value="paglalakbay">Paglalakbay &mdash; travel, directions, transport</option>
-            <option value="baybayin">Buhay sa Baybayin &mdash; coastal life and fishing</option>
-          </select>
-          <p class="form-hint">A themed word leaves its category section and is taught in the theme's
-          section instead. A theme needs 35 words before its section appears in the app.</p>
         </div>
         <div class="form-group">
           <label>Part of Speech</label>
@@ -1003,32 +823,19 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
         </div>
         <div class="form-group">
           <label>Example Sentence, in Kasiguranin</label>
-          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word, exactly as it was said">
+          <input type="text" id="edit-input-example1" class="form-control" placeholder="A sentence using this word">
         </div>
         <div class="form-group">
-          <label>What it means, in English</label>
-          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
-        </div>
-        <div class="form-group">
-          <label>What it means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
-          <input type="text" id="edit-input-example1-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangungusap, sa Filipino">
+          <label>Example Sentence Translation</label>
+          <input type="text" id="edit-input-example1-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div class="form-group">
           <label>Second Example Sentence, in Kasiguranin</label>
           <input type="text" id="edit-input-example2" class="form-control" placeholder="A second, different sentence using this word">
         </div>
         <div class="form-group">
-          <label>What the second one means, in English</label>
-          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="English only &mdash; the lesson exercises read this field">
-        </div>
-        <div class="form-group">
-          <label>What the second one means, in Tagalog <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
-          <input type="text" id="edit-input-example2-translation-tl" class="form-control" placeholder="Ang kahulugan ng pangalawang pangungusap">
-        </div>
-        <div class="form-group">
-          <label>Where these sentences came from</label>
-          <input type="text" id="edit-input-example-source" class="form-control" placeholder="Who said it, where, and when &mdash; e.g. Lola Maria Ramos, Casiguran, Aug 2026">
-          <small style="color:var(--muted);">Field data needs provenance. A sentence with no source cannot be cited in the thesis.</small>
+          <label>Second Example Translation</label>
+          <input type="text" id="edit-input-example2-translation" class="form-control" placeholder="Its Tagalog or English translation">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('edit-vocab-modal')">Cancel</button>
@@ -1152,24 +959,6 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
           </button>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- Modal: Image / Photo Evidence Lightbox -->
-  <div id="evidence-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width:800px; text-align:center;">
-      <div class="modal-header">
-        <h2 id="evidence-modal-title">Photo Evidence</h2>
-        <button class="close-btn" onclick="closeModal('evidence-modal')" aria-label="Close">&times;</button>
-      </div>
-      <div style="padding:16px 0; max-height:75vh; overflow-y:auto; display:flex; justify-content:center; align-items:center;">
-        <!-- No src attribute: viewReportEvidence() assigns it when a report is opened. An empty
-             src="" makes some browsers re-request the current page as an image. -->
-        <img id="evidence-modal-img" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px; box-shadow:var(--shadow-md); object-fit:contain;" />
-      </div>
-      <div class="modal-actions" style="justify-content:flex-end;">
-        <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>
-      </div>
     </div>
   </div>
 
