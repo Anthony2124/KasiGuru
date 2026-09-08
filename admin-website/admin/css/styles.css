@@ -429,6 +429,39 @@ textarea.form-control { min-height: 88px; resize: vertical; }
 .input-icon-wrap iconsax-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 .input-icon-wrap .form-control { padding-left: 44px; }
 
+/* Grouped sections inside a long form modal, so 20-odd fields read as five short lists. */
+.form-section { margin-top: var(--s-6); }
+.form-section:first-child { margin-top: 0; }
+.form-section > h3 {
+  font-family: var(--sans); font-size: var(--t-xs); font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--violet);
+  padding-bottom: var(--s-2); margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+.form-section > h3 .form-section-note { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+/* Pair short, related fields side by side; collapse on a narrow modal. */
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--s-4); }
+.form-grid-2 > .form-group { min-width: 0; }
+@container (max-width: 520px) { .form-grid-2 { grid-template-columns: 1fr; } }
+@supports not (container-type: inline-size) {
+  @media (max-width: 620px) { .form-grid-2 { grid-template-columns: 1fr; } }
+}
+
+/* Form modal: fixed header and footer, only the fields scroll. Scoped so other modals are untouched.
+   The compound selector outweighs the responsive `.modal-card { padding }` rule further down. */
+.modal-card.modal-card--form { display: flex; flex-direction: column; padding: 0; container-type: inline-size; }
+.modal-card--wide { max-width: 720px; }
+.modal-card--form .modal-header {
+  flex: none; margin: 0; padding: var(--s-6) var(--s-7) var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+.modal-card--form > form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.modal-card--form .modal-scroll { flex: 1 1 auto; overflow-y: auto; padding: var(--s-5) var(--s-7); }
+.modal-card--form .modal-actions {
+  flex: none; margin: 0; padding: var(--s-4) var(--s-7);
+  border-top: 1px solid var(--line); background: var(--surface);
+}
+
 /* ── Buttons. Pill, per the shape scale; violet fill for primary. ──────────── */
 .btn {
   font-family: var(--sans); font-weight: 700; font-size: var(--t-sm);

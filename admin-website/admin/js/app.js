@@ -2938,32 +2938,46 @@ function pendingAudio(prefix) {
 }
 
 // Writes / removes word_audio/{key} for a word and returns the vocab-doc fields to merge into the
-// write ({} when there is nothing to do). Called before the vocabulary write, mirroring the
-// story-editor's "pictures first" order: an orphaned audio doc is invisible, a vocab doc pointing
-// at a missing clip would just fall back to TTS.
+// write ({} when there is nothing to do, or when the audio write failed).
+//
+// The audio write is best-effort: it must never block the word save. If word_audio is denied
+// (the security rule not yet deployed) or the upload fails for any other reason, the word still
+// saves — just without an audio pointer — and the admin is told the clip did not go through.
 async function commitWordAudio(prefix, kasiguranin, english) {
   const pending = pendingAudio(prefix);
   if (!pending) return {};
   const key = audioKey(kasiguranin, english);
 
   if (pending.kind === 'set') {
-    const buf = new Uint8Array(await pending.blob.arrayBuffer());
-    await setDoc(doc(db, 'word_audio', key), {
-      data: Bytes.fromUint8Array(buf),
-      mimeType: pending.mimeType || 'audio/mp4',
-      byteSize: buf.length,
-      kasiguranin,
-      english: english || '',
-      updatedAt: new Date().toISOString()
-    });
-    await logAudit('vocabulary.audio', { word: kasiguranin, action: 'set', bytes: buf.length });
-    return { audioResName: key, audioUpdatedAt: Date.now() };
+    try {
+      const buf = new Uint8Array(await pending.blob.arrayBuffer());
+      await setDoc(doc(db, 'word_audio', key), {
+        data: Bytes.fromUint8Array(buf),
+        mimeType: pending.mimeType || 'audio/mp4',
+        byteSize: buf.length,
+        kasiguranin,
+        english: english || '',
+        updatedAt: new Date().toISOString()
+      });
+      await logAudit('vocabulary.audio', { word: kasiguranin, action: 'set', bytes: buf.length });
+      return { audioResName: key, audioUpdatedAt: Date.now() };
+    } catch (err) {
+      console.warn('word_audio upload failed', key, err);
+      notify('The word was saved, but the audio clip could not be uploaded: ' + (err.message || err), 'error');
+      return {};
+    }
   }
 
-  try { await deleteDoc(doc(db, 'word_audio', key)); }
-  catch (err) { console.warn('Could not delete word_audio', key, err); }
-  await logAudit('vocabulary.audio', { word: kasiguranin, action: 'remove' });
-  return { audioResName: '', audioUpdatedAt: Date.now() };
+  // remove
+  try {
+    await deleteDoc(doc(db, 'word_audio', key));
+    await logAudit('vocabulary.audio', { word: kasiguranin, action: 'remove' });
+    return { audioResName: '', audioUpdatedAt: Date.now() };
+  } catch (err) {
+    console.warn('word_audio delete failed', key, err);
+    notify('The word was saved, but the audio clip could not be removed: ' + (err.message || err), 'error');
+    return {};
+  }
 }
 
 function initAudioEditors() {
