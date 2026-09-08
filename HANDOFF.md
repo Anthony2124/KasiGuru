@@ -40,40 +40,68 @@ holds product truth and the mode assignments. Read both first — they are short
 
 ## Where things stand
 
-The last release shipped is **v1.10.0 (versionCode 11)**. HEAD is `cae88a1`.
+The last release shipped is **v1.15.0 (versionCode 16)**, published 2026-09-08 — the first release to
+run end to end since v1.10.0, and the first through the GitHub Release asset pipeline. v1.11.0 through
+v1.13.0 were published by hand and v1.14.0 failed outright; its tag still points at `aa43af3` and was
+deliberately skipped rather than moved.
 
-**The admin portal is not up to date on the web.** Nothing deploys automatically — no Vercel project has
-a Git link, so the site only changes when a person runs `vercel --prod`. The last production deploy of the
-`admin` project was 2026-08-25, so the bug-report moderation UI, the user email and registration-date
-columns, and the account-deduplication fixes are all in the repo and not on the live site. Check before
-assuming: `curl -s https://kasiguru-admin.vercel.app/js/app.js | wc -l` against
-`wc -l admin-website/admin/js/app.js`.
+**The two Vercel projects deploy differently, and it matters.** The `admin` project
+(`kasi-guru/admin-wheat-nu-52`) *is* Git-linked: it builds on every push to `main`, with its Root
+Directory set to `admin-website/admin`, which is why a CLI deploy from inside that folder fails with
+"Root Directory does not exist". Push to deploy it; do not run `vercel` there. The `download` project
+(`kasi-guru/kasiguru-download`) has no Git link and is deployed by hand from its own folder, or by the
+release workflow.
+
+**The download site is behind, and the release workflow cannot fix it.** `secrets.VERCEL_TOKEN` was
+issued 2026-08-19, before hosting moved to Anthony's account, so every deploy attempt fails with
+"Could not retrieve Project Settings". Since 2026-09-08 that failure is `continue-on-error` and only
+warns, so releases still complete — but the live download page keeps serving markup whose static
+button points at the old Vercel-hosted APK rather than the GitHub Release asset. Anthony has to
+reissue the token; Adrian has push access to the repo but not admin, so he cannot set the secret.
 
 ### Already done and committed
 
-- `admin-website/shared/tokens.css` and `shared/components.css` — the canonical design layer, ported from
-  `app/src/main/java/com/kasiguru/ui/theme/`. Copies synced into both surfaces' `css/`.
-- `scripts/sync-web-shared.js` — copies shared → both surfaces; `--check` mode exits 1 if a copy is stale.
-- **Typography fixed.** Nunito (display) + DM Sans (body) are wired into both surfaces; zero `Outfit`
-  references remain.
-- **New download pages**: `install.html`, `releases.html`, `faq.html`, plus `js/releases.js`.
-- Landing page and admin dashboard restructured; `DESIGN.md` gained an 85-line web section.
-- `functions/publish_release.js` partially updated.
-- The invisible white-on-white release heading is fixed.
+Verified 2026-09-08 — the previous version of this list described work that `db24c80` ("Revert the web
+redesign and its follow-up fixes") had since removed, so check before trusting an entry here.
+
+- **Typography.** Nunito (display) + DM Sans (body) are wired into both surfaces; zero `Outfit`
+  references remain. *(Confirmed present.)*
+- **The web token contract.** `scripts/check-web-tokens.js` guards the 14-token brand core shared by the
+  two surfaces; CI runs it, and DESIGN.md's "The two web surfaces" section records the reasoning.
+- **The release pipeline** now hosts APKs as GitHub Release assets, with the migration complete — see
+  the next section.
+- **Report photo compression** honours the Firestore size cap (`ImageCompressor.kt`).
+
+Gone with the revert, despite what earlier handoffs claimed — do not go looking for them:
+`admin-website/shared/`, `scripts/sync-web-shared.js`, the download site's `install.html` /
+`releases.html` / `faq.html` and `js/releases.js`, and DESIGN.md's original 85-line web section. The
+download site is a single `index.html` today.
 
 ### Outstanding — your work
 
-Re-measured 2026-09-02. Items 1, 2, 3 and 6 from the previous handoff are **done** — the users table is
-6 columns and its `colspan="6"` is correct, only 3 `alert`/`confirm` call sites remain (down from 26, and
-the survivors are in comments), 22 `data-label` attributes are in place, and no `--play-` / `--vocab-` /
-`--coast-` / `--sand-bg` aliases remain. What is genuinely still open:
+Re-measured 2026-09-08. Items 1 through 4 from the previous handoff are all **closed**:
+
+- **The shared CSS layer** is settled, not restored. The two surfaces share only 17 token names out of
+  62 and 46, and 14 of those already agreed exactly — so they are now formally separate stylesheets
+  with a guarded brand core. `scripts/check-web-tokens.js` asserts the 14 identity tokens agree and
+  records the three that differ on purpose; CI runs it. The reasoning is in DESIGN.md under "The two
+  web surfaces". Do not reintroduce `admin-website/shared/` or a sync script.
+- **Old release downloads** are fixed. Every archived APK is now a GitHub Release asset, and the
+  backfill repointed ten `app_releases` documents at their own version's permanent URL. Re-running it
+  reports 12 already correct.
+- **The two legacy Vercel projects** are gone: `kasi-guru-iota.vercel.app/admin/js/app.js` and
+  `admin-website-sandy.vercel.app/admin/js/app.js` both return 404.
+- **Report photo size budget** shipped in `ImageCompressor.kt`: a quality ladder then a scale ladder,
+  checked against the rule's 700,000-character cap, failing at attach time with a message the user can
+  act on.
+
+What is genuinely still open:
 
 | # | Task | Evidence it is still open |
 |---|---|---|
-| 1 | **The shared CSS layer is gone.** The previous handoff asked for a CI staleness check on `scripts/sync-web-shared.js`; that script and `admin-website/shared/` were both deleted by `db24c80` ("Revert the web redesign and its follow-up fixes"). `admin/css/styles.css` and `download/css/styles.css` are now independent copies again with nothing keeping them in step. Decide deliberately: reinstate a shared layer plus its check, or accept the two surfaces as separate and say so here | `scripts/sync-web-shared.js` does not exist |
-| 2 | **Old release downloads all 404.** `functions/backfill_app_releases.js` was written to fix this and has never been run: 7 of 9 `app_releases` docs still carry versioned `apkUrl`s, 6 have empty `releaseNotes`, 5 have no `releasedAt`. `kasiguru-v1.1.0.apk` and `kasiguru-v1.6.0.apk` both return 404 live; only `kasiguru-latest.apk` returns 200 | run the script with `--apply` |
-| 3 | **Two legacy Vercel projects publish a stale admin portal to the public.** `kasi-guru-iota.vercel.app/admin/js/app.js` and `admin-website-sandy.vercel.app/admin/js/app.js` both return 200; the first is a 1,235-line copy against the current 3,326. `.vercelignore` now stops a *future* root deploy carrying them, but the already-published deployments have to be taken down in the Vercel dashboard | both URLs return 200 |
-| 4 | **Report photos have no client-side size budget.** `firestore.rules:315` caps `photoBase64` at 700,000 chars; `ImageCompressor.kt` compresses to 1024px at quality 75 and never checks the result, so an oversized photo fails as a generic permission error | no size check in `ImageCompressor.kt` |
+| 1 | **`VERCEL_TOKEN` is stale.** Issued 2026-08-19, before hosting moved to Anthony's account, so the release workflow's deploy step fails every run. It only warns now, so releases complete and the download site is left serving older markup. Only Anthony can fix it — Adrian has push but not admin on the repo | run 34237024472, step 17: "Could not retrieve Project Settings" |
+| 2 | **Four releases have no binary anywhere.** v1.7.0–v1.10.0 were never archived and their APKs are lost. v1.7.0 and v1.8.0 already 404; v1.9.0 and v1.10.0 point at a `kasiguru-latest.apk` alias on the *old* Vercel project in Adrian's account, which serves some other build and dies when that project is deleted. Yank them in the admin release manager rather than leave mislabelled links | `node functions/backfill_app_releases.js <key>` lists all four |
+| 3 | **v1.15.0 has no release notes.** CI has no source for them, so it writes an empty string; the admin panel's publish form is where they get typed. Safe to add now — `publish_release.js` only seeds `releaseNotes` when the field is absent, so a workflow re-run will not blank them | `app_releases/v1.15.0.releaseNotes` is `""` |
 
 ## The release pipeline — the one thing that can break distribution
 
@@ -92,15 +120,14 @@ account, which cannot reach the project after hosting moved to Anthony's.)
 
 **Do not** commit APKs to git instead: ~8 MB per release forever, and this audience is on poor connectivity.
 
-**The migration is still outstanding.** Existing `app_releases` docs still point at
-`kasiguru-download.vercel.app`, and the pre-v1.14.0 APKs exist only in one local `admin-website/download/`
-folder. Until both are moved, the new static href 404s (GitHub's current "latest release" is v1.2.0, which
-has no `kasiguru-latest.apk` asset). Two steps, in this order:
+**The migration is complete** (2026-09-08). `scripts/archive-apks-to-releases.sh --apply` uploaded the
+nine surviving archived APKs to their GitHub Releases, and
+`functions/backfill_app_releases.js --apply` repointed ten `app_releases` documents at their own
+version's permanent asset; a re-run now reports 12 already correct. The only gap is v1.7.0–v1.10.0,
+whose binaries were lost before the archive ran.
 
-1. `scripts/archive-apks-to-releases.sh --apply` — uploads every archived APK to its GitHub Release,
-   creating archival releases for the versions that were never tagged, then marks the newest as Latest.
-2. `functions/backfill_app_releases.js <service-account.json> --apply` — repoints each doc at its own
-   version's asset, but only after confirming that asset is reachable, and reports the ones that are not.
+Both scripts are idempotent and worth re-running rather than reasoning about: the backfill without
+`--apply` is a read-only report of exactly which documents disagree with the assets that exist.
 
 **The two writers are unified.** Both `functions/publish_release.js` and the admin dashboard's publish form
 write the deterministic id `app_releases/v<versionName>` with `set(..., { merge: true })`:

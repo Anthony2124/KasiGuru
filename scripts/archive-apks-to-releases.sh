@@ -11,6 +11,13 @@
 #
 # Safe to re-run: existing releases are reused and assets are replaced with --clobber.
 #
+# Expect failed Release workflow runs. Creating a release for a version that was never
+# tagged pushes that tag, and release.yml triggers on `v*.*.*`. When it ran on 2026-09-08
+# it fired six runs, every one of which stopped at the "Derive version" step because the
+# archival tag does not match the versionName in app/build.gradle.kts — nothing was built,
+# signed, uploaded or written to Firestore. That guard is the reason this is safe, so do
+# not weaken it to silence the noise; the red runs are the cost of an honest check.
+#
 # Usage (from the repo root):
 #   scripts/archive-apks-to-releases.sh            # dry run — prints what it would do
 #   scripts/archive-apks-to-releases.sh --apply
