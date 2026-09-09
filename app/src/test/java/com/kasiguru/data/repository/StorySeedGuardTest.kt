@@ -54,6 +54,9 @@ class StorySeedGuardTest {
         override suspend fun insert(story: StoryEntity) {
             rows.add(story)
         }
+        override suspend fun deleteStories(ids: List<Int>) {
+            rows.removeAll { it.id in ids }
+        }
     }
 
     @Test
