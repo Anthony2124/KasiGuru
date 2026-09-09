@@ -42,4 +42,15 @@ interface StoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(story: StoryEntity)
+
+    /**
+     * Removes specific stories by id.
+     *
+     * Used by the full reconcile to drop stories that no longer exist upstream and are not in the
+     * shipped set either. Id-based rather than a predicate for the same reason as
+     * [VocabularyDao.deleteWords]: the caller has already decided which rows are withdrawn, and
+     * duplicating that judgement in SQL would put the rule in two places.
+     */
+    @Query("DELETE FROM stories WHERE id IN (:ids)")
+    suspend fun deleteStories(ids: List<Int>)
 }
