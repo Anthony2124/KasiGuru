@@ -1,7 +1,7 @@
 # KasiGuru — Product truth
 
-> Captured 2026-08-17 during the UI/UX rebuild. Facts come from the codebase, the release pipeline and
-> Adrian's direction. Items marked *(assumed)* were inferred from the brief and code, not confirmed.
+> Captured 2026-08-17, re-measured against the codebase 2026-09-09. Facts come from the codebase, the
+> release pipeline and Adrian's direction. Items marked *(assumed)* were inferred from the brief and code, not confirmed.
 
 ## What it is
 
@@ -19,21 +19,28 @@ undergraduate thesis on gamified mobile learning for language preservation.
 
 ## What success looks like
 
-A learner opens the app daily, completes a lesson, and can feel that they moved. Today they cannot: the
-app has a dictionary and six mini-games but no lesson, so there is nothing to progress through.
+A learner opens the app daily, completes a lesson, and can feel that they moved. As of 2026-09 they can:
+the lesson system shipped (`domain/lesson/`, with a learning tree, SM-2 review scheduling and generated
+exercises), alongside the dictionary and eight mini-games.
 
 ## Product truth that must not change
 
-- **Content**: 417 vocabulary entries across 12 categories, each with Kasiguranin / Tagalog / English,
-  IPA, four verb-aspect inflections, example sentences and audio. Plus folk stories and cultural context.
+- **Content**: 1,202 seeded vocabulary entries across 12 categories (1,246 live in Firestore, including
+  admin additions), each with Kasiguranin / Tagalog / English, IPA and four verb-aspect inflections.
+  Plus ten folk stories and cultural context.
+- **Connected Kasiguranin is the scarce resource, not vocabulary.** The corpus carries five example
+  sentences across 1,246 entries; `SentenceBank` holds sixteen authored sentences; and all ten seeded
+  stories leave every page's `kasiguranin` field blank. Audio exists only where an admin has uploaded a
+  clip. Filling these requires speakers — never generate Kasiguranin to close the gap.
 - **The learning model is real**: SuperMemo-2 spaced repetition (`Sm2Algorithm`) drives review scheduling.
   This is a thesis claim; it stays exact.
 - **Offline-first**: Room is the source of truth; Firestore syncs progress and receives admin edits.
 - **Gamification already in the data**: XP, 10 levels, streaks, achievements, stars, public leaderboard.
 - **Accounts**: anonymous by default, upgradeable via Google Sign-In or email; guest progress is at risk
   and the app warns about it.
-- **Distribution**: side-loaded APK from a Vercel download page, versioned through a Firestore
-  `app_releases` collection. There is no Play Store listing.
+- **Distribution**: side-loaded APK attached to a GitHub Release (permanent per-version URLs), announced
+  through a Firestore `app_releases` collection and linked from a Vercel download page that hosts no
+  binaries itself. There is no Play Store listing.
 
 ## Constraints
 

@@ -3,6 +3,7 @@ package com.kasiguru.ui.screens.flashcards
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.util.LearningAnalytics
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.util.Constants
@@ -127,6 +128,9 @@ class FlashcardViewModel @Inject constructor(
             val nextIndex = state.currentIndex + 1
             if (nextIndex >= state.cards.size) {
                 userProgressRepository.recordDailyReviewCompleted()
+                // The deck is the day's due set, so both counts are the same number here —
+                // they diverge only if a partial-session flow is ever added.
+                LearningAnalytics.reviewCompleted(state.cards.size, state.cards.size)
                 _uiState.update { it.copy(isDeckComplete = true, isRating = false) }
             } else {
                 _uiState.update { it.copy(currentIndex = nextIndex, isRating = false) }
