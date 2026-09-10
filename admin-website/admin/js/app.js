@@ -1901,7 +1901,7 @@ function renderRecentSubmissions() {
     const status = (sub.status || 'pending');
     const word = (sub.kasiguranin || '?').trim();
     return `
-      <div class="item">
+      <div class="item" onclick="window.openSubmissionModal('${sub.id}')" style="cursor:pointer;" title="Click to review submission details for ${escapeHtml(word)}">
         <span class="item-mark is-${escapeHtml(status)}" aria-hidden="true">${escapeHtml(word.charAt(0).toUpperCase())}</span>
         <span class="item-body">
           <span class="item-title">${escapeHtml(word)}</span>
@@ -2009,10 +2009,15 @@ function renderSubmissionsTable() {
 
   submissions.forEach(sub => {
     const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
     const statusBadgeClass = sub.status === 'approved' ? 'badge-approved' : (sub.status === 'rejected' ? 'badge-rejected' : 'badge-pending');
     
     tr.innerHTML = `
-      <td data-label="Kasiguranin"><strong>${escapeHtml(sub.kasiguranin)}</strong></td>
+      <td data-label="Kasiguranin">
+        <button type="button" class="table-link-btn" onclick="window.openSubmissionModal('${sub.id}')" title="Click to view details for ${escapeHtml(sub.kasiguranin)}">
+          <strong>${escapeHtml(sub.kasiguranin)}</strong>
+        </button>
+      </td>
       <td data-label="Tagalog">${escapeHtml(sub.tagalog || '-')}</td>
       <td data-label="English">${escapeHtml(sub.english || '-')}</td>
       <td data-label="Category"><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></td>
@@ -2026,10 +2031,17 @@ function renderSubmissionsTable() {
           <button class="btn btn-danger btn-sm reject-btn" data-id="${sub.id}"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject</button>
         </div>
         ` : `
-          <span style="color:var(--muted); font-size:0.85rem;">Processed</span>
+          <div class="row-actions">
+            <span style="color:var(--muted); font-size:0.85rem; margin-right:4px;">Processed</span>
+            <button class="btn btn-outline btn-sm delete-sub-btn" data-id="${sub.id}" title="Delete submission record"><iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon></button>
+          </div>
         `}
       </td>
     `;
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
+      window.openSubmissionModal(sub.id);
+    });
     tbody.appendChild(tr);
   });
 
@@ -2045,6 +2057,12 @@ function renderSubmissionsTable() {
       rejectSubmission(btn.getAttribute('data-id'));
     });
   });
+  tbody.querySelectorAll('.delete-sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      markRowLeaving(btn);
+      deleteSubmission(btn.getAttribute('data-id'));
+    });
+  });
 
   applyTableSemantics();
 }
@@ -2055,6 +2073,187 @@ function renderSubmissionsError(message) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
   }
 }
+
+// ── Word Submission Details Modal ───────────────────────────────────────────
+window.openSubmissionModal = function(id) {
+  const sub = submissions.find(s => s.id === id);
+  const body = document.getElementById('submission-modal-body');
+  const actions = document.getElementById('submission-modal-actions');
+  if (!sub || !body || !actions) return;
+
+  const pos = sub.partOfSpeech || '';
+  const aspects = [
+    ['Neutral', sub.neutralForm],
+    ['Past', sub.pastTense || sub.perfectiveForm],
+    ['Present', sub.presentTense || sub.imperfectiveForm],
+    ['Future', sub.futureTense || sub.contemplativeForm]
+  ].filter(([, v]) => (v || '').trim());
+
+  const row = (label, value) => value
+    ? `<dt>${label}</dt><dd>${escapeHtml(value)}</dd>`
+    : `<dt>${label}</dt><dd style="color:var(--muted); font-style:italic;">Not recorded</dd>`;
+
+  const statusBadgeClass = sub.status === 'approved' ? 'badge-approved' : (sub.status === 'rejected' ? 'badge-rejected' : 'badge-pending');
+  const submittedFormatted = sub.submittedAt
+    ? new Date(sub.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'Not recorded';
+
+  // Check if existing in master dictionary
+  const existing = findExistingWord(sub.kasiguranin, vocabulary);
+  let conflictBanner = '';
+  if (existing.length > 0) {
+    const senses = existing
+      .map(e => `<strong>"${escapeHtml(e.kasiguranin)}"</strong> &mdash; ${escapeHtml(e.english || e.tagalog || 'no gloss')}`)
+      .join('<br>');
+    conflictBanner = `
+      <div style="margin-top:var(--s-4); padding:var(--s-3); background:var(--status-pending-tint); border:1px solid var(--status-pending); border-radius:var(--r-ctl);">
+        <div style="font-size:var(--t-xs); font-weight:700; color:var(--status-pending); margin-bottom:4px;">
+          Already in Master Dictionary (${existing.length} sense${existing.length === 1 ? '' : 's'})
+        </div>
+        <div style="font-size:var(--t-xs); color:var(--ink); line-height:1.4;">${senses}</div>
+      </div>
+    `;
+  }
+
+  body.innerHTML = `
+    <div class="entry-detail-head">
+      <span class="headword">${escapeHtml(sub.kasiguranin || '—')}</span>
+      ${sub.ipaNotation ? `<span class="ipa">/${escapeHtml(sub.ipaNotation)}/</span>` : ''}
+      ${pos ? `<span class="pos">${escapeHtml(pos)}</span>` : ''}
+    </div>
+    <dl class="deflist">
+      ${row('Tagalog', sub.tagalog)}
+      ${row('English', sub.english)}
+      ${row('Meaning (English)', sub.meaningEnglish)}
+      ${row('Meaning (Tagalog)', sub.meaningTagalog)}
+      <dt>Category</dt><dd><span class="badge badge-category">${escapeHtml(sub.category || 'General')}</span></dd>
+      ${(sub.rootForm && sub.rootForm !== sub.kasiguranin) ? row('Root form', sub.rootForm) : ''}
+      <dt>Contributor</dt><dd><strong>${escapeHtml(sub.contributorName || 'Anonymous')}</strong></dd>
+      <dt>Submitted</dt><dd>${submittedFormatted}</dd>
+      <dt>Status</dt><dd><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></dd>
+    </dl>
+    ${conflictBanner}
+    ${aspects.length ? `
+      <div style="margin-top:var(--s-5);">
+        <dt style="font-size:var(--t-xs); font-weight:700; color:var(--muted);">Verb aspects</dt>
+        <div class="aspect-grid">
+          ${aspects.map(([label, value]) => `
+            <div class="aspect"><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join('')}
+        </div>
+      </div>` : ''}
+    ${(sub.exampleSentence || '').trim() ? `
+      <div style="margin-top:var(--s-5);">
+        <dt style="font-size:var(--t-xs); font-weight:700; color:var(--muted);">Example sentence</dt>
+        <p style="margin:var(--s-2) 0 0;"><i>${escapeHtml(sub.exampleSentence)}</i></p>
+      </div>` : ''}`;
+
+  const isPending = (sub.status || 'pending') === 'pending';
+  actions.innerHTML = `
+    <button type="button" class="btn btn-outline" onclick="closeModal('submission-modal')">Close</button>
+    <button type="button" class="btn btn-danger" id="submission-modal-delete">
+      <iconsax-icon name="trash" type="bulk" size="17" color="currentColor"></iconsax-icon> Delete entry
+    </button>
+    ${isPending ? `
+      <button type="button" class="btn btn-danger" id="submission-modal-reject" style="background:#b43a3a; border-color:#b43a3a;">
+        <iconsax-icon name="close-circle" type="bulk" size="17" color="currentColor"></iconsax-icon> Reject
+      </button>
+    ` : ''}
+    <button type="button" class="btn btn-primary" id="submission-modal-edit">
+      <iconsax-icon name="edit" type="bulk" size="17" color="currentColor"></iconsax-icon> Edit entry
+    </button>
+    ${isPending ? `
+      <button type="button" class="btn btn-success" id="submission-modal-approve">
+        <iconsax-icon name="tick-circle" type="bulk" size="17" color="currentColor"></iconsax-icon> Approve entry
+      </button>
+    ` : ''}
+  `;
+
+  const editBtn = document.getElementById('submission-modal-edit');
+  if (editBtn) {
+    editBtn.onclick = () => {
+      window.closeModal('submission-modal');
+      window.openEditSubmissionModal(id);
+    };
+  }
+
+  const deleteBtn = document.getElementById('submission-modal-delete');
+  if (deleteBtn) {
+    deleteBtn.onclick = () => {
+      window.deleteSubmission(id);
+    };
+  }
+
+  const rejectBtn = document.getElementById('submission-modal-reject');
+  if (rejectBtn) {
+    rejectBtn.onclick = async () => {
+      window.closeModal('submission-modal');
+      await rejectSubmission(id);
+    };
+  }
+
+  const approveBtn = document.getElementById('submission-modal-approve');
+  if (approveBtn) {
+    approveBtn.onclick = async () => {
+      window.closeModal('submission-modal');
+      await approveSubmission(id);
+    };
+  }
+
+  window.openModal('submission-modal');
+};
+
+// ── Edit Submission Modal ───────────────────────────────────────────────────
+window.openEditSubmissionModal = function(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) {
+    console.error('Edit submission: item not found for id', id);
+    return;
+  }
+
+  document.getElementById('edit-sub-id').value = id;
+  document.getElementById('edit-sub-kasiguranin').value = sub.kasiguranin || '';
+  document.getElementById('edit-sub-tagalog').value = sub.tagalog || '';
+  document.getElementById('edit-sub-english').value = sub.english || '';
+  document.getElementById('edit-sub-category').value = sub.category || 'General';
+  document.getElementById('edit-sub-part-of-speech').value = sub.partOfSpeech || '';
+  document.getElementById('edit-sub-meaning-en').value = sub.meaningEnglish || '';
+  document.getElementById('edit-sub-meaning-tl').value = sub.meaningTagalog || '';
+  document.getElementById('edit-sub-ipa').value = sub.ipaNotation || '';
+  document.getElementById('edit-sub-root').value = sub.rootForm || '';
+  document.getElementById('edit-sub-past').value = sub.pastTense || sub.perfectiveForm || '';
+  document.getElementById('edit-sub-present').value = sub.presentTense || sub.imperfectiveForm || '';
+  document.getElementById('edit-sub-future').value = sub.futureTense || sub.contemplativeForm || '';
+  document.getElementById('edit-sub-example').value = sub.exampleSentence || '';
+  document.getElementById('edit-sub-contributor').value = sub.contributorName || 'Anonymous';
+
+  window.openModal('edit-submission-modal');
+};
+
+// ── Delete Submission ───────────────────────────────────────────────────────
+window.deleteSubmission = async function(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+
+  if (!(await confirmDialog({
+    title: 'Delete Word Submission?',
+    body: `Are you sure you want to permanently delete the submission for "${sub.kasiguranin}"? This action cannot be undone.`,
+    confirmLabel: 'Delete',
+    danger: true
+  }))) return;
+
+  try {
+    await deleteDoc(doc(db, "word_submissions", id));
+    await logAudit("submission.delete", { id, word: sub.kasiguranin });
+    window.closeModal('submission-modal');
+    notify(`Deleted submission "${sub.kasiguranin}"`, 'success');
+    submissions = submissions.filter(s => s.id !== id);
+    renderSubmissionsTable();
+    renderOverview();
+  } catch (error) {
+    console.error("Error deleting submission:", error);
+    notify("Failed to delete submission: " + error.message, 'error');
+  }
+};
 
 // ── Approve Submission ──────────────────────────────────────────────────────
 async function approveSubmission(id) {
@@ -2094,13 +2293,13 @@ async function approveSubmission(id) {
       rootForm: (sub.rootForm || sub.kasiguranin).trim(),
       category: sub.category || "General",
       partOfSpeech: sub.partOfSpeech || null,
+      meaningEnglish: (sub.meaningEnglish || "").trim() || null,
+      meaningTagalog: (sub.meaningTagalog || "").trim() || null,
       ipaNotation: (sub.ipaNotation || "").trim(),
-      perfectiveForm: (sub.pastTense || "").trim(),
-      imperfectiveForm: (sub.presentTense || "").trim(),
-      contemplativeForm: (sub.futureTense || "").trim(),
-      // The contributor's example sentence was collected by the in-app submit form, stored on the
-      // submission, and then dropped on the floor at approval -- the one piece of the contribution
-      // that only they could supply.
+      perfectiveForm: (sub.pastTense || sub.perfectiveForm || "").trim(),
+      imperfectiveForm: (sub.presentTense || sub.imperfectiveForm || "").trim(),
+      contemplativeForm: (sub.futureTense || sub.contemplativeForm || "").trim(),
+      neutralForm: (sub.neutralForm || "").trim() || null,
       exampleSentence: (sub.exampleSentence || "").trim(),
       verifiedByAdmin: true,
       approvedAt: Date.now()
@@ -2111,8 +2310,13 @@ async function approveSubmission(id) {
       reviewedAt: Date.now()
     });
 
+    sub.status = 'approved';
+    sub.reviewedAt = Date.now();
+
     await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
     notify(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`, 'success');
+    renderSubmissionsTable();
+    renderOverview();
   } catch (error) {
     console.error("Error approving submission:", error);
     notify("Failed to approve submission: " + error.message, 'error');
@@ -2121,6 +2325,9 @@ async function approveSubmission(id) {
 
 // ── Reject Submission ───────────────────────────────────────────────────────
 async function rejectSubmission(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+
   if (!(await confirmDialog({
     title: 'Reject this submission?',
     body: 'The contributor will not see it in the dictionary. This does not delete their account or their other submissions.',
@@ -2131,10 +2338,15 @@ async function rejectSubmission(id) {
       status: "rejected",
       reviewedAt: Date.now()
     });
-    const sub = submissions.find(s => s.id === id);
+    sub.status = 'rejected';
+    sub.reviewedAt = Date.now();
     await logAudit("submission.reject", { submissionId: id, word: sub ? sub.kasiguranin : "" });
+    notify(`Rejected "${sub.kasiguranin}"`, 'info');
+    renderSubmissionsTable();
+    renderOverview();
   } catch (error) {
     console.error("Error rejecting submission:", error);
+    notify("Error rejecting submission: " + error.message, 'error');
   }
 }
 
@@ -3167,6 +3379,68 @@ function initFormListeners() {
         notify(`Successfully updated "${word}"!`, 'success');
       } catch (error) {
         notify("Error updating word: " + error.message, 'error');
+      }
+    });
+  }
+
+  const editSubForm = document.getElementById('edit-submission-form');
+  if (editSubForm) {
+    editSubForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-sub-id').value;
+      const word = document.getElementById('edit-sub-kasiguranin').value.trim();
+      const tagalog = document.getElementById('edit-sub-tagalog').value.trim();
+      const english = document.getElementById('edit-sub-english').value.trim();
+      const category = document.getElementById('edit-sub-category').value;
+      const partOfSpeech = document.getElementById('edit-sub-part-of-speech').value;
+      const meaningEn = document.getElementById('edit-sub-meaning-en').value.trim();
+      const meaningTl = document.getElementById('edit-sub-meaning-tl').value.trim();
+      const ipa = document.getElementById('edit-sub-ipa').value.trim();
+      const root = document.getElementById('edit-sub-root').value.trim();
+      const past = document.getElementById('edit-sub-past').value.trim();
+      const present = document.getElementById('edit-sub-present').value.trim();
+      const future = document.getElementById('edit-sub-future').value.trim();
+      const example = document.getElementById('edit-sub-example').value.trim();
+      const contributor = document.getElementById('edit-sub-contributor').value.trim();
+
+      if (!word) {
+        notify("Please enter the Kasiguranin word.", 'error');
+        return;
+      }
+
+      try {
+        const updated = {
+          kasiguranin: word,
+          tagalog: tagalog || null,
+          english: english || null,
+          category: category,
+          partOfSpeech: partOfSpeech || null,
+          meaningEnglish: meaningEn || null,
+          meaningTagalog: meaningTl || null,
+          ipaNotation: ipa || null,
+          rootForm: root || word,
+          pastTense: past || null,
+          presentTense: present || null,
+          futureTense: future || null,
+          exampleSentence: example || null,
+          contributorName: contributor || 'Anonymous'
+        };
+
+        await updateDoc(doc(db, "word_submissions", id), updated);
+        await logAudit("submission.update", { id, word });
+
+        const sub = submissions.find(s => s.id === id);
+        if (sub) {
+          Object.assign(sub, updated);
+        }
+
+        closeModal('edit-submission-modal');
+        notify(`Successfully updated submission "${word}"!`, 'success');
+        renderSubmissionsTable();
+        window.openSubmissionModal(id);
+      } catch (error) {
+        console.error("Error updating submission:", error);
+        notify("Error updating submission: " + error.message, 'error');
       }
     });
   }

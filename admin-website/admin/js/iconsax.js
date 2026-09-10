@@ -158,6 +158,10 @@
       'close-circle': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<circle cx="12" cy="12" r="9" fill="' + c + '" opacity="0.35"/>' +
         '<path d="M9 9L15 15M15 9L9 15" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round"/>' +
+      '</svg>',
+      'trash': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M5 7L6.5 20C6.6 20.8 7.3 21.5 8.1 21.5H15.9C16.7 21.5 17.4 20.8 17.5 20L19 7H5Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M3 7H21M10 11V17M14 11V17M9 7V4C9 3.4 9.4 3 10 3H14C14.6 3 15 3.4 15 4V7" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
       '</svg>'
     };
 
