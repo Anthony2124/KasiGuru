@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "25073459164-ic8l7qmtrrf0geon3kr5v7oivii0a4e8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kasiguru",
+            "certificate_hash": "1dc552f3051f943e8408067302f2d208bf1f58cc"
+          }
+        },
+        {
           "client_id": "25073459164-ql61sh1m2k9tuja9cnrf8080mo7ejvrf.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
