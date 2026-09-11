@@ -4212,7 +4212,7 @@ function renderUsersTable() {
     // Actions cell — only show for real accounts that have a uid
     let actionCell = '—';
     if (user.id) {
-      let buttons = `<button type="button" class="btn btn-sm btn-outline btn-view-user" data-uid="${escapeHtml(user.id)}" style="margin-right:6px;" title="View User Details">View</button>`;
+      let buttons = '';
       if (isBanned) {
         if (hasPendingAppeal) {
           buttons += `<button type="button" class="btn btn-sm btn-primary btn-review-appeal" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}" style="margin-right:6px;">Review Appeal</button>`;
@@ -4221,7 +4221,7 @@ function renderUsersTable() {
       } else {
         buttons += `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`;
       }
-      actionCell = buttons;
+      actionCell = buttons || '—';
     }
 
     return `
