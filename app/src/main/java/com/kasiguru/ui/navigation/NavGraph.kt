@@ -96,6 +96,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val banCheckViewModel: BanCheckViewModel = hiltViewModel()
     val banState by banCheckViewModel.banState.collectAsState()
     val isSigningOut by banCheckViewModel.isSigningOut.collectAsState()
+    val isSubmittingAppeal by banCheckViewModel.isSubmittingAppeal.collectAsState()
+    val appealError by banCheckViewModel.appealError.collectAsState()
 
     LaunchedEffect(banState, isSigningOut) {
         if (isSigningOut) return@LaunchedEffect
@@ -605,6 +607,15 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     AccountSuspendedScreen(
                         reason = state.reason,
                         bannedAt = state.bannedAt,
+                        appealText = state.appealText,
+                        appealSubmittedAt = state.appealSubmittedAt,
+                        appealStatus = state.appealStatus,
+                        appealReviewNotes = state.appealReviewNotes,
+                        appealReviewedAt = state.appealReviewedAt,
+                        isSubmittingAppeal = isSubmittingAppeal,
+                        appealError = appealError,
+                        onSubmitAppeal = { text -> banCheckViewModel.submitAppeal(text) },
+                        onClearAppealError = { banCheckViewModel.clearAppealError() },
                         onSignOut = {
                             banCheckViewModel.signOut {
                                 navController.navigate(Screen.Splash.route) {

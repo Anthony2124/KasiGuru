@@ -1029,7 +1029,9 @@ function filteredAuditLogs() {
   return auditLogs.filter(log => {
     if (filterAction) {
       if (filterAction === 'user') {
-        if (!log.action.startsWith('user.') && !log.action.startsWith('user_')) return false;
+        if (!log.action.startsWith('user.') && !log.action.startsWith('user_') && !log.action.startsWith('appeal.')) return false;
+      } else if (filterAction === 'appeal') {
+        if (!log.action.startsWith('appeal.')) return false;
       } else if (!log.action.startsWith(filterAction)) {
         return false;
       }
@@ -1120,7 +1122,7 @@ function renderAuditLogs() {
     const d = log.details || {};
     if (d.displayName || d.uid) {
       const userDisplay = d.displayName ? d.displayName : `UID: ${d.uid}`;
-      const reasonPart = d.reason ? ` — Reason: "${d.reason}"` : '';
+      const reasonPart = d.reason ? ` — Reason: "${d.reason}"` : (d.reviewNotes ? ` — Note: "${d.reviewNotes}"` : (d.note ? ` — Note: "${d.note}"` : ''));
       summary = `User: ${userDisplay}${reasonPart}`;
     } else if (d.word) summary = `Word: ${d.word}`;
     else if (d.title) summary = `Title: ${d.title}`;
@@ -3956,6 +3958,13 @@ function initUsersListener() {
   const usersTableBody = document.getElementById('users-tbody');
   if (usersTableBody) {
     usersTableBody.addEventListener('click', (e) => {
+      const reviewAppealBtn = e.target.closest('.btn-review-appeal');
+      if (reviewAppealBtn) {
+        const uid = reviewAppealBtn.getAttribute('data-uid');
+        const name = reviewAppealBtn.getAttribute('data-name');
+        window.openAppealReview(uid, name);
+        return;
+      }
       const blockBtn = e.target.closest('.btn-block-user');
       if (blockBtn) {
         const uid = blockBtn.getAttribute('data-uid');
@@ -3969,6 +3978,17 @@ function initUsersListener() {
         const name = unblockBtn.getAttribute('data-name');
         window.unblockUser(uid, name);
         return;
+      }
+      const viewBtn = e.target.closest('.btn-view-user');
+      if (viewBtn) {
+        const uid = viewBtn.getAttribute('data-uid');
+        window.openUserDetails(uid);
+        return;
+      }
+      const row = e.target.closest('.user-row-clickable');
+      if (row && !e.target.closest('button') && !e.target.closest('a')) {
+        const uid = row.getAttribute('data-uid');
+        if (uid) window.openUserDetails(uid);
       }
     });
   }
@@ -4103,6 +4123,11 @@ function renderUsersTable() {
     registeredUsers = registeredUsers.filter(u => bansMap.has(u.id));
   } else if (statusF === 'active') {
     registeredUsers = registeredUsers.filter(u => !bansMap.has(u.id));
+  } else if (statusF === 'appeals') {
+    registeredUsers = registeredUsers.filter(u => {
+      const ban = bansMap.get(u.id);
+      return ban && ban.appealStatus === 'pending';
+    });
   }
 
   if (countEl) {
@@ -4119,6 +4144,8 @@ function renderUsersTable() {
     const streak = user.currentStreak || 0;
     const isBanned = bansMap.has(user.id);
     const banDoc   = bansMap.get(user.id) || {};
+    const hasPendingAppeal = isBanned && banDoc.appealStatus === 'pending';
+    const hasRejectedAppeal = isBanned && banDoc.appealStatus === 'rejected';
 
     // Resolve email
     const resolvedEmail = (user.email && user.email.includes('@'))
@@ -4135,7 +4162,24 @@ function renderUsersTable() {
     if (!displayName && resolvedEmail) displayName = resolvedEmail.split('@')[0];
     if (!displayName) displayName = 'Registered User';
 
-    const userLabel    = `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
+    let appealBadge = '';
+    if (hasPendingAppeal) {
+      appealBadge = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="User has an appeal waiting for review"><iconsax-icon name="notification" type="bulk" size="12" color="#b45309"></iconsax-icon> Appeal Pending</span>`;
+    }
+
+    const initial = (displayName[0] || 'U').toUpperCase();
+    const userLabel = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="user-avatar-sm">${escapeHtml(initial)}</div>
+        <div>
+          <div style="font-weight:700; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+            <span>${escapeHtml(displayName)}</span>
+            ${appealBadge}
+          </div>
+          <div style="color:var(--muted); font-size:0.75rem; font-family:monospace;">${escapeHtml(user.id ? user.id.slice(0, 10) + '…' : '—')}</div>
+        </div>
+      </div>
+    `;
     const emailDisplay = resolvedEmail ? escapeHtml(resolvedEmail) : `<span style="color:var(--muted);">—</span>`;
 
     // Format date
@@ -4152,19 +4196,36 @@ function renderUsersTable() {
     const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
 
     // Status cell
-    const statusCell = isBanned
-      ? `<span class="badge badge-rejected" title="${escapeHtml(banDoc.reason || '')}">Blocked</span>`
-      : `<span class="badge badge-approved">Active</span>`;
+    let statusCell = '';
+    if (isBanned) {
+      if (hasPendingAppeal) {
+        statusCell = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="Appeal pending review"><iconsax-icon name="notification" type="bulk" size="12" color="#b45309"></iconsax-icon> Appeal Pending</span>`;
+      } else if (hasRejectedAppeal) {
+        statusCell = `<span class="badge badge-rejected" title="Appeal rejected: ${escapeHtml(banDoc.appealReviewNotes || '')}">Blocked (Appeal Declined)</span>`;
+      } else {
+        statusCell = `<span class="badge badge-rejected" title="${escapeHtml(banDoc.reason || '')}">Blocked</span>`;
+      }
+    } else {
+      statusCell = `<span class="badge badge-approved">Active</span>`;
+    }
 
     // Actions cell — only show for real accounts that have a uid
-    const actionCell = user.id
-      ? isBanned
-        ? `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`
-        : `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`
-      : '—';
+    let actionCell = '—';
+    if (user.id) {
+      let buttons = `<button type="button" class="btn btn-sm btn-outline btn-view-user" data-uid="${escapeHtml(user.id)}" style="margin-right:6px;" title="View User Details">View</button>`;
+      if (isBanned) {
+        if (hasPendingAppeal) {
+          buttons += `<button type="button" class="btn btn-sm btn-primary btn-review-appeal" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}" style="margin-right:6px;">Review Appeal</button>`;
+        }
+        buttons += `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`;
+      } else {
+        buttons += `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`;
+      }
+      actionCell = buttons;
+    }
 
     return `
-      <tr>
+      <tr class="user-row-clickable" data-uid="${escapeHtml(user.id)}" title="Click to view details">
         <td>${userLabel}</td>
         <td style="color:var(--text); font-size:0.875rem;">${emailDisplay}</td>
         <td style="color:var(--muted); font-size:0.875rem; white-space:nowrap;">${escapeHtml(registeredDate)}</td>
@@ -4176,6 +4237,8 @@ function renderUsersTable() {
       </tr>
     `;
   }).join('');
+
+  updateAppealsBadge();
 }
 
 // ── Bans Listener ────────────────────────────────────────────────────────────
@@ -4187,6 +4250,7 @@ function initBansListener() {
         if (d.data().isBanned) bansMap.set(d.id, { id: d.id, ...d.data() });
       });
       renderUsersTable();
+      updateAppealsBadge();
     }, (err) => {
       console.warn('Bans listener error:', err);
     });
@@ -4195,6 +4259,236 @@ function initBansListener() {
     console.error('Bans init error:', e);
   }
 }
+
+// ── Appeals Notification & Filter Helper ────────────────────────────────────
+function updateAppealsBadge() {
+  let pendingAppealsCount = 0;
+  bansMap.forEach((ban) => {
+    if (ban && ban.isBanned && ban.appealStatus === 'pending') {
+      pendingAppealsCount++;
+    }
+  });
+
+  // Sidebar badge next to "Users"
+  const navUsersCount = document.getElementById('nav-users-count');
+  if (navUsersCount) {
+    navUsersCount.textContent = pendingAppealsCount;
+    navUsersCount.hidden = pendingAppealsCount === 0;
+  }
+
+  // Users tab banner alert
+  const appealsAlert = document.getElementById('users-appeals-alert');
+  const appealsAlertCount = document.getElementById('users-appeals-alert-count');
+  if (appealsAlert) {
+    if (pendingAppealsCount > 0) {
+      appealsAlert.style.display = 'flex';
+      if (appealsAlertCount) {
+        appealsAlertCount.textContent = `${pendingAppealsCount} user appeal${pendingAppealsCount === 1 ? '' : 's'}`;
+      }
+    } else {
+      appealsAlert.style.display = 'none';
+    }
+  }
+}
+
+window.filterToAppeals = function() {
+  const filterSelect = document.getElementById('filter-users-status');
+  if (filterSelect) {
+    filterSelect.value = 'appeals';
+    renderUsersTable();
+  }
+};
+
+// ── User Account Details Modal ──────────────────────────────────────────────
+window.openUserDetails = async function(uid) {
+  if (!uid) return;
+  const modal = document.getElementById('user-details-modal');
+  const body = document.getElementById('user-modal-body');
+  const actionsBox = document.getElementById('user-modal-action-buttons');
+  if (!modal || !body) return;
+
+  // Show loading skeleton while loading user progress
+  body.innerHTML = `
+    <div style="text-align:center; padding:2.5rem; color:var(--muted);">
+      <iconsax-icon name="user" type="bulk" size="36" color="var(--violet)"></iconsax-icon>
+      <p style="margin-top:12px; font-weight:600;">Loading user details&hellip;</p>
+    </div>
+  `;
+  if (actionsBox) actionsBox.innerHTML = '';
+  openModal('user-details-modal');
+
+  // Find cached user
+  const user = usersList.find(u => u.id === uid) || { id: uid };
+  let progressData = {};
+  try {
+    const pDoc = await getDoc(doc(db, 'users', uid, 'progress', 'main'));
+    if (pDoc.exists()) {
+      progressData = pDoc.data() || {};
+    }
+  } catch (e) {
+    console.warn('Could not load user progress in details modal:', e);
+  }
+
+  const banDoc = bansMap.get(uid);
+  const isBanned = Boolean(banDoc && banDoc.isBanned);
+  const hasPendingAppeal = Boolean(isBanned && banDoc.appealStatus === 'pending');
+  const hasRejectedAppeal = Boolean(isBanned && banDoc.appealStatus === 'rejected');
+
+  // Email resolution
+  const resolvedEmail = (progressData.email || user.email || '').trim();
+
+  // Display name resolution
+  let displayName = (progressData.fullName || progressData.userName || user.displayName || user.fullName || user.userName || '').trim();
+  if (['google account','google'].includes(displayName.toLowerCase()) || displayName === resolvedEmail) {
+    displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
+  }
+  if (!displayName && resolvedEmail) displayName = resolvedEmail.split('@')[0];
+  if (!displayName) displayName = 'Registered User';
+
+  const xp = progressData.totalXp ?? user.totalXp ?? 0;
+  const streak = progressData.currentStreak ?? user.currentStreak ?? 0;
+  const badge = progressData.titleBadge || user.titleBadge || 'Kasiguranin Apprentice';
+
+  const dateValue = progressData.registeredAt || user.registeredAt || progressData.createdAt || user.createdAt || user.joinedAt || user.updatedAt;
+  const dateMs = toMillis(dateValue);
+  let registeredDate = '—';
+  if (dateMs > 0) {
+    registeredDate = new Date(dateMs).toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' });
+  }
+
+  // Status tag
+  let statusBadgeHtml = `<span class="badge badge-approved" style="font-size:0.8rem; padding:4px 10px;">Active Account</span>`;
+  if (isBanned) {
+    if (hasPendingAppeal) {
+      statusBadgeHtml = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; font-size:0.8rem; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;"><iconsax-icon name="notification" type="bulk" size="14" color="#b45309"></iconsax-icon> Suspended (Appeal Pending)</span>`;
+    } else if (hasRejectedAppeal) {
+      statusBadgeHtml = `<span class="badge badge-rejected" style="font-size:0.8rem; padding:4px 10px;">Suspended (Appeal Declined)</span>`;
+    } else {
+      statusBadgeHtml = `<span class="badge badge-rejected" style="font-size:0.8rem; padding:4px 10px;">Suspended</span>`;
+    }
+  }
+
+  // Suspension details card (if banned)
+  let suspensionSectionHtml = '';
+  if (isBanned) {
+    const bannedDateStr = banDoc.bannedAt ? new Date(banDoc.bannedAt).toLocaleString() : 'Unknown';
+    suspensionSectionHtml = `
+      <div style="background:var(--sunken); border-left:4px solid var(--status-rejected); border-radius:var(--r-ctl); padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:700; color:var(--status-rejected); font-size:0.875rem;">Account Suspension Reason</span>
+          <small style="color:var(--muted); font-size:0.75rem;">Suspended on ${escapeHtml(bannedDateStr)} by ${escapeHtml(banDoc.bannedBy || 'Admin')}</small>
+        </div>
+        <p style="margin:0; font-size:0.875rem; color:var(--ink); line-height:1.5;">${escapeHtml(banDoc.reason || 'No reason specified.')}</p>
+      </div>
+    `;
+  }
+
+  // Appeal Section
+  let appealSectionHtml = '';
+  if (hasPendingAppeal) {
+    const appealDateStr = banDoc.appealSubmittedAt ? new Date(banDoc.appealSubmittedAt).toLocaleString() : 'Unknown';
+    appealSectionHtml = `
+      <div class="appeal-banner-pending">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; color:#92400e; font-weight:700; font-size:0.9rem;">
+            <iconsax-icon name="notification" type="bulk" size="20" color="#d97706"></iconsax-icon>
+            <span>Appeal Awaiting Review</span>
+          </div>
+          <small style="color:#b45309; font-size:0.75rem;">Submitted ${escapeHtml(appealDateStr)}</small>
+        </div>
+        <div style="background:white; border:1px solid #fde68a; border-radius:var(--r-ctl); padding:12px; margin-top:4px;">
+          <div style="font-size:0.75rem; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.04em;">User Statement:</div>
+          <blockquote style="margin:0; font-size:0.875rem; color:#1f2937; line-height:1.6; font-style:italic; white-space:pre-wrap;">${escapeHtml(banDoc.appealText || 'No statement provided.')}</blockquote>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button type="button" class="btn btn-sm btn-danger" onclick="closeModal('user-details-modal'); window.rejectAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Decline Appeal</button>
+          <button type="button" class="btn btn-sm btn-primary" onclick="closeModal('user-details-modal'); window.approveAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Approve Appeal &amp; Unblock</button>
+        </div>
+      </div>
+    `;
+  } else if (hasRejectedAppeal) {
+    const reviewDateStr = banDoc.appealReviewedAt ? new Date(banDoc.appealReviewedAt).toLocaleString() : 'Unknown';
+    appealSectionHtml = `
+      <div class="appeal-banner-rejected">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <span style="font-weight:700; color:var(--status-rejected); font-size:0.875rem;">Appeal Declined</span>
+          <small style="color:var(--muted); font-size:0.75rem;">Reviewed ${escapeHtml(reviewDateStr)} by ${escapeHtml(banDoc.appealReviewedBy || 'Admin')}</small>
+        </div>
+        ${banDoc.appealText ? `<div style="font-size:0.825rem; color:var(--muted); font-style:italic;">User statement: "${escapeHtml(banDoc.appealText)}"</div>` : ''}
+        ${banDoc.appealReviewNotes ? `<div style="font-size:0.875rem; color:var(--ink); margin-top:4px;"><strong>Feedback given:</strong> ${escapeHtml(banDoc.appealReviewNotes)}</div>` : ''}
+      </div>
+    `;
+  }
+
+  const initial = (displayName[0] || 'U').toUpperCase();
+
+  body.innerHTML = `
+    <!-- Profile Header Card -->
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--sunken); border-radius:var(--r-ctl); padding:16px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:52px; height:52px; border-radius:50%; background:var(--violet); color:white; display:flex; align-items:center; justify-content:center; font-size:1.35rem; font-weight:800; flex-shrink:0; box-shadow:0 4px 12px rgba(91,76,219,0.25);">
+          ${escapeHtml(initial)}
+        </div>
+        <div>
+          <div style="font-size:1.15rem; font-weight:800; color:var(--ink);">${escapeHtml(displayName)}</div>
+          <div style="font-size:0.875rem; color:var(--muted); margin-top:2px;">${escapeHtml(resolvedEmail || 'No email associated')}</div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+            <span style="font-size:0.75rem; font-family:monospace; background:var(--surface); border:1px solid var(--border); padding:2px 6px; border-radius:4px; color:var(--text);">UID: ${escapeHtml(uid)}</span>
+            <button type="button" class="btn btn-xs btn-outline" style="font-size:0.7rem; padding:2px 6px;" onclick="navigator.clipboard.writeText('${escapeHtml(uid)}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500);">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        ${statusBadgeHtml}
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px;">
+      <div class="user-details-stat-card">
+        <span class="user-details-stat-label">Total XP</span>
+        <span class="user-details-stat-val" style="color:var(--violet);">${xp.toLocaleString()} XP</span>
+      </div>
+      <div class="user-details-stat-card">
+        <span class="user-details-stat-label">Current Streak</span>
+        <span class="user-details-stat-val" style="color:#d97706; display:flex; align-items:center; gap:4px;">
+          <iconsax-icon name="fire" type="bulk" size="18" color="#d97706"></iconsax-icon> ${streak} ${streak === 1 ? 'day' : 'days'}
+        </span>
+      </div>
+      <div class="user-details-stat-card">
+        <span class="user-details-stat-label">Level Badge</span>
+        <span class="user-details-stat-val" style="font-size:0.9rem; font-weight:700;">${escapeHtml(badge)}</span>
+      </div>
+      <div class="user-details-stat-card">
+        <span class="user-details-stat-label">Joined</span>
+        <span class="user-details-stat-val" style="font-size:0.825rem; font-weight:600; color:var(--muted);">${escapeHtml(registeredDate)}</span>
+      </div>
+    </div>
+
+    ${suspensionSectionHtml}
+    ${appealSectionHtml}
+  `;
+
+  // Modal Actions
+  if (actionsBox) {
+    let actionButtonsHtml = '';
+    if (hasPendingAppeal) {
+      actionButtonsHtml = `
+        <button type="button" class="btn btn-danger" onclick="closeModal('user-details-modal'); window.rejectAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Decline Appeal</button>
+        <button type="button" class="btn btn-primary" onclick="closeModal('user-details-modal'); window.approveAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Approve Appeal &amp; Unblock</button>
+      `;
+    } else if (isBanned) {
+      actionButtonsHtml = `
+        <button type="button" class="btn btn-outline" onclick="closeModal('user-details-modal'); window.unblockUser('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Unblock User</button>
+      `;
+    } else {
+      actionButtonsHtml = `
+        <button type="button" class="btn btn-danger" onclick="closeModal('user-details-modal'); window.blockUser('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Block User</button>
+      `;
+    }
+    actionsBox.innerHTML = actionButtonsHtml;
+  }
+};
 
 // ── Block User ────────────────────────────────────────────────────────────────
 window.blockUser = async function(uid, displayName) {
@@ -4296,6 +4590,146 @@ window.unblockUser = async function(uid, displayName) {
       errMsg = 'Permission denied. Make sure firestore.rules has been published to Firebase with user_bans permissions.';
     }
     notify('Failed to unblock user: ' + errMsg, 'danger');
+  }
+};
+
+// ── Review Appeal ─────────────────────────────────────────────────────────────
+window.openAppealReview = function(uid, displayName) {
+  const ban = bansMap.get(uid);
+  if (!ban) {
+    notify('Ban record not found for this user.', 'danger');
+    return;
+  }
+  const nameToDisplay = displayName || 'User';
+  const modal = document.getElementById('appeal-review-modal');
+  const body = document.getElementById('appeal-modal-body');
+  const approveBtn = document.getElementById('appeal-modal-approve-btn');
+  const rejectBtn = document.getElementById('appeal-modal-reject-btn');
+  if (!modal || !body) return;
+
+  const banDateStr = ban.bannedAt ? new Date(ban.bannedAt).toLocaleString() : 'Unknown';
+  const appealDateStr = ban.appealSubmittedAt ? new Date(ban.appealSubmittedAt).toLocaleString() : 'Unknown';
+
+  body.innerHTML = `
+    <div style="background:var(--bg-subtle, #f8f9fa); border:1px solid var(--border, #e9ecef); border-radius:8px; padding:12px 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <strong style="font-size:1rem;">${escapeHtml(nameToDisplay)}</strong>
+        <span style="font-size:0.75rem; color:var(--muted); font-family:monospace;">${escapeHtml(uid)}</span>
+      </div>
+      <div style="font-size:0.85rem; color:var(--muted); margin-bottom:4px;">
+        <strong>Suspension Reason:</strong> ${escapeHtml(ban.reason || 'None specified')}
+      </div>
+      <div style="font-size:0.8rem; color:var(--muted);">
+        Suspended on: ${escapeHtml(banDateStr)} ${ban.bannedBy ? `by ${escapeHtml(ban.bannedBy)}` : ''}
+      </div>
+    </div>
+
+    <div>
+      <label style="font-weight:700; font-size:0.875rem; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+        <iconsax-icon name="document-text" type="bulk" size="16" color="var(--violet)"></iconsax-icon>
+        User Appeal Statement
+      </label>
+      <div style="background:#fff; border:1px solid var(--border, #ced4da); border-radius:8px; padding:14px; font-size:0.925rem; line-height:1.5; color:var(--text); white-space:pre-wrap; max-height:200px; overflow-y:auto;">
+        ${escapeHtml(ban.appealText || 'No statement provided.')}
+      </div>
+      <small style="color:var(--muted); display:block; margin-top:4px;">Submitted: ${escapeHtml(appealDateStr)}</small>
+    </div>
+  `;
+
+  approveBtn.onclick = async () => {
+    closeModal('appeal-review-modal');
+    await window.approveAppeal(uid, nameToDisplay);
+  };
+
+  rejectBtn.onclick = async () => {
+    closeModal('appeal-review-modal');
+    await window.rejectAppeal(uid, nameToDisplay);
+  };
+
+  openModal('appeal-review-modal');
+};
+
+// ── Approve Appeal & Unblock ──────────────────────────────────────────────────
+window.approveAppeal = async function(uid, displayName) {
+  const nameToDisplay = displayName || 'User';
+  const confirmed = await confirmDialog({
+    title: `Approve Appeal & Unblock ${nameToDisplay}?`,
+    body: `<p>This will approve the appeal and restore the user's account immediately. The user will be automatically redirected to KasiGuru without having to sign out.</p>`,
+    confirmLabel: 'Approve & Unblock',
+    danger: false
+  });
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(doc(db, 'user_bans', uid));
+    await logAudit('appeal.approve', { uid, displayName: nameToDisplay, note: 'Appeal approved; user unblocked' });
+    notify(`Appeal approved! ${nameToDisplay} has been unblocked.`, 'success');
+  } catch (e) {
+    console.error('Approve appeal failed:', e);
+    notify('Failed to approve appeal: ' + (e.message || String(e)), 'danger');
+  }
+};
+
+// ── Reject Appeal ─────────────────────────────────────────────────────────────
+window.rejectAppeal = async function(uid, displayName) {
+  const nameToDisplay = displayName || 'User';
+
+  let feedbackValue = '';
+  const host = dialogHost();
+  host.querySelector('#confirm-dialog-title').textContent = `Decline Appeal from ${nameToDisplay}?`;
+  const bodyEl = host.querySelector('#confirm-dialog-body');
+  bodyEl.innerHTML =
+    `<p style="margin-bottom:10px;">The account will remain suspended. The user will see your feedback message on their Account Suspended screen.</p>` +
+    `<label for="reject-feedback-input" style="font-weight:600; display:block; margin-bottom:6px;">Moderator Feedback <span style="color:var(--status-rejected);">*</span></label>` +
+    `<textarea id="reject-feedback-input" class="form-control" rows="3" placeholder="e.g. Your appeal was reviewed, but the suspension stands due to repeated violations." style="width:100%; resize:vertical;"></textarea>`;
+
+  const okBtn = host.querySelector('[data-act="ok"]');
+  okBtn.textContent = 'Decline appeal';
+  okBtn.className = 'btn btn-danger';
+
+  const confirmed = await new Promise((resolve) => {
+    function close(result) {
+      feedbackValue = (document.getElementById('reject-feedback-input')?.value || '').trim();
+      host.classList.remove('active');
+      host.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+      okBtn.onclick = null;
+      host.querySelector('[data-act="cancel"]').onclick = null;
+      resolve(result);
+    }
+    function onBackdrop(e) { if (e.target === host) close(false); }
+    function onKey(e) { if (e.key === 'Escape') close(false); }
+    okBtn.onclick = () => {
+      const fb = (document.getElementById('reject-feedback-input')?.value || '').trim();
+      if (!fb) {
+        document.getElementById('reject-feedback-input')?.classList.add('input-error');
+        document.getElementById('reject-feedback-input')?.focus();
+        return;
+      }
+      close(true);
+    };
+    host.querySelector('[data-act="cancel"]').onclick = () => close(false);
+    host.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    host.classList.add('active');
+    setTimeout(() => document.getElementById('reject-feedback-input')?.focus(), 80);
+  });
+
+  if (!confirmed || !feedbackValue) return;
+
+  try {
+    const actor = (auth.currentUser && auth.currentUser.email) || 'admin';
+    await updateDoc(doc(db, 'user_bans', uid), {
+      appealStatus: 'rejected',
+      appealReviewNotes: feedbackValue,
+      appealReviewedAt: Date.now(),
+      appealReviewedBy: actor
+    });
+    await logAudit('appeal.reject', { uid, displayName: nameToDisplay, reviewNotes: feedbackValue });
+    notify(`Appeal declined for ${nameToDisplay}.`, 'info');
+  } catch (e) {
+    console.error('Reject appeal failed:', e);
+    notify('Failed to decline appeal: ' + (e.message || String(e)), 'danger');
   }
 };
 

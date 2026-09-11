@@ -399,14 +399,37 @@ service cloud.firestore {
       allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Validation for suspended users submitting an appeal.
+    // The user cannot unban themselves, tamper with ban reasons/timestamps,
+    // or forge review decisions, but can submit an appeal statement.
+    function isValidBanAppealUpdate() {
+      let r = resource.data;
+      let nr = request.resource.data;
+      return r.isBanned == true
+        && nr.isBanned == true
+        && nr.reason == r.reason
+        && nr.bannedAt == r.bannedAt
+        && (!('bannedBy' in r) || nr.bannedBy == r.bannedBy)
+        && nr.appealText is string
+        && nr.appealText.size() >= 5
+        && nr.appealText.size() <= 2000
+        && nr.appealStatus == 'pending'
+        && nr.appealSubmittedAt is int
+        && (!('appealReviewNotes' in r) || nr.appealReviewNotes == r.appealReviewNotes)
+        && (!('appealReviewedAt' in r) || nr.appealReviewedAt == r.appealReviewedAt)
+        && (!('appealReviewNotes' in nr) || ('appealReviewNotes' in r));
+    }
+
     // User ban records. Written by admins (block/unblock); the banned user's own
     // app can read its own document to show the "Account Suspended" screen without
-    // needing a Cloud Function. No one else can read or write bans:
+    // needing a Cloud Function. Users may submit appeals by updating appeal fields.
+    // No one else can read or write bans:
     //   - Other users cannot enumerate who is banned.
     //   - Banned users cannot delete their own ban record (admin-only delete).
     match /user_bans/{userId} {
       allow read: if isAdmin() || isOwner(userId);
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && isValidBanAppealUpdate());
     }
 
     // Deny everything else by default (explicit allow rules only).

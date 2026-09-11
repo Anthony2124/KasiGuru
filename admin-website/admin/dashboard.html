@@ -86,6 +86,7 @@
         <nav>
           <button data-tab="tab-users" onclick="window.switchTab('tab-users')">
             <iconsax-icon name="profile-2user" type="bulk" size="18" color="currentColor"></iconsax-icon> Users
+            <span class="nav-count" id="nav-users-count" hidden>0</span>
           </button>
           <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
             <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Admin logs
@@ -534,6 +535,15 @@
         </div>
       </div>
 
+      <!-- Appeal Alert Banner if there are appeals pending -->
+      <div id="users-appeals-alert" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:var(--r-ctl); padding:12px 18px; margin-bottom:16px; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; align-items:center; gap:12px; color:#92400e; font-size:0.875rem; font-weight:600;">
+          <iconsax-icon name="notification" type="bulk" size="22" color="#d97706"></iconsax-icon>
+          <span><strong>Action required:</strong> <span id="users-appeals-alert-count">1 user appeal</span> pending review.</span>
+        </div>
+        <button type="button" class="btn btn-sm" style="background:#d97706; color:#fff; font-weight:700; border:none; cursor:pointer;" onclick="window.filterToAppeals()">View Appeals</button>
+      </div>
+
       <div class="panel">
         <div class="toolbar">
           <div class="input-icon-wrap" style="flex:1; min-width:220px;">
@@ -546,6 +556,7 @@
             <option value="">All users</option>
             <option value="active">Active only</option>
             <option value="banned">Blocked only</option>
+            <option value="appeals">Appeals pending</option>
           </select>
         </div>
 
@@ -609,6 +620,7 @@
           <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
             <option value="">All actions</option>
             <option value="user">User management</option>
+            <option value="appeal">Appeals</option>
             <option value="vocabulary">Vocabulary</option>
             <option value="submission">Submissions</option>
             <option value="literature">Literature</option>
@@ -1445,6 +1457,51 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
       </div>
       <div class="modal-actions" style="justify-content:flex-end;">
         <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Review Ban Appeal -->
+  <div id="appeal-review-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:580px;">
+      <div class="modal-header">
+        <h2 id="appeal-modal-title" style="display:flex; align-items:center; gap:8px;">
+          <iconsax-icon name="shield-tick" type="bulk" size="22" color="var(--violet)"></iconsax-icon>
+          Review Account Appeal
+        </h2>
+        <button class="close-btn" onclick="closeModal('appeal-review-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div id="appeal-modal-body" style="padding:16px 0; display:flex; flex-direction:column; gap:16px;">
+        <!-- Filled dynamically by window.openAppealReview -->
+      </div>
+      <div class="modal-actions" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('appeal-review-modal')">Close</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-danger" id="appeal-modal-reject-btn">Reject appeal</button>
+          <button type="button" class="btn btn-primary" id="appeal-modal-approve-btn">Approve &amp; unblock</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: User Account Details -->
+  <div id="user-details-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:620px;">
+      <div class="modal-header">
+        <h2 id="user-modal-title" style="display:flex; align-items:center; gap:8px;">
+          <iconsax-icon name="profile-circle" type="bulk" size="22" color="var(--violet)"></iconsax-icon>
+          User Details
+        </h2>
+        <button class="close-btn" onclick="closeModal('user-details-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div id="user-modal-body" style="padding:10px 0; display:flex; flex-direction:column; gap:16px;">
+        <!-- Filled dynamically by window.openUserDetails -->
+      </div>
+      <div id="user-modal-actions" class="modal-actions" style="justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px solid var(--hair); padding-top:14px; margin-top:16px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('user-details-modal')">Close</button>
+        <div id="user-modal-action-buttons" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <!-- Dynamically populated buttons (Block/Unblock/Review) -->
+        </div>
       </div>
     </div>
   </div>

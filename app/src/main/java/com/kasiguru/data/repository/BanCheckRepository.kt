@@ -19,10 +19,23 @@ sealed interface BanStatus {
     /**
      * User has an active ban.
      *
-     * @param reason   The human-readable reason the admin provided.
-     * @param bannedAt Epoch milliseconds when the ban was placed.
+     * @param reason              The human-readable reason the admin provided.
+     * @param bannedAt            Epoch milliseconds when the ban was placed.
+     * @param appealText          The user's appeal statement, if submitted.
+     * @param appealSubmittedAt   Epoch milliseconds when the appeal was submitted.
+     * @param appealStatus        Status of the appeal: "pending", "rejected", etc.
+     * @param appealReviewNotes   Moderator's notes or reason upon review.
+     * @param appealReviewedAt    Epoch milliseconds when the appeal was reviewed.
      */
-    data class Banned(val reason: String, val bannedAt: Long) : BanStatus
+    data class Banned(
+        val reason: String,
+        val bannedAt: Long,
+        val appealText: String? = null,
+        val appealSubmittedAt: Long? = null,
+        val appealStatus: String? = null,
+        val appealReviewNotes: String? = null,
+        val appealReviewedAt: Long? = null
+    ) : BanStatus
 }
 
 /**
@@ -65,7 +78,23 @@ class BanCheckRepository @Inject constructor(
                 val reason = snap.getString("reason")?.takeIf { it.isNotBlank() }
                     ?: "Your account has been suspended. Please contact support."
                 val bannedAt = snap.getLong("bannedAt") ?: 0L
-                trySend(BanStatus.Banned(reason = reason, bannedAt = bannedAt))
+                val appealText = snap.getString("appealText")
+                val appealSubmittedAt = snap.getLong("appealSubmittedAt")
+                val appealStatus = snap.getString("appealStatus")
+                val appealReviewNotes = snap.getString("appealReviewNotes")
+                val appealReviewedAt = snap.getLong("appealReviewedAt")
+
+                trySend(
+                    BanStatus.Banned(
+                        reason = reason,
+                        bannedAt = bannedAt,
+                        appealText = appealText,
+                        appealSubmittedAt = appealSubmittedAt,
+                        appealStatus = appealStatus,
+                        appealReviewNotes = appealReviewNotes,
+                        appealReviewedAt = appealReviewedAt
+                    )
+                )
             }
 
         awaitClose { listener.remove() }
@@ -83,10 +112,43 @@ class BanCheckRepository @Inject constructor(
             val reason = snap.getString("reason")?.takeIf { it.isNotBlank() }
                 ?: "Your account has been suspended. Please contact support."
             val bannedAt = snap.getLong("bannedAt") ?: 0L
-            BanStatus.Banned(reason = reason, bannedAt = bannedAt)
+            val appealText = snap.getString("appealText")
+            val appealSubmittedAt = snap.getLong("appealSubmittedAt")
+            val appealStatus = snap.getString("appealStatus")
+            val appealReviewNotes = snap.getString("appealReviewNotes")
+            val appealReviewedAt = snap.getLong("appealReviewedAt")
+
+            BanStatus.Banned(
+                reason = reason,
+                bannedAt = bannedAt,
+                appealText = appealText,
+                appealSubmittedAt = appealSubmittedAt,
+                appealStatus = appealStatus,
+                appealReviewNotes = appealReviewNotes,
+                appealReviewedAt = appealReviewedAt
+            )
         } catch (e: Exception) {
             Log.w("BanCheckRepository", "Ban check failed — treating as clear", e)
             BanStatus.Clear
+        }
+    }
+
+    /**
+     * Submits an appeal on behalf of the suspended user.
+     * Updates `user_bans/{uid}` with appealText and sets status to "pending".
+     */
+    suspend fun submitAppeal(uid: String, appealText: String): Result<Unit> {
+        return try {
+            val updates = mapOf(
+                "appealText" to appealText.trim(),
+                "appealSubmittedAt" to System.currentTimeMillis(),
+                "appealStatus" to "pending"
+            )
+            firestore.collection("user_bans").document(uid).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("BanCheckRepository", "Failed to submit appeal for $uid", e)
+            Result.failure(e)
         }
     }
 }
