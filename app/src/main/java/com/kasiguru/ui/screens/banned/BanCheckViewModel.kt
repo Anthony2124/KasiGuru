@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.BanCheckRepository
 import com.kasiguru.data.repository.BanStatus
+import com.kasiguru.data.repository.UserDataResetManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ sealed interface BanState {
 @HiltViewModel
 class BanCheckViewModel @Inject constructor(
     private val banCheckRepository: BanCheckRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userDataResetManager: UserDataResetManager
 ) : ViewModel() {
 
     private val _banState = MutableStateFlow<BanState>(BanState.Loading)
@@ -59,12 +61,27 @@ class BanCheckViewModel @Inject constructor(
         }
     }
 
-    /** Signs the user out to a fresh anonymous session so they can still use the public features. */
-    fun signOut() {
+    /**
+     * Signs the user out of the suspended account.
+     * Clears all local user progress, profile, and session data so the banned
+     * account's info does not remain in local storage, and establishes a clean
+     * anonymous guest session.
+     */
+    fun signOut(onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             _isSigningOut.value = true
-            authRepository.signOutToAnonymous()
-            _isSigningOut.value = false
+            try {
+                // Wipe local Room tables, DataStore preferences, and sync cache.
+                // uploadPendingChanges = false so we don't attempt to push data to the banned account.
+                userDataResetManager.resetAllLocalUserData(uploadPendingChanges = false)
+                // Sign out of Firebase and start a clean anonymous session
+                authRepository.signOutToAnonymous()
+            } catch (e: Exception) {
+                android.util.Log.e("BanCheckViewModel", "Failed to reset data on suspended sign out", e)
+            } finally {
+                _isSigningOut.value = false
+                onComplete()
+            }
         }
     }
 }

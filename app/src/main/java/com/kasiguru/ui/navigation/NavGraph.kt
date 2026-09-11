@@ -97,14 +97,15 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val banState by banCheckViewModel.banState.collectAsState()
     val isSigningOut by banCheckViewModel.isSigningOut.collectAsState()
 
-    LaunchedEffect(banState) {
+    LaunchedEffect(banState, isSigningOut) {
+        if (isSigningOut) return@LaunchedEffect
         if (banState is BanState.Banned && currentRoute != Screen.AccountSuspended.route) {
             navController.navigate(Screen.AccountSuspended.route) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
         } else if (banState is BanState.Clear && currentRoute == Screen.AccountSuspended.route) {
-            navController.navigate(Screen.Learn.route) {
+            navController.navigate(Screen.Splash.route) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
@@ -605,10 +606,11 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                         reason = state.reason,
                         bannedAt = state.bannedAt,
                         onSignOut = {
-                            banCheckViewModel.signOut()
-                            navController.navigate(Screen.Splash.route) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
+                            banCheckViewModel.signOut {
+                                navController.navigate(Screen.Splash.route) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         },
                         isSigningOut = isSigningOut
