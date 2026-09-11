@@ -1,4 +1,4 @@
-package com.kasiguru.ui.navigation
+﻿package com.kasiguru.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -64,6 +64,9 @@ import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyDetailScreen
 import com.kasiguru.ui.screens.vocabulary.VocabularyScreen
+import com.kasiguru.ui.screens.banned.AccountSuspendedScreen
+import com.kasiguru.ui.screens.banned.BanCheckViewModel
+import com.kasiguru.ui.screens.banned.BanState
 import com.kasiguru.util.Constants
 
 @Composable
@@ -84,6 +87,23 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val pendingStreakActivation by streakCelebrationViewModel.pendingStreakActivation.collectAsState()
     pendingStreakActivation?.let { streakDays ->
         StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
+    }
+
+    // ── Ban gate ─────────────────────────────────────────────────────────────────
+    // One-shot check at startup. If the current signed-in account has an active ban
+    // written by an admin, we redirect immediately to AccountSuspendedScreen and
+    // clear the back stack so the user cannot navigate away from it.
+    val banCheckViewModel: BanCheckViewModel = hiltViewModel()
+    val banState by banCheckViewModel.banState.collectAsState()
+    val isSigningOut by banCheckViewModel.isSigningOut.collectAsState()
+
+    LaunchedEffect(banState) {
+        if (banState is BanState.Banned && currentRoute != Screen.AccountSuspended.route) {
+            navController.navigate(Screen.AccountSuspended.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
     }
 
     // Moving between the five tab roots. Hoisted out of the bottom bar's own call site because the
@@ -569,14 +589,32 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-        }
+
+            // Account Suspended - shown when the admin has banned the current account.
+            // No back navigation: the back stack is cleared when we navigate here.
+            composable(Screen.AccountSuspended.route) {
+                val state = banState
+                if (state is BanState.Banned) {
+                    AccountSuspendedScreen(
+                        reason = state.reason,
+                        bannedAt = state.bannedAt,
+                        onSignOut = {
+                            banCheckViewModel.signOut()
+                            navController.navigate(Screen.Splash.route) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        isSigningOut = isSigningOut
+                    )
+                }
+            }
+        } // end NavHost
 
         if (showBottomBar) {
             KasiGuruBottomBar(
                 currentRoute = currentRoute,
                 onNavigateToRoute = switchTab,
-                // Still measured, and still worth measuring: the cluster is shorter without the docked
-                // FAB, so every screen's bottom inset shrinks with it rather than being hardcoded.
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { size ->
@@ -595,12 +633,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 chapterTitle = tour.chapter.title,
                 stepIndex = tour.index,
                 stepCount = tour.stops.size,
-                // The registry is handed over rather than read here. Reading it in this scope would
-                // make every anchor measurement recompose the whole navigation graph, and a relayout
-                // that re-reports its bounds turns that into a loop.
                 anchors = tourAnchors,
-                // Only trust the anchor once the destination it lives on is actually showing;
-                // otherwise a hole would be cut at coordinates the previous screen reported.
                 anchorVisible = currentRoute == stop.route,
                 bottomBlocked = if (showBottomBar) navClusterHeight else 0.dp,
                 onBack = {

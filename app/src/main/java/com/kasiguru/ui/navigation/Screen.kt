@@ -85,6 +85,9 @@ sealed class Screen(val route: String) {
         }
     }
 
+    /** Shown when an admin has banned the current signed-in account. No back navigation. */
+    data object AccountSuspended : Screen("account_suspended")
+
     companion object {
         /**
          * The five destinations the bottom bar shows, and the only routes that may be reached by

@@ -527,7 +527,7 @@
       <div class="pagehead">
         <div>
           <h1>Registered users</h1>
-          <p>All user accounts currently registered in the KasiGuru app. Data is synchronised from the public leaderboard records.</p>
+          <p>All user accounts currently registered in the KasiGuru app. Block or unblock accounts and record the reason. Data is synchronised from the public leaderboard records.</p>
         </div>
         <div class="pagehead-actions">
           <span class="result-count" id="users-result-count"></span>
@@ -535,6 +535,20 @@
       </div>
 
       <div class="panel">
+        <div class="toolbar">
+          <div class="input-icon-wrap" style="flex:1; min-width:220px;">
+            <iconsax-icon name="search-normal-1" type="linear" size="17" color="var(--muted)"></iconsax-icon>
+            <label class="sr-only" for="search-users-input">Search users</label>
+            <input type="search" id="search-users-input" class="form-control" placeholder="Search by name or email&hellip;">
+          </div>
+          <label class="sr-only" for="filter-users-status">Filter by status</label>
+          <select id="filter-users-status" class="form-control" style="width:auto; min-width:160px;">
+            <option value="">All users</option>
+            <option value="active">Active only</option>
+            <option value="banned">Blocked only</option>
+          </select>
+        </div>
+
         <div class="table-responsive">
           <table>
             <thead>
@@ -544,11 +558,13 @@
                 <th>Date Registered</th>
                 <th>Level Badge</th>
                 <th>Total XP</th>
-                <th>Current Streak</th>
+                <th>Streak</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="users-tbody">
-              <tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading users&hellip;</td></tr>
             </tbody>
           </table>
         </div>

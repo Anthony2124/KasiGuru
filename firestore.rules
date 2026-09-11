@@ -399,6 +399,16 @@ service cloud.firestore {
       allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
+    // User ban records. Written by admins (block/unblock); the banned user's own
+    // app can read its own document to show the "Account Suspended" screen without
+    // needing a Cloud Function. No one else can read or write bans:
+    //   - Other users cannot enumerate who is banned.
+    //   - Banned users cannot delete their own ban record (admin-only delete).
+    match /user_bans/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow create, update, delete: if isAdmin();
+    }
+
     // Deny everything else by default (explicit allow rules only).
   }
 }

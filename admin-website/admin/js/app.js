@@ -257,6 +257,7 @@ function init() {
   initStageReview();
   initLogsControls();
   initUsersListener();
+  initBansListener();
   initBackupRestore();
 
   // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
@@ -3912,6 +3913,7 @@ async function logAudit(action, details = {}) {
 
 // ── Users Listener ──────────────────────────────────────────────────────────
 let usersList = [];
+let bansMap = new Map(); // uid → ban doc
 
 function initUsersListener() {
   const usersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
@@ -3923,10 +3925,16 @@ function initUsersListener() {
     console.error("Users listener error:", error);
     const tbody = document.getElementById('users-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--status-rejected);">Failed to load users. Check permissions or indexes.</td></tr>`;
     }
   });
   unsubscribeFns.push(unsubUsers);
+
+  // Search + filter controls
+  const searchInput = document.getElementById('search-users-input');
+  const filterSelect = document.getElementById('filter-users-status');
+  if (searchInput) searchInput.addEventListener('input', renderUsersTable);
+  if (filterSelect) filterSelect.addEventListener('change', renderUsersTable);
 }
 
 async function enrichUsersWithProgress() {
@@ -3978,22 +3986,13 @@ async function enrichUsersWithProgress() {
 function renderUsersTable() {
   const tbody = document.getElementById('users-tbody');
   const countEl = document.getElementById('users-result-count');
-  
   if (!tbody) return;
-  
-  // ── Step 1: Filter ───────────────────────────────────────────────
-  // Many leaderboard docs were created by anonymous users who never signed in
-  // with Google/email and never changed their display name. These accounts have
-  // isAnonymous: undefined (field absent) and use the app default name.
-  //
-  // Rule: show an account only if it has EITHER
-  //   (a) a real email address, OR
-  //   (b) a display name that is NOT one of the default/generic app values.
+
+  // ── Step 1: Filter anonymous / generic accounts ───────────────────
   const GENERIC_NAMES = new Set([
     'learner', 'guest', 'anonymous user', 'registered user',
     'kasiguranin learner', 'kasiguru learner'
   ]);
-
   const validUsers = usersList.filter(user => {
     if (user.isAnonymous === true) return false;
     const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
@@ -4002,23 +4001,16 @@ function renderUsersTable() {
     return hasRealEmail || hasRealName;
   });
 
-  // ── Step 2: Deduplicate ────────────────────────────────────────────
-  // A real person may have two leaderboard docs if they used the app while
-  // anonymous then later signed in with Google (two Firebase UIDs). Merge them
-  // by display name: keep the one with a real email and the higher total XP.
-  const uniqueUserMap = new Map(); // normalisedKey → merged user object
-
+  // ── Step 2: Deduplicate by email / display name ───────────────────
+  const uniqueUserMap = new Map();
   for (const user of validUsers) {
     const name  = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
     const email = (user.email || '').trim().toLowerCase();
-    // Primary key: email when present, otherwise display name
     const key = email || name || user.id;
-
     if (!uniqueUserMap.has(key)) {
       uniqueUserMap.set(key, { ...user });
     } else {
       const existing = uniqueUserMap.get(key);
-      // Merge: prefer email, keep the higher XP
       const merged = { ...existing };
       if (!existing.email && user.email) merged.email = user.email;
       if ((user.totalXp || 0) > (existing.totalXp || 0)) merged.totalXp = user.totalXp;
@@ -4026,36 +4018,25 @@ function renderUsersTable() {
       uniqueUserMap.set(key, merged);
     }
   }
-
-  // Also cross-link by name: if we have two keys (one = email, one = name) that
-  // resolve to accounts with the same display name, merge them too.
-  const byNameIndex = new Map(); // lowercaseName → key in uniqueUserMap
+  const byNameIndex = new Map();
   for (const [key, user] of uniqueUserMap) {
     const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
     if (!name) continue;
     if (!byNameIndex.has(name)) {
       byNameIndex.set(name, key);
     } else {
-      // Same name, different key
       const otherKey = byNameIndex.get(name);
       const other = uniqueUserMap.get(otherKey);
       if (!other) continue;
       const current = user;
       const currentHasEmail = current.email && current.email.includes('@');
       const otherHasEmail   = other.email   && other.email.includes('@');
-
-      // If BOTH have real but DIFFERENT emails — different people, don't merge
-      if (currentHasEmail && otherHasEmail && current.email.toLowerCase() !== other.email.toLowerCase()) {
-        continue;
-      }
-
-      // Winner = entry that has email; tie-break = higher XP
+      if (currentHasEmail && otherHasEmail && current.email.toLowerCase() !== other.email.toLowerCase()) continue;
       let keepKey, dropKey;
       if (currentHasEmail && !otherHasEmail) { keepKey = key;      dropKey = otherKey; }
       else if (otherHasEmail && !currentHasEmail) { keepKey = otherKey; dropKey = key; }
       else { keepKey = (current.totalXp||0) >= (other.totalXp||0) ? key : otherKey;
              dropKey = keepKey === key ? otherKey : key; }
-
       const winner = uniqueUserMap.get(keepKey);
       const loser  = uniqueUserMap.get(dropKey);
       const merged = { ...winner };
@@ -4068,78 +4049,199 @@ function renderUsersTable() {
     }
   }
 
-  const registeredUsers = Array.from(uniqueUserMap.values());
-  
+  let registeredUsers = Array.from(uniqueUserMap.values());
+
+  // ── Step 3: Search + status filter ───────────────────────────────
+  const searchQ = (document.getElementById('search-users-input')?.value || '').trim().toLowerCase();
+  const statusF = document.getElementById('filter-users-status')?.value || '';
+
+  if (searchQ) {
+    registeredUsers = registeredUsers.filter(u => {
+      const name  = (u.displayName || u.fullName || u.userName || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      return name.includes(searchQ) || email.includes(searchQ);
+    });
+  }
+  if (statusF === 'banned') {
+    registeredUsers = registeredUsers.filter(u => bansMap.has(u.id));
+  } else if (statusF === 'active') {
+    registeredUsers = registeredUsers.filter(u => !bansMap.has(u.id));
+  }
+
   if (countEl) {
     countEl.textContent = `${registeredUsers.length} user account${registeredUsers.length === 1 ? '' : 's'}`;
   }
-  
+
   if (registeredUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--muted);">No registered user accounts found yet.</td></tr>`;
     return;
   }
-  
+
   tbody.innerHTML = registeredUsers.map(user => {
-    const xp = user.totalXp || 0;
+    const xp     = user.totalXp || 0;
     const streak = user.currentStreak || 0;
-    
-    // Resolve email address
-    const resolvedEmail = (user.email && user.email.includes('@')) 
-      ? user.email.trim() 
-      : (user.displayName && user.displayName.includes('@')) 
-        ? user.displayName.trim() 
+    const isBanned = bansMap.has(user.id);
+    const banDoc   = bansMap.get(user.id) || {};
+
+    // Resolve email
+    const resolvedEmail = (user.email && user.email.includes('@'))
+      ? user.email.trim()
+      : (user.displayName && user.displayName.includes('@'))
+        ? user.displayName.trim()
         : '';
-        
+
     // Resolve display name
     let displayName = (user.displayName || user.fullName || user.userName || '').trim();
-    if (displayName.toLowerCase() === 'google account' || displayName.toLowerCase() === 'google' || displayName === resolvedEmail) {
+    if (['google account','google'].includes(displayName.toLowerCase()) || displayName === resolvedEmail) {
       displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
     }
-    if (!displayName && resolvedEmail) {
-      displayName = resolvedEmail.split('@')[0];
-    }
-    if (!displayName) {
-      displayName = 'Registered User';
-    }
+    if (!displayName && resolvedEmail) displayName = resolvedEmail.split('@')[0];
+    if (!displayName) displayName = 'Registered User';
 
-    const userLabel = `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
+    const userLabel    = `<div style="font-weight:700;">${escapeHtml(displayName)}</div>`;
     const emailDisplay = resolvedEmail ? escapeHtml(resolvedEmail) : `<span style="color:var(--muted);">—</span>`;
-    
-    // Format registered/joined date
-    const dateValue = user.registeredAt || user.createdAt || user.joinedAt || user.dateJoined || user.timestamp || user.updatedAt;
+
+    // Format date
+    const dateValue = user.registeredAt || user.createdAt || user.joinedAt || user.updatedAt;
     const dateMs = toMillis(dateValue);
     let registeredDate = '—';
     if (dateMs > 0) {
-      registeredDate = new Date(dateMs).toLocaleDateString(undefined, { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
+      registeredDate = new Date(dateMs).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
     } else if (user.lastActiveDate) {
       const parsed = Date.parse(user.lastActiveDate);
-      if (!Number.isNaN(parsed)) {
-        registeredDate = new Date(parsed).toLocaleDateString(undefined, { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
-        });
-      }
+      if (!Number.isNaN(parsed)) registeredDate = new Date(parsed).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
     }
 
     const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
-    
+
+    // Status cell
+    const statusCell = isBanned
+      ? `<span class="badge badge-rejected" title="${escapeHtml(banDoc.reason || '')}">Blocked</span>`
+      : `<span class="badge badge-approved">Active</span>`;
+
+    // Actions cell — only show for real accounts that have a uid
+    const uid = escapeHtml(user.id || '');
+    const nameForDialog = escapeHtml(displayName).replace(/'/g, "\\'");
+    const actionCell = user.id
+      ? isBanned
+        ? `<button class="btn btn-sm btn-outline" onclick="window.unblockUser('${uid}', '${nameForDialog}')">Unblock</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="window.blockUser('${uid}', '${nameForDialog}')">Block</button>`
+      : '—';
+
     return `
       <tr>
         <td>${userLabel}</td>
         <td style="color:var(--text); font-size:0.875rem;">${emailDisplay}</td>
         <td style="color:var(--muted); font-size:0.875rem; white-space:nowrap;">${escapeHtml(registeredDate)}</td>
-        <td><span class="badge badge-outline" style="border: 1px solid var(--border); color: var(--text); background: transparent;">${badge}</span></td>
+        <td><span class="badge badge-outline" style="border:1px solid var(--border); color:var(--text); background:transparent;">${badge}</span></td>
         <td class="num">${xp.toLocaleString()} XP</td>
-        <td class="num" style="color: var(--primary); font-weight: 700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
+        <td class="num" style="color:var(--primary); font-weight:700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
+        <td>${statusCell}</td>
+        <td>${actionCell}</td>
       </tr>
     `;
   }).join('');
 }
+
+// ── Bans Listener ────────────────────────────────────────────────────────────
+function initBansListener() {
+  try {
+    const unsubBans = onSnapshot(collection(db, 'user_bans'), (snapshot) => {
+      bansMap.clear();
+      snapshot.docs.forEach(d => {
+        if (d.data().isBanned) bansMap.set(d.id, { id: d.id, ...d.data() });
+      });
+      renderUsersTable();
+    }, (err) => {
+      console.warn('Bans listener error:', err);
+    });
+    unsubscribeFns.push(unsubBans);
+  } catch (e) {
+    console.error('Bans init error:', e);
+  }
+}
+
+// ── Block User ────────────────────────────────────────────────────────────────
+window.blockUser = async function(uid, displayName) {
+  // Step 1: Ask for a reason via a custom input dialog
+  let reasonValue = '';
+  const host = dialogHost();
+  host.querySelector('#confirm-dialog-title').textContent = `Block ${displayName}?`;
+  const bodyEl = host.querySelector('#confirm-dialog-body');
+  bodyEl.innerHTML =
+    `<p style="margin-bottom:10px;">This user will see an "Account Suspended" screen and cannot use KasiGuru until unblocked.</p>` +
+    `<label for="ban-reason-input" style="font-weight:600; display:block; margin-bottom:6px;">Reason <span style="color:var(--status-rejected);">*</span></label>` +
+    `<textarea id="ban-reason-input" class="form-control" rows="3" placeholder="e.g. Harassment, cheating, repeated abuse of the community submission system…" style="width:100%; resize:vertical;"></textarea>`;
+
+  const okBtn = host.querySelector('[data-act="ok"]');
+  okBtn.textContent = 'Block user';
+  okBtn.className = 'btn btn-danger';
+
+  const confirmed = await new Promise((resolve) => {
+    function close(result) {
+      reasonValue = (document.getElementById('ban-reason-input')?.value || '').trim();
+      host.classList.remove('active');
+      host.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+      okBtn.onclick = null;
+      host.querySelector('[data-act="cancel"]').onclick = null;
+      resolve(result);
+    }
+    function onBackdrop(e) { if (e.target === host) close(false); }
+    function onKey(e) { if (e.key === 'Escape') close(false); }
+    okBtn.onclick = () => {
+      const reason = (document.getElementById('ban-reason-input')?.value || '').trim();
+      if (!reason) {
+        document.getElementById('ban-reason-input')?.classList.add('input-error');
+        document.getElementById('ban-reason-input')?.focus();
+        return;
+      }
+      close(true);
+    };
+    host.querySelector('[data-act="cancel"]').onclick = () => close(false);
+    host.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    host.classList.add('active');
+    setTimeout(() => document.getElementById('ban-reason-input')?.focus(), 80);
+  });
+
+  if (!confirmed || !reasonValue) return;
+
+  try {
+    const actor = (auth.currentUser && auth.currentUser.email) || 'unknown admin';
+    await setDoc(doc(db, 'user_bans', uid), {
+      isBanned: true,
+      reason: reasonValue,
+      bannedAt: Date.now(),
+      bannedBy: actor
+    });
+    await logAudit('user_blocked', { uid, displayName, reason: reasonValue });
+    notify(`${displayName} has been blocked.`, 'success');
+  } catch (e) {
+    console.error('Block failed:', e);
+    notify('Failed to block user: ' + e.message, 'danger');
+  }
+};
+
+// ── Unblock User ──────────────────────────────────────────────────────────────
+window.unblockUser = async function(uid, displayName) {
+  const confirmed = await confirmDialog({
+    title: `Unblock ${displayName}?`,
+    body: `<p>This user will regain full access to KasiGuru immediately.</p>`,
+    confirmLabel: 'Unblock',
+    danger: false
+  });
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(doc(db, 'user_bans', uid));
+    await logAudit('user_unblocked', { uid, displayName });
+    notify(`${displayName} has been unblocked.`, 'success');
+  } catch (e) {
+    console.error('Unblock failed:', e);
+    notify('Failed to unblock user: ' + e.message, 'danger');
+  }
+};
 
 // ── Backup & Restore ────────────────────────────────────────────────────────
 window.exportBackup = async function() {
