@@ -4214,9 +4214,6 @@ function renderUsersTable() {
     if (user.id) {
       let buttons = '';
       if (isBanned) {
-        if (hasPendingAppeal) {
-          buttons += `<button type="button" class="btn btn-sm btn-primary btn-review-appeal" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}" style="margin-right:6px;">Review Appeal</button>`;
-        }
         buttons += `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`;
       } else {
         buttons += `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`;
@@ -4396,13 +4393,9 @@ window.openUserDetails = async function(uid) {
           </div>
           <small style="color:#b45309; font-size:0.75rem;">Submitted ${escapeHtml(appealDateStr)}</small>
         </div>
-        <div style="background:white; border:1px solid #fde68a; border-radius:var(--r-ctl); padding:12px; margin-top:4px;">
+        <div style="background:white; border:1px solid #fde68a; border-radius:var(--r-ctl); padding:12px; margin-top:8px;">
           <div style="font-size:0.75rem; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.04em;">User Statement:</div>
           <blockquote style="margin:0; font-size:0.875rem; color:#1f2937; line-height:1.6; font-style:italic; white-space:pre-wrap;">${escapeHtml(banDoc.appealText || 'No statement provided.')}</blockquote>
-        </div>
-        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
-          <button type="button" class="btn btn-sm btn-danger" onclick="closeModal('user-details-modal'); window.rejectAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Decline Appeal</button>
-          <button type="button" class="btn btn-sm btn-primary" onclick="closeModal('user-details-modal'); window.approveAppeal('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Approve Appeal &amp; Unblock</button>
         </div>
       </div>
     `;
