@@ -1,4 +1,4 @@
-﻿package com.kasiguru.ui.navigation
+package com.kasiguru.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -103,6 +103,11 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
+        } else if (banState is BanState.Clear && currentRoute == Screen.AccountSuspended.route) {
+            navController.navigate(Screen.Learn.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 
@@ -131,7 +136,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val tourAllowed = currentRoute != null && currentRoute !in setOf(
         Screen.Splash.route,
         Screen.Onboarding.route,
-        Screen.ProfileSelection.route
+        Screen.ProfileSelection.route,
+        Screen.AccountSuspended.route
     )
     val activeStop = activeTour?.takeIf { tourAllowed }?.current
     SideEffect { tourAnchors.active = activeStop != null }

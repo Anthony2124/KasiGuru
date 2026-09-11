@@ -1,12 +1,16 @@
 package com.kasiguru.data.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Represents the ban state for the current user's UID.
+ * Represents the ban state for a user's UID.
  */
 sealed interface BanStatus {
     /** User is not banned — proceed normally. */
@@ -22,27 +26,53 @@ sealed interface BanStatus {
 }
 
 /**
- * Checks whether the current user has an active ban in `user_bans/{uid}`.
+ * Checks and observes whether a user has an active ban in `user_bans/{uid}`.
  *
- * The admin writes ban records from the admin dashboard. The Firestore rule
+ * Admins manage ban records from the web dashboard. The Firestore security rule
  * (`user_bans/{userId}`) grants each user owner-read on their own document,
- * so this check requires no Cloud Function on the Spark plan.
- *
- * A missing document or any read error is treated as "not banned" — a transient
- * network error or a permission setup issue should never prevent a user from
- * accessing the app.
+ * enabling real-time ban enforcement without requiring a Cloud Function.
  */
 @Singleton
 class BanCheckRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     /**
+     * Real-time listener on `user_bans/{uid}`.
+     * Emits immediately on first read and re-emits whenever the ban record is
+     * created, modified, or deleted by an admin.
+     */
+    fun observeBan(uid: String): Flow<BanStatus> = callbackFlow {
+        val listener = firestore.collection("user_bans").document(uid)
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    // Fail-open: network hiccups or permission sync delays should not lock out users
+                    Log.w("BanCheckRepository", "Ban snapshot error for $uid — treating as clear", error)
+                    trySend(BanStatus.Clear)
+                    return@addSnapshotListener
+                }
+
+                if (snap == null || !snap.exists()) {
+                    trySend(BanStatus.Clear)
+                    return@addSnapshotListener
+                }
+
+                val isBanned = snap.getBoolean("isBanned") ?: false
+                if (!isBanned) {
+                    trySend(BanStatus.Clear)
+                    return@addSnapshotListener
+                }
+
+                val reason = snap.getString("reason")?.takeIf { it.isNotBlank() }
+                    ?: "Your account has been suspended. Please contact support."
+                val bannedAt = snap.getLong("bannedAt") ?: 0L
+                trySend(BanStatus.Banned(reason = reason, bannedAt = bannedAt))
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    /**
      * One-shot read of `user_bans/{uid}`.
-     *
-     * Returns [BanStatus.Clear] when:
-     *  - the document does not exist (never banned / already unblocked), OR
-     *  - the `isBanned` field is false or absent, OR
-     *  - any Firestore error occurs (fail-open: don't block the app on a network hiccup).
      */
     suspend fun checkBan(uid: String): BanStatus {
         return try {
@@ -55,9 +85,7 @@ class BanCheckRepository @Inject constructor(
             val bannedAt = snap.getLong("bannedAt") ?: 0L
             BanStatus.Banned(reason = reason, bannedAt = bannedAt)
         } catch (e: Exception) {
-            // Fail-open: a network error or misconfigured rule should not lock out
-            // an innocent user. Log in debug builds and proceed.
-            android.util.Log.w("BanCheckRepository", "Ban check failed — treating as clear", e)
+            Log.w("BanCheckRepository", "Ban check failed — treating as clear", e)
             BanStatus.Clear
         }
     }

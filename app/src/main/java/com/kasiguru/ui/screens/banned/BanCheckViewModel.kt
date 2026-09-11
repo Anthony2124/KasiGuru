@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,31 +36,30 @@ class BanCheckViewModel @Inject constructor(
     val isSigningOut: StateFlow<Boolean> = _isSigningOut.asStateFlow()
 
     init {
-        checkBan()
-    }
-
-    /** One-shot ban check on startup. Anonymous UIDs are skipped (cannot be banned). */
-    fun checkBan() {
+        // Observe auth state changes in real time.
+        // Whenever the user starts the app, logs in, links an account, or creates a session,
+        // we dynamically attach a real-time Firestore listener to their UID.
         viewModelScope.launch {
-            val account = authRepository.currentAccount()
-            // Anonymous users have no stable identity to ban — skip.
-            if (account.uid == null || account.isAnonymous) {
-                _banState.value = BanState.Clear
-                return@launch
-            }
-            _banState.value = BanState.Loading
-            val status = banCheckRepository.checkBan(account.uid)
-            _banState.value = when (status) {
-                is BanStatus.Clear -> BanState.Clear
-                is BanStatus.Banned -> BanState.Banned(
-                    reason = status.reason,
-                    bannedAt = status.bannedAt
-                )
+            authRepository.accountState.collectLatest { account ->
+                val uid = account.uid
+                if (uid == null) {
+                    _banState.value = BanState.Clear
+                } else {
+                    banCheckRepository.observeBan(uid).collect { status ->
+                        _banState.value = when (status) {
+                            is BanStatus.Clear -> BanState.Clear
+                            is BanStatus.Banned -> BanState.Banned(
+                                reason = status.reason,
+                                bannedAt = status.bannedAt
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 
-    /** Signs the user out to an anonymous session so they can still use the public features. */
+    /** Signs the user out to a fresh anonymous session so they can still use the public features. */
     fun signOut() {
         viewModelScope.launch {
             _isSigningOut.value = true

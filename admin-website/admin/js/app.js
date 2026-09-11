@@ -1027,7 +1027,13 @@ function filteredAuditLogs() {
   const filterAction = document.getElementById('filter-logs-action')?.value || '';
 
   return auditLogs.filter(log => {
-    if (filterAction && !log.action.startsWith(filterAction)) return false;
+    if (filterAction) {
+      if (filterAction === 'user') {
+        if (!log.action.startsWith('user.') && !log.action.startsWith('user_')) return false;
+      } else if (!log.action.startsWith(filterAction)) {
+        return false;
+      }
+    }
 
     if (searchTerm) {
       if (log.actor && log.actor.toLowerCase().includes(searchTerm)) return true;
@@ -1109,20 +1115,31 @@ function renderAuditLogs() {
       hour: '2-digit', minute: '2-digit'
     }) : 'unknown time';
     
-    // Extract a readable summary from details (no raw code or IDs displayed for privacy)
+    // Extract a readable summary from details
     let summary = '';
     const d = log.details || {};
-    if (d.word) summary = `Word: ${d.word}`;
+    if (d.displayName || d.uid) {
+      const userDisplay = d.displayName ? d.displayName : `UID: ${d.uid}`;
+      const reasonPart = d.reason ? ` — Reason: "${d.reason}"` : '';
+      summary = `User: ${userDisplay}${reasonPart}`;
+    } else if (d.word) summary = `Word: ${d.word}`;
     else if (d.title) summary = `Title: ${d.title}`;
     else if (d.kasiguranin) summary = `Word: ${d.kasiguranin}`;
     else if (d.versionName) summary = `v${d.versionName}`;
+
+    let badgeClass = 'badge-category';
+    if (log.action.includes('block') || log.action.includes('delete') || log.action.includes('reject')) {
+      badgeClass = 'badge-rejected';
+    } else if (log.action.includes('unblock') || log.action.includes('approve') || log.action.includes('create')) {
+      badgeClass = 'badge-approved';
+    }
 
     return `
       <div class="release-row" style="grid-template-columns: auto 1fr; border-bottom: 1px solid var(--hair); padding: var(--s-4) 0;">
         <div class="release-node"><span class="release-dot" aria-hidden="true" style="background:var(--violet-soft);"></span></div>
         <div class="release-main">
           <div class="release-title">
-            <span class="badge badge-category" style="margin-left:0; margin-right:var(--s-2); font-family:var(--sans); font-size:var(--t-xs); font-weight:700;">${escapeHtml(log.action)}</span>
+            <span class="badge ${badgeClass}" style="margin-left:0; margin-right:var(--s-2); font-family:var(--sans); font-size:var(--t-xs); font-weight:700;">${escapeHtml(log.action)}</span>
             <b style="font-size: var(--t-sm); font-family:var(--sans);">${escapeHtml(log.actor)}</b>
             <small style="font-size: var(--t-xs); color: var(--muted);">${escapeHtml(when)}</small>
             ${summary ? `<small style="margin-left: var(--s-2); color: var(--ink);"><b>${escapeHtml(summary)}</b></small>` : ''}
@@ -3935,6 +3952,26 @@ function initUsersListener() {
   const filterSelect = document.getElementById('filter-users-status');
   if (searchInput) searchInput.addEventListener('input', renderUsersTable);
   if (filterSelect) filterSelect.addEventListener('change', renderUsersTable);
+
+  const usersTableBody = document.getElementById('users-tbody');
+  if (usersTableBody) {
+    usersTableBody.addEventListener('click', (e) => {
+      const blockBtn = e.target.closest('.btn-block-user');
+      if (blockBtn) {
+        const uid = blockBtn.getAttribute('data-uid');
+        const name = blockBtn.getAttribute('data-name');
+        window.blockUser(uid, name);
+        return;
+      }
+      const unblockBtn = e.target.closest('.btn-unblock-user');
+      if (unblockBtn) {
+        const uid = unblockBtn.getAttribute('data-uid');
+        const name = unblockBtn.getAttribute('data-name');
+        window.unblockUser(uid, name);
+        return;
+      }
+    });
+  }
 }
 
 async function enrichUsersWithProgress() {
@@ -4120,12 +4157,10 @@ function renderUsersTable() {
       : `<span class="badge badge-approved">Active</span>`;
 
     // Actions cell — only show for real accounts that have a uid
-    const uid = escapeHtml(user.id || '');
-    const nameForDialog = escapeHtml(displayName).replace(/'/g, "\\'");
     const actionCell = user.id
       ? isBanned
-        ? `<button class="btn btn-sm btn-outline" onclick="window.unblockUser('${uid}', '${nameForDialog}')">Unblock</button>`
-        : `<button class="btn btn-sm btn-danger" onclick="window.blockUser('${uid}', '${nameForDialog}')">Block</button>`
+        ? `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`
+        : `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`
       : '—';
 
     return `
@@ -4163,10 +4198,16 @@ function initBansListener() {
 
 // ── Block User ────────────────────────────────────────────────────────────────
 window.blockUser = async function(uid, displayName) {
+  if (!uid) {
+    notify('Cannot block user: missing UID.', 'danger');
+    return;
+  }
+  const nameToDisplay = displayName || 'User';
+
   // Step 1: Ask for a reason via a custom input dialog
   let reasonValue = '';
   const host = dialogHost();
-  host.querySelector('#confirm-dialog-title').textContent = `Block ${displayName}?`;
+  host.querySelector('#confirm-dialog-title').textContent = `Block ${nameToDisplay}?`;
   const bodyEl = host.querySelector('#confirm-dialog-body');
   bodyEl.innerHTML =
     `<p style="margin-bottom:10px;">This user will see an "Account Suspended" screen and cannot use KasiGuru until unblocked.</p>` +
@@ -4208,25 +4249,36 @@ window.blockUser = async function(uid, displayName) {
   if (!confirmed || !reasonValue) return;
 
   try {
-    const actor = (auth.currentUser && auth.currentUser.email) || 'unknown admin';
+    const actor = (auth.currentUser && auth.currentUser.email) || 'admin';
     await setDoc(doc(db, 'user_bans', uid), {
       isBanned: true,
       reason: reasonValue,
       bannedAt: Date.now(),
       bannedBy: actor
     });
-    await logAudit('user_blocked', { uid, displayName, reason: reasonValue });
-    notify(`${displayName} has been blocked.`, 'success');
+    // Log with both format and details for audit trail
+    await logAudit('user.block', { uid, displayName: nameToDisplay, reason: reasonValue });
+    notify(`${nameToDisplay} has been blocked.`, 'success');
   } catch (e) {
     console.error('Block failed:', e);
-    notify('Failed to block user: ' + e.message, 'danger');
+    let errMsg = e.message || String(e);
+    if (e.code === 'permission-denied') {
+      errMsg = 'Permission denied. Make sure firestore.rules has been published to Firebase with user_bans permissions.';
+    }
+    notify('Failed to block user: ' + errMsg, 'danger');
   }
 };
 
 // ── Unblock User ──────────────────────────────────────────────────────────────
 window.unblockUser = async function(uid, displayName) {
+  if (!uid) {
+    notify('Cannot unblock user: missing UID.', 'danger');
+    return;
+  }
+  const nameToDisplay = displayName || 'User';
+
   const confirmed = await confirmDialog({
-    title: `Unblock ${displayName}?`,
+    title: `Unblock ${nameToDisplay}?`,
     body: `<p>This user will regain full access to KasiGuru immediately.</p>`,
     confirmLabel: 'Unblock',
     danger: false
@@ -4235,11 +4287,15 @@ window.unblockUser = async function(uid, displayName) {
 
   try {
     await deleteDoc(doc(db, 'user_bans', uid));
-    await logAudit('user_unblocked', { uid, displayName });
-    notify(`${displayName} has been unblocked.`, 'success');
+    await logAudit('user.unblock', { uid, displayName: nameToDisplay });
+    notify(`${nameToDisplay} has been unblocked.`, 'success');
   } catch (e) {
     console.error('Unblock failed:', e);
-    notify('Failed to unblock user: ' + e.message, 'danger');
+    let errMsg = e.message || String(e);
+    if (e.code === 'permission-denied') {
+      errMsg = 'Permission denied. Make sure firestore.rules has been published to Firebase with user_bans permissions.';
+    }
+    notify('Failed to unblock user: ' + errMsg, 'danger');
   }
 };
 
