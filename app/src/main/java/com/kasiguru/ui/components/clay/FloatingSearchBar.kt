@@ -123,22 +123,13 @@ fun FloatingSearchBar(
                                     style = MaterialTheme.typography.titleSmall,
                                     color = Ink
                                 )
-                                if (word.isLearned) {
-                                    Text(
-                                        text = listOf(word.tagalog, word.english)
-                                            .filter { it.isNotBlank() }
-                                            .joinToString(" · "),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Muted
-                                    )
-                                } else {
-                                    Text(
-                                        text = "🔒 Take quiz to unlock meaning",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Violet,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                                    )
-                                }
+                                Text(
+                                    text = listOf(word.tagalog, word.english)
+                                        .filter { it.isNotBlank() }
+                                        .joinToString(" · "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Muted
+                                )
                             }
                         }
                     }

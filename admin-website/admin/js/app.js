@@ -3931,13 +3931,84 @@ async function logAudit(action, details = {}) {
 }
 
 // ── Users Listener ──────────────────────────────────────────────────────────
+// ── Users Listener & Helpers ────────────────────────────────────────────────
 let usersList = [];
 let bansMap = new Map(); // uid → ban doc
+
+const GENERIC_NAMES = new Set([
+  'learner', 'guest', 'anonymous user', 'registered user',
+  'kasiguranin learner', 'kasiguru learner',
+  'google account', 'google'
+]);
+
+function isGenericName(name) {
+  if (!name || typeof name !== 'string') return true;
+  const clean = name.trim().toLowerCase();
+  return !clean || GENERIC_NAMES.has(clean);
+}
+
+function resolveUserDisplayName(user, progressData = null) {
+  const p = progressData || {};
+  const u = user || {};
+
+  // Try real non-generic names first in priority order:
+  // 1. progressData.fullName
+  // 2. progressData.userName
+  // 3. user.fullName
+  // 4. user.userName
+  // 5. user.displayName
+  const candidates = [
+    p.fullName,
+    p.userName,
+    u.fullName,
+    u.userName,
+    u.displayName
+  ];
+
+  for (const c of candidates) {
+    if (c && typeof c === 'string') {
+      const trimmed = c.trim();
+      if (trimmed && !isGenericName(trimmed)) {
+        return trimmed;
+      }
+    }
+  }
+
+  // If all explicit names are generic or missing, derive from email prefix
+  const resolvedEmail = (p.email || u.email || '').trim();
+  if (resolvedEmail && resolvedEmail.includes('@')) {
+    const emailPrefix = resolvedEmail.split('@')[0].trim();
+    if (emailPrefix && !isGenericName(emailPrefix)) {
+      return emailPrefix;
+    }
+  }
+
+  // Fallback to any non-empty name or 'Registered User'
+  for (const c of candidates) {
+    if (c && typeof c === 'string' && c.trim()) {
+      return c.trim();
+    }
+  }
+
+  return 'Registered User';
+}
 
 function initUsersListener() {
   const usersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
   const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
-    usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const prevMap = new Map(usersList.map(u => [u.id, u]));
+    usersList = snapshot.docs.map(doc => {
+      const prev = prevMap.get(doc.id) || {};
+      const raw = { id: doc.id, ...doc.data() };
+      const merged = { ...prev, ...raw };
+      if (prev.fullName && !raw.fullName) merged.fullName = prev.fullName;
+      if (prev.userName && !raw.userName) merged.userName = prev.userName;
+      if (prev.progressLoaded) merged.progressLoaded = true;
+      if (!isGenericName(prev.displayName) && isGenericName(raw.displayName)) {
+        merged.displayName = prev.displayName;
+      }
+      return merged;
+    });
     renderUsersTable();
     enrichUsersWithProgress();
   }, (error) => {
@@ -3997,7 +4068,8 @@ function initUsersListener() {
 async function enrichUsersWithProgress() {
   let hasUpdates = false;
   const enriched = await Promise.all(usersList.map(async (u) => {
-    if (u.email && u.email.includes('@') && (u.registeredAt || u.createdAt)) {
+    const currentResolved = resolveUserDisplayName(u);
+    if (u.progressLoaded && !isGenericName(currentResolved)) {
       return u;
     }
     try {
@@ -4006,10 +4078,11 @@ async function enrichUsersWithProgress() {
         const pData = pDoc.data() || {};
         const pEmail = (pData.email || '').trim();
         const pDate = pData.registeredAt || pData.createdAt || pData.updatedAt || 0;
-        const pName = pData.fullName || pData.userName || '';
+        const pFullName = (pData.fullName || '').trim();
+        const pUserName = (pData.userName || '').trim();
         
         let changed = false;
-        const updatedUser = { ...u };
+        const updatedUser = { ...u, progressLoaded: true };
         
         if (!updatedUser.email && pEmail) {
           updatedUser.email = pEmail;
@@ -4019,19 +4092,33 @@ async function enrichUsersWithProgress() {
           updatedUser.registeredAt = pDate;
           changed = true;
         }
-        if ((!updatedUser.displayName || updatedUser.displayName === 'Learner' || updatedUser.displayName === 'Registered User') && pName) {
-          updatedUser.displayName = pName;
+        if (pFullName && updatedUser.fullName !== pFullName) {
+          updatedUser.fullName = pFullName;
           changed = true;
         }
+        if (pUserName && updatedUser.userName !== pUserName) {
+          updatedUser.userName = pUserName;
+          changed = true;
+        }
+
+        const newResolved = resolveUserDisplayName(updatedUser, pData);
+        if (newResolved && (isGenericName(updatedUser.displayName) || updatedUser.displayName !== newResolved)) {
+          updatedUser.displayName = newResolved;
+          changed = true;
+        }
+
         if (changed) {
           hasUpdates = true;
           return updatedUser;
         }
+        return updatedUser;
+      } else {
+        return { ...u, progressLoaded: true };
       }
     } catch (e) {
       // Ignore if user progress doc is not accessible
+      return u;
     }
-    return u;
   }));
 
   if (hasUpdates) {
@@ -4046,24 +4133,20 @@ function renderUsersTable() {
   if (!tbody) return;
 
   // ── Step 1: Filter anonymous / generic accounts ───────────────────
-  const GENERIC_NAMES = new Set([
-    'learner', 'guest', 'anonymous user', 'registered user',
-    'kasiguranin learner', 'kasiguru learner'
-  ]);
   const validUsers = usersList.filter(user => {
     if (user.isAnonymous === true) return false;
-    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    const hasRealEmail = user.email && user.email.includes('@');
-    const hasRealName  = name && !GENERIC_NAMES.has(name);
+    const name = resolveUserDisplayName(user).toLowerCase();
+    const hasRealEmail = Boolean(user.email && user.email.includes('@'));
+    const hasRealName  = !isGenericName(name);
     return hasRealEmail || hasRealName;
   });
 
   // ── Step 2: Deduplicate by email / display name ───────────────────
   const uniqueUserMap = new Map();
   for (const user of validUsers) {
-    const name  = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
+    const name  = resolveUserDisplayName(user).toLowerCase();
     const email = (user.email || '').trim().toLowerCase();
-    const key = email || name || user.id;
+    const key = email || (!isGenericName(name) ? name : '') || user.id;
     if (!uniqueUserMap.has(key)) {
       uniqueUserMap.set(key, { ...user });
     } else {
@@ -4072,13 +4155,15 @@ function renderUsersTable() {
       if (!existing.email && user.email) merged.email = user.email;
       if ((user.totalXp || 0) > (existing.totalXp || 0)) merged.totalXp = user.totalXp;
       if (!existing.registeredAt && user.registeredAt) merged.registeredAt = user.registeredAt;
+      if (!existing.fullName && user.fullName) merged.fullName = user.fullName;
+      if (!existing.userName && user.userName) merged.userName = user.userName;
       uniqueUserMap.set(key, merged);
     }
   }
   const byNameIndex = new Map();
   for (const [key, user] of uniqueUserMap) {
-    const name = (user.displayName || user.fullName || user.userName || '').trim().toLowerCase();
-    if (!name) continue;
+    const name = resolveUserDisplayName(user).toLowerCase();
+    if (!name || isGenericName(name)) continue;
     if (!byNameIndex.has(name)) {
       byNameIndex.set(name, key);
     } else {
@@ -4100,6 +4185,8 @@ function renderUsersTable() {
       if (!winner.email && loser.email) merged.email = loser.email;
       merged.totalXp = Math.max(winner.totalXp||0, loser.totalXp||0);
       if (!winner.registeredAt && loser.registeredAt) merged.registeredAt = loser.registeredAt;
+      if (!winner.fullName && loser.fullName) merged.fullName = loser.fullName;
+      if (!winner.userName && loser.userName) merged.userName = loser.userName;
       uniqueUserMap.set(keepKey, merged);
       uniqueUserMap.delete(dropKey);
       byNameIndex.set(name, keepKey);
@@ -4114,9 +4201,10 @@ function renderUsersTable() {
 
   if (searchQ) {
     registeredUsers = registeredUsers.filter(u => {
-      const name  = (u.displayName || u.fullName || u.userName || '').toLowerCase();
+      const displayName = resolveUserDisplayName(u).toLowerCase();
+      const rawName  = (u.displayName || u.fullName || u.userName || '').toLowerCase();
       const email = (u.email || '').toLowerCase();
-      return name.includes(searchQ) || email.includes(searchQ);
+      return displayName.includes(searchQ) || rawName.includes(searchQ) || email.includes(searchQ);
     });
   }
   if (statusF === 'banned') {
@@ -4154,26 +4242,28 @@ function renderUsersTable() {
         ? user.displayName.trim()
         : '';
 
-    // Resolve display name
-    let displayName = (user.displayName || user.fullName || user.userName || '').trim();
-    if (['google account','google'].includes(displayName.toLowerCase()) || displayName === resolvedEmail) {
-      displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
-    }
-    if (!displayName && resolvedEmail) displayName = resolvedEmail.split('@')[0];
-    if (!displayName) displayName = 'Registered User';
+    // Resolve display name & username
+    const displayName = resolveUserDisplayName(user);
+    const initial = (displayName[0] || 'U').toUpperCase();
+
+    // Show secondary username tag if different from display name (e.g. Full Name shown with @username)
+    const rawUserName = (user.userName || '').trim();
+    const userNameHint = (rawUserName && rawUserName !== displayName && !isGenericName(rawUserName))
+      ? `<span style="color:var(--muted); font-size:0.75rem; font-weight:normal;">(@${escapeHtml(rawUserName)})</span>`
+      : '';
 
     let appealBadge = '';
     if (hasPendingAppeal) {
       appealBadge = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="User has an appeal waiting for review"><iconsax-icon name="notification" type="bulk" size="12" color="#b45309"></iconsax-icon> Appeal Pending</span>`;
     }
 
-    const initial = (displayName[0] || 'U').toUpperCase();
     const userLabel = `
       <div style="display:flex; align-items:center; gap:10px;">
         <div class="user-avatar-sm">${escapeHtml(initial)}</div>
         <div>
           <div style="font-weight:700; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
             <span>${escapeHtml(displayName)}</span>
+            ${userNameHint}
             ${appealBadge}
           </div>
           <div style="color:var(--muted); font-size:0.75rem; font-family:monospace;">${escapeHtml(user.id ? user.id.slice(0, 10) + '…' : '—')}</div>
@@ -4326,6 +4416,39 @@ window.openUserDetails = async function(uid) {
     console.warn('Could not load user progress in details modal:', e);
   }
 
+  // Display name resolution
+  const displayName = resolveUserDisplayName(user, progressData);
+
+  // Sync loaded progress data into cached user in usersList and update table
+  const cachedIdx = usersList.findIndex(u => u.id === uid);
+  if (cachedIdx !== -1) {
+    let changed = false;
+    const cu = usersList[cachedIdx];
+    if (progressData.fullName && cu.fullName !== progressData.fullName) {
+      cu.fullName = progressData.fullName;
+      changed = true;
+    }
+    if (progressData.userName && cu.userName !== progressData.userName) {
+      cu.userName = progressData.userName;
+      changed = true;
+    }
+    if (progressData.email && !cu.email) {
+      cu.email = progressData.email;
+      changed = true;
+    }
+    if (!cu.progressLoaded) {
+      cu.progressLoaded = true;
+      changed = true;
+    }
+    if (cu.displayName !== displayName) {
+      cu.displayName = displayName;
+      changed = true;
+    }
+    if (changed) {
+      renderUsersTable();
+    }
+  }
+
   const banDoc = bansMap.get(uid);
   const isBanned = Boolean(banDoc && banDoc.isBanned);
   const hasPendingAppeal = Boolean(isBanned && banDoc.appealStatus === 'pending');
@@ -4333,14 +4456,6 @@ window.openUserDetails = async function(uid) {
 
   // Email resolution
   const resolvedEmail = (progressData.email || user.email || '').trim();
-
-  // Display name resolution
-  let displayName = (progressData.fullName || progressData.userName || user.displayName || user.fullName || user.userName || '').trim();
-  if (['google account','google'].includes(displayName.toLowerCase()) || displayName === resolvedEmail) {
-    displayName = resolvedEmail ? resolvedEmail.split('@')[0] : 'Registered User';
-  }
-  if (!displayName && resolvedEmail) displayName = resolvedEmail.split('@')[0];
-  if (!displayName) displayName = 'Registered User';
 
   const xp = progressData.totalXp ?? user.totalXp ?? 0;
   const streak = progressData.currentStreak ?? user.currentStreak ?? 0;
@@ -4424,6 +4539,7 @@ window.openUserDetails = async function(uid) {
         </div>
         <div>
           <div style="font-size:1.15rem; font-weight:800; color:var(--ink);">${escapeHtml(displayName)}</div>
+          ${(progressData.userName && progressData.userName !== displayName && !isGenericName(progressData.userName)) ? `<div style="font-size:0.8rem; color:var(--primary); font-weight:600; margin-top:1px;">@${escapeHtml(progressData.userName)}</div>` : ''}
           <div style="font-size:0.875rem; color:var(--muted); margin-top:2px;">${escapeHtml(resolvedEmail || 'No email associated')}</div>
           <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
             <span style="font-size:0.75rem; font-family:monospace; background:var(--surface); border:1px solid var(--border); padding:2px 6px; border-radius:4px; color:var(--text);">UID: ${escapeHtml(uid)}</span>

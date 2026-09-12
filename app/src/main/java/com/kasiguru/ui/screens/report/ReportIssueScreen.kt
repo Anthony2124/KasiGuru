@@ -384,13 +384,13 @@ fun ReportIssueScreen(
                     ) {
                         Column {
                             Text(
-                                text = "3. Photo Evidence",
+                                text = "3. Photo Evidence *",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Ink
                             )
                             Text(
-                                text = "Attach a screenshot showing the bug or typo",
+                                text = "Attach a screenshot showing the bug or typo (Required)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Muted
                             )
@@ -439,7 +439,7 @@ fun ReportIssueScreen(
                                     )
                                 }
                                 Text(
-                                    text = "Add Screenshot / Photo Evidence",
+                                    text = "Add Screenshot / Photo Evidence *",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
                                     color = Violet
@@ -524,13 +524,13 @@ fun ReportIssueScreen(
                     OutlinedTextField(
                         value = uiState.reporterName,
                         onValueChange = { viewModel.onReporterNameChanged(it) },
-                        label = { Text("Your Name (Optional)") },
-                        placeholder = { Text("Anonymous learner") },
+                        label = { Text("Your Name *") },
+                        placeholder = { Text("Enter your name") },
                         leadingIcon = {
                             Icon(
                                 painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
-                                tint = Muted,
+                                tint = Violet,
                                 modifier = Modifier.size(20.dp)
                             )
                         },

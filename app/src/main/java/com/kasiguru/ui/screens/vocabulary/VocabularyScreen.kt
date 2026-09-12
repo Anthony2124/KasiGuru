@@ -149,20 +149,6 @@ fun VocabularyScreen(
         uiState.totalLearnedCount.toFloat() / uiState.allVocabulary.size.toFloat()
     } else 0f
 
-    var verifyingWordOfDay by remember { mutableStateOf<com.kasiguru.data.local.entity.VocabularyEntity?>(null) }
-
-    verifyingWordOfDay?.let { word ->
-        com.kasiguru.ui.components.WordVerificationDialog(
-            targetWord = word,
-            allWords = uiState.allVocabulary,
-            onSuccess = {
-                viewModel.markWordAsLearned(word.id)
-                verifyingWordOfDay = null
-            },
-            onDismiss = { verifyingWordOfDay = null }
-        )
-    }
-
     GroundScaffold(
         title = "Dictionary",
         subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
@@ -249,18 +235,12 @@ fun VocabularyScreen(
                         kasiguranin = featuredWord?.kasiguranin ?: "singët",
                         translation = when {
                             featuredWord == null -> "langgam · ant"
-                            featuredWord.isLearned -> "${featuredWord.tagalog} · ${featuredWord.english}"
-                            else -> "🔒 Take quiz to unlock meaning"
+                            else -> "${featuredWord.tagalog} · ${featuredWord.english}"
                         },
-                        isLearned = featuredWord?.isLearned ?: false,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             if (featuredWord != null) {
-                                if (featuredWord.isLearned) {
-                                    onNavigateToWord(featuredWord.id)
-                                } else {
-                                    verifyingWordOfDay = featuredWord
-                                }
+                                onNavigateToWord(featuredWord.id)
                             }
                         },
                         onPlayClick = {
@@ -405,7 +385,6 @@ private fun WordOfTheDayCard(
     modifier: Modifier = Modifier,
     kasiguranin: String,
     translation: String,
-    isLearned: Boolean = true,
     onClick: () -> Unit = {},
     onPlayClick: () -> Unit
 ) {
@@ -419,28 +398,7 @@ private fun WordOfTheDayCard(
                 Text(text = "Word of the day", style = MaterialTheme.typography.labelMedium, color = Muted)
                 Spacer(Modifier.height(2.dp))
                 Text(text = kasiguranin, style = KasiguraninHeadword.copy(fontSize = 26.sp, lineHeight = 30.sp), color = Violet)
-                if (isLearned) {
-                    Text(text = translation, style = MaterialTheme.typography.bodySmall, color = Faint)
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Lock),
-                            contentDescription = null,
-                            tint = Violet,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = translation,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Violet
-                        )
-                    }
-                }
+                Text(text = translation, style = MaterialTheme.typography.bodySmall, color = Faint)
             }
             Box(
                 modifier = Modifier

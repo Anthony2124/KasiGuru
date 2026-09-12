@@ -99,7 +99,7 @@ class ReportIssueViewModel @Inject constructor(
     }
 
     fun onReporterNameChanged(value: String) {
-        _uiState.update { it.copy(reporterName = value) }
+        _uiState.update { it.copy(reporterName = value, errorMessage = null) }
     }
 
     fun onPhotoSelected(uri: Uri?) {
@@ -129,6 +129,11 @@ class ReportIssueViewModel @Inject constructor(
     fun submitReport() {
         val state = _uiState.value
 
+        if (state.category == "Wrong Word / Translation" && state.targetWord.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Please specify the Kasiguranin word that is incorrect.") }
+            return
+        }
+
         if (state.title.trim().length < 3) {
             _uiState.update { it.copy(errorMessage = "Please enter a short summary or title (at least 3 characters).") }
             return
@@ -139,8 +144,18 @@ class ReportIssueViewModel @Inject constructor(
             return
         }
 
-        if (state.category == "Wrong Word / Translation" && state.targetWord.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Please specify the Kasiguranin word that is incorrect.") }
+        if (state.isCompressingPhoto) {
+            _uiState.update { it.copy(errorMessage = "Please wait for the photo to finish processing.") }
+            return
+        }
+
+        if (state.photoUri == null || state.photoBase64.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Please attach a photo or screenshot evidence.") }
+            return
+        }
+
+        if (state.reporterName.trim().isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Please enter your name.") }
             return
         }
 
@@ -154,7 +169,7 @@ class ReportIssueViewModel @Inject constructor(
                 targetWord = state.targetWord.trim(),
                 targetScreen = state.targetScreen.trim(),
                 photoBase64 = state.photoBase64,
-                reporterName = state.reporterName.trim().ifBlank { "Anonymous" },
+                reporterName = state.reporterName.trim(),
                 reporterEmail = state.reporterEmail.trim(),
                 appVersion = state.appVersion,
                 deviceInfo = state.deviceInfo

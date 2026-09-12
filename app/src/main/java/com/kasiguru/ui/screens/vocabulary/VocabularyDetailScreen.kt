@@ -1,6 +1,7 @@
 package com.kasiguru.ui.screens.vocabulary
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,13 +43,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.AudioPlayButton
-import com.kasiguru.ui.components.WordVerificationDialog
-import com.kasiguru.ui.components.clay.ClaySurface
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -71,24 +71,10 @@ fun VocabularyDetailScreen(
     viewModel: VocabularyDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val allWords by viewModel.allWords.collectAsState()
-    var isVerifying by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val audioPlayerManager = remember { AudioPlayerManager(context) }
     DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
-
-    if (isVerifying && uiState.word != null) {
-        WordVerificationDialog(
-            targetWord = uiState.word!!,
-            allWords = allWords,
-            onSuccess = {
-                viewModel.markWordAsLearned()
-                isVerifying = false
-            },
-            onDismiss = { isVerifying = false }
-        )
-    }
 
     GroundScaffold(
         title = uiState.word?.kasiguranin ?: "Word",
@@ -109,7 +95,9 @@ fun VocabularyDetailScreen(
                         onPlayAudio = {
                             audioPlayerManager.playWord(vocab)
                         },
-                        onTakeQuiz = { isVerifying = true },
+                        onToggleLearned = {
+                            viewModel.markWordAsLearned()
+                        },
                         onReportWord = onReportWord
                     )
                 }
@@ -122,7 +110,7 @@ fun VocabularyDetailScreen(
 private fun VocabularyDetailBody(
     vocab: VocabularyEntity,
     onPlayAudio: () -> Unit,
-    onTakeQuiz: () -> Unit,
+    onToggleLearned: () -> Unit,
     onReportWord: ((String) -> Unit)? = null
 ) {
     Column(
@@ -135,35 +123,72 @@ private fun VocabularyDetailBody(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (vocab.isLearned) {
-                Text(
-                    text = "${vocab.english} • ${vocab.tagalog}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Muted,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        painter = painterResource(id = Iconsax.Lock),
-                        contentDescription = null,
-                        tint = Violet,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Verification Quiz Required",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Violet,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                text = "${vocab.english} • ${vocab.tagalog}",
+                style = MaterialTheme.typography.titleMedium,
+                color = Muted,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Space.xs)
+            ) {
+                if (vocab.isLearned) {
+                    Surface(
+                        shape = Shapes.pill,
+                        color = Green.copy(alpha = 0.12f),
+                        modifier = Modifier.clip(Shapes.pill)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.TickCircle),
+                                contentDescription = "Learned",
+                                tint = Green,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "Learned",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Green
+                            )
+                        }
+                    }
+                } else {
+                    Surface(
+                        shape = Shapes.pill,
+                        color = Violet.copy(alpha = 0.12f),
+                        modifier = Modifier
+                            .clip(Shapes.pill)
+                            .clickable(onClick = onToggleLearned)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.TickCircle),
+                                contentDescription = "Mark as learned",
+                                tint = Violet,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "Mark Learned",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Violet
+                            )
+                        }
+                    }
                 }
+                AudioPlayButton(onClick = onPlayAudio)
             }
-            AudioPlayButton(onClick = onPlayAudio)
         }
 
         Spacer(Modifier.height(Space.md))
@@ -189,156 +214,86 @@ private fun VocabularyDetailBody(
             )
         }
 
-        if (!vocab.isLearned) {
-            Spacer(Modifier.height(Space.lg))
-            SoftCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = Shapes.panel
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(Space.md),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(Shapes.chip)
-                            .background(Violet.copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Lock),
-                            contentDescription = null,
-                            tint = Violet,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                    Spacer(Modifier.height(Space.sm))
-                    Text(
-                        text = "Meaning is Locked",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Ink
-                    )
-                    Spacer(Modifier.height(Space.xs))
-                    Text(
-                        text = "Take the verification quiz to verify this word and unlock its full definition, translations, and example sentences.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Muted,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(Space.md))
-                    ClaySurface(
-                        face = Violet,
-                        lipColor = VioletDeep,
-                        shape = Shapes.pill,
-                        onClick = onTakeQuiz,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = Space.xs),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                painter = painterResource(id = Iconsax.TickCircle),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Take Verification Quiz",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            // What the word means, as opposed to what it translates to.
-            if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
-                Spacer(Modifier.height(Space.md))
-                Text(
-                    text = "Meaning",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Violet,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Spacer(Modifier.height(Space.xxs))
-                if (vocab.meaningEnglish.isNotEmpty()) {
-                    Text(
-                        text = vocab.meaningEnglish,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Ink
-                    )
-                }
-                if (vocab.meaningTagalog.isNotEmpty()) {
-                    Spacer(Modifier.height(Space.xxs))
-                    Text(
-                        text = vocab.meaningTagalog,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Muted
-                    )
-                }
-            }
-
+        // What the word means, as opposed to what it translates to.
+        if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
             Spacer(Modifier.height(Space.md))
-            HorizontalDivider(color = Faint)
-            Spacer(Modifier.height(Space.md))
-
-            if (vocab.neutralForm.isNotEmpty()) {
+            Text(
+                text = "Meaning",
+                style = MaterialTheme.typography.titleSmall,
+                color = Violet,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.height(Space.xxs))
+            if (vocab.meaningEnglish.isNotEmpty()) {
                 Text(
-                    text = "Verb Aspect Inflections",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Violet,
-                    fontWeight = FontWeight.ExtraBold
+                    text = vocab.meaningEnglish,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
                 )
-                Spacer(Modifier.height(Space.xs))
-                DetailRow("Root", vocab.rootForm)
-                DetailRow("Neutral", vocab.neutralForm)
-                DetailRow("Imperfective (Present)", vocab.imperfectiveForm)
-                DetailRow("Perfective (Past)", vocab.perfectiveForm)
-                DetailRow("Contemplative (Future)", vocab.contemplativeForm)
             }
-
-            if (vocab.exampleSentence.isNotEmpty()) {
-                Spacer(Modifier.height(Space.md))
-                Text(
-                    text = "Example Sentence",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Violet,
-                    fontWeight = FontWeight.ExtraBold
-                )
+            if (vocab.meaningTagalog.isNotEmpty()) {
                 Spacer(Modifier.height(Space.xxs))
                 Text(
-                    text = "\"${vocab.exampleSentence}\"",
+                    text = vocab.meaningTagalog,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Space.md))
+        HorizontalDivider(color = Faint)
+        Spacer(Modifier.height(Space.md))
+
+        if (vocab.neutralForm.isNotEmpty()) {
+            Text(
+                text = "Verb Aspect Inflections",
+                style = MaterialTheme.typography.titleSmall,
+                color = Violet,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.height(Space.xs))
+            DetailRow("Root", vocab.rootForm)
+            DetailRow("Neutral", vocab.neutralForm)
+            DetailRow("Imperfective (Present)", vocab.imperfectiveForm)
+            DetailRow("Perfective (Past)", vocab.perfectiveForm)
+            DetailRow("Contemplative (Future)", vocab.contemplativeForm)
+        }
+
+        if (vocab.exampleSentence.isNotEmpty()) {
+            Spacer(Modifier.height(Space.md))
+            Text(
+                text = "Example Sentence",
+                style = MaterialTheme.typography.titleSmall,
+                color = Violet,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.height(Space.xxs))
+            Text(
+                text = "\"${vocab.exampleSentence}\"",
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                color = Ink
+            )
+            Text(
+                text = vocab.exampleTranslation,
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted
+            )
+
+            if (vocab.exampleSentence2.isNotEmpty()) {
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = "\"${vocab.exampleSentence2}\"",
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     color = Ink
                 )
                 Text(
-                    text = vocab.exampleTranslation,
+                    text = vocab.exampleTranslation2,
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted
                 )
-
-                if (vocab.exampleSentence2.isNotEmpty()) {
-                    Spacer(Modifier.height(Space.sm))
-                    Text(
-                        text = "\"${vocab.exampleSentence2}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = Ink
-                    )
-                    Text(
-                        text = vocab.exampleTranslation2,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Muted
-                    )
-                }
             }
         }
 

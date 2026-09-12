@@ -130,6 +130,11 @@ class BanCheckViewModel @Inject constructor(
     fun signOut(onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             _isSigningOut.value = true
+            // Reset ban state to Loading immediately so the NavGraph LaunchedEffect
+            // does not re-trigger AccountSuspended navigation in the window between
+            // isSigningOut becoming false and the new anonymous uid's Firestore ban
+            // check returning BanState.Clear.
+            _banState.value = BanState.Loading
             try {
                 // Wipe local Room tables, DataStore preferences, and sync cache.
                 // uploadPendingChanges = false so we don't attempt to push data to the banned account.

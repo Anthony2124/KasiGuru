@@ -50,9 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
-import com.kasiguru.ui.components.WordVerificationDialog
 import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.clay.FloatingSearchBar
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -88,7 +86,6 @@ fun CategoryDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    var verifyingWord by remember { mutableStateOf<VocabularyEntity?>(null) }
     var unlearningWord by remember { mutableStateOf<VocabularyEntity?>(null) }
     var dictionaryQuery by remember { mutableStateOf("") }
     val dictionaryResults by viewModel.dictionarySearchResults.collectAsState()
@@ -112,14 +109,6 @@ fun CategoryDetailScreen(
     val totalWords = categoryWords.size
     val learnedCount = categoryWords.count { it.isLearned }
 
-    verifyingWord?.let { word ->
-        WordVerificationDialog(
-            targetWord = word,
-            allWords = uiState.allVocabulary,
-            onSuccess = { viewModel.markWordAsLearned(word.id); verifyingWord = null },
-            onDismiss = { verifyingWord = null }
-        )
-    }
     unlearningWord?.let { word ->
         AlertDialog(
             onDismissRequest = { unlearningWord = null },
@@ -214,7 +203,11 @@ fun CategoryDetailScreen(
                         audioPlayerManager = audioPlayerManager,
                         onMarkLearned = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            if (vocab.isLearned) unlearningWord = vocab else verifyingWord = vocab
+                            if (vocab.isLearned) {
+                                unlearningWord = vocab
+                            } else {
+                                viewModel.markWordAsLearned(vocab.id)
+                            }
                         }
                     )
                 }
@@ -259,42 +252,17 @@ private fun CategoryWordCard(
         shape = Shapes.tile,
         onClick = {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            if (vocab.isLearned) {
-                isExpanded = !isExpanded
-            } else {
-                onMarkLearned()
-            }
+            isExpanded = !isExpanded
         }
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(text = vocab.kasiguranin, style = MaterialTheme.typography.titleLarge, color = Ink)
-                if (vocab.isLearned) {
-                    Text(
-                        text = "${vocab.english} · ${vocab.tagalog}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Faint
-                    )
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Lock),
-                            contentDescription = null,
-                            tint = Violet,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = "Take verification quiz to reveal meaning",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Violet
-                        )
-                    }
-                }
+                Text(
+                    text = "${vocab.english} · ${vocab.tagalog}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Faint
+                )
             }
             // Both icons have properly-sized touch targets
             Box(
@@ -326,25 +294,17 @@ private fun CategoryWordCard(
                         modifier = Modifier.size(22.dp)
                     )
                 } else {
-                    Surface(
-                        shape = Shapes.pill,
-                        color = Violet.copy(alpha = 0.12f),
-                        modifier = Modifier.padding(horizontal = 2.dp)
-                    ) {
-                        Text(
-                            text = "Quiz",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Violet
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = Iconsax.TickCircle),
+                        contentDescription = "Mark as learned",
+                        tint = SurfaceSunken,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
             }
         }
 
-        if (vocab.isLearned) {
-            AnimatedVisibility(visible = isExpanded) {
+        AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.padding(top = Space.sm)) {
                     HorizontalDivider(color = SurfaceSunken)
                     Spacer(Modifier.height(Space.sm))
@@ -396,7 +356,6 @@ private fun CategoryWordCard(
             }
         }
     }
-}
 
 @Composable
 private fun AspectRow(label: String, value: String) {
