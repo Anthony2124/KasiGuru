@@ -1170,29 +1170,142 @@ window.exportAuditLogs = function() {
     return;
   }
 
-  const exportPayload = {
-    exportType: "kasiguru_admin_audit_logs",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    filterRange: label,
-    totalLogs: targetLogs.length,
-    logs: targetLogs
-  };
-
-  const jsonStr = JSON.stringify(exportPayload, null, 2);
-  const blob = new Blob([jsonStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
   const dateStr = new Date().toISOString().split('T')[0];
+  const exportedAt = new Date().toLocaleString();
+  const rangeLabel = label.replace(/-/g, ' ');
+
+  // Helper to pick a badge colour based on the action string
+  function actionColor(action) {
+    const a = (action || '').toLowerCase();
+    if (a.includes('delete') || a.includes('block') || a.includes('reject') || a.includes('ban')) {
+      return { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' };
+    }
+    if (a.includes('create') || a.includes('approve') || a.includes('unblock') || a.includes('unban')) {
+      return { bg: '#dcfce7', color: '#15803d', border: '#86efac' };
+    }
+    if (a.includes('update') || a.includes('edit') || a.includes('modify')) {
+      return { bg: '#fef9c3', color: '#a16207', border: '#fde047' };
+    }
+    return { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' };
+  }
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatTs(ts) {
+    if (!ts) return '—';
+    try { return new Date(ts).toLocaleString(); } catch { return ts; }
+  }
+
+  function detailsHtml(d) {
+    if (!d || typeof d !== 'object') return esc(d);
+    return Object.entries(d)
+      .filter(([, v]) => v !== undefined && v !== null && v !== '')
+      .map(([k, v]) => `<span class="detail-pill"><b>${esc(k)}:</b> ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`)
+      .join('');
+  }
+
+  const rows = targetLogs.map((log, i) => {
+    const c = actionColor(log.action);
+    const badge = `<span class="badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.border}">${esc(log.action)}</span>`;
+    return `
+      <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+        <td class="num">${i + 1}</td>
+        <td>${formatTs(log.timestamp)}</td>
+        <td>${badge}</td>
+        <td><b>${esc(log.actor || log.adminEmail || '—')}</b></td>
+        <td class="details">${detailsHtml(log.details || log.data || {})}</td>
+      </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KasiGuru Audit Logs — ${rangeLabel} — ${dateStr}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: #f8fafc; color: #1e293b; padding: 32px 24px; font-size: 14px; }
+  .report-header { background: linear-gradient(135deg, #6c3aff 0%, #a855f7 100%);
+    color: #fff; border-radius: 16px; padding: 32px 36px; margin-bottom: 28px; }
+  .report-header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .report-header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+               padding: 16px 24px; flex: 1; min-width: 150px; }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: #6c3aff; }
+  .stat-card .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .table-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+                overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #f1f5f9; padding: 12px 14px; text-align: left;
+             font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+             color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+  tbody tr.even { background: #fff; }
+  tbody tr.odd  { background: #fafafa; }
+  tbody tr:hover { background: #f0f4ff; }
+  td { padding: 10px 14px; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
+  td.num { color: #94a3b8; font-size: 12px; width: 48px; text-align: center; }
+  td.details { max-width: 420px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px;
+           font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .detail-pill { display: inline-block; background: #f1f5f9; border-radius: 6px;
+                 padding: 2px 7px; margin: 2px 3px 2px 0; font-size: 12px; word-break: break-all; }
+  .detail-pill b { color: #475569; margin-right: 2px; }
+  .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #94a3b8; }
+  @media(max-width:600px) {
+    body { padding: 16px 8px; }
+    table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="report-header">
+  <h1>📋 KasiGuru Audit Logs</h1>
+  <p>Range: <b>${rangeLabel}</b> &nbsp;•&nbsp; Exported on <b>${exportedAt}</b></p>
+</div>
+<div class="stats">
+  <div class="stat-card"><div class="num">${targetLogs.length}</div><div class="lbl">Total Entries</div></div>
+  <div class="stat-card"><div class="num">${[...new Set(targetLogs.map(l => l.actor || l.adminEmail).filter(Boolean))].length}</div><div class="lbl">Unique Admins</div></div>
+  <div class="stat-card"><div class="num">${[...new Set(targetLogs.map(l => l.action).filter(Boolean))].length}</div><div class="lbl">Unique Actions</div></div>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timestamp</th>
+        <th>Action</th>
+        <th>Admin</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+<div class="footer">KasiGuru Admin &mdash; Audit Log Report &mdash; ${dateStr}</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = `kasiguru-audit-logs-${label}-${dateStr}.json`;
+  a.download = `kasiguru-audit-logs-${label}-${dateStr}.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  notify(`Exported ${targetLogs.length} audit logs (${label.replace(/-/g, ' ')}) successfully!`, "success");
+  notify(`Exported ${targetLogs.length} audit logs (${rangeLabel}) as a readable report!`, "success");
 };
 
 
