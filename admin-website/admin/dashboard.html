@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>KasiGuru — Admin</title>
   <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
-  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v3">
+  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v4">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -693,34 +693,61 @@
         <div class="card span-12">
           <div class="card-head">
             <div>
-              <h2>Reset</h2>
-              <p>Return the database to a known state. Take a backup first.</p>
+              <h2>Reset &amp; Maintenance</h2>
+              <p>Return the database or queues to a known state. Always take an export backup first before running reset operations.</p>
             </div>
           </div>
-          <div style="padding:1rem 0;">
-            <p style="font-weight:700; margin-bottom:4px;">Clear moderation queues</p>
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-              Deletes every pending and rejected word submission, literature submission, and issue report.
-              Words already approved into the dictionary are unaffected.
-            </p>
-            <button class="btn btn-danger" id="btn-reset-queues" onclick="window.resetModerationQueues()">
-              <iconsax-icon name="trash" type="bulk" size="18" color="currentColor"></iconsax-icon> Clear moderation queues
-            </button>
+          <div class="reset-grid">
+            <!-- Clear Moderation Queues Sub-panel -->
+            <div class="reset-panel">
+              <div class="reset-panel-header">
+                <div class="reset-panel-icon reset-panel-icon--danger">
+                  <iconsax-icon name="trash" type="bulk" size="22" color="var(--red)"></iconsax-icon>
+                </div>
+                <div>
+                  <h3 class="reset-panel-title">Clear moderation queues</h3>
+                  <span class="reset-badge reset-badge--danger">Immediate Action</span>
+                </div>
+              </div>
+              <p class="reset-panel-desc">
+                Deletes every pending and rejected word submission, literature submission, and issue report.
+                Words already approved into the dictionary are unaffected.
+              </p>
+              <div class="reset-panel-warning">
+                <iconsax-icon name="info-circle" type="bulk" size="18" color="var(--status-pending)"></iconsax-icon>
+                <span>Export a backup first if you wish to archive submitted and rejected items before deletion.</span>
+              </div>
+              <div class="reset-panel-footer">
+                <button class="btn btn-danger" id="btn-reset-queues" onclick="window.resetModerationQueues()">
+                  <iconsax-icon name="trash" type="bulk" size="18" color="currentColor"></iconsax-icon> Clear moderation queues
+                </button>
+              </div>
+            </div>
 
-            <hr style="border:none; border-top:1px solid var(--rule, #e5e5e5); margin:1.5rem 0;">
-
-            <p style="font-weight:700; margin-bottom:4px;">Full database reset</p>
-            <p style="color:var(--muted); font-size:0.9rem; margin-bottom:0.75rem;">
-              Clearing learner progress, leaderboard rows, device tokens and security questions is deliberately not available here.
-              Those documents are owner-writable only, so that a compromised admin session cannot rewrite anyone's learning record.
-              A full reset runs from the operator machine with the service-account key:
-            </p>
-            <pre style="background:var(--sunken, #f3f3f3); padding:12px 14px; border-radius:6px; overflow-x:auto; font-size:0.82rem; margin:0;"><code>node functions/backup_firestore.js &lt;service-account.json&gt;
+            <!-- Full Database Reset Sub-panel -->
+            <div class="reset-panel">
+              <div class="reset-panel-header">
+                <div class="reset-panel-icon reset-panel-icon--violet">
+                  <iconsax-icon name="security-safe" type="bulk" size="22" color="var(--violet)"></iconsax-icon>
+                </div>
+                <div>
+                  <h3 class="reset-panel-title">Full database reset</h3>
+                  <span class="reset-badge reset-badge--violet">Operator CLI Only</span>
+                </div>
+              </div>
+              <p class="reset-panel-desc">
+                Clearing learner progress, leaderboard rows, device tokens, and security questions is deliberately not available in the browser. Those documents are owner-writable only, so that a compromised admin session cannot rewrite learning records.
+              </p>
+              <p class="reset-panel-note">
+                A full reset runs from the operator machine with the service-account key:
+              </p>
+              <pre class="reset-code-block"><code>node functions/backup_firestore.js &lt;service-account.json&gt;
 node functions/reset_firestore.js &lt;service-account.json&gt; --mode=learner
 node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --from=&lt;backup-dir&gt;</code></pre>
-            <p style="color:var(--muted); font-size:0.85rem; margin-top:0.75rem;">
-              Both modes are a dry run until <code>--confirm=&lt;projectId&gt;</code> is passed. See <code>docs/BACKUP_AND_RESET.md</code>.
-            </p>
+              <p class="reset-panel-caption">
+                Both modes are a dry run until <code>--confirm=&lt;projectId&gt;</code> is passed. See <code>docs/BACKUP_AND_RESET.md</code>.
+              </p>
+            </div>
           </div>
         </div>
       </div>

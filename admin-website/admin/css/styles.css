@@ -313,11 +313,128 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-4); }
 .card-head h2 { font-size: var(--t-md); color: var(--ink); }
 .card-head p { font-size: var(--t-xs); color: var(--muted); margin-top: 3px; }
+.span-12 { grid-column: span 12; }
 .span-6 { grid-column: span 6; }
 .span-5 { grid-column: span 5; }
 .span-4 { grid-column: span 4; }
 .span-3 { grid-column: span 3; }
 .row-2 { grid-row: span 2; }
+
+/* ── Reset Grid & Sub-panels ──────────────────────────────────────────────── */
+.reset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-5);
+  align-items: stretch;
+  margin-top: var(--s-2);
+}
+.reset-panel {
+  background: var(--sunken);
+  border: 1px solid var(--hair);
+  border-radius: var(--r-tile);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+}
+.reset-panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.reset-panel-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-chip);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+}
+.reset-panel-icon--danger {
+  background: var(--status-rejected-tint);
+}
+.reset-panel-icon--violet {
+  background: var(--violet-wash);
+}
+.reset-panel-title {
+  font-size: var(--t-base);
+  font-weight: 800;
+  color: var(--ink);
+  font-family: var(--display);
+  line-height: 1.2;
+}
+.reset-badge {
+  display: inline-block;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  margin-top: 4px;
+}
+.reset-badge--danger {
+  background: var(--status-rejected-tint);
+  color: var(--status-rejected);
+}
+.reset-badge--violet {
+  background: var(--violet-wash);
+  color: var(--violet);
+}
+.reset-panel-desc {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  margin-bottom: var(--s-4);
+}
+.reset-panel-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  background: var(--status-pending-tint);
+  border-radius: var(--r-ctl);
+  padding: 10px 12px;
+  color: var(--status-pending);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  margin-bottom: var(--s-4);
+}
+.reset-panel-warning iconsax-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.reset-panel-footer {
+  margin-top: auto;
+  padding-top: var(--s-2);
+}
+.reset-panel-note {
+  font-size: var(--t-xs);
+  color: var(--ink);
+  font-weight: 600;
+  margin-bottom: var(--s-2);
+}
+.reset-code-block {
+  background: var(--surface);
+  border: 1px solid var(--hair-strong);
+  border-radius: var(--r-ctl);
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  color: var(--ink);
+  margin-bottom: var(--s-2);
+}
+.reset-panel-caption {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: var(--s-2);
+}
+@media (max-width: 900px) {
+  .reset-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* Bar chart. Real counts, drawn as divs — there is no chart library on this page and a corpus
    histogram does not justify one. Every bar states its own number, so the figure is readable
@@ -723,6 +840,7 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
 }
 
 @media (max-width: 1280px) {
+  .span-12 { grid-column: span 12; }
   .span-6 { grid-column: span 12; }
   .span-5 { grid-column: span 7; }
   .span-4 { grid-column: span 5; }
@@ -753,7 +871,7 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
 @media (max-width: 760px) {
   .statgrid { grid-template-columns: 1fr; }
   .stat { min-height: 0; }
-  .span-6, .span-5, .span-4, .span-3 { grid-column: span 12; }
+  .span-12, .span-6, .span-5, .span-4, .span-3 { grid-column: span 12; }
   .topsearch kbd { display: none; }
   .topsearch input { padding-right: 16px; }
   .topuser-meta { display: none; }
