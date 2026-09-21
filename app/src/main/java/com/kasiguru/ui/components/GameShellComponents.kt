@@ -189,7 +189,8 @@ fun GameAnswerFeedback(
      * An extra line shown whatever the verdict. The answer is otherwise printed only when the
      * learner got it wrong, which hides the correct spelling in exactly the case that needs it.
      */
-    correction: String? = null
+    correction: String? = null,
+    onPlayAudio: (() -> Unit)? = null
 ) {
     val tint = if (isCorrect) GreenTint else RedTint
     val accent = if (isCorrect) GreenDeep else RedDeep
@@ -202,21 +203,36 @@ fun GameAnswerFeedback(
             .navigationBarsPadding()
             .padding(Space.gutter)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(
-                    id = if (isCorrect) Iconsax.TickCircle else Iconsax.InfoCircle
-                ),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(26.dp)
-            )
-            Spacer(Modifier.width(Space.xs))
-            Text(
-                text = headline ?: if (isCorrect) "Correct" else "Not quite",
-                style = MaterialTheme.typography.headlineSmall,
-                color = accent
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        id = if (isCorrect) Iconsax.TickCircle else Iconsax.InfoCircle
+                    ),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(Modifier.width(Space.xs))
+                Text(
+                    text = headline ?: if (isCorrect) "Correct" else "Not quite",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = accent
+                )
+            }
+            if (onPlayAudio != null) {
+                AudioPlayButton(
+                    onClick = onPlayAudio,
+                    size = 36.dp
+                )
+            }
         }
 
         if (correction != null) {

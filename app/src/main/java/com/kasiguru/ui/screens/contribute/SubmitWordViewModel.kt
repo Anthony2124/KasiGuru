@@ -139,6 +139,10 @@ class SubmitWordViewModel @Inject constructor(
             _uiState.value = state.copy(errorMessage = "Please enter either Tagalog or English definition")
             return
         }
+        if (state.contributorName.isBlank()) {
+            _uiState.value = state.copy(errorMessage = "Please enter your name for contributor credit")
+            return
+        }
 
         _uiState.value = state.copy(isLoading = true, errorMessage = null, showDuplicateConfirm = false)
 
@@ -175,7 +179,7 @@ class SubmitWordViewModel @Inject constructor(
                 pastTense = state.pastTense.trim(),
                 presentTense = state.presentTense.trim(),
                 futureTense = state.futureTense.trim(),
-                contributorName = if (state.contributorName.isBlank()) "Anonymous Contributor" else state.contributorName.trim(),
+                contributorName = state.contributorName.trim(),
                 status = "pending",
                 submittedAt = System.currentTimeMillis()
             )

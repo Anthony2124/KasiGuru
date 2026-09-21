@@ -47,15 +47,24 @@ class AudioPlayerManager @Inject constructor(
      */
     fun playWord(word: VocabularyEntity) {
         stopAudio()
-        if (word.audioFileName.isBlank()) return
+        val key = word.audioFileName.ifBlank {
+            val slugK = word.kasiguranin.trim().lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+            val slugE = word.english.trim().lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+            if (slugK.isNotBlank() && slugE.isNotBlank()) "${slugK}__${slugE}" else slugK
+        }
+        if (key.isBlank()) return
         resolveJob = scope.launch {
             val file = try {
-                wordAudioRepository.audioFor(word.audioFileName, word.audioUpdatedAt)
+                wordAudioRepository.audioFor(key, word.audioUpdatedAt)
             } catch (e: Exception) {
                 Log.w("AudioPlayerManager", "Audio lookup failed for ${word.kasiguranin}", e)
                 null
             }
-            if (file != null) playFile(file)
+            if (file != null) {
+                playFile(file)
+            } else {
+                playAudio(word.kasiguranin, word.audioFileName)
+            }
         }
     }
 

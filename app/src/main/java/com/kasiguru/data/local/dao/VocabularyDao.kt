@@ -87,6 +87,18 @@ interface VocabularyDao {
     @Query("DELETE FROM vocabulary WHERE id IN (:ids)")
     suspend fun deleteWords(ids: List<Int>)
 
+    /**
+     * Removes the row for a specific sense — headword plus English gloss.
+     *
+     * Used by the realtime listener when a document is deleted from the admin portal: the listener
+     * knows the headword and gloss from the removed document but not the local auto-generated id.
+     */
+    @Query(
+        "DELETE FROM vocabulary WHERE LOWER(kasiguranin) = LOWER(:kasiguranin) " +
+            "AND LOWER(english) = LOWER(:english)"
+    )
+    suspend fun deleteBySense(kasiguranin: String, english: String)
+
     @Query("SELECT * FROM vocabulary WHERE isLearned = 1 ORDER BY kasiguranin")
     fun getLearnedVocabulary(): Flow<List<VocabularyEntity>>
 

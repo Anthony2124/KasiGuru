@@ -13,10 +13,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.GameAnswerFeedback
@@ -40,6 +45,7 @@ import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Violet
 import com.kasiguru.util.RecallMatch
+import com.kasiguru.util.audio.AudioPlayerManager
 
 /**
  * Word Recall — meaning in, Kasiguranin out.
@@ -57,6 +63,13 @@ fun RecallGameScreen(
     viewModel: RecallGameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val audioPlayerManager = remember { AudioPlayerManager(context) }
+    DisposableEffect(Unit) {
+        onDispose { audioPlayerManager.stopAudio() }
+    }
+
     val exitGuard = rememberGameExitGuard(
         active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
         onExit = onNavigateBack
@@ -177,7 +190,11 @@ fun RecallGameScreen(
                         } else {
                             null
                         },
-                        onContinue = { viewModel.nextQuestion() }
+                        onContinue = { viewModel.nextQuestion() },
+                        onPlayAudio = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            audioPlayerManager.playWord(word)
+                        }
                     )
                 } else {
                     ClayButton(

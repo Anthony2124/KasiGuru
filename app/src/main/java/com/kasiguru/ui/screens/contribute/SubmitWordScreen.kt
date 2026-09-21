@@ -427,8 +427,8 @@ fun SubmitWordScreen(
                     OutlinedTextField(
                         value = uiState.contributorName,
                         onValueChange = { viewModel.onContributorNameChanged(it) },
-                        label = { Text("Your Name / Credit (Optional)") },
-                        placeholder = { Text("Leave blank to submit anonymously") },
+                        label = { Text("Your Name / Credit") },
+                        placeholder = { Text("Enter your name") },
                         leadingIcon = {
                             Icon(painter = painterResource(id = Iconsax.Profile), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
                         },

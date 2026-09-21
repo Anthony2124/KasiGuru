@@ -4,10 +4,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,6 +33,7 @@ import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.theme.Ink
+import com.kasiguru.util.audio.AudioPlayerManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +43,13 @@ fun ReverseMatchGameScreen(
     viewModel: ReverseMatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val audioPlayerManager = remember { AudioPlayerManager(context) }
+    DisposableEffect(Unit) {
+        onDispose { audioPlayerManager.stopAudio() }
+    }
+
     val exitGuard = rememberGameExitGuard(
         active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
         onExit = onNavigateBack
@@ -172,7 +185,13 @@ fun ReverseMatchGameScreen(
                     isCorrect = uiState.selectedOption == uiState.currentWord?.kasiguranin,
                     correctAnswer = uiState.currentWord?.kasiguranin ?: "",
                     word = uiState.currentWord,
-                    onContinue = { viewModel.nextQuestion() }
+                    onContinue = { viewModel.nextQuestion() },
+                    onPlayAudio = uiState.currentWord?.let { word ->
+                        {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            audioPlayerManager.playWord(word)
+                        }
+                    }
                 )
             }
         }

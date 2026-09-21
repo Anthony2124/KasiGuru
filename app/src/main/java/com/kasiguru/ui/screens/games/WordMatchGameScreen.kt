@@ -4,15 +4,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.AudioPlayButton
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameHintButton
@@ -28,6 +34,7 @@ import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.theme.Ink
+import com.kasiguru.util.audio.AudioPlayerManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +44,13 @@ fun WordMatchGameScreen(
     viewModel: WordMatchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val audioPlayerManager = remember { AudioPlayerManager(context) }
+    DisposableEffect(Unit) {
+        onDispose { audioPlayerManager.stopAudio() }
+    }
+
     val exitGuard = rememberGameExitGuard(
         active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
         onExit = onNavigateBack
@@ -111,7 +125,7 @@ fun WordMatchGameScreen(
                     shadowElevation = 2.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(28.dp),
+                        modifier = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -120,13 +134,28 @@ fun WordMatchGameScreen(
                             color = Muted
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = uiState.currentWord?.kasiguranin ?: "",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Black,
-                            color = Ink,
-                            fontSize = 32.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = uiState.currentWord?.kasiguranin ?: "",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
+                                color = Ink,
+                                fontSize = 32.sp
+                            )
+                            uiState.currentWord?.let { word ->
+                                Spacer(modifier = Modifier.width(12.dp))
+                                AudioPlayButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        audioPlayerManager.playWord(word)
+                                    },
+                                    size = 40.dp
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -165,7 +194,13 @@ fun WordMatchGameScreen(
                     isCorrect = uiState.selectedOption == uiState.currentWord?.tagalog,
                     correctAnswer = uiState.currentWord?.tagalog ?: "",
                     word = uiState.currentWord,
-                    onContinue = { viewModel.nextQuestion() }
+                    onContinue = { viewModel.nextQuestion() },
+                    onPlayAudio = uiState.currentWord?.let { word ->
+                        {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            audioPlayerManager.playWord(word)
+                        }
+                    }
                 )
             }
         }
