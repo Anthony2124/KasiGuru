@@ -69,11 +69,14 @@ object ContentTopUp {
 
     suspend fun run(vocabularyDao: VocabularyDao) {
         val plan = plan(vocabularyDao.getAllVocabularyOnce(), DatabaseSeeder.getInitialVocabulary())
-        if (plan.isEmpty) return
 
         if (plan.toInsert.isNotEmpty()) vocabularyDao.insertAll(plan.toInsert)
         // insertAll is REPLACE on the primary key, so an update is an insert of a row that already
         // carries its id -- and every learning column travels with it untouched.
         if (plan.toUpdate.isNotEmpty()) vocabularyDao.insertAll(plan.toUpdate)
+
+        // Clean up any duplicate rows left by earlier sync bugs. Runs on every launch so existing
+        // users see duplicates removed immediately, not only after the next 6-hour Firestore sync.
+        vocabularyDao.deleteDuplicateWords()
     }
 }
