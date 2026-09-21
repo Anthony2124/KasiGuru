@@ -1,7 +1,12 @@
 package com.kasiguru.ui.screens.contribute
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -11,9 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
@@ -37,9 +45,23 @@ fun SubmitLiteratureScreen(
     viewModel: SubmitLiteratureViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val pdfPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.onPdfSelected(context, uri)
+        }
+    }
+
+    val openPdfPicker = {
+        pdfPickerLauncher.launch("application/pdf")
+    }
 
     val hasUnsavedChanges = !uiState.isSuccess && (
         uiState.title.isNotBlank() || uiState.titleKasiguranin.isNotBlank() ||
+            uiState.pdfUri != null ||
             uiState.pages.any { it.kasiguranin.isNotBlank() || it.tagalog.isNotBlank() || it.english.isNotBlank() }
         )
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -114,7 +136,7 @@ fun SubmitLiteratureScreen(
             ) {
                 GroundTitleBlock(
                     title = "Submit a story or poem",
-                    subtitle = "Write it in Kasiguranin, with a translation alongside if you can. " +
+                    subtitle = "Attach the piece as a PDF file, with a title and optional text transcription. " +
                         "It joins the pending queue for a moderator to review, the same as a submitted word."
                 )
 
@@ -124,6 +146,7 @@ fun SubmitLiteratureScreen(
                     }
                 }
 
+                // Title & Author details
                 SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                         OutlinedTextField(
@@ -148,6 +171,178 @@ fun SubmitLiteratureScreen(
                             singleLine = true
                         )
                     }
+                }
+
+                // PDF Document Attachment (Required)
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Story / Manuscript Document *",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Ink
+                                )
+                                Text(
+                                    text = "PDF file required (max 500 KB)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Muted
+                                )
+                            }
+                            if (uiState.pdfUri != null) {
+                                TextButton(onClick = { viewModel.onRemovePdf() }) {
+                                    Text("Remove", color = Red, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+
+                        if (uiState.isReadingPdf) {
+                            Surface(
+                                shape = Shapes.tile,
+                                color = Violet.copy(alpha = 0.05f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(Space.md),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Space.sm)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = Violet,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text(
+                                        text = "Reading and attaching PDF…",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Violet
+                                    )
+                                }
+                            }
+                        } else if (uiState.pdfUri != null && uiState.pdfBase64.isNotBlank()) {
+                            val formattedSize = if (uiState.pdfFileSize > 0) {
+                                val kb = uiState.pdfFileSize / 1024
+                                if (kb >= 1024) String.format("%.1f MB", kb / 1024.0) else "$kb KB"
+                            } else ""
+
+                            Surface(
+                                shape = Shapes.tile,
+                                color = Violet.copy(alpha = 0.08f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, Violet.copy(alpha = 0.3f), Shapes.tile)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Space.sm),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Space.sm)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(Violet.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.Document),
+                                            contentDescription = "PDF Document",
+                                            tint = Violet,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = uiState.pdfFileName.ifBlank { "Attached PDF" },
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Ink,
+                                            maxLines = 1
+                                        )
+                                        if (formattedSize.isNotBlank()) {
+                                            Text(
+                                                text = formattedSize,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Muted
+                                            )
+                                        }
+                                    }
+                                    TextButton(onClick = openPdfPicker) {
+                                        Text("Change", color = Violet, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    }
+                                }
+                            }
+                        } else {
+                            Surface(
+                                shape = Shapes.tile,
+                                color = Violet.copy(alpha = 0.04f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { openPdfPicker() }
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = Violet.copy(alpha = 0.35f),
+                                        shape = Shapes.tile
+                                    )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp, horizontal = 16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(Violet.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = Iconsax.Document),
+                                            contentDescription = "Attach PDF",
+                                            tint = Violet,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Attach Story / Poem (PDF) *",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = Violet
+                                    )
+                                    Text(
+                                        text = "Tap to choose a .pdf document from your device",
+                                        fontSize = 12.sp,
+                                        color = Muted
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Optional page-by-page transcription
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Space.xs),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Page Transcription (Optional)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Ink
+                    )
                 }
 
                 uiState.pages.forEachIndexed { index, page ->
@@ -209,7 +404,7 @@ fun SubmitLiteratureScreen(
                 ClayButton(
                     label = if (uiState.isLoading) "Submitting…" else "Submit for review",
                     onClick = viewModel::submitLiterature,
-                    enabled = !uiState.isLoading,
+                    enabled = !uiState.isLoading && !uiState.isReadingPdf,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(Space.navBarClearance))
@@ -217,3 +412,4 @@ fun SubmitLiteratureScreen(
         }
     )
 }
+

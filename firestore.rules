@@ -293,7 +293,7 @@ service cloud.firestore {
     function isValidLiteratureSubmission() {
       let data = request.resource.data;
       let allowedKeys = data.keys().hasOnly([
-        'id', 'title', 'titleKasiguranin', 'pagesJson', 'contributorName', 'status', 'submittedAt', 'uid'
+        'id', 'title', 'titleKasiguranin', 'pagesJson', 'contributorName', 'pdfBase64', 'pdfFileName', 'status', 'submittedAt', 'uid'
       ]);
       return allowedKeys
         && data.title is string && data.title.size() <= 200
@@ -301,6 +301,8 @@ service cloud.firestore {
         && (data.title.size() >= 1 || data.titleKasiguranin.size() >= 1)
         && data.pagesJson is string && data.pagesJson.size() <= 300000
         && data.contributorName is string && data.contributorName.size() <= 60
+        && data.pdfBase64 is string && data.pdfBase64.size() >= 20 && data.pdfBase64.size() <= 800000
+        && (!('pdfFileName' in data) || data.pdfFileName is string && data.pdfFileName.size() <= 255)
         && data.status == 'pending'
         && data.submittedAt is int
         && data.uid is string && data.uid.size() <= 128

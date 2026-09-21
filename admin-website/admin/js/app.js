@@ -2692,7 +2692,7 @@ function renderLiteratureSubmissionsTable() {
   if (literatureSubmissions.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align:center; padding:2.5rem; color:var(--muted);">
+        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">
           No pending story or poem submissions.
         </td>
       </tr>`;
@@ -2704,9 +2704,19 @@ function renderLiteratureSubmissionsTable() {
     const statusBadgeClass = sub.status === 'approved' ? 'badge-approved' : (sub.status === 'rejected' ? 'badge-rejected' : 'badge-pending');
     let pageCount = 0;
     try { pageCount = JSON.parse(sub.pagesJson || '[]').length; } catch (e) { pageCount = 0; }
+    const hasPdf = sub.pdfBase64 && sub.pdfBase64.length > 20;
+    const pdfFileName = sub.pdfFileName || 'submission.pdf';
 
     tr.innerHTML = `
       <td data-label="Title"><strong>${escapeHtml(sub.titleKasiguranin || sub.title || '(untitled)')}</strong></td>
+      <td data-label="PDF Document">
+        ${hasPdf ? `
+          <a href="${sub.pdfBase64}" download="${escapeHtml(pdfFileName)}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; padding:4px 8px;" title="Download / view attached PDF">
+            <iconsax-icon name="document-download" type="bulk" size="15" color="currentColor"></iconsax-icon>
+            <span style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(pdfFileName)}</span>
+          </a>
+        ` : `<span style="color:var(--muted); font-size:0.82rem;">None</span>`}
+      </td>
       <td data-label="Pages">${pageCount}</td>
       <td data-label="Contributor">${escapeHtml(sub.contributorName || 'Anonymous')}</td>
       <td data-label="Status"><span class="badge ${statusBadgeClass}">${(sub.status || 'pending').toUpperCase()}</span></td>
@@ -2743,7 +2753,7 @@ function renderLiteratureSubmissionsTable() {
 function renderLiteratureSubmissionsError(message) {
   const tbody = document.getElementById('literature-submissions-tbody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--status-rejected); padding:2rem;">${escapeHtml(message)}</td></tr>`;
   }
 }
 

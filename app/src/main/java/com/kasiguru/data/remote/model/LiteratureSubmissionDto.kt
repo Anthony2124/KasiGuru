@@ -22,6 +22,8 @@ data class LiteratureSubmissionDto(
     val titleKasiguranin: String = "",
     val pagesJson: String = "[]",
     val contributorName: String = "Anonymous",
+    val pdfBase64: String = "",
+    val pdfFileName: String = "",
     val status: String = "pending", // "pending", "approved", "rejected"
     val submittedAt: Long = System.currentTimeMillis(),
     val uid: String = "" // Firebase Auth uid of the submitter ("" if anonymous sign-in hasn't completed)
