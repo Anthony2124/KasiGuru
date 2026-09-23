@@ -122,11 +122,33 @@ object Constants {
          * learner can see.
          */
         const val RECALL = "audio_quiz"
+
+        /**
+         * Word Search, the one game whose levels belong to a category rather than to the game.
+         *
+         * This key names the game itself (its tile, rules, scores and high score). Its level rows are
+         * keyed per category by [wordSearchLevelKey], so each of the dictionary categories carries its
+         * own 30 levels through the same `game_levels` table and synced `gameLevels` document as every
+         * other game, with no schema change.
+         */
+        const val WORD_SEARCH = "word_search"
+
+        /** The `game_levels.gameType` for one category's Word Search levels, e.g. `word_search_food_dining`. */
+        fun wordSearchLevelKey(category: String): String =
+            WORD_SEARCH + "_" + category.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+
+        /** The category a [wordSearchLevelKey] was made from, or null if it is not one. */
+        fun categoryForWordSearchKey(key: String): String? =
+            VocabCategories.ALL.firstOrNull { wordSearchLevelKey(it) == key }
+
+        fun isWordSearchLevelKey(key: String): Boolean = key.startsWith(WORD_SEARCH + "_")
     }
 
     // Mini-Game Unlock Requirements (Total Stars)
     object GameUnlockStars {
         const val WORD_MATCH = 0
+        /** Open from the start: a new game should be something to try, not another thing to earn. */
+        const val WORD_SEARCH = 0
         const val FILL_BLANK = 45
         const val RECALL = 90
         const val ASPECT_BUILDER = 135

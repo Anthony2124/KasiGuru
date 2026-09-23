@@ -100,7 +100,10 @@ fun GameHubScreen(
                 com.kasiguru.util.Constants.GameUnlockStars.RECALL,
                 uiState.highScores[com.kasiguru.util.Constants.Games.RECALL] ?: 0),
             GameEntry("aspect_builder", "Aspect Builder", Iconsax.Flash, Gold,
-                com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0)
+                com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0),
+            GameEntry(com.kasiguru.util.Constants.Games.WORD_SEARCH, "Word Search", Iconsax.Search, violet,
+                com.kasiguru.util.Constants.GameUnlockStars.WORD_SEARCH,
+                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_SEARCH] ?: 0)
         )
     }
     // The single best next move: the unlocked game played least successfully, or — if everything is
@@ -197,8 +200,8 @@ fun GameHubScreen(
                 }
 
                 item {
-                    // Three per row at medium/expanded widths (six games divides evenly into two
-                    // full rows there); two per row on a compact phone, as before.
+                    // Three per row at medium/expanded widths, two per row on a compact phone. With
+                    // seven games the last row is short; the spacers below keep its tile at full width.
                     val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                         games.chunked(columns).forEach { row ->
@@ -373,6 +376,7 @@ private fun GameScoreRow(score: GameScoreEntity) {
         com.kasiguru.util.Constants.Games.RECALL -> "Word Recall"
         "aspect_builder" -> "Aspect Builder"
         "sentence_order" -> "Sentence Construction"
+        com.kasiguru.util.Constants.Games.WORD_SEARCH -> "Word Search"
         else -> score.gameType
     }
     val accuracy = if (score.totalQuestions > 0) (score.score.toFloat() / score.totalQuestions * 100).toInt() else 0

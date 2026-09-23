@@ -43,6 +43,24 @@ object DatabaseSeeder {
                 )
             }
         }
+
+        // Word Search keeps a separate 30-level track per dictionary category. questionsCount is the
+        // number of hidden words, mirroring WordSearchTier (4 / 6 / 8).
+        for (category in Constants.VocabCategories.ALL) {
+            val key = Constants.Games.wordSearchLevelKey(category)
+            for (levelNum in 1..30) {
+                val tier = com.kasiguru.domain.wordsearch.WordSearchTier.forLevel(levelNum)
+                levels.add(
+                    GameLevelEntity(
+                        gameType = key,
+                        levelNumber = levelNum,
+                        difficulty = tier.name,
+                        isUnlocked = levelNum == 1,
+                        questionsCount = tier.wordCount
+                    )
+                )
+            }
+        }
         return levels
     }
 

@@ -85,6 +85,9 @@ object DatabaseModule {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     try {
                         ContentTopUp.run(vocabularyDaoProvider.get())
+                        // Level rows added after install (Word Search's per-category tracks) arrive
+                        // here, before progress sync reads the table. IGNORE keeps every played row.
+                        gameLevelDaoProvider.get().insertMissing(DatabaseSeeder.getInitialGameLevels())
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

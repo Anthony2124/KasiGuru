@@ -157,6 +157,19 @@ object GameRulesRegistry {
             ),
             gradient = listOf(Coral, CoralDeep),
             onGradientIsInk = true
+        ),
+        com.kasiguru.util.Constants.Games.WORD_SEARCH to GameRuleInfo(
+            gameType = com.kasiguru.util.Constants.Games.WORD_SEARCH,
+            title = "Word Search",
+            description = "Find hidden Kasiguranin words in a grid of letters. Pick a category first; each has its own 30 levels.",
+            iconRes = Iconsax.Search,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_SEARCH,
+            rules = listOf(
+                "Tap a word's first letter, then its last letter.",
+                "Levels 1-10 run across and down, 11-20 add diagonals, 21-30 go any direction, even backwards.",
+                "Find every word with no wrong lines for three stars."
+            ),
+            gradient = listOf(FixedViolet, FixedVioletDeep)
         )
     )
 }
