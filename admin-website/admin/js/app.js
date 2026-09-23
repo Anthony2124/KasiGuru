@@ -4057,6 +4057,28 @@ async function logAudit(action, details = {}) {
 // ── Users Listener & Helpers ────────────────────────────────────────────────
 let usersList = [];
 let bansMap = new Map(); // uid → ban doc
+// uid → users/{uid}/progress/main data. The table and the details modal both
+// read through applyProgress() so they always show the same values.
+const progressCache = new Map();
+
+// Overlay the private progress doc onto the public leaderboard row, using the
+// same precedence as the details modal (progress doc wins when it has a value).
+function applyProgress(user) {
+  const p = progressCache.get(user.id);
+  if (!p) return user;
+  const out = { ...user, progressLoaded: true };
+  const email = (p.email || '').trim();
+  if (email) out.email = email;
+  if (p.fullName && p.fullName.trim()) out.fullName = p.fullName.trim();
+  if (p.userName && p.userName.trim()) out.userName = p.userName.trim();
+  if (p.totalXp != null) out.totalXp = p.totalXp;
+  if (p.currentStreak != null) out.currentStreak = p.currentStreak;
+  if (p.titleBadge) out.titleBadge = p.titleBadge;
+  const date = p.registeredAt || user.registeredAt || p.createdAt || user.createdAt || user.joinedAt || user.updatedAt;
+  if (date) out.registeredAt = date;
+  out.displayName = resolveUserDisplayName(out, p);
+  return out;
+}
 
 const GENERIC_NAMES = new Set([
   'learner', 'guest', 'anonymous user', 'registered user',
@@ -4119,19 +4141,7 @@ function resolveUserDisplayName(user, progressData = null) {
 function initUsersListener() {
   const usersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
   const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
-    const prevMap = new Map(usersList.map(u => [u.id, u]));
-    usersList = snapshot.docs.map(doc => {
-      const prev = prevMap.get(doc.id) || {};
-      const raw = { id: doc.id, ...doc.data() };
-      const merged = { ...prev, ...raw };
-      if (prev.fullName && !raw.fullName) merged.fullName = prev.fullName;
-      if (prev.userName && !raw.userName) merged.userName = prev.userName;
-      if (prev.progressLoaded) merged.progressLoaded = true;
-      if (!isGenericName(prev.displayName) && isGenericName(raw.displayName)) {
-        merged.displayName = prev.displayName;
-      }
-      return merged;
-    });
+    usersList = snapshot.docs.map(d => applyProgress({ id: d.id, ...d.data() }));
     renderUsersTable();
     enrichUsersWithProgress();
   }, (error) => {
@@ -4189,65 +4199,18 @@ function initUsersListener() {
 }
 
 async function enrichUsersWithProgress() {
-  let hasUpdates = false;
-  const enriched = await Promise.all(usersList.map(async (u) => {
-    const currentResolved = resolveUserDisplayName(u);
-    if (u.progressLoaded && !isGenericName(currentResolved)) {
-      return u;
-    }
+  const missing = usersList.filter(u => !progressCache.has(u.id));
+  if (missing.length === 0) return;
+  await Promise.all(missing.map(async (u) => {
     try {
       const pDoc = await getDoc(doc(db, "users", u.id, "progress", "main"));
-      if (pDoc.exists()) {
-        const pData = pDoc.data() || {};
-        const pEmail = (pData.email || '').trim();
-        const pDate = pData.registeredAt || pData.createdAt || pData.updatedAt || 0;
-        const pFullName = (pData.fullName || '').trim();
-        const pUserName = (pData.userName || '').trim();
-        
-        let changed = false;
-        const updatedUser = { ...u, progressLoaded: true };
-        
-        if (!updatedUser.email && pEmail) {
-          updatedUser.email = pEmail;
-          changed = true;
-        }
-        if (!updatedUser.registeredAt && !updatedUser.createdAt && pDate) {
-          updatedUser.registeredAt = pDate;
-          changed = true;
-        }
-        if (pFullName && updatedUser.fullName !== pFullName) {
-          updatedUser.fullName = pFullName;
-          changed = true;
-        }
-        if (pUserName && updatedUser.userName !== pUserName) {
-          updatedUser.userName = pUserName;
-          changed = true;
-        }
-
-        const newResolved = resolveUserDisplayName(updatedUser, pData);
-        if (newResolved && (isGenericName(updatedUser.displayName) || updatedUser.displayName !== newResolved)) {
-          updatedUser.displayName = newResolved;
-          changed = true;
-        }
-
-        if (changed) {
-          hasUpdates = true;
-          return updatedUser;
-        }
-        return updatedUser;
-      } else {
-        return { ...u, progressLoaded: true };
-      }
+      progressCache.set(u.id, pDoc.exists() ? (pDoc.data() || {}) : {});
     } catch (e) {
-      // Ignore if user progress doc is not accessible
-      return u;
+      // Progress doc not accessible — keep the leaderboard values
     }
   }));
-
-  if (hasUpdates) {
-    usersList = enriched;
-    renderUsersTable();
-  }
+  usersList = usersList.map(applyProgress);
+  renderUsersTable();
 }
 
 function renderUsersTable() {
@@ -4273,14 +4236,10 @@ function renderUsersTable() {
     if (!uniqueUserMap.has(key)) {
       uniqueUserMap.set(key, { ...user });
     } else {
+      // Keep one real account's record intact (never blend fields across uids),
+      // so the row matches what the details modal shows for that uid.
       const existing = uniqueUserMap.get(key);
-      const merged = { ...existing };
-      if (!existing.email && user.email) merged.email = user.email;
-      if ((user.totalXp || 0) > (existing.totalXp || 0)) merged.totalXp = user.totalXp;
-      if (!existing.registeredAt && user.registeredAt) merged.registeredAt = user.registeredAt;
-      if (!existing.fullName && user.fullName) merged.fullName = user.fullName;
-      if (!existing.userName && user.userName) merged.userName = user.userName;
-      uniqueUserMap.set(key, merged);
+      if ((user.totalXp || 0) > (existing.totalXp || 0)) uniqueUserMap.set(key, { ...user });
     }
   }
   const byNameIndex = new Map();
@@ -4302,15 +4261,6 @@ function renderUsersTable() {
       else if (otherHasEmail && !currentHasEmail) { keepKey = otherKey; dropKey = key; }
       else { keepKey = (current.totalXp||0) >= (other.totalXp||0) ? key : otherKey;
              dropKey = keepKey === key ? otherKey : key; }
-      const winner = uniqueUserMap.get(keepKey);
-      const loser  = uniqueUserMap.get(dropKey);
-      const merged = { ...winner };
-      if (!winner.email && loser.email) merged.email = loser.email;
-      merged.totalXp = Math.max(winner.totalXp||0, loser.totalXp||0);
-      if (!winner.registeredAt && loser.registeredAt) merged.registeredAt = loser.registeredAt;
-      if (!winner.fullName && loser.fullName) merged.fullName = loser.fullName;
-      if (!winner.userName && loser.userName) merged.userName = loser.userName;
-      uniqueUserMap.set(keepKey, merged);
       uniqueUserMap.delete(dropKey);
       byNameIndex.set(name, keepKey);
     }
@@ -4543,33 +4493,11 @@ window.openUserDetails = async function(uid) {
   const displayName = resolveUserDisplayName(user, progressData);
 
   // Sync loaded progress data into cached user in usersList and update table
+  progressCache.set(uid, progressData);
   const cachedIdx = usersList.findIndex(u => u.id === uid);
   if (cachedIdx !== -1) {
-    let changed = false;
-    const cu = usersList[cachedIdx];
-    if (progressData.fullName && cu.fullName !== progressData.fullName) {
-      cu.fullName = progressData.fullName;
-      changed = true;
-    }
-    if (progressData.userName && cu.userName !== progressData.userName) {
-      cu.userName = progressData.userName;
-      changed = true;
-    }
-    if (progressData.email && !cu.email) {
-      cu.email = progressData.email;
-      changed = true;
-    }
-    if (!cu.progressLoaded) {
-      cu.progressLoaded = true;
-      changed = true;
-    }
-    if (cu.displayName !== displayName) {
-      cu.displayName = displayName;
-      changed = true;
-    }
-    if (changed) {
-      renderUsersTable();
-    }
+    usersList[cachedIdx] = applyProgress(usersList[cachedIdx]);
+    renderUsersTable();
   }
 
   const banDoc = bansMap.get(uid);
