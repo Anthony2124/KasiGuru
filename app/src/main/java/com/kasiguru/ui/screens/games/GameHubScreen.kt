@@ -103,7 +103,10 @@ fun GameHubScreen(
                 com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0),
             GameEntry(com.kasiguru.util.Constants.Games.WORD_SEARCH, "Word Search", Iconsax.Search, violet,
                 com.kasiguru.util.Constants.GameUnlockStars.WORD_SEARCH,
-                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_SEARCH] ?: 0)
+                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_SEARCH] ?: 0),
+            GameEntry(com.kasiguru.util.Constants.Games.WORD_WHEEL, "Word Wheel", Iconsax.Refresh, Gold,
+                com.kasiguru.util.Constants.GameUnlockStars.WORD_WHEEL,
+                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_WHEEL] ?: 0)
         )
     }
     // The single best next move: the unlocked game played least successfully, or — if everything is
@@ -200,8 +203,8 @@ fun GameHubScreen(
                 }
 
                 item {
-                    // Three per row at medium/expanded widths, two per row on a compact phone. With
-                    // seven games the last row is short; the spacers below keep its tile at full width.
+                    // Three per row at medium/expanded widths, two per row on a compact phone. When the
+                    // game count does not divide evenly, spacers keep the last row's tiles full width.
                     val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                         games.chunked(columns).forEach { row ->
@@ -377,6 +380,7 @@ private fun GameScoreRow(score: GameScoreEntity) {
         "aspect_builder" -> "Aspect Builder"
         "sentence_order" -> "Sentence Construction"
         com.kasiguru.util.Constants.Games.WORD_SEARCH -> "Word Search"
+        com.kasiguru.util.Constants.Games.WORD_WHEEL -> "Word Wheel"
         else -> score.gameType
     }
     val accuracy = if (score.totalQuestions > 0) (score.score.toFloat() / score.totalQuestions * 100).toInt() else 0

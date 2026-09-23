@@ -417,6 +417,20 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
 
+            composable(
+                route = Screen.WordWheelGame.route,
+                arguments = listOf(navArgument("level") { type = NavType.IntType })
+            ) {
+                WordWheelGameScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNextLevel = { nextLevel ->
+                        navController.navigate(Screen.WordWheelGame.createRoute(nextLevel)) {
+                            popUpTo(Screen.WordWheelGame.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Screen.WordSearchCategories.route) {
                 WordSearchCategoryScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -457,6 +471,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                             Constants.Games.RECALL -> navController.navigate(Screen.RecallGame.createRoute(level))
                             "aspect_builder" -> navController.navigate(Screen.AspectBuilderGame.createRoute(level))
                             "sentence_order" -> navController.navigate(Screen.SentenceOrderGame.createRoute(level))
+                            Constants.Games.WORD_WHEEL -> navController.navigate(Screen.WordWheelGame.createRoute(level))
                             else -> if (Constants.Games.isWordSearchLevelKey(gameType)) {
                                 navController.navigate(Screen.WordSearchGame.createRoute(gameType, level))
                             }

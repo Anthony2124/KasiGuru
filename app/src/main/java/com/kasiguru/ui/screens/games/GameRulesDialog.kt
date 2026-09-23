@@ -170,6 +170,20 @@ object GameRulesRegistry {
                 "Find every word with no wrong lines for three stars."
             ),
             gradient = listOf(FixedViolet, FixedVioletDeep)
+        ),
+        com.kasiguru.util.Constants.Games.WORD_WHEEL to GameRuleInfo(
+            gameType = com.kasiguru.util.Constants.Games.WORD_WHEEL,
+            title = "Word Wheel",
+            description = "Spell Kasiguranin words from the letters on the wheel to fill the crossword.",
+            iconRes = Iconsax.Refresh,
+            unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_WHEEL,
+            rules = listOf(
+                "Swipe across the letters, or tap them and press Check. Words need 3 letters or more.",
+                "Other real words you spell are bonus words and earn extra XP.",
+                "Solve the board with no hints for three stars."
+            ),
+            gradient = listOf(Gold, GoldDeep),
+            onGradientIsInk = true
         )
     )
 }

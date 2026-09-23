@@ -72,6 +72,7 @@ class GamesViewModel @Inject constructor(
                 val abHigh = gameRepository.getHighScore("aspect_builder")
                 val soHigh = gameRepository.getHighScore("sentence_order")
                 val wsHigh = gameRepository.getHighScore(Constants.Games.WORD_SEARCH)
+                val wwHigh = gameRepository.getHighScore(Constants.Games.WORD_WHEEL)
                 
                 _uiState.value = _uiState.value.copy(
                     highScores = mapOf(
@@ -81,7 +82,8 @@ class GamesViewModel @Inject constructor(
                         Constants.Games.RECALL to (recallHigh?.score ?: 0),
                         "aspect_builder" to (abHigh?.score ?: 0),
                         "sentence_order" to (soHigh?.score ?: 0),
-                        Constants.Games.WORD_SEARCH to (wsHigh?.score ?: 0)
+                        Constants.Games.WORD_SEARCH to (wsHigh?.score ?: 0),
+                        Constants.Games.WORD_WHEEL to (wwHigh?.score ?: 0)
                     )
                 )
             }
