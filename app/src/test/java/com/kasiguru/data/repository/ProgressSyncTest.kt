@@ -3,6 +3,7 @@ package com.kasiguru.data.repository
 import com.kasiguru.data.local.entity.UserProgressEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDate
 
 class ProgressSyncTest {
 
@@ -161,6 +162,11 @@ class ProgressSyncTest {
     private fun streakProgress(streak: Int, lastActiveDate: String, updatedAt: Long = 0) =
         UserProgressEntity(currentStreak = streak, lastActiveDate = lastActiveDate, updatedAt = updatedAt)
 
+    // "Today" for the streak tests. Pinned, not LocalDate.now(): these tests once passed and then
+    // failed a month later with no code change, because their 2026-08-18 activity had aged past the
+    // one-day expiry window against the real clock.
+    private val today = LocalDate.of(2026, 8, 20)
+
     @Test
     fun localResetIsNotOverwrittenByHigherRemoteStreak() {
         // User missed a day: local correctly reset to 0. Remote (cloud) still stores the old 5.
@@ -168,7 +174,7 @@ class ProgressSyncTest {
         val local = streakProgress(streak = 0, lastActiveDate = "2026-08-20", updatedAt = 2)
         val remote = streakProgress(streak = 5, lastActiveDate = "2026-08-18", updatedAt = 1)
 
-        val merged = mergeProgress(local, remote)
+        val merged = mergeProgress(local, remote, today)
         // Local has the newer lastActiveDate, so local streak (0) wins.
         assertEquals(0, merged.currentStreak)
         assertEquals("2026-08-20", merged.lastActiveDate)
@@ -177,22 +183,33 @@ class ProgressSyncTest {
     @Test
     fun remoteStreakWinsWhenRemoteHasNewerActivity() {
         // User has two devices: remote device logged activity more recently.
-        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-17", updatedAt = 1)
-        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-18", updatedAt = 2)
+        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-18", updatedAt = 1)
+        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-19", updatedAt = 2)
 
-        val merged = mergeProgress(local, remote)
+        val merged = mergeProgress(local, remote, today)
         assertEquals(4, merged.currentStreak)
-        assertEquals("2026-08-18", merged.lastActiveDate)
+        assertEquals("2026-08-19", merged.lastActiveDate)
     }
 
     @Test
     fun sameDateTakesHigherStreak() {
         // Both sides active on the same day, different streak counts (due to sync order).
-        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-18", updatedAt = 1)
-        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-18", updatedAt = 2)
+        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-19", updatedAt = 1)
+        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-19", updatedAt = 2)
 
-        val merged = mergeProgress(local, remote)
+        val merged = mergeProgress(local, remote, today)
         assertEquals(4, merged.currentStreak)
+    }
+
+    @Test
+    fun streakExpiresExactlyWhenADayIsMissed() {
+        // Active yesterday: the streak is still alive today. Active two days ago: a day was
+        // missed, so it expires. Pins the boundary the two tests above depend on.
+        val yesterday = streakProgress(streak = 4, lastActiveDate = "2026-08-19")
+        val twoDaysAgo = streakProgress(streak = 4, lastActiveDate = "2026-08-18")
+
+        assertEquals(4, mergeProgress(yesterday, yesterday, today).currentStreak)
+        assertEquals(0, mergeProgress(twoDaysAgo, twoDaysAgo, today).currentStreak)
     }
 
     @Test
