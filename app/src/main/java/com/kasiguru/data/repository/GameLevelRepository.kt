@@ -18,8 +18,7 @@ class GameLevelRepository @Inject constructor(
     private val gameLevelDao: GameLevelDao
 ) {
     /**
-     * Returns levels for a game type. If no levels exist yet in the DB,
-     * seeds all 150 levels first (5 games × 30 levels), then emits.
+     * Returns levels for a game type, seeding any missing level rows first.
      */
     fun getLevelsByGame(gameType: String): Flow<List<GameLevelEntity>> = flow {
         ensureLevelsSeeded()
@@ -27,12 +26,21 @@ class GameLevelRepository @Inject constructor(
     }
 
     /**
-     * Ensures all 150 game levels are present. Called lazily on first access.
+     * Ensures every game level row is present: the six games' 30 levels each, plus Word Search's
+     * 30 per category. Called lazily on first access, and tops up installs that predate a new track.
      */
     suspend fun ensureLevelsSeeded() {
-        if (gameLevelDao.getLevelCount() == 0) {
-            gameLevelDao.insertAll(DatabaseSeeder.getInitialGameLevels())
+        val initial = DatabaseSeeder.getInitialGameLevels()
+        if (gameLevelDao.getLevelCount() < initial.size) {
+            // Not insertAll: that REPLACEs, and would wipe the stars on every level already played.
+            gameLevelDao.insertMissing(initial)
         }
+    }
+
+    /** Every level row, for screens that summarise several level tracks at once (Word Search). */
+    fun getAllLevels(): Flow<List<GameLevelEntity>> = flow {
+        ensureLevelsSeeded()
+        emitAll(gameLevelDao.getAllLevelsForSync())
     }
 
     suspend fun getLevel(gameType: String, levelNumber: Int): GameLevelEntity? {

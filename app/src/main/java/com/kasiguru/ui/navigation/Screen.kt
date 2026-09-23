@@ -60,6 +60,12 @@ sealed class Screen(val route: String) {
     data object SentenceOrderGame : Screen("games/sentence_order/{level}") {
         fun createRoute(level: Int) = "games/sentence_order/$level"
     }
+    /** Asks which category to play; each category's own levels then open in [LevelSelection]. */
+    data object WordSearchCategories : Screen("games/word_search")
+    /** [category] is a `Constants.Games.wordSearchLevelKey`, already a route-safe slug. */
+    data object WordSearchGame : Screen("games/word_search/{category}/{level}") {
+        fun createRoute(category: String, level: Int) = "games/word_search/$category/$level"
+    }
     data object Achievements : Screen("achievements")
     data object CulturalContext : Screen("cultural")
     data object FlashcardDeck : Screen("flashcards")

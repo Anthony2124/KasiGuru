@@ -40,6 +40,10 @@ interface GameLevelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(levels: List<GameLevelEntity>)
 
+    /** Adds only the rows that are missing; a level someone has already played keeps its stars. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMissing(levels: List<GameLevelEntity>)
+
     @Update
     suspend fun update(level: GameLevelEntity)
 }

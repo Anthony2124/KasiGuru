@@ -64,10 +64,15 @@ fun LevelSelectionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val ruleInfo = GameRulesRegistry.games[uiState.gameType]
+    // Word Search opens this screen once per category, keyed by that category rather than the game.
+    val wordSearchCategory = com.kasiguru.util.Constants.Games.categoryForWordSearchKey(uiState.gameType)
+    val title = wordSearchCategory ?: ruleInfo?.title ?: "Levels"
+    val subtitle = if (wordSearchCategory != null) "Word Search · clear a level to unlock the next"
+        else "Clear a level to unlock the next one"
 
     GroundScaffold(
-        title = ruleInfo?.title ?: "Levels",
-        subtitle = "Clear a level to unlock the next one",
+        title = title,
+        subtitle = subtitle,
         onBack = onNavigateBack,
         pattern = GroundPattern.Arcs,
         content = {
@@ -87,13 +92,17 @@ fun LevelSelectionScreen(
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         GroundTitleBlock(
-                            title = ruleInfo?.title ?: "Levels",
-                            subtitle = "Clear a level to unlock the next one",
+                            title = title,
+                            subtitle = subtitle,
                             // The star count was a canopy GlassChip. Gold carries RewardInk at 9.00
                             // measured, so the tag states it without needing a translucent fill.
                             lead = {
                                 TagChip(
-                                    label = "${uiState.totalStars} stars earned",
+                                    label = if (wordSearchCategory != null) {
+                                        "${uiState.levels.sumOf { it.starsEarned }} stars in this category"
+                                    } else {
+                                        "${uiState.totalStars} stars earned"
+                                    },
                                     tint = Gold,
                                     labelColor = RewardInk
                                 )
