@@ -142,6 +142,13 @@ object Constants {
             VocabCategories.ALL.firstOrNull { wordSearchLevelKey(it) == key }
 
         fun isWordSearchLevelKey(key: String): Boolean = key.startsWith(WORD_SEARCH + "_")
+
+        /**
+         * Word Wheel: spell dictionary words from the letters of one word to fill a small crossword.
+         * One 30-level track over the whole dictionary; see `WordWheelGenerator` for why it is not
+         * per category.
+         */
+        const val WORD_WHEEL = "word_wheel"
     }
 
     // Mini-Game Unlock Requirements (Total Stars)
@@ -149,6 +156,8 @@ object Constants {
         const val WORD_MATCH = 0
         /** Open from the start: a new game should be something to try, not another thing to earn. */
         const val WORD_SEARCH = 0
+        /** Open from the start, like Word Search. */
+        const val WORD_WHEEL = 0
         const val FILL_BLANK = 45
         const val RECALL = 90
         const val ASPECT_BUILDER = 135

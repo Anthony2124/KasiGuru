@@ -49,7 +49,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.domain.wordsearch.GridCell
 import com.kasiguru.domain.wordsearch.PlacedWord
 import com.kasiguru.domain.wordsearch.WordSearchPuzzle
@@ -79,22 +78,6 @@ import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletDeep
 import com.kasiguru.ui.theme.VioletTint
 import com.kasiguru.util.audio.AudioPlayerManager
-
-/**
- * The line shown under a word in the list: its Tagalog translation, which is the learners' own
- * language. English only fills in where the dictionary has no Tagalog. Blank when the translation is
- * spelled the same as the Kasiguranin (`manok` / `manok`), since repeating the word teaches nothing.
- */
-internal fun tagalogGloss(entry: VocabularyEntity): String {
-    val gloss = entry.tagalog.ifBlank { entry.english }.trim()
-    return if (comparable(gloss) == comparable(entry.kasiguranin)) "" else gloss
-}
-
-/** Case, accents, the schwa `ë` and hyphens ignored, so `singët` and `singet` count as one spelling. */
-private fun comparable(text: String): String =
-    java.text.Normalizer.normalize(text.trim().lowercase(), java.text.Normalizer.Form.NFD)
-        .replace(Regex("\\p{Mn}+"), "")
-        .replace("-", "")
 
 /** A found word's fill and the letter colour that reads on it. */
 private data class WordHue(val fill: Color, val letter: Color)

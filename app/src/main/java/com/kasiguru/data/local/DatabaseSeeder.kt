@@ -17,7 +17,9 @@ object DatabaseSeeder {
             // Word Recall took this slot over from Audio Quiz and kept its key so existing levels,
             // stars and high scores keep counting — see Constants.Games.RECALL.
             Constants.Games.RECALL,
-            "aspect_builder", "sentence_order"
+            "aspect_builder", "sentence_order",
+            // Installs from before Word Wheel get these 30 rows from the insertMissing top-up.
+            Constants.Games.WORD_WHEEL
         )
         
         for (game in gameTypes) {
