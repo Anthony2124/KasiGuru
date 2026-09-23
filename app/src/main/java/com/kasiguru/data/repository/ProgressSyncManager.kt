@@ -648,10 +648,15 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
  * recorded activity most recently (higher `lastActiveDate`), and then expire it here if that date
  * is already more than one day old — matching the same rule used in
  * `UserProgressRepository.validateAndResetExpiredStreak`.
+ *
+ * [today] is the day that expiry is measured from. Production leaves it as the real date; tests pin
+ * it, because a fixed `lastActiveDate` in a test ages past the one-day window as the calendar moves
+ * and the test starts failing with no code change.
  */
 internal fun mergeProgress(
     local: UserProgressEntity,
-    remote: UserProgressEntity
+    remote: UserProgressEntity,
+    today: java.time.LocalDate = java.time.LocalDate.now()
 ): UserProgressEntity {
     val remoteNewer = remote.updatedAt >= local.updatedAt
 
@@ -699,7 +704,7 @@ internal fun mergeProgress(
             java.time.LocalDate.parse(mergedLastActiveDate)
         }.getOrNull()
         if (lastDate != null && java.time.temporal.ChronoUnit.DAYS.between(
-                lastDate, java.time.LocalDate.now()) > 1
+                lastDate, today) > 1
         ) 0 else rawStreak
     } else rawStreak
     // ────────────────────────────────────────────────────────────────────────
