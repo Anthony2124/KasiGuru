@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -153,6 +154,13 @@ fun SubmitWordScreen(
         return
     }
 
+    uiState.errorMessage?.let { message ->
+        ErrorDialog(
+            message = message,
+            onDismiss = { viewModel.clearErrorMessage() }
+        )
+    }
+
     GroundScaffold(
         title = "Help Expand Kasiguranin",
         subtitle = "Share native words, phrases, or local expressions to be verified and published to KasiGuru.",
@@ -170,30 +178,6 @@ fun SubmitWordScreen(
                     title = "Help Expand Kasiguranin",
                     subtitle = "Share native words, phrases, or local expressions to be verified and published to KasiGuru."
                 )
-                Spacer(Modifier.height(Space.xs))
-
-                if (uiState.errorMessage != null) {
-                    Surface(color = RedTint, shape = Shapes.tile, modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(Space.sm),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Space.xs)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = Iconsax.InfoCircle),
-                                contentDescription = null,
-                                tint = Red,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = uiState.errorMessage!!,
-                                color = Red,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-                }
 
                 // Section 1: Core Translations
                 SoftCard(modifier = Modifier.fillMaxWidth()) {

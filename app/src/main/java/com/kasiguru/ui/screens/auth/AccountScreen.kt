@@ -1,25 +1,35 @@
 package com.kasiguru.ui.screens.auth
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.R
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -36,6 +46,8 @@ import com.kasiguru.ui.theme.*
 @Composable
 fun AccountScreen(
     onNavigateBack: () -> Unit,
+    onAuthSuccess: (() -> Unit)? = null,
+    initialSignInMode: Boolean = true,
     viewModel: AccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +55,8 @@ fun AccountScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isSignInMode by remember { mutableStateOf(false) }
+    var isSignInMode by remember { mutableStateOf(initialSignInMode) }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val googleSignIn = rememberGoogleSignIn(onIdToken = { viewModel.linkGoogle(it) })
 
@@ -69,11 +82,23 @@ fun AccountScreen(
         )
     }
 
-    LaunchedEffect(uiState.message, uiState.error) {
-        val text = uiState.message ?: uiState.error
-        if (text != null) {
-            snackbarHostState.showSnackbar(text)
+    uiState.error?.let { error ->
+        ErrorDialog(
+            message = error,
+            onDismiss = { viewModel.clearError() }
+        )
+    }
+
+    LaunchedEffect(uiState.message) {
+        uiState.message?.let { message ->
+            snackbarHostState.showSnackbar(message)
             viewModel.consumeMessages()
+        }
+    }
+
+    LaunchedEffect(uiState.didSucceed) {
+        if (uiState.didSucceed) {
+            onAuthSuccess?.invoke()
         }
     }
 
@@ -107,7 +132,7 @@ fun AccountScreen(
     }
 
     GroundScaffold(
-        title = "Account",
+        title = "Account & Sign In",
         subtitle = "Keep your progress safe across devices",
         onBack = attemptBack,
         pattern = GroundPattern.Orbs,
@@ -121,7 +146,7 @@ fun AccountScreen(
                     verticalArrangement = Arrangement.spacedBy(Space.md)
                 ) {
                     GroundTitleBlock(
-                        title = "Account",
+                        title = "Account & Sign In",
                         subtitle = "Keep your progress safe across devices"
                     )
                     Spacer(Modifier.height(Space.xs))
@@ -138,6 +163,12 @@ fun AccountScreen(
                             onSignOut = { viewModel.signOut() }
                         )
                     } else {
+                        // Mode Switcher: Log In vs Create Account
+                        AuthSegmentedSwitcher(
+                            isSignInMode = isSignInMode,
+                            onModeChange = { isSignInMode = it }
+                        )
+
                         SoftCard(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = if (isSignInMode) "Sign in to your account" else "Create your account",
@@ -148,21 +179,53 @@ fun AccountScreen(
                             Spacer(Modifier.height(Space.xxs))
                             Text(
                                 text = if (isSignInMode) {
-                                    "Already have an account? Sign in to load its progress on this device."
+                                    "Sign in to restore your cloud progress, XP, streak, and badges."
                                 } else {
-                                    "Your current progress stays exactly as it is and gets attached to the new account."
+                                    "Your current device progress will be securely attached to your new account."
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Muted
                             )
                             Spacer(Modifier.height(Space.md))
 
+                            if (googleSignIn != null) {
+                                OutlinedButton(
+                                    onClick = googleSignIn,
+                                    enabled = !uiState.isBusy,
+                                    shape = Shapes.pill,
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface),
+                                    border = BorderStroke(1.dp, SurfaceSunken),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_google_g),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(Space.sm))
+                                    Text("Continue with Google", color = Ink, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(Modifier.height(Space.md))
+                                AuthDivider(text = "or with email")
+                                Spacer(Modifier.height(Space.md))
+                            }
+
                             OutlinedTextField(
                                 value = email,
                                 onValueChange = { email = it },
-                                label = { Text("Email") },
+                                label = { Text("Email address") },
                                 singleLine = true,
                                 enabled = !uiState.isBusy,
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Sms),
+                                        contentDescription = null,
+                                        tint = Violet,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Email,
                                     imeAction = ImeAction.Next
@@ -178,7 +241,24 @@ fun AccountScreen(
                                 label = { Text("Password") },
                                 singleLine = true,
                                 enabled = !uiState.isBusy,
-                                visualTransformation = PasswordVisualTransformation(),
+                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(id = Iconsax.Lock),
+                                        contentDescription = null,
+                                        tint = Violet,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                trailingIcon = {
+                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                        Icon(
+                                            imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                            tint = Muted
+                                        )
+                                    }
+                                },
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Password,
                                     imeAction = ImeAction.Done
@@ -188,7 +268,26 @@ fun AccountScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            Spacer(Modifier.height(Space.md))
+                            if (isSignInMode) {
+                                Spacer(Modifier.height(Space.xxs))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
+                                        Text(
+                                            text = "Forgot password?",
+                                            color = Violet,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            } else {
+                                Spacer(Modifier.height(Space.sm))
+                            }
+
+                            Spacer(Modifier.height(Space.xs))
                             ClayButton(
                                 label = if (isSignInMode) "Sign In" else "Create Account",
                                 onClick = {
@@ -200,45 +299,55 @@ fun AccountScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            if (googleSignIn != null) {
-                                Spacer(Modifier.height(Space.sm))
-                                OutlinedButton(
-                                    onClick = googleSignIn,
-                                    enabled = !uiState.isBusy,
-                                    shape = Shapes.tile,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(52.dp)
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_google_g),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(Modifier.width(Space.xs))
-                                    Text("Continue with Google", color = Ink, fontWeight = FontWeight.Bold)
-                                }
-                            }
-
-                            Spacer(Modifier.height(Space.xs))
+                            Spacer(Modifier.height(Space.sm))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Text(
+                                    text = if (isSignInMode) "Don't have an account?" else "Already have an account?",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Muted
+                                )
+                                Spacer(Modifier.width(Space.xxs))
                                 TextButton(onClick = { isSignInMode = !isSignInMode }) {
                                     Text(
-                                        text = if (isSignInMode) "Create an account" else "I already have one",
+                                        text = if (isSignInMode) "Create one" else "Sign in",
                                         color = Violet,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
-                                if (isSignInMode) {
-                                    TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
-                                        Text("Forgot password?", color = Muted)
-                                    }
-                                }
                             }
+                        }
+
+                        // Benefits Card
+                        SoftCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Why sync your KasiGuru account?",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Ink
+                            )
+                            Spacer(Modifier.height(Space.sm))
+                            AuthBenefitRow(
+                                iconRes = Iconsax.TickCircle,
+                                title = "Protect your hard work",
+                                subtitle = "Your streak, XP, badges, and review progress are backed up safely."
+                            )
+                            Spacer(Modifier.height(Space.sm))
+                            AuthBenefitRow(
+                                iconRes = Iconsax.Global,
+                                title = "Learn on any device",
+                                subtitle = "Log in on a new phone and immediately resume where you left off."
+                            )
+                            Spacer(Modifier.height(Space.sm))
+                            AuthBenefitRow(
+                                iconRes = Iconsax.Cup,
+                                title = "Compete on leaderboards",
+                                subtitle = "Share your Kasiguranin learning rank with your community."
+                            )
                         }
                     }
 
@@ -255,6 +364,114 @@ fun AccountScreen(
             }
         }
     )
+}
+
+@Composable
+private fun AuthSegmentedSwitcher(
+    isSignInMode: Boolean,
+    onModeChange: (Boolean) -> Unit
+) {
+    Surface(
+        shape = Shapes.pill,
+        color = SurfaceSunken,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(4.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(Shapes.pill)
+                    .background(if (isSignInMode) Violet else Color.Transparent)
+                    .clickable { onModeChange(true) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Sign In",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSignInMode) Color.White else Muted
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(Shapes.pill)
+                    .background(if (!isSignInMode) Violet else Color.Transparent)
+                    .clickable { onModeChange(false) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Create Account",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (!isSignInMode) Color.White else Muted
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthDivider(text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceSunken)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = Muted,
+            modifier = Modifier.padding(horizontal = Space.sm)
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceSunken)
+    }
+}
+
+@Composable
+private fun AuthBenefitRow(
+    iconRes: Int,
+    title: String,
+    subtitle: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Space.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Violet.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = Violet,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ink
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted
+            )
+        }
+    }
 }
 
 @Composable
@@ -304,7 +521,7 @@ private fun AccountStatusCard(
                         isRecoverable && email != null -> "Signed in as $email"
                         isRecoverable && providers.contains("google.com") -> "Signed in with Google"
                         isRecoverable -> "Signed in"
-                        else -> "Saved on this device only. Uninstalling loses it."
+                        else -> "Saved on this device only. Sign in to protect your progress."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted

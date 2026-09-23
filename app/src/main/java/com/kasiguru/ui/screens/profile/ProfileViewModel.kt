@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.data.repository.AccountState
+import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +18,7 @@ import javax.inject.Inject
 data class ProfileUiState(
     val userProgress: UserProgressEntity? = null,
     val achievements: List<AchievementEntity> = emptyList(),
+    val account: AccountState = AccountState(null, isAnonymous = true, email = null),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
@@ -64,7 +67,8 @@ data class ProfileUiState(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
-    private val vocabularyRepository: VocabularyRepository
+    private val vocabularyRepository: VocabularyRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -74,6 +78,15 @@ class ProfileViewModel @Inject constructor(
         loadProfile()
         observeAchievements()
         observeMasteredCount()
+        observeAccount()
+    }
+
+    private fun observeAccount() {
+        viewModelScope.launch {
+            authRepository.accountState.collect { account ->
+                _uiState.value = _uiState.value.copy(account = account)
+            }
+        }
     }
 
     /**
@@ -138,5 +151,9 @@ class ProfileViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isSaving = false, error = "Couldn't save your changes. Check your connection and try again.")
             false
         }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

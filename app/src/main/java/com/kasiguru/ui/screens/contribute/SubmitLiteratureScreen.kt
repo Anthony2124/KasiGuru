@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.GroundPattern
@@ -122,6 +123,13 @@ fun SubmitLiteratureScreen(
         return
     }
 
+    uiState.errorMessage?.let { message ->
+        ErrorDialog(
+            message = message,
+            onDismiss = { viewModel.clearErrorMessage() }
+        )
+    }
+
     GroundScaffold(
         title = "Submit a story or poem",
         onBack = { if (hasUnsavedChanges) showDiscardConfirm = true else onNavigateBack() },
@@ -139,12 +147,6 @@ fun SubmitLiteratureScreen(
                     subtitle = "Attach the piece as a PDF file, with a title and optional text transcription. " +
                         "It joins the pending queue for a moderator to review, the same as a submitted word."
                 )
-
-                uiState.errorMessage?.let { message ->
-                    SoftCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(text = message, color = Red, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
 
                 // Title & Author details
                 SoftCard(modifier = Modifier.fillMaxWidth()) {

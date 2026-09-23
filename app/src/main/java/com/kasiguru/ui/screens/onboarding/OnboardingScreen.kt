@@ -85,6 +85,7 @@ import com.kasiguru.ui.theme.VioletTint
 @Composable
 fun OnboardingScreen(
     onCompleteOnboarding: (userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String, residentName: String) -> Unit,
+    onOpenLogin: () -> Unit = {},
     @DrawableRes heroArt: Int? = null
 ) {
     var step by remember { mutableIntStateOf(1) }
@@ -215,6 +216,13 @@ fun OnboardingScreen(
                         ClayButton(
                             label = "Get started",
                             onClick = ::advance,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(Space.xs))
+                        ClayButton(
+                            label = "I already have an account",
+                            onClick = onOpenLogin,
+                            tone = ClayButtonTone.Quiet,
                             modifier = Modifier.fillMaxWidth()
                         )
                         SkipLink(onClick = ::finish)

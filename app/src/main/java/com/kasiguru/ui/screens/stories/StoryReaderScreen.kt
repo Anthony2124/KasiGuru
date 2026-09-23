@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.kasiguru.data.local.entity.StoryPage
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -51,6 +52,16 @@ fun StoryReaderScreen(
     val context = LocalContext.current
     val audioPlayerManager = remember { AudioPlayerManager(context) }
     DisposableEffect(Unit) { onDispose { audioPlayerManager.stopAudio() } }
+
+    uiState.error?.let { errorMsg ->
+        ErrorDialog(
+            message = errorMsg,
+            onDismiss = {
+                viewModel.clearError()
+                onNavigateBack()
+            }
+        )
+    }
 
     // A finished story used to close the screen the instant the last page's XP landed, with no
     // acknowledgement of what was just read — a Peak-End violation despite XP genuinely being
@@ -99,7 +110,9 @@ fun StoryReaderScreen(
 
         if (uiState.error != null || uiState.pages.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Failed to load story", color = Red)
+                if (uiState.error == null) {
+                    Text("No pages available", color = Muted)
+                }
             }
             return@Column
         }

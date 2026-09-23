@@ -119,6 +119,10 @@ class SubmitWordViewModel @Inject constructor(
      *   `baga` is lungs, swollen and ember -- which the dictionary genuinely wants, so the caution
      *   asks once and then gets out of the way rather than refusing.
      */
+    fun clearErrorMessage() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
     fun submitWord(confirmedDuplicate: Boolean = false) {
         val state = _uiState.value
         // Client-side rate limit: one submission per cooldown window.

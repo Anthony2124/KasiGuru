@@ -52,6 +52,9 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET currentStreak = :streak, longestStreak = CASE WHEN :streak > longestStreak THEN :streak ELSE longestStreak END, lastActiveDate = :date WHERE id = 1")
     suspend fun updateStreak(streak: Int, date: String)
 
+    @Query("UPDATE user_progress SET currentStreak = 0 WHERE id = 1")
+    suspend fun resetStreak()
+
     @Query("UPDATE user_progress SET level = :level WHERE id = 1")
     suspend fun updateLevel(level: Int)
 

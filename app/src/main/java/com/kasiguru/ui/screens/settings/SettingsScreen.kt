@@ -124,7 +124,7 @@ fun SettingsScreen(
                     onClick = onNavigateToAccount
                 ) {
                     Text(
-                        text = "Account",
+                        text = "Account & Sign In",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = Ink
@@ -159,7 +159,7 @@ fun SettingsScreen(
                             }
                             Column {
                                 Text(
-                                    text = if (account.isRecoverable) "Progress protected" else "Secure your progress",
+                                    text = if (account.isRecoverable) "Progress protected" else "Guest Mode — Not signed in",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Ink
@@ -169,10 +169,10 @@ fun SettingsScreen(
                                         ?: if (account.isRecoverable) {
                                             "Signed in"
                                         } else {
-                                            "Guest — progress is only on this device"
+                                            "Tap to sign in or create an account"
                                         },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Muted
+                                    color = if (account.isRecoverable) Muted else Violet
                                 )
                             }
                         }

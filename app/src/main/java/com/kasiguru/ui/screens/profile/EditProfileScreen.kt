@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.components.CasiguranAvatarPortrait
 import com.kasiguru.ui.components.CasiguranResident
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -89,6 +90,13 @@ fun EditProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep editing") }
             }
+        )
+    }
+
+    uiState.error?.let { message ->
+        ErrorDialog(
+            message = message,
+            onDismiss = { viewModel.clearError() }
         )
     }
 
@@ -164,10 +172,6 @@ fun EditProfileScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-                uiState.error?.let { message ->
-                    Spacer(Modifier.height(Space.sm))
-                    Text(text = message, style = MaterialTheme.typography.bodySmall, color = Red)
-                }
                 Spacer(Modifier.height(Space.navBarClearance))
             }
         }

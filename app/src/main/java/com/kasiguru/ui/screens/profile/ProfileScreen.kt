@@ -34,8 +34,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
@@ -80,6 +83,7 @@ fun ProfileScreen(
     onNavigateToCultural: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
+    onNavigateToAccount: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -180,6 +184,13 @@ fun ProfileScreen(
                                 color = Faint
                             )
                         }
+                    }
+                }
+
+                // Guest Account Banner: prominent reminder to sign in or create an account
+                if (!uiState.account.isRecoverable) {
+                    item {
+                        GuestAccountBanner(onNavigateToAccount = onNavigateToAccount)
                     }
                 }
 
@@ -382,5 +393,52 @@ private fun StatDetailRow(label: String, value: String, iconRes: Int) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Text(text = value, style = MaterialTheme.typography.titleMedium, color = Ink)
+    }
+}
+
+@Composable
+private fun GuestAccountBanner(onNavigateToAccount: () -> Unit) {
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(Shapes.chip)
+                    .background(Violet.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.Lock),
+                    contentDescription = null,
+                    tint = Violet,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Protect your learning streak",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Ink
+                )
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    text = "Sign in or register to sync your XP and badges across devices.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+            }
+        }
+        Spacer(Modifier.height(Space.sm))
+        ClayButton(
+            label = "Sign In or Register",
+            onClick = onNavigateToAccount,
+            tone = ClayButtonTone.Primary,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

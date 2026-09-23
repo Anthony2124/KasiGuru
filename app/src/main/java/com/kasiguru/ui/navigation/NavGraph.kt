@@ -259,6 +259,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                         navController.navigate(Screen.Learn.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
+                    },
+                    onOpenLogin = {
+                        navController.navigate(Screen.Account.route)
                     }
                 )
             }
@@ -324,7 +327,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) },
-                    onNavigateToHelp = { navController.navigate(Screen.Help.route) }
+                    onNavigateToHelp = { navController.navigate(Screen.Help.route) },
+                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
                 )
             }
             
@@ -527,7 +531,19 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
             composable(Screen.Account.route) {
-                AccountScreen(onNavigateBack = { navController.popBackStack() })
+                AccountScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onAuthSuccess = {
+                        val previousRoute = navController.previousBackStackEntry?.destination?.route
+                        if (previousRoute == Screen.Onboarding.route) {
+                            navController.navigate(Screen.Learn.route) {
+                                popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
+                )
             }
             composable(Screen.CulturalContext.route) {
                 CulturalScreen(onNavigateBack = { navController.popBackStack() })

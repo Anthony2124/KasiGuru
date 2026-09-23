@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
@@ -486,6 +487,13 @@ fun AccountSuspendedScreen(
                 lineHeight = 18.sp
             )
         }
+    }
+
+    if (appealError != null) {
+        ErrorDialog(
+            message = appealError,
+            onDismiss = onClearAppealError
+        )
     }
 
     // ── Appeal Input Dialog ───────────────────────────────────────────

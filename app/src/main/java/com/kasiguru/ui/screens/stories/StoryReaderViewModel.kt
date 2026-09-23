@@ -159,6 +159,10 @@ class StoryReaderViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isFinished = true)
         }
     }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
 }
 
 data class StoryReaderUiState(

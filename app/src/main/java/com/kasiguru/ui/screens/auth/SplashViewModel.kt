@@ -27,6 +27,7 @@ class SplashViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            userProgressRepository.validateAndResetExpiredStreak()
             val progress = userProgressRepository.getUserProgressOnce()
 
             // Stamp the tutorial baseline once, here, because this is the one place that already

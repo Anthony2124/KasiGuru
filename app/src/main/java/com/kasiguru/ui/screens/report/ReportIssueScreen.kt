@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.GroundPattern
@@ -177,6 +178,13 @@ fun ReportIssueScreen(
         return
     }
 
+    uiState.errorMessage?.let { message ->
+        ErrorDialog(
+            message = message,
+            onDismiss = { viewModel.clearErrorMessage() }
+        )
+    }
+
     GroundScaffold(
         title = "Report an Issue",
         subtitle = "Report bugs, incorrect words, or translation errors with screenshot evidence.",
@@ -195,29 +203,6 @@ fun ReportIssueScreen(
                     title = "Report an Issue",
                     subtitle = "Found a bug, glitch, or wrong word? Help us fix it."
                 )
-
-                if (uiState.errorMessage != null) {
-                    Surface(color = RedTint, shape = Shapes.tile, modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(Space.sm),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Space.xs)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = Iconsax.InfoCircle),
-                                contentDescription = null,
-                                tint = Red,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = uiState.errorMessage!!,
-                                color = Red,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-                }
 
                 // 1. Issue Category
                 SoftCard(modifier = Modifier.fillMaxWidth()) {

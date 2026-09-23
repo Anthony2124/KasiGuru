@@ -170,6 +170,10 @@ class SubmitLiteratureViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(pages = pages)
     }
 
+    fun clearErrorMessage() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
     fun submitLiterature() {
         val state = _uiState.value
         val now = System.currentTimeMillis()

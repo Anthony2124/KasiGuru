@@ -126,6 +126,10 @@ class ReportIssueViewModel @Inject constructor(
         _uiState.update { it.copy(photoUri = null, photoBase64 = "", isCompressingPhoto = false) }
     }
 
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun submitReport() {
         val state = _uiState.value
 

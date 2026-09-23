@@ -162,6 +162,7 @@ class LearnViewModel @Inject constructor(
     val uiState: StateFlow<LearnUiState> = _uiState.asStateFlow()
 
     init {
+        validateStreak()
         observeProgress()
         observeStreakQuota()
         refreshPlan()
@@ -170,8 +171,14 @@ class LearnViewModel @Inject constructor(
         observeAnnouncements()
         checkSubmissionAchievements()
         observeAuthForRefresh()
-        // No streak call here on purpose. Opening this screen is not learning; the streak now
-        // advances from answered reviews, finished lessons and finished games instead.
+        // No streak advancement call here on purpose. Opening this screen does not advance
+        // the streak; it only validates whether an active streak has expired.
+    }
+
+    private fun validateStreak() {
+        viewModelScope.launch {
+            userProgressRepository.validateAndResetExpiredStreak()
+        }
     }
 
     private fun observeStreakQuota() {
@@ -207,6 +214,7 @@ class LearnViewModel @Inject constructor(
     /** Re-derives Today's Path. Called on entry and after returning from a lesson. */
     fun refreshPlan() {
         viewModelScope.launch {
+            userProgressRepository.validateAndResetExpiredStreak()
             val progress = userProgressRepository.getUserProgressOnce() ?: UserProgressEntity()
             val due = vocabularyRepository.getDueReviewWordsStrict(limit = 20)
             _uiState.update {

@@ -152,6 +152,61 @@ class ProgressSyncTest {
         assertEquals("2026-08-17", merged.dailyXpDate)
     }
 
+    // ── Streak merge ─────────────────────────────────────────────────────────
+    //
+    // Before the fix, mergeProgress used maxOf(local.currentStreak, remote.currentStreak),
+    // which silently resurrected a remote streak that the local device had correctly reset to
+    // 0 after a missed day. These tests pin the correct behaviour.
+
+    private fun streakProgress(streak: Int, lastActiveDate: String, updatedAt: Long = 0) =
+        UserProgressEntity(currentStreak = streak, lastActiveDate = lastActiveDate, updatedAt = updatedAt)
+
+    @Test
+    fun localResetIsNotOverwrittenByHigherRemoteStreak() {
+        // User missed a day: local correctly reset to 0. Remote (cloud) still stores the old 5.
+        // The merge must NOT restore the 5.
+        val local = streakProgress(streak = 0, lastActiveDate = "2026-08-20", updatedAt = 2)
+        val remote = streakProgress(streak = 5, lastActiveDate = "2026-08-18", updatedAt = 1)
+
+        val merged = mergeProgress(local, remote)
+        // Local has the newer lastActiveDate, so local streak (0) wins.
+        assertEquals(0, merged.currentStreak)
+        assertEquals("2026-08-20", merged.lastActiveDate)
+    }
+
+    @Test
+    fun remoteStreakWinsWhenRemoteHasNewerActivity() {
+        // User has two devices: remote device logged activity more recently.
+        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-17", updatedAt = 1)
+        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-18", updatedAt = 2)
+
+        val merged = mergeProgress(local, remote)
+        assertEquals(4, merged.currentStreak)
+        assertEquals("2026-08-18", merged.lastActiveDate)
+    }
+
+    @Test
+    fun sameDateTakesHigherStreak() {
+        // Both sides active on the same day, different streak counts (due to sync order).
+        val local = streakProgress(streak = 3, lastActiveDate = "2026-08-18", updatedAt = 1)
+        val remote = streakProgress(streak = 4, lastActiveDate = "2026-08-18", updatedAt = 2)
+
+        val merged = mergeProgress(local, remote)
+        assertEquals(4, merged.currentStreak)
+    }
+
+    @Test
+    fun streakIsExpiredDuringMergeIfLastActiveDateIsTooOld() {
+        // Both sides have a streak but lastActiveDate is > 1 day in the past relative to today.
+        // The merge must expire the streak to 0 rather than carrying it forward as a live streak.
+        // We use a date far in the past so this test is always deterministic.
+        val local = streakProgress(streak = 7, lastActiveDate = "2020-01-01", updatedAt = 1)
+        val remote = streakProgress(streak = 10, lastActiveDate = "2020-01-02", updatedAt = 2)
+
+        val merged = mergeProgress(local, remote)
+        assertEquals(0, merged.currentStreak)
+    }
+
     @Test
     fun dailyStreakQuotaSurvivesMergeAndRoundTrips() {
         val local = UserProgressEntity(

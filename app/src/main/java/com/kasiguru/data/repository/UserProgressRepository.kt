@@ -159,6 +159,23 @@ class UserProgressRepository @Inject constructor(
     }
 
     /**
+     * Checks if the user missed yesterday (or earlier) and resets the streak to 0 if so.
+     * Safe and idempotent to call on app startup and whenever progress is observed.
+     */
+    suspend fun validateAndResetExpiredStreak() {
+        val progress = userProgressDao.getUserProgressOnce() ?: return
+        if (progress.currentStreak > 0 && progress.lastActiveDate.isNotEmpty()) {
+            val lastDate = runCatching { LocalDate.parse(progress.lastActiveDate) }.getOrNull()
+            if (lastDate != null) {
+                val daysBetween = ChronoUnit.DAYS.between(lastDate, LocalDate.now())
+                if (daysBetween > 1) {
+                    userProgressDao.resetStreak()
+                }
+            }
+        }
+    }
+
+    /**
      * Backward-compatible hook for general learning activity.
      */
     suspend fun recordLearningActivity() {

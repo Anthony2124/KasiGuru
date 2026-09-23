@@ -634,11 +634,6 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
 )
 
 /**
- * Merges local and remote progress: counters take the max, profile fields come
- * from the side with the newer [UserProgressEntity.updatedAt]. Pure function
- * (unit-tested). Passwords/emails are never part of the cloud payload.
- */
-/**
  * Reconciles local and remote progress.
  *
  * **This constructs a new entity field by field rather than copying one.** Any field added to
@@ -646,6 +641,13 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
  * silently reverts to its default the next time a sync runs — the write succeeds, no error is logged,
  * and the value simply disappears. That is exactly how the daily-XP ledger was being erased on every
  * app start before it was added to all three.
+ *
+ * **Streak merge rule**: the streak is NOT a simple lifetime max — it is a time-sensitive counter
+ * that resets when the user misses a day. Taking `maxOf(local, remote)` would resurrect a remote
+ * streak that the device had correctly reset to 0. Instead we adopt the streak from whichever side
+ * recorded activity most recently (higher `lastActiveDate`), and then expire it here if that date
+ * is already more than one day old — matching the same rule used in
+ * `UserProgressRepository.validateAndResetExpiredStreak`.
  */
 internal fun mergeProgress(
     local: UserProgressEntity,
@@ -675,6 +677,33 @@ internal fun mergeProgress(
         else -> remote.dailyGamesDate to remote.dailyGamesPlayedCount
     }
 
+    // ── Streak: date-aware merge, then expiry check ──────────────────────────
+    //
+    // Pick the (streak, lastActiveDate) pair from whichever side last recorded
+    // activity. If both dates are equal, take the higher streak count (the two
+    // devices may have synced at slightly different times within the same day).
+    val (rawStreak, mergedLastActiveDate) = when {
+        local.lastActiveDate == remote.lastActiveDate ->
+            maxOf(local.currentStreak, remote.currentStreak) to local.lastActiveDate
+        local.lastActiveDate > remote.lastActiveDate ->
+            local.currentStreak to local.lastActiveDate
+        else ->
+            remote.currentStreak to remote.lastActiveDate
+    }
+
+    // Apply the same expiry rule used in validateAndResetExpiredStreak: if the
+    // winning lastActiveDate is more than 1 calendar day in the past, the user
+    // missed a day and the streak must be 0.
+    val mergedStreak = if (rawStreak > 0 && mergedLastActiveDate.isNotEmpty()) {
+        val lastDate = runCatching {
+            java.time.LocalDate.parse(mergedLastActiveDate)
+        }.getOrNull()
+        if (lastDate != null && java.time.temporal.ChronoUnit.DAYS.between(
+                lastDate, java.time.LocalDate.now()) > 1
+        ) 0 else rawStreak
+    } else rawStreak
+    // ────────────────────────────────────────────────────────────────────────
+
     return UserProgressEntity(
         id = 1,
         userName = pick(local.userName, remote.userName, remoteNewer),
@@ -686,9 +715,9 @@ internal fun mergeProgress(
         profileIconId = if (remoteNewer) remote.profileIconId else local.profileIconId,
         totalXp = maxOf(local.totalXp, remote.totalXp),
         level = maxOf(local.level, remote.level),
-        currentStreak = maxOf(local.currentStreak, remote.currentStreak),
+        currentStreak = mergedStreak,
         longestStreak = maxOf(local.longestStreak, remote.longestStreak),
-        lastActiveDate = maxOf(local.lastActiveDate, remote.lastActiveDate),
+        lastActiveDate = mergedLastActiveDate,
         wordsLearned = maxOf(local.wordsLearned, remote.wordsLearned),
         storiesCompleted = maxOf(local.storiesCompleted, remote.storiesCompleted),
         gamesPlayed = maxOf(local.gamesPlayed, remote.gamesPlayed),
