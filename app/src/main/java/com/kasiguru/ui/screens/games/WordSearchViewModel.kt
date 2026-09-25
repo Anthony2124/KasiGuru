@@ -146,9 +146,18 @@ class WordSearchViewModel @Inject constructor(
     }
 
     /**
-     * Word selection is two taps, first letter then last, rather than a drag. A drag across a 10x10
-     * grid of 29dp tiles is hard to land on a small phone and impossible with TalkBack; two taps work
-     * for both, and either end may come first.
+     * A finger dragged from [from] to [to]; the grid has already snapped the line straight. Either
+     * end may be the word's first letter. Lifting on the starting cell is a change of mind, not a miss.
+     */
+    fun onLineSelected(from: GridCell, to: GridCell) {
+        val state = _uiState.value
+        if (state.puzzle == null || state.isGameOver || from == to) return
+        judgeLine(state, from, to)
+    }
+
+    /**
+     * The TalkBack path: a drag cannot be performed by swipe navigation, so each cell also answers a
+     * double-tap, first letter then last, in either order.
      */
     fun onCellTapped(cell: GridCell) {
         val state = _uiState.value
@@ -162,16 +171,19 @@ class WordSearchViewModel @Inject constructor(
             // Not in line with the first tap: treat it as a fresh first tap, not a wrong answer.
             puzzle.lineBetween(start, cell) == null ->
                 _uiState.value = state.copy(selectionStart = cell, lastTapMissed = false)
-            else -> {
-                val hit = puzzle.match(start, cell, state.foundIds.toSet())
-                if (hit == null) {
-                    _uiState.value = state.copy(selectionStart = null, lastTapMissed = true, misses = state.misses + 1)
-                } else {
-                    val found = state.foundIds + hit.id
-                    _uiState.value = state.copy(selectionStart = null, lastTapMissed = false, foundIds = found)
-                    if (found.size == puzzle.words.size) finish()
-                }
-            }
+            else -> judgeLine(state, start, cell)
+        }
+    }
+
+    private fun judgeLine(state: WordSearchUiState, from: GridCell, to: GridCell) {
+        val puzzle = state.puzzle ?: return
+        val hit = puzzle.match(from, to, state.foundIds.toSet())
+        if (hit == null) {
+            _uiState.value = state.copy(selectionStart = null, lastTapMissed = true, misses = state.misses + 1)
+        } else {
+            val found = state.foundIds + hit.id
+            _uiState.value = state.copy(selectionStart = null, lastTapMissed = false, foundIds = found)
+            if (found.size == puzzle.words.size) finish()
         }
     }
 

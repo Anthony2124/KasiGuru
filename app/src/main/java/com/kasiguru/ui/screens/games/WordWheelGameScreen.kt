@@ -69,13 +69,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.domain.wordwheel.BoardCell
 import com.kasiguru.domain.wordwheel.WordWheelPuzzle
+import com.kasiguru.ui.components.CasiguranBackdrop
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.PhotoCredit
+import com.kasiguru.ui.components.backdropPill
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.rememberGameExitGuard
+import com.kasiguru.ui.theme.CasiguranPhotos
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
@@ -151,7 +155,9 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
     val haptic = LocalHapticFeedback.current
     val found = uiState.foundSlots.size
     val total = puzzle.slots.size
+    val photo = CasiguranPhotos.forLevel(uiState.level)
 
+    CasiguranBackdrop(photo) {
     // No vertical scroll: a scroll container would steal the vertical part of every swipe across the
     // wheel. The board takes whatever height is left and scales its tiles to fit instead.
     //
@@ -231,7 +237,11 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 enabled = uiState.selection.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             )
+            // Required by the photo's licence wherever it is shown.
+            Spacer(Modifier.height(Space.xs))
+            PhotoCredit(photo)
         }
+    }
     }
 }
 
@@ -317,6 +327,8 @@ private fun FeedbackLine(uiState: WordWheelUiState) {
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        // The message pill hugs its text, so this keeps the Bonus badge pinned to the right edge.
+        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 24.dp)
@@ -328,7 +340,11 @@ private fun FeedbackLine(uiState: WordWheelUiState) {
             // Ink, not Red: red text on the Ground falls under 4.5:1, so a miss is marked by weight.
             fontWeight = if (isMiss) FontWeight.Bold else FontWeight.Normal,
             color = if (isMiss) Ink else Muted,
-            modifier = Modifier.weight(1f)
+            // The pill keeps this small text readable over the photo.
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .backdropPill(Surface)
+                .padding(horizontal = Space.sm, vertical = Space.xxs)
         )
         if (uiState.bonusFound.isNotEmpty()) {
             Spacer(Modifier.width(Space.xs))
