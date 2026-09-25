@@ -58,6 +58,9 @@ data class WordWheelUiState(
     val finalXp: Int = 0,
     val nextLevel: Int? = null
 ) {
+    val hintsLeft: Int
+        get() = (WordWheelViewModel.MAX_HINTS - hintsUsed).coerceAtLeast(0)
+
     val attempt: String
         get() = puzzle?.let { p -> selection.joinToString("") { p.wheel[it] } }.orEmpty()
 
@@ -183,13 +186,13 @@ class WordWheelViewModel @Inject constructor(
     }
 
     /**
-     * Uncovers one letter: the first hidden cell of the first unfinished word. Free to use, but each
-     * hint lowers the stars the level can earn, so the choice stays the learner's.
+     * Uncovers one letter: the first hidden cell of the first unfinished word. At most [MAX_HINTS] per
+     * level, and each one lowers the stars the level can earn, so the choice stays the learner's.
      */
     fun hint() {
         val state = _uiState.value
         val puzzle = state.puzzle ?: return
-        if (state.isGameOver) return
+        if (state.isGameOver || state.hintsLeft <= 0) return
         val shown = state.shownCells
         val cell = puzzle.slots.indices
             .filter { it !in state.foundSlots }
@@ -260,5 +263,10 @@ class WordWheelViewModel @Inject constructor(
                 nextLevel = (levelNumber + 1).takeIf { it <= WordWheelTier.MAX_LEVEL }
             )
         }
+    }
+
+    companion object {
+        /** Hints allowed per level. Three is also where the star rating bottoms out at one star. */
+        const val MAX_HINTS = 3
     }
 }
