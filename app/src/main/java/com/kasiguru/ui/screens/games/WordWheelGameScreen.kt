@@ -12,14 +12,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,17 +66,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.domain.wordwheel.BoardCell
 import com.kasiguru.domain.wordwheel.WordWheelPuzzle
+import com.kasiguru.ui.components.CasiguranBackdrop
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.PhotoCredit
+import com.kasiguru.ui.components.backdropPill
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.rememberGameExitGuard
+import com.kasiguru.ui.theme.CasiguranPhotos
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
@@ -145,11 +155,25 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
     val haptic = LocalHapticFeedback.current
     val found = uiState.foundSlots.size
     val total = puzzle.slots.size
+    val photo = CasiguranPhotos.forLevel(uiState.level)
 
+    CasiguranBackdrop(photo) {
     // No vertical scroll: a scroll container would steal the vertical part of every swipe across the
     // wheel. The board takes whatever height is left and scales its tiles to fit instead.
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val wheelSize = min(260.dp, maxHeight * 0.36f)
+    //
+    // The scaffold only pads the top, so this pads the bottom and sides itself: without it the
+    // gesture handle or three-button bar sits on top of the Check button.
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(
+                WindowInsets.systemBars
+                    .union(WindowInsets.displayCutout)
+                    .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+            )
+    ) {
+        // Shuffle and Hint flank the wheel, so it leaves room for a button and a gap on each side.
+        val wheelSize = minOf(260.dp, maxHeight * 0.36f, maxWidth - (Space.gutter + ControlSize + Space.xs) * 2)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -169,26 +193,55 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
             Spacer(Modifier.height(Space.sm))
             FeedbackLine(uiState)
             Spacer(Modifier.height(Space.xs))
-            AttemptPill(uiState.attempt)
+            // Clear sits with the word it clears; the pill stays centred over the wheel either way.
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                AttemptPill(uiState.attempt)
+                if (uiState.selection.isNotEmpty()) {
+                    ControlIcon(
+                        iconRes = Iconsax.CloseCircle,
+                        label = "Clear letters",
+                        onClick = viewModel::clearSelection,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    )
+                }
+            }
             Spacer(Modifier.height(Space.sm))
-            LetterWheel(
-                letters = puzzle.wheel,
-                order = uiState.wheelOrder,
-                selection = uiState.selection,
-                size = wheelSize,
-                onTap = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    viewModel.onLetterTapped(it)
-                },
-                onDragOver = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    viewModel.onLetterDraggedOver(it)
-                },
-                onDragEnd = viewModel::submit
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                // Bottom, not centre: the side buttons sit low, where a thumb already is.
+                verticalAlignment = Alignment.Bottom
+            ) {
+                ControlIcon(Iconsax.Refresh, "Shuffle letters", onClick = viewModel::shuffle)
+                LetterWheel(
+                    letters = puzzle.wheel,
+                    order = uiState.wheelOrder,
+                    selection = uiState.selection,
+                    size = wheelSize,
+                    onTap = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        viewModel.onLetterTapped(it)
+                    },
+                    onDragOver = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        viewModel.onLetterDraggedOver(it)
+                    },
+                    onDragEnd = viewModel::submit
+                )
+                HintButton(hintsLeft = uiState.hintsLeft, onClick = viewModel::hint)
+            }
+            Spacer(Modifier.height(Space.sm))
+            ClayButton(
+                label = "Check",
+                onClick = viewModel::submit,
+                enabled = uiState.selection.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(Space.sm))
-            Controls(uiState, viewModel)
+            // Required by the photo's licence wherever it is shown.
+            Spacer(Modifier.height(Space.xs))
+            PhotoCredit(photo)
         }
+    }
     }
 }
 
@@ -266,11 +319,16 @@ private fun FeedbackLine(uiState: WordWheelUiState) {
         is WheelFeedback.AlreadyFound -> "You already found ${f.word}." to false
         is WheelFeedback.NotAWord -> "${f.attempt.lowercase()} isn't in the dictionary." to true
         WheelFeedback.TooShort -> "Words need at least 3 letters." to true
-        is WheelFeedback.Revealed -> "Hint: one letter uncovered." to false
+        is WheelFeedback.Revealed -> when (val left = uiState.hintsLeft) {
+            0 -> "Hint: one letter uncovered. That was your last hint."
+            else -> "Hint: one letter uncovered. $left left."
+        } to false
         null -> "Swipe across the letters, or tap them and press Check." to false
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        // The message pill hugs its text, so this keeps the Bonus badge pinned to the right edge.
+        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 24.dp)
@@ -282,7 +340,11 @@ private fun FeedbackLine(uiState: WordWheelUiState) {
             // Ink, not Red: red text on the Ground falls under 4.5:1, so a miss is marked by weight.
             fontWeight = if (isMiss) FontWeight.Bold else FontWeight.Normal,
             color = if (isMiss) Ink else Muted,
-            modifier = Modifier.weight(1f)
+            // The pill keeps this small text readable over the photo.
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .backdropPill(Surface)
+                .padding(horizontal = Space.sm, vertical = Space.xxs)
         )
         if (uiState.bonusFound.isNotEmpty()) {
             Spacer(Modifier.width(Space.xs))
@@ -425,36 +487,51 @@ private fun LetterWheel(
     }
 }
 
+private val ControlSize = 48.dp
+
+/** Hint with a badge counting what's left, so the limit is visible before it's reached. */
 @Composable
-private fun Controls(uiState: WordWheelUiState, viewModel: WordWheelViewModel) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Space.xs)
-    ) {
-        ControlIcon(Iconsax.Refresh, "Shuffle letters", onClick = viewModel::shuffle)
+private fun HintButton(hintsLeft: Int, onClick: () -> Unit) {
+    Box {
         ControlIcon(
             iconRes = Iconsax.Flash,
-            label = if (uiState.hintsUsed == 0) "Hint: uncover a letter" else "Hint, ${uiState.hintsUsed} used",
-            onClick = viewModel::hint
+            label = if (hintsLeft > 0) "Hint: uncover a letter, $hintsLeft left" else "No hints left",
+            onClick = onClick,
+            enabled = hintsLeft > 0
         )
-        ControlIcon(Iconsax.CloseCircle, "Clear letters", onClick = viewModel::clearSelection, enabled = uiState.selection.isNotEmpty())
-        ClayButton(
-            label = "Check",
-            onClick = viewModel::submit,
-            enabled = uiState.selection.isNotEmpty(),
-            modifier = Modifier.weight(1f)
-        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 4.dp, y = (-4).dp)
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(if (hintsLeft > 0) Violet else TrackNeutral)
+                .clearAndSetSemantics { }, // the button's own label already says how many are left
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "$hintsLeft",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (hintsLeft > 0) androidx.compose.ui.graphics.Color.White else Muted
+            )
+        }
     }
 }
 
 @Composable
-private fun ControlIcon(iconRes: Int, label: String, onClick: () -> Unit, enabled: Boolean = true) {
+private fun ControlIcon(
+    iconRes: Int,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier
-            .size(48.dp)
+        modifier = modifier
+            .size(ControlSize)
             .clip(CircleShape)
             .background(if (enabled) VioletTint else TrackNeutral)
     ) {

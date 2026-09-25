@@ -2,7 +2,8 @@ package com.kasiguru.ui.screens.games
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,12 +11,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,12 +36,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -42,6 +55,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +68,9 @@ import com.kasiguru.domain.wordsearch.GridCell
 import com.kasiguru.domain.wordsearch.PlacedWord
 import com.kasiguru.domain.wordsearch.WordSearchPuzzle
 import com.kasiguru.ui.components.AudioPlayButton
+import com.kasiguru.ui.components.CasiguranBackdrop
+import com.kasiguru.ui.components.PhotoCredit
+import com.kasiguru.ui.components.backdropPill
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
@@ -60,6 +78,8 @@ import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.components.rememberGameExitGuard
+import com.kasiguru.ui.theme.CasiguranPhoto
+import com.kasiguru.ui.theme.CasiguranPhotos
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.CoralDeep
 import com.kasiguru.ui.theme.Gold
@@ -78,6 +98,12 @@ import com.kasiguru.ui.theme.Violet
 import com.kasiguru.ui.theme.VioletDeep
 import com.kasiguru.ui.theme.VioletTint
 import com.kasiguru.util.audio.AudioPlayerManager
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /** A found word's fill and the letter colour that reads on it. */
 private data class WordHue(val fill: Color, val letter: Color)
@@ -150,6 +176,8 @@ fun WordSearchGameScreen(
                 else -> PlayingState(
                     uiState = uiState,
                     puzzle = puzzle,
+                    onCellCrossed = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
+                    onLineSelected = viewModel::onLineSelected,
                     onCellTapped = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         viewModel.onCellTapped(it)
@@ -165,6 +193,24 @@ fun WordSearchGameScreen(
 private fun PlayingState(
     uiState: WordSearchUiState,
     puzzle: WordSearchPuzzle,
+    onCellCrossed: () -> Unit,
+    onLineSelected: (GridCell, GridCell) -> Unit,
+    onCellTapped: (GridCell) -> Unit,
+    onPlayWord: (Int) -> Unit
+) {
+    val photo = CasiguranPhotos.forCategory(uiState.category)
+    CasiguranBackdrop(photo) {
+        PlayingContent(uiState, puzzle, photo, onCellCrossed, onLineSelected, onCellTapped, onPlayWord)
+    }
+}
+
+@Composable
+private fun PlayingContent(
+    uiState: WordSearchUiState,
+    puzzle: WordSearchPuzzle,
+    photo: CasiguranPhoto,
+    onCellCrossed: () -> Unit,
+    onLineSelected: (GridCell, GridCell) -> Unit,
     onCellTapped: (GridCell) -> Unit,
     onPlayWord: (Int) -> Unit
 ) {
@@ -184,6 +230,13 @@ private fun PlayingState(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            // Inside the scroll, so the photo still runs under the system bars but the last row of
+            // words and the credit scroll clear of them.
+            .windowInsetsPadding(
+                WindowInsets.systemBars
+                    .union(WindowInsets.displayCutout)
+                    .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+            )
             .padding(horizontal = Space.gutter, vertical = Space.md)
     ) {
         GameHeader(
@@ -207,12 +260,19 @@ private fun PlayingState(
                 selection = uiState.selectionStart,
                 cellOwner = cellOwner,
                 hues = hues,
+                onCellCrossed = onCellCrossed,
+                onLineSelected = onLineSelected,
                 onCellTapped = onCellTapped
             )
         }
 
         Spacer(Modifier.height(Space.lg))
-        Text("Find these words", style = MaterialTheme.typography.titleMedium, color = Ink)
+        Text(
+            text = "Find these words",
+            style = MaterialTheme.typography.titleMedium,
+            color = Ink,
+            modifier = Modifier.backdropPill(Surface).padding(horizontal = Space.sm, vertical = Space.xxs)
+        )
         Spacer(Modifier.height(Space.xs))
         Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {
             puzzle.words.chunked(2).forEach { pair ->
@@ -231,6 +291,10 @@ private fun PlayingState(
                 }
             }
         }
+
+        // Required by the photo's licence wherever it is shown.
+        Spacer(Modifier.height(Space.lg))
+        PhotoCredit(photo)
     }
 }
 
@@ -238,13 +302,18 @@ private fun PlayingState(
 private fun StatusLine(uiState: WordSearchUiState) {
     val (text, isMiss) = when {
         uiState.lastTapMissed -> "That line isn't one of the words. Try again." to true
-        uiState.selectionStart != null -> "Now tap the word's last letter." to false
-        else -> "Tap a word's first letter, then its last letter." to false
+        // Only reachable through TalkBack's double-tap path; a drag never leaves a start behind.
+        uiState.selectionStart != null -> "Now choose the word's last letter." to false
+        else -> "Drag across a word, from its first letter to its last." to false
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        // Announced as it changes, so a TalkBack user hears whether a line was a word.
-        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+        // Announced as it changes, so a TalkBack user hears whether a line was a word. The pill keeps
+        // the small Muted text readable over whatever part of the photo sits behind it.
+        modifier = Modifier
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .backdropPill(Surface)
+            .padding(horizontal = Space.sm, vertical = Space.xxs)
     ) {
         Icon(
             painter = painterResource(id = if (isMiss) Iconsax.CloseCircle else Iconsax.InfoCircle),
@@ -269,6 +338,8 @@ private fun LetterGrid(
     selection: GridCell?,
     cellOwner: Map<GridCell, Int>,
     hues: List<WordHue>,
+    onCellCrossed: () -> Unit,
+    onLineSelected: (GridCell, GridCell) -> Unit,
     onCellTapped: (GridCell) -> Unit
 ) {
     val gap = when {
@@ -276,19 +347,57 @@ private fun LetterGrid(
         puzzle.size <= 8 -> 5.dp
         else -> 4.dp
     }
+    // The line under the finger while a drag is in progress, first cell first.
+    var dragLine by remember { mutableStateOf<List<GridCell>>(emptyList()) }
+    val crossed by rememberUpdatedState(onCellCrossed)
+    val selected by rememberUpdatedState(onLineSelected)
+
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val tile = (maxWidth - gap * (puzzle.size - 1)) / puzzle.size
         // Letter size follows the tile, not the system font scale: the grid is a fixed number of
         // cells across, and a scaled-up letter would overflow its tile rather than get easier to read.
         // Dp.toSp divides the font scale back out, so the drawn letter stays 46% of the tile.
         val letterSize = with(LocalDensity.current) { (tile * 0.46f).toSp() }
-        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+        val pitchPx = with(LocalDensity.current) { (tile + gap).toPx() }
+        val dragCells = dragLine.toSet()
+
+        fun cellAt(point: Offset) = GridCell(
+            row = (point.y / pitchPx).toInt().coerceIn(0, puzzle.size - 1),
+            col = (point.x / pitchPx).toInt().coerceIn(0, puzzle.size - 1)
+        )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(gap),
+            modifier = Modifier.pointerInput(puzzle, pitchPx) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    val start = cellAt(down.position)
+                    dragLine = listOf(start)
+                    crossed()
+                    while (true) {
+                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        // Consumed from the first pixel, so the screen's vertical scroll never takes a
+                        // drag that started on the grid. Scrolling still works anywhere off the grid.
+                        change.consume()
+                        val line = straightLine(start, cellAt(change.position), puzzle.size)
+                        if (line != dragLine) {
+                            if (line.size > dragLine.size) crossed()
+                            dragLine = line
+                        }
+                    }
+                    val line = dragLine
+                    dragLine = emptyList()
+                    if (line.size > 1) selected(line.first(), line.last())
+                }
+            }
+        ) {
             for (row in 0 until puzzle.size) {
                 Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                     for (col in 0 until puzzle.size) {
                         val cell = GridCell(row, col)
                         val owner = cellOwner[cell]
-                        val isSelected = cell == selection
+                        val isSelected = cell == selection || cell in dragCells
                         val hue = owner?.let { hues[it % hues.size] }
                         val letter = puzzle.letterAt(cell)
                         Box(
@@ -306,11 +415,14 @@ private fun LetterGrid(
                                     if (isSelected) Modifier.border(2.5.dp, Violet, RoundedCornerShape(tile * 0.28f))
                                     else Modifier
                                 )
-                                .clickable(role = Role.Button) { onCellTapped(cell) }
+                                // No pointer click: the grid's drag handler owns touch. TalkBack's
+                                // double-tap still arrives here as a semantics click.
                                 .semantics {
+                                    role = Role.Button
+                                    onClick { onCellTapped(cell); true }
                                     contentDescription = "Row ${row + 1}, column ${col + 1}, $letter"
                                     stateDescription = when {
-                                        isSelected -> "First letter selected"
+                                        cell == selection -> "First letter selected"
                                         owner != null -> "Part of a found word"
                                         else -> ""
                                     }
@@ -330,6 +442,24 @@ private fun LetterGrid(
             }
         }
     }
+}
+
+/**
+ * The straight line from [start] toward [finger], snapped to the nearest of the eight directions and
+ * stopped at the grid's edge, so a slightly wobbly drag still reads as the line the learner meant.
+ */
+private fun straightLine(start: GridCell, finger: GridCell, size: Int): List<GridCell> {
+    val dRow = finger.row - start.row
+    val dCol = finger.col - start.col
+    if (dRow == 0 && dCol == 0) return listOf(start)
+    val angle = atan2(dRow.toDouble(), dCol.toDouble())
+    val octant = (angle / (PI / 4)).roundToInt()
+    val stepRow = sin(octant * PI / 4).roundToInt()
+    val stepCol = cos(octant * PI / 4).roundToInt()
+    val length = maxOf(abs(dRow), abs(dCol))
+    return (0..length)
+        .map { GridCell(start.row + stepRow * it, start.col + stepCol * it) }
+        .takeWhile { it.row in 0 until size && it.col in 0 until size }
 }
 
 @Composable
