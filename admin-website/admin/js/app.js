@@ -797,8 +797,9 @@ window.openEntryModal = function(id) {
     deleteBtn.onclick = async () => {
       if (!(await confirmDialog({
         title: 'Delete Dictionary Entry?',
-        body: `Are you sure you want to delete the entry for "${item.kasiguranin}"? This action cannot be undone.`,
-        confirmLabel: 'Delete'
+        body: `Are you sure you want to delete the entry for "${escapeHtml(item.kasiguranin)}"? This action cannot be undone.`,
+        confirmLabel: 'Delete',
+        danger: true
       }))) return;
 
       try {
@@ -1399,9 +1400,16 @@ async function acceptStoryPageImage(index, file) {
   }
 }
 
-window.removeStoryPageImage = function(index) {
+window.removeStoryPageImage = async function(index) {
   const page = storyPages[index];
   if (!page || !page.imageId) return;
+  const ok = await confirmDialog({
+    title: `Remove the picture from page ${index + 1}?`,
+    body: 'The picture is discarded when the story is saved.',
+    confirmLabel: 'Remove picture',
+    danger: true
+  });
+  if (!ok || !page.imageId) return;
   const pending = pendingImages.get(page.imageId);
   if (pending?.url) URL.revokeObjectURL(pending.url);
   if (pending) pendingImages.delete(page.imageId);
@@ -2369,7 +2377,7 @@ window.deleteSubmission = async function(id) {
 
   if (!(await confirmDialog({
     title: 'Delete Word Submission?',
-    body: `Are you sure you want to permanently delete the submission for "${sub.kasiguranin}"? This action cannot be undone.`,
+    body: `Are you sure you want to permanently delete the submission for "${escapeHtml(sub.kasiguranin)}"? This action cannot be undone.`,
     confirmLabel: 'Delete',
     danger: true
   }))) return;
@@ -3269,7 +3277,14 @@ function initAudioEditor(prefix) {
   });
 
   if (el.remove) {
-    el.remove.addEventListener('click', () => {
+    el.remove.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: 'Remove this recording?',
+        body: 'The recording is deleted when you save, and the app goes back to text-to-speech for this word.',
+        confirmLabel: 'Remove recording',
+        danger: true
+      });
+      if (!ok) return;
       const prev = audioEditors.get(prefix);
       if (prev?.url) URL.revokeObjectURL(prev.url);
       audioEditors.set(prefix, { blob: null, mimeType: '', name: '', remove: true, url: null });
