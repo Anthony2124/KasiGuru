@@ -9,6 +9,7 @@ import com.kasiguru.data.repository.AuthOutcome
 import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.UserDataResetManager
 import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,12 @@ data class AccountUiState(
     val pendingSignIn: AuthCredential? = null,
     val didSucceed: Boolean = false,
     /** True once account deletion has actually completed — the UI navigates away on this. */
-    val didDeleteAccount: Boolean = false
+    val didDeleteAccount: Boolean = false,
+    /**
+     * Whether name, age and address are on file. Null until the progress row has been read, so
+     * the screen does not flash the details form at someone who already filled it in.
+     */
+    val hasPersonalDetails: Boolean? = null
 )
 
 @HiltViewModel
@@ -39,7 +45,8 @@ class AccountViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val preferences: UserPreferencesRepository,
     private val database: KasiGuruDatabase,
-    private val userDataResetManager: UserDataResetManager
+    private val userDataResetManager: UserDataResetManager,
+    private val userProgressRepository: UserProgressRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountUiState(account = authRepository.currentAccount()))
@@ -50,6 +57,43 @@ class AccountViewModel @Inject constructor(
             authRepository.accountState.collect { account ->
                 _uiState.value = _uiState.value.copy(account = account)
             }
+        }
+        viewModelScope.launch {
+            userProgressRepository.getUserProgress().collect { progress ->
+                val complete = progress != null &&
+                    progress.fullName.isNotBlank() &&
+                    progress.age != null &&
+                    progress.address.isNotBlank()
+                _uiState.value = _uiState.value.copy(hasPersonalDetails = complete)
+            }
+        }
+    }
+
+    /**
+     * Saves the one-time "About you" details. Once they are stored the form never shows again
+     * and the sign-in options take its place; they sync to the account with the rest of progress.
+     */
+    fun savePersonalDetails(fullName: String, ageText: String, address: String) {
+        val name = fullName.trim()
+        val place = address.trim()
+        val age = ageText.trim().toIntOrNull()
+        val problem = when {
+            name.isBlank() -> "Enter your name."
+            name.length > MAX_NAME_LENGTH -> "Your name is too long."
+            age == null -> "Enter your age."
+            age !in MIN_AGE..MAX_AGE -> "Enter an age between $MIN_AGE and $MAX_AGE."
+            place.isBlank() -> "Enter your address."
+            place.length > MAX_ADDRESS_LENGTH -> "Your address is too long."
+            else -> null
+        }
+        if (problem != null) {
+            _uiState.value = _uiState.value.copy(error = problem)
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isBusy = true, error = null)
+            userProgressRepository.savePersonalDetails(name, age!!, place)
+            _uiState.value = _uiState.value.copy(isBusy = false)
         }
     }
 
@@ -185,5 +229,14 @@ class AccountViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private companion object {
+        // fullName is capped at 100 characters by firestore.rules; a longer one would make every
+        // progress upload for this account fail validation.
+        const val MAX_NAME_LENGTH = 100
+        const val MAX_ADDRESS_LENGTH = 200
+        const val MIN_AGE = 3
+        const val MAX_AGE = 120
     }
 }

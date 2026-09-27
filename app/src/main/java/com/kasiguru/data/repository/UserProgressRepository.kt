@@ -76,6 +76,19 @@ class UserProgressRepository @Inject constructor(
         userProgressDao.updateProfileDetails(fullName, age, address, iconId)
 
     /**
+     * The one-time "About you" details asked before sign-in. Only the personal fields change —
+     * userName (the public leaderboard name) and the avatar stay as the learner set them. The row
+     * is created first when missing, for the same reason as [completeOnboarding]: someone can
+     * reach sign-in from the wizard's first step, before the row exists.
+     */
+    suspend fun savePersonalDetails(fullName: String, age: Int, address: String) {
+        if (userProgressDao.getUserProgressOnce() == null) {
+            userProgressDao.insertOrUpdate(UserProgressEntity())
+        }
+        userProgressDao.updatePersonalDetails(fullName, age, address)
+    }
+
+    /**
      * The row is created if it is missing before the update runs.
      *
      * [UserProgressDao.completeOnboarding] is an `UPDATE ... WHERE id = 1`, so on a fresh install it
