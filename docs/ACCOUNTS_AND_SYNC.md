@@ -70,6 +70,12 @@ directly after every successful progress upload, copying out just `displayName`,
 `totalXp`, `level`, `currentStreak`, `profileIconId`, `titleBadge`, `weeklyXp` — never
 email, address or age.
 
+**Only real accounts are ranked.** A guest (anonymous session) publishes no row, and
+withdraws any it published earlier; `firestore.rules` refuses a leaderboard write from an
+anonymous sign-in, and the app also hides any row flagged `isAnonymous`. Linking an account
+keeps the uid, so the player appears after their next sync. Rows left over from before this
+rule are removed with `node functions/remove_guest_leaderboard.js <key> [--apply]`.
+
 **Tamper-resistant, not anti-cheat.** XP is still computed on-device, and now the
 client publishes its own ranking row too, so the trust model is weaker than a
 Cloud-Function-mediated design would be. `firestore.rules`' `isValidLeaderboardEntry()`

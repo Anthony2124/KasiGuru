@@ -222,6 +222,16 @@ class ProgressSyncManager @Inject constructor(
     private fun leaderboardDoc(uid: String) = firestore.collection("leaderboard_public").document(uid)
 
     private suspend fun publishLeaderboardEntry(uid: String, progress: UserProgressEntity) {
+        // Only players with a real account are ranked. A guest's progress still syncs, but it
+        // gets no leaderboard row, and any row it published before this rule is withdrawn.
+        // Linking an account keeps the same uid, so the row appears on the next sync after
+        // signing up. firestore.rules enforces the same thing on the server.
+        if (auth.currentUser?.isAnonymous != false) {
+            runCatching { leaderboardDoc(uid).delete().await() }
+                .onFailure { e -> Log.w(TAG, "guest leaderboard row removal FAILED", e) }
+            return
+        }
+
         val currentWeekId = currentIsoWeekId()
         val existing = runCatching { leaderboardDoc(uid).get().await() }.getOrNull()
         val storedWeekId = existing?.getString("weekStartDate")

@@ -389,7 +389,11 @@ service cloud.firestore {
     // see that function's comment.
     match /leaderboard_public/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isOwner(userId) && isValidLeaderboardEntry();
+      // Guests (anonymous sessions) are not ranked: only a real account may publish a row.
+      // This also stops app versions from before that rule re-adding guest rows.
+      allow create, update: if isOwner(userId)
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && isValidLeaderboardEntry();
       // Split from create/update: isValidLeaderboardEntry() reads request.resource.data,
       // which is null on a delete — under the old combined `allow write` rule, deleting
       // your own row was silently rejected, which would have broken account deletion.
