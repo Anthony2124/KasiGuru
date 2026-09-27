@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -58,9 +59,21 @@ fun AccountScreen(
     var isSignInMode by remember { mutableStateOf(initialSignInMode) }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // The one-time "About you" step shown before sign-in when name, age or address is missing.
+    var fullName by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    // A returning learner on a new device (or after signing out) has these on their account
+    // already; signing in restores them, so they may go straight to sign-in for this visit.
+    var skippedDetails by remember { mutableStateOf(false) }
+
     val googleSignIn = rememberGoogleSignIn(onIdToken = { viewModel.linkGoogle(it) })
 
-    val hasUnsavedChanges = !uiState.account.isRecoverable && (email.isNotBlank() || password.isNotBlank())
+    val hasUnsavedChanges = !uiState.account.isRecoverable && (
+        email.isNotBlank() || password.isNotBlank() ||
+            (uiState.hasPersonalDetails == false &&
+                (fullName.isNotBlank() || age.isNotBlank() || address.isNotBlank()))
+        )
     var showDiscardConfirm by remember { mutableStateOf(false) }
     val attemptBack: () -> Unit = { if (hasUnsavedChanges) showDiscardConfirm = true else onNavigateBack() }
 
@@ -162,6 +175,23 @@ fun AccountScreen(
                             isBusy = uiState.isBusy,
                             onSignOut = { viewModel.signOut() }
                         )
+                    } else if (uiState.hasPersonalDetails == null) {
+                        // Still reading the progress row; show nothing rather than the wrong card.
+                    } else if (uiState.hasPersonalDetails == false && !skippedDetails) {
+                        PersonalDetailsCard(
+                            isBusy = uiState.isBusy,
+                            fullName = fullName,
+                            onFullNameChange = { fullName = it },
+                            age = age,
+                            onAgeChange = { age = it },
+                            address = address,
+                            onAddressChange = { address = it },
+                            onContinue = { viewModel.savePersonalDetails(fullName, age, address) },
+                            onSkipToSignIn = {
+                                skippedDetails = true
+                                isSignInMode = true
+                            }
+                        )
                     } else {
                         // Mode Switcher: Log In vs Create Account
                         AuthSegmentedSwitcher(
@@ -170,6 +200,16 @@ fun AccountScreen(
                         )
 
                         SoftCard(modifier = Modifier.fillMaxWidth()) {
+                            // Only when the details step was just completed on this visit.
+                            if (fullName.isNotBlank() && !skippedDetails) {
+                                Text(
+                                    text = "Step 2 of 2 · Sign in",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Violet
+                                )
+                                Spacer(Modifier.height(Space.xxs))
+                            }
                             Text(
                                 text = if (isSignInMode) "Sign in to your account" else "Create your account",
                                 style = MaterialTheme.typography.titleMedium,
@@ -414,6 +454,128 @@ private fun AuthSegmentedSwitcher(
             }
         }
     }
+}
+
+/**
+ * Asked once, before the sign-in options: the learner's name, age and address. Saved to the local
+ * progress row, from where they sync to the account like the rest of the profile and stay editable
+ * in Edit profile. The full name becomes the leaderboard name; age and address are never published.
+ */
+@Composable
+private fun PersonalDetailsCard(
+    isBusy: Boolean,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
+    age: String,
+    onAgeChange: (String) -> Unit,
+    address: String,
+    onAddressChange: (String) -> Unit,
+    onContinue: () -> Unit,
+    onSkipToSignIn: () -> Unit
+) {
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Step 1 of 2 · About you",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = Violet
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            text = "Tell us about yourself",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Ink
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            text = "You only need to do this once. Next, you'll sign in with Google or email.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted
+        )
+        Spacer(Modifier.height(Space.md))
+
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = onFullNameChange,
+            label = { Text("Full name") },
+            singleLine = true,
+            enabled = !isBusy,
+            leadingIcon = { DetailsFieldIcon(Iconsax.Profile) },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Next
+            ),
+            shape = Shapes.tile,
+            colors = accountFieldColors(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(Space.sm))
+        OutlinedTextField(
+            value = age,
+            onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) onAgeChange(it) },
+            label = { Text("Age") },
+            singleLine = true,
+            enabled = !isBusy,
+            leadingIcon = { DetailsFieldIcon(Iconsax.Calendar) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
+            shape = Shapes.tile,
+            colors = accountFieldColors(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(Space.sm))
+        OutlinedTextField(
+            value = address,
+            onValueChange = onAddressChange,
+            label = { Text("Address") },
+            placeholder = { Text("e.g. Barangay, Casiguran, Aurora") },
+            enabled = !isBusy,
+            leadingIcon = { DetailsFieldIcon(Iconsax.Location) },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Done
+            ),
+            maxLines = 3,
+            shape = Shapes.tile,
+            colors = accountFieldColors(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(Space.md))
+        ClayButton(
+            label = "Continue",
+            onClick = onContinue,
+            enabled = !isBusy,
+            tone = ClayButtonTone.Primary,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(Space.xs))
+        TextButton(
+            onClick = onSkipToSignIn,
+            enabled = !isBusy,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Already gave these before? Sign in to restore them",
+                color = Violet,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailsFieldIcon(iconRes: Int) {
+    Icon(
+        painter = painterResource(id = iconRes),
+        contentDescription = null,
+        tint = Violet,
+        modifier = Modifier.size(20.dp)
+    )
 }
 
 @Composable
