@@ -459,7 +459,7 @@ private fun AuthSegmentedSwitcher(
 /**
  * Asked once, before the sign-in options: the learner's name, age and address. Saved to the local
  * progress row, from where they sync to the account like the rest of the profile and stay editable
- * in Edit profile. Never published to the leaderboard.
+ * in Edit profile. The full name becomes the leaderboard name; age and address are never published.
  */
 @Composable
 private fun PersonalDetailsCard(
