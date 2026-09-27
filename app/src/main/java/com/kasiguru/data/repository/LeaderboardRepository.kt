@@ -68,19 +68,23 @@ class LeaderboardRepository @Inject constructor(
                 if (snapshot == null) return@addSnapshotListener
 
                 val currentUid = auth.currentUser?.uid
-                val entries = snapshot.documents.mapIndexedNotNull { index, doc ->
-                    val name = doc.getString("displayName")?.takeIf { it.isNotBlank() } ?: return@mapIndexedNotNull null
-                    LeaderboardEntity(
-                        // Room needs a stable local id; rank position is enough for a cache.
-                        id = index + 1,
-                        name = name,
-                        totalXp = (doc.getLong(FIELD_XP) ?: 0L).toInt(),
-                        currentStreak = (doc.getLong(FIELD_STREAK) ?: 0L).toInt(),
-                        avatarIconId = (doc.getLong("profileIconId") ?: 1L).toInt(),
-                        levelTitle = doc.getString("titleBadge") ?: "Kasiguranin Apprentice",
-                        isCurrentUser = doc.id == currentUid
-                    )
-                }
+                // Guests (no account) are not ranked. Filtered here as well as at publish time so
+                // rows left behind by older app versions stay hidden until they are cleaned up.
+                val entries = snapshot.documents
+                    .filter { it.getBoolean("isAnonymous") != true }
+                    .mapIndexedNotNull { index, doc ->
+                        val name = doc.getString("displayName")?.takeIf { it.isNotBlank() } ?: return@mapIndexedNotNull null
+                        LeaderboardEntity(
+                            // Room needs a stable local id; rank position is enough for a cache.
+                            id = index + 1,
+                            name = name,
+                            totalXp = (doc.getLong(FIELD_XP) ?: 0L).toInt(),
+                            currentStreak = (doc.getLong(FIELD_STREAK) ?: 0L).toInt(),
+                            avatarIconId = (doc.getLong("profileIconId") ?: 1L).toInt(),
+                            levelTitle = doc.getString("titleBadge") ?: "Kasiguranin Apprentice",
+                            isCurrentUser = doc.id == currentUid
+                        )
+                    }
                 trySend(entries)
             }
         awaitClose { registration.remove() }
