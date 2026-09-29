@@ -101,7 +101,9 @@ class UserProgressRepository @Inject constructor(
         if (userProgressDao.getUserProgressOnce() == null) {
             userProgressDao.insertOrUpdate(UserProgressEntity())
         }
-        userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
+        // Onboarding grants day 1 of the streak, so today is also the day it was last active. Without
+        // the date, Home calls a brand-new streak "at risk" and practising tomorrow restarts it at 1.
+        userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge, LocalDate.now().toIsoString())
     }
 
     suspend fun addXp(xp: Int) {

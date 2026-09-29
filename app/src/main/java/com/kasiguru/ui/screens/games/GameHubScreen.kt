@@ -171,7 +171,14 @@ fun GameHubScreen(
                                     stats = listOf(
                                         Stat("XP", "$totalXp"),
                                         Stat("Stars", "${uiState.totalStars}"),
-                                        Stat("Accuracy", "${(uiState.accuracyRate * 100).toInt()}%")
+                                        // accuracyRate is 1.0 during the repository's grace period, which
+                                        // would show a learner who has answered nothing as 100% accurate.
+                                        // Same rule as Me's "Not measured yet".
+                                        Stat(
+                                            "Accuracy",
+                                            if ((uiState.userProgress?.totalQuestionsAnswered ?: 0) == 0) "–"
+                                            else "${(uiState.accuracyRate * 100).toInt()}%"
+                                        )
                                     ),
                                     onCanopy = false
                                 )

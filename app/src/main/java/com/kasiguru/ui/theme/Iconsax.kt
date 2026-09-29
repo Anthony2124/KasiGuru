@@ -71,7 +71,9 @@ object Iconsax {
     val Edit: Int get() = IconSax.Bulk.Edit
     val EditBold: Int get() = IconSax.Bulk.Edit
     val Keyboard: Int get() = IconSax.Bulk.Keyboard
-    val Search: Int get() = IconSax.Bulk.SearchNormal
+    // Linear, not Bulk: Bulk fills the lens at partial opacity, which on the dark ground reads as a
+    // solid grey disc rather than a magnifier.
+    val Search: Int get() = IconSax.Linear.SearchNormal
     val SearchBold: Int get() = IconSax.Bulk.SearchNormal
     val Setting: Int get() = IconSax.Bulk.Setting2
     val SettingBold: Int get() = IconSax.Bulk.Setting2

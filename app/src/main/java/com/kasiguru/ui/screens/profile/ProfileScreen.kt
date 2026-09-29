@@ -257,8 +257,8 @@ fun ProfileScreen(
                             // currently satisfy the SM-2 bar and can fall when one lapses;
                             // "practised" is the lifetime tally and only rises.
                             StatDetailRow("Words mastered", "${uiState.masteredCount}", Iconsax.BookBold)
-                            StatDetailRow("Longest streak", "${progress.longestStreak} days", Iconsax.Medal)
-                            StatDetailRow("Lessons completed", "${progress.lessonsCompleted}", Iconsax.Teacher)
+                            StatDetailRow("Longest streak", "${progress.longestStreak} ${if (progress.longestStreak == 1) "day" else "days"}", Iconsax.Medal)
+                            StatDetailRow("Lessons completed", "${uiState.lessonsCompleted}", Iconsax.Teacher)
                             StatDetailRow("Games played", "${progress.gamesPlayed}", Iconsax.Game)
                             StatDetailRow("Stories read", "${progress.storiesCompleted}", Iconsax.Book)
                             StatDetailRow(

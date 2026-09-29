@@ -6,6 +6,7 @@ import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.LessonRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +33,14 @@ data class ProfileUiState(
      * is still an honest record of effort — it is now labelled as such — while this is the honest
      * record of retention.
      */
-    val masteredCount: Int = 0
+    val masteredCount: Int = 0,
+    /**
+     * Lessons finished at least once, counted from the lesson progress rows.
+     *
+     * [UserProgressEntity.lessonsCompleted] is never incremented anywhere, so Profile read it as a
+     * permanent 0 no matter how many lessons the learner had finished.
+     */
+    val lessonsCompleted: Int = 0
 ) {
     val unlockedCount: Int get() = achievements.count { it.isUnlocked }
 
@@ -68,7 +76,8 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val vocabularyRepository: VocabularyRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val lessonRepository: LessonRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -78,6 +87,7 @@ class ProfileViewModel @Inject constructor(
         loadProfile()
         observeAchievements()
         observeMasteredCount()
+        observeLessonsCompleted()
         observeAccount()
     }
 
@@ -98,6 +108,14 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             vocabularyRepository.getLearnedCount().collect { count ->
                 _uiState.value = _uiState.value.copy(masteredCount = count)
+            }
+        }
+    }
+
+    private fun observeLessonsCompleted() {
+        viewModelScope.launch {
+            lessonRepository.observeCompletedCount().collect { count ->
+                _uiState.value = _uiState.value.copy(lessonsCompleted = count)
             }
         }
     }

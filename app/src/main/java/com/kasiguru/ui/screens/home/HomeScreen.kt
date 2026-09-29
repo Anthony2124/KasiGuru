@@ -370,7 +370,8 @@ private fun HomeHero(
                 iconRes = Iconsax.FlashBold,
                 tint = Coral,
                 text = if (progress.currentStreak == 1) "1 day streak" else "${progress.currentStreak} day streak",
-                spoken = "Streak, ${progress.currentStreak} days. Shows what keeps it going.",
+                spoken = "Streak, ${progress.currentStreak} ${if (progress.currentStreak == 1) "day" else "days"}. " +
+                    "Shows what keeps it going.",
                 onClick = onOpenStreak,
                 modifier = Modifier.tourAnchor(TourAnchor.StreakBadge)
             )
