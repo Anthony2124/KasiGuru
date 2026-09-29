@@ -325,4 +325,56 @@ class LearningTreeTest {
         assertTrue(section(180).opensNext)
         assertEquals(0.5f, section(90).gateFraction, 0.001f)
     }
+
+    // -- which lessons are open -----------------------------------------------
+
+    @Test
+    fun aFreshStageOpensOnlyItsFirstLesson() {
+        assertEquals(
+            listOf(true, false, false, false),
+            LearningTree.openLessons(listOf(false, false, false, false), coreCount = 4)
+        )
+    }
+
+    @Test
+    fun finishingALessonOpensTheNextAndNoFurther() {
+        assertEquals(
+            listOf(true, true, true, false, false),
+            LearningTree.openLessons(listOf(true, true, false, false, false), coreCount = 5)
+        )
+    }
+
+    @Test
+    fun aLessonFinishedOutOfOrderStaysOpen() {
+        // Before lessons locked, every lesson in an open stage was tappable, so some learners have
+        // lesson 4 done with lesson 2 not. Locking lesson 4 now would take back work they did.
+        assertEquals(
+            listOf(true, true, false, true, false),
+            LearningTree.openLessons(listOf(true, false, false, true, false), coreCount = 5)
+        )
+    }
+
+    @Test
+    fun theDeepDiveTailStaysLockedUntilTheCoreIsFinished() {
+        val coreUnfinished = listOf(true, false, false, false)
+        assertEquals(
+            listOf(true, true, false, false),
+            LearningTree.openLessons(coreUnfinished, coreCount = 2)
+        )
+
+        val coreFinished = listOf(true, true, false, false)
+        assertEquals(
+            listOf(true, true, true, false),
+            LearningTree.openLessons(coreFinished, coreCount = 2)
+        )
+    }
+
+    @Test
+    fun aStageShorterThanTheCoreIsAllCore() {
+        assertEquals(
+            listOf(true, true),
+            LearningTree.openLessons(listOf(true, false), coreCount = LearningTree.CORE_LESSONS_PER_STAGE)
+        )
+        assertTrue(LearningTree.openLessons(emptyList(), coreCount = 6).isEmpty())
+    }
 }

@@ -34,6 +34,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.screens.leaderboard.LeaderboardPreview
+import com.kasiguru.ui.screens.leaderboard.LeaderboardViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -65,7 +67,7 @@ import com.kasiguru.ui.tour.tourAnchor
 
 /**
  * Practice: the mini-game hub. A violet canopy carrying level, XP and stars, over a sheet listing the
- * six drill modes and, once played, recent activity.
+ * leaderboard at a glance, the drill modes and, once played, recent activity.
  *
  * Replaces a screen built entirely from ad hoc `Surface` gradients (`PlayPurpleStart`, `XpGold`, the
  * "DICTIONARY CORPUS"-style eyebrow chips' sibling patterns) with the shared canopy/sheet spine so
@@ -75,9 +77,12 @@ import com.kasiguru.ui.tour.tourAnchor
 fun GameHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLevelSelection: (String) -> Unit,
-    viewModel: GamesViewModel = hiltViewModel()
+    onNavigateToLeaderboard: () -> Unit = {},
+    viewModel: GamesViewModel = hiltViewModel(),
+    leaderboardViewModel: LeaderboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val leaderboardState by leaderboardViewModel.uiState.collectAsState()
     var selectedGameRulesType by remember { mutableStateOf<String?>(null) }
     val haptic = LocalHapticFeedback.current
 
@@ -201,6 +206,13 @@ fun GameHubScreen(
                         )
                         Spacer(Modifier.height(Space.lg))
                     }
+                }
+
+                // Moved here from Me: Practice is where XP is earned, so this is where a learner
+                // wants to see the rankings move.
+                item {
+                    LeaderboardPreview(state = leaderboardState, onSeeAll = onNavigateToLeaderboard)
+                    Spacer(Modifier.height(Space.lg))
                 }
 
                 item {

@@ -137,7 +137,7 @@ fun LeaderboardScreen(
 
 /** Your own standing, or - for a learner not on the board - why not, without a made-up rank. */
 @Composable
-private fun MyRankCard(entry: LeaderboardEntity?, rank: Int, avatarId: Int?, byStreak: Boolean) {
+internal fun MyRankCard(entry: LeaderboardEntity?, rank: Int, avatarId: Int?, byStreak: Boolean) {
     SoftCard(
         modifier = Modifier.fillMaxWidth(),
         shape = Shapes.tile,
@@ -169,7 +169,7 @@ private fun MyRankCard(entry: LeaderboardEntity?, rank: Int, avatarId: Int?, byS
 }
 
 @Composable
-private fun LeaderRow(rank: Int, learner: LeaderboardEntity, byStreak: Boolean) {
+internal fun LeaderRow(rank: Int, learner: LeaderboardEntity, byStreak: Boolean) {
     val medal: Color? = when (rank) {
         1 -> TierGold
         2 -> TierSilver

@@ -371,7 +371,6 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
-                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) },
                     onNavigateToHelp = { navController.navigate(Screen.Help.route) },
@@ -454,6 +453,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.GameHub.route) {
                 GameHubScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToLevelSelection = { gameType ->
                         // Word Search asks for a category before any levels: its levels belong to one.
                         if (gameType == Constants.Games.WORD_SEARCH) {

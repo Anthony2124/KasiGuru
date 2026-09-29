@@ -260,8 +260,8 @@ private val tabGuide = listOf(
     TabGuideEntry(
         Iconsax.GameBold,
         "Practice",
-        "Games that drill the words you have already met. Stars unlock the harder ones, so play " +
-            "the open ones first."
+        "Games that drill the words you have already met, and the leaderboard to see where you " +
+            "rank. Stars unlock the harder games, so play the open ones first."
     ),
     TabGuideEntry(
         Iconsax.BookBold,
@@ -272,8 +272,8 @@ private val tabGuide = listOf(
     TabGuideEntry(
         Iconsax.ProfileBold,
         "Me",
-        "Who you are and what you have earned: your badges, the leaderboard, and the way through " +
-            "to Settings and Casiguran's cultural heritage."
+        "Who you are and what you have earned: your badges, and the way through to Settings and " +
+            "Casiguran's cultural heritage."
     )
 )
 

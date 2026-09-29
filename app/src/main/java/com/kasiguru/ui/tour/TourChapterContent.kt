@@ -179,8 +179,8 @@ val profileSettingsChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.Profile.route),
             anchor = TourAnchor.ProfileExplore,
             title = "Everything else lives here",
-            body = "Casiguran's cultural heritage, this guide, and what the project is. Your badges and " +
-                "the leaderboard sit just above. Me is the way through to all of it.",
+            body = "Casiguran's cultural heritage, this guide, and what the project is. Your badges sit " +
+                "just above. Me is the way through to all of it.",
             corner = Radius.panel
         ),
         TourStop(
