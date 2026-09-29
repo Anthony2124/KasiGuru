@@ -240,6 +240,32 @@ object LearningTree {
     }
 
     /**
+     * Which of a stage's lessons can be opened, in path order: every finished one, and the next one
+     * in line. Nothing further ahead.
+     *
+     * [completed] holds each lesson's state in path order, the first [coreCount] being the core tier.
+     * The core opens one lesson at a time. The deep-dive tail opens once the core is finished, also
+     * one at a time, so it is still reachable before the checkpoint is passed. A lesson finished out
+     * of order - possible while every lesson in an open stage was tappable - stays open, so no learner
+     * loses a lesson they have already done.
+     *
+     * Pure for the same reason [masterySelection] is: opening too much is invisible until a learner
+     * notices they can skip ahead, and opening too little strands them in front of a lock.
+     */
+    fun openLessons(completed: List<Boolean>, coreCount: Int): List<Boolean> {
+        val core = coreCount.coerceIn(0, completed.size)
+        var coreNextOpen = true
+        var deepDiveNextOpen = (0 until core).all { completed[it] }
+        return completed.mapIndexed { index, done ->
+            when {
+                done -> true
+                index < core -> coreNextOpen.also { coreNextOpen = false }
+                else -> deepDiveNextOpen.also { deepDiveNextOpen = false }
+            }
+        }
+    }
+
+    /**
      * How a lesson node reads, given whether its lesson is finished and how its words are doing.
      *
      * Completing the lesson earns [Mastery.FAMILIAR] outright - the learner has met all seven words.
@@ -317,6 +343,7 @@ data class TreeNodeState(
     val node: TreeNode,
     val title: String,
     val mastery: Mastery,
+    /** Open to tap. For a lesson: finished, or the next one in line. See [LearningTree.openLessons]. */
     val isUnlocked: Boolean,
     /** True for the single node the learner should tap next. */
     val isCurrent: Boolean,

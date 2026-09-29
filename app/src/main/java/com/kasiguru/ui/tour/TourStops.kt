@@ -83,8 +83,8 @@ val coreChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.GameHub.route),
             anchor = TourAnchor.NavPractice,
             title = "Practice",
-            body = "Games that drill the words you have already met. Stars unlock the harder ones, so " +
-                "play the open ones first.",
+            body = "Games that drill the words you have already met, and the leaderboard to see where " +
+                "you rank. Stars unlock the harder games, so play the open ones first.",
             corner = Radius.pill
         ),
         TourStop(
@@ -99,8 +99,7 @@ val coreChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.Profile.route),
             anchor = TourAnchor.NavMe,
             title = "Me",
-            body = "Who you are and what you have earned - your badges, your place on the leaderboard, " +
-                "and the way through to Settings.",
+            body = "Who you are and what you have earned - your badges, and the way through to Settings.",
             corner = Radius.pill
         ),
         TourStop(

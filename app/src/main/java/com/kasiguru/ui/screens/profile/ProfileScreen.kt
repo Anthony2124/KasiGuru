@@ -83,8 +83,8 @@ import com.kasiguru.util.gamification.GamificationEngine
  *
  * Reads top to bottom as identity, then record, then the ways out: the avatar inside its level ring
  * with the rank it has earned; streak, XP and words as three figures; the latest badges with a way
- * into the whole wall; the leaderboard; and finally the rows for settings, the account and the rest
- * of the app. A guest sees one calm prompt near the top, because an anonymous account is the one
+ * into the whole wall; and finally the rows for settings, the account and the rest of the app. The
+ * leaderboard lives on Practice, where XP is earned. A guest sees one calm prompt near the top, because an anonymous account is the one
  * thing here that can be lost.
  *
  * A tab root, so no back chevron. Settings and Edit sit in the bar.
@@ -95,7 +95,6 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAchievements: () -> Unit = {},
-    onNavigateToLeaderboard: () -> Unit = {},
     onNavigateToCultural: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
@@ -232,18 +231,6 @@ fun ProfileScreen(
                         recent = uiState.recentlyUnlocked,
                         closestLocked = uiState.closestLocked,
                         onSeeAll = onNavigateToAchievements
-                    )
-                }
-
-                // ── Leaderboard ──
-                item(key = "leaderboard") {
-                    LinkCard(
-                        iconRes = Iconsax.CupBold,
-                        accent = Gold,
-                        title = "Leaderboard",
-                        // Guests are not ranked - the leaderboard only lists signed-in learners.
-                        subtitle = if (isGuest) "Sign in to appear in the rankings" else "See where you rank this week",
-                        onClick = onNavigateToLeaderboard
                     )
                 }
 
@@ -461,19 +448,6 @@ private fun BadgesSection(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LinkCard(iconRes: Int, accent: Color, title: String, subtitle: String, onClick: () -> Unit) {
-    SoftCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = Shapes.tile,
-        border = BorderHairline,
-        onClick = onClick,
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        LinkRow(iconRes, accent, title, subtitle, onClick = null)
     }
 }
 

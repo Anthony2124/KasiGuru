@@ -94,7 +94,8 @@ import com.kasiguru.ui.theme.TrackNeutral
  *    arriving somewhere - titled in Tagalog with the English beneath it. A locked section's scene is
  *    drained of colour and dimmed; a finished one carries a Complete chip.
  * 2. **State is never carried by colour alone.** A finished node shows a check, the next one carries
- *    Jepjep and a "Start" label, a locked one a lock, and mastery is a three-segment ring whose
+ *    Jepjep and a "Start" label, a locked one a lock - every lesson past the next one, until the
+ *    lesson before it is finished - and mastery is a three-segment ring whose
  *    number of *filled* segments is the tier. The node's spoken description says all of it in words.
  * 3. **A locked section still shows itself.** Hiding it would hide the reason to come back; it
  *    states its own gate instead, in XP, naming the section that opens it.
@@ -439,7 +440,10 @@ private enum class NodeLook {
     /** Finished: olive with a cream check, and the mastery ring around it. */
     Done,
 
-    /** Open but not the suggested next step - a deep dive, or a lesson after the current one. */
+    /**
+     * Open but not the suggested next step: the next deep-dive lesson. Core lessons after the current
+     * one are [Locked] until the one before them is finished (LearningTree.openLessons).
+     */
     Open,
 
     /** The section's mastery test, open. Gold, because it is the section's reward. */

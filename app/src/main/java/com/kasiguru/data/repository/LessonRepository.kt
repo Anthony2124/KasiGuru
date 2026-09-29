@@ -112,7 +112,8 @@ class LessonRepository @Inject constructor(
      * One section's nodes: a lesson per [LessonPlan] slice, then the section's mastery test.
      *
      * `isCurrent` marks the first unfinished lesson, which is the single node the path should draw
-     * the eye to. The mastery test unlocks only once every lesson in the section is complete - it
+     * the eye to. Lessons past it stay locked until the one before them is finished, so a stage is
+     * walked in order. The mastery test unlocks only once every lesson in the section is complete - it
      * tests the section, so it has nothing to test until the section has been taught.
      */
     private fun buildNodes(
@@ -122,41 +123,51 @@ class LessonRepository @Inject constructor(
         progress: Map<Pair<String, Int>, LessonProgressEntity>,
         isSectionUnlocked: Boolean
     ): List<TreeNodeState> {
+        // Every lesson in path order, gathered before any node is built: whether a lesson is open
+        // depends on the lessons in front of it. See LearningTree.openLessons.
+        val lessons = units.flatMap { unitId ->
+            val unitWords = wordsByUnit[unitId].orEmpty()
+            (0 until LessonPlan.lessonCountFor(unitWords.size)).map { index ->
+                val range = LessonPlan.wordIndicesFor(index, unitWords.size)
+                PlannedLesson(
+                    ref = LessonRef(unitId, index),
+                    isComplete = progress[unitId to index]?.isComplete == true,
+                    words = if (range.isEmpty()) emptyList() else unitWords.slice(range)
+                )
+            }
+        }
+        val open = LearningTree.openLessons(
+            completed = lessons.map { it.isComplete },
+            coreCount = LearningTree.CORE_LESSONS_PER_STAGE
+        )
+
         val core = mutableListOf<TreeNodeState>()
         val deepDive = mutableListOf<TreeNodeState>()
         var currentMarked = false
-        var position = 0
 
-        units.forEach { unitId ->
-            val unitWords = wordsByUnit[unitId].orEmpty()
-            for (index in 0 until LessonPlan.lessonCountFor(unitWords.size)) {
-                val ref = LessonRef(unitId, index)
-                val isComplete = progress[unitId to index]?.isComplete == true
-                val range = LessonPlan.wordIndicesFor(index, unitWords.size)
-                val lessonWords = if (range.isEmpty()) emptyList() else unitWords.slice(range)
+        lessons.forEachIndexed { i, lesson ->
+            val position = i + 1
+            // Everything past the core tier is a deep dive. The lesson itself is unchanged --
+            // same slice, same `(unitId, lessonIndex)`, same progress row -- so a learner who
+            // already finished lesson 12 of a large stage keeps it; it simply now sits after the
+            // checkpoint instead of before it.
+            val isDeepDive = position > LearningTree.CORE_LESSONS_PER_STAGE
 
-                position++
-                // Everything past the core tier is a deep dive. The lesson itself is unchanged --
-                // same slice, same `(unitId, lessonIndex)`, same progress row -- so a learner who
-                // already finished lesson 12 of a large stage keeps it; it simply now sits after the
-                // checkpoint instead of before it.
-                val isDeepDive = position > LearningTree.CORE_LESSONS_PER_STAGE
+            // Only a core lesson can be the one node the path points at. Pointing the learner
+            // into the optional tail is precisely what the two tiers exist to stop.
+            val isCurrent = isSectionUnlocked && !lesson.isComplete && !currentMarked && !isDeepDive
+            if (isCurrent) currentMarked = true
 
-                // Only a core lesson can be the one node the path points at. Pointing the learner
-                // into the optional tail is precisely what the two tiers exist to stop.
-                val isCurrent = isSectionUnlocked && !isComplete && !currentMarked && !isDeepDive
-                if (isCurrent) currentMarked = true
-
-                val state = TreeNodeState(
-                    node = TreeNode.Lesson(ref, position),
-                    title = "Lesson $position",
-                    mastery = LearningTree.nodeMastery(isComplete, lessonWords),
-                    isUnlocked = isSectionUnlocked,
-                    isCurrent = isCurrent,
-                    isDeepDive = isDeepDive
-                )
-                if (isDeepDive) deepDive += state else core += state
-            }
+            val state = TreeNodeState(
+                node = TreeNode.Lesson(lesson.ref, position),
+                title = "Lesson $position",
+                mastery = LearningTree.nodeMastery(lesson.isComplete, lesson.words),
+                // Finished, or next in line; the rest stay locked until the one before is done.
+                isUnlocked = isSectionUnlocked && open[i],
+                isCurrent = isCurrent,
+                isDeepDive = isDeepDive
+            )
+            if (isDeepDive) deepDive += state else core += state
         }
 
         // The checkpoint tests the core, so it opens when the core is done rather than waiting on an
@@ -175,6 +186,13 @@ class LessonRepository @Inject constructor(
 
         return core + checkpoint + deepDive
     }
+
+    /** One lesson slot of a stage, before learner-facing state is applied. */
+    private class PlannedLesson(
+        val ref: LessonRef,
+        val isComplete: Boolean,
+        val words: List<VocabularyEntity>
+    )
 
     /** The unit key a section draws on: its theme, or the closing remainder. */
     private fun unitIdsFor(definition: SectionDefinition): List<String> =
