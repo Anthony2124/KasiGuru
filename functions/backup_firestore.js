@@ -59,7 +59,10 @@ admin.initializeApp({
   credential: admin.credential.cert(path.resolve(keyFile))
 });
 
-const projectId = require(keyFile).project_id;
+// Resolved against the working directory, as fs.existsSync above was. A bare require(keyFile)
+// resolves against this file's folder, or as a package name, so `node backup_firestore.js key.json`
+// passed the existence check and then crashed with "Cannot find module".
+const projectId = require(path.resolve(keyFile)).project_id;
 
 (async () => {
   const db = admin.firestore();

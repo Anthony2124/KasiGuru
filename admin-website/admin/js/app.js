@@ -4,7 +4,7 @@
 import { 
   db, auth,
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, where, onSnapshot, Bytes, writeBatch
+  query, orderBy, where, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
@@ -4909,6 +4909,44 @@ window.rejectAppeal = async function(uid, displayName) {
 };
 
 // ── Backup & Restore ────────────────────────────────────────────────────────
+// JSON has no timestamp or bytes type. Left to JSON.stringify, a Timestamp comes out as a plain
+// {seconds, nanoseconds} map and a Bytes as its private {_byteString} internals, and restoring those
+// stores a map where the value used to be. The story_page_images rule (`data is bytes`) rejects that,
+// so restoring this page's own export failed at the first story picture and never reached the
+// collections after it. Tagged the way functions/firestore_backup_util.js tags them.
+function encodeBackupValue(value) {
+  if (value instanceof Bytes) return { __t: 'bytes', v: value.toBase64() };
+  if (value instanceof Timestamp) return { __t: 'timestamp', s: value.seconds, n: value.nanoseconds };
+  if (value instanceof GeoPoint) return { __t: 'geopoint', v: [value.latitude, value.longitude] };
+  if (value instanceof DocumentReference) return { __t: 'ref', v: value.path };
+  if (Array.isArray(value)) return value.map(encodeBackupValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, encodeBackupValue(v)]));
+  }
+  return value;
+}
+
+function decodeBackupValue(value) {
+  if (Array.isArray(value)) return value.map(decodeBackupValue);
+  if (!value || typeof value !== 'object') return value;
+  switch (value.__t) {
+    case 'bytes': return Bytes.fromBase64String(value.v);
+    case 'timestamp': return new Timestamp(value.s, value.n);
+    case 'geopoint': return new GeoPoint(value.v[0], value.v[1]);
+    case 'ref': return doc(db, value.v);
+  }
+  // Files exported before version 3 hold what JSON.stringify made of these types. Both shapes are
+  // specific enough to recognise, so those files restore to the values they were taken from.
+  const keys = Object.keys(value);
+  if (keys.length === 1 && value._byteString && typeof value._byteString.binaryString === 'string') {
+    return Bytes.fromUint8Array(Uint8Array.from(value._byteString.binaryString, (c) => c.charCodeAt(0)));
+  }
+  if (keys.length === 2 && Number.isInteger(value.seconds) && Number.isInteger(value.nanoseconds)) {
+    return new Timestamp(value.seconds, value.nanoseconds);
+  }
+  return Object.fromEntries(keys.map((k) => [k, decodeBackupValue(value[k])]));
+}
+
 window.exportBackup = async function() {
   const btn = document.getElementById('btn-export-backup');
   if (btn) btn.disabled = true;
@@ -4938,11 +4976,12 @@ window.exportBackup = async function() {
     const collections = {};
     for (const name of SCOPE) {
       const snap = await getDocs(collection(db, name));
-      collections[name] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // The id stays beside the fields, not among them: every story has an `id` field of its own.
+      collections[name] = snap.docs.map(d => ({ id: d.id, data: encodeBackupValue(d.data()) }));
     }
 
     const backupData = {
-      version: 2,
+      version: 3,
       scope: "content-and-moderation",
       note: "Learner progress (users/*/progress) is not included; use functions/backup_firestore.js for a full backup.",
       exportedAt: new Date().toISOString(),
@@ -5120,68 +5159,55 @@ function initBackupRestore() {
       if (statusEl) statusEl.textContent = 'Restoring database records...';
       notify("Restoring backup...", "info");
 
+      // Version 3 keeps each document's id apart from its fields. Before that the id was spread into
+      // the fields, so a document's own `id` field overwrote it, and the restore then deleted that
+      // field as if it were the document id. Every story lost its numeric id, and the app skips a
+      // story without one. In an old file a non-string `id` can only have come from the fields.
+      const unpack = (entry) => {
+        if (backup.version >= 3) return { id: entry.id, data: decodeBackupValue(entry.data) };
+        const { id, ...fields } = entry;
+        const data = decodeBackupValue(fields);
+        if (id != null && typeof id !== 'string') data.id = id;
+        return { id: id == null ? '' : String(id), data };
+      };
+
+      // The rules only accept a queue item created in the shape the app submits it: status
+      // 'pending' and none of the fields review adds. A reviewed item that is gone from Firestore
+      // therefore cannot be recreated from a browser, and one in a batch sinks the whole batch.
+      const APP_CREATED_QUEUES = new Set(['word_submissions', 'literature_submissions', 'issue_reports']);
+
       let totalRestored = 0;
+      let notRecreatable = 0;
 
-      for (const [collName, docs] of Object.entries(backup.collections)) {
-        if (!Array.isArray(docs)) continue;
+      for (const [collName, entries] of Object.entries(backup.collections)) {
+        if (!Array.isArray(entries)) continue;
+        const docs = entries.filter(Boolean).map(unpack).filter((d) => d.id);
 
-        let batch = writeBatch(db);
-        let count = 0;
-
-        // Firestore security rules enforce append-only for admin_audit_log (update/delete denied).
-        // Only insert audit logs that do not already exist in Firestore to prevent update rejections.
+        let writes = docs;
         if (collName === 'admin_audit_log') {
+          // Append-only by rule (update denied): insert only entries that are not already there.
           const existingIds = new Set(auditLogs.map(l => l.id));
-          const newDocs = docs.filter(d => d && d.id && !existingIds.has(d.id));
-
-          for (const docData of newDocs) {
-            const dataToSave = { ...docData };
-            delete dataToSave.id;
-
-            const docRef = doc(db, collName, String(docData.id));
-            batch.set(docRef, dataToSave);
-            count++;
-            totalRestored++;
-
-            if (count >= 450) {
-              await batch.commit();
-              batch = writeBatch(db);
-              count = 0;
-            }
-          }
-          if (count > 0) {
-            await batch.commit();
-          }
-          continue;
+          writes = docs.filter((d) => !existingIds.has(d.id));
+        } else if (APP_CREATED_QUEUES.has(collName)) {
+          const existingIds = new Set((await getDocs(collection(db, collName))).docs.map((d) => d.id));
+          writes = docs.filter((d) => existingIds.has(d.id) || d.data.status === 'pending');
+          notRecreatable += docs.length - writes.length;
         }
 
-        for (const docData of docs) {
-          const docId = docData.id;
-          if (!docId) continue;
-
-          const dataToSave = { ...docData };
-          delete dataToSave.id;
-
-          const docRef = doc(db, collName, String(docId));
-          batch.set(docRef, dataToSave, { merge: true });
-          count++;
-          totalRestored++;
-
-          if (count >= 450) {
-            await batch.commit();
-            batch = writeBatch(db);
-            count = 0;
-          }
-        }
-
-        if (count > 0) {
+        for (let i = 0; i < writes.length; i += 450) {
+          const batch = writeBatch(db);
+          for (const d of writes.slice(i, i + 450)) batch.set(doc(db, collName, d.id), d.data, { merge: true });
           await batch.commit();
         }
+        totalRestored += writes.length;
       }
 
-      if (statusEl) statusEl.textContent = `Restore completed! Restored ${totalRestored} documents.`;
-      notify(`Successfully restored ${totalRestored} documents from backup!`, "success");
-      logAudit("backup_restore", { totalRestored });
+      const skippedNote = notRecreatable
+        ? ` ${notRecreatable} reviewed moderation item(s) no longer in Firestore could not be recreated from the browser; restore those from the operator's full backup (functions/restore_firestore.js).`
+        : '';
+      if (statusEl) statusEl.textContent = `Restore completed! Restored ${totalRestored} documents.${skippedNote}`;
+      notify(`Restored ${totalRestored} documents from backup.${skippedNote}`, notRecreatable ? "info" : "success");
+      logAudit("backup_restore", { totalRestored, notRecreatable });
 
     } catch (e) {
       console.error("Restore failed:", e);

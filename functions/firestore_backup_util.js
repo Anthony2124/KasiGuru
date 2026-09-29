@@ -11,7 +11,9 @@ const PAGE_SIZE = 300;
 function serialize(value) {
   if (value === null || value === undefined) return null;
   if (value instanceof admin.firestore.Timestamp) {
-    return { __t: 'timestamp', v: value.toDate().toISOString() };
+    // `v` alone is milliseconds; seconds + nanoseconds keep the full value. `v` stays so a restore
+    // script from before this change can still read the file.
+    return { __t: 'timestamp', v: value.toDate().toISOString(), s: value.seconds, n: value.nanoseconds };
   }
   if (value instanceof admin.firestore.DocumentReference) {
     return { __t: 'ref', v: value.path };
@@ -26,8 +28,9 @@ function serialize(value) {
   if (typeof value === 'object') {
     const out = {};
     for (const key of Object.keys(value)) {
-      const s = serialize(value[key]);
-      if (s !== null) out[key] = s;
+      // A null field is data - Firestore keeps it apart from an absent one, and the dashboard writes
+      // explicit nulls into vocabulary (partOfSpeech, meaningEnglish...). Only undefined is dropped.
+      if (value[key] !== undefined) out[key] = serialize(value[key]);
     }
     return out;
   }
@@ -39,6 +42,7 @@ function deserialize(db, value) {
   if (Array.isArray(value)) return value.map((v) => deserialize(db, v));
   if (typeof value === 'object') {
     if (value.__t === 'timestamp') {
+      if (typeof value.s === 'number') return new admin.firestore.Timestamp(value.s, value.n);
       return admin.firestore.Timestamp.fromDate(new Date(value.v));
     }
     if (value.__t === 'ref') return db.doc(value.v);
