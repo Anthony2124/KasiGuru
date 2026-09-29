@@ -683,7 +683,7 @@
           <div style="padding:1rem 0;">
             <div class="dropzone" id="backup-dropzone" style="margin-bottom:1rem;">
               <p style="font-weight:800; margin-bottom:6px;">Drop a .json backup file, or click to choose</p>
-              <p style="color:var(--muted); font-size:0.8rem;">Merges the file's documents back into Firestore (including vocabulary, stories, announcements, releases, and admin audit logs). Existing documents with the same id are overwritten; documents added since the backup are left in place.</p>
+              <p style="color:var(--muted); font-size:0.8rem;">Merges the file's documents back into Firestore (including vocabulary, stories, story pictures, announcements, releases, and admin audit logs). Existing documents with the same id are overwritten; documents added since the backup are left in place. Reviewed submissions and reports that are no longer in Firestore cannot be recreated from the browser and need the operator's full restore.</p>
               <input type="file" id="backup-file-input" accept=".json" style="display:none;">
             </div>
             <div id="backup-restore-status" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>

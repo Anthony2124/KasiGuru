@@ -17,7 +17,11 @@ import {
   // Bytes carries a story page illustration as raw binary. Base64 in a string field would inflate
   // every picture by a third for an audience that is explicitly data-sensitive.
   Bytes,
-  writeBatch
+  writeBatch,
+  // The backup export has to recognise these to write them into JSON as what they are.
+  Timestamp,
+  GeoPoint,
+  DocumentReference
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -52,5 +56,8 @@ export {
   where, 
   onSnapshot,
   Bytes,
-  writeBatch
+  writeBatch,
+  Timestamp,
+  GeoPoint,
+  DocumentReference
 };

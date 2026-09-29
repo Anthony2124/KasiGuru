@@ -13,7 +13,10 @@
  */
 
 const assert = require('assert');
+const admin = require('firebase-admin');
 const {
+  serialize,
+  deserialize,
   readAllDocsDeep,
   writeAllDocsByPath,
   countCollectionDeep,
@@ -27,6 +30,8 @@ function makeSnapshot(docs) {
   return { empty: docs.length === 0, size: docs.length, docs };
 }
 
+const deletionOrder = [];
+
 function makeDoc(parentPath, id, data, subcollections = {}) {
   const path = `${parentPath}/${id}`;
   const ref = {
@@ -34,7 +39,7 @@ function makeDoc(parentPath, id, data, subcollections = {}) {
     path,
     deleted: false,
     listCollections: async () => Object.entries(subcollections).map(([name, docs]) => makeCollection(path, name, docs)),
-    delete: async () => { ref.deleted = true; }
+    delete: async () => { ref.deleted = true; deletionOrder.push(path); }
   };
   return { id, path, data, ref, exists: data !== null };
 }
@@ -94,9 +99,11 @@ function buildUsers() {
 }
 
 let failures = 0;
-function check(name, fn) {
+// Awaited, so an async check that throws is counted. Called synchronously, an async check's
+// failure became an unhandled rejection after PASS had already been printed.
+async function check(name, fn) {
   try {
-    fn();
+    await fn();
     console.log(`  PASS  ${name}`);
   } catch (e) {
     failures++;
@@ -112,7 +119,7 @@ function check(name, fn) {
   const real = deep.filter((d) => !d.missing);
   const missing = deep.filter((d) => d.missing);
 
-  check('finds every nested progress document', () => {
+  await check('finds every nested progress document', () => {
     const paths = real.map((d) => d.path).sort();
     assert.deepStrictEqual(paths, [
       'users/uidAAA/progress/main',
@@ -123,20 +130,20 @@ function check(name, fn) {
     ]);
   });
 
-  check('records missing parents without inventing data for them', () => {
+  await check('records missing parents without inventing data for them', () => {
     assert.strictEqual(missing.length, 2);
     assert.deepStrictEqual(missing.map((d) => d.path).sort(), ['users/uidAAA', 'users/uidBBB']);
     assert.ok(missing.every((d) => d.data === null));
   });
 
-  check('the old flat read would have found nothing under users', async () => {
+  await check('the old flat read would have found nothing under users', async () => {
     // The regression itself: a query returns only documents that exist. Two of three users have
     // no fields, so the pre-fix backup captured one document and zero progress records.
     const snapshot = await users.orderBy('__name__').limit(300).get();
     assert.strictEqual(snapshot.docs.length, 1);
   });
 
-  check('carries a full path so nested docs can be restored where they came from', () => {
+  await check('carries a full path so nested docs can be restored where they came from', () => {
     assert.ok(real.every((d) => typeof d.path === 'string' && d.path.length > 0));
   });
 
@@ -154,17 +161,17 @@ function check(name, fn) {
 
   const restored = await writeAllDocsByPath(fakeDb, 'users', deep);
 
-  check('restores every real document and skips missing parents', () => {
+  await check('restores every real document and skips missing parents', () => {
     assert.strictEqual(restored, 5);
     assert.strictEqual(written.length, 5);
     assert.ok(!written.some((w) => w.path === 'users/uidAAA'));
   });
 
-  check('restores nested documents to their original paths', () => {
+  await check('restores nested documents to their original paths', () => {
     assert.ok(written.some((w) => w.path === 'users/uidAAA/progress/main' && w.data.totalXp === 1200));
   });
 
-  check('a pre-format-2 backup entry still restores by id at the root', async () => {
+  await check('a pre-format-2 backup entry still restores by id at the root', async () => {
     const legacy = [];
     const legacyDb = {
       doc: (p) => ({ path: p }),
@@ -180,7 +187,7 @@ function check(name, fn) {
   const toCount = buildUsers();
   const counted = await countCollectionDeep(fakeDb, toCount);
 
-  check('counts parents and nested documents alike', () => {
+  await check('counts parents and nested documents alike', () => {
     // 3 user parents + 4 progress documents.
     assert.strictEqual(counted, 7);
   });
@@ -188,12 +195,39 @@ function check(name, fn) {
   const toDelete = buildUsers();
   const deleted = await deleteCollectionDeep(fakeDb, toDelete, () => {});
 
-  check('deletes the same number it counted', () => {
+  await check('deletes the same number it counted', () => {
     assert.strictEqual(deleted, counted);
   });
 
-  check('deletes children before their parent', () => {
+  await check('deletes children before their parent', () => {
     assert.ok(toDelete._built.every((d) => d.ref.deleted));
+    for (const parent of ['users/uidAAA', 'users/uidBBB', 'users/uidCCC']) {
+      const children = deletionOrder.filter((p) => p.startsWith(parent + '/'));
+      assert.ok(children.length > 0, `${parent} owns no deleted children`);
+      assert.ok(children.every((c) => deletionOrder.indexOf(c) < deletionOrder.indexOf(parent)), `${parent} went before its children`);
+    }
+  });
+
+  console.log('\nSerialization');
+
+  // Through JSON and back, as a backup file carries it.
+  const precise = new admin.firestore.Timestamp(1759000001, 123456789);
+  const roundTrip = deserialize(null, JSON.parse(JSON.stringify(
+    serialize({ at: precise, photoUrl: null, meanings: [{ gloss: 'now', note: null }] })
+  )));
+
+  await check('keeps null fields, top-level and nested, apart from absent ones', () => {
+    assert.ok('photoUrl' in roundTrip && roundTrip.photoUrl === null);
+    assert.ok('note' in roundTrip.meanings[0] && roundTrip.meanings[0].note === null);
+  });
+
+  await check('keeps timestamps to the nanosecond', () => {
+    assert.ok(roundTrip.at.isEqual(precise), `got ${roundTrip.at.seconds}s ${roundTrip.at.nanoseconds}ns`);
+  });
+
+  await check('still reads a timestamp from a backup that stored only milliseconds', () => {
+    const legacy = deserialize(null, { __t: 'timestamp', v: '2025-09-27T19:06:41.123Z' });
+    assert.strictEqual(legacy.toMillis(), Date.parse('2025-09-27T19:06:41.123Z'));
   });
 
   console.log('');

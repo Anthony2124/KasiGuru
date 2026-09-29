@@ -86,7 +86,11 @@ contains no learner progress.** Those backups are still restorable, but only for
 
 Admin dashboard → **Backup & Reset** → *Export content backup*. Produces
 `kasiguru-content-backup-<date>.json` covering vocabulary, stories, story images, announcements,
-releases, and the three moderation queues.
+releases, the three moderation queues, and the admin audit log. It does not cover `word_audio`
+(pronunciation clips) or `user_bans`.
+
+Files are `version: 3`: each document is `{ id, data }`, with timestamps, bytes, geopoints and
+references tagged (`{"__t": "bytes", "v": "<base64>"}`) the same way the CLI backup tags them.
 
 It does **not** contain learner progress, and says so in the file's `scope` and `note` fields. A
 browser cannot enumerate `users/{uid}` documents that have no fields of their own, and that is all of
@@ -105,7 +109,13 @@ documents created *since* the backup are left alone. This is a **roll-forward, n
 you need the database to end at exactly the state of a backup, use a factory reset instead.
 
 From the dashboard, drop a `.json` content backup onto *Restore from backup*. Same semantics: merge,
-not replace.
+not replace. One exception the browser cannot get around: the rules only let a queue item
+(`word_submissions`, `literature_submissions`, `issue_reports`) be *created* as the app submits it,
+status `pending` with no review fields. A reviewed item that still exists is restored; one that is
+gone is skipped, counted in the result, and needs `restore_firestore.js`.
+
+Neither restore path can tell an integer from a whole-number double: JavaScript has one number type,
+so a field stored as `3.0` comes back as `3`. Nothing in this schema depends on the difference.
 
 ---
 
@@ -166,11 +176,11 @@ A backup nobody has restored is a hypothesis.
 node functions/verify_backup_util.js
 ```
 
-Ten checks over a fixture that reproduces the exact shape that broke: users with no fields owning
+Thirteen checks over a fixture that reproduces the exact shape that broke: users with no fields owning
 progress subcollections. It asserts that the deep read finds them, that missing parents are recorded
 without inventing data, that restore puts nested documents back at their original paths, that
-pre-format-2 backups still restore, and that the reset counts and deletes the same documents,
-children before parents.
+pre-format-2 backups still restore, that the reset counts and deletes the same documents,
+children before parents, and that null fields and nanosecond timestamps survive a trip through JSON.
 
 **2. Restore drill — do this at least once before the defence:**
 
@@ -197,3 +207,17 @@ If you need data from a pre-fix backup, the content is intact; the progress is n
 **The dashboard export named the wrong collection.** It read `system_announcements`; the collection is
 `announcements` (`AnnouncementRepository.kt`, `firestore.rules`). Announcements were never included in
 a dashboard backup, and a restore would have been rejected by the rules. Fixed at the same time.
+
+**Until 2026-09-29 the dashboard could not restore its own backup.** The export ran values through
+`JSON.stringify`, which writes a story picture's `Bytes` as its private `{_byteString}` internals.
+Restoring wrote that back as a map, the `story_page_images` rule (`data is bytes`) denied it, and the
+restore stopped there: vocabulary and stories were written, and announcements, releases, the queues
+and the audit log never were. The same export spread each document's id into its fields, so every
+story's numeric `id` field was then deleted as if it were the document id, and the app skips a story
+without one. Found by running the real dashboard code against the emulator. Version 2 files still
+restore: the restore recognises both broken shapes, and Timestamps saved as `{seconds, nanoseconds}`,
+and turns them back into the values they were taken from.
+
+**CLI backups before 2026-09-29 drop null fields and keep timestamps only to the millisecond.** A
+field set to `null` restores as absent. Nothing in this schema queries on the difference, so those
+backups are sound. Newer backups keep both, and remain readable by the older restore script.
