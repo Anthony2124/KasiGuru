@@ -280,7 +280,7 @@ fun ProfileScreen(
                     Spacer(Modifier.height(Space.sm))
                     SoftCard(modifier = Modifier.fillMaxWidth()) {
                         Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
-                            ProfileInfoRow(Iconsax.Sms, "Email", progress.email.ifEmpty { "Not linked" })
+                            ProfileInfoRow(Iconsax.Sms, "Email", progress.email.ifEmpty { uiState.account.email ?: "Not linked" })
                             ProfileInfoRow(
                                 Iconsax.Calendar, "Age",
                                 progress.age?.let { "$it years old" } ?: "Not set"
