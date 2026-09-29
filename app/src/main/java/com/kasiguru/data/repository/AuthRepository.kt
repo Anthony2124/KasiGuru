@@ -4,11 +4,15 @@ import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,11 +53,22 @@ class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) {
+    /**
+     * Poked after a successful link. AuthStateListener only fires when the uid changes, and a
+     * link keeps the uid, so without this every screen already observing [accountState] (Profile
+     * sits on the back stack) kept showing the guest state until the app was restarted.
+     */
+    private val accountUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     val accountState: Flow<AccountState> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser.toAccountState()) }
         auth.addAuthStateListener(listener)
-        awaitClose { auth.removeAuthStateListener(listener) }
-    }
+        val updates = launch { accountUpdates.collect { trySend(currentAccount()) } }
+        awaitClose {
+            updates.cancel()
+            auth.removeAuthStateListener(listener)
+        }
+    }.distinctUntilChanged()
 
     fun currentAccount(): AccountState = auth.currentUser.toAccountState()
 
@@ -83,6 +98,7 @@ class AuthRepository @Inject constructor(
 
         return try {
             user.linkWithCredential(credential).await()
+            accountUpdates.tryEmit(Unit)
             AuthOutcome.Linked
         } catch (e: FirebaseAuthUserCollisionException) {
             AuthOutcome.AlreadyRegistered(credential)
@@ -189,7 +205,7 @@ class AuthRepository @Inject constructor(
     private fun com.google.firebase.auth.FirebaseUser?.toAccountState() = AccountState(
         uid = this?.uid,
         isAnonymous = this?.isAnonymous ?: true,
-        email = this?.email?.takeIf { it.isNotBlank() },
+        email = this?.accountEmail(),
         providers = this?.providerData?.map { it.providerId }?.filter { it != "firebase" } ?: emptyList()
     )
 
@@ -201,6 +217,16 @@ class AuthRepository @Inject constructor(
         )
     }
 }
+
+/**
+ * The account's email, or null when it has none.
+ *
+ * Linking Google to an anonymous user leaves [FirebaseUser.getEmail] empty on some SDK versions;
+ * the address is only on the Google provider entry, so fall back to that.
+ */
+internal fun FirebaseUser.accountEmail(): String? =
+    email?.takeIf { it.isNotBlank() }
+        ?: providerData.firstNotNullOfOrNull { info -> info.email?.takeIf { it.isNotBlank() } }
 
 private fun Exception.friendlyMessage(): String = when (this) {
     is com.google.firebase.auth.FirebaseAuthWeakPasswordException ->

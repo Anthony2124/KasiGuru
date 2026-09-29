@@ -171,16 +171,37 @@ class ProgressSyncManager @Inject constructor(
         val local = userProgressDao.getUserProgressOnce()
         if (local == null) return
         val merged = if (remote != null) mergeProgress(local, remote) else local
-        val authEmail = auth.currentUser?.email.orEmpty()
-        val authName = auth.currentUser?.displayName.orEmpty()
-        val updated = merged.copy(
-            email = if (merged.email.isBlank() && authEmail.isNotBlank()) authEmail else merged.email,
-            fullName = if (merged.fullName.isBlank() && authName.isNotBlank()) authName else merged.fullName
-        )
+        val updated = withAccountIdentity(merged)
         if (updated != local) {
             userProgressDao.insertOrUpdate(updated)
         }
         upload(uid, updated)
+    }
+
+    /**
+     * Called after a guest links email or Google. The uid does not change on a link, so the
+     * auth listener above never re-runs [syncFromCloud], and the new email never reached the
+     * profile or the leaderboard row. This does that part, then uploads straight away so
+     * the account appears on the leaderboard without waiting for the next lesson.
+     */
+    fun onAccountLinked() {
+        val uid = auth.currentUser?.uid ?: return
+        scope.launch {
+            val local = userProgressDao.getUserProgressOnce() ?: return@launch
+            val updated = withAccountIdentity(local)
+            if (updated != local) userProgressDao.insertOrUpdate(updated)
+            upload(uid, updated)
+        }
+    }
+
+    /** Fills a blank email or name from the signed-in account. Never overwrites what's there. */
+    private fun withAccountIdentity(progress: UserProgressEntity): UserProgressEntity {
+        val authEmail = auth.currentUser?.accountEmail().orEmpty()
+        val authName = auth.currentUser?.displayName.orEmpty()
+        return progress.copy(
+            email = if (progress.email.isBlank() && authEmail.isNotBlank()) authEmail else progress.email,
+            fullName = if (progress.fullName.isBlank() && authName.isNotBlank()) authName else progress.fullName
+        )
     }
 
     /** Watches local changes and pushes them (debounced, idempotent). */
@@ -247,7 +268,7 @@ class ProgressSyncManager @Inject constructor(
             }
         val weeklyXp = (progress.totalXp - weekStartXp).coerceAtLeast(0)
 
-        val resolvedEmail = progress.email.ifBlank { auth.currentUser?.email.orEmpty() }
+        val resolvedEmail = progress.email.ifBlank { auth.currentUser?.accountEmail().orEmpty() }
         val displayName = progress.fullName.ifBlank { progress.userName }
             .ifBlank { auth.currentUser?.displayName.orEmpty() }
             .ifBlank { resolvedEmail.takeIf { it.isNotBlank() } }

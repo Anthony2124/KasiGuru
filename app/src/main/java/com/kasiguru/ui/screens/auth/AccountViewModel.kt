@@ -7,6 +7,7 @@ import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthOutcome
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.data.repository.UserDataResetManager
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
@@ -46,7 +47,8 @@ class AccountViewModel @Inject constructor(
     private val preferences: UserPreferencesRepository,
     private val database: KasiGuruDatabase,
     private val userDataResetManager: UserDataResetManager,
-    private val userProgressRepository: UserProgressRepository
+    private val userProgressRepository: UserProgressRepository,
+    private val progressSyncManager: ProgressSyncManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountUiState(account = authRepository.currentAccount()))
@@ -209,11 +211,14 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBusy = true, error = null, message = null)
             when (val outcome = block()) {
-                is AuthOutcome.Linked -> _uiState.value = _uiState.value.copy(
-                    isBusy = false,
-                    didSucceed = true,
-                    message = "Account secured. Your progress is now saved to it."
-                )
+                is AuthOutcome.Linked -> {
+                    progressSyncManager.onAccountLinked()
+                    _uiState.value = _uiState.value.copy(
+                        isBusy = false,
+                        didSucceed = true,
+                        message = "Account secured. Your progress is now saved to it."
+                    )
+                }
                 is AuthOutcome.SignedIn -> _uiState.value = _uiState.value.copy(
                     isBusy = false,
                     didSucceed = true,
