@@ -2,92 +2,90 @@ package com.kasiguru.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import com.kasiguru.R
 
-private val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
-
-private val nunito = GoogleFont("Nunito")
-private val dmSans = GoogleFont("DM Sans")
-
 /**
- * Display voice. Nunito at 800/900 — rounded terminals are what make the type belong to the clay
- * world; a geometric-square face would fight it. Carries every heading and every number that
- * celebrates: XP, streak, score, rank.
+ * Display voice: Fredoka, the face of Adrian's onboarding designs. Rounded and friendly, it carries
+ * every heading, every button and every number that celebrates (XP, streak, score, rank).
+ *
+ * Bundled in res/font (static 600 and 700 instances, about 50 KB each) so it renders on the very first
+ * launch, offline, instead of falling back to the system face while a downloadable font loads.
+ *
+ * Fredoka stops at 700. The heavier weights call sites already ask for (ExtraBold, Black) resolve to
+ * the 700 file explicitly rather than leaving the matcher to synthesise a fake bold.
  */
 val KasiGuruDisplay = FontFamily(
-    Font(googleFont = nunito, fontProvider = provider, weight = FontWeight.Bold),
-    Font(googleFont = nunito, fontProvider = provider, weight = FontWeight.ExtraBold),
-    Font(googleFont = nunito, fontProvider = provider, weight = FontWeight.Black)
+    Font(R.font.fredoka_semibold, FontWeight.Medium),
+    Font(R.font.fredoka_semibold, FontWeight.SemiBold),
+    Font(R.font.fredoka_bold, FontWeight.Bold),
+    Font(R.font.fredoka_bold, FontWeight.ExtraBold),
+    Font(R.font.fredoka_bold, FontWeight.Black)
 )
 
 /**
- * Body voice. DM Sans — clean and geometric, so long dictionary entries and story text stay
- * comfortable at length where a rounded display face would tire the eye.
+ * Body voice: DM Sans. Compact and very legible at 12–14 sp, so long dictionary entries, story text
+ * and long Kasiguranin words wrap later than they would in a wider geometric face.
  */
 val KasiGuruBody = FontFamily(
-    Font(googleFont = dmSans, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = dmSans, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = dmSans, fontProvider = provider, weight = FontWeight.Bold)
+    Font(R.font.dm_sans_regular, FontWeight.Normal),
+    Font(R.font.dm_sans_medium, FontWeight.Medium),
+    Font(R.font.dm_sans_bold, FontWeight.SemiBold),
+    Font(R.font.dm_sans_bold, FontWeight.Bold),
+    Font(R.font.dm_sans_bold, FontWeight.ExtraBold)
 )
 
 /** Kept so any straggling reference still resolves; new code picks a family explicitly. */
 val KasiGuruFontFamily = KasiGuruBody
 
 /**
- * Sizes are in sp so the system font-size setting is honoured. Tracking tightens as size grows,
- * which is the optical correction that makes large type look evenly set.
+ * Sizes are in sp so the system font-size setting is honoured. Fredoka is wide and round, so it is
+ * tracked less tightly than the old display face.
  *
- * Display / headline / title are Nunito. Body / label are DM Sans. The split is deliberate: the
- * moment a screen switches from "telling you how you did" to "giving you something to read", the
- * voice changes with it.
+ * Display / headline / title are Fredoka. Body / label are DM Sans: the moment a screen switches from
+ * "telling you how you did" to "giving you something to read", the voice changes with it.
  */
 val KasiGuruTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Black,
-        fontSize = 40.sp, lineHeight = 44.sp, letterSpacing = (-1.0).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
+        fontSize = 40.sp, lineHeight = 46.sp, letterSpacing = (-0.5).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Black,
-        fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.9).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
+        fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.5).sp
     ),
     displaySmall = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.ExtraBold,
-        fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.7).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
+        fontSize = 30.sp, lineHeight = 36.sp, letterSpacing = (-0.4).sp
     ),
 
     headlineLarge = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.ExtraBold,
-        fontSize = 26.sp, lineHeight = 32.sp, letterSpacing = (-0.6).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
+        fontSize = 26.sp, lineHeight = 32.sp, letterSpacing = (-0.3).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.ExtraBold,
-        fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.4).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
+        fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.ExtraBold,
-        fontSize = 20.sp, lineHeight = 26.sp, letterSpacing = (-0.4).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.SemiBold,
+        fontSize = 21.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp
     ),
 
     titleLarge = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.ExtraBold,
-        fontSize = 18.sp, lineHeight = 24.sp, letterSpacing = (-0.3).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp, lineHeight = 24.sp, letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
-        fontSize = 16.sp, lineHeight = 22.sp, letterSpacing = (-0.2).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp, lineHeight = 22.sp, letterSpacing = 0.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.Bold,
-        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = (-0.1).sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp, lineHeight = 20.sp, letterSpacing = 0.sp
     ),
 
     bodyLarge = TextStyle(
@@ -96,20 +94,21 @@ val KasiGuruTypography = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = KasiGuruBody, fontWeight = FontWeight.Normal,
-        fontSize = 14.sp, lineHeight = 21.sp, letterSpacing = 0.1.sp
+        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp
     ),
     bodySmall = TextStyle(
         fontFamily = KasiGuruBody, fontWeight = FontWeight.Normal,
-        fontSize = 12.sp, lineHeight = 17.sp, letterSpacing = 0.2.sp
+        fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.2.sp
     ),
 
+    // Buttons use labelLarge, so it is Fredoka: the onboarding sets every button in it.
     labelLarge = TextStyle(
-        fontFamily = KasiGuruBody, fontWeight = FontWeight.Bold,
-        fontSize = 14.sp, lineHeight = 18.sp, letterSpacing = 0.1.sp
+        fontFamily = KasiGuruDisplay, fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp, lineHeight = 20.sp, letterSpacing = 0.2.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = KasiGuruBody, fontWeight = FontWeight.Medium,
-        fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.2.sp
+        fontFamily = KasiGuruBody, fontWeight = FontWeight.Bold,
+        fontSize = 13.sp, lineHeight = 16.sp, letterSpacing = 0.3.sp
     ),
     labelSmall = TextStyle(
         fontFamily = KasiGuruBody, fontWeight = FontWeight.Bold,
@@ -124,8 +123,8 @@ val KasiGuruTypography = Typography(
  */
 val KasiguraninHeadword = TextStyle(
     fontFamily = KasiGuruDisplay,
-    fontWeight = FontWeight.Black,
+    fontWeight = FontWeight.Bold,
     fontSize = 36.sp,
     lineHeight = 42.sp,
-    letterSpacing = (-1.0).sp
+    letterSpacing = (-0.5).sp
 )

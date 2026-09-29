@@ -59,14 +59,13 @@ import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
-import com.kasiguru.ui.theme.LocalDarkMode
 import com.kasiguru.ui.theme.Motion
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.StatusBarIcons
 import com.kasiguru.ui.theme.Touch
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.motionTween
 
 /** The bar's height below the status bar. One value everywhere — the canopy's per-screen sizing is what this replaces. */
@@ -76,11 +75,9 @@ val GroundBarHeight: Dp = 56.dp
 private val TitleHandoff: Dp = 40.dp
 
 /**
- * The texture drawn behind a Ground screen, so a page of white cards on lavender does not read as flat.
- *
- * Drawn rather than shipped. Raster tiles would cost APK bytes on a build that has to stay small for a
- * data-sensitive audience, and a drawn pattern re-derives itself from the theme tokens, so it follows
- * dark mode for free.
+ * What is drawn behind a Ground screen. In Jepjep's Forest everyday screens are flat night, so [Orbs]
+ * and [Grid] now draw nothing and are kept only so existing call sites compile; [Arcs] is the soft
+ * green glow from above, for screens about something earned. See [drawGlow].
  */
 enum class GroundPattern {
     /** Soft colour fields. The default, and the only one that gives glass something to be glass over. */
@@ -106,7 +103,7 @@ enum class GroundPattern {
  */
 @Composable
 fun Modifier.groundTexture(pattern: GroundPattern, seed: String): Modifier {
-    val orbA = Violet
+    val orbA = Lime
     val orbB = Coral
     val orbC = Gold
     val dot = Ink
@@ -148,9 +145,8 @@ fun GroundScaffold(
     actions: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
-    // Ground follows the theme, so the status icons must too: dark glyphs on the light lavender,
-    // light glyphs on the dark ground. The canopy can hardcode light because it is violet in both.
-    StatusBarIcons(dark = !LocalDarkMode.current)
+    // Night is dark, so the status-bar glyphs are light.
+    StatusBarIcons(dark = false)
 
     val handoffPx = with(LocalDensity.current) { TitleHandoff.toPx() }
     var scrolled by remember { mutableStateOf(false) }
@@ -173,7 +169,7 @@ fun GroundScaffold(
         }
     }
 
-    val orbA = Violet
+    val orbA = Lime
     val orbB = Coral
     val orbC = Gold
     val dot = Ink
@@ -353,91 +349,28 @@ fun GroundIconButton(
 }
 
 /**
- * Draws the texture behind a Ground screen.
+ * Draws what sits behind a Ground screen: nothing on everyday screens, the glow on earned ones.
  *
  * Deliberately no `Modifier.blur`. Blur is API 31+ where minSdk here is 26, and a radial gradient is
- * already a soft-edged disc — blurring one would buy no visible softness while putting a full-screen
- * render pass on the mid-range phones this app targets.
- *
- * Placement varies by [seed] (the screen's title) so twenty-two screens do not all carry the same
- * arrangement, which would be its own kind of flatness. Same screen, same layout, every time.
+ * already soft-edged.
  */
 private fun DrawScope.drawGroundPattern(
     pattern: GroundPattern,
-    seed: String,
-    orbA: Color,
-    orbB: Color,
-    orbC: Color,
-    dot: Color
+    @Suppress("UNUSED_PARAMETER") seed: String,
+    @Suppress("UNUSED_PARAMETER") orbA: Color,
+    @Suppress("UNUSED_PARAMETER") orbB: Color,
+    @Suppress("UNUSED_PARAMETER") orbC: Color,
+    @Suppress("UNUSED_PARAMETER") dot: Color
 ) {
     when (pattern) {
-        GroundPattern.None -> Unit
+        // Everyday screens are flat night: the Kasiguranin words should be the loudest thing on them.
+        GroundPattern.None, GroundPattern.Orbs, GroundPattern.Grid -> Unit
 
-        GroundPattern.Orbs -> {
-            val variant = (seed.hashCode().mod(3))
-            val w = size.width
-            val h = size.height
-            // Three arrangements, each keeping the strongest field high where the title sits and the
-            // quieter ones low, so the texture never competes with the content in the middle.
-            val orbs = when (variant) {
-                0 -> listOf(
-                    Triple(Offset(w * 0.85f, h * 0.06f), w * 0.55f, orbA),
-                    Triple(Offset(w * 0.05f, h * 0.38f), w * 0.45f, orbB),
-                    Triple(Offset(w * 0.75f, h * 0.86f), w * 0.50f, orbC)
-                )
-                1 -> listOf(
-                    Triple(Offset(w * 0.10f, h * 0.04f), w * 0.60f, orbA),
-                    Triple(Offset(w * 0.95f, h * 0.30f), w * 0.42f, orbC),
-                    Triple(Offset(w * 0.20f, h * 0.90f), w * 0.48f, orbB)
-                )
-                else -> listOf(
-                    Triple(Offset(w * 0.50f, h * -0.02f), w * 0.62f, orbA),
-                    Triple(Offset(w * 0.02f, h * 0.60f), w * 0.44f, orbC),
-                    Triple(Offset(w * 0.98f, h * 0.78f), w * 0.46f, orbB)
-                )
-            }
-            orbs.forEachIndexed { index, (centre, radius, colour) ->
-                // The violet field leads; the warm ones sit back so they read as light, not as blobs.
-                val alpha = if (index == 0) 0.10f else 0.07f
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(colour.copy(alpha = alpha), Color.Transparent),
-                        center = centre,
-                        radius = radius
-                    ),
-                    radius = radius,
-                    center = centre
-                )
-            }
-        }
-
-        GroundPattern.Grid -> {
-            val step = 24.dp.toPx()
-            val r = 1.5.dp.toPx()
-            val colour = dot.copy(alpha = 0.04f)
-            var y = step
-            while (y < size.height) {
-                var x = step
-                while (x < size.width) {
-                    drawCircle(color = colour, radius = r, center = Offset(x, y))
-                    x += step
-                }
-                y += step
-            }
-        }
-
-        GroundPattern.Arcs -> {
-            val centre = Offset(size.width * 0.5f, size.height * 0.12f)
-            val stroke = Stroke(width = 1.dp.toPx())
-            val colour = orbA.copy(alpha = 0.08f)
-            // Radii step by the sheet corner radius, so the rings echo a shape the app already uses
-            // rather than introducing an unrelated rhythm.
-            val step = 32.dp.toPx()
-            var radius = step * 2
-            while (radius < size.width * 1.1f) {
-                drawCircle(color = colour, radius = radius, center = centre, style = stroke)
-                radius += step
-            }
-        }
+        // Screens about something earned get the soft glow from above. Never rings.
+        GroundPattern.Arcs -> drawGlow(
+            center = Offset(size.width * 0.5f, size.height * 0.10f),
+            radius = size.width
+        )
     }
 }
+

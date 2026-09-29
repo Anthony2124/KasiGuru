@@ -49,8 +49,8 @@ import com.kasiguru.ui.theme.NodeLockedInk
 import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeTint
 
 /**
  * Level picker for one mini-game: 30 levels across three difficulty bands. A pushed subscreen (no
@@ -78,7 +78,7 @@ fun LevelSelectionScreen(
         content = {
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
+                    CircularProgressIndicator(color = Lime)
                 }
             } else {
                 LazyVerticalGrid(
@@ -136,7 +136,7 @@ private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
         SoftCard(
             modifier = Modifier.aspectRatio(1f).fillMaxWidth(),
             shape = Shapes.chip,
-            color = if (level.isUnlocked) VioletTint else NodeLocked,
+            color = if (level.isUnlocked) LimeTint else NodeLocked,
             elevation = if (level.isUnlocked) 2.dp else 0.dp,
             onClick = if (level.isUnlocked) onClick else null,
             contentPadding = PaddingValues(0.dp)
@@ -146,7 +146,7 @@ private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
                     Text(
                         text = "${level.levelNumber}",
                         style = MaterialTheme.typography.titleLarge,
-                        color = Violet
+                        color = Lime
                     )
                 } else {
                     Icon(

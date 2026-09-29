@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -50,7 +51,10 @@ import com.kasiguru.ui.screens.flashcards.FlashcardDeckScreen
 import com.kasiguru.ui.screens.leaderboard.LeaderboardScreen
 import com.kasiguru.ui.screens.notifications.NotificationInboxScreen
 import com.kasiguru.ui.screens.games.*
+import com.kasiguru.ui.screens.home.HomeScreen
 import com.kasiguru.ui.screens.learn.LearnScreen
+import com.kasiguru.ui.screens.library.LibraryScreen
+import com.kasiguru.ui.screens.library.LibrarySegment
 import com.kasiguru.ui.screens.lesson.LessonPlayerScreen
 import com.kasiguru.ui.screens.onboarding.OnboardingScreen
 import com.kasiguru.ui.screens.contribute.SubmitLiteratureScreen
@@ -116,12 +120,12 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
     // Moving between the five tab roots. Hoisted out of the bottom bar's own call site because the
     // guided tour drives the same navigation, and it must do it with exactly these options: a bare
-    // navigate() would leave Learn→Practice→Words→Progress→Profile on the back stack, so the first
-    // Back after a tour would walk the learner backwards through five screens they never chose.
+    // navigate() would leave Home→Learn→Practice→Library→Me on the back stack, so the first Back
+    // after a tour would walk the learner backwards through five screens they never chose.
     val switchTab: (String) -> Unit = { route ->
         if (currentRoute != route) {
             navController.navigate(route) {
-                popUpTo(Screen.Learn.route) { saveState = true }
+                popUpTo(Screen.Home.route) { saveState = true }
                 launchSingleTop = true
                 restoreState = true
             }
@@ -197,14 +201,22 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         tourViewModel.startChapter(id, entryRoute = currentRoute, at = resumeStep ?: 0)
     }
 
-    /** Replays the core chapter. Learn is rebuilt rather than restored, so stop 1's anchor is on
+    /** Replays the core chapter. Home is rebuilt rather than restored, so stop 1's anchor is on
      *  screen instead of wherever the learner had last scrolled to. */
     val replayTour: () -> Unit = {
         tourViewModel.restart()
-        navController.navigate(Screen.Learn.route) {
-            popUpTo(Screen.Learn.route) { inclusive = true }
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
             launchSingleTop = true
         }
+    }
+
+    // A Library side another screen asked for (Home's "See all" stories). Held here because the
+    // request crosses a tab switch; LibraryScreen clears it once applied.
+    var librarySegmentRequest by rememberSaveable { mutableStateOf<Int?>(null) }
+    val openLibraryStories: () -> Unit = {
+        librarySegmentRequest = LibrarySegment.STORIES
+        switchTab(Screen.Library.route)
     }
 
     CompositionLocalProvider(LocalTourAnchors provides tourAnchors) {
@@ -238,7 +250,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 
                 LaunchedEffect(startDestination) {
                     if (startDestination != null) {
-                        navController.navigate(startDestination!!) {
+                        // SplashViewModel still names Learn as the everyday landing; the landing is
+                        // Home now. Mapped here so the entry point is right whichever way that
+                        // file reads.
+                        val target = startDestination!!.let {
+                            if (it == Screen.Learn.route) Screen.Home.route else it
+                        }
+                        navController.navigate(target) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                         // Notification deep link (Phase 5): open the target screen
@@ -256,7 +274,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 OnboardingScreen(
                     onCompleteOnboarding = { userName, avatarId, dailyGoalXp, titleBadge, residentName ->
                         viewModel.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge, residentName)
-                        navController.navigate(Screen.Learn.route) {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
                     },
@@ -271,7 +289,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.ProfileSelection.route) {
                 com.kasiguru.ui.screens.profile.ProfileSelectionScreen(
                     onProfileSelected = {
-                        navController.navigate(Screen.Learn.route) {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.ProfileSelection.route) { inclusive = true }
                         }
                     },
@@ -281,23 +299,52 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
 
-            // Learn: today's plan. Replaces the old Home dashboard, which duplicated four tabs.
-            composable(Screen.Learn.route) {
-                LearnScreen(
+            // Home: today's one next action, the day goal, reviews, stories and the week.
+            composable(Screen.Home.route) {
+                HomeScreen(
                     onStartLesson = { unitId, lessonIndex ->
                         navController.navigate(Screen.LessonPlayer.createRoute(unitId, lessonIndex))
                     },
                     onOpenReview = { navController.navigate(Screen.FlashcardDeck.route) },
-                    onOpenGames = { navController.navigate(Screen.GameHub.route) },
-                    onOpenStories = { navController.navigate(Screen.StoryList.route) },
+                    // Tabs are switched to, never pushed: a pushed tab root would sit on top of Home
+                    // with the bar showing, and Back would unwind it like a detail screen.
+                    onOpenGames = { switchTab(Screen.GameHub.route) },
+                    onOpenStories = openLibraryStories,
                     onOpenStory = { storyId ->
                         navController.navigate(Screen.StoryReader.createRoute(storyId))
                     },
-                    onOpenDictionary = { navController.navigate(Screen.VocabularyList.route) },
                     onOpenProgress = { navController.navigate(Screen.Achievements.route) },
                     onOpenNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onOpenProfile = { navController.navigate(Screen.Profile.route) },
+                    onOpenProfile = { switchTab(Screen.Profile.route) },
                     onOpenAccount = { navController.navigate(Screen.Account.route) }
+                )
+            }
+
+            // Learn: the learning path alone.
+            composable(Screen.Learn.route) {
+                LearnScreen(
+                    onStartLesson = { unitId, lessonIndex ->
+                        navController.navigate(Screen.LessonPlayer.createRoute(unitId, lessonIndex))
+                    }
+                )
+            }
+
+            // Library: Words and Stories behind one toggle.
+            composable(Screen.Library.route) {
+                LibraryScreen(
+                    onNavigateToCategory = { category ->
+                        navController.navigate(Screen.VocabularyCategory.createRoute(category))
+                    },
+                    onNavigateToWord = { wordId ->
+                        navController.navigate(Screen.VocabularyDetail.createRoute(wordId))
+                    },
+                    onNavigateToAddWord = { navController.navigate(Screen.SubmitWord.route) },
+                    onNavigateToStory = { storyId ->
+                        navController.navigate(Screen.StoryReader.createRoute(storyId))
+                    },
+                    onNavigateToShareStory = { navController.navigate(Screen.SubmitLiterature.route) },
+                    segmentRequest = librarySegmentRequest,
+                    onSegmentRequestConsumed = { librarySegmentRequest = null }
                 )
             }
 
@@ -311,13 +358,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             ) {
                 LessonPlayerScreen(
                     onExit = { navController.popBackStack() },
-                    // Finishing returns to Learn, which re-derives today's plan so the completed
-                    // lesson is replaced by the next one rather than sitting there still marked to do.
+                    // Finishing returns to Home or Learn, both of which re-derive on resume, so the
+                    // completed lesson is replaced by the next one rather than still marked to do.
                     onFinished = { navController.popBackStack() }
                 )
             }
 
-            // Profile
+            // Me. The route keeps its old name so deep links written against it still land.
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -338,7 +385,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
 
-            // Learn (Vocabulary & Dictionary)
+            // The dictionary on its own, pushed (deep links, the dictionary tour). The Library tab
+            // shows the same content.
             composable(Screen.VocabularyList.route) {
                 VocabularyScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -384,7 +432,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
 
-            // Stories
+            // The stories list on its own, pushed. The Library tab shows the same content.
             composable(Screen.StoryList.route) {
                 StoryListScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -559,7 +607,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 )
             }
 
-            // Profile & Achievements
+            // Badges, pushed from Me and from Home's goal ring.
             composable(Screen.Achievements.route) {
                 AchievementsScreen(onNavigateBack = { navController.popBackStack() })
             }
@@ -585,7 +633,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onAuthSuccess = {
                         val previousRoute = navController.previousBackStackEntry?.destination?.route
                         if (previousRoute == Screen.Onboarding.route) {
-                            navController.navigate(Screen.Learn.route) {
+                            navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Onboarding.route) { inclusive = true }
                             }
                         } else {

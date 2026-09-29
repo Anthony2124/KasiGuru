@@ -7,6 +7,9 @@ import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -17,6 +20,29 @@ class OnboardingViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    /**
+     * The same two preferences the Settings screen toggles, so the reminders step starts from what
+     * Settings would show and writes back to the one place both screens read.
+     */
+    val streakReminders: StateFlow<Boolean> = userPreferencesRepository.streakReminders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val wordOfDayReminders: StateFlow<Boolean> = userPreferencesRepository.wordOfDayReminders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    /**
+     * Saves the reminders step. NonCancellable for the same reason as [completeOnboarding]: the
+     * learner can reach "Start learning" a second later, and that destroys this view model.
+     */
+    fun saveReminders(streak: Boolean, wordOfDay: Boolean) {
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                userPreferencesRepository.setStreakReminders(streak)
+                userPreferencesRepository.setWordOfDayReminders(wordOfDay)
+            }
+        }
+    }
 
     fun completeOnboarding(
         userName: String,

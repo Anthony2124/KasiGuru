@@ -55,8 +55,8 @@ import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeLip
 import com.kasiguru.util.audio.AudioPlayerManager
 
 /**
@@ -84,7 +84,7 @@ fun VocabularyDetailScreen(
         content = {
             when {
                 uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
+                    CircularProgressIndicator(color = Lime)
                 }
                 uiState.notFound -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("This word couldn't be found.", color = Muted, style = MaterialTheme.typography.bodyLarge)
@@ -162,7 +162,7 @@ private fun VocabularyDetailBody(
                 } else {
                     Surface(
                         shape = Shapes.pill,
-                        color = Violet.copy(alpha = 0.12f),
+                        color = Lime.copy(alpha = 0.12f),
                         modifier = Modifier
                             .clip(Shapes.pill)
                             .clickable(onClick = onToggleLearned)
@@ -174,7 +174,7 @@ private fun VocabularyDetailBody(
                             Icon(
                                 painter = painterResource(id = Iconsax.TickCircle),
                                 contentDescription = "Mark as learned",
-                                tint = Violet,
+                                tint = Lime,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(Modifier.width(4.dp))
@@ -182,7 +182,7 @@ private fun VocabularyDetailBody(
                                 text = "Mark Learned",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Violet
+                                color = Lime
                             )
                         }
                     }
@@ -220,7 +220,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Meaning",
                 style = MaterialTheme.typography.titleSmall,
-                color = Violet,
+                color = Lime,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xxs))
@@ -249,7 +249,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Verb Aspect Inflections",
                 style = MaterialTheme.typography.titleSmall,
-                color = Violet,
+                color = Lime,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xs))
@@ -265,7 +265,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Example Sentence",
                 style = MaterialTheme.typography.titleSmall,
-                color = Violet,
+                color = Lime,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xxs))
@@ -331,13 +331,13 @@ private fun VocabularyDetailBody(
 
 @Composable
 private fun DetailBadge(text: String) {
-    Surface(shape = RoundedCornerShape(999.dp), color = Violet.copy(alpha = 0.12f)) {
+    Surface(shape = RoundedCornerShape(999.dp), color = Lime.copy(alpha = 0.12f)) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.ExtraBold,
-            color = Violet
+            color = Lime
         )
     }
 }

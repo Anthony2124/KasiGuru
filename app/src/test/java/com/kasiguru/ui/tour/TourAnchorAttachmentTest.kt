@@ -25,8 +25,8 @@ class TourAnchorAttachmentTest {
      *
      * `KasiGuruBottomBar` is why this exists. It attaches its five nav anchors indirectly -
      * `Modifier.tourAnchor(it.tourAnchor)`, where `it` is a `BottomNavItem` whose anchor was set in a
-     * list literal further up. A strict regex sees none of NavLearn..NavProfile and fails on code that
-     * is perfectly correct.
+     * list literal further up. A strict regex sees none of NavHome..NavMe and fails on code that is
+     * perfectly correct.
      *
      * The looser rule would pass a file that merely imports an anchor without attaching it. That is
      * the right trade: a guard that fails on correct code gets deleted, and then the silent

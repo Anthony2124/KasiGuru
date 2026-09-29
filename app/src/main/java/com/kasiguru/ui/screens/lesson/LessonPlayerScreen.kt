@@ -58,6 +58,8 @@ import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayFab
 import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.theme.Olive
+import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Green
@@ -75,9 +77,9 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeLip
+import com.kasiguru.ui.theme.LimeTint
 import com.kasiguru.util.audio.AudioPlayerManager
 
 /**
@@ -113,7 +115,7 @@ fun LessonPlayerScreen(
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize().background(Ground), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
+            CircularProgressIndicator(color = Lime)
         }
         return
     }
@@ -376,7 +378,7 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
                     Icon(
                         painter = painterResource(id = Iconsax.VolumeHigh),
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = OnLime,
                         modifier = Modifier.size(38.dp)
                     )
                 }
@@ -440,13 +442,13 @@ private fun AnswerOption(
     val background = when {
         isRevealedCorrect -> GreenTint
         isRevealedWrong -> RedTint
-        isSelected -> VioletTint
+        isSelected -> Olive
         else -> Surface
     }
     val borderColor = when {
         isRevealedCorrect -> Green
         isRevealedWrong -> Red
-        isSelected -> Violet
+        isSelected -> Lime
         else -> TrackNeutral
     }
     val borderWidth = if (isSelected || isRevealedCorrect || isRevealedWrong) 2.dp else 1.dp
@@ -501,7 +503,7 @@ private fun LessonProgressBar(fraction: Float, modifier: Modifier = Modifier) {
                 .fillMaxWidth(animated)
                 .height(10.dp)
                 .clip(Shapes.pill)
-                .background(Violet)
+                .background(Lime)
         )
     }
 }

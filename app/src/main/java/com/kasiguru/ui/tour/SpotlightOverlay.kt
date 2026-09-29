@@ -59,7 +59,7 @@ import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.Scrim
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Touch
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.motionTween
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -103,7 +103,7 @@ fun SpotlightOverlay(
     val isLast = stepIndex == stepCount - 1
 
     // Back is handled here rather than left to fall through. At stop 1 the back stack holds only
-    // Learn - onboarding was popped inclusively on the way in - so falling through would pop it and
+    // Home - onboarding was popped inclusively on the way in - so falling through would pop it and
     // drop the learner at the launcher with this overlay still drawn over the app.
     BackHandler(enabled = true) { onBack() }
 
@@ -273,7 +273,7 @@ private fun CaptionCard(
                         Text(
                             text = "Skip",
                             style = MaterialTheme.typography.labelLarge,
-                            color = Violet
+                            color = Lime
                         )
                     }
                 }
@@ -314,7 +314,7 @@ private fun CaptionCard(
                     Text(
                         text = "Back",
                         style = MaterialTheme.typography.labelLarge,
-                        color = Violet
+                        color = Lime
                     )
                 }
                 Spacer(Modifier.width(Space.sm))

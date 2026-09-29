@@ -48,8 +48,8 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeTint
 
 /**
  * Circular progress ring with a free content slot at its centre.
@@ -152,12 +152,12 @@ fun WeekStrip(
 
             val cellColor = when {
                 isCurrent && onCanopy -> Surface
-                isCurrent -> Violet
+                isCurrent -> Lime
                 onCanopy -> OnCanopyDecor
-                else -> VioletTint
+                else -> LimeTint
             }
             val numberColor = when {
-                isCurrent && onCanopy -> Violet
+                isCurrent && onCanopy -> Lime
                 isCurrent -> Surface
                 onCanopy -> OnCanopy
                 else -> Ink
@@ -212,7 +212,7 @@ fun WeekStrip(
                                 Modifier
                                     .size(4.dp)
                                     .clip(Shapes.pill)
-                                    .background(if (isCurrent && onCanopy) Violet else Gold)
+                                    .background(if (isCurrent && onCanopy) Lime else Gold)
                             )
                         }
                     }

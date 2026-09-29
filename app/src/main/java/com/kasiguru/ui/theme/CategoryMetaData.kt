@@ -5,12 +5,12 @@ import com.kasiguru.R
 
 /**
  * [CategoryRegistry] is a plain data object built once at class-load time, outside composition — so
- * its gradients cannot reference the theme-reactive [Violet]/[VioletDeep] tokens. That's the correct
+ * its gradients cannot reference the theme-reactive [Lime]/[LimeLip] tokens. That's the correct
  * call anyway: category identity is a fixed brand choice, the same discipline [Gold]/[Coral] already
  * follow (see their own doc comments in `Color.kt`). These are that same light-mode violet, frozen.
  */
-private val FixedViolet = Color(0xFF5B4CDB)
-private val FixedVioletDeep = Color(0xFF4034A8)
+private val FixedForest = Color(0xFF5B4CDB)
+private val FixedForestDeep = Color(0xFF4034A8)
 
 enum class BentoSpan {
     HERO_2X2,
@@ -28,21 +28,20 @@ data class CategoryMetaData(
     val bentoSpan: BentoSpan
 ) {
     /**
-     * Gold and Coral are fills that carry [Ink], never a foreground — measured 1.83 and 2.31 on
-     * white, and the same figure holds in reverse for white text on the fill. Violet clears 6.00
-     * either direction, so it is the only one of the three that can carry white. See DESIGN.md.
+     * Gold and Coral are bright fills that carry [RewardInk]; white on them fails. Olive is the only
+     * one of the three that carries white. See DESIGN.md.
      */
     val onGradientIsInk: Boolean get() = startColor == Gold || startColor == Coral
 }
 
-/** Three category gradients, cycled: Violet, Gold, Coral — the app's only three expressive hues. */
+/** Three category gradients, cycled: olive, gold, coral. */
 object CategoryRegistry {
     val categories = listOf(
         CategoryMetaData(
             name = "Greetings & Essentials",
             iconRes = Iconsax.BookBold,
-            startColor = FixedViolet,
-            endColor = FixedVioletDeep,
+            startColor = FixedForest,
+            endColor = FixedForestDeep,
             description = "Hellos, politeness, questions & basic phrases",
             bentoSpan = BentoSpan.HERO_2X2
         ),
@@ -65,8 +64,8 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Body Parts & Health",
             iconRes = Iconsax.ProfileBold,
-            startColor = FixedViolet,
-            endColor = FixedVioletDeep,
+            startColor = FixedForest,
+            endColor = FixedForestDeep,
             description = "Anatomy, head, limbs, face & senses",
             bentoSpan = BentoSpan.MEDIUM_2X1
         ),
@@ -105,16 +104,16 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Nature & Environment",
             iconRes = Iconsax.Teacher,
-            startColor = FixedViolet,
-            endColor = FixedVioletDeep,
+            startColor = FixedForest,
+            endColor = FixedForestDeep,
             description = "Ocean, rivers, mountains, soil & plants",
             bentoSpan = BentoSpan.SMALL_1X1
         ),
         CategoryMetaData(
             name = "Family & People",
             iconRes = Iconsax.People,
-            startColor = FixedViolet,
-            endColor = FixedVioletDeep,
+            startColor = FixedForest,
+            endColor = FixedForestDeep,
             description = "Parents, siblings, children & community",
             bentoSpan = BentoSpan.SMALL_1X1
         ),
@@ -141,8 +140,8 @@ object CategoryRegistry {
             ?: CategoryMetaData(
                 name = categoryName,
                 iconRes = Iconsax.BookBold,
-                startColor = FixedViolet,
-                endColor = FixedVioletDeep,
+                startColor = FixedForest,
+                endColor = FixedForestDeep,
                 description = "Kasiguranin vocabulary",
                 bentoSpan = BentoSpan.SMALL_1X1
             )

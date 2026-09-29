@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Violet Sheet tokens mirrored for XML surfaces (splash, launcher) that cannot read Color.kt.
-         CanopyTop/Violet are fixed across light and dark, so these need no values-night variant. -->
-    <color name="canopy_top">#6C5CE7</color>
-    <color name="ic_launcher_background">#5B4CDB</color>
+    <!-- Jepjep's Forest tokens mirrored for XML surfaces (window, splash, launcher) that cannot read
+         Color.kt. The app is dark only, so these need no values-night variant. -->
+    <!-- Ground ("night"): the window and splash background. -->
+    <color name="night">#0A0E0D</color>
+    <!-- BrandLime: "Guru" in the wordmark. -->
+    <color name="brand_lime">#6CB619</color>
+    <!-- The launcher's background layer. The "K" mark is a placeholder until Adrian's icon art lands. -->
+    <color name="ic_launcher_background">#0A0E0D</color>
 </resources>

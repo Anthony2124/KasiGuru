@@ -36,6 +36,7 @@ import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.CategoryRegistry
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
@@ -45,8 +46,8 @@ import com.kasiguru.ui.theme.NodeLockedInk
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeTint
 
 /**
  * The question Word Search asks before it starts: which category? Every category keeps its own 30
@@ -68,7 +69,7 @@ fun WordSearchCategoryScreen(
         content = {
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
+                    CircularProgressIndicator(color = Lime)
                 }
                 return@GroundScaffold
             }
@@ -121,7 +122,7 @@ private fun CategoryRow(row: WordSearchCategoryRow, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(44.dp)
                     .clip(Shapes.chip)
-                    .background(if (row.isPlayable) meta.startColor else VioletTint),
+                    .background(if (row.isPlayable) meta.startColor else SurfaceSunken),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

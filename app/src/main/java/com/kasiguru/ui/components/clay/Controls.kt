@@ -40,16 +40,20 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Touch
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeLip
+import com.kasiguru.ui.theme.LimeTint
+import com.kasiguru.ui.theme.OnLime
+import com.kasiguru.ui.theme.Olive
+import com.kasiguru.ui.theme.BorderHairline
 
 /**
  * Primary button. Built from clay because a button is something you press — the face compresses onto
- * its lip, which is the app's press language.
+ * its lip, which is the app's press language, and the one Adrian's onboarding designs keep.
  *
- * [ClayButtonTone.Reward] carries ink rather than white text: gold measures 1.83:1 against white and
- * fails even the non-text floor, so a white label on gold is not an option. See DESIGN.md.
+ * Every bright face carries a dark label: white on lime measures 2.3:1 and white on gold is worse, so
+ * [ClayButtonTone.Primary] and [ClayButtonTone.Reward] both use [OnLime]/[RewardInk]. [ClayButtonTone.Quiet]
+ * is the secondary button: a dark card face with a hairline lip and a white label. See DESIGN.md.
  */
 enum class ClayButtonTone { Primary, Reward, Quiet }
 
@@ -66,9 +70,9 @@ fun ClayButton(
     val lip: Color
     val labelColor: Color
     when (tone) {
-        ClayButtonTone.Primary -> { face = Violet; lip = VioletDeep; labelColor = Color.White }
-        ClayButtonTone.Reward  -> { face = Gold;   lip = GoldDeep;   labelColor = RewardInk }
-        ClayButtonTone.Quiet   -> { face = Surface; lip = VioletTint; labelColor = Violet }
+        ClayButtonTone.Primary -> { face = Lime;    lip = LimeLip;        labelColor = OnLime }
+        ClayButtonTone.Reward  -> { face = Gold;    lip = GoldDeep;       labelColor = RewardInk }
+        ClayButtonTone.Quiet   -> { face = SurfaceSunken; lip = BorderHairline; labelColor = Ink }
     }
 
     ClaySurface(
@@ -110,8 +114,8 @@ fun ClayFab(
     contentDescription: String,
     modifier: Modifier = Modifier,
     size: Dp = 60.dp,
-    face: Color = Violet,
-    lipColor: Color = VioletDeep,
+    face: Color = Lime,
+    lipColor: Color = LimeLip,
     content: @Composable BoxScope.() -> Unit
 ) {
     ClayCircle(
@@ -131,10 +135,10 @@ private fun Modifier.semanticsLabel(label: String): Modifier =
     )
 
 /**
- * Segmented toggle — the Weekly / All-time control from the reference set.
+ * Segmented toggle — Words / Stories, All-time / This week, Inbox / Settings.
  *
- * The track is a recessed well and the active segment is a raised white pill, so the selected state
- * reads as physically forward rather than merely tinted.
+ * The track is a dark card and the active segment is an olive pill with a white label (7.1:1), the
+ * same "selected" fill the onboarding uses for a chosen option.
  */
 @Composable
 fun SegmentedToggle(
@@ -142,7 +146,7 @@ fun SegmentedToggle(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    trackColor: Color = SurfaceSunken
+    trackColor: Color = Surface
 ) {
     Row(
         modifier = modifier
@@ -154,12 +158,12 @@ fun SegmentedToggle(
         options.forEachIndexed { index, option ->
             val isSelected = index == selectedIndex
             val bg by animateColorAsState(
-                targetValue = if (isSelected) Surface else Color.Transparent,
+                targetValue = if (isSelected) Olive else Color.Transparent,
                 animationSpec = tween(200),
                 label = "SegmentBg"
             )
             val fg by animateColorAsState(
-                targetValue = if (isSelected) Violet else Muted,
+                targetValue = if (isSelected) Ink else Muted,
                 animationSpec = tween(200),
                 label = "SegmentFg"
             )
@@ -202,8 +206,8 @@ fun SegmentedToggle(
 fun TagChip(
     label: String,
     modifier: Modifier = Modifier,
-    tint: Color = VioletTint,
-    labelColor: Color = Violet
+    tint: Color = LimeTint,
+    labelColor: Color = Lime
 ) {
     Box(
         modifier = modifier
@@ -269,7 +273,7 @@ fun DotTabs(
                             .alpha(dotAlpha)
                             .padding(0.dp)
                             .clip(Shapes.pill)
-                            .background(Violet)
+                            .background(Lime)
                             .defaultMinSize(minWidth = 5.dp, minHeight = 5.dp)
                     )
                 }

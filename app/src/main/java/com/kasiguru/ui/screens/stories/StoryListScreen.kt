@@ -1,43 +1,51 @@
 package com.kasiguru.ui.screens.stories
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.data.local.entity.StoryEntity
+import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
-import com.kasiguru.ui.components.clay.StoryCoverCard
-import com.kasiguru.ui.components.clay.rememberStoryCoverRes
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
-import com.kasiguru.ui.components.clay.SoftCard
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.clay.SectionHeading
+import com.kasiguru.ui.components.clay.StoryCoverCard
+import com.kasiguru.ui.components.clay.rememberStoryCoverRes
+import com.kasiguru.ui.components.states.EmptyState
+import com.kasiguru.ui.components.states.LoadingState
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.WidthClass
+import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
 
+/**
+ * The stories as a screen of their own, pushed - from a notification or the guided tour. The Library
+ * tab shows the same [StoryListContent] under its Stories segment.
+ */
 @Composable
 fun StoryListScreen(
     onNavigateBack: () -> Unit,
@@ -45,36 +53,104 @@ fun StoryListScreen(
     onNavigateToSubmitLiterature: () -> Unit = {},
     viewModel: StoriesViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
     GroundScaffold(
         title = "Stories",
         onBack = onNavigateBack,
-        pattern = GroundPattern.Arcs,
+        pattern = GroundPattern.None,
         content = {
-            if (uiState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
-                }
-                return@GroundScaffold
+            StoryListContent(
+                onNavigateToStory = onNavigateToStory,
+                onNavigateToSubmitLiterature = onNavigateToSubmitLiterature,
+                header = {
+                    GroundTitleBlock(title = "Stories", subtitle = "Folk tales with Tagalog and English alongside")
+                },
+                viewModel = viewModel
+            )
+        }
+    )
+}
+
+/**
+ * The stories' body: the one to carry on with, every cover, and the way to share one.
+ *
+ * No bar of its own, so it can sit under [StoryListScreen]'s bar or inside the Library tab; [header]
+ * is the first full-width item and scrolls away with the list. Locked stories are shown rather than
+ * hidden - the lock is the motivation.
+ */
+@Composable
+fun StoryListContent(
+    onNavigateToStory: (Int) -> Unit,
+    onNavigateToSubmitLiterature: () -> Unit,
+    modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
+    viewModel: StoriesViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 1 else 2
+
+    // A story opened but not finished. The reader stores its page, so this is a real bookmark.
+    val continueReading = uiState.stories.firstOrNull {
+        it.isUnlocked && !it.isCompleted && it.currentPage > 0
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
+        ),
+        horizontalArrangement = Arrangement.spacedBy(Space.md),
+        verticalArrangement = Arrangement.spacedBy(Space.md)
+    ) {
+        if (header != null) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "header") { header() }
+        }
+
+        when {
+            uiState.isLoading -> item(span = { GridItemSpan(maxLineSpan) }, key = "loading") {
+                LoadingState(label = "Loading stories")
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = Space.gutter, end = Space.gutter, top = Space.md, bottom = Space.navBarClearance
-                ),
-                verticalArrangement = Arrangement.spacedBy(Space.md)
-            ) {
-                item { GroundTitleBlock(title = "Stories", subtitle = "Folk tales with Tagalog and English alongside") }
-                item {
-                    ClayButton(
-                        label = "Submit a story or poem",
-                        onClick = onNavigateToSubmitLiterature,
-                        tone = ClayButtonTone.Reward,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            uiState.stories.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }, key = "empty") {
+                EmptyState(
+                    pose = JepjepPose.Reading,
+                    title = "No stories yet",
+                    message = "The folk tales arrive with the next sync. Know one? You can share it.",
+                    actionLabel = "Share a story or poem",
+                    onAction = onNavigateToSubmitLiterature
+                )
+            }
+
+            else -> {
+                continueReading?.let { story ->
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "continue") {
+                        Column(Modifier.fillMaxWidth()) {
+                            SectionHeading(text = "Continue reading")
+                            Text(
+                                text = "Page ${story.currentPage + 1} of ${story.totalPages}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Muted
+                            )
+                            Spacer(Modifier.height(Space.sm))
+                            StoryCoverCard(
+                                titleKasiguranin = story.titleKasiguranin,
+                                title = story.title,
+                                totalPages = story.totalPages,
+                                isUnlocked = story.isUnlocked,
+                                isCompleted = story.isCompleted,
+                                requiredXp = story.requiredXp,
+                                onClick = { onNavigateToStory(story.id) },
+                                modifier = Modifier.fillMaxWidth(),
+                                cover = rememberStoryCoverRes(story.id)
+                            )
+                        }
+                    }
                 }
+
+                item(span = { GridItemSpan(maxLineSpan) }, key = "all-heading") {
+                    SectionHeading(text = "All stories", modifier = Modifier)
+                }
+
                 itemsIndexed(uiState.stories, key = { _, story -> story.id }) { index, story ->
                     StoryCoverCard(
                         titleKasiguranin = story.titleKasiguranin,
@@ -94,8 +170,25 @@ fun StoryListScreen(
                         cover = rememberStoryCoverRes(story.id)
                     )
                 }
+
+                // Quiet, not lime: reading is what this list is for; sharing is the invitation after it.
+                item(span = { GridItemSpan(maxLineSpan) }, key = "share") {
+                    ClayButton(
+                        label = "Share a story or poem",
+                        onClick = onNavigateToSubmitLiterature,
+                        tone = ClayButtonTone.Quiet,
+                        modifier = Modifier.fillMaxWidth(),
+                        leading = {
+                            Icon(
+                                painter = painterResource(id = Iconsax.Edit),
+                                contentDescription = null,
+                                tint = Ink,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    )
+                }
             }
         }
-    )
+    }
 }
-

@@ -103,7 +103,7 @@ fun StoryReaderScreen(
 
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Violet)
+                CircularProgressIndicator(color = Lime)
             }
             return@Column
         }
@@ -199,11 +199,11 @@ fun StoryReaderScreen(
                                 Text(
                                     text = word,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Violet,
+                                    color = Lime,
                                     fontWeight = FontWeight.Bold
                                 )
                             },
-                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = Violet.copy(alpha = 0.12f)),
+                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = Lime.copy(alpha = 0.12f)),
                             border = null,
                             shape = Shapes.chip
                         )
@@ -237,17 +237,17 @@ fun StoryReaderScreen(
                 // Audio Button
                 Button(
                     onClick = { audioPlayerManager.playAudio(targetPage.kasiguranin, targetPage.audioFileName) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Violet),
+                    colors = ButtonDefaults.buttonColors(containerColor = Lime),
                     shape = Shapes.tile
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.VolumeHigh),
                         contentDescription = "Play Audio",
-                        tint = Color.White,
+                        tint = OnLime,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(Space.xs))
-                    Text("Pakinggan (Listen)", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Pakinggan (Listen)", color = OnLime, fontWeight = FontWeight.Bold)
                 }
                 }
 
@@ -385,23 +385,23 @@ fun StoryBottomBar(
                     fontWeight = FontWeight.Bold
                 )
 
-                Button(onClick = onNext, colors = ButtonDefaults.buttonColors(containerColor = Violet), shape = Shapes.pill) {
+                Button(onClick = onNext, colors = ButtonDefaults.buttonColors(containerColor = Lime), shape = Shapes.pill) {
                     if (currentPage == totalPages) {
-                        Text("Finish", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Finish", color = OnLime, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.width(Space.xxs))
                         Icon(
                             painter = painterResource(id = Iconsax.TickCircle),
                             contentDescription = "Finish",
-                            tint = Color.White,
+                            tint = OnLime,
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
-                        Text("Next", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Next", color = OnLime, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.width(Space.xxs))
                         Icon(
                             painter = painterResource(id = Iconsax.ArrowRight),
                             contentDescription = "Next",
-                            tint = Color.White,
+                            tint = OnLime,
                             modifier = Modifier.size(18.dp)
                         )
                     }

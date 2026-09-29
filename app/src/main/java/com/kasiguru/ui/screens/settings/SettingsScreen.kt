@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Settings: the same grouped-card idiom every OS settings screen uses (Account / Notifications /
- * Preferences / Sync / About), redrawn in the Violet Sheet system rather than the old Coastal one —
+ * Preferences / Sync / About), redrawn in the Lime Sheet system rather than the old Coastal one —
  * every section a `SoftCard`, over a canopy carrying just the screen's name.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +47,6 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
 
     val account by viewModel.account.collectAsState()
-    val isDarkMode by viewModel.isDarkMode.collectAsState()
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val streakReminders by viewModel.streakReminders.collectAsState()
     val wordOfDayReminders by viewModel.wordOfDayReminders.collectAsState()
@@ -84,7 +83,7 @@ fun SettingsScreen(
                                     reminderTime = time
                                     showTimePicker = false
                                 },
-                                colors = RadioButtonDefaults.colors(selectedColor = Violet)
+                                colors = RadioButtonDefaults.colors(selectedColor = Lime)
                             )
                         }
                     }
@@ -92,7 +91,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Close", fontWeight = FontWeight.Bold, color = Violet)
+                    Text("Close", fontWeight = FontWeight.Bold, color = Lime)
                 }
             }
         )
@@ -172,7 +171,7 @@ fun SettingsScreen(
                                             "Tap to sign in or create an account"
                                         },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = if (account.isRecoverable) Muted else Violet
+                                    color = if (account.isRecoverable) Muted else Lime
                                 )
                             }
                         }
@@ -199,14 +198,14 @@ fun SettingsScreen(
                         ) {
                             Surface(
                                 shape = Shapes.chip,
-                                color = Violet.copy(alpha = 0.15f),
+                                color = Lime.copy(alpha = 0.15f),
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         painter = painterResource(id = Iconsax.Profile2user),
                                         contentDescription = null,
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -297,13 +296,13 @@ fun SettingsScreen(
                             )
                         }
 
-                        Surface(shape = Shapes.pill, color = Violet.copy(alpha = 0.12f)) {
+                        Surface(shape = Shapes.pill, color = Lime.copy(alpha = 0.12f)) {
                             Text(
                                 text = reminderTime,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Violet
+                                color = Lime
                             )
                         }
                     }
@@ -317,16 +316,6 @@ fun SettingsScreen(
                         fontWeight = FontWeight.ExtraBold,
                         color = Ink
                     )
-                    Spacer(Modifier.height(Space.sm))
-
-                    SettingSwitchRow(
-                        title = "Dark Theme",
-                        subtitle = "Enable sleek dark mode",
-                        checked = isDarkMode,
-                        iconRes = Iconsax.Moon,
-                        onCheckedChange = { viewModel.toggleDarkMode(it) }
-                    )
-
                     Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
@@ -401,7 +390,7 @@ fun SettingsScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Refresh),
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = OnLime,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -524,12 +513,12 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Space.sm)
                     ) {
-                        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.12f), modifier = Modifier.size(40.dp)) {
+                        Surface(shape = Shapes.chip, color = Lime.copy(alpha = 0.12f), modifier = Modifier.size(40.dp)) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = null,
-                                    tint = Violet,
+                                    tint = Lime,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -577,12 +566,12 @@ fun SettingActionRow(
         horizontalArrangement = Arrangement.spacedBy(Space.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+        Surface(shape = Shapes.chip, color = Lime.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    tint = Violet,
+                    tint = Lime,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -629,12 +618,12 @@ fun SettingSwitchRow(
             horizontalArrangement = Arrangement.spacedBy(Space.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+            Surface(shape = Shapes.chip, color = Lime.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
-                        tint = Violet,
+                        tint = Lime,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -660,7 +649,7 @@ fun SettingSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Violet,
+                checkedTrackColor = Lime,
                 uncheckedThumbColor = Surface,
                 uncheckedTrackColor = SurfaceSunken
             )

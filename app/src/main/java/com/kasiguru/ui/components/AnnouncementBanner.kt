@@ -21,7 +21,7 @@ import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
 /**
  * A live, admin-authored system announcement - read from Firestore `announcements` while the
@@ -37,7 +37,7 @@ fun AnnouncementBanner(announcement: AnnouncementDto, modifier: Modifier = Modif
             Icon(
                 painter = painterResource(id = Iconsax.InfoCircle),
                 contentDescription = null,
-                tint = Violet,
+                tint = Lime,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(Modifier.width(Space.sm))

@@ -53,7 +53,7 @@ fun FlashcardDeckScreen(
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize().background(Ground), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
+            CircularProgressIndicator(color = Lime)
         }
         return
     }
@@ -340,7 +340,7 @@ fun FlashcardDeckScreen(
                         shape = Shapes.chip,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Again", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                        Text("Again", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
                     }
 
                     Button(
@@ -355,9 +355,8 @@ fun FlashcardDeckScreen(
                         shape = Shapes.chip,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        // Warning is a dark amber; Ink measures 3.38 on it (fails AA) where White
-                        // measures 4.87 — the other three buttons already use white for this reason.
-                        Text("Hard", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                        // All four faces are bright on night, so all four carry the dark reward ink.
+                        Text("Hard", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
                     }
 
                     Button(
@@ -368,11 +367,11 @@ fun FlashcardDeckScreen(
                         },
                         enabled = !uiState.isRating,
                         modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Violet),
+                        colors = ButtonDefaults.buttonColors(containerColor = Lime),
                         shape = Shapes.chip,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Good", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                        Text("Good", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = OnLime)
                     }
 
                     Button(
@@ -383,11 +382,11 @@ fun FlashcardDeckScreen(
                         },
                         enabled = !uiState.isRating,
                         modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Green),
+                        colors = ButtonDefaults.buttonColors(containerColor = Info),
                         shape = Shapes.chip,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Easy", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                        Text("Easy", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
                     }
                 }
             }
@@ -429,13 +428,13 @@ private fun NothingDueState(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
-                        .background(Violet.copy(alpha = 0.12f)),
+                        .background(Lime.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircleBold),
                         contentDescription = null,
-                        tint = Violet,
+                        tint = Lime,
                         modifier = Modifier.size(40.dp)
                     )
                 }

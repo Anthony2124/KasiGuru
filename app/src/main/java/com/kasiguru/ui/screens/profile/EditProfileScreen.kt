@@ -28,8 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.unit.dp
-import com.kasiguru.ui.components.CasiguranAvatarPortrait
-import com.kasiguru.ui.components.CasiguranResident
+import com.kasiguru.ui.components.brand.JepjepAvatar
+import com.kasiguru.ui.components.brand.JepjepAvatarPicker
+import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
 import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -42,7 +43,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import kotlinx.coroutines.launch
 
 /**
@@ -58,7 +59,7 @@ fun EditProfileScreen(
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
+            CircularProgressIndicator(color = Lime)
         }
         return
     }
@@ -67,11 +68,13 @@ fun EditProfileScreen(
     var fullName by remember { mutableStateOf(progress.fullName) }
     var age by remember { mutableStateOf(progress.age?.toString() ?: "") }
     var address by remember { mutableStateOf(progress.address) }
+    var avatar by remember { mutableStateOf(JepjepAvatar.fromId(progress.profileIconId)) }
     val scope = rememberCoroutineScope()
 
     val hasUnsavedChanges = fullName != progress.fullName ||
         age != (progress.age?.toString() ?: "") ||
-        address != progress.address
+        address != progress.address ||
+        avatar.id != progress.profileIconId
     var showDiscardConfirm by remember { mutableStateOf(false) }
     val attemptBack: () -> Unit = { if (hasUnsavedChanges) showDiscardConfirm = true else onNavigateBack() }
 
@@ -113,12 +116,20 @@ fun EditProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(Modifier.height(Space.lg))
-                CasiguranAvatarPortrait(
-                    resident = CasiguranResident.TEACHER,
-                    size = 88.dp,
+                JepjepAvatarPortrait(
+                    avatar = avatar,
+                    size = 96.dp,
                     level = progress.level
                 )
                 Spacer(Modifier.height(Space.lg))
+
+                SoftCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                        Text("Your avatar", style = MaterialTheme.typography.titleMedium, color = com.kasiguru.ui.theme.Ink)
+                        JepjepAvatarPicker(selected = avatar, onSelect = { avatar = it }, portraitSize = 64.dp)
+                    }
+                }
+                Spacer(Modifier.height(Space.md))
 
                 SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
@@ -163,7 +174,7 @@ fun EditProfileScreen(
                                 fullName = fullName.trim(),
                                 age = age.trim().toIntOrNull(),
                                 address = address.trim(),
-                                iconId = 1
+                                iconId = avatar.id
                             )
                             // Only leave once the write actually finished — a failure now surfaces
                             // as the inline message below instead of navigating away silently.
@@ -182,6 +193,6 @@ fun EditProfileScreen(
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Surface,
     unfocusedContainerColor = Surface,
-    focusedBorderColor = Violet,
+    focusedBorderColor = Lime,
     unfocusedBorderColor = SurfaceSunken
 )

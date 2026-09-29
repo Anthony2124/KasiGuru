@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Clay
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.VioletShadow
+import com.kasiguru.ui.theme.ShadowTint
 
 /**
  * The clay primitive every dimensional object in KasiGuru is built from.
@@ -98,8 +98,8 @@ fun ClaySurface(
                 .shadow(
                     elevation = if (enabled) shadowElevation else 0.dp,
                     shape = shape,
-                    ambientColor = VioletShadow,
-                    spotColor = VioletShadow
+                    ambientColor = ShadowTint,
+                    spotColor = ShadowTint
                 )
                 .clip(shape)
                 .background(lipColor)
@@ -186,8 +186,8 @@ fun ClayCircle(
                 .shadow(
                     elevation = if (enabled) shadowElevation else 0.dp,
                     shape = CircleShape,
-                    ambientColor = VioletShadow,
-                    spotColor = VioletShadow
+                    ambientColor = ShadowTint,
+                    spotColor = ShadowTint
                 )
                 .clip(CircleShape)
                 .background(lipColor)

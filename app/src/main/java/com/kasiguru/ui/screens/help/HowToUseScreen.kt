@@ -33,7 +33,7 @@ import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.tour.TourChapterId
 import com.kasiguru.ui.tour.TourChapterState
 import com.kasiguru.ui.tour.TourResumePoint
@@ -86,7 +86,7 @@ fun HowToUseScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.Teacher),
                                     contentDescription = null,
-                                    tint = androidx.compose.ui.graphics.Color.White,
+                                    tint = com.kasiguru.ui.theme.OnLime,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -207,7 +207,7 @@ fun HowToUseScreen(
                         iconRes = Iconsax.Edit,
                         accent = Coral,
                         iconTint = Ink,
-                        title = "Send us a Kasiguranin word",
+                        title = "Add a Kasiguranin word",
                         subtitle = "Missing entries are reviewed and added to the dictionary",
                         onClick = onNavigateToSubmitWord
                     )
@@ -218,8 +218,8 @@ fun HowToUseScreen(
                     )
                     HelpActionRow(
                         iconRes = Iconsax.InfoCircle,
-                        accent = Violet,
-                        iconTint = Violet,
+                        accent = Lime,
+                        iconTint = Lime,
                         title = "Report a problem",
                         subtitle = "A wrong translation, missing audio, or anything broken",
                         onClick = onNavigateToReport
@@ -247,38 +247,38 @@ private data class TabGuideEntry(
 private val tabGuide = listOf(
     TabGuideEntry(
         Iconsax.HomeBold,
-        "Learn",
-        "Home. Today's plan, the path you are working through, and one button at the top that " +
-            "always names whatever comes next."
+        "Home",
+        "Where every day starts. One button always names whatever comes next, with your daily " +
+            "goal, the words due for review and a shelf of stories underneath."
     ),
     TabGuideEntry(
-        Iconsax.Element4Bold,
+        Iconsax.Teacher,
+        "Learn",
+        "The whole path, section by section, each one set in a place in Casiguran. Jepjep waits " +
+            "at the lesson that is yours to take next."
+    ),
+    TabGuideEntry(
+        Iconsax.GameBold,
         "Practice",
         "Games that drill the words you have already met. Stars unlock the harder ones, so play " +
             "the open ones first."
     ),
     TabGuideEntry(
         Iconsax.BookBold,
-        "Words",
-        "The whole dictionary, sorted by category, with audio on every entry. Tap a word for its " +
-            "aspects, its pronunciation and an example sentence."
-    ),
-    TabGuideEntry(
-        Iconsax.MedalStarBold,
-        "Progress",
-        "Every badge you have earned, and how close you are to the rest. Locked badges show what " +
-            "they still need."
+        "Library",
+        "The whole dictionary, with audio on every entry, and the folk tales beside it. Add a word " +
+            "or share a story from here."
     ),
     TabGuideEntry(
         Iconsax.ProfileBold,
-        "Profile",
-        "Who you are and what you have learned, plus the way through to Settings, the leaderboard " +
-            "and Casiguran's cultural heritage."
+        "Me",
+        "Who you are and what you have earned: your badges, the leaderboard, and the way through " +
+            "to Settings and Casiguran's cultural heritage."
     )
 )
 
 private val dailyLoop = listOf(
-    "Open Learn" to "Your plan is already built. Nothing to choose.",
+    "Open Home" to "Your plan is already built. Nothing to choose.",
     "Do the lesson" to "A few minutes. New words, then a check that you kept them.",
     "Clear your review" to "Words come back on the day you are about to forget them.",
     "Play a game or read a story" to "Whichever you feel like. Both count toward your goal."
@@ -292,12 +292,12 @@ private fun TabGuideRow(entry: TabGuideEntry) {
             .padding(horizontal = Space.md, vertical = Space.sm),
         horizontalArrangement = Arrangement.spacedBy(Space.sm)
     ) {
-        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+        Surface(shape = Shapes.chip, color = Lime.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(id = entry.iconRes),
                     contentDescription = null,
-                    tint = Violet,
+                    tint = Lime,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -324,7 +324,7 @@ private fun HelpActionRow(
     iconRes: Int,
     accent: androidx.compose.ui.graphics.Color,
     /**
-     * Violet passes at 6.00 against its own 16% tint and is the house idiom for a tinted chip;
+     * Lime passes at 6.00 against its own 16% tint and is the house idiom for a tinted chip;
      * Coral measures 2.03 the same way and fails even the non-text floor, so it carries ink instead.
      * DESIGN.md records both figures.
      */

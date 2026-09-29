@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.LeaderboardEntity
 import com.kasiguru.data.repository.LeaderboardRepository
+import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,12 +18,18 @@ data class LeaderboardUiState(
     val selectedFilter: String = "All-Time XP",
     val currentUserRank: Int = 0,
     val currentUserEntry: LeaderboardEntity? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    /**
+     * The learner's own avatar, from their progress rather than the leaderboard row, so the rank
+     * card can show it even while they are not ranked (guests never are).
+     */
+    val myAvatarId: Int? = null
 )
 
 @HiltViewModel
 class LeaderboardViewModel @Inject constructor(
-    private val leaderboardRepository: LeaderboardRepository
+    private val leaderboardRepository: LeaderboardRepository,
+    private val userProgressRepository: UserProgressRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LeaderboardUiState())
@@ -33,6 +40,11 @@ class LeaderboardViewModel @Inject constructor(
 
     init {
         setFilter("All-Time XP")
+        viewModelScope.launch {
+            userProgressRepository.getUserProgress().collect { progress ->
+                _uiState.value = _uiState.value.copy(myAvatarId = progress?.profileIconId)
+            }
+        }
     }
 
     fun setFilter(filter: String) {

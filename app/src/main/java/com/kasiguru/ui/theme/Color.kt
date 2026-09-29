@@ -1,236 +1,159 @@
 package com.kasiguru.ui.theme
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * KasiGuru "Clay Canopy" palette. See DESIGN.md for the full contract.
+ * KasiGuru "Jepjep's Forest" palette. See DESIGN.md for the full contract.
  *
- * Every token below is theme-reactive: it reads [LocalDarkMode] and resolves to a light or dark value,
- * both independently measured with the WCAG relative-luminance formula (the validator lives in the
- * scratchpad; the numbers are reproducible). A token is declared `@Composable get()` specifically so it
- * can react to the current theme while still being referenced exactly like a constant everywhere it
- * already is (`color = Ink`, `face = Gold`, a default parameter value) — the read just has to happen in
- * composition, which every existing call site already is.
+ * Taken from Adrian's onboarding designs and the KasiGuru wordmark by sampling pixels, then checked
+ * with the WCAG relative-luminance formula: a near-black night ground, dark cards, lime for the one
+ * thing to do, cream from Jepjep's barong, and a soft green glow behind Jepjep for big moments.
  *
- * One deliberate exception: [Gold], [Coral], [Tier variants and their Ink-pairing. These reward/callout
- * fills keep the *same* hex value in both themes — a badge or the primary reward button should not
- * change hue when the system theme flips. What changes instead is the ink text/icon painted on top of
- * them: light mode's dark [Ink] cannot simply follow [Ink] into its dark-mode near-white value, or every
- * "ink on gold" pairing would flip to unreadable near-white-on-gold. Those specific fill+ink pairings use
- * [RewardInk] instead, a fixed dark tone that never themes. See the fill tokens' own doc comments.
+ * The app is dark only for now. A cream "Daylight" theme may follow; when it does, these tokens become
+ * theme-reactive again rather than every call site learning about themes.
+ *
+ * Contrast figures quoted below are measured, not estimated.
  */
-
-/** Provided by [com.kasiguru.ui.theme.KasiGuruTheme]; true when dark mode is the active preference. */
-val LocalDarkMode = compositionLocalOf { false }
-
-private object Light {
-    val Ground        = Color(0xFFF1EEFF)
-    val Surface       = Color(0xFFFFFFFF)
-    val SurfaceSunken = Color(0xFFE8E4F8)
-    val TrackNeutral  = Color(0xFFE0DBF5)
-    val BorderHairline = Color(0x141F1B3A)
-
-    val CanopyTop    = Color(0xFF6C5CE7)
-    val CanopyBottom = Color(0xFF4A3FC0)
-    val OnCanopyDecor = Color(0x3DFFFFFF)
-    val ChipOnCanopy  = Color(0x38FFFFFF)
-
-    val Violet       = Color(0xFF5B4CDB)
-    val VioletDeep   = Color(0xFF4034A8)
-    val VioletTint   = Color(0xFFE7E3FF)
-    val VioletShadow = Color(0x335B4CDB)
-
-    val Ink   = Color(0xFF1F1B3A)
-    val Muted = Color(0xFF5E5A80)
-    val Faint = Color(0xFF8A86A6)
-
-    val GreenTint = Color(0xFFE3F5E9)
-    val RedTint   = Color(0xFFFDEAEC)
-    val Amber     = Color(0xFF8A5A00)
-    val AmberTint = Color(0xFFFFF1D6)
-
-    val NodeLocked    = Color(0xFFDCD8EE)
-    val NodeLockedInk = Color(0xFF8A86A6)
-    val PathTrackIdle = Color(0xFFDFDAF3)
-}
-
-private object Dark {
-    val Ground        = Color(0xFF15131F)
-    val Surface       = Color(0xFF1E1B30)
-    val SurfaceSunken = Color(0xFF282440)
-    val TrackNeutral  = Color(0xFF332E4D)
-    val BorderHairline = Color(0x1FF1EEFF)
-
-    // The canopy is already a vivid, self-contained accent surface — it does not need a dark variant.
-    val CanopyTop    = Light.CanopyTop
-    val CanopyBottom = Light.CanopyBottom
-    val OnCanopyDecor = Light.OnCanopyDecor
-    val ChipOnCanopy  = Light.ChipOnCanopy
-
-    val Violet       = Color(0xFF9C90F5)
-    val VioletDeep   = Color(0xFF6C5CE7)
-    val VioletTint   = Color(0xFF2A2660)
-    val VioletShadow = Color(0x40241C57)
-
-    val Ink   = Color(0xFFF1EEFF)
-    val Muted = Color(0xFFB7B2D6)
-    val Faint = Color(0xFF827DA0)
-
-    val GreenTint = Color(0xFF1B3324)
-    val RedTint   = Color(0xFF3A1E20)
-    val Amber     = Color(0xFFF5C86A)
-    val AmberTint = Color(0xFF3A2E12)
-
-    val NodeLocked    = Color(0xFF332E4D)
-    val NodeLockedInk = Color(0xFF8983A8)
-    val PathTrackIdle = Color(0xFF3A3555)
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ground and surfaces
 // ─────────────────────────────────────────────────────────────────────────────
-/** App background. Soft lavender in light mode, near-black violet in dark; white/surface cards float. */
-val Ground: Color @Composable get() = if (LocalDarkMode.current) Dark.Ground else Light.Ground
-/** Cards, rows, sheets. */
-val Surface: Color @Composable get() = if (LocalDarkMode.current) Dark.Surface else Light.Surface
-/** Recessed wells: search fields, inactive segments, progress tracks. */
-val SurfaceSunken: Color @Composable get() = if (LocalDarkMode.current) Dark.SurfaceSunken else Light.SurfaceSunken
-/** Neutral progress track on a surface. */
-val TrackNeutral: Color @Composable get() = if (LocalDarkMode.current) Dark.TrackNeutral else Light.TrackNeutral
-/** Hairline separator, used instead of a shadow wherever only a boundary is needed. */
-val BorderHairline: Color @Composable get() = if (LocalDarkMode.current) Dark.BorderHairline else Light.BorderHairline
+/** App background, "night". White text 19.4, Faint 6.2. */
+val Ground = Color(0xFF0A0E0D)
+/** Cards, rows, options, inputs, the bottom bar. White text 18.4. */
+val Surface = Color(0xFF141414)
+/** Raised or recessed wells: search fields, inactive segments, pressed rows. White text 16.4. */
+val SurfaceSunken = Color(0xFF1C211D)
+/** Neutral progress track. Non-text. */
+val TrackNeutral = Color(0xFF2C312D)
+/** 1 dp borders on cards and options. Non-text. */
+val BorderHairline = Color(0xFF3A3F3B)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The canopy — the deep violet panel every screen opens with. Unchanged across themes.
+// The canopy: the deep forest-green panel at the top of Home, and hero fields.
 // ─────────────────────────────────────────────────────────────────────────────
-val CanopyTop    = Light.CanopyTop
-val CanopyBottom = Light.CanopyBottom
+/** Canopy gradient start. White text 12.9. */
+val CanopyTop = Color(0xFF0F3A10)
+/** Canopy gradient end. White text 18.0. */
+val CanopyBottom = Color(0xFF0A1A0C)
 
-/** The only colour for text on the canopy. White measures 4.86 on the top, 7.60 on the bottom. */
+/** Text on the canopy. */
 val OnCanopy = Color(0xFFFFFFFF)
-/** Decoration on the canopy — dividers, wave shapes, ring tracks. Never text. */
-val OnCanopyDecor = Light.OnCanopyDecor
-/** Translucent chip fill. Legible with a white label only over the deep end of the canopy. */
-val ChipOnCanopy = Light.ChipOnCanopy
+/** Decoration on the canopy — dividers, ring tracks. Never text. */
+val OnCanopyDecor = Color(0x3DFFFFFF)
+/** Translucent chip fill on the canopy. White label on it stays above 9:1. */
+val ChipOnCanopy = Color(0x38FFFFFF)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Interactive violet on light/dark surfaces
+// The glow: a soft radial light behind Jepjep on onboarding and reward screens.
+// Stops: GlowCore at the centre, GlowMid halfway out, Ground one screen-width out. No rings.
 // ─────────────────────────────────────────────────────────────────────────────
-val Violet: Color @Composable get() = if (LocalDarkMode.current) Dark.Violet else Light.Violet
-/** The clay lip beneath violet objects. */
-val VioletDeep: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletDeep else Light.VioletDeep
-/** Selected rows, soft fills. */
-val VioletTint: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletTint else Light.VioletTint
-/** Violet-tinted cast shadow, never neutral grey. */
-val VioletShadow: Color @Composable get() = if (LocalDarkMode.current) Dark.VioletShadow else Light.VioletShadow
+/** Centre of the glow. White 16.4, BrandLime 6.5. */
+val GlowCore = Color(0xFF0A250B)
+/** The glow half a screen-width out. */
+val GlowMid = Color(0xFF0A190C)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lime: "do this". Primary button faces, the active tab, links, focus, selected borders.
+// ─────────────────────────────────────────────────────────────────────────────
+/** The action colour. 8.3 on Ground, 7.9 on Surface. Text on a lime fill is always [OnLime]. */
+val Lime = Color(0xFF71BD1D)
+/** The clay lip beneath lime objects. White 6.2. */
+val LimeLip = Color(0xFF3F6D0E)
+/** Selected rows and soft fills. Lime text on it 6.2. */
+val LimeTint = Color(0xFF1C2E12)
+/** Label on a lime fill. 7.7 on Lime. White on Lime is 2.3 and never allowed. */
+val OnLime = Color(0xFF0B1A05)
+/** "Guru" in the wordmark, highlighted words in headings, progress fills. 7.7 on Ground, 6.5 on the glow. */
+val BrandLime = Color(0xFF6CB619)
+/** A selected option or tile, with a 2 dp lime border. White 7.1. */
+val Olive = Color(0xFF446025)
+/** The deep end of an olive gradient (category and game heroes). White 10.8. */
+val OliveDeep = Color(0xFF2C4418)
+/** Jepjep's barong: warm highlights, story paper, focus rings. On Ground 16.3. */
+val Cream = Color(0xFFF2ECCA)
+/** Cast shadow. Shadows barely read on night, so depth comes from the lip and the hairline instead. */
+val ShadowTint = Color(0x66000000)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ink
 // ─────────────────────────────────────────────────────────────────────────────
-val Ink: Color @Composable get() = if (LocalDarkMode.current) Dark.Ink else Light.Ink
-val Muted: Color @Composable get() = if (LocalDarkMode.current) Dark.Muted else Light.Muted
-val Faint: Color @Composable get() = if (LocalDarkMode.current) Dark.Faint else Light.Faint
+/** Primary text. */
+val Ink = Color(0xFFFFFFFF)
+/** Secondary text. 11.8 on Surface, 10.4 on SurfaceSunken. */
+val Muted = Color(0xFFC9D1C5)
+/** Captions, hints, placeholders. 5.9 on Surface, 5.2 on SurfaceSunken. */
+val Faint = Color(0xFF8C948A)
 
 /**
- * Fixed dark ink for text/icons painted on a reward or callout fill ([Gold], [Coral], the [Tier]
- * badges). Those fills keep one hex value in both themes, so the ink on top of them must too — it
- * cannot follow [Ink] into near-white in dark mode without breaking the exact contrast pairing this
- * token exists to guarantee. Never use this for ordinary text on [Surface]/[Ground]; use [Ink].
+ * Dark ink for text and icons painted on a bright fill: [Gold], [Coral], [Lime], [Red], the [Tier]
+ * badges. 11.7 on Gold, 8.8 on Coral, 7.7 on Lime, 6.5 on Red. Never ordinary text on [Surface].
  */
-val RewardInk = Color(0xFF1F1B3A)
+val RewardInk = Color(0xFF0B1A05)
+
+/** The full-screen dim behind the guided tour and dialogs, used at roughly 0.72 alpha. */
+val Scrim = Color(0xFF000000)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reward fills. Readable as foregrounds on night; as fills they carry [RewardInk].
+// ─────────────────────────────────────────────────────────────────────────────
+/** Streak orange. 9.5 on Ground; RewardInk on it 8.8. */
+val Coral     = Color(0xFFFF9F1C)
+val CoralDeep = Color(0xFFC46A00)
+/** XP gold. 11.9 on Surface; RewardInk on it 11.7. */
+val Gold      = Color(0xFFFFC83D)
+val GoldDeep  = Color(0xFFC98A00)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Feedback. Both are bright enough to be text on night; as fills they carry [RewardInk].
+// ─────────────────────────────────────────────────────────────────────────────
+/** Correct / success. The lime, always with a check icon so colour is never the only signal. */
+val Green     = Color(0xFF71BD1D)
+val GreenDeep = Color(0xFF3F6D0E)
+val GreenTint = Color(0xFF1C2E12)
+/** Wrong / destructive. 6.6 on Surface. */
+val Red       = Color(0xFFFF6B5B)
+/** A deep red that carries white text (5.3), for destructive buttons. */
+val RedDeep   = Color(0xFFC8352B)
+val RedTint   = Color(0xFF3A1E1C)
 
 /**
- * The full-screen dim behind the guided tour, used at roughly 0.72 alpha.
- *
- * Fixed across themes for the same reason as [RewardInk]: a scrim's whole job is to darken what is
- * behind it, and [Ink] — which carries this same hex in light mode — resolves to near-white in dark
- * mode, which would turn the dim into a wash. Anything that must darken in both themes belongs here
- * rather than reading [LocalDarkMode].
+ * Caution — a third feedback level between [Green] and [Red], for "this is probably not what you
+ * meant, but it is your call" (the duplicate-word notice on the contribution form). 11.7 on Surface,
+ * 8.5 on [AmberTint].
  */
-val Scrim = Color(0xFF1F1B3A)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Reward and callout fills. These carry [RewardInk]; never a foreground on light or dark.
-// Fixed across themes on purpose — see the file doc comment.
-// ─────────────────────────────────────────────────────────────────────────────
-val Coral     = Color(0xFFFF8B5E)  // RewardInk on it measures 7.14
-val CoralDeep = Color(0xFFE0651F)  // clay lip under coral
-val Gold      = Color(0xFFFFB020)  // RewardInk on it measures 9.00
-val GoldDeep  = Color(0xFFD98200)  // clay lip under gold
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Feedback. Green and red are deep enough to carry white text in both themes.
-// ─────────────────────────────────────────────────────────────────────────────
-val Green     = Color(0xFF15803D)  // white 5.02
-val GreenDeep = Color(0xFF0F5C2C)
-val GreenTint: Color @Composable get() = if (LocalDarkMode.current) Dark.GreenTint else Light.GreenTint
-val Red       = Color(0xFFDC2626)  // white 4.83
-val RedDeep   = Color(0xFFA81B1B)
-val RedTint: Color @Composable get() = if (LocalDarkMode.current) Dark.RedTint else Light.RedTint
-
-/**
- * Caution — a third feedback level between [Green] and [Red].
- *
- * Green says done and red says wrong, and between them the palette had nothing for "this is
- * probably not what you meant, but it is your call". The duplicate-word notice on the contribution
- * form is exactly that: a contributor adding a word the dictionary already carries is usually
- * repeating an entry, but Kasiguranin has genuine homonyms — `baga` is lungs, swollen, and ember —
- * so the form must be able to caution without refusing. Painting that in [Red] would read as a
- * rejection of a submission the app actually wants.
- *
- * Unlike [Gold], which is a fixed reward fill carrying [RewardInk], this is ordinary themed ink:
- * a deep ochre on light, a warm sand on dark. Measured on [AmberTint] it is 5.31 (light) and 8.45
- * (dark); on [Surface], 5.93 and 10.6.
- */
-val Amber: Color @Composable get() = if (LocalDarkMode.current) Dark.Amber else Light.Amber
+val Amber = Color(0xFFF5C86A)
 /** Soft fill behind an [Amber] caution notice. */
-val AmberTint: Color @Composable get() = if (LocalDarkMode.current) Dark.AmberTint else Light.AmberTint
+val AmberTint = Color(0xFF3A2E12)
+
+/** Audio, tips and links to help. 7.9 on Surface; RewardInk on it 7.7. */
+val Info = Color(0xFF4FB3E8)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lesson-path node states
 // ─────────────────────────────────────────────────────────────────────────────
-val NodeLocked: Color @Composable get() = if (LocalDarkMode.current) Dark.NodeLocked else Light.NodeLocked
-val NodeLockedInk: Color @Composable get() = if (LocalDarkMode.current) Dark.NodeLockedInk else Light.NodeLockedInk
-val PathTrackIdle: Color @Composable get() = if (LocalDarkMode.current) Dark.PathTrackIdle else Light.PathTrackIdle
+val NodeLocked = Color(0xFF1C211D)
+val NodeLockedInk = Color(0xFF8C948A)
+val PathTrackIdle = Color(0xFF2C312D)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Badge tiers. Fixed across themes — same reasoning as Gold/Coral; carry RewardInk, not Ink.
+// Badge tiers. Carry RewardInk.
 // ─────────────────────────────────────────────────────────────────────────────
-val TierGold   = Color(0xFFFFC24A)
-val TierGoldDeep   = Color(0xFFD98200)
+val TierGold   = Color(0xFFFFC83D)
+val TierGoldDeep   = Color(0xFFC98A00)
 val TierSilver = Color(0xFFC3C9D8)
 val TierSilverDeep = Color(0xFF8E96AA)
 val TierBronze = Color(0xFFD08A55)
 val TierBronzeDeep = Color(0xFF9C5F2E)
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Off-palette colours.
-//
-// What is left of a compatibility layer that once carried sixty-three aliases for two superseded
-// systems, "Casiguran Coast" and an earlier "Play" palette. Every alias that merely renamed a
-// current token has been migrated to that token and deleted; these three are the ones with no
-// canonical equivalent, so deleting them would have changed what the app looks like.
-//
-// They are not shims. They are real colours the palette never documented, and each needs a design
-// decision rather than a rename: fold it into the palette properly, or replace it with a token that
-// is already there. Until then they stay here, named honestly, so the palette above can be read as
-// complete and this list can be read as the exception.
-// ══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// Named accents kept for their call sites.
+// ─────────────────────────────────────────────────────────────────────────────
+/** A state to attend to but not broken: guest progress at risk, a deck about to reset. Same as [Amber]. */
+val Warning = Amber
 
-/**
- * Amber for a state the learner should attend to but has not broken: guest progress at risk, a
- * flashcard deck about to be reset. Static rather than theme-reactive, and its exact value carries a
- * measured contrast note at FlashcardDeckScreen's call site, so do not swap it for [Amber] without
- * re-measuring.
- */
-val Warning = Color(0xFF9A6700)
+/** The Review activity's accent on Home. Same as [Info]. */
+val SkyReview = Info
 
-/** The Review activity's accent on Learn's Today's Path. The one blue in the app. */
-val SkyReview = Color(0xFF2C7BE5)
-
-/** The dictionary's accent in the word detail sheet. The one teal in the app. */
-val VocabSea = Color(0xFF0F9C91)
+/** The dictionary's accent in the word detail sheet. The one teal in the app. 5.4 on Surface. */
+val VocabSea = Color(0xFF26B5A8)

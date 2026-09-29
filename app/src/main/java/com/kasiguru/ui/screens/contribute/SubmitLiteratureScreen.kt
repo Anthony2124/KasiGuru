@@ -206,7 +206,7 @@ fun SubmitLiteratureScreen(
                         if (uiState.isReadingPdf) {
                             Surface(
                                 shape = Shapes.tile,
-                                color = Violet.copy(alpha = 0.05f),
+                                color = Lime.copy(alpha = 0.05f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -216,13 +216,13 @@ fun SubmitLiteratureScreen(
                                 ) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
-                                        color = Violet,
+                                        color = Lime,
                                         strokeWidth = 2.dp
                                     )
                                     Text(
                                         text = "Reading and attaching PDF…",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Violet
+                                        color = Lime
                                     )
                                 }
                             }
@@ -234,10 +234,10 @@ fun SubmitLiteratureScreen(
 
                             Surface(
                                 shape = Shapes.tile,
-                                color = Violet.copy(alpha = 0.08f),
+                                color = Lime.copy(alpha = 0.08f),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(1.dp, Violet.copy(alpha = 0.3f), Shapes.tile)
+                                    .border(1.dp, Lime.copy(alpha = 0.3f), Shapes.tile)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -250,13 +250,13 @@ fun SubmitLiteratureScreen(
                                         modifier = Modifier
                                             .size(44.dp)
                                             .clip(CircleShape)
-                                            .background(Violet.copy(alpha = 0.15f)),
+                                            .background(Lime.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             painter = painterResource(id = Iconsax.Document),
                                             contentDescription = "PDF Document",
-                                            tint = Violet,
+                                            tint = Lime,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -277,20 +277,20 @@ fun SubmitLiteratureScreen(
                                         }
                                     }
                                     TextButton(onClick = openPdfPicker) {
-                                        Text("Change", color = Violet, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                        Text("Change", color = Lime, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                                     }
                                 }
                             }
                         } else {
                             Surface(
                                 shape = Shapes.tile,
-                                color = Violet.copy(alpha = 0.04f),
+                                color = Lime.copy(alpha = 0.04f),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { openPdfPicker() }
                                     .border(
                                         width = 1.5.dp,
-                                        color = Violet.copy(alpha = 0.35f),
+                                        color = Lime.copy(alpha = 0.35f),
                                         shape = Shapes.tile
                                     )
                             ) {
@@ -305,13 +305,13 @@ fun SubmitLiteratureScreen(
                                         modifier = Modifier
                                             .size(44.dp)
                                             .clip(CircleShape)
-                                            .background(Violet.copy(alpha = 0.12f)),
+                                            .background(Lime.copy(alpha = 0.12f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             painter = painterResource(id = Iconsax.Document),
                                             contentDescription = "Attach PDF",
-                                            tint = Violet,
+                                            tint = Lime,
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
@@ -319,7 +319,7 @@ fun SubmitLiteratureScreen(
                                         text = "Attach Story / Poem (PDF) *",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
-                                        color = Violet
+                                        color = Lime
                                     )
                                     Text(
                                         text = "Tap to choose a .pdf document from your device",
@@ -358,7 +358,7 @@ fun SubmitLiteratureScreen(
                                 Text(
                                     text = "Page ${index + 1}",
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = Violet
+                                    color = Lime
                                 )
                                 if (uiState.pages.size > 1) {
                                     IconButton(onClick = { viewModel.removePage(index) }) {

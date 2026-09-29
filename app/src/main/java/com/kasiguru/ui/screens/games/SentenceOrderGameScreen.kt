@@ -53,7 +53,7 @@ fun SentenceOrderGameScreen(
         content = {
         if (uiState.questions.isEmpty() && !uiState.isGameFinished) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Violet)
+                CircularProgressIndicator(color = Lime)
             }
             return@GroundScaffold
         }
@@ -164,7 +164,7 @@ fun SentenceOrderGameScreen(
                                     onClick = { viewModel.deselectWord(word) },
                                     label = { Text(word, fontWeight = FontWeight.Bold) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Ink,
+                                        selectedContainerColor = Olive,
                                         selectedLabelColor = Color.White
                                     ),
                                     shape = RoundedCornerShape(16.dp)

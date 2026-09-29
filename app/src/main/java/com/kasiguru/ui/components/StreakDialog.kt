@@ -20,6 +20,7 @@ import androidx.compose.ui.window.Dialog
 import com.kasiguru.data.repository.DailyStreakQuota
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.time.LocalDate
@@ -262,7 +263,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Flash),
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = RewardInk,
                                         modifier = Modifier.size(17.dp)
                                     )
                                 } else if (isPastOrToday) {

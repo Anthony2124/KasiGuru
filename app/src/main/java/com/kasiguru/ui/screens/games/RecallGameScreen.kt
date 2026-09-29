@@ -43,7 +43,7 @@ import com.kasiguru.ui.theme.CoralDeep
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.util.RecallMatch
 import com.kasiguru.util.audio.AudioPlayerManager
 
@@ -86,7 +86,7 @@ fun RecallGameScreen(
         content = {
             if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
+                    CircularProgressIndicator(color = Lime)
                 }
                 return@GroundScaffold
             }

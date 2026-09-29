@@ -71,7 +71,6 @@ import com.kasiguru.domain.wordwheel.BoardCell
 import com.kasiguru.domain.wordwheel.WordWheelPuzzle
 import com.kasiguru.ui.components.CasiguranBackdrop
 import com.kasiguru.ui.components.GameHeader
-import com.kasiguru.ui.components.PhotoCredit
 import com.kasiguru.ui.components.backdropPill
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
@@ -79,7 +78,9 @@ import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.rememberGameExitGuard
-import com.kasiguru.ui.theme.CasiguranPhotos
+import com.kasiguru.ui.theme.SurfaceSunken
+import com.kasiguru.ui.theme.OnLime
+import com.kasiguru.ui.theme.Scenery
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
@@ -89,9 +90,9 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeLip
+import com.kasiguru.ui.theme.LimeTint
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -119,7 +120,7 @@ fun WordWheelGameScreen(
             when {
                 uiState.isLoading -> Loading()
                 uiState.isUnavailable || puzzle == null -> GameUnavailableState(
-                    accentColor = Violet,
+                    accentColor = Lime,
                     onBack = onNavigateBack,
                     title = "Not enough words for this level yet",
                     message = "The dictionary on this phone can't build this wheel yet. " +
@@ -146,7 +147,7 @@ fun WordWheelGameScreen(
 @Composable
 private fun Loading() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = Violet)
+        CircularProgressIndicator(color = Lime)
     }
 }
 
@@ -155,9 +156,9 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
     val haptic = LocalHapticFeedback.current
     val found = uiState.foundSlots.size
     val total = puzzle.slots.size
-    val photo = CasiguranPhotos.forLevel(uiState.level)
+    val scene = Scenery.forIndex(uiState.level)
 
-    CasiguranBackdrop(photo) {
+    CasiguranBackdrop(scene) {
     // No vertical scroll: a scroll container would steal the vertical part of every swipe across the
     // wheel. The board takes whatever height is left and scales its tiles to fit instead.
     //
@@ -184,8 +185,8 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 label = "Found $found of $total",
                 progress = found / total.toFloat(),
                 score = found,
-                accentStart = Violet,
-                accentEnd = VioletDeep,
+                accentStart = Lime,
+                accentEnd = LimeLip,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(Space.sm))
@@ -237,9 +238,6 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 enabled = uiState.selection.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             )
-            // Required by the photo's licence wherever it is shown.
-            Spacer(Modifier.height(Space.xs))
-            PhotoCredit(photo)
         }
     }
     }
@@ -283,8 +281,8 @@ private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState
                                 .clip(RoundedCornerShape(tile * 0.22f))
                                 .background(
                                     when {
-                                        isFound -> Violet
-                                        isShown -> VioletTint
+                                        isFound -> Lime
+                                        isShown -> LimeTint
                                         else -> Surface
                                     }
                                 )
@@ -300,7 +298,7 @@ private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState
                                     fontSize = letterSize,
                                     fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = if (isFound) androidx.compose.ui.graphics.Color.White else Violet
+                                    color = if (isFound) OnLime else Lime
                                 )
                             }
                         }
@@ -340,7 +338,7 @@ private fun FeedbackLine(uiState: WordWheelUiState) {
             // Ink, not Red: red text on the Ground falls under 4.5:1, so a miss is marked by weight.
             fontWeight = if (isMiss) FontWeight.Bold else FontWeight.Normal,
             color = if (isMiss) Ink else Muted,
-            // The pill keeps this small text readable over the photo.
+            // The pill keeps this small text readable over the scenery.
             modifier = Modifier
                 .weight(1f, fill = false)
                 .backdropPill(Surface)
@@ -367,7 +365,7 @@ private fun AttemptPill(attempt: String) {
         modifier = Modifier
             .heightIn(min = 44.dp)
             .clip(Shapes.pill)
-            .background(if (attempt.isEmpty()) androidx.compose.ui.graphics.Color.Transparent else Violet)
+            .background(if (attempt.isEmpty()) androidx.compose.ui.graphics.Color.Transparent else Lime)
             .padding(horizontal = Space.md, vertical = Space.xs)
             .semantics { contentDescription = if (attempt.isEmpty()) "No letters picked" else "Spelling $attempt" },
         contentAlignment = Alignment.Center
@@ -376,7 +374,7 @@ private fun AttemptPill(attempt: String) {
             text = attempt,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.ExtraBold,
-            color = androidx.compose.ui.graphics.Color.White,
+            color = OnLime,
             textAlign = TextAlign.Center
         )
     }
@@ -416,7 +414,7 @@ private fun LetterWheel(
     val tap by rememberUpdatedState(onTap)
     val dragOver by rememberUpdatedState(onDragOver)
     val dragEnd by rememberUpdatedState(onDragEnd)
-    val lineColor = Violet.copy(alpha = 0.45f)
+    val lineColor = Lime.copy(alpha = 0.45f)
 
     fun hit(point: Offset): Int? =
         positions.entries.firstOrNull { (it.value - point).getDistance() <= hitRadiusPx }?.key
@@ -424,7 +422,7 @@ private fun LetterWheel(
     Box(
         modifier = Modifier
             .size(size)
-            .shadow(10.dp, CircleShape, ambientColor = Violet, spotColor = Violet)
+            .shadow(10.dp, CircleShape, ambientColor = Lime, spotColor = Lime)
             .clip(CircleShape)
             .background(Surface)
             .pointerInput(positions) {
@@ -466,7 +464,7 @@ private fun LetterWheel(
                     .offset { IntOffset((center.x - letterPx / 2).toInt(), (center.y - letterPx / 2).toInt()) }
                     .size(letterSize)
                     .clip(CircleShape)
-                    .background(if (isSelected) Violet else VioletTint)
+                    .background(if (isSelected) Lime else SurfaceSunken)
                     .semantics {
                         contentDescription = "Letter ${letters[index]}"
                         role = Role.Button
@@ -480,7 +478,7 @@ private fun LetterWheel(
                     fontSize = letterSp,
                     fontWeight = FontWeight.ExtraBold,
                     style = MaterialTheme.typography.titleLarge,
-                    color = if (isSelected) androidx.compose.ui.graphics.Color.White else Ink
+                    color = if (isSelected) OnLime else Ink
                 )
             }
         }
@@ -505,7 +503,7 @@ private fun HintButton(hintsLeft: Int, onClick: () -> Unit) {
                 .offset(x = 4.dp, y = (-4).dp)
                 .size(20.dp)
                 .clip(CircleShape)
-                .background(if (hintsLeft > 0) Violet else TrackNeutral)
+                .background(if (hintsLeft > 0) Lime else TrackNeutral)
                 .clearAndSetSemantics { }, // the button's own label already says how many are left
             contentAlignment = Alignment.Center
         ) {
@@ -513,7 +511,7 @@ private fun HintButton(hintsLeft: Int, onClick: () -> Unit) {
                 text = "$hintsLeft",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (hintsLeft > 0) androidx.compose.ui.graphics.Color.White else Muted
+                color = if (hintsLeft > 0) OnLime else Muted
             )
         }
     }
@@ -533,12 +531,12 @@ private fun ControlIcon(
         modifier = modifier
             .size(ControlSize)
             .clip(CircleShape)
-            .background(if (enabled) VioletTint else TrackNeutral)
+            .background(if (enabled) SurfaceSunken else TrackNeutral)
     ) {
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = label,
-            tint = if (enabled) Violet else Muted,
+            tint = if (enabled) Lime else Muted,
             modifier = Modifier.size(22.dp)
         )
     }

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.kasiguru.ui.theme.RedDeep
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -95,7 +96,7 @@ fun ErrorDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Red,
+                        containerColor = RedDeep,
                         contentColor = androidx.compose.ui.graphics.Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)

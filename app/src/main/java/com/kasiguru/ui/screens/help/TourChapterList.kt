@@ -31,7 +31,7 @@ import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.tour.TourChapter
 import com.kasiguru.ui.tour.TourChapterId
 import com.kasiguru.ui.tour.TourChapterState
@@ -93,12 +93,12 @@ private fun ChapterRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Space.sm)
     ) {
-        Surface(shape = Shapes.chip, color = Violet.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+        Surface(shape = Shapes.chip, color = Lime.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(id = Iconsax.Teacher),
                     contentDescription = null,
-                    tint = Violet,
+                    tint = Lime,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -145,11 +145,11 @@ private fun StateBadge(state: TourChapterState) {
         else -> return
     }
     Spacer(Modifier.size(Space.xs))
-    Surface(shape = Shapes.pill, color = Violet.copy(alpha = 0.12f)) {
+    Surface(shape = Shapes.pill, color = Lime.copy(alpha = 0.12f)) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Violet,
+            color = Lime,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }
@@ -166,7 +166,7 @@ private fun subtitleFor(chapter: TourChapter, state: TourChapterState, resumeSte
 /** The green tick shown against a finished chapter, kept out of the row so the row stays readable. */
 @Composable
 fun ChapterDoneTint(state: TourChapterState): androidx.compose.ui.graphics.Color =
-    if (state == TourChapterState.Done) Green else Violet
+    if (state == TourChapterState.Done) Green else Lime
 
 /** Convenience for callers that hold only an id. */
 fun chapterTitle(id: TourChapterId): String = chapterById(id)?.title ?: ""

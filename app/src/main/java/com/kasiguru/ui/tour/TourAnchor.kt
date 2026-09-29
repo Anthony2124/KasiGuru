@@ -23,25 +23,25 @@ import androidx.compose.ui.layout.onGloballyPositioned
  * reason it is a spotlight rather than a slideshow of pictures.
  */
 enum class TourAnchor {
-    // ── Learn ────────────────────────────────────────────────────────────────
-    /** Learn's primary action - the button that names whatever comes next. */
+    // ── Home ─────────────────────────────────────────────────────────────────
+    /** Home's primary action - the card or button that names whatever comes next. */
     ContinueAction,
 
-    /** The Gold streak pill in Learn's canopy. Pinned, so it cannot scroll out of view. */
+    /** The streak chip in Home's hero panel. */
     StreakBadge,
 
-    /** The notification bell in Learn's canopy. */
+    /** The notification bell in Home's hero panel. */
     NotificationBell,
 
-    /** The daily-goal ring in Learn's canopy. */
+    /** The daily-goal ring below Home's primary action. */
     DailyGoalRing,
 
     // ── The bar ──────────────────────────────────────────────────────────────
+    NavHome,
     NavLearn,
     NavPractice,
-    NavWords,
-    NavProgress,
-    NavProfile,
+    NavLibrary,
+    NavMe,
 
     // ── Dictionary ───────────────────────────────────────────────────────────
     DictSubmitBanner,
@@ -75,7 +75,7 @@ enum class TourAnchor {
  * Where each [TourAnchor] currently is on screen.
  *
  * The overlay is drawn at the navigation root; the things it points at live several layers down, in
- * `LearnScreen` and `KasiGuruBottomBar`. This is the bridge: anchored composables report their
+ * `HomeScreen` and `KasiGuruBottomBar`. This is the bridge: anchored composables report their
  * bounds up, the overlay reads them back down.
  *
  * Deliberately a plain composition-scoped holder rather than a Hilt singleton. These are root-space

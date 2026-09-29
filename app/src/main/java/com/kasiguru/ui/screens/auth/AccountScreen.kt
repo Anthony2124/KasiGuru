@@ -206,7 +206,7 @@ fun AccountScreen(
                                     text = "Step 2 of 2 · Sign in",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Violet
+                                    color = Lime
                                 )
                                 Spacer(Modifier.height(Space.xxs))
                             }
@@ -262,7 +262,7 @@ fun AccountScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Sms),
                                         contentDescription = null,
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -286,7 +286,7 @@ fun AccountScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Lock),
                                         contentDescription = null,
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -317,7 +317,7 @@ fun AccountScreen(
                                     TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
                                         Text(
                                             text = "Forgot password?",
-                                            color = Violet,
+                                            color = Lime,
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -354,7 +354,7 @@ fun AccountScreen(
                                 TextButton(onClick = { isSignInMode = !isSignInMode }) {
                                     Text(
                                         text = if (isSignInMode) "Create one" else "Sign in",
-                                        color = Violet,
+                                        color = Lime,
                                         fontWeight = FontWeight.Bold,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -425,7 +425,7 @@ private fun AuthSegmentedSwitcher(
                     .weight(1f)
                     .fillMaxHeight()
                     .clip(Shapes.pill)
-                    .background(if (isSignInMode) Violet else Color.Transparent)
+                    .background(if (isSignInMode) Lime else Color.Transparent)
                     .clickable { onModeChange(true) },
                 contentAlignment = Alignment.Center
             ) {
@@ -433,7 +433,7 @@ private fun AuthSegmentedSwitcher(
                     text = "Sign In",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSignInMode) Color.White else Muted
+                    color = if (isSignInMode) OnLime else Muted
                 )
             }
             Box(
@@ -441,7 +441,7 @@ private fun AuthSegmentedSwitcher(
                     .weight(1f)
                     .fillMaxHeight()
                     .clip(Shapes.pill)
-                    .background(if (!isSignInMode) Violet else Color.Transparent)
+                    .background(if (!isSignInMode) Lime else Color.Transparent)
                     .clickable { onModeChange(false) },
                 contentAlignment = Alignment.Center
             ) {
@@ -449,7 +449,7 @@ private fun AuthSegmentedSwitcher(
                     text = "Create Account",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (!isSignInMode) Color.White else Muted
+                    color = if (!isSignInMode) OnLime else Muted
                 )
             }
         }
@@ -478,7 +478,7 @@ private fun PersonalDetailsCard(
             text = "Step 1 of 2 · About you",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = Violet
+            color = Lime
         )
         Spacer(Modifier.height(Space.xxs))
         Text(
@@ -560,7 +560,7 @@ private fun PersonalDetailsCard(
         ) {
             Text(
                 text = "Already gave these before? Sign in to restore them",
-                color = Violet,
+                color = Lime,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -573,7 +573,7 @@ private fun DetailsFieldIcon(iconRes: Int) {
     Icon(
         painter = painterResource(id = iconRes),
         contentDescription = null,
-        tint = Violet,
+        tint = Lime,
         modifier = Modifier.size(20.dp)
     )
 }
@@ -610,13 +610,13 @@ private fun AuthBenefitRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Violet.copy(alpha = 0.1f)),
+                .background(Lime.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                tint = Violet,
+                tint = Lime,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -640,7 +640,7 @@ private fun AuthBenefitRow(
 private fun accountFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Surface,
     unfocusedContainerColor = Surface,
-    focusedBorderColor = Violet,
+    focusedBorderColor = Lime,
     unfocusedBorderColor = SurfaceSunken
 )
 

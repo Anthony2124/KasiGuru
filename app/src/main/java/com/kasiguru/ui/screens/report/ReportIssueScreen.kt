@@ -149,13 +149,13 @@ fun ReportIssueScreen(
                 )
                 if (!uiState.submittedReportId.isNullOrBlank()) {
                     Spacer(Modifier.height(Space.sm))
-                    Surface(shape = Shapes.pill, color = Violet.copy(alpha = 0.1f)) {
+                    Surface(shape = Shapes.pill, color = Lime.copy(alpha = 0.1f)) {
                         Text(
                             text = "Reference ID: #${uiState.submittedReportId?.take(8)}",
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Violet
+                            color = Lime
                         )
                     }
                 }
@@ -233,13 +233,13 @@ fun ReportIssueScreen(
 
                             Surface(
                                 shape = Shapes.tile,
-                                color = if (isSelected) Violet.copy(alpha = 0.12f) else Surface,
+                                color = if (isSelected) Lime.copy(alpha = 0.12f) else Surface,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { viewModel.onCategorySelected(cat) }
                                     .border(
                                         width = if (isSelected) 1.5.dp else 1.dp,
-                                        color = if (isSelected) Violet else SurfaceSunken,
+                                        color = if (isSelected) Lime else SurfaceSunken,
                                         shape = Shapes.tile
                                     )
                             ) {
@@ -257,13 +257,13 @@ fun ReportIssueScreen(
                                         Icon(
                                             painter = painterResource(id = categoryIcon),
                                             contentDescription = null,
-                                            tint = if (isSelected) Violet else Muted,
+                                            tint = if (isSelected) Lime else Muted,
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Text(
                                             text = cat,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) Violet else Ink,
+                                            color = if (isSelected) Lime else Ink,
                                             fontSize = 14.sp
                                         )
                                     }
@@ -271,7 +271,7 @@ fun ReportIssueScreen(
                                     RadioButton(
                                         selected = isSelected,
                                         onClick = { viewModel.onCategorySelected(cat) },
-                                        colors = RadioButtonDefaults.colors(selectedColor = Violet)
+                                        colors = RadioButtonDefaults.colors(selectedColor = Lime)
                                     )
                                 }
                             }
@@ -299,7 +299,7 @@ fun ReportIssueScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.Book),
                                     contentDescription = null,
-                                    tint = Violet,
+                                    tint = Lime,
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
@@ -328,7 +328,7 @@ fun ReportIssueScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.Edit),
                                 contentDescription = null,
-                                tint = Violet,
+                                tint = Lime,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -392,13 +392,13 @@ fun ReportIssueScreen(
                     if (uiState.photoUri == null) {
                         Surface(
                             shape = Shapes.tile,
-                            color = Violet.copy(alpha = 0.05f),
+                            color = Lime.copy(alpha = 0.05f),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { openPhotoPicker() }
                                 .border(
                                     width = 1.5.dp,
-                                    color = Violet.copy(alpha = 0.4f),
+                                    color = Lime.copy(alpha = 0.4f),
                                     shape = Shapes.tile
                                 )
                         ) {
@@ -413,13 +413,13 @@ fun ReportIssueScreen(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
-                                        .background(Violet.copy(alpha = 0.15f)),
+                                        .background(Lime.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = Iconsax.AddCircle),
                                         contentDescription = "Add photo",
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(26.dp)
                                     )
                                 }
@@ -427,7 +427,7 @@ fun ReportIssueScreen(
                                     text = "Add Screenshot / Photo Evidence *",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = Violet
+                                    color = Lime
                                 )
                                 Text(
                                     text = "Tap to choose an image from your gallery",
@@ -483,7 +483,7 @@ fun ReportIssueScreen(
                                 )
 
                                 TextButton(onClick = { openPhotoPicker() }) {
-                                    Text("Change Photo", color = Violet, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text("Change Photo", color = Lime, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 }
                             }
                         }
@@ -515,7 +515,7 @@ fun ReportIssueScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
-                                tint = Violet,
+                                tint = Lime,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -578,6 +578,6 @@ fun ReportIssueScreen(
 private fun reportFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Surface,
     unfocusedContainerColor = Surface,
-    focusedBorderColor = Violet,
+    focusedBorderColor = Lime,
     unfocusedBorderColor = SurfaceSunken
 )

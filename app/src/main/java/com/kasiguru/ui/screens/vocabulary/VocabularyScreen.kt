@@ -14,73 +14,80 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.ui.components.clay.ClaySurface
-import com.kasiguru.ui.components.clay.FloatingSearchBar
+import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
-import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.states.EmptyState
+import com.kasiguru.ui.components.states.LoadingState
+import com.kasiguru.ui.theme.BorderHairline
+import com.kasiguru.ui.theme.BrandLime
 import com.kasiguru.ui.theme.CategoryMetaData
 import com.kasiguru.ui.theme.CategoryRegistry
+import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
-import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.KasiguraninHeadword
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.Muted
-import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
-import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.util.audio.AudioPlayerManager
+import com.kasiguru.ui.theme.TrackNeutral
+import com.kasiguru.ui.theme.WidthClass
+import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.TourRevealInLazyGrid
 import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.util.audio.AudioPlayerManager
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 
 /**
- * Dictionary: a short canopy stating the corpus and how much of it is learned, over a sheet of
- * search, the word of the day, and the twelve category cards.
- *
- * The canopy is deliberately short (DESIGN.md: "short on Dictionary") — this screen's job is to get a
- * learner into a category fast, not to hold their attention the way Learn or Progress does.
+ * The dictionary as a screen of its own, pushed - from a notification, a help link or the guided
+ * tour. The Library tab shows the same [DictionaryContent] under its Words segment.
  */
 @Composable
 fun VocabularyScreen(
@@ -90,27 +97,92 @@ fun VocabularyScreen(
     onNavigateToSubmitWord: () -> Unit = {},
     viewModel: VocabularyViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedFilterCategory by remember { mutableStateOf("All") }
-    var dictionaryQuery by remember { mutableStateOf("") }
-    val dictionaryResults by viewModel.dictionarySearchResults.collectAsState()
+
+    GroundScaffold(
+        title = "Dictionary",
+        onBack = onNavigateBack,
+        pattern = GroundPattern.None,
+        actions = { DictionaryRefreshAction(isSyncing = isSyncing, onRefresh = viewModel::refreshFromCloud) },
+        content = {
+            DictionaryContent(
+                onNavigateToCategory = onNavigateToCategory,
+                onNavigateToWord = onNavigateToWord,
+                onNavigateToSubmitWord = onNavigateToSubmitWord,
+                header = { GroundTitleBlock(title = "Dictionary") },
+                viewModel = viewModel
+            )
+        }
+    )
+}
+
+/** Pulls the latest corpus now. A spinner while it runs, so a second tap cannot stack a second sync. */
+@Composable
+fun DictionaryRefreshAction(isSyncing: Boolean, onRefresh: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    if (isSyncing) {
+        CircularProgressIndicator(
+            modifier = Modifier
+                .padding(end = Space.sm)
+                .size(20.dp),
+            strokeWidth = 2.dp,
+            color = Lime
+        )
+    } else {
+        GroundIconButton(
+            iconRes = Iconsax.Refresh,
+            contentDescription = "Refresh the dictionary from the cloud",
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onRefresh()
+            }
+        )
+    }
+}
+
+/** Status hues the category tiles cycle through, so neighbouring tiles differ without new colours. */
+private val CategoryAccents = listOf(Lime, Info, Gold, Coral)
+
+/**
+ * The dictionary's body: one search field, the word of the day, Add a word, and the categories.
+ *
+ * Carries no bar or back button of its own, so it can sit under [VocabularyScreen]'s bar or inside
+ * the Library tab below its Words/Stories toggle; [header] is drawn as the first full-width item and
+ * scrolls away with the content.
+ *
+ * One search field does the work the old screen split between a category filter and a floating
+ * word search: it looks through every entry and every category at once, and says so plainly - with
+ * Jepjep curious - when nothing matches.
+ */
+@Composable
+fun DictionaryContent(
+    onNavigateToCategory: (String) -> Unit,
+    onNavigateToWord: (Int) -> Unit,
+    onNavigateToSubmitWord: () -> Unit,
+    modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
+    viewModel: VocabularyViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val search by viewModel.dictionarySearch.collectAsState()
+    var query by rememberSaveable { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayerManager(context) }
+    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
+    val gridState = rememberLazyGridState()
 
     DisposableEffect(Unit) {
         onDispose { audioPlayer.stopAudio() }
     }
 
-    val filterOptions = listOf("All", "Essentials", "Food", "Animals", "Body", "Numbers", "House", "Nature")
+    // The field's text survives a segment switch in Library; the view model's query must agree with it.
+    LaunchedEffect(Unit) { viewModel.onDictionarySearchQueryChange(query) }
 
     // The registry's twelve, plus any category the corpus actually contains that the registry has
     // never heard of. Rendering the registry alone meant a word filed under "General" -- which is
     // what the admin portal offers and what the sync falls back to -- had no card at all and could
-    // be reached only by typing its name into the search bar. CategoryRegistry.getMeta already
-    // returns usable metadata for an unknown name, so the extra card costs nothing.
+    // be reached only by typing its name into the search bar.
     val allCategoryMeta = remember(uiState.categories) {
         val known = CategoryRegistry.categories.map { it.name.lowercase() }.toSet()
         CategoryRegistry.categories +
@@ -119,22 +191,19 @@ fun VocabularyScreen(
                 .map { CategoryRegistry.getMeta(it) }
     }
 
-    val displayedCategories = remember(searchQuery, selectedFilterCategory, allCategoryMeta) {
-        allCategoryMeta.filter { meta ->
-            val matchesSearch = searchQuery.isBlank() ||
-                meta.name.contains(searchQuery, ignoreCase = true) ||
-                meta.description.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedFilterCategory == "All" ||
-                meta.name.contains(selectedFilterCategory, ignoreCase = true)
-            matchesSearch && matchesCategory
+    val trimmed = query.trim()
+    val searching = trimmed.isNotEmpty()
+    val matchingCategories = remember(trimmed, allCategoryMeta) {
+        if (trimmed.isEmpty()) allCategoryMeta
+        else allCategoryMeta.filter {
+            it.name.contains(trimmed, ignoreCase = true) || it.description.contains(trimmed, ignoreCase = true)
         }
     }
+    val searchSettled = search.query == trimmed
+    val wordResults = if (searchSettled) search.results else emptyList()
 
-    // Word of the Day was the alphabetically-first eligible word, recomputed only when the
-    // vocabulary list reference changed - the same word for every user, forever, until the
-    // dictionary itself changed. Seeding the pick by the epoch day gives a word that is stable
-    // for everyone on a given day and rotates the next, over a stable id-sorted list so the
-    // pick doesn't shift if Room's category/name ordering ever does.
+    // Word of the Day: seeded by the epoch day, so it is stable for everyone on a given day and
+    // rotates the next, over a stable id-sorted list.
     val featuredWord = remember(uiState.allVocabulary) {
         val eligible = uiState.allVocabulary
             .filter { it.kasiguranin.isNotBlank() && it.tagalog.isNotBlank() }
@@ -149,87 +218,62 @@ fun VocabularyScreen(
         uiState.totalLearnedCount.toFloat() / uiState.allVocabulary.size.toFloat()
     } else 0f
 
-    GroundScaffold(
-        title = "Dictionary",
-        subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
-        pattern = GroundPattern.Grid,
-        actions = {
-            if (isSyncing) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .padding(end = Space.sm)
-                        .size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = Violet
-                )
-            } else {
-                GroundIconButton(
-                    iconRes = Iconsax.Refresh,
-                    contentDescription = "Refresh the dictionary from the cloud",
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.refreshFromCloud()
-                    }
-                )
-            }
-        },
-        content = {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
-                ),
-                horizontalArrangement = Arrangement.spacedBy(Space.sm),
-                verticalArrangement = Arrangement.spacedBy(Space.sm)
-            ) {
-                item(span = { GridItemSpan(2) }) {
-                    GroundTitleBlock(
-                        title = "Dictionary",
-                        subtitle = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
-                        lead = {
-                            // The white gradient existed only to survive the violet canopy.
-                            KasiGuruProgressBar(
-                                progress = corpusProgress,
-                                modifier = Modifier.fillMaxWidth(),
-                                height = 6.dp,
-                                gradientColors = listOf(Violet, VioletDeep)
-                            )
-                        }
-                    )
-                }
+    // Index of each anchored item, for bringing it back on screen during the tour. Only meaningful
+    // while not searching, which is the state the tour always arrives in.
+    val base = if (header != null) 1 else 0
+    TourRevealInLazyGrid(gridState) { anchor ->
+        when (anchor) {
+            TourAnchor.DictWordOfDay -> base + 2
+            TourAnchor.DictSubmitBanner -> base + 3
+            else -> null
+        }
+    }
 
-                item(span = { GridItemSpan(2) }) {
-                    SubmitWordBanner(
-                        modifier = Modifier.tourAnchor(TourAnchor.DictSubmitBanner),onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onNavigateToSubmitWord()
-                    })
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        state = gridState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
+        ),
+        horizontalArrangement = Arrangement.spacedBy(Space.sm),
+        verticalArrangement = Arrangement.spacedBy(Space.sm)
+    ) {
+        if (header != null) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "header") { header() }
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }, key = "search") {
+            SearchField(
+                query = query,
+                onQueryChange = {
+                    query = it
+                    viewModel.onDictionarySearchQueryChange(it)
+                }
+            )
+        }
+
+        if (!searching) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "progress") {
+                Column(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "${uiState.totalLearnedCount} of ${uiState.allVocabulary.size} words learned",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted
+                    )
                     Spacer(Modifier.height(Space.xs))
-                }
-
-                item(span = { GridItemSpan(2) }) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search categories…") },
-                        leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Violet)
-                        },
+                    KasiGuruProgressBar(
+                        progress = corpusProgress,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = Shapes.tile,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Surface,
-                            unfocusedContainerColor = Surface,
-                            focusedBorderColor = Violet,
-                            unfocusedBorderColor = SurfaceSunken
-                        ),
-                        singleLine = true
+                        height = 6.dp
                     )
-                    Spacer(Modifier.height(Space.sm))
                 }
+            }
 
-                item(span = { GridItemSpan(2) }) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "word-of-day") {
+                if (uiState.isLoading && featuredWord == null) {
+                    LoadingState(label = "Loading the dictionary")
+                } else {
                     WordOfTheDayCard(
                         modifier = Modifier.tourAnchor(TourAnchor.DictWordOfDay),
                         kasiguranin = featuredWord?.kasiguranin ?: "singët",
@@ -239,9 +283,7 @@ fun VocabularyScreen(
                         },
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            if (featuredWord != null) {
-                                onNavigateToWord(featuredWord.id)
-                            }
+                            if (featuredWord != null) onNavigateToWord(featuredWord.id)
                         },
                         onPlayClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -252,134 +294,149 @@ fun VocabularyScreen(
                             }
                         }
                     )
-                    Spacer(Modifier.height(Space.md))
                 }
-
-                item(span = { GridItemSpan(2) }) {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(Space.xs),
-                        contentPadding = PaddingValues(vertical = 2.dp)
-                    ) {
-                        items(filterOptions) { filterName ->
-                            val isSelected = selectedFilterCategory == filterName
-                            Box(
-                                modifier = Modifier
-                                    .clip(Shapes.pill)
-                                    .background(if (isSelected) Violet else SurfaceSunken)
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        selectedFilterCategory = filterName
-                                    }
-                                    .padding(horizontal = Space.md, vertical = Space.xs)
-                            ) {
-                                Text(
-                                    text = filterName,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (isSelected) Color.White else Muted
-                                )
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(Space.md))
-                }
-
-                item(span = { GridItemSpan(2) }) {
-                    SectionHeading(text = "Categories")
-                    Spacer(Modifier.height(Space.sm))
-                }
-
-                items(displayedCategories, key = { it.name }) { meta ->
-                    val stats = uiState.categoryStats[meta.name] ?: CategoryProgressStats()
-                    CategoryCard(
-                        meta = meta,
-                        stats = stats,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onNavigateToCategory(meta.name)
-                        }
-                    )
-                }
-
             }
 
-            // Overlays the grid rather than pushing it - the grid stays scrollable underneath.
-            FloatingSearchBar(
-                query = dictionaryQuery,
-                onQueryChange = {
-                    dictionaryQuery = it
-                    viewModel.onDictionarySearchQueryChange(it)
-                },
-                results = dictionaryResults,
-                onResultClick = { word ->
-                    dictionaryQuery = ""
-                    viewModel.onDictionarySearchQueryChange("")
-                    onNavigateToWord(word.id)
-                },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(horizontal = Space.gutter)
-                    .padding(top = 64.dp)
-            )
+            item(span = { GridItemSpan(maxLineSpan) }, key = "add-word") {
+                AddWordRow(
+                    modifier = Modifier.tourAnchor(TourAnchor.DictSubmitBanner),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigateToSubmitWord()
+                    }
+                )
+            }
         }
+
+        if (matchingCategories.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "categories-heading") {
+                SectionHeading(text = "Categories", modifier = Modifier.padding(top = Space.sm))
+            }
+            itemsIndexed(matchingCategories, key = { _, meta -> "category-${meta.name}" }) { _, meta ->
+                val stats = uiState.categoryStats[meta.name] ?: CategoryProgressStats()
+                CategoryTile(
+                    meta = meta,
+                    stats = stats,
+                    accent = CategoryAccents[allCategoryMeta.indexOf(meta).coerceAtLeast(0) % CategoryAccents.size],
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigateToCategory(meta.name)
+                    }
+                )
+            }
+        }
+
+        if (searching) {
+            if (wordResults.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "words-heading") {
+                    SectionHeading(text = "Words", modifier = Modifier.padding(top = Space.sm))
+                }
+                items(wordResults, key = { "word-${it.id}" }, span = { GridItemSpan(maxLineSpan) }) { word ->
+                    WordResultRow(word = word, onClick = { onNavigateToWord(word.id) })
+                }
+            } else if (!searchSettled) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "searching") {
+                    LoadingState(label = "Searching")
+                }
+            } else if (matchingCategories.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "no-results") {
+                    EmptyState(
+                        pose = JepjepPose.Curious,
+                        title = "No words match \"$trimmed\"",
+                        message = "Try the Tagalog or English meaning, or check the spelling. If the word " +
+                            "really is missing, you can add it.",
+                        actionLabel = "Add a word",
+                        onAction = onNavigateToSubmitWord
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        placeholder = { Text("Search words and categories") },
+        leadingIcon = {
+            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Muted)
+        },
+        trailingIcon = if (query.isNotEmpty()) {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.CloseCircle),
+                        contentDescription = "Clear search",
+                        tint = Muted
+                    )
+                }
+            }
+        } else null,
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.pill,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Surface,
+            unfocusedContainerColor = Surface,
+            focusedBorderColor = Lime,
+            unfocusedBorderColor = BorderHairline,
+            focusedTextColor = Ink,
+            unfocusedTextColor = Ink,
+            cursorColor = Lime,
+            focusedPlaceholderColor = Faint,
+            unfocusedPlaceholderColor = Faint
+        ),
+        singleLine = true
     )
 }
 
 /**
- * The way into the community review queue, and the loudest thing on the Dictionary.
- *
- * The corpus is community-grown (PRODUCT.md: contributors submit words into a moderated queue), but
- * this used to be the very last item in the category grid - a 40dp icon and two lines of small text,
- * below twelve cards nobody scrolls past. It now opens the screen.
- *
- * Clay and violet on purpose: on a page made of a search field and a grid of categories this is the
- * only *action*, and DESIGN.md reserves clay for things you press. White text is safe here without
- * new measurement - Violet carries white at 6.00 in the measured table - and the icon disc can be
- * translucent because, unlike anything else on this screen, it has a genuinely vivid backdrop.
+ * The way into the community review queue. A quiet row, not a lime banner: the Words view is for
+ * finding a word, and lime on this screen would compete with nothing but still claim to be the thing
+ * to do.
  */
 @Composable
-private fun SubmitWordBanner(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    ClaySurface(
-        face = Violet,
-        lipColor = VioletDeep,
-        shape = Shapes.panel,
+private fun AddWordRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SoftCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline,
         onClick = onClick,
-        modifier = modifier.fillMaxWidth()
+        contentPadding = PaddingValues(Space.md)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(
-                modifier = Modifier.size(44.dp).clip(Shapes.chip).background(Color.White.copy(alpha = 0.18f)),
+                modifier = Modifier.size(44.dp).clip(Shapes.chip).background(Lime.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = Iconsax.Add),
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = Lime,
                     modifier = Modifier.size(22.dp)
                 )
             }
             Spacer(Modifier.width(Space.md))
             Column(Modifier.weight(1f)) {
+                Text(text = "Add a word", style = MaterialTheme.typography.titleMedium, color = Ink)
                 Text(
-                    text = "Submit a word",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
-                )
-                Text(
-                    text = "Add a Kasiguranin word you know to the community review queue",
+                    text = "Know a Kasiguranin word that is missing? Send it for review.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White
+                    color = Muted
                 )
             }
             Spacer(Modifier.width(Space.sm))
             Icon(
                 painter = painterResource(id = Iconsax.ArrowRight),
                 contentDescription = null,
-                tint = Color.White,
+                tint = Faint,
                 modifier = Modifier.size(18.dp)
             )
         }
     }
 }
+
 @Composable
 private fun WordOfTheDayCard(
     modifier: Modifier = Modifier,
@@ -391,27 +448,33 @@ private fun WordOfTheDayCard(
     SoftCard(
         modifier = modifier.fillMaxWidth(),
         shape = Shapes.panel,
+        border = BorderHairline,
         onClick = onClick
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(text = "Word of the day", style = MaterialTheme.typography.labelMedium, color = Muted)
                 Spacer(Modifier.height(2.dp))
-                Text(text = kasiguranin, style = KasiguraninHeadword.copy(fontSize = 26.sp, lineHeight = 30.sp), color = Violet)
-                Text(text = translation, style = MaterialTheme.typography.bodySmall, color = Faint)
+                Text(
+                    text = kasiguranin,
+                    style = KasiguraninHeadword.copy(fontSize = 28.sp, lineHeight = 32.sp),
+                    color = Ink
+                )
+                Text(text = translation, style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
+            // Audio is Info, not lime: lime is for the thing to do, and this is something to hear.
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Violet, VioletDeep)))
+                    .background(Info)
                     .clickable(onClick = onPlayClick),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = Iconsax.VolumeHigh),
                     contentDescription = "Play pronunciation",
-                    tint = Color.White,
+                    tint = RewardInk,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -419,67 +482,93 @@ private fun WordOfTheDayCard(
     }
 }
 
+/** A category: its icon on a tinted tile, its name, and how much of it is learned, in words and a bar. */
 @Composable
-private fun CategoryCard(meta: CategoryMetaData, stats: CategoryProgressStats, onClick: () -> Unit) {
-    val onGradient = if (meta.onGradientIsInk) RewardInk else Color.White
+private fun CategoryTile(
+    meta: CategoryMetaData,
+    stats: CategoryProgressStats,
+    accent: Color,
+    onClick: () -> Unit
+) {
+    val fraction = if (stats.totalWords > 0) stats.learnedWords.toFloat() / stats.totalWords else 0f
     SoftCard(
-        modifier = Modifier.fillMaxWidth().height(150.dp),
-        shape = Shapes.panel,
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline,
         onClick = onClick,
-        contentPadding = PaddingValues(0.dp)
+        contentPadding = PaddingValues(Space.md)
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.linearGradient(listOf(meta.startColor, meta.endColor)))
-                .padding(Space.md)
+            modifier = Modifier.size(40.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center
         ) {
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Box(
-                        modifier = Modifier.size(40.dp).clip(CircleShape).background(onGradient.copy(alpha = 0.22f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (meta.customDrawableRes != null) {
-                            androidx.compose.foundation.Image(
-                                painter = painterResource(id = meta.customDrawableRes),
-                                contentDescription = meta.name,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(id = meta.iconRes),
-                                contentDescription = null,
-                                tint = onGradient,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier.clip(Shapes.pill).background(onGradient.copy(alpha = 0.20f))
-                            .padding(horizontal = Space.xs, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = "${stats.totalWords} words",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = onGradient
-                        )
-                    }
-                }
-                Column {
-                    Text(
-                        text = meta.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = onGradient,
-                        maxLines = 2
-                    )
-                    Text(
-                        text = "${stats.learnedWords} learned",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = onGradient.copy(alpha = 0.85f)
-                    )
-                }
+            if (meta.customDrawableRes != null) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = meta.customDrawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Icon(
+                    painter = painterResource(id = meta.iconRes),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
+        Spacer(Modifier.height(Space.sm))
+        Text(
+            text = meta.name,
+            style = MaterialTheme.typography.titleSmall,
+            color = Ink,
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            text = "${stats.totalWords} words · ${stats.learnedWords} learned",
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(Space.xs))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(Shapes.pill)
+                .background(TrackNeutral)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .height(4.dp)
+                    .clip(Shapes.pill)
+                    .background(BrandLime)
+            )
+        }
+    }
+}
+
+@Composable
+private fun WordResultRow(word: VocabularyEntity, onClick: () -> Unit) {
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline,
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = Space.md, vertical = Space.sm)
+    ) {
+        Text(text = word.kasiguranin, style = MaterialTheme.typography.titleMedium, color = Ink)
+        Text(
+            text = listOf(word.tagalog, word.english).filter { it.isNotBlank() }.joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

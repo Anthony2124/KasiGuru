@@ -195,7 +195,7 @@ fun SubmitWordScreen(
                         label = { Text("Kasiguranin Word *") },
                         placeholder = { Text("e.g. apak, singët, lukag") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Book), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Book), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SubmitWordField),
                         singleLine = true,
@@ -210,7 +210,7 @@ fun SubmitWordScreen(
                         label = { Text("Tagalog Translation") },
                         placeholder = { Text("e.g. daras, langgam, gising") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Global), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Global), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -268,7 +268,7 @@ fun SubmitWordScreen(
                             readOnly = true,
                             label = { Text("Category") },
                             leadingIcon = {
-                                Icon(painter = painterResource(id = Iconsax.Element4Outline), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                                Icon(painter = painterResource(id = Iconsax.Element4Outline), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
                             },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryDropdown) },
                             modifier = Modifier.menuAnchor().fillMaxWidth(),
@@ -301,7 +301,7 @@ fun SubmitWordScreen(
                             readOnly = true,
                             label = { Text("Part of Speech") },
                             leadingIcon = {
-                                Icon(painter = painterResource(id = Iconsax.HashtagDown), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                                Icon(painter = painterResource(id = Iconsax.HashtagDown), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
                             },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPartOfSpeechDropdown) },
                             modifier = Modifier.menuAnchor().fillMaxWidth(),
@@ -414,7 +414,7 @@ fun SubmitWordScreen(
                         label = { Text("Your Name / Credit") },
                         placeholder = { Text("Enter your name") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Profile), contentDescription = null, tint = Violet, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Profile), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -430,13 +430,13 @@ fun SubmitWordScreen(
                     tone = ClayButtonTone.Primary,
                     modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SubmitButton),
                     leading = if (uiState.isLoading) {
-                        { CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp) }
+                        { CircularProgressIndicator(modifier = Modifier.size(18.dp), color = OnLime, strokeWidth = 2.dp) }
                     } else {
                         {
                             Icon(
                                 painter = painterResource(id = Iconsax.AddCircle),
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = OnLime,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -453,7 +453,7 @@ fun SubmitWordScreen(
 private fun submitFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Surface,
     unfocusedContainerColor = Surface,
-    focusedBorderColor = Violet,
+    focusedBorderColor = Lime,
     unfocusedBorderColor = SurfaceSunken
 )
 

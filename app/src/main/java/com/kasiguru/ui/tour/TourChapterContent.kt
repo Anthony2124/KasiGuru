@@ -14,19 +14,26 @@ import com.kasiguru.ui.theme.Radius
  * was written into copy it was wrong for months before anyone noticed.
  */
 
-/** Everything about the dictionary except the words themselves. */
+/**
+ * Everything about the dictionary except the words themselves.
+ *
+ * Walked on the pushed dictionary screen rather than on the Library tab. It is the same content, but
+ * a pushed screen unwinds cleanly back to the help page when the chapter ends, where a tab switch
+ * would leave the learner on Library with the help page stacked on top of it.
+ */
 val dictionaryChapter: TourChapter = TourChapter(
     id = TourChapterId.Dictionary,
     title = "The dictionary",
     subtitle = "Finding a word, hearing it, and adding one that is missing",
-    version = 1,
+    // 2: the dictionary moved into the Library tab, with one search field.
+    version = 2,
     stops = listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.VocabularyList.route),
             anchor = TourAnchor.DictWordOfDay,
             title = "A word each day",
-            body = "One word is offered every day. It starts covered - answer a short question about " +
-                "it and the meaning stays unlocked.",
+            body = "One word is offered every day. Tap it for the whole entry, or the speaker to hear " +
+                "how it is said.",
             corner = Radius.panel
         ),
         TourStop(
@@ -34,14 +41,15 @@ val dictionaryChapter: TourChapter = TourChapter(
             anchor = null,
             title = "Categories, and search",
             body = "Words are grouped by what they are about - the body, the house, the weather. The " +
-                "field above filters those groups, and the floating search looks through every entry."
+                "search field at the top looks through every entry and every group at once. You will " +
+                "find all of this under Words in the Library tab."
         ),
         TourStop(
             target = TourTarget.Fixed(Screen.VocabularyList.route),
             anchor = TourAnchor.DictSubmitBanner,
             title = "A word we are missing",
             body = "The dictionary is not finished, and it is not meant to be. If you know a word that " +
-                "is not here, this is where it starts its way in.",
+                "is not here, Add a word is where it starts its way in.",
             corner = Radius.panel
         )
     )
@@ -83,7 +91,8 @@ val lessonsChapter: TourChapter = TourChapter(
     id = TourChapterId.Lessons,
     title = "Lessons and practice",
     subtitle = "How the app works out what to show you next",
-    version = 1,
+    // 2: the primary action moved from Learn to Home.
+    version = 2,
     stops = listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.GameHub.route),
@@ -109,21 +118,28 @@ val lessonsChapter: TourChapter = TourChapter(
                 "recorded with our language experts."
         ),
         TourStop(
-            target = TourTarget.Fixed(Screen.Learn.route),
+            target = TourTarget.Fixed(Screen.Home.route),
             anchor = TourAnchor.ContinueAction,
             title = "Or just start here",
-            body = "Lessons themselves live behind this button. It works out what you are due and takes " +
-                "you straight into it, so you never have to plan a session yourself."
+            body = "This button on Home works out what you are due and takes you straight into it, so " +
+                "you never have to plan a session yourself. The full path of lessons is on Learn.",
+            corner = Radius.panel
         )
     )
 )
 
-/** Progress: badges, and what they mean on an account where almost all of them are still locked. */
+/**
+ * Progress: badges, and what they mean on an account where almost all of them are still locked.
+ *
+ * The badge wall is no longer a tab - it opens from Me - so the chapter pushes it like any other
+ * screen and unwinds back to wherever it was started from.
+ */
 val progressChapter: TourChapter = TourChapter(
     id = TourChapterId.Progress,
     title = "Progress and badges",
     subtitle = "What gets counted, and what each badge is waiting for",
-    version = 1,
+    // 2: badges moved under Me, and the filter covers every kind of badge.
+    version = 2,
     stops = listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.Achievements.route),
@@ -137,8 +153,8 @@ val progressChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.Achievements.route),
             anchor = TourAnchor.ProgressFilter,
             title = "Sorted by how you earn them",
-            body = "Some badges come from levelling up, some from steady daily practice, some from " +
-                "streaks. This narrows the wall to one kind at a time.",
+            body = "Some badges come from levelling up, some from words, streaks, games, stories or " +
+                "helping the dictionary grow. This narrows the wall to one kind at a time.",
             corner = Radius.pill
         ),
         TourStop(
@@ -146,24 +162,25 @@ val progressChapter: TourChapter = TourChapter(
             anchor = null,
             title = "A locked badge still tells you something",
             body = "Every badge you have not earned shows what it is waiting for, and how far along you " +
-                "already are. None of them is a mystery box."
+                "already are. None of them is a mystery box. Me shows the ones you earned most recently."
         )
     )
 )
 
-/** Profile and Settings: the two screens everything else hangs off. */
+/** Me and Settings: the two screens everything else hangs off. */
 val profileSettingsChapter: TourChapter = TourChapter(
     id = TourChapterId.ProfileSettings,
-    title = "Profile and settings",
+    title = "Me and settings",
     subtitle = "Your record, and the switches that change how the app behaves",
-    version = 1,
+    // 2: Profile and Progress merged into the Me tab.
+    version = 2,
     stops = listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.Profile.route),
             anchor = TourAnchor.ProfileExplore,
             title = "Everything else lives here",
-            body = "The leaderboard, Casiguran's cultural heritage, this guide, and what the project " +
-                "is. Profile is the way through to all of it.",
+            body = "Casiguran's cultural heritage, this guide, and what the project is. Your badges and " +
+                "the leaderboard sit just above. Me is the way through to all of it.",
             corner = Radius.panel
         ),
         TourStop(
@@ -193,7 +210,7 @@ val profileSettingsChapter: TourChapter = TourChapter(
             anchor = TourAnchor.SettingsReplayTutorial,
             title = "And you can always come back",
             body = "This row starts the short tour again. The longer chapters are on the help page in " +
-                "your profile, and none of them ever expire."
+                "Me, and none of them ever expire."
         )
     )
 )
@@ -201,12 +218,16 @@ val profileSettingsChapter: TourChapter = TourChapter(
 /**
  * Notifications and stories: the two places outside the daily plan worth a visit - one that fills
  * itself in as things happen, one that has been full since install.
+ *
+ * The stories stops use the pushed stories screen, for the same reason the dictionary chapter uses
+ * the pushed dictionary: it unwinds cleanly back to where the chapter began.
  */
 val inboxChapter: TourChapter = TourChapter(
     id = TourChapterId.Inbox,
     title = "Notifications and stories",
     subtitle = "Where reminders arrive, and where the folk tales live",
-    version = 1,
+    // 2: stories moved into the Library tab.
+    version = 2,
     stops = listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.Notifications.route),
@@ -227,15 +248,16 @@ val inboxChapter: TourChapter = TourChapter(
             anchor = TourAnchor.StoryShelf,
             title = "Folk tales, in three languages",
             body = "Every story is told in Kasiguranin, Tagalog and English side by side. Tap any word " +
-                "as you read to look it up without losing your place.",
+                "as you read to look it up without losing your place. They live under Stories in the " +
+                "Library tab.",
             corner = Radius.panel
         ),
         TourStop(
             target = TourTarget.Fixed(Screen.StoryList.route),
             anchor = null,
             title = "Know one we do not have?",
-            body = "The button above the shelf sends a story or poem in for review, the same way a " +
-                "missing word does."
+            body = "The Share a story or poem button sends one in for review, the same way a missing " +
+                "word does. A moderator reads it before it joins the shelf."
         )
     )
 )

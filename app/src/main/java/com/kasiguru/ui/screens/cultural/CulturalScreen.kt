@@ -56,7 +56,7 @@ fun CulturalScreen(
                     title = "Geographic Location",
                     description = "Casiguran is a coastal municipality situated in northern Aurora province, Luzon. It is bounded by the Sierra Madre mountain range to the west and the Pacific Ocean to the east.",
                     iconRes = Iconsax.Location,
-                    accentColor = Violet
+                    accentColor = Lime
                 )
 
                 HeritageInfoCard(
@@ -96,7 +96,7 @@ private fun HeritageInfoCard(
     // Gold and Coral measure below even the 3:1 non-text floor as a foreground on their own light
     // tint (1.65 and 2.03, measured) — DESIGN.md's "fills carry ink, never foregrounds" rule, so
     // those two get a solid fill with an ink icon instead of the tinted-chip treatment that works
-    // for Violet (6.00) and Green (4.25).
+    // for Lime (6.00) and Green (4.25).
     val isRewardFill = accentColor == Gold || accentColor == Coral
     SoftCard(modifier = Modifier.fillMaxWidth()) {
         Row(

@@ -30,8 +30,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.ProfileEntity
-import com.kasiguru.ui.components.CasiguranAvatarPortrait
-import com.kasiguru.ui.components.CasiguranResident
+import com.kasiguru.ui.components.brand.JepjepAvatar
+import com.kasiguru.ui.components.brand.JepjepAvatarPicker
+import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.GroundPattern
@@ -43,7 +44,7 @@ import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Red
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
 /**
  * "Who is using this device" - shown after Splash whenever more than one profile exists, and
@@ -115,12 +116,11 @@ fun ProfileSelectionScreen(
 
 @Composable
 private fun ProfileRow(profile: ProfileEntity, onClick: () -> Unit, onDelete: (() -> Unit)?) {
-    val resident = runCatching { CasiguranResident.valueOf(profile.residentName) }
-        .getOrDefault(CasiguranResident.TEACHER)
+    val avatar = JepjepAvatar.fromStored(profile.residentName)
 
     SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            CasiguranAvatarPortrait(resident = resident, size = 48.dp, showLevelRing = false)
+            JepjepAvatarPortrait(avatar = avatar, size = 48.dp)
             Spacer(Modifier.width(Space.sm))
             Column(Modifier.weight(1f)) {
                 Text(text = profile.name, style = MaterialTheme.typography.titleMedium, color = Ink)
@@ -144,18 +144,10 @@ private fun ProfileRow(profile: ProfileEntity, onClick: () -> Unit, onDelete: ((
 @Composable
 private fun AddProfileDialog(
     onDismiss: () -> Unit,
-    onConfirm: (name: String, resident: CasiguranResident) -> Unit
+    onConfirm: (name: String, avatar: JepjepAvatar) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    val choices = listOf(
-        CasiguranResident.STUDENT,
-        CasiguranResident.TEACHER,
-        CasiguranResident.ELDER,
-        CasiguranResident.SURFER,
-        CasiguranResident.MUSICIAN,
-        CasiguranResident.FARMER
-    )
-    var selected by remember { mutableStateOf(choices.first()) }
+    var selected by remember { mutableStateOf(JepjepAvatar.Default) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -170,22 +162,13 @@ private fun AddProfileDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(Space.sm))
-                Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-                    choices.forEach { resident ->
-                        CasiguranAvatarPortrait(
-                            resident = resident,
-                            size = 40.dp,
-                            showLevelRing = selected == resident,
-                            onClick = { selected = resident }
-                        )
-                    }
-                }
+                JepjepAvatarPicker(selected = selected, onSelect = { selected = it }, portraitSize = 52.dp)
             }
         },
         confirmButton = {
             TextButton(
                 onClick = { if (name.isNotBlank()) onConfirm(name.trim(), selected) }
-            ) { Text("Add", color = Violet) }
+            ) { Text("Add", color = Lime) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel", color = Red) }

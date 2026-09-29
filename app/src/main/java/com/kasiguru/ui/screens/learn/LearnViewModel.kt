@@ -140,8 +140,24 @@ data class LearnUiState(
             else -> "${wordsToReview(wordsDue)} still to review"
         }
 
-    /** The first activity not yet done — the one the FAB and the raised card point at. */
+    /** The first activity not yet done — the one Home's primary action points at. */
     val currentActivity: PathActivity? get() = activities.firstOrNull { !it.isDone }
+
+    /**
+     * Whether today has already counted toward the streak.
+     *
+     * The streak only advances once the day's quota is met, and doing so stamps `lastActiveDate`
+     * with today - so this is the stored fact, not a guess from XP.
+     */
+    val practisedToday: Boolean
+        get() = progress.lastActiveDate == LocalDate.now().toIsoString()
+
+    /**
+     * A streak that ends at midnight unless today counts. Home's Jepjep leads with this, because a
+     * lost streak is the one thing on the screen that cannot be made up tomorrow.
+     */
+    val streakAtRisk: Boolean
+        get() = progress.currentStreak > 0 && !practisedToday
 }
 
 @HiltViewModel

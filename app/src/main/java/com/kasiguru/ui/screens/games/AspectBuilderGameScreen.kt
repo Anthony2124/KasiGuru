@@ -52,7 +52,7 @@ fun AspectBuilderGameScreen(
         content = {
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Violet)
+                CircularProgressIndicator(color = Lime)
             }
             return@GroundScaffold
         }

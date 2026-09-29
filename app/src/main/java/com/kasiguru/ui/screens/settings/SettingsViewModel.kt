@@ -25,9 +25,6 @@ class SettingsViewModel @Inject constructor(
     val account: StateFlow<AccountState> = authRepository.accountState
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), authRepository.currentAccount())
 
-    val isDarkMode: StateFlow<Boolean> = userPreferencesRepository.isDarkMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
     val soundEnabled: StateFlow<Boolean> = userPreferencesRepository.soundEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
@@ -39,12 +36,6 @@ class SettingsViewModel @Inject constructor(
 
     val leaderboardAlerts: StateFlow<Boolean> = userPreferencesRepository.leaderboardAlerts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
-
-    fun toggleDarkMode(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferencesRepository.setDarkMode(enabled)
-        }
-    }
 
     fun toggleSoundEnabled(enabled: Boolean) {
         viewModelScope.launch {

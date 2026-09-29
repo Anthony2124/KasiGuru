@@ -1,21 +1,14 @@
 package com.kasiguru
 
 import android.os.Bundle
-import android.os.Build
-import android.Manifest
-import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.kasiguru.data.remote.FirestoreSyncManager
 import com.kasiguru.data.repository.FirestoreSyncRepository
-import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.ui.navigation.KasiGuruNavGraph
 import com.kasiguru.ui.theme.KasiGuruTheme
 import com.kasiguru.util.worker.StreakReminderWorker
@@ -32,24 +25,21 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var firestoreSyncRepository: FirestoreSyncRepository
 
-    @Inject
-    lateinit var userPreferencesRepository: UserPreferencesRepository
-
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // The app is dark only, so the system bars always get light icons, whatever the phone's theme.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
 
         // Deep link target from a notification tap (Phase 5).
         val deepLinkRoute = intent?.getStringExtra("deep_link_route")
 
-        // Android 13+: request notification permission so streak reminders work.
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        
+        // Notification permission is not asked for here: onboarding's reminders step asks when the
+        // learner says yes to reminders, and Settings asks when one is turned on.
+
         // Schedule daily background streak reminder notification
         StreakReminderWorker.scheduleDailyReminder(applicationContext)
 
@@ -62,13 +52,9 @@ class MainActivity : ComponentActivity() {
         firestoreSyncRepository.startRealtimeSync()
 
         setContent {
-            val isDarkMode by userPreferencesRepository.isDarkMode.collectAsState(initial = false)
-            KasiGuruTheme(darkTheme = isDarkMode) {
+            KasiGuruTheme {
                 KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
             }
         }
     }
-
-    private val requestNotificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* granted or denied; reminders degrade silently */ }
 }

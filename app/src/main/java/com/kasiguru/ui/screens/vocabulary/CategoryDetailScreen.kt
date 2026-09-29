@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
-import com.kasiguru.ui.theme.VioletDeep
+import com.kasiguru.ui.theme.LimeLip
 import com.kasiguru.ui.components.clay.FloatingSearchBar
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -70,7 +70,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.util.audio.AudioPlayerManager
 
 /**
@@ -147,7 +147,7 @@ fun CategoryDetailScreen(
                                 progress = if (totalWords == 0) 0f else learnedCount.toFloat() / totalWords,
                                 modifier = Modifier.fillMaxWidth(),
                                 height = 6.dp,
-                                gradientColors = listOf(Violet, VioletDeep)
+                                gradientColors = listOf(Lime, LimeLip)
                             )
                             Spacer(Modifier.height(Space.xs))
                             Text(
@@ -164,7 +164,7 @@ fun CategoryDetailScreen(
                         onValueChange = { searchQuery = it },
                         placeholder = { Text("Search in ${meta.name}…") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Violet)
+                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Lime)
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -183,7 +183,7 @@ fun CategoryDetailScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Surface,
                             unfocusedContainerColor = Surface,
-                            focusedBorderColor = Violet,
+                            focusedBorderColor = Lime,
                             unfocusedBorderColor = SurfaceSunken
                         ),
                         singleLine = true
@@ -277,7 +277,7 @@ private fun CategoryWordCard(
                 Icon(
                     painter = painterResource(id = Iconsax.VolumeHigh),
                     contentDescription = "Listen",
-                    tint = Violet,
+                    tint = Lime,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -319,7 +319,7 @@ private fun CategoryWordCard(
                     }
 
                     if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
-                        Text(text = "Meaning", style = MaterialTheme.typography.labelLarge, color = Violet)
+                        Text(text = "Meaning", style = MaterialTheme.typography.labelLarge, color = Lime)
                         Spacer(Modifier.height(Space.xxs))
                         if (vocab.meaningEnglish.isNotEmpty()) {
                             Text(text = vocab.meaningEnglish, style = MaterialTheme.typography.bodyMedium, color = Ink)
@@ -331,7 +331,7 @@ private fun CategoryWordCard(
                     }
 
                     if (vocab.neutralForm.isNotEmpty()) {
-                        Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Violet)
+                        Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Lime)
                         Spacer(Modifier.height(Space.xs))
                         AspectRow("Neutral (infinitive)", vocab.neutralForm)
                         AspectRow("Imperfective (present)", vocab.imperfectiveForm)

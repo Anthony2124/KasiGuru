@@ -69,7 +69,6 @@ import com.kasiguru.domain.wordsearch.PlacedWord
 import com.kasiguru.domain.wordsearch.WordSearchPuzzle
 import com.kasiguru.ui.components.AudioPlayButton
 import com.kasiguru.ui.components.CasiguranBackdrop
-import com.kasiguru.ui.components.PhotoCredit
 import com.kasiguru.ui.components.backdropPill
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameOverView
@@ -78,8 +77,12 @@ import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.components.rememberGameExitGuard
-import com.kasiguru.ui.theme.CasiguranPhoto
-import com.kasiguru.ui.theme.CasiguranPhotos
+import com.kasiguru.ui.theme.VocabSea
+import com.kasiguru.ui.theme.Cream
+import com.kasiguru.ui.theme.Olive
+import com.kasiguru.ui.theme.Info
+import com.kasiguru.ui.theme.OnLime
+import com.kasiguru.ui.theme.Scenery
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.CoralDeep
 import com.kasiguru.ui.theme.Gold
@@ -94,9 +97,9 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeLip
+import com.kasiguru.ui.theme.LimeTint
 import com.kasiguru.util.audio.AudioPlayerManager
 import kotlin.math.PI
 import kotlin.math.abs
@@ -109,19 +112,19 @@ import kotlin.math.sin
 private data class WordHue(val fill: Color, val letter: Color)
 
 /**
- * One hue per found word, in the order found. Gold and Coral carry Ink, never white (DESIGN.md's
- * third colour rule); Red is left out because in this app it means "wrong".
+ * One hue per found word, in the order found. The bright fills carry the dark reward ink and the
+ * deep ones carry white; Red is left out because in this app it means "wrong".
  */
 @Composable
 private fun wordHues(): List<WordHue> = listOf(
-    WordHue(Violet, Color.White),
+    WordHue(Lime, OnLime),
     WordHue(Coral, RewardInk),
-    WordHue(Green, Color.White),
+    WordHue(Info, RewardInk),
     WordHue(Gold, RewardInk),
-    WordHue(VioletDeep, Color.White),
-    WordHue(CoralDeep, RewardInk),
-    WordHue(GoldDeep, RewardInk),
-    WordHue(Ink, Surface)
+    WordHue(Olive, Color.White),
+    WordHue(Cream, RewardInk),
+    WordHue(VocabSea, RewardInk),
+    WordHue(LimeLip, Color.White)
 )
 
 @Composable
@@ -154,10 +157,10 @@ fun WordSearchGameScreen(
             val puzzle = uiState.puzzle
             when {
                 uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
+                    CircularProgressIndicator(color = Lime)
                 }
                 uiState.isUnavailable || puzzle == null -> GameUnavailableState(
-                    accentColor = Violet,
+                    accentColor = Lime,
                     onBack = onNavigateBack,
                     title = "Not enough words for this level yet",
                     message = "This category needs more short words before this grid can be built. " +
@@ -198,9 +201,9 @@ private fun PlayingState(
     onCellTapped: (GridCell) -> Unit,
     onPlayWord: (Int) -> Unit
 ) {
-    val photo = CasiguranPhotos.forCategory(uiState.category)
-    CasiguranBackdrop(photo) {
-        PlayingContent(uiState, puzzle, photo, onCellCrossed, onLineSelected, onCellTapped, onPlayWord)
+    val scene = Scenery.forCategory(uiState.category)
+    CasiguranBackdrop(scene) {
+        PlayingContent(uiState, puzzle, onCellCrossed, onLineSelected, onCellTapped, onPlayWord)
     }
 }
 
@@ -208,7 +211,6 @@ private fun PlayingState(
 private fun PlayingContent(
     uiState: WordSearchUiState,
     puzzle: WordSearchPuzzle,
-    photo: CasiguranPhoto,
     onCellCrossed: () -> Unit,
     onLineSelected: (GridCell, GridCell) -> Unit,
     onCellTapped: (GridCell) -> Unit,
@@ -243,8 +245,8 @@ private fun PlayingContent(
             label = "Found $found of $total",
             progress = found / total.toFloat(),
             score = found,
-            accentStart = Violet,
-            accentEnd = VioletDeep
+            accentStart = Lime,
+            accentEnd = LimeLip
         )
         Spacer(Modifier.height(Space.sm))
         StatusLine(uiState)
@@ -292,9 +294,7 @@ private fun PlayingContent(
             }
         }
 
-        // Required by the photo's licence wherever it is shown.
         Spacer(Modifier.height(Space.lg))
-        PhotoCredit(photo)
     }
 }
 
@@ -406,13 +406,13 @@ private fun LetterGrid(
                                 .clip(RoundedCornerShape(tile * 0.28f))
                                 .background(
                                     when {
-                                        isSelected -> VioletTint
+                                        isSelected -> LimeTint
                                         hue != null -> hue.fill
                                         else -> TrackNeutral
                                     }
                                 )
                                 .then(
-                                    if (isSelected) Modifier.border(2.5.dp, Violet, RoundedCornerShape(tile * 0.28f))
+                                    if (isSelected) Modifier.border(2.5.dp, Lime, RoundedCornerShape(tile * 0.28f))
                                     else Modifier
                                 )
                                 // No pointer click: the grid's drag handler owns touch. TalkBack's

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -39,13 +40,14 @@ import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
-import com.kasiguru.ui.theme.VioletShadow
+import com.kasiguru.ui.theme.TrackNeutral
+import com.kasiguru.ui.theme.ShadowTint
 
 /** How far the sheet rides up into the canopy. One value, so every screen overlaps identically. */
 val SheetOverlap: Dp = 26.dp
 
 /**
- * The structural spine of the app: a violet **canopy** with a white **sheet** overlapping upward
+ * The structural spine of Home: a forest-green **canopy** with a dark **sheet** overlapping upward
  * into it.
  *
  * The canopy carries who you are and where you stand today. The sheet carries the work. Having one
@@ -69,8 +71,7 @@ fun CanopyScaffold(
     canopyContent: @Composable ColumnScope.() -> Unit,
     sheetContent: @Composable BoxScope.() -> Unit
 ) {
-    // The canopy is violet in both themes, so its status-bar icons are always light. This used to be
-    // forced app-wide from Theme.kt on the assumption every screen had a canopy behind the status bar.
+    // The canopy is dark forest green, so its status-bar icons are light.
     com.kasiguru.ui.theme.StatusBarIcons(dark = false)
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -131,7 +132,8 @@ fun CanopyIconButton(
 }
 
 /**
- * The default content surface: white, one diffuse violet-tinted shadow, no lip.
+ * The default content surface: a dark card (#141414) on night, separated by colour and a 1 dp
+ * hairline rather than a shadow — shadows barely read on a near-black ground. No lip.
  *
  * Deliberately *not* clay. Clay is reserved for things you earn or press — podium blocks, badges, the
  * FAB, the primary button. Building ordinary content out of clay is what tips a playful interface into
@@ -145,7 +147,8 @@ fun SoftCard(
     modifier: Modifier = Modifier,
     shape: CornerBasedShape = Shapes.panel,
     color: Color = Surface,
-    elevation: Dp = 8.dp,
+    elevation: Dp = 0.dp,
+    border: Color? = TrackNeutral,
     onClick: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(Space.md),
     artwork: (@Composable BoxScope.() -> Unit)? = null,
@@ -165,11 +168,12 @@ fun SoftCard(
             .shadow(
                 elevation = elevation,
                 shape = shape,
-                ambientColor = VioletShadow,
-                spotColor = VioletShadow
+                ambientColor = ShadowTint,
+                spotColor = ShadowTint
             )
             .clip(shape)
             .background(color)
+            .then(if (border != null) Modifier.border(1.dp, border, shape) else Modifier)
             .then(
                 if (onClick != null) Modifier.clickable(
                     interactionSource = interactionSource,

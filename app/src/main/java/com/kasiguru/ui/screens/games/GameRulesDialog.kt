@@ -51,16 +51,11 @@ import com.kasiguru.ui.theme.RedTint
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
-/**
- * [GameRulesRegistry] is a plain data object built once at class-load time, outside composition, so
- * its Violet gradients can't reference the theme-reactive tokens — same reasoning as
- * `CategoryMetaData.kt`'s `FixedViolet`. Kept local rather than shared since each file's registry is
- * itself the single place that should ever reference it.
- */
-private val FixedViolet = Color(0xFF5B4CDB)
-private val FixedVioletDeep = Color(0xFF4034A8)
+/** The olive gradient used for the games that are not gold or coral. White text 7.1 and up. */
+private val FixedForest = com.kasiguru.ui.theme.Olive
+private val FixedForestDeep = com.kasiguru.ui.theme.OliveDeep
 
 data class GameRuleInfo(
     val gameType: String,
@@ -70,7 +65,7 @@ data class GameRuleInfo(
     val unlockStars: Int,
     val rules: List<String>,
     val gradient: List<Color>,
-    /** Ink on light gradients (Gold, Coral); white on the deep Violet gradient. See DESIGN.md. */
+    /** Ink on light gradients (Gold, Coral); white on the deep Lime gradient. See DESIGN.md. */
     val onGradientIsInk: Boolean = false
 )
 
@@ -87,7 +82,7 @@ object GameRulesRegistry {
                 "Consecutive correct matches build a Combo Multiplier (x2, x3 XP!).",
                 "Earn up to +100 XP per round."
             ),
-            gradient = listOf(FixedViolet, FixedVioletDeep)
+            gradient = listOf(FixedForest, FixedForestDeep)
         ),
         "fill_blank" to GameRuleInfo(
             gameType = "fill_blank",
@@ -142,7 +137,7 @@ object GameRulesRegistry {
                 "Tap word blocks in order to construct authentic sentences.",
                 "Earn +150 XP for perfect syntax construction!"
             ),
-            gradient = listOf(FixedViolet, FixedVioletDeep)
+            gradient = listOf(FixedForest, FixedForestDeep)
         ),
         "reverse_match" to GameRuleInfo(
             gameType = "reverse_match",
@@ -169,7 +164,7 @@ object GameRulesRegistry {
                 "Levels 1-10 run across and down, 11-20 add diagonals, 21-30 go any direction, even backwards.",
                 "Find every word with no wrong lines for three stars."
             ),
-            gradient = listOf(FixedViolet, FixedVioletDeep)
+            gradient = listOf(FixedForest, FixedForestDeep)
         ),
         com.kasiguru.util.Constants.Games.WORD_WHEEL to GameRuleInfo(
             gameType = com.kasiguru.util.Constants.Games.WORD_WHEEL,
@@ -270,7 +265,7 @@ fun GameRulesDialog(
                                     .padding(top = 7.dp)
                                     .size(5.dp)
                                     .clip(CircleShape)
-                                    .background(Violet)
+                                    .background(Lime)
                             )
                             Text(text = rule, style = MaterialTheme.typography.bodySmall, color = Muted)
                         }

@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.VioletShadow
+import com.kasiguru.ui.theme.ShadowTint
 
 /**
  * KasiGuru's third surface family, after **Soft** (ordinary content) and **Clay** (things you earn or
@@ -64,8 +64,8 @@ fun GlassPanel(
             .shadow(
                 elevation = 14.dp,
                 shape = shape,
-                ambientColor = VioletShadow,
-                spotColor = VioletShadow
+                ambientColor = ShadowTint,
+                spotColor = ShadowTint
             )
             .clip(shape)
     ) {

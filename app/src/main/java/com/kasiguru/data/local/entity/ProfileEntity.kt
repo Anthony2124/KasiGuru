@@ -25,7 +25,7 @@ data class ProfileEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    /** [com.kasiguru.ui.components.CasiguranResident] name, e.g. "STUDENT" - see ResidentIcons. */
+    /** [com.kasiguru.ui.components.brand.JepjepAvatar] name, e.g. "SCHOLAR"; older profiles hold a legacy resident name ("STUDENT"), which JepjepAvatar.fromStored maps. */
     val residentName: String,
     val createdAt: Long = System.currentTimeMillis(),
     val isActive: Boolean = false

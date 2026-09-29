@@ -270,13 +270,13 @@ fun AccountSuspendedScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Edit),
                                         contentDescription = null,
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
                                         text = "Update Appeal",
-                                        color = Violet,
+                                        color = Lime,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -363,8 +363,8 @@ fun AccountSuspendedScreen(
                                         showAppealDialog = true
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Violet,
-                                        contentColor = Color.White
+                                        containerColor = Lime,
+                                        contentColor = OnLime
                                     ),
                                     shape = Shapes.pill,
                                     contentPadding = PaddingValues(horizontal = Space.md, vertical = 6.dp)
@@ -390,8 +390,8 @@ fun AccountSuspendedScreen(
                     // No appeal has been submitted yet
                     Surface(
                         shape = Shapes.tile,
-                        color = Violet.copy(alpha = 0.07f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Violet.copy(alpha = 0.15f)),
+                        color = Lime.copy(alpha = 0.07f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = 0.15f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -405,14 +405,14 @@ fun AccountSuspendedScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = null,
-                                    tint = Violet,
+                                    tint = Lime,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
                                     text = "Believe this is a mistake?",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = Violet
+                                    color = Lime
                                 )
                             }
                             Text(
@@ -428,8 +428,8 @@ fun AccountSuspendedScreen(
                                     showAppealDialog = true
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Violet,
-                                    contentColor = Color.White
+                                    containerColor = Lime,
+                                    contentColor = OnLime
                                 ),
                                 shape = Shapes.pill,
                                 modifier = Modifier
@@ -460,9 +460,9 @@ fun AccountSuspendedScreen(
                 onClick = onSignOut,
                 enabled = !isSigningOut,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Red,
+                    containerColor = RedDeep,
                     contentColor = Color.White,
-                    disabledContainerColor = Red.copy(alpha = 0.4f),
+                    disabledContainerColor = RedDeep.copy(alpha = 0.4f),
                     disabledContentColor = Color.White.copy(alpha = 0.6f)
                 ),
                 modifier = Modifier
@@ -524,13 +524,13 @@ fun AccountSuspendedScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Violet.copy(alpha = 0.12f)),
+                                .background(Lime.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 painter = painterResource(id = Iconsax.Edit),
                                 contentDescription = null,
-                                tint = Violet,
+                                tint = Lime,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -571,7 +571,7 @@ fun AccountSuspendedScreen(
                         isError = (hasAttemptedSubmit && appealInput.trim().length < 10) || appealError != null,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Violet,
+                            focusedBorderColor = Lime,
                             unfocusedBorderColor = BorderHairline,
                             errorBorderColor = Red
                         )
@@ -635,17 +635,17 @@ fun AccountSuspendedScreen(
                             },
                             enabled = !isSubmittingAppeal && appealInput.trim().length >= 10,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Violet,
-                                contentColor = Color.White,
-                                disabledContainerColor = Violet.copy(alpha = 0.4f),
-                                disabledContentColor = Color.White.copy(alpha = 0.6f)
+                                containerColor = Lime,
+                                contentColor = OnLime,
+                                disabledContainerColor = Lime.copy(alpha = 0.4f),
+                                disabledContentColor = OnLime.copy(alpha = 0.6f)
                             ),
                             shape = Shapes.pill
                         ) {
                             if (isSubmittingAppeal) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(16.dp),
-                                    color = Color.White,
+                                    color = OnLime,
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(Modifier.width(8.dp))

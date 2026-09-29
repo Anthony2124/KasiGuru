@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.CanopyBottom
 import com.kasiguru.ui.theme.CanopyTop
 import com.kasiguru.ui.theme.Green
@@ -55,7 +56,7 @@ import com.kasiguru.ui.theme.Surface
  *
  * @param cover optional artwork. Adrian authors this; the expected asset is `story_cover_<id>`, 3:2,
  *   rendered at roughly 160x107dp on the shelf and gutter-width on the Stories screen. With it absent
- *   the violet field plus the page count is a finished cover, not a placeholder - which is the state
+ *   a Casiguran scene (see [rememberStoryCoverRes]) plus the title is a finished cover - which is the state
  *   every story ships in today.
  */
 /**
@@ -73,6 +74,9 @@ fun rememberStoryCoverRes(storyId: Int): Int? {
         val name = "story_cover_$storyId"
         context.resources.getIdentifier(name, "drawable", context.packageName)
             .takeIf { it != 0 }
+            // Until a story has its own cover, it borrows one of Adrian's Casiguran scenes, so the
+            // shelf reads as places rather than as a row of identical green fields.
+            ?: com.kasiguru.ui.theme.Scenery.forIndex(storyId).res
     }
 }
 
@@ -110,7 +114,7 @@ fun StoryCoverCard(
                         if (isUnlocked) {
                             Brush.linearGradient(listOf(CanopyTop, CanopyBottom))
                         } else {
-                            Brush.linearGradient(listOf(Muted, Muted))
+                            Brush.linearGradient(listOf(SurfaceSunken, SurfaceSunken))
                         }
                     )
             ) {
@@ -119,6 +123,8 @@ fun StoryCoverCard(
                         painter = painterResource(id = cover),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        // Locked stories keep their place but sit back in the dark.
+                        alpha = if (isUnlocked) 1f else 0.35f,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

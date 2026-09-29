@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,6 +23,12 @@ import javax.inject.Inject
 data class CategoryProgressStats(
     val totalWords: Int = 0,
     val learnedWords: Int = 0
+)
+
+/** One settled dictionary search: the trimmed [query] and the words it found. */
+data class DictionarySearch(
+    val query: String = "",
+    val results: List<VocabularyEntity> = emptyList()
 )
 
 data class VocabularyUiState(
@@ -76,6 +83,22 @@ class VocabularyViewModel @Inject constructor(
             if (query.isBlank()) flowOf(emptyList()) else vocabularyRepository.searchVocabulary(query.trim())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * The same search, paired with the query it answers.
+     *
+     * The results arrive 300ms behind the keystrokes, so an empty list on its own cannot tell "no word
+     * matches" from "not searched yet". The dictionary's no-results state waits until [query] catches
+     * up with what is in the field, so Jepjep does not flash up on every keystroke.
+     */
+    val dictionarySearch: StateFlow<DictionarySearch> = searchQuery
+        .debounce(300)
+        .flatMapLatest { raw ->
+            val query = raw.trim()
+            if (query.isBlank()) flowOf(DictionarySearch())
+            else vocabularyRepository.searchVocabulary(query).map { DictionarySearch(query, it) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DictionarySearch())
 
     init {
         loadData()

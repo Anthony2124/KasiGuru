@@ -1,173 +1,99 @@
 package com.kasiguru.ui.screens.leaderboard
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.LeaderboardEntity
-import com.kasiguru.ui.components.MascotOwlSlot
-import com.kasiguru.ui.theme.Ink
-import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.components.brand.JepjepAvatar
+import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
+import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
-import com.kasiguru.ui.components.clay.ClaySurface
-import com.kasiguru.ui.components.clay.GlassChip
 import com.kasiguru.ui.components.clay.SegmentedToggle
 import com.kasiguru.ui.components.clay.SoftCard
-import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.states.EmptyState
+import com.kasiguru.ui.components.states.LoadingState
+import com.kasiguru.ui.theme.BorderHairline
+import com.kasiguru.ui.theme.BrandLime
+import com.kasiguru.ui.theme.Coral
+import com.kasiguru.ui.theme.Faint
+import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.LimeTint
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.RewardInk
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.SurfaceSunken
+import com.kasiguru.ui.theme.TierBronze
+import com.kasiguru.ui.theme.TierGold
+import com.kasiguru.ui.theme.TierSilver
 
+/**
+ * Where the learner stands. Real rankings only: every row comes from the server-maintained public
+ * leaderboard (cached for offline), and an empty board says so instead of inventing players.
+ *
+ * Segmented period, then your own rank card with your avatar, then the list. The top three carry a
+ * gold, silver or bronze rank disc - with the number on it, so the medal is never colour alone.
+ */
 @Composable
 fun LeaderboardScreen(
     onNavigateBack: () -> Unit,
     viewModel: LeaderboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    // The ViewModel keys off these exact strings; the segmented control shows shorter labels so
-    // three options plus a rounded track don't crowd or wrap "Streak Masters" at typical widths.
+    // The ViewModel keys off these exact strings; the toggle shows shorter labels.
     val filterKeys = listOf("All-Time XP", "Weekly XP", "Streak Masters")
-    val filterLabels = listOf("All-Time", "This Week", "Streaks")
+    val filterLabels = listOf("All-time", "This week", "Streaks")
+    val selectedFilterIndex = filterKeys.indexOf(uiState.selectedFilter).coerceAtLeast(0)
+    val byStreak = uiState.selectedFilter == "Streak Masters"
 
     GroundScaffold(
-        title = "Kasiguranin Champions",
-        subtitle = "Climb the rankings with daily learning streaks!",
+        title = "Leaderboard",
         onBack = onNavigateBack,
-        pattern = GroundPattern.Arcs,
+        pattern = GroundPattern.None,
         content = {
-            if (uiState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Violet)
-                }
-                return@GroundScaffold
-            }
-
-            val list = uiState.leaderboard
-            val top3 = list.take(3)
-            val rest = if (list.size > 3) list.drop(3) else emptyList()
-            val selectedFilterIndex = filterKeys.indexOf(uiState.selectedFilter).coerceAtLeast(0)
-
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = Space.gutter, end = Space.gutter, top = Space.md, bottom = Space.navBarClearance
+                    start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
                 ),
-                verticalArrangement = Arrangement.spacedBy(Space.md)
+                verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
-                item {
-                    GroundTitleBlock(
-                        title = "Kasiguranin Champions",
-                        subtitle = "Climb the rankings with daily learning streaks!",
-                        // Was a GlassChip tucked into the canopy's bottom corner. Given a real surface
-                        // it can say more and stay readable while the list scrolls under the bar.
-                        lead = {
-                            uiState.currentUserEntry?.let { userEntry ->
-                                SoftCard(modifier = Modifier.fillMaxWidth()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            painter = painterResource(id = Iconsax.FlashBold),
-                                            contentDescription = null,
-                                            tint = Violet,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(Modifier.width(Space.sm))
-                                        Text(
-                                            text = "You are #${uiState.currentUserRank}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Ink,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = "${userEntry.totalXp} XP",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = Muted
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    )
+                item(key = "title") {
+                    GroundTitleBlock(title = "Leaderboard", subtitle = "Learners of Kasiguranin, ranked")
                 }
-                uiState.currentUserEntry?.let { userEntry ->
-                    item {
-                        ClaySurface(face = Gold, lipColor = GoldDeep, modifier = Modifier.fillMaxWidth()) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(60.dp).clip(CircleShape).background(Color.White),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    MascotOwlSlot(size = 44.dp)
-                                }
-                                Spacer(Modifier.height(Space.xs))
-                                Text(
-                                    text = userEntry.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = RewardInk
-                                )
-                                Spacer(Modifier.height(Space.sm))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = "${userEntry.totalXp}",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = RewardInk
-                                        )
-                                        Text(
-                                            text = "Total XP",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = RewardInk.copy(alpha = 0.7f)
-                                        )
-                                    }
-                                    Box(Modifier.width(1.dp).height(36.dp).background(RewardInk.copy(alpha = 0.15f)))
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = userEntry.levelTitle,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = RewardInk
-                                        )
-                                        Text(
-                                            text = "Rank #${uiState.currentUserRank}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = RewardInk.copy(alpha = 0.7f)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
+                item(key = "filter") {
                     SegmentedToggle(
                         options = filterLabels,
                         selectedIndex = selectedFilterIndex,
@@ -176,215 +102,141 @@ fun LeaderboardScreen(
                     )
                 }
 
-                if (top3.isNotEmpty()) {
-                    item { Top3PodiumView(top3 = top3) }
+                if (uiState.isLoading) {
+                    item(key = "loading") { LoadingState(label = "Loading the rankings") }
+                    return@LazyColumn
                 }
 
-                item {
-                    Text(
-                        text = "Top Learners (${list.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Ink
+                item(key = "me") {
+                    MyRankCard(
+                        entry = uiState.currentUserEntry,
+                        rank = uiState.currentUserRank,
+                        avatarId = uiState.currentUserEntry?.avatarIconId ?: uiState.myAvatarId,
+                        byStreak = byStreak
                     )
                 }
 
-                itemsIndexed(rest, key = { _, item -> item.id }) { index, learner ->
-                    RankedLearnerRow(rank = index + 4, learner = learner)
+                if (uiState.leaderboard.isEmpty()) {
+                    item(key = "empty") {
+                        EmptyState(
+                            pose = JepjepPose.Curious,
+                            title = "No one ranked yet",
+                            message = "Rankings appear once signed-in learners start earning XP. Yours " +
+                                "could be the first name here."
+                        )
+                    }
+                } else {
+                    itemsIndexed(uiState.leaderboard, key = { _, item -> item.id }) { index, learner ->
+                        LeaderRow(rank = index + 1, learner = learner, byStreak = byStreak)
+                    }
                 }
             }
         }
     )
 }
 
+/** Your own standing, or - for a learner not on the board - why not, without a made-up rank. */
 @Composable
-private fun Top3PodiumView(top3: List<LeaderboardEntity>) {
-    val rank1 = top3.getOrNull(0)
-    val rank2 = top3.getOrNull(1)
-    val rank3 = top3.getOrNull(2)
-
-    Row(
+private fun MyRankCard(entry: LeaderboardEntity?, rank: Int, avatarId: Int?, byStreak: Boolean) {
+    SoftCard(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Space.xs),
-        verticalAlignment = Alignment.Bottom
+        shape = Shapes.tile,
+        border = BrandLime,
+        color = LimeTint
     ) {
-        rank2?.let { learner ->
-            PodiumCard(
-                modifier = Modifier.weight(1f),
-                rank = 2,
-                learner = learner,
-                face = TierSilver,
-                lip = TierSilverDeep,
-                badgeIcon = Iconsax.MedalStar,
-                cardHeight = 164.dp
-            )
-        }
-        rank1?.let { learner ->
-            PodiumCard(
-                modifier = Modifier.weight(1.1f),
-                rank = 1,
-                learner = learner,
-                face = TierGold,
-                lip = TierGoldDeep,
-                badgeIcon = Iconsax.CupBold,
-                cardHeight = 196.dp
-            )
-        }
-        rank3?.let { learner ->
-            PodiumCard(
-                modifier = Modifier.weight(1f),
-                rank = 3,
-                learner = learner,
-                face = TierBronze,
-                lip = TierBronzeDeep,
-                badgeIcon = Iconsax.Medal,
-                cardHeight = 148.dp
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            JepjepAvatarPortrait(avatar = JepjepAvatar.fromId(avatarId), size = 52.dp)
+            Spacer(Modifier.width(Space.md))
+            Column(Modifier.weight(1f)) {
+                if (entry != null) {
+                    Text(text = "You are #$rank", style = MaterialTheme.typography.titleLarge, color = Ink)
+                    Text(
+                        text = if (byStreak) "${entry.currentStreak} day streak" else "${entry.totalXp} XP",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted
+                    )
+                } else {
+                    Text(text = "You're not ranked yet", style = MaterialTheme.typography.titleMedium, color = Ink)
+                    Text(
+                        text = "Only signed-in learners appear here. Sign in from Me, then keep earning XP.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PodiumCard(
-    modifier: Modifier,
-    rank: Int,
-    learner: LeaderboardEntity,
-    face: Color,
-    lip: Color,
-    badgeIcon: Int,
-    cardHeight: Dp
-) {
-    ClaySurface(
-        face = face,
-        lipColor = lip,
-        modifier = modifier.height(cardHeight),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(Space.sm)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                painter = painterResource(id = badgeIcon),
-                contentDescription = "Rank $rank",
-                tint = RewardInk,
-                modifier = Modifier.size(22.dp)
-            )
+private fun LeaderRow(rank: Int, learner: LeaderboardEntity, byStreak: Boolean) {
+    val medal: Color? = when (rank) {
+        1 -> TierGold
+        2 -> TierSilver
+        3 -> TierBronze
+        else -> null
+    }
+    val figure = if (byStreak) "${learner.currentStreak} day streak" else "${learner.totalXp} XP"
+    val spoken = buildString {
+        append("Rank $rank, ${learner.name}")
+        if (learner.isCurrentUser) append(", you")
+        append(", ${learner.levelTitle}, $figure")
+    }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    SoftCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics { contentDescription = spoken },
+        shape = Shapes.tile,
+        border = if (learner.isCurrentUser) BrandLime else BorderHairline,
+        contentPadding = PaddingValues(horizontal = Space.md, vertical = Space.sm)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(medal ?: SurfaceSunken),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = learner.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = RewardInk,
-                    textAlign = TextAlign.Center,
+                    text = "$rank",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (medal != null) RewardInk else Muted
+                )
+            }
+            Spacer(Modifier.width(Space.sm))
+            JepjepAvatarPortrait(avatar = JepjepAvatar.fromId(learner.avatarIconId), size = 44.dp)
+            Spacer(Modifier.width(Space.sm))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = if (learner.isCurrentUser) "${learner.name} (you)" else learner.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Ink,
                     maxLines = 1,
-                    fontSize = 14.sp
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = learner.levelTitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = RewardInk.copy(alpha = 0.75f),
-                    fontSize = 11.sp,
-                    maxLines = 1
+                    color = Faint,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Surface(shape = Shapes.pill, color = Color.White.copy(alpha = 0.35f)) {
-                Text(
-                    text = "${learner.totalXp} XP",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = RewardInk,
-                    fontSize = 10.sp
+            Spacer(Modifier.width(Space.xs))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = if (byStreak) Iconsax.FlashBold else Iconsax.StarBold),
+                    contentDescription = null,
+                    tint = if (byStreak) Coral else Gold,
+                    modifier = Modifier.size(14.dp)
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RankedLearnerRow(rank: Int, learner: LeaderboardEntity) {
-    SoftCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Space.sm)
-            ) {
+                Spacer(Modifier.width(Space.xxs))
                 Text(
-                    text = "#$rank",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Muted,
-                    modifier = Modifier.width(28.dp)
-                )
-
-                Surface(shape = CircleShape, color = Violet.copy(alpha = 0.12f), modifier = Modifier.size(40.dp)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = Iconsax.Profile),
-                            contentDescription = learner.name,
-                            tint = Violet,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = learner.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Ink,
-                            fontSize = 15.sp
-                        )
-                        if (learner.isCurrentUser) {
-                            Text("(You)", style = MaterialTheme.typography.labelSmall, color = Violet, fontWeight = FontWeight.ExtraBold)
-                        }
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(text = learner.levelTitle, style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 11.sp)
-                        Text(text = "•", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 11.sp)
-                        // Coral/Gold measure 2.31/1.83 as a foreground on white (DESIGN.md's own
-                        // measured failure) — Violet is the safe substitute the rule itself names.
-                        Icon(
-                            painter = painterResource(id = Iconsax.FlashBold),
-                            contentDescription = null,
-                            tint = Violet,
-                            modifier = Modifier.size(11.dp)
-                        )
-                        Text(
-                            text = "${learner.currentStreak}d streak",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Violet,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-            }
-
-            Surface(shape = Shapes.pill, color = Gold) {
-                Text(
-                    text = "${learner.totalXp} XP",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = RewardInk,
-                    fontSize = 11.sp
+                    text = if (byStreak) "${learner.currentStreak}d" else "${learner.totalXp}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Ink
                 )
             }
         }

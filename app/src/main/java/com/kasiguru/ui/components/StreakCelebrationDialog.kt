@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
+import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 
@@ -156,7 +157,7 @@ fun StreakCelebrationDialog(
                             Icon(
                                 painter = painterResource(id = Iconsax.FlashBold),
                                 contentDescription = "Flame",
-                                tint = Color.White,
+                                tint = RewardInk,
                                 modifier = Modifier.size(46.dp)
                             )
                         }

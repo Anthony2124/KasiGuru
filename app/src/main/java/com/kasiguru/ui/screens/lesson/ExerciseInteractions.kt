@@ -39,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kasiguru.domain.lesson.Exercise
+import com.kasiguru.ui.theme.BorderHairline
+import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.GreenTint
@@ -49,8 +51,8 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletTint
+import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeTint
 
 /**
  * The two exercise shapes that need more than a list of answer buttons.
@@ -155,10 +157,10 @@ private fun WordChip(
         Modifier
             .heightIn(min = 48.dp)
             .clip(Shapes.pill)
-            .background(if (placed) Violet else Surface)
+            .background(if (placed) Lime else Surface)
             .border(
                 width = if (placed) 0.dp else 1.5.dp,
-                color = if (placed) Color.Transparent else VioletTint,
+                color = if (placed) Color.Transparent else BorderHairline,
                 shape = Shapes.pill
             )
             .clickable(enabled = enabled, onClick = onClick)
@@ -169,7 +171,7 @@ private fun WordChip(
             text = label,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.W700,
-            color = if (placed) Color.White else Ink
+            color = if (placed) OnLime else Ink
         )
     }
 }
@@ -273,17 +275,17 @@ private fun MatchTile(
 
     val background = when {
         isMatched -> GreenTint
-        isSelected -> Violet
+        isSelected -> Lime
         else -> Surface
     }
     val borderColour = when {
         isMatched -> Green
-        isSelected -> Violet
+        isSelected -> Lime
         isWrong -> Faint
-        else -> VioletTint
+        else -> BorderHairline
     }
     val labelColour = when {
-        isSelected -> Color.White
+        isSelected -> OnLime
         isMatched -> Ink
         else -> Ink
     }

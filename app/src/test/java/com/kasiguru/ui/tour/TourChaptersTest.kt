@@ -9,7 +9,7 @@ import java.io.File
 /**
  * Pins the invariants that hold the guided tour together across three files that the compiler cannot
  * relate to each other: the stop list here, the routes in [Screen], and the anchors that
- * `KasiGuruBottomBar` and `LearnScreen` actually attach.
+ * `KasiGuruBottomBar` and `HomeScreen` actually attach.
  *
  * The failure this guards against is silent rather than loud. A stop pointing at a route the bottom
  * bar does not show would still compile and still run - it would simply dim the screen, cut no hole,
@@ -58,9 +58,11 @@ class TourChaptersTest {
     }
 
     @Test
-    fun `tour opens and closes on Learn`() {
-        assertEquals(Screen.Learn.route, coreStops.first().fixedRoute())
-        assertEquals(Screen.Learn.route, coreStops.last().fixedRoute())
+    fun `tour opens and closes on Home`() {
+        // Home carries the one action that always knows what is next, and it is where the learner
+        // lands every day afterwards - so the tour starts on it and hands the learner back to it.
+        assertEquals(Screen.Home.route, coreStops.first().fixedRoute())
+        assertEquals(Screen.Home.route, coreStops.last().fixedRoute())
     }
 
     @Test

@@ -11,15 +11,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,49 +32,62 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.brand.Jepjep
+import com.kasiguru.ui.components.brand.JepjepAvatar
+import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
+import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.ClayButton
-import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
-import com.kasiguru.ui.components.clay.SectionCaption
-import com.kasiguru.ui.components.clay.TagChip
-import com.kasiguru.ui.theme.GoldDeep
-import com.kasiguru.ui.theme.RewardInk
-import com.kasiguru.ui.theme.VioletDeep
-import com.kasiguru.ui.components.CasiguranAvatarPortrait
-import com.kasiguru.ui.components.CasiguranResident
+import com.kasiguru.ui.components.clay.ProgressRing
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.components.clay.TagChip
+import com.kasiguru.ui.components.states.LoadingState
+import com.kasiguru.ui.theme.BorderHairline
+import com.kasiguru.ui.theme.BrandLime
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
+import com.kasiguru.ui.theme.GoldDeep
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.VioletTint
-import com.kasiguru.util.gamification.GamificationEngine
+import com.kasiguru.ui.theme.TierBronze
+import com.kasiguru.ui.theme.TierBronzeDeep
+import com.kasiguru.ui.theme.TierSilver
+import com.kasiguru.ui.theme.TierSilverDeep
+import com.kasiguru.ui.theme.Touch
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.util.gamification.GamificationEngine
 
 /**
- * Profile: a tall canopy carrying the avatar and headline stats, over a sheet of personal details, a
- * learning-overview summary, and an "Explore" section — this is the only place Leaderboard, Cultural
- * Heritage and About are reachable from since the old Home dashboard (which linked to all three) was
- * retired. A tab root — no back chevron, matching Learn's precedent — with its canopy actions
- * (settings, edit) as small circular icon buttons in the corner instead of a top bar.
+ * Me: who you are and what you have earned. The old Profile and Progress tabs, merged.
+ *
+ * Reads top to bottom as identity, then record, then the ways out: the avatar inside its level ring
+ * with the rank it has earned; streak, XP and words as three figures; the latest badges with a way
+ * into the whole wall; the leaderboard; and finally the rows for settings, the account and the rest
+ * of the app. A guest sees one calm prompt near the top, because an anonymous account is the one
+ * thing here that can be lost.
+ *
+ * A tab root, so no back chevron. Settings and Edit sit in the bar.
  */
 @Composable
 fun ProfileScreen(
@@ -87,26 +103,13 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    if (uiState.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
-        }
-        return
-    }
-
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
-    val levelInfo = remember(progress.totalXp) { GamificationEngine.getLevelInfo(progress.totalXp) }
-    val nextLevel = remember(levelInfo.level) { GamificationEngine.getNextLevelInfo(levelInfo.level) }
-    val levelFraction = remember(progress.totalXp) { GamificationEngine.getXpProgressInLevel(progress.totalXp) }
+    val displayName = progress.fullName.ifBlank { progress.userName }
+    val isGuest = !uiState.account.isRecoverable
 
     GroundScaffold(
-        title = progress.fullName.ifBlank { progress.userName },
-        subtitle = "@" + progress.userName.lowercase().replace(" ", "_"),
-        pattern = GroundPattern.Arcs,
-        // The identity card leads with the rank, so the name has nowhere else to be. Pinned in the
-        // bar it is visible on arrival rather than only after a scroll that may never happen.
-        compactTitle = true,
+        title = displayName,
+        pattern = GroundPattern.None,
         actions = {
             GroundIconButton(
                 Iconsax.Setting,
@@ -117,221 +120,187 @@ fun ProfileScreen(
             GroundIconButton(Iconsax.Edit, "Edit profile", onNavigateToEditProfile)
         },
         content = {
+            if (uiState.isLoading) {
+                LoadingState(label = "Loading your profile")
+                return@GroundScaffold
+            }
+
+            val levelInfo = remember(progress.totalXp) { GamificationEngine.getLevelInfo(progress.totalXp) }
+            val nextLevel = remember(levelInfo.level) { GamificationEngine.getNextLevelInfo(levelInfo.level) }
+            val levelFraction = remember(progress.totalXp) { GamificationEngine.getXpProgressInLevel(progress.totalXp) }
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
+                    start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
                 ),
-                verticalArrangement = Arrangement.spacedBy(Space.md)
+                verticalArrangement = Arrangement.spacedBy(Space.lg)
             ) {
-                // Identity leads. The name already sits in the bar, so this card spends its space on
-                // what was earned rather than repeating it: rank, the title held, and the next level.
-                item {
-                    SoftCard(modifier = Modifier.fillMaxWidth()) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CasiguranAvatarPortrait(
-                                    resident = CasiguranResident.TEACHER,
-                                    size = 72.dp,
-                                    level = progress.level,
-                                    onClick = onNavigateToEditProfile
-                                )
-                                Spacer(Modifier.width(Space.md))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        text = levelInfo.title,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = Ink
-                                    )
-                                    Spacer(Modifier.height(Space.xxs))
-                                    // Stored for every learner since onboarding and displayed nowhere
-                                    // until now, despite being an earned title.
-                                    TagChip(label = progress.titleBadge)
-                                }
-                            }
-
-                            Spacer(Modifier.height(Space.md))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Level " + levelInfo.level,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Ink
-                                )
-                                Text(
-                                    text = progress.totalXp.toString() + " XP",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Muted
-                                )
-                            }
+                // ── Identity ──
+                item(key = "identity") {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        ProgressRing(
+                            progress = levelFraction,
+                            size = 120.dp,
+                            strokeWidth = 6.dp,
+                            color = BrandLime,
+                            contentDescription = "Level ${progress.level}, " +
+                                (nextLevel?.let { "${(it.minXp - progress.totalXp).coerceAtLeast(0)} XP to ${it.title}" }
+                                    ?: "highest rank reached")
+                        ) {
+                            JepjepAvatarPortrait(
+                                avatar = JepjepAvatar.fromId(progress.profileIconId),
+                                size = 96.dp,
+                                level = progress.level,
+                                contentDescription = "Your avatar. Edit profile",
+                                onClick = onNavigateToEditProfile
+                            )
+                        }
+                        Spacer(Modifier.height(Space.sm))
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = Ink,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = levelInfo.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = BrandLime,
+                            textAlign = TextAlign.Center
+                        )
+                        if (progress.titleBadge.isNotBlank()) {
                             Spacer(Modifier.height(Space.xs))
-                            KasiGuruProgressBar(
-                                progress = levelFraction,
-                                modifier = Modifier.fillMaxWidth(),
-                                height = 8.dp,
-                                gradientColors = listOf(Violet, VioletDeep)
-                            )
-                            Spacer(Modifier.height(Space.xs))
-                            Text(
-                                text = nextLevel?.let {
-                                    (it.minXp - progress.totalXp).coerceAtLeast(0).toString() +
-                                        " XP to " + it.title
-                                } ?: "Highest rank reached",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Faint
-                            )
+                            // Stored for every learner since onboarding; an earned title, so it shows.
+                            TagChip(label = progress.titleBadge)
                         }
+                        Spacer(Modifier.height(Space.xs))
+                        Text(
+                            text = nextLevel?.let {
+                                "${(it.minXp - progress.totalXp).coerceAtLeast(0)} XP to ${it.title}"
+                            } ?: "Highest rank reached",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Faint
+                        )
                     }
                 }
 
-                // Guest Account Banner: prominent reminder to sign in or create an account
-                if (!uiState.account.isRecoverable) {
-                    item {
-                        GuestAccountBanner(onNavigateToAccount = onNavigateToAccount)
+                // ── Guest ──
+                if (isGuest) {
+                    item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
+                }
+
+                // ── Record ──
+                item(key = "stats") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Space.sm)
+                    ) {
+                        StatTile(
+                            iconRes = Iconsax.FlashBold,
+                            tint = Coral,
+                            value = "${progress.currentStreak}",
+                            label = "day streak",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatTile(
+                            iconRes = Iconsax.StarBold,
+                            tint = Gold,
+                            value = "${progress.totalXp}",
+                            label = "total XP",
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Words practised: the lifetime tally, which only rises. Mastered - the
+                        // honest retention figure, which can fall - is in the overview below.
+                        StatTile(
+                            iconRes = Iconsax.BookBold,
+                            tint = BrandLime,
+                            value = "${progress.wordsLearned}",
+                            label = "words practised",
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 
-                // Achievements. This finally calls onNavigateToAchievements, which has been passed
-                // from NavGraph since the tab was built and referenced by nothing.
-                item {
-                    SectionHeading(
-                        text = "Achievements",
-                        action = {
-                            TextButton(onClick = onNavigateToAchievements) {
-                                Text("See all", color = Violet, style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
+                // ── Badges ──
+                item(key = "badges") {
+                    BadgesSection(
+                        unlocked = uiState.unlockedCount,
+                        total = uiState.achievements.size,
+                        recent = uiState.recentlyUnlocked,
+                        closestLocked = uiState.closestLocked,
+                        onSeeAll = onNavigateToAchievements
                     )
-                    SectionCaption(
-                        text = uiState.unlockedCount.toString() + " of " +
-                            uiState.achievements.size + " badges earned"
+                }
+
+                // ── Leaderboard ──
+                item(key = "leaderboard") {
+                    LinkCard(
+                        iconRes = Iconsax.CupBold,
+                        accent = Gold,
+                        title = "Leaderboard",
+                        // Guests are not ranked - the leaderboard only lists signed-in learners.
+                        subtitle = if (isGuest) "Sign in to appear in the rankings" else "See where you rank this week",
+                        onClick = onNavigateToLeaderboard
                     )
-                    Spacer(Modifier.height(Space.sm))
-
-                    val recent = uiState.recentlyUnlocked
-                    if (recent.isNotEmpty()) {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.md)) {
-                            items(recent, key = { it.id }) { badge ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.width(72.dp)
-                                ) {
-                                    ClayCircle(face = Gold, lipColor = GoldDeep, size = 56.dp) {
-                                        Icon(
-                                            painter = painterResource(id = Iconsax.MedalStar),
-                                            contentDescription = null,
-                                            tint = RewardInk,
-                                            modifier = Modifier.size(26.dp).align(Alignment.Center)
-                                        )
-                                    }
-                                    Spacer(Modifier.height(Space.xs))
-                                    Text(
-                                        text = badge.name,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Muted,
-                                        maxLines = 2,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        // A designed empty state: name the nearest badge and how close it is, rather
-                        // than a blank row that reads as a loading failure.
-                        SoftCard(modifier = Modifier.fillMaxWidth()) {
-                            Column {
-                                Text(
-                                    text = "No badges yet. Finish a lesson to earn your first.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Ink
-                                )
-                                uiState.closestLocked?.let { next ->
-                                    Spacer(Modifier.height(Space.sm))
-                                    Text(
-                                        text = next.name,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = Muted
-                                    )
-                                    Spacer(Modifier.height(Space.xxs))
-                                    KasiGuruProgressBar(
-                                        progress = if (next.requiredValue == 0) 0f
-                                            else next.currentValue.toFloat() / next.requiredValue,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        height = 6.dp,
-                                        gradientColors = listOf(Violet, VioletDeep)
-                                    )
-                                    Spacer(Modifier.height(Space.xxs))
-                                    Text(
-                                        text = next.currentValue.toString() + " of " + next.requiredValue,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Faint
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
 
-                item {
-                    SectionHeading(text = "Personal details")
-                    Spacer(Modifier.height(Space.sm))
-                    SoftCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
-                            ProfileInfoRow(Iconsax.Sms, "Email", progress.email.ifEmpty { uiState.account.email ?: "Not linked" })
-                            ProfileInfoRow(
-                                Iconsax.Calendar, "Age",
-                                progress.age?.let { "$it years old" } ?: "Not set"
-                            )
-                            ProfileInfoRow(Iconsax.Location, "Address", progress.address.ifEmpty { "Not set" })
-                        }
-                    }
-                }
-
-                item {
+                // ── Overview ──
+                item(key = "overview") {
                     SectionHeading(text = "Learning overview")
                     Spacer(Modifier.height(Space.sm))
-                    SoftCard(modifier = Modifier.fillMaxWidth()) {
+                    SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.tile) {
                         Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                             // Two different, both-honest numbers. "Mastered" counts words that
                             // currently satisfy the SM-2 bar and can fall when one lapses;
-                            // "practised" is the lifetime tally of words ever taken that far and
-                            // only rises. The second used to be labelled "mastered", which made a
-                            // number that never goes down stand for something that certainly can.
+                            // "practised" is the lifetime tally and only rises.
                             StatDetailRow("Words mastered", "${uiState.masteredCount}", Iconsax.BookBold)
-                            StatDetailRow("Words practised", "${progress.wordsLearned}", Iconsax.Book)
-                            StatDetailRow("Current streak", "${progress.currentStreak} days", Iconsax.FlashBold)
                             StatDetailRow("Longest streak", "${progress.longestStreak} days", Iconsax.Medal)
+                            StatDetailRow("Lessons completed", "${progress.lessonsCompleted}", Iconsax.Teacher)
                             StatDetailRow("Games played", "${progress.gamesPlayed}", Iconsax.Game)
-                            // Three figures the entity has always carried and Profile never showed.
-                            StatDetailRow("Lessons completed", "${progress.lessonsCompleted}", Iconsax.Book)
-                            StatDetailRow("Stories read", "${progress.storiesCompleted}", Iconsax.BookBold)
+                            StatDetailRow("Stories read", "${progress.storiesCompleted}", Iconsax.Book)
                             StatDetailRow(
                                 "Accuracy",
                                 if (progress.totalQuestionsAnswered == 0) "Not measured yet"
                                 else "${(uiState.accuracy * 100).toInt()}%",
-                                Iconsax.MedalStar
+                                Iconsax.TickCircle
                             )
                         }
                     }
                 }
 
-                item {
-                    Spacer(Modifier.height(Space.xs))
+                // ── Settings and account ──
+                item(key = "settings") {
+                    SectionHeading(text = "Settings and account")
+                    Spacer(Modifier.height(Space.sm))
+                    RowGroup {
+                        LinkRow(Iconsax.Setting, Lime, "Settings", "Reminders, sound and more", onNavigateToSettings)
+                        GroupDivider()
+                        LinkRow(
+                            Iconsax.Lock,
+                            if (isGuest) Coral else Lime,
+                            "Account",
+                            if (isGuest) "Guest - progress is only on this phone"
+                            else progress.email.ifEmpty { uiState.account.email ?: "Signed in" },
+                            onNavigateToAccount
+                        )
+                        GroupDivider()
+                        LinkRow(Iconsax.Edit, Lime, "Edit profile", "Name, avatar and details", onNavigateToEditProfile)
+                    }
+                }
+
+                // ── Explore ──
+                item(key = "explore") {
                     SectionHeading(text = "Explore")
                     Spacer(Modifier.height(Space.sm))
-                    SoftCard(
-                        modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.ProfileExplore),
-                        contentPadding = PaddingValues(vertical = Space.xs)
-                    ) {
-                        Column {
-                            ProfileLinkRow(Iconsax.Teacher, Violet, "How to use KasiGuru", "A short guide to every tab", onNavigateToHelp)
-                            ProfileLinkRow(Iconsax.MedalStar, Violet, "Leaderboard", "See how you rank this week", onNavigateToLeaderboard)
-                            ProfileLinkRow(Iconsax.Courthouse, Coral, "Cultural heritage", "Stories and context from Casiguran", onNavigateToCultural)
-                            ProfileLinkRow(Iconsax.InfoCircle, Gold, "About KasiGuru", "The project, the team, the mission", onNavigateToAbout)
-                        }
+                    RowGroup(modifier = Modifier.tourAnchor(TourAnchor.ProfileExplore)) {
+                        LinkRow(Iconsax.Teacher, Info, "How to use KasiGuru", "A short guide to every tab", onNavigateToHelp)
+                        GroupDivider()
+                        LinkRow(Iconsax.Courthouse, Coral, "Cultural heritage", "Stories and context from Casiguran", onNavigateToCultural)
+                        GroupDivider()
+                        LinkRow(Iconsax.InfoCircle, Gold, "About KasiGuru", "The project, the team, the mission", onNavigateToAbout)
                     }
                 }
             }
@@ -339,12 +308,205 @@ fun ProfileScreen(
     )
 }
 
+/**
+ * The one prompt a guest sees: calm, and specific about the risk. Jepjep looks worried because an
+ * anonymous account really is lost with the phone - not to alarm, just to say so.
+ */
 @Composable
-private fun ProfileLinkRow(iconRes: Int, accent: Color, title: String, subtitle: String, onClick: () -> Unit) {
+private fun GuestBanner(onSignIn: () -> Unit) {
+    SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.panel) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Jepjep(pose = JepjepPose.Worried, height = 84.dp)
+            Spacer(Modifier.width(Space.md))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Sign in so you don't lose your progress",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Ink
+                )
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    text = "Right now your XP, streak and badges live only on this phone.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+            }
+        }
+        Spacer(Modifier.height(Space.md))
+        // The one lime action on Me: for a guest, nothing here matters more.
+        ClayButton(label = "Sign in", onClick = onSignIn, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** A figure with its icon and unit. The colour tints the icon only; the words carry the meaning. */
+@Composable
+private fun StatTile(iconRes: Int, tint: Color, value: String, label: String, modifier: Modifier = Modifier) {
+    SoftCard(
+        modifier = modifier.clearAndSetSemantics { contentDescription = "$value $label" },
+        shape = Shapes.tile,
+        border = BorderHairline,
+        contentPadding = PaddingValues(Space.sm)
+    ) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.height(Space.xxs))
+            Text(text = value, style = MaterialTheme.typography.headlineSmall, color = Ink, maxLines = 1)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
+    }
+}
+
+/** The latest badges, with the way into all of them. A learner with none is told which is closest. */
+@Composable
+private fun BadgesSection(
+    unlocked: Int,
+    total: Int,
+    recent: List<AchievementEntity>,
+    closestLocked: AchievementEntity?,
+    onSeeAll: () -> Unit
+) {
+    Column(Modifier.fillMaxWidth()) {
+        SectionHeading(
+            text = "Badges",
+            action = {
+                TextButton(
+                    onClick = onSeeAll,
+                    modifier = Modifier.semantics { contentDescription = "See all badges" }
+                ) {
+                    Text("See all", color = Lime, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        )
+        Text(
+            text = "$unlocked of $total earned",
+            style = MaterialTheme.typography.bodySmall,
+            color = Faint
+        )
+        Spacer(Modifier.height(Space.sm))
+
+        if (recent.isNotEmpty()) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.md)) {
+                items(recent, key = { it.id }) { badge ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .width(76.dp)
+                            .clickable(onClick = onSeeAll)
+                    ) {
+                        val (face, lip) = when (badge.tier) {
+                            "silver" -> TierSilver to TierSilverDeep
+                            "bronze" -> TierBronze to TierBronzeDeep
+                            else -> Gold to GoldDeep
+                        }
+                        ClayCircle(face = face, lipColor = lip, size = 56.dp) {
+                            Icon(
+                                painter = painterResource(id = Iconsax.MedalStar),
+                                contentDescription = null,
+                                tint = RewardInk,
+                                modifier = Modifier.size(26.dp).align(Alignment.Center)
+                            )
+                        }
+                        Spacer(Modifier.height(Space.xs))
+                        Text(
+                            text = badge.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Muted,
+                            maxLines = 2,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        } else {
+            // A designed empty state: name the nearest badge and how close it is, rather than a blank
+            // row that reads as a loading failure.
+            SoftCard(
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderHairline,
+                shape = Shapes.tile,
+                onClick = onSeeAll
+            ) {
+                Text(
+                    text = "No badges yet. Finish a lesson to earn your first.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink
+                )
+                closestLocked?.let { next ->
+                    Spacer(Modifier.height(Space.sm))
+                    Text(text = "Closest: ${next.name}", style = MaterialTheme.typography.labelLarge, color = Muted)
+                    Spacer(Modifier.height(Space.xxs))
+                    KasiGuruProgressBar(
+                        progress = if (next.requiredValue == 0) 0f
+                        else next.currentValue.toFloat() / next.requiredValue,
+                        modifier = Modifier.fillMaxWidth(),
+                        height = 6.dp
+                    )
+                    Spacer(Modifier.height(Space.xxs))
+                    Text(
+                        text = "${next.currentValue} of ${next.requiredValue}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Faint
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LinkCard(iconRes: Int, accent: Color, title: String, subtitle: String, onClick: () -> Unit) {
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline,
+        onClick = onClick,
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        LinkRow(iconRes, accent, title, subtitle, onClick = null)
+    }
+}
+
+/** A grouped list of rows on one card, as the settings-style groups in the design. */
+@Composable
+private fun RowGroup(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    SoftCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline,
+        contentPadding = PaddingValues(vertical = Space.xxs)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun GroupDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = Space.md),
+        thickness = 1.dp,
+        color = BorderHairline
+    )
+}
+
+/** A row with a tinted icon tile, a title and a line of detail. [onClick] null when the parent is the target. */
+@Composable
+private fun LinkRow(iconRes: Int, accent: Color, title: String, subtitle: String, onClick: (() -> Unit)?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .heightIn(min = Touch.minTarget)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = Space.md, vertical = Space.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -356,27 +518,16 @@ private fun ProfileLinkRow(iconRes: Int, accent: Color, title: String, subtitle:
         }
         Spacer(Modifier.width(Space.sm))
         Column(Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = Ink)
-            Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = Faint)
+            Text(text = title, style = MaterialTheme.typography.titleSmall, color = Ink)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
-        Icon(painter = painterResource(id = Iconsax.ArrowRight), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
-    }
-}
-
-@Composable
-private fun ProfileInfoRow(iconRes: Int, label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier.size(36.dp).clip(CircleShape).background(VioletTint),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = Violet, modifier = Modifier.size(18.dp))
-        }
-        Spacer(Modifier.width(Space.sm))
-        Column {
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = Faint)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = Ink)
-        }
+        Icon(painter = painterResource(id = Iconsax.ArrowRight), contentDescription = null, tint = Faint, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -393,52 +544,5 @@ private fun StatDetailRow(label: String, value: String, iconRes: Int) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Text(text = value, style = MaterialTheme.typography.titleMedium, color = Ink)
-    }
-}
-
-@Composable
-private fun GuestAccountBanner(onNavigateToAccount: () -> Unit) {
-    SoftCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Space.sm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(Shapes.chip)
-                    .background(Violet.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.Lock),
-                    contentDescription = null,
-                    tint = Violet,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Protect your learning streak",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Ink
-                )
-                Spacer(Modifier.height(Space.xxs))
-                Text(
-                    text = "Sign in or register to sync your XP and badges across devices.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted
-                )
-            }
-        }
-        Spacer(Modifier.height(Space.sm))
-        ClayButton(
-            label = "Sign In or Register",
-            onClick = onNavigateToAccount,
-            tone = ClayButtonTone.Primary,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }

@@ -55,15 +55,10 @@ fun LevelUpDialog(
                     verticalArrangement = Arrangement.Center
                 ) {
 
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clip(CircleShape)
-                            .background(CanopyTop.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        MascotOwlSlot(size = 54.dp)
-                    }
+                    com.kasiguru.ui.components.brand.Jepjep(
+                        pose = com.kasiguru.ui.components.brand.JepjepPose.Celebrating,
+                        height = 120.dp
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 

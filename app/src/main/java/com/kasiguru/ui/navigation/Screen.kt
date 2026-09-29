@@ -7,8 +7,15 @@ sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
     data object ProfileSelection : Screen("profile_selection")
-    /** The learner's home: today's plan. Replaces the old Home dashboard. */
+    /**
+     * The learner's home: today's one next action, the day goal, reviews due, stories and the week.
+     * Where every entry into the app lands - splash, onboarding and profile selection all end here.
+     */
+    data object Home : Screen("home")
+    /** The learning path alone: the sections as a journey, with the node to tap next. */
     data object Learn : Screen("learn")
+    /** Words and Stories behind one segmented toggle. [VocabularyList] and [StoryList] stay as pushed routes. */
+    data object Library : Screen("library")
     data object LessonPlayer : Screen("lesson/{unitId}/{lessonIndex}") {
         /** Unit ids are category names and contain spaces and ampersands, so they must be encoded. */
         fun createRoute(unitId: String, lessonIndex: Int): String {
@@ -16,12 +23,15 @@ sealed class Screen(val route: String) {
             return "lesson/$encoded/$lessonIndex"
         }
     }
+    /** The Me tab. The route keeps its old name so notification deep links written against it still land. */
     data object Profile : Screen("profile")
     data object EditProfile : Screen("edit_profile")
+    /** The stories list on its own, pushed. The Library tab shows the same content under its Stories segment. */
     data object StoryList : Screen("stories")
     data object StoryReader : Screen("story/{storyId}") {
         fun createRoute(storyId: Int) = "story/$storyId"
     }
+    /** The dictionary on its own, pushed. The Library tab shows the same content under its Words segment. */
     data object VocabularyList : Screen("vocabulary")
     data object VocabularyDetail : Screen("vocabulary/{wordId}") {
         fun createRoute(wordId: Int) = "vocabulary/$wordId"
@@ -69,6 +79,7 @@ sealed class Screen(val route: String) {
     data object WordSearchGame : Screen("games/word_search/{category}/{level}") {
         fun createRoute(category: String, level: Int) = "games/word_search/$category/$level"
     }
+    /** Every badge. Pushed from Me and from Home's goal ring; no longer a tab of its own. */
     data object Achievements : Screen("achievements")
     data object CulturalContext : Screen("cultural")
     data object FlashcardDeck : Screen("flashcards")
@@ -110,17 +121,21 @@ sealed class Screen(val route: String) {
          * Computed on access, not stored.
          *
          * A `val` here would be evaluated while `Screen` itself is still initialising, and reading
-         * `Learn.route` at that moment re-enters the very class initialiser that is running - the
+         * `Home.route` at that moment re-enters the very class initialiser that is running - the
          * nested object's INSTANCE is still null, and the whole class fails to load with a
          * NoClassDefFoundError that names nothing useful. Deferring to a getter sidesteps it, and a
          * five-element set is not worth caching.
+         *
+         * Home, Learn, Practice, Library, Me - in the order the bar shows them. The dictionary, the
+         * stories list and the badges used to be tabs; they are now reached through Library and Me,
+         * and their own routes survive as pushed screens for deep links.
          */
         val tabRoots: Set<String>
             get() = setOf(
+                Home.route,
                 Learn.route,
                 GameHub.route,
-                VocabularyList.route,
-                Achievements.route,
+                Library.route,
                 Profile.route
             )
     }

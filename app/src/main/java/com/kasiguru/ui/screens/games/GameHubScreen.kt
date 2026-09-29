@@ -58,7 +58,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.WidthClass
 import com.kasiguru.ui.theme.rememberWidthClass
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.util.gamification.GamificationEngine
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
@@ -85,7 +85,7 @@ fun GameHubScreen(
     val levelInfo = remember(totalXp) { GamificationEngine.getLevelInfo(totalXp) }
 
     // remember's calculation runs outside composition, so themed colours must be resolved here first.
-    val violet = Violet
+    val violet = Lime
     val games = remember(uiState.totalStars, uiState.highScores, violet) {
         listOf(
             GameEntry("word_match", "Word Match", Iconsax.Element4Outline, violet,
@@ -142,7 +142,7 @@ fun GameHubScreen(
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
+            CircularProgressIndicator(color = Lime)
         }
         return
     }

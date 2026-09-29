@@ -50,7 +50,7 @@ import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
 /**
  * The moment the lesson pays off.
@@ -161,7 +161,7 @@ fun LessonCompleteScreen(
                             Text(
                                 text = word.kasiguranin,
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Violet
+                                color = Lime
                             )
                             Spacer(Modifier.width(Space.xs))
                             Text(

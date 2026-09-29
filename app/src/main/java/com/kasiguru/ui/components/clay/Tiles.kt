@@ -43,7 +43,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
 /**
  * A skill card with its completion percentage, after the reference's Reading / Listening / Speaking
@@ -199,7 +199,7 @@ fun TimelineItem(
     // here first and captured as a plain value.
     val green = Green
     val pathTrackIdle = PathTrackIdle
-    val violet = Violet
+    val violet = Lime
     val surface = Surface
     val nodeLocked = NodeLocked
 

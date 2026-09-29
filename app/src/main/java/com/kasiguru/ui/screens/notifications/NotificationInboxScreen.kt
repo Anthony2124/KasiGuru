@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.NotificationEntity
 import com.kasiguru.ui.components.clay.TagChip
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -119,7 +119,7 @@ fun NotificationInboxScreen(
                                     text = "Mark all read",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Violet,
+                                    color = Lime,
                                     modifier = Modifier
                                         .clip(Shapes.chip)
                                         .clickable { viewModel.markAllAsRead() }
@@ -148,8 +148,8 @@ fun NotificationInboxScreen(
                                 )
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Violet,
-                                selectedLabelColor = Color.White,
+                                selectedContainerColor = Lime,
+                                selectedLabelColor = OnLime,
                                 containerColor = SurfaceSunken,
                                 labelColor = Muted
                             ),
@@ -170,12 +170,12 @@ fun NotificationInboxScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(Space.sm)
                         ) {
-                            Surface(shape = CircleShape, color = Violet.copy(alpha = 0.12f), modifier = Modifier.size(80.dp)) {
+                            Surface(shape = CircleShape, color = Lime.copy(alpha = 0.12f), modifier = Modifier.size(80.dp)) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         painter = painterResource(id = Iconsax.Notification),
                                         contentDescription = null,
-                                        tint = Violet,
+                                        tint = Lime,
                                         modifier = Modifier.size(36.dp)
                                     )
                                 }
@@ -227,7 +227,7 @@ fun NotificationCard(
 ) {
     val (iconRes, iconTint) = when (notification.category.lowercase()) {
         "streak" -> Iconsax.Flash to Gold
-        "wordofday" -> Iconsax.Book to Violet
+        "wordofday" -> Iconsax.Book to Lime
         "leaderboard" -> Iconsax.MedalStar to Coral
         else -> Iconsax.Cup to Green
     }
@@ -274,7 +274,7 @@ fun NotificationCard(
                                 .padding(start = 6.dp)
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Violet)
+                                .background(Lime)
                         )
                     }
                 }

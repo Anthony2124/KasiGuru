@@ -35,7 +35,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.Violet
+import com.kasiguru.ui.theme.Lime
 
 /**
  * A dictionary search bar that sits on top of a screen's content rather than pushing it - the
@@ -64,7 +64,7 @@ fun FloatingSearchBar(
             onValueChange = onQueryChange,
             placeholder = { Text(placeholder) },
             leadingIcon = {
-                Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Violet)
+                Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Lime)
             },
             trailingIcon = if (query.isNotEmpty()) {
                 {
@@ -84,7 +84,7 @@ fun FloatingSearchBar(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Surface,
                 unfocusedContainerColor = Surface,
-                focusedBorderColor = Violet,
+                focusedBorderColor = Lime,
                 unfocusedBorderColor = SurfaceSunken
             ),
             singleLine = true

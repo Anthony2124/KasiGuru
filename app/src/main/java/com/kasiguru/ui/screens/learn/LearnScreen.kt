@@ -1,511 +1,136 @@
 package com.kasiguru.ui.screens.learn
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.kasiguru.ui.components.AnnouncementBanner
-import com.kasiguru.ui.components.AppUpdateBanner
-import com.kasiguru.ui.components.CasiguranAvatarPortrait
-import com.kasiguru.ui.components.CasiguranResident
-import com.kasiguru.ui.components.SecureProgressBanner
-import com.kasiguru.ui.components.StreakDialog
-import com.kasiguru.ui.components.clay.ActivityRow
-import com.kasiguru.ui.components.clay.ActivityState
-import com.kasiguru.ui.components.clay.CanopyIconButton
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.TextButton
-import com.kasiguru.ui.components.clay.StoryCoverCard
-import com.kasiguru.ui.components.clay.rememberStoryCoverRes
-import com.kasiguru.ui.components.clay.ClayButton
-import com.kasiguru.ui.components.clay.CanopyScaffold
-import com.kasiguru.ui.components.clay.DayMark
-import com.kasiguru.ui.components.clay.DayState
-import com.kasiguru.ui.components.clay.ProgressRing
-import com.kasiguru.ui.components.clay.SectionCaption
-import com.kasiguru.ui.components.clay.SectionHeading
-import com.kasiguru.ui.components.clay.TimelineItem
-import com.kasiguru.ui.components.clay.WeekStrip
-import com.kasiguru.ui.theme.Coral
-import com.kasiguru.ui.theme.Gold
-import com.kasiguru.ui.theme.Green
-import com.kasiguru.ui.theme.Iconsax
-import com.kasiguru.ui.theme.Ink
-import com.kasiguru.ui.theme.Muted
-import com.kasiguru.ui.theme.NodeLockedInk
-import com.kasiguru.ui.theme.OnCanopy
-import com.kasiguru.ui.theme.RewardInk
-import com.kasiguru.ui.theme.Shapes
-import com.kasiguru.ui.theme.SkyReview
 import com.kasiguru.domain.lesson.LearningTree
+import com.kasiguru.ui.components.brand.JepjepPose
+import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.clay.GroundScaffold
+import com.kasiguru.ui.components.states.EmptyState
+import com.kasiguru.ui.components.states.LoadingState
 import com.kasiguru.ui.screens.learn.tree.learningPath
+import com.kasiguru.ui.screens.learn.tree.learningPathCurrentItemIndex
+import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Violet
-import com.kasiguru.ui.theme.WidthClass
-import com.kasiguru.ui.theme.rememberWidthClass
-import com.kasiguru.ui.tour.TourAnchor
-import com.kasiguru.ui.tour.tourAnchor
+
+/** The path stays centred and readable on a tablet rather than winding across the whole width. */
+private val PathMaxWidth = 520.dp
 
 /**
- * The learner's home: a violet canopy carrying today's state, over a sheet carrying today's work.
+ * The Learn tab: the learning path, section by section, and nothing else.
  *
- * This replaces the old Home screen, which was a link farm — four of its cards duplicated four
- * bottom-nav tabs, and its "Learning Journey Map" was four hardcoded nodes that all navigated to the
- * dictionary. Everything shown here is derived from real progress.
+ * Today's plan - the one next action, the day goal, reviews, stories - moved to Home. What is left is
+ * the journey itself: each section opens on the Casiguran place it belongs to, and Jepjep waits at
+ * the node that is the learner's to take next. The tab opens scrolled to that node, because after a
+ * few weeks it sits several screens below the first section.
  */
 @Composable
 fun LearnScreen(
     onStartLesson: (unitId: String, lessonIndex: Int) -> Unit,
-    onOpenReview: () -> Unit,
-    onOpenGames: () -> Unit,
-    onOpenStories: () -> Unit,
-    /** Opens one story straight from the shelf, without the detour through the Stories list. */
-    onOpenStory: (storyId: Int) -> Unit,
-    onOpenDictionary: () -> Unit,
-    onOpenProgress: () -> Unit,
-    onOpenNotifications: () -> Unit,
-    onOpenProfile: () -> Unit,
-    onOpenAccount: () -> Unit,
-    viewModel: LearnViewModel = hiltViewModel()
+    viewModel: LearnPathViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showStreakDialog by remember { mutableStateOf(false) }
 
-    // Today's Path and the day goal are a snapshot taken when this screen was built, and all the
-    // work that changes them -- a review session, a lesson, a game -- happens on another screen.
-    // Without this the learner clears their whole review deck and comes back to a card that still
-    // says five words are due, and a goal ring that cannot turn green until the app is restarted.
-    // The lifecycle owner inside a NavHost is the back-stack entry, so this fires on return to the
-    // tab rather than only on Activity resume.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPlan() }
+    // The path is a snapshot, and the work that changes it happens in the lesson player. The
+    // lifecycle owner inside a NavHost is the back-stack entry, so this fires on return to the tab.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-    if (uiState.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Violet)
+    val listState = rememberLazyListState()
+    // Only the first arrival jumps to the current node. After that the learner's own scroll position
+    // wins - including when they come back from a lesson and the next node is one row further down.
+    var arrivedAtCurrent by rememberSaveable { mutableStateOf(false) }
+
+    val subtitle = uiState.currentSection?.let { "You are in ${it.definition.title}" }
+        ?: if (uiState.tree.isNotEmpty() && uiState.tree.all { it.isComplete }) {
+            "Every section walked. Keep them sharp with review."
+        } else {
+            "Section by section, from greetings to everyday talk"
         }
-        return
+
+    LaunchedEffect(uiState.tree, arrivedAtCurrent) {
+        if (arrivedAtCurrent || uiState.tree.isEmpty()) return@LaunchedEffect
+        learningPathCurrentItemIndex(uiState.tree)?.let { index ->
+            // One item early, so the node arrives with the connector (or its section's banner) above
+            // it rather than pinned to the top edge.
+            listState.scrollToItem((index - 1).coerceAtLeast(0))
+        }
+        arrivedAtCurrent = true
     }
 
-    val progress = uiState.progress
-    val displayName = progress.fullName.ifBlank { progress.userName }
+    // The title sits in the bar from the start rather than in a scrolling title block: the tab usually
+    // opens already scrolled to the current node, where a title block would be off screen.
+    GroundScaffold(
+        title = "Learn",
+        pattern = GroundPattern.None,
+        compactTitle = true,
+        content = {
+            when {
+                uiState.isLoading -> LoadingState(label = "Loading your path")
 
-    if (showStreakDialog) {
-        StreakDialog(
-            currentStreak = progress.currentStreak,
-            longestStreak = progress.longestStreak,
-            streakQuota = uiState.streakQuota,
-            onDismiss = { showStreakDialog = false }
-        )
-    }
-
-    // Steps down one Space tier at a wider width, same spirit as the skills grid below going
-    // from 2 to 4 columns - more width means the canopy doesn't need to claim as much height to
-    // read as a real "who you are and where you stand today" band.
-    val widthClass = rememberWidthClass()
-    // Was 244dp. The canopy is pinned, so every dp of it is spent on every screenful the learner
-    // ever scrolls -- roughly a quarter of the screen, to say hello and show a week that on day one
-    // is empty. It now carries only who you are and today's streak; the week strip moved into the
-    // sheet, where it scrolls away like the history it is.
-    val canopyHeight = when (widthClass) {
-        WidthClass.COMPACT -> 168.dp
-        WidthClass.MEDIUM -> 160.dp
-        WidthClass.EXPANDED -> 152.dp
-    }
-
-    CanopyScaffold(
-        canopyHeight = canopyHeight,
-        canopyContent = {
-            Spacer(Modifier.height(Space.sm))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                // A solid fill, not glass: a translucent chip's label fails contrast at this end of
-                // the canopy gradient (DESIGN.md's translucent-chip rule), and Gold already carries
-                // Ink at 9.00 measured, so a solid badge is both safer and closer to the streak
-                // flame's original look.
-                Row(
-                    modifier = Modifier
-                        .tourAnchor(TourAnchor.StreakBadge)
-                        .clip(Shapes.pill)
-                        .background(Gold)
-                        .clickable { showStreakDialog = true }
-                        .padding(horizontal = Space.sm, vertical = Space.xxs),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Space.xxs)
-                ) {
-                    Icon(
-                        painter = painterResource(id = Iconsax.FlashBold),
-                        contentDescription = "Streak",
-                        tint = RewardInk,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "${progress.currentStreak}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = RewardInk
-                    )
-                }
-                Spacer(Modifier.width(Space.xs))
-                CanopyIconButton(
-                    modifier = Modifier.tourAnchor(TourAnchor.NotificationBell),
-                    iconRes = Iconsax.Notification,
-                    contentDescription = "Notifications",
-                    onClick = onOpenNotifications
+                uiState.tree.isEmpty() -> EmptyState(
+                    pose = JepjepPose.Sleeping,
+                    title = "Nothing on the path yet",
+                    message = "The lessons appear once the dictionary has finished loading.",
+                    actionLabel = "Check again",
+                    onAction = viewModel::refresh
                 )
-            }
 
-            Spacer(Modifier.height(Space.xs))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CasiguranAvatarPortrait(
-                    resident = CasiguranResident.TEACHER,
-                    size = 52.dp,
-                    level = progress.level,
-                    onClick = onOpenProfile
-                )
-                Spacer(Modifier.width(Space.sm))
-                Column(Modifier.weight(1f)) {
+                else -> Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Magandang aldew,",
+                        text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OnCanopy
-                    )
-                    Text(
-                        text = displayName,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = OnCanopy,
-                        maxLines = 1
-                    )
-                }
-
-                // Daily goal. The ring is the one place the app states, honestly, how today is going.
-                ProgressRing(
-                    progress = uiState.dailyGoalFraction,
-                    size = 64.dp,
-                    strokeWidth = 7.dp,
-                    color = if (uiState.dailyGoalMet) Green else Gold,
-                    onCanopy = true,
-                    contentDescription = "Daily goal: ${uiState.dailyXpEarned} of " +
-                        "${progress.dailyGoalXp} XP earned today, ${uiState.dailyGoalRemainder}",
-                    modifier = Modifier
-                        .clickable(onClick = onOpenProgress)
-                        .tourAnchor(TourAnchor.DailyGoalRing)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "${uiState.dailyXpEarned}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = OnCanopy
-                        )
-                        Text(
-                            text = "XP",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = OnCanopy
-                        )
-                    }
-                }
-            }
-
-        },
-        sheetContent = {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = Space.gutter,
-                    end = Space.gutter,
-                    top = Space.lg,
-                    bottom = Space.navBarClearance
-                )
-            ) {
-                uiState.updateRelease?.let { release ->
-                    item {
-                        AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
-                        Spacer(Modifier.height(Space.md))
-                    }
-                }
-
-                items(uiState.announcements, key = { it.id }) { announcement ->
-                    AnnouncementBanner(announcement = announcement)
-                    Spacer(Modifier.height(Space.md))
-                }
-
-                if (uiState.showBackupPrompt) {
-                    item {
-                        SecureProgressBanner(
-                            onSecure = onOpenAccount,
-                            onDismiss = viewModel::dismissBackupPrompt
-                        )
-                        Spacer(Modifier.height(Space.md))
-                    }
-                }
-
-                // The app's most-pressed control, and what replaced the docked FAB.
-                //
-                // It sits here rather than in the navigation bar for three reasons: a full-width button
-                // is entirely tappable, where the FAB lost roughly its top 12dp to overflowing the pill
-                // it was docked into; it can carry a label, so the action names itself instead of
-                // showing a bare glyph whose meaning changed underneath the user; and an action that
-                // belongs to Learn should not follow the learner onto Words or Profile.
-                item {
-                    val next = uiState.currentActivity
-                    val label: String
-                    val iconRes: Int
-                    val onContinue: () -> Unit
-                    when (next?.kind) {
-                        ActivityKind.Lesson -> {
-                            label = "Continue learning"
-                            iconRes = Iconsax.Play
-                            onContinue = {
-                                next.lessonRef
-                                    ?.let { onStartLesson(it.unitId, it.lessonIndex) }
-                                    ?: onOpenReview()
-                            }
-                        }
-                        ActivityKind.Game -> {
-                            label = "Play a game"
-                            iconRes = Iconsax.Game
-                            onContinue = onOpenGames
-                        }
-                        ActivityKind.Story -> {
-                            label = "Read a story"
-                            iconRes = Iconsax.BookBold
-                            onContinue = onOpenStories
-                        }
-                        // Review, or today's path already finished. The deck always has something to
-                        // show, so this is a real destination rather than a disabled state.
-                        else -> {
-                            label = "Review your words"
-                            iconRes = Iconsax.Repeat
-                            onContinue = onOpenReview
-                        }
-                    }
-
-                    // One action, not three. The screen used to answer "what do I do now?" with a
-                    // Continue button, then a list of four cards, then the path below -- so none of
-                    // them read as the answer. The card is now the only call to action above the
-                    // path, and it leads with a Kasiguranin word rather than a verb.
-                    // Wrapped so the guided tour can spotlight the primary action without either
-                    // branch needing to know about it -- the card and the button are alternatives for
-                    // the same job, and the tour points at whichever one is showing.
-                    Box(
+                        color = Muted,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .tourAnchor(TourAnchor.ContinueAction)
+                            .padding(horizontal = Space.gutter)
+                            .padding(bottom = Space.xs)
+                    )
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .widthIn(max = PathMaxWidth),
+                        contentPadding = PaddingValues(
+                            start = Space.gutter,
+                            end = Space.gutter,
+                            top = Space.xs,
+                            bottom = Space.navBarClearance
+                        )
                     ) {
-                        uiState.continueCard?.let { card ->
-                            ContinueCard(
-                                card = card,
-                                onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) }
-                            )
-                        } ?: ClayButton(
-                            label = label,
-                            onClick = onContinue,
-                            modifier = Modifier.fillMaxWidth(),
-                            leading = {
-                                Icon(
-                                    painter = painterResource(id = iconRes),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                        learningPath(
+                            sections = uiState.tree,
+                            onOpenLesson = onStartLesson,
+                            // A checkpoint is a lesson over a different set of words, so it opens the
+                            // same player by the same route -- see LearningTree.masteryUnitId.
+                            onOpenMastery = { sectionId ->
+                                onStartLesson(LearningTree.masteryUnitId(sectionId), 0)
                             }
                         )
                     }
-
-                    // Due review is the one thing urgent enough to sit above the path: a word due
-                    // today is a word about to be forgotten, which outranks meeting a new one.
-                    if (uiState.wordsDue > 0) {
-                        Spacer(Modifier.height(Space.sm))
-                        ActivityRow(
-                            title = "Review",
-                            subtitle = "${wordsToReview(uiState.wordsDue)} due today",
-                            accent = SkyReview,
-                            state = ActivityState.Current,
-                            onClick = onOpenReview,
-                            leading = {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Repeat),
-                                    contentDescription = null,
-                                    tint = SkyReview,
-                                    modifier = Modifier.size(20.dp).align(Alignment.Center)
-                                )
-                            }
-                        )
-                    }
-
-                    Spacer(Modifier.height(Space.lg))
-                }
-
-                // The learning tree, in place of the four skill tiles that used to sit here. The
-                // tiles were a summary of progress; this is the thing progress is made of, and it
-                // answers "what do I do next" with a single node instead of a percentage.
-                learningPath(
-                    sections = uiState.tree,
-                    onOpenLesson = onStartLesson,
-                    // A checkpoint is a lesson over a different set of words, so it opens the same
-                    // player by the same route -- see LearningTree.masteryUnitId.
-                    onOpenMastery = { sectionId ->
-                        onStartLesson(LearningTree.masteryUnitId(sectionId), 0)
-                    }
-                )
-
-                // Below the path: the things that are genuinely secondary. They used to sit above
-                // it as four same-size cards, which made a game and a story look exactly as
-                // important as the lesson the learner came to do.
-                item {
-                    Spacer(Modifier.height(Space.xl))
-                    SectionHeading(text = "Also today")
-                    Spacer(Modifier.height(Space.sm))
-
-                    ActivityRow(
-                        title = "Practice game",
-                        subtitle = "Earn stars and XP",
-                        accent = Coral,
-                        state = ActivityState.Upcoming,
-                        onClick = onOpenGames,
-                        leading = {
-                            Icon(
-                                painter = painterResource(id = Iconsax.Game),
-                                contentDescription = null,
-                                tint = Coral,
-                                modifier = Modifier.size(20.dp).align(Alignment.Center)
-                            )
-                        }
-                    )
-
-                    if (uiState.wordsDue == 0) {
-                        Spacer(Modifier.height(Space.sm))
-                        ActivityRow(
-                            title = "Review",
-                            subtitle = "Nothing due today",
-                            accent = SkyReview,
-                            state = ActivityState.Done,
-                            onClick = onOpenReview,
-                            leading = {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Repeat),
-                                    contentDescription = null,
-                                    tint = SkyReview,
-                                    modifier = Modifier.size(20.dp).align(Alignment.Center)
-                                )
-                            }
-                        )
-                    }
-
-                    // The story shelf. Until now Stories had no door: the only way in was the primary
-                    // action at the top of this screen, and only on the days today's path happened to
-                    // schedule a story — every other day the feature did not exist as far as a learner
-                    // could tell, since no tab leads to it either. Nothing else was missing; the
-                    // ViewModel has been loading `stories` all along (locked ones included, because
-                    // the lock is the motivation) and this file still imported StoryCoverCard. Only
-                    // the shelf itself had gone.
-                    if (uiState.stories.isNotEmpty()) {
-                        Spacer(Modifier.height(Space.xl))
-                        SectionHeading(
-                            text = "Stories",
-                            action = {
-                                TextButton(onClick = onOpenStories) {
-                                    Text(
-                                        "See all",
-                                        color = Violet,
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
-                            }
-                        )
-                        Spacer(Modifier.height(Space.sm))
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(Space.sm),
-                            // The cards carry their own shadow, so the row needs a little vertical
-                            // room or the shadow is clipped by the item bounds.
-                            contentPadding = PaddingValues(vertical = 2.dp)
-                        ) {
-                            items(uiState.stories, key = { it.id }) { story ->
-                                StoryCoverCard(
-                                    titleKasiguranin = story.titleKasiguranin,
-                                    title = story.title,
-                                    totalPages = story.totalPages,
-                                    isUnlocked = story.isUnlocked,
-                                    isCompleted = story.isCompleted,
-                                    requiredXp = story.requiredXp,
-                                    onClick = { onOpenStory(story.id) },
-                                    // DESIGN.md sizes a cover at roughly 160x107 dp on this shelf.
-                                    modifier = Modifier.width(160.dp),
-                                    cover = rememberStoryCoverRes(story.id)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(Space.xl))
-
-                    // The week, where history belongs: below the work, not pinned above it.
-                    SectionHeading(text = "This week")
-                    Spacer(Modifier.height(Space.sm))
-                    WeekStrip(
-                        days = uiState.week.map { day ->
-                            DayMark(
-                                label = day.label,
-                                dayOfMonth = day.dayOfMonth,
-                                state = when {
-                                    day.isToday && day.practised -> DayState.TodayDone
-                                    day.isToday -> DayState.Today
-                                    day.practised -> DayState.Done
-                                    else -> DayState.Missed
-                                }
-                            )
-                        },
-                        onCanopy = false
-                    )
                 }
             }
         }
     )
-}
-
-/** Each activity kind owns one hue, so colour carries meaning across Learn, Practice and Progress. */
-@Composable
-private fun ActivityKind.accent(): Color = when (this) {
-    ActivityKind.Lesson -> Violet
-    ActivityKind.Review -> SkyReview
-    ActivityKind.Game -> Coral
-    ActivityKind.Story -> Gold
-}
-
-private fun ActivityKind.iconRes(): Int = when (this) {
-    ActivityKind.Lesson -> Iconsax.Book
-    ActivityKind.Review -> Iconsax.Repeat
-    ActivityKind.Game -> Iconsax.Game
-    ActivityKind.Story -> Iconsax.Document
 }
