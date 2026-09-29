@@ -116,10 +116,17 @@ fun OnboardingScreen(
         finished = true
         focusManager.clearFocus()
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        // Resolved from the saved answers now, not from the vals above, which a button lambda held
+        // by the shared frame may have captured several steps ago (see currentStep()).
+        val chosenAvatar = JepjepAvatar.entries.getOrElse(avatarOrdinal) { JepjepAvatar.Default }
+        val chosenGoal = resolveDailyGoal(
+            DailyGoal.entries.getOrNull(goalOrdinal),
+            KnowledgeLevel.entries.getOrNull(levelOrdinal)
+        )
         onCompleteOnboarding(
             name.trim().ifBlank { DEFAULT_NAME },
-            avatar.id,
-            goal.xp,
+            chosenAvatar.id,
+            chosenGoal.xp,
             DEFAULT_TITLE,
             avatar.name
         )
@@ -131,14 +138,19 @@ fun OnboardingScreen(
         if (next == null) finish() else goTo(next)
     }
 
-    fun advance() = advanceFrom(step)
+    // These read [stepOrdinal] when called, never the [step] val above. The frame's buttons are built
+    // inside an AnimatedContent entry that every framed step shares, so a lambda holding [step] keeps
+    // the step it was composed on, and Next would replay "advance from Name" forever.
+    fun currentStep(): OnboardingStep = OnboardingStep.fromOrdinal(stepOrdinal)
+
+    fun advance() = advanceFrom(currentStep())
 
     fun goBack() {
-        step.previous?.let(::goTo)
+        currentStep().previous?.let(::goTo)
     }
 
     fun skip() {
-        val target = step.skipTarget
+        val target = currentStep().skipTarget
         if (target != null) goTo(target) else finish()
     }
 
@@ -149,15 +161,19 @@ fun OnboardingScreen(
     ) { advanceFrom(OnboardingStep.Reminders) }
 
     fun allowReminders() {
-        viewModel.saveReminders(streak = streakOn, wordOfDay = wordOfDayOn)
-        val needsPermission = (streakOn || wordOfDayOn) &&
+        // Re-read the switches here rather than using streakOn/wordOfDayOn, for the same stale-capture
+        // reason as currentStep().
+        val streak = streakChoice ?: savedStreak
+        val wordOfDay = wordOfDayChoice ?: savedWordOfDay
+        viewModel.saveReminders(streak = streak, wordOfDay = wordOfDay)
+        val needsPermission = (streak || wordOfDay) &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         if (needsPermission) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            advance()
+            advanceFrom(OnboardingStep.Reminders)
         }
     }
 
