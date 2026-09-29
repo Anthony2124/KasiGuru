@@ -84,7 +84,7 @@ val coreChapter: TourChapter = TourChapter(
             anchor = TourAnchor.NavPractice,
             title = "Practice",
             body = "Games that drill the words you have already met, and the leaderboard to see where " +
-                "you rank. Stars unlock the harder games, so play the open ones first.",
+                "you rank. Three games are open now, and more are coming soon.",
             corner = Radius.pill
         ),
         TourStop(

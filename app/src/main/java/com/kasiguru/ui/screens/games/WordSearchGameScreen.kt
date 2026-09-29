@@ -246,7 +246,8 @@ private fun PlayingContent(
             progress = found / total.toFloat(),
             score = found,
             accentStart = Lime,
-            accentEnd = LimeLip
+            accentEnd = LimeLip,
+            overScene = true
         )
         Spacer(Modifier.height(Space.sm))
         StatusLine(uiState)

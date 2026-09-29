@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.AudioPlayButton
+import com.kasiguru.ui.components.CasiguranBackdrop
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
 import com.kasiguru.ui.components.GameHintButton
@@ -100,10 +101,11 @@ fun WordMatchGameScreen(
         val roundNum = uiState.currentQuestionIndex + 1
         val hasAnswered = uiState.selectedOption != null
 
+        // The round is set over one of Adrian's scenes, a different one per level, as Word Wheel's is.
+        CasiguranBackdrop(Scenery.forIndex(uiState.level)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                
                 .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -113,7 +115,8 @@ fun WordMatchGameScreen(
                     progress = roundNum.toFloat() / uiState.totalQuestions.toFloat(),
                     score = uiState.score,
                     accentStart = Gold,
-                    accentEnd = GoldDeep
+                    accentEnd = GoldDeep,
+                    overScene = true
                 )
 
                 Surface(
@@ -165,7 +168,8 @@ fun WordMatchGameScreen(
                     GameHintButton(
                         hint = hintFor(uiState.currentWord, HintLanguages.EnglishOnly),
                         revealed = uiState.hintRevealed,
-                        onReveal = { viewModel.revealHint() }
+                        onReveal = { viewModel.revealHint() },
+                        overScene = true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -183,7 +187,8 @@ fun WordMatchGameScreen(
                             label = option,
                             state = state,
                             enabled = !hasAnswered,
-                            onClick = { viewModel.selectOption(option) }
+                            onClick = { viewModel.selectOption(option) },
+                            overScene = true
                         )
                     }
                 }
@@ -203,6 +208,7 @@ fun WordMatchGameScreen(
                     }
                 )
             }
+        }
         }
         }
     )
