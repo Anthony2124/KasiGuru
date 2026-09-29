@@ -112,10 +112,9 @@ val lessonsChapter: TourChapter = TourChapter(
         TourStop(
             target = TourTarget.Fixed(Screen.GameHub.route),
             anchor = null,
-            title = "Locked is not finished",
-            body = "Most games start closed and open as you earn stars, and a locked tile says what it " +
-                "is waiting for. One is waiting on us instead - the verb forms it needs are still being " +
-                "recorded with our language experts."
+            title = "More games are coming",
+            body = "Word Match, Word Search and Word Wheel are open now. The tiles marked Coming soon " +
+                "are games still being finished, and they open in a later update."
         ),
         TourStop(
             target = TourTarget.Fixed(Screen.Home.route),

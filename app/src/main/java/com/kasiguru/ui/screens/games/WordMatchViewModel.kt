@@ -35,7 +35,7 @@ class WordMatchViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
-    private val _uiState = MutableStateFlow(WordMatchUiState())
+    private val _uiState = MutableStateFlow(WordMatchUiState(level = levelNumber))
     val uiState: StateFlow<WordMatchUiState> = _uiState.asStateFlow()
 
     private var totalInitialQuestions = 5
@@ -50,7 +50,7 @@ class WordMatchViewModel @Inject constructor(
 
     private fun startGame() {
         viewModelScope.launch {
-            _uiState.value = WordMatchUiState(isLoading = true)
+            _uiState.value = WordMatchUiState(level = levelNumber, isLoading = true)
             
             val levelInfo = gameLevelRepository.getLevel("word_match", levelNumber)
             if (levelInfo != null) {
@@ -215,6 +215,8 @@ class WordMatchViewModel @Inject constructor(
 }
 
 data class WordMatchUiState(
+    /** The level being played; picks the Casiguran scene behind the round. */
+    val level: Int = 1,
     val isLoading: Boolean = true,
     val isUnavailable: Boolean = false,
     val currentQuestionIndex: Int = 0,

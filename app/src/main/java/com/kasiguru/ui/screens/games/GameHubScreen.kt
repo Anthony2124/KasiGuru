@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -57,6 +58,7 @@ import com.kasiguru.ui.theme.NodeLockedInk
 import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.WidthClass
 import com.kasiguru.ui.theme.rememberWidthClass
@@ -92,34 +94,37 @@ fun GameHubScreen(
     // remember's calculation runs outside composition, so themed colours must be resolved here first.
     val violet = Lime
     val games = remember(uiState.totalStars, uiState.highScores, violet) {
+        // Word Match, Word Search and Word Wheel are the playable three and lead the grid. The rest
+        // are shown as coming soon.
         listOf(
             GameEntry("word_match", "Word Match", Iconsax.Element4Outline, violet,
                 com.kasiguru.util.Constants.GameUnlockStars.WORD_MATCH, uiState.highScores["word_match"] ?: 0),
-            GameEntry("reverse_match", "Reverse Match", Iconsax.RepeatOutline, Coral,
-                com.kasiguru.util.Constants.GameUnlockStars.REVERSE_MATCH, uiState.highScores["reverse_match"] ?: 0),
-            GameEntry("fill_blank", "Fill in Blank", Iconsax.Edit, Gold,
-                com.kasiguru.util.Constants.GameUnlockStars.FILL_BLANK, uiState.highScores["fill_blank"] ?: 0),
-            GameEntry("sentence_order", "Sentence Order", Iconsax.Document, violet,
-                com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER, uiState.highScores["sentence_order"] ?: 0),
-            GameEntry(com.kasiguru.util.Constants.Games.RECALL, "Word Recall", Iconsax.Keyboard, Coral,
-                com.kasiguru.util.Constants.GameUnlockStars.RECALL,
-                uiState.highScores[com.kasiguru.util.Constants.Games.RECALL] ?: 0),
-            GameEntry("aspect_builder", "Aspect Builder", Iconsax.Flash, Gold,
-                com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0),
-            GameEntry(com.kasiguru.util.Constants.Games.WORD_SEARCH, "Word Search", Iconsax.Search, violet,
+            GameEntry(com.kasiguru.util.Constants.Games.WORD_SEARCH, "Word Search", Iconsax.Search, Coral,
                 com.kasiguru.util.Constants.GameUnlockStars.WORD_SEARCH,
                 uiState.highScores[com.kasiguru.util.Constants.Games.WORD_SEARCH] ?: 0),
             GameEntry(com.kasiguru.util.Constants.Games.WORD_WHEEL, "Word Wheel", Iconsax.Refresh, Gold,
                 com.kasiguru.util.Constants.GameUnlockStars.WORD_WHEEL,
-                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_WHEEL] ?: 0)
+                uiState.highScores[com.kasiguru.util.Constants.Games.WORD_WHEEL] ?: 0),
+            GameEntry("reverse_match", "Reverse Match", Iconsax.RepeatOutline, Coral,
+                com.kasiguru.util.Constants.GameUnlockStars.REVERSE_MATCH, uiState.highScores["reverse_match"] ?: 0, comingSoon = true),
+            GameEntry("fill_blank", "Fill in Blank", Iconsax.Edit, Gold,
+                com.kasiguru.util.Constants.GameUnlockStars.FILL_BLANK, uiState.highScores["fill_blank"] ?: 0, comingSoon = true),
+            GameEntry("sentence_order", "Sentence Order", Iconsax.Document, violet,
+                com.kasiguru.util.Constants.GameUnlockStars.SENTENCE_ORDER, uiState.highScores["sentence_order"] ?: 0, comingSoon = true),
+            GameEntry(com.kasiguru.util.Constants.Games.RECALL, "Word Recall", Iconsax.Keyboard, Coral,
+                com.kasiguru.util.Constants.GameUnlockStars.RECALL,
+                uiState.highScores[com.kasiguru.util.Constants.Games.RECALL] ?: 0, comingSoon = true),
+            GameEntry("aspect_builder", "Aspect Builder", Iconsax.Flash, Gold,
+                com.kasiguru.util.Constants.GameUnlockStars.ASPECT_BUILDER, uiState.highScores["aspect_builder"] ?: 0, comingSoon = true)
         )
     }
     // The single best next move: the unlocked game played least successfully, or — if everything is
     // still locked — whichever is closest to unlocking. Gives the screen one lead item instead of
     // asking the grid alone to double as both catalog and recommendation.
+    // A coming-soon game is never suggested: the card would lead to a tile that cannot be opened.
     val recommended = remember(games) {
-        games.filter { uiState.totalStars >= it.unlockStars }.minByOrNull { it.highScore }
-            ?: games.minByOrNull { it.unlockStars }
+        games.filter { it.isPlayable(uiState.totalStars) }.minByOrNull { it.highScore }
+            ?: games.filter { !it.comingSoon }.minByOrNull { it.unlockStars }
     }
 
     // Skips straight to the level select once a player has opted out of re-seeing a game's rules,
@@ -217,7 +222,7 @@ fun GameHubScreen(
 
                 item {
                     SectionHeading(text = "All mini-games")
-                    SectionCaption(text = "Earn stars to unlock the rest")
+                    SectionCaption(text = "More games are on the way")
                     Spacer(Modifier.height(Space.md))
                 }
 
@@ -231,7 +236,7 @@ fun GameHubScreen(
                                 row.forEach { game ->
                                     GameTile(
                                         entry = game,
-                                        isUnlocked = uiState.totalStars >= game.unlockStars,
+                                        isUnlocked = game.isPlayable(uiState.totalStars),
                                         modifier = Modifier.weight(1f),
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -329,8 +334,15 @@ private data class GameEntry(
     val iconRes: Int,
     val accent: Color,
     val unlockStars: Int,
-    val highScore: Int
-)
+    val highScore: Int,
+    /**
+     * Shown but not playable yet, whatever the learner's stars. The game's code and levels are kept,
+     * so opening one again is this flag and nothing else.
+     */
+    val comingSoon: Boolean = false
+) {
+    fun isPlayable(totalStars: Int): Boolean = !comingSoon && totalStars >= unlockStars
+}
 
 @Composable
 private fun GameTile(
@@ -346,7 +358,8 @@ private fun GameTile(
     SoftCard(
         modifier = modifier,
         shape = Shapes.tile,
-        onClick = onClick,
+        // A coming-soon tile is a notice, not a door: nothing behind it to open yet.
+        onClick = if (entry.comingSoon) null else onClick,
         contentPadding = PaddingValues(Space.sm)
     ) {
         Box(
@@ -363,7 +376,9 @@ private fun GameTile(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(id = if (isUnlocked) entry.iconRes else Iconsax.Lock),
+                // Its own icon, greyed, when coming soon: the lock would say "earn this", and there
+                // is nothing to earn yet.
+                painter = painterResource(id = if (isUnlocked || entry.comingSoon) entry.iconRes else Iconsax.Lock),
                 contentDescription = null,
                 tint = when {
                     !isUnlocked -> NodeLockedInk
@@ -381,11 +396,23 @@ private fun GameTile(
             maxLines = 1
         )
         Spacer(Modifier.height(2.dp))
-        Text(
-            text = if (isUnlocked) "Best: ${entry.highScore}" else "${entry.unlockStars} stars to unlock",
-            style = MaterialTheme.typography.labelSmall,
-            color = Muted
-        )
+        if (entry.comingSoon) {
+            Text(
+                text = "Coming soon",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted,
+                modifier = Modifier
+                    .clip(Shapes.pill)
+                    .background(SurfaceSunken)
+                    .padding(horizontal = Space.xs, vertical = 2.dp)
+            )
+        } else {
+            Text(
+                text = if (isUnlocked) "Best: ${entry.highScore}" else "${entry.unlockStars} stars to unlock",
+                style = MaterialTheme.typography.labelSmall,
+                color = Muted
+            )
+        }
     }
 }
 

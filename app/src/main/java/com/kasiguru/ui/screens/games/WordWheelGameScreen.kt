@@ -187,7 +187,8 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 score = found,
                 accentStart = Lime,
                 accentEnd = LimeLip,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                overScene = true
             )
             Spacer(Modifier.height(Space.sm))
             Board(puzzle = puzzle, uiState = uiState)

@@ -46,6 +46,9 @@ import com.kasiguru.ui.theme.RedDeep
 import com.kasiguru.ui.theme.RedTint
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.Ground
+import com.kasiguru.ui.theme.Surface as SurfaceColor
+import androidx.compose.ui.graphics.compositeOver
 import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
@@ -56,7 +59,12 @@ import com.kasiguru.ui.theme.Muted
  * implementations of the same job, each free to drift from the others. One shared set here instead.
  */
 
-/** Progress bar, "Round/Question X/Y," and score chip — was duplicated in every game screen. */
+/**
+ * Progress bar, "Round/Question X/Y," and score chip — was duplicated in every game screen.
+ *
+ * [overScene] is for a header drawn on a [CasiguranBackdrop]: the scene is shown at full strength,
+ * so the label gets a [backdropPill] instead of sitting on bare picture.
+ */
 @Composable
 fun GameHeader(
     label: String,
@@ -64,7 +72,8 @@ fun GameHeader(
     score: Int,
     accentStart: Color,
     accentEnd: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    overScene: Boolean = false
 ) {
     Column(modifier = modifier) {
         KasiGuruProgressBar(progress = progress, gradientColors = listOf(accentStart, accentEnd))
@@ -78,7 +87,12 @@ fun GameHeader(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Ink
+                color = Ink,
+                modifier = if (overScene) {
+                    Modifier.backdropPill(SurfaceColor).padding(horizontal = Space.sm, vertical = Space.xxs)
+                } else {
+                    Modifier
+                }
             )
             Surface(shape = RoundedCornerShape(16.dp), color = accentStart) {
                 Text(
@@ -93,6 +107,12 @@ fun GameHeader(
     }
 }
 
+/**
+ * A translucent fill made solid for a [CasiguranBackdrop], by laying it over [Ground] first: it then
+ * looks exactly as it does on the page, instead of letting the full-strength scene show through.
+ */
+private fun Color.solidOverScene(overScene: Boolean): Color = if (overScene) compositeOver(Ground) else this
+
 /** An answer option's revealed state. Colour never carries this alone — see [GameOptionRow]. */
 enum class GameOptionState { Idle, Wrong, Correct }
 
@@ -106,11 +126,13 @@ fun GameOptionRow(
     state: GameOptionState,
     enabled: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Drawn on a [CasiguranBackdrop]: the correct/wrong tints are made solid. */
+    overScene: Boolean = false
 ) {
     val backgroundColor = when (state) {
-        GameOptionState.Correct -> Green.copy(alpha = 0.18f)
-        GameOptionState.Wrong -> Red.copy(alpha = 0.18f)
+        GameOptionState.Correct -> Green.copy(alpha = 0.18f).solidOverScene(overScene)
+        GameOptionState.Wrong -> Red.copy(alpha = 0.18f).solidOverScene(overScene)
         GameOptionState.Idle -> MaterialTheme.colorScheme.surface
     }
 
@@ -388,13 +410,18 @@ fun GameHintButton(
     hint: String?,
     revealed: Boolean,
     onReveal: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Drawn on a [CasiguranBackdrop]: the button gets a pill and the hint a solid panel. */
+    overScene: Boolean = false
 ) {
     if (hint == null) return
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (!revealed) {
-            TextButton(onClick = onReveal) {
+            TextButton(
+                onClick = onReveal,
+                modifier = if (overScene) Modifier.backdropPill(SurfaceColor) else Modifier
+            ) {
                 Icon(
                     painter = painterResource(id = Iconsax.InfoCircle),
                     contentDescription = null,
@@ -412,7 +439,7 @@ fun GameHintButton(
         } else {
             Surface(
                 shape = Shapes.tile,
-                color = Muted.copy(alpha = 0.08f),
+                color = Muted.copy(alpha = 0.08f).solidOverScene(overScene),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(Space.sm)) {

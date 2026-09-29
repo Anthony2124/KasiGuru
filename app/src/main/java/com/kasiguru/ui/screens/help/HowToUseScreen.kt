@@ -261,7 +261,7 @@ private val tabGuide = listOf(
         Iconsax.GameBold,
         "Practice",
         "Games that drill the words you have already met, and the leaderboard to see where you " +
-            "rank. Stars unlock the harder games, so play the open ones first."
+            "rank. Three games are open now, and more are coming soon."
     ),
     TabGuideEntry(
         Iconsax.BookBold,
