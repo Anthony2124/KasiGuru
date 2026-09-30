@@ -719,7 +719,7 @@ function renderVocabularyTable() {
           <span class="gloss">${glosses.join('<span class="sep">·</span>') || '<span class="lang">No gloss recorded yet</span>'}</span>
         </span>
         <span class="entry-side">
-          ${aspects ? `<span class="badge badge-pending">${aspects} aspect${aspects === 1 ? '' : 's'}</span>` : ''}
+          ${aspects ? `<span class="badge badge-aspect">${aspects} aspect${aspects === 1 ? '' : 's'}</span>` : ''}
           <span class="badge badge-category">${escapeHtml(item.category || 'General')}</span>
         </span>
       </button>`;
@@ -847,7 +847,7 @@ function renderStoriesTable() {
 
     const kasi = (story.titleKasiguranin || '').trim();
     const xp = (story.requiredXp || 0) === 0
-      ? '<span class="badge badge-approved">Free</span>'
+      ? '<span class="badge badge-approved badge-plain">Free</span>'
       : `<span class="badge badge-category">${story.requiredXp} XP</span>`;
 
     // The cover is an optional slot. With no artwork the violet field plus the page count is a
@@ -915,7 +915,7 @@ function renderReleasesList() {
             <small>Build ${escapeHtml(String(rel.versionCode ?? '—'))} · ${escapeHtml(when)}</small>
             ${isLive ? '<span class="badge badge-approved">Live</span>' : ''}
             ${rel.yanked ? '<span class="badge badge-rejected">Yanked</span>' : ''}
-            ${rel.forceUpdate ? '<span class="badge badge-pending">Required</span>' : ''}
+            ${rel.forceUpdate ? '<span class="badge badge-pending badge-plain">Required</span>' : ''}
           </div>
           <p class="release-notes${notes ? '' : ' is-empty'}">${notes ? escapeHtml(notes) : 'No release notes were recorded for this build.'}</p>
         </div>
@@ -2295,7 +2295,7 @@ window.openSubmissionModal = function(id) {
       <iconsax-icon name="trash" type="bulk" size="17" color="currentColor"></iconsax-icon> Delete entry
     </button>
     ${isPending ? `
-      <button type="button" class="btn btn-danger" id="submission-modal-reject" style="background:#b43a3a; border-color:#b43a3a;">
+      <button type="button" class="btn btn-danger" id="submission-modal-reject">
         <iconsax-icon name="close-circle" type="bulk" size="17" color="currentColor"></iconsax-icon> Reject
       </button>
     ` : ''}
@@ -2531,7 +2531,7 @@ function renderReportsTable() {
       <td data-label="Category"><span class="badge badge-category">${escapeHtml(rep.category || 'Bug / Issue')}</span></td>
       <td data-label="Title & Target">
         <strong>${escapeHtml(rep.title || 'Report')}</strong>
-        ${rep.targetWord ? `<div style="font-size:0.85rem; color:var(--primary); font-weight:600; margin-top:2px;">Word: ${escapeHtml(rep.targetWord)}</div>` : ''}
+        ${rep.targetWord ? `<div style="font-size:0.85rem; color:var(--violet); font-weight:600; margin-top:2px;">Word: ${escapeHtml(rep.targetWord)}</div>` : ''}
         ${rep.targetScreen ? `<div style="font-size:0.8rem; color:var(--muted);">Screen: ${escapeHtml(rep.targetScreen)}</div>` : ''}
       </td>
       <td data-label="Description" style="max-width:260px; font-size:0.88rem; line-height:1.4;">
@@ -2541,7 +2541,7 @@ function renderReportsTable() {
         ${hasPhoto ? `
           <div style="cursor:pointer; display:inline-block;" onclick="window.viewReportEvidence('${photoSrc}', '${escapeHtml(rep.title || 'Evidence')}')" title="Click to enlarge">
             <img src="${photoSrc}" alt="Evidence Thumbnail" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm);" />
-            <div style="font-size:0.75rem; color:var(--primary); font-weight:600; text-align:center;">Enlarge</div>
+            <div style="font-size:0.75rem; color:var(--violet); font-weight:600; text-align:center;">Enlarge</div>
           </div>
         ` : `<span style="color:var(--muted); font-size:0.82rem;">None</span>`}
       </td>
@@ -3914,7 +3914,7 @@ function renderStageReview() {
       <td data-label="Stage">${themeCell}</td>
       <td data-label="Part of speech">${posCell}</td>
       <td data-label="Why">
-        <span class="badge ${confident ? 'badge-approved' : 'badge-pending'}">
+        <span class="badge badge-plain ${confident ? 'badge-approved' : 'badge-pending'}">
           ${confident ? 'gloss' : 'definition'}
         </span>
         <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">
@@ -4342,7 +4342,7 @@ function renderUsersTable() {
 
     let appealBadge = '';
     if (hasPendingAppeal) {
-      appealBadge = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="User has an appeal waiting for review"><iconsax-icon name="notification" type="bulk" size="12" color="#b45309"></iconsax-icon> Appeal Pending</span>`;
+      appealBadge = `<span class="badge" style="background:var(--status-pending-tint); color:var(--status-pending); border:1px solid rgba(245,200,106,.4); font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="User has an appeal waiting for review"><iconsax-icon name="notification" type="bulk" size="12" color="var(--status-pending)"></iconsax-icon> Appeal Pending</span>`;
     }
 
     const userLabel = `
@@ -4377,7 +4377,7 @@ function renderUsersTable() {
     let statusCell = '';
     if (isBanned) {
       if (hasPendingAppeal) {
-        statusCell = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="Appeal pending review"><iconsax-icon name="notification" type="bulk" size="12" color="#b45309"></iconsax-icon> Appeal Pending</span>`;
+        statusCell = `<span class="badge" style="background:var(--status-pending-tint); color:var(--status-pending); border:1px solid rgba(245,200,106,.4); font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="Appeal pending review"><iconsax-icon name="notification" type="bulk" size="12" color="var(--status-pending)"></iconsax-icon> Appeal Pending</span>`;
       } else if (hasRejectedAppeal) {
         statusCell = `<span class="badge badge-rejected" title="Appeal rejected: ${escapeHtml(banDoc.appealReviewNotes || '')}">Blocked (Appeal Declined)</span>`;
       } else {
@@ -4402,11 +4402,11 @@ function renderUsersTable() {
     return `
       <tr class="user-row-clickable" data-uid="${escapeHtml(user.id)}" title="Click to view details">
         <td>${userLabel}</td>
-        <td style="color:var(--text); font-size:0.875rem;">${emailDisplay}</td>
+        <td style="color:var(--ink); font-size:0.875rem;">${emailDisplay}</td>
         <td style="color:var(--muted); font-size:0.875rem; white-space:nowrap;">${escapeHtml(registeredDate)}</td>
-        <td><span class="badge badge-outline" style="border:1px solid var(--border); color:var(--text); background:transparent;">${badge}</span></td>
+        <td><span class="badge badge-outline" style="border:1px solid var(--border); color:var(--ink); background:transparent;">${badge}</span></td>
         <td class="num">${xp.toLocaleString()} XP</td>
-        <td class="num" style="color:var(--primary); font-weight:700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
+        <td class="num" style="color:var(--violet); font-weight:700;"><iconsax-icon name="fire" type="bulk" size="14" color="currentColor" style="vertical-align:text-bottom;"></iconsax-icon> ${streak}</td>
         <td>${statusCell}</td>
         <td>${actionCell}</td>
       </tr>
@@ -4538,7 +4538,7 @@ window.openUserDetails = async function(uid) {
   let statusBadgeHtml = `<span class="badge badge-approved" style="font-size:0.8rem; padding:4px 10px;">Active Account</span>`;
   if (isBanned) {
     if (hasPendingAppeal) {
-      statusBadgeHtml = `<span class="badge" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:700; font-size:0.8rem; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;"><iconsax-icon name="notification" type="bulk" size="14" color="#b45309"></iconsax-icon> Suspended (Appeal Pending)</span>`;
+      statusBadgeHtml = `<span class="badge" style="background:var(--status-pending-tint); color:var(--status-pending); border:1px solid rgba(245,200,106,.4); font-weight:700; font-size:0.8rem; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;"><iconsax-icon name="notification" type="bulk" size="14" color="var(--status-pending)"></iconsax-icon> Suspended (Appeal Pending)</span>`;
     } else if (hasRejectedAppeal) {
       statusBadgeHtml = `<span class="badge badge-rejected" style="font-size:0.8rem; padding:4px 10px;">Suspended (Appeal Declined)</span>`;
     } else {
@@ -4568,15 +4568,15 @@ window.openUserDetails = async function(uid) {
     appealSectionHtml = `
       <div class="appeal-banner-pending">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-          <div style="display:flex; align-items:center; gap:8px; color:#92400e; font-weight:700; font-size:0.9rem;">
-            <iconsax-icon name="notification" type="bulk" size="20" color="#d97706"></iconsax-icon>
+          <div style="display:flex; align-items:center; gap:8px; color:var(--status-pending); font-weight:700; font-size:0.9rem;">
+            <iconsax-icon name="notification" type="bulk" size="20" color="var(--status-pending)"></iconsax-icon>
             <span>Appeal Awaiting Review</span>
           </div>
-          <small style="color:#b45309; font-size:0.75rem;">Submitted ${escapeHtml(appealDateStr)}</small>
+          <small style="color:var(--status-pending); font-size:0.75rem;">Submitted ${escapeHtml(appealDateStr)}</small>
         </div>
-        <div style="background:white; border:1px solid #fde68a; border-radius:var(--r-ctl); padding:12px; margin-top:8px;">
-          <div style="font-size:0.75rem; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.04em;">User Statement:</div>
-          <blockquote style="margin:0; font-size:0.875rem; color:#1f2937; line-height:1.6; font-style:italic; white-space:pre-wrap;">${escapeHtml(banDoc.appealText || 'No statement provided.')}</blockquote>
+        <div style="background:var(--surface); border:1px solid rgba(245,200,106,.4); border-radius:var(--r-ctl); padding:12px; margin-top:8px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--status-pending); text-transform:uppercase; margin-bottom:4px; letter-spacing:0.04em;">User Statement:</div>
+          <blockquote style="margin:0; font-size:0.875rem; color:var(--ink); line-height:1.6; font-style:italic; white-space:pre-wrap;">${escapeHtml(banDoc.appealText || 'No statement provided.')}</blockquote>
         </div>
       </div>
     `;
@@ -4600,15 +4600,15 @@ window.openUserDetails = async function(uid) {
     <!-- Profile Header Card -->
     <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--sunken); border-radius:var(--r-ctl); padding:16px; flex-wrap:wrap;">
       <div style="display:flex; align-items:center; gap:14px;">
-        <div style="width:52px; height:52px; border-radius:50%; background:var(--violet); color:white; display:flex; align-items:center; justify-content:center; font-size:1.35rem; font-weight:800; flex-shrink:0; box-shadow:0 4px 12px rgba(91,76,219,0.25);">
+        <div style="width:52px; height:52px; border-radius:50%; background:var(--violet); color:var(--on-violet); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:1.35rem; font-weight:700; flex-shrink:0;">
           ${escapeHtml(initial)}
         </div>
         <div>
           <div style="font-size:1.15rem; font-weight:800; color:var(--ink);">${escapeHtml(displayName)}</div>
-          ${(progressData.userName && progressData.userName !== displayName && !isGenericName(progressData.userName)) ? `<div style="font-size:0.8rem; color:var(--primary); font-weight:600; margin-top:1px;">@${escapeHtml(progressData.userName)}</div>` : ''}
+          ${(progressData.userName && progressData.userName !== displayName && !isGenericName(progressData.userName)) ? `<div style="font-size:0.8rem; color:var(--violet); font-weight:600; margin-top:1px;">@${escapeHtml(progressData.userName)}</div>` : ''}
           <div style="font-size:0.875rem; color:var(--muted); margin-top:2px;">${escapeHtml(resolvedEmail || 'No email associated')}</div>
           <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
-            <span style="font-size:0.75rem; font-family:monospace; background:var(--surface); border:1px solid var(--border); padding:2px 6px; border-radius:4px; color:var(--text);">UID: ${escapeHtml(uid)}</span>
+            <span style="font-size:0.75rem; font-family:monospace; background:var(--surface); border:1px solid var(--border); padding:2px 6px; border-radius:4px; color:var(--ink);">UID: ${escapeHtml(uid)}</span>
             <button type="button" class="btn btn-xs btn-outline" style="font-size:0.7rem; padding:2px 6px;" onclick="navigator.clipboard.writeText('${escapeHtml(uid)}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500);">Copy</button>
           </div>
         </div>
@@ -4626,8 +4626,8 @@ window.openUserDetails = async function(uid) {
       </div>
       <div class="user-details-stat-card">
         <span class="user-details-stat-label">Current Streak</span>
-        <span class="user-details-stat-val" style="color:#d97706; display:flex; align-items:center; gap:4px;">
-          <iconsax-icon name="fire" type="bulk" size="18" color="#d97706"></iconsax-icon> ${streak} ${streak === 1 ? 'day' : 'days'}
+        <span class="user-details-stat-val" style="color:var(--coral); display:flex; align-items:center; gap:4px;">
+          <iconsax-icon name="fire" type="bulk" size="18" color="var(--coral)"></iconsax-icon> ${streak} ${streak === 1 ? 'day' : 'days'}
         </span>
       </div>
       <div class="user-details-stat-card">
@@ -4786,7 +4786,7 @@ window.openAppealReview = function(uid, displayName) {
   const appealDateStr = ban.appealSubmittedAt ? new Date(ban.appealSubmittedAt).toLocaleString() : 'Unknown';
 
   body.innerHTML = `
-    <div style="background:var(--bg-subtle, #f8f9fa); border:1px solid var(--border, #e9ecef); border-radius:8px; padding:12px 16px;">
+    <div style="background:var(--sunken); border:1px solid var(--hair); border-radius:8px; padding:12px 16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <strong style="font-size:1rem;">${escapeHtml(nameToDisplay)}</strong>
         <span style="font-size:0.75rem; color:var(--muted); font-family:monospace;">${escapeHtml(uid)}</span>
@@ -4804,7 +4804,7 @@ window.openAppealReview = function(uid, displayName) {
         <iconsax-icon name="document-text" type="bulk" size="16" color="var(--violet)"></iconsax-icon>
         User Appeal Statement
       </label>
-      <div style="background:#fff; border:1px solid var(--border, #ced4da); border-radius:8px; padding:14px; font-size:0.925rem; line-height:1.5; color:var(--text); white-space:pre-wrap; max-height:200px; overflow-y:auto;">
+      <div style="background:var(--sunken); border:1px solid var(--hair-strong); border-radius:8px; padding:14px; font-size:0.925rem; line-height:1.5; color:var(--ink); white-space:pre-wrap; max-height:200px; overflow-y:auto;">
         ${escapeHtml(ban.appealText || 'No statement provided.')}
       </div>
       <small style="color:var(--muted); display:block; margin-top:4px;">Submitted: ${escapeHtml(appealDateStr)}</small>

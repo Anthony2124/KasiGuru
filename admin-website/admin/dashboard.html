@@ -5,23 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <title>KasiGuru — Admin</title>
+  <title>KasiGuru Admin</title>
   <script src="js/iconsax.js?v=2026_08_icons_v3"></script>
-  <link rel="stylesheet" href="css/styles.css?v=2026_soft_v4">
+  <meta name="color-scheme" content="dark">
+  <link rel="preload" href="fonts/fredoka-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css?v=2026_10_forest">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 </head>
 <body>
 
   <!-- Auth loading screen, shown until Firebase confirms the session -->
   <div id="auth-loading-screen">
-    <div class="logo-badge">KasiGuru</div>
+    <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
     <div class="spinner"></div>
     <p style="color:var(--muted);">Verifying admin session&hellip;</p>
   </div>
 
   <!-- Access denied: signed in, but without the admin claim -->
   <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--ground); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;">
-    <div class="logo-badge">KasiGuru</div>
+    <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
     <h2 style="margin:0;">Access denied</h2>
     <p style="color:var(--muted); max-width:420px; margin:0;">
       Your account is signed in but does not have administrator access.
@@ -38,11 +40,8 @@
          Stories previously shared book-1, which made them indistinguishable at a glance. -->
     <aside>
       <div class="logo-container">
-        <div class="logo-mark" aria-hidden="true">K</div>
-        <div>
-          <div class="logo-badge">KasiGuru</div>
-          <div class="logo-title">Moderation console</div>
-        </div>
+        <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
+        <div class="logo-title">Moderation console</div>
       </div>
 
       <div class="navgroup">
@@ -537,12 +536,12 @@
       </div>
 
       <!-- Appeal Alert Banner if there are appeals pending -->
-      <div id="users-appeals-alert" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:var(--r-ctl); padding:12px 18px; margin-bottom:16px; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div style="display:flex; align-items:center; gap:12px; color:#92400e; font-size:0.875rem; font-weight:600;">
-          <iconsax-icon name="notification" type="bulk" size="22" color="#d97706"></iconsax-icon>
+      <div id="users-appeals-alert" style="display:none; background:var(--status-pending-tint); border:1px solid rgba(245,200,106,.4); border-radius:var(--r-ctl); padding:12px 18px; margin-bottom:16px; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; align-items:center; gap:12px; color:var(--status-pending); font-size:0.875rem; font-weight:600;">
+          <iconsax-icon name="notification" type="bulk" size="22" color="var(--status-pending)"></iconsax-icon>
           <span><strong>Action required:</strong> <span id="users-appeals-alert-count">1 user appeal</span> pending review.</span>
         </div>
-        <button type="button" class="btn btn-sm" style="background:#d97706; color:#fff; font-weight:700; border:none; cursor:pointer;" onclick="window.filterToAppeals()">View Appeals</button>
+        <button type="button" class="btn btn-sm" style="background:var(--status-pending); color:var(--on-reward); font-weight:700; border:none; cursor:pointer;" onclick="window.filterToAppeals()">View Appeals</button>
       </div>
 
       <div class="panel">
@@ -1481,7 +1480,7 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
       <div style="padding:16px 0; max-height:75vh; overflow-y:auto; display:flex; justify-content:center; align-items:center;">
         <!-- No src attribute: viewReportEvidence() assigns it when a report is opened. An empty
              src="" makes some browsers re-request the current page as an image. -->
-        <img id="evidence-modal-img" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px; box-shadow:var(--shadow-md); object-fit:contain;" />
+        <img id="evidence-modal-img" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px;  object-fit:contain;" />
       </div>
       <div class="modal-actions" style="justify-content:flex-end;">
         <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>

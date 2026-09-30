@@ -1,75 +1,92 @@
 /*
    KasiGuru Admin — moderation console
-   2026 "Violet Sheet", soft-card language. Light only.
+   2026 "Jepjep's Forest", the same world as the Android app and the download site. Dark only.
 
-   The same world as the Android app and the download site: identical colour tokens, identical type
-   (Nunito display + DM Sans body). Where the app floats white SoftCards on a lavender Ground, this
-   console does exactly that — a white sidebar, a lavender field, and white rounded cards carrying
-   the work. Nothing is built out of clay: DESIGN.md reserves clay for things you earn or press, and
-   a moderation queue is neither.
+   Adrian chose dark-to-match-the-app on 2026-09-30, replacing the light-only Violet Sheet console.
+   Every value below is the app's (app/src/main/java/com/kasiguru/ui/theme/Color.kt, Type.kt,
+   Dimens.kt): a near-black night ground, dark cards edged by a 1px hairline, lime for the one thing
+   to do, Fredoka for display and every figure, DM Sans for everything you read.
 
-   Light only, by decision. This console is used at a desk in daylight, and a second theme is a
-   second set of measurements to keep honest for no one who asked for it. `color-scheme: light`
-   below stops a dark-OS browser from repainting form controls and scrollbars underneath us.
+   The token *names* are the Violet Sheet ones on purpose. dashboard.html and app.js reference
+   --violet, --violet-wash, --on-violet and friends in inline styles and generated markup, so the
+   names stay and their meaning moves: --violet is now "the action colour", which is lime.
+   New code should read them that way.
 
-   Measured with the WCAG relative-luminance formula, not estimated. ink/surface 16.46,
-   ink/ground 14.43, muted/surface 6.46, muted/ground 5.67, violet/surface 6.00, violet/ground 5.26,
-   white/violet 6.00, white/canopy-bottom 7.60, white/canopy-top 4.86. Data marks, which need 3:1
-   rather than 4.5:1: violet 6.00, violet-soft 3.33, green 5.02, amber 5.02, red 4.83. Status
-   foregrounds sit on their own tints, a harder test than white: 6.45, 5.83, 5.53, 6.45.
-   Worst text pair anywhere in the console is 5.26.
+   Depth. Shadows barely read on night, so cards do not float on a shadow any more: --lift draws a
+   1px hairline ring instead, which is how the app's cards are edged. Clay (a solid lip beneath the
+   face that compresses on press) is kept for the things you press: primary, approve, reject.
+
+   Measured with the WCAG relative-luminance formula, not estimated:
+     ink/surface 18.4   muted/surface 11.8   faint/surface 5.9   muted/sunken 10.4   faint/sunken 5.2
+     lime/ground 8.3    lime/sunken 7.0      on-lime/lime 7.7    white/red-deep 5.3
+     white/canopy-top 12.9   muted/canopy-top 8.2
+     status on its own tint: pending 8.5, approved 6.2, rejected 5.4, info 6.5
+     non-text: input border 3.3 on sunken, 3.8 on surface; soft bar fill 3.4 on its track.
+   Nothing that carries text is below 4.5.
 */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Nunito:wght@700;800;900&display=swap');
+@font-face { font-family: 'Fredoka'; src: url('../fonts/fredoka-600.woff2') format('woff2'); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: 'Fredoka'; src: url('../fonts/fredoka-700.woff2') format('woff2'); font-weight: 700 900; font-display: swap; }
+@font-face { font-family: 'DM Sans'; src: url('../fonts/dmsans-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'DM Sans'; src: url('../fonts/dmsans-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'DM Sans'; src: url('../fonts/dmsans-700.woff2') format('woff2'); font-weight: 600 900; font-display: swap; }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Ground and ink — the app's values, unchanged. */
-  --ground: #F1EEFF;
-  --surface: #FFFFFF;
-  --sunken: #F7F5FF;
-  --ink: #1F1B3A;
-  --muted: #5E5A80;
-  --faint: #8A86A6;            /* Non-text only. 3.48 on white: above the 3:1 graphic floor,
-                                  below the 4.5:1 text floor, so it never carries a label. */
-  --hair: #E7E2FA;
-  --hair-strong: #D2CBEF;
+  /* Ground and ink — the app's values. */
+  --ground: #0A0E0D;
+  --surface: #141414;
+  --sunken: #1C211D;
+  --ink: #FFFFFF;
+  --muted: #C9D1C5;
+  --faint: #8C948A;            /* Captions and hints. 5.9 on surface, 5.2 on sunken. */
+  --hair: #3A3F3B;             /* 1px card and row edges. Non-text. */
+  --hair-strong: #6B736C;      /* Input borders: 3.3 on sunken, above the 3:1 control floor. */
+  --line: var(--hair);
 
-  /* Violet. The fill and the foreground are the same value here because both directions measure
-     above 4.5 — white on #5B4CDB is 6.00 and #5B4CDB on white is 6.00. */
-  --violet: #5B4CDB;
-  --violet-soft: #8B7FE8;      /* Data marks only. 3.33 on white: above the 3:1 non-text floor,
-                                  below the 4.5:1 text floor, so it never carries a label. */
-  --violet-wash: #EDEAFF;
-  --canopy-top: #6C5CE7;
-  --canopy-bottom: #4A3FC0;
-  --on-violet: #FFFFFF;
+  /* The action colour. Named "violet" for the markup that already references it (see above). Lime
+     reads as text on night (8.3) and, as a fill, always carries --on-violet, the app's OnLime.
+     White on lime is 2.3 and never allowed. */
+  --violet: #71BD1D;
+  --violet-soft: #4E7F1A;      /* Data marks only: 3.4 on its sunken track. Never a label. */
+  --violet-wash: #1C2E12;      /* The app's LimeTint: selected rows, soft fills. Lime text on it 6.2. */
+  --lime: #71BD1D;
+  --lime-lip: #3F6D0E;
+  --lime-tint: #1C2E12;
+  --on-lime: #0B1A05;
+  --canopy-top: #0F3A10;
+  --canopy-bottom: #0A1A0C;
+  --on-violet: #0B1A05;
+  --on-canopy: #FFFFFF;
+  --olive: #446025;
+  --cream: #F2ECCA;
 
-  /* Status. Each is a foreground on its own tint, so the value is the palette hue deepened until it
-     carries text there — Green and Red measure 4.27 and 4.01 on their own 12% tints and fail. */
-  --status-pending: #92400E;
-  --status-approved: #0F6B32;
-  --status-rejected: #B91C1C;
-  --status-info: #4A3FC0;
-  --status-pending-tint: #FDF3E4;
-  --status-approved-tint: #E8F3EC;
-  --status-rejected-tint: #FBE9E9;
-  --status-info-tint: #EDEAFF;
+  /* Status. Each is a foreground on its own tint, and each also carries an icon or a word, so
+     colour is never the only signal. */
+  --status-pending: #F5C86A;
+  --status-approved: #71BD1D;
+  --status-rejected: #FF6B5B;
+  --status-info: #4FB3E8;
+  --status-pending-tint: #3A2E12;
+  --status-approved-tint: #1C2E12;
+  --status-rejected-tint: #3A1E1C;
+  --status-info-tint: #152733;
 
-  /* Reward hues are fills, never foregrounds: #FFB020 measures 1.83 on white and #FF8B5E 2.31,
-     below even the 3:1 non-text floor. When a gold or coral *mark* is needed, it takes the
-     deepened form beside it. */
-  --gold: #FFB020;
-  --gold-ink: #92400E;
-  --coral: #FF8B5E;
-  --coral-ink: #B03A0B;
-  --green: #15803D;
-  --amber: #B45309;
-  --red: #DC2626;
-  --on-reward: #1F1B3A;
+  /* Reward and feedback. On night the reward hues are bright enough to be text (gold 11.9, coral
+     9.0); as fills they carry --on-reward. --green and --red are the *fills* for approve and
+     reject: lime under dark ink, and the deep red that carries white at 5.3. */
+  --gold: #FFC83D;
+  --gold-ink: #FFC83D;
+  --coral: #FF9F1C;
+  --coral-ink: #FF9F1C;
+  --green: #71BD1D;
+  --amber: #F5C86A;
+  --red: #C8352B;
+  --red-lip: #7E1F18;
+  --on-reward: #0B1A05;
 
-  /* Type. Nunito carries display and every figure; DM Sans carries everything you read. */
-  --display: 'Nunito', system-ui, -apple-system, sans-serif;
+  /* Type. Fredoka carries display and every figure; DM Sans carries everything you read. */
+  --display: 'Fredoka', 'DM Sans', system-ui, sans-serif;
   --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --t-xs: 0.75rem;
   --t-sm: 0.875rem;
@@ -78,25 +95,23 @@
   --t-lg: 1.75rem;
   --t-xl: 2.25rem;
 
-  /* Shape, from DESIGN.md: chip 14 · tile 20 · panel 28 · pill 999. */
+  /* Shape, from Dimens.kt: chip 14 · tile 20 · panel 28 · pill 999. */
   --r-chip: 14px;
   --r-tile: 20px;
   --r-panel: 28px;
   --r-ctl: 12px;
   --r-pill: 999px;
 
-  /* One diffuse violet-tinted shadow, with a real offset and a real blur. A zero-offset coloured
-     halo is decoration, not depth. */
-  --lift: 0 2px 4px rgba(31, 27, 58, .03), 0 8px 24px rgba(91, 76, 219, .07);
-  --lift-hi: 0 4px 8px rgba(31, 27, 58, .05), 0 14px 34px rgba(91, 76, 219, .13);
+  /* Depth: a hairline ring, not a shadow (see the header). */
+  --lift: 0 0 0 1px var(--hair);
+  --lift-hi: 0 0 0 1px var(--hair-strong);
+  --clay-lip: 4px;
 
   --tap-min: 44px;
   --sidebar: 248px;
   --gutter: 24px;
 
-  /* One 4/8 spacing scale. Every surface inset, section gap and stack rhythm below comes from
-     this, because three surfaces each inventing their own padding is what made the console read
-     as assembled rather than designed. */
+  /* One 4/8 spacing scale. */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -105,18 +120,19 @@
   --s-6: 24px;
   --s-8: 32px;
   --s-12: 48px;
-  --pad: var(--s-6);          /* the inset of every white surface */
-  --stack: var(--s-5);        /* the gap between sections on a page */
+  --pad: var(--s-6);
+  --stack: var(--s-5);
 
-  /* Motion. Operate mode: routine transitions stay fast and carry state; the count-up on the
-     Overview figures is the one authored moment, and it is DESIGN.md's own rule for counters. */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --t-quick: 130ms;
+  /* Motion, from Motion.kt. */
+  --ease-out: cubic-bezier(.05, .7, .1, 1);
+  --t-quick: 120ms;
   --t-state: 200ms;
-  --t-view: 280ms;
+  --t-view: 240ms;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+/* Controls take the page ink rather than the UA default, which is black whatever the theme. */
+button, input, select, textarea { color: inherit; }
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -130,7 +146,7 @@ body {
 }
 
 /* Browser surfaces the design still owns: the caret, the selection, the scrollbar, the focus ring. */
-::selection { background: var(--violet-wash); color: var(--ink); }
+::selection { background: var(--violet); color: var(--on-violet); }
 :root { accent-color: var(--violet); caret-color: var(--violet); }
 * { scrollbar-width: thin; scrollbar-color: var(--hair-strong) transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -138,12 +154,12 @@ body {
 *::-webkit-scrollbar-thumb { background: var(--hair-strong); border-radius: var(--r-pill); border: 3px solid transparent; background-clip: content-box; }
 *::-webkit-scrollbar-thumb:hover { background: var(--faint); background-clip: content-box; }
 
-:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; border-radius: 4px; }
 
 iconsax-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; line-height: 1; pointer-events: none; }
 iconsax-icon svg { display: block; overflow: visible; }
 
-h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
 .num { font-family: var(--display); font-variant-numeric: tabular-nums; }
 
 /* Tab isolation. The sections all live in one document. */
@@ -167,13 +183,8 @@ aside {
   padding: 22px 14px; display: flex; flex-direction: column; gap: 26px;
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
-.logo-container { display: flex; align-items: center; gap: 11px; padding: 2px 8px 0; }
-.logo-mark {
-  width: 36px; height: 36px; border-radius: var(--r-chip); flex-shrink: 0;
-  background: linear-gradient(155deg, var(--canopy-top), var(--canopy-bottom));
-  display: grid; place-items: center; color: var(--on-violet);
-  font-family: var(--display); font-weight: 900; font-size: var(--t-md);
-}
+.logo-container { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 4px 10px 0; }
+.logo-wordmark { display: block; width: 132px; height: auto; }
 .logo-badge { font-family: var(--display); font-weight: 900; font-size: var(--t-md); letter-spacing: -0.03em; color: var(--ink); }
 .logo-title { font-size: var(--t-xs); font-weight: 700; color: var(--muted); line-height: 1.2; }
 
@@ -192,15 +203,15 @@ aside nav button, aside nav a {
 }
 aside nav button:hover, aside nav a:hover { background: var(--sunken); color: var(--ink); }
 aside nav button.active, aside nav a.active {
-  background: var(--violet); color: var(--on-violet); font-weight: 700;
-  box-shadow: 0 4px 12px rgba(91, 76, 219, .28);
+  background: var(--violet-wash); color: var(--violet); font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--olive);
 }
 .nav-count {
   margin-left: auto; font-size: var(--t-xs); font-weight: 700; font-variant-numeric: tabular-nums;
   background: var(--status-pending-tint); color: var(--status-pending);
   padding: 2px 8px; border-radius: var(--r-pill);
 }
-aside nav button.active .nav-count { background: var(--surface); color: var(--violet); }
+aside nav button.active .nav-count { background: var(--status-pending); color: var(--on-reward); }
 .sidebar-spacer { flex: 1; }
 
 /* Destructive actions sit apart from navigation, never inside the same list. */
@@ -217,7 +228,7 @@ aside nav button.active .nav-count { background: var(--surface); color: var(--vi
 
 main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex-direction: column; gap: var(--stack); }
 
-/* ── Topbar: a white card floating on the ground, not a bar welded to the viewport ─────────── */
+/* ── Topbar: a card floating on the ground, not a bar welded to the viewport ──────────────── */
 .topbar {
   background: var(--surface); border-radius: var(--r-tile); box-shadow: var(--lift);
   padding: var(--s-3); display: flex; align-items: center; gap: var(--s-3);
@@ -238,7 +249,7 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
   font-family: var(--sans); font-size: var(--t-sm); color: var(--ink); outline: none;
   transition: border-color .15s ease, background .15s ease;
 }
-.topsearch input::placeholder { color: var(--muted); }
+.topsearch input::placeholder { color: var(--faint); }
 .topsearch input:focus { background: var(--surface); border-color: var(--violet); }
 .topsearch kbd {
   position: absolute; right: 14px; font-family: var(--sans); font-size: var(--t-xs);
@@ -254,16 +265,16 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .icon-btn:hover { background: var(--sunken); color: var(--ink); border-color: var(--hair-strong); }
 .icon-btn .dot {
   position: absolute; top: 8px; right: 8px; min-width: 17px; height: 17px; padding: 0 4px;
-  border-radius: var(--r-pill); background: var(--red); color: #fff;
+  border-radius: var(--r-pill); background: var(--red); color: var(--ink);
   font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
   border: 2px solid var(--surface); font-variant-numeric: tabular-nums;
 }
 .topuser { display: flex; align-items: center; gap: 10px; padding-left: 14px; border-left: 1px solid var(--hair); margin-left: 4px; }
 .avatar {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(155deg, var(--canopy-top), var(--canopy-bottom));
-  color: var(--on-violet); display: grid; place-items: center;
-  font-family: var(--display); font-weight: 800; font-size: var(--t-sm);
+  background: var(--olive);
+  color: var(--on-canopy); display: grid; place-items: center;
+  font-family: var(--display); font-weight: 700; font-size: var(--t-sm);
 }
 .topuser-meta { display: flex; flex-direction: column; min-width: 0; }
 .topuser-name { font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
@@ -284,10 +295,10 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
   display: flex; flex-direction: column; gap: 4px; min-height: 138px;
   transition: transform .18s cubic-bezier(.2, .7, .3, 1), box-shadow .18s ease;
 }
-.stat:hover { transform: translateY(-3px); box-shadow: var(--lift-hi); }
+.stat:hover { transform: translateY(-2px); box-shadow: var(--lift-hi); }
 .stat:active { transform: translateY(-1px); }
 .stat-label { font-size: var(--t-sm); font-weight: 700; color: var(--muted); padding-right: 38px; }
-.stat-value { font-family: var(--display); font-weight: 800; font-size: var(--t-xl); line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: auto; }
+.stat-value { font-family: var(--display); font-weight: 700; font-size: var(--t-xl); line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: auto; }
 .stat-note { font-size: var(--t-xs); color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .stat-go {
   position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: 50%;
@@ -297,12 +308,12 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .stat:hover .stat-go { background: var(--violet); border-color: var(--violet); color: var(--on-violet); }
 
 /* The one tile that carries colour: the queue, because it is the only number that is a claim on
-   the moderator's time. Text on it is pure white at both weights — white at 0.70–0.90 alpha over
-   this gradient measures 3.23–4.27 and fails at every step. */
-.stat--queue { background: linear-gradient(150deg, var(--canopy-top), var(--canopy-bottom)); box-shadow: 0 4px 10px rgba(74, 63, 192, .18), 0 16px 34px rgba(91, 76, 219, .26); }
-.stat--queue .stat-label, .stat--queue .stat-value, .stat--queue .stat-note { color: var(--on-violet); }
-.stat--queue .stat-go { background: var(--surface); border-color: var(--surface); color: var(--violet); }
-.stat--queue:hover .stat-go { background: var(--surface); color: var(--canopy-bottom); }
+   the moderator's time. It sits on the app's canopy (the forest-green panel at the top of Home),
+   with white text at 12.9. */
+.stat--queue { background: linear-gradient(160deg, var(--canopy-top), var(--canopy-bottom)); box-shadow: 0 0 0 1px rgba(113, 189, 29, .35); }
+.stat--queue .stat-label, .stat--queue .stat-value, .stat--queue .stat-note { color: var(--on-canopy); }
+.stat--queue .stat-go { background: var(--violet); border-color: var(--violet); color: var(--on-violet); }
+.stat--queue:hover .stat-go { filter: brightness(1.08); }
 
 /* ── Bento ─────────────────────────────────────────────────────────────────── */
 .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s-4); align-items: start; }
@@ -445,7 +456,7 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .bar-track { display: block; height: 22px; background: var(--sunken); border-radius: 7px; overflow: hidden; }
 .bar-fill { display: block; height: 100%; background: var(--violet-soft); border-radius: 7px; min-width: 3px; }
 .bar-row.is-top .bar-fill { background: var(--violet); }
-.bar-value { font-family: var(--display); font-weight: 800; font-size: var(--t-sm); color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+.bar-value { font-family: var(--display); font-weight: 700; font-size: var(--t-sm); color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
 
 /* Donut. An SVG ring, because the proportion is the point; the counts sit beside it in the legend
    so no meaning rests on colour alone. */
@@ -481,17 +492,17 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .item-sub { font-size: var(--t-xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-meta { font-size: var(--t-xs); color: var(--muted); flex-shrink: 0; white-space: nowrap; }
 
-/* The release card. Violet because a published version is the one fact on this page that is about
+/* The release card. Canopy green because a published version is the one fact on this page that is about
    the outside world rather than the queue. */
 .release-card {
-  background: linear-gradient(150deg, var(--canopy-top), var(--canopy-bottom));
-  color: var(--on-violet); border-radius: var(--r-tile);
-  box-shadow: 0 4px 10px rgba(74, 63, 192, .18), 0 16px 34px rgba(91, 76, 219, .26);
+  background: linear-gradient(160deg, var(--canopy-top), var(--canopy-bottom));
+  color: var(--on-canopy); border-radius: var(--r-tile);
+  box-shadow: 0 0 0 1px rgba(113, 189, 29, .35);
   padding: 22px; display: flex; flex-direction: column; gap: 4px; min-height: 100%;
 }
-.release-card h2 { font-size: var(--t-sm); font-weight: 700; color: var(--on-violet); letter-spacing: 0; }
-.release-version { font-family: var(--display); font-weight: 900; font-size: var(--t-xl); line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
-.release-meta { font-size: var(--t-xs); color: var(--on-violet); }
+.release-card h2 { font-size: var(--t-sm); font-weight: 600; color: var(--on-canopy); letter-spacing: 0; }
+.release-version { font-family: var(--display); font-weight: 700; font-size: var(--t-xl); line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.release-meta { font-size: var(--t-xs); color: var(--muted); }
 .release-card .btn { margin-top: 16px; align-self: flex-start; }
 
 /* Empty states carry a sentence and, where there is one, the action that resolves them. */
@@ -504,7 +515,7 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .skeleton { position: relative; overflow: hidden; background: var(--sunken); border-radius: 7px; color: transparent !important; }
 .skeleton::after {
   content: ''; position: absolute; inset: 0; transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(91, 76, 219, .09), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .06), transparent);
   animation: shimmer 1.3s infinite;
 }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -539,7 +550,7 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
   outline: none; min-height: var(--tap-min);
   transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
-.form-control::placeholder { color: var(--muted); }
+.form-control::placeholder { color: var(--faint); }
 .form-control:focus { background: var(--surface); border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-wash); }
 textarea.form-control { min-height: 88px; resize: vertical; }
 .input-icon-wrap { position: relative; }
@@ -605,39 +616,40 @@ textarea.form-control { min-height: 88px; resize: vertical; }
   border-top: 1px solid var(--line); background: var(--surface);
 }
 
-/* ── Buttons. Pill, per the shape scale; violet fill for primary. ──────────── */
+/* ── Buttons. Pill, per the shape scale. The ones you press to decide something (primary, approve,
+   reject) are clay: a solid lip under the face that compresses on press, the app's press language. */
 .btn {
-  font-family: var(--sans); font-weight: 700; font-size: var(--t-sm);
+  font-family: var(--display); font-weight: 600; font-size: var(--t-sm); letter-spacing: .01em;
   padding: 11px 20px; border-radius: var(--r-pill); border: 1px solid transparent;
   cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   text-decoration: none; min-height: var(--tap-min); white-space: nowrap;
   transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 .btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--violet); color: var(--on-violet); box-shadow: 0 3px 10px rgba(91, 76, 219, .3); }
-.btn-primary:hover { background: var(--canopy-bottom); box-shadow: 0 5px 16px rgba(91, 76, 219, .38); }
+.btn-primary, .btn-success, .approve-btn {
+  background: var(--violet) linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 50%);
+  color: var(--on-violet); box-shadow: 0 var(--clay-lip) 0 var(--lime-lip); margin-bottom: var(--clay-lip);
+}
+.btn-danger, .reject-btn {
+  background: var(--red); color: var(--ink); box-shadow: 0 var(--clay-lip) 0 var(--red-lip); margin-bottom: var(--clay-lip);
+}
+.btn-primary:hover, .btn-success:hover, .approve-btn:hover, .btn-danger:hover, .reject-btn:hover { filter: brightness(1.07); }
+.btn-primary:active, .btn-success:active, .approve-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--lime-lip); }
+.btn-danger:active, .reject-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--red-lip); }
 .btn-outline { background: var(--surface); border-color: var(--hair-strong); color: var(--ink); }
 .btn-outline:hover { background: var(--sunken); border-color: var(--violet); color: var(--violet); }
-/* On the violet release card an outline button would have to borrow the card's own fill; a solid
-   white pill with violet text measures 6.00 in both directions instead. */
-.btn-on-violet { background: var(--surface); color: var(--violet); }
-.btn-on-violet:hover { background: var(--violet-wash); color: var(--canopy-bottom); }
-/* Success is Green, not Gold: gold cannot carry a white label and ink-on-gold reads as a warning.
-   Destructive is Red, which carries white at 4.83 — Coral measures 2.31 and was the old value. */
-.btn-success { background: var(--green); color: #FFFFFF; }
-.btn-success:hover { filter: brightness(.92); }
-.btn-danger { background: var(--red); color: #FFFFFF; }
-.btn-danger:hover { filter: brightness(.92); }
-.btn-sm { padding: 6px 13px; font-size: var(--t-xs); min-height: 34px; }
-.btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; transform: none; }
-.approve-btn { background: var(--green); color: #FFFFFF; }
-.reject-btn { background: var(--red); color: #FFFFFF; }
+/* On the canopy release card: a dark pill with a lime label, 7.9 on the surface. */
+.btn-on-violet { background: var(--surface); color: var(--violet); border-color: rgba(113, 189, 29, .4); }
+.btn-on-violet:hover { background: var(--violet-wash); color: var(--ink); }
+/* Approve is lime under dark ink (7.7); reject is the deep red that carries white (5.3). */
+.btn-sm { padding: 6px 13px; font-size: var(--t-xs); min-height: 34px; --clay-lip: 3px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; filter: none; }
 .text-link {
   background: none; border: none; padding: 0; min-height: 0; font-family: var(--sans);
   font-size: var(--t-xs); font-weight: 700; color: var(--violet); cursor: pointer;
   text-decoration: underline; text-underline-offset: 3px;
 }
-.text-link:hover:not(:disabled) { color: var(--canopy-bottom); }
+.text-link:hover:not(:disabled) { color: var(--ink); }
 .text-link:disabled { opacity: .6; cursor: default; text-decoration: none; }
 
 /* ── Tables ────────────────────────────────────────────────────────────────── */
@@ -681,8 +693,8 @@ td .btn, td button { white-space: nowrap; }
   transition: color var(--t-quick) ease, text-decoration-color var(--t-quick) ease;
 }
 .table-link-btn:hover {
-  color: var(--canopy-bottom);
-  text-decoration-color: var(--canopy-bottom);
+  color: var(--ink);
+  text-decoration-color: var(--violet);
 }
 .table-link-btn strong {
   font-weight: 700;
@@ -722,15 +734,14 @@ td .btn, td button { white-space: nowrap; }
 
 /* ── Modals ────────────────────────────────────────────────────────────────── */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(31, 27, 58, .5);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  position: fixed; inset: 0; background: rgba(0, 0, 0, .72);
   z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px;
   opacity: 0; pointer-events: none; transition: opacity .22s ease;
 }
 .modal-overlay.active { opacity: 1; pointer-events: auto; }
 .modal-card {
   background: var(--surface); border-radius: var(--r-panel);
-  box-shadow: 0 24px 60px rgba(31, 27, 58, .28);
+  box-shadow: 0 0 0 1px var(--hair), 0 24px 60px rgba(0, 0, 0, .5);
   padding: var(--s-8); width: 100%; max-width: 560px; max-height: min(90vh, 900px); overflow-y: auto;
   transform: translateY(14px) scale(.985); transition: transform .22s cubic-bezier(.2, .7, .3, 1);
 }
@@ -739,7 +750,7 @@ td .btn, td button { white-space: nowrap; }
 /* When the content carries its own title — a dictionary headword is the title — the header row is
    only the close control, and it must not reserve a heading's worth of empty space above it. */
 .modal-header--bare { justify-content: flex-end; margin-bottom: 0; margin-top: calc(var(--s-3) * -1); }
-.modal-header h2 { font-family: var(--display); font-size: var(--t-md); font-weight: 800; }
+.modal-header h2 { font-family: var(--display); font-size: var(--t-md); font-weight: 700; }
 .close-btn {
   background: none; border: none; color: var(--muted); font-size: var(--t-md);
   line-height: 1; cursor: pointer; min-height: var(--tap-min); min-width: var(--tap-min);
@@ -757,7 +768,7 @@ body.auth { display: flex; align-items: center; justify-content: center; padding
 .login-logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
 .lock-icon-wrapper {
   width: 48px; height: 48px; border-radius: var(--r-chip); flex-shrink: 0; display: grid; place-items: center;
-  background: linear-gradient(155deg, var(--canopy-top), var(--canopy-bottom));
+  background: var(--violet-wash); color: var(--violet);
 }
 .login-header h1 { font-size: var(--t-lg); margin-bottom: 6px; }
 .login-header p { color: var(--muted); font-size: var(--t-sm); }
@@ -784,6 +795,7 @@ body.auth { display: flex; align-items: center; justify-content: center; padding
   gap: 11px; cursor: pointer; margin-bottom: 16px; min-height: var(--tap-min);
 }
 #google-login-btn:hover { background: var(--sunken); border-color: var(--violet); }
+#google-login-btn { font-family: var(--display); font-weight: 600; }
 #login-btn { width: 100%; margin-top: 8px; }
 #login-btn:disabled { opacity: .7; cursor: not-allowed; }
 #auth-loading-screen {
@@ -806,7 +818,7 @@ body.auth { display: flex; align-items: center; justify-content: center; padding
 .toast {
   background: var(--surface); border-radius: var(--r-chip);
   padding: 13px 16px 13px 15px; font-size: var(--t-sm); line-height: 1.5;
-  color: var(--ink); box-shadow: 0 10px 30px rgba(31, 27, 58, .18);
+  color: var(--ink); box-shadow: 0 0 0 1px var(--hair-strong), 0 10px 30px rgba(0, 0, 0, .45);
   animation: toast-in .22s cubic-bezier(.2, .7, .3, 1) both; pointer-events: auto;
   display: flex; align-items: flex-start; gap: 11px;
 }
@@ -944,10 +956,10 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
 .entry:last-child { border-bottom: none; }
 .entry-head { display: flex; align-items: baseline; gap: var(--s-3); flex-wrap: wrap; min-width: 0; }
 .headword {
-  font-family: var(--display); font-weight: 800; font-size: 1.375rem; color: var(--ink);
-  letter-spacing: -0.02em; line-height: 1.15;
+  font-family: var(--display); font-weight: 700; font-size: 1.375rem; color: var(--ink);
+  letter-spacing: -0.01em; line-height: 1.15;
 }
-.ipa { font-size: var(--t-sm); color: var(--muted); font-variant-ligatures: none; }
+.ipa { font-family: var(--sans), 'Segoe UI', Roboto, 'Noto Sans', sans-serif; font-size: var(--t-sm); color: var(--muted); font-variant-ligatures: none; }
 .pos { font-size: var(--t-sm); color: var(--violet); font-style: italic; }
 .gloss { margin-top: var(--s-1); font-size: var(--t-sm); color: var(--ink); line-height: 1.55; max-width: 68ch; }
 .gloss .lang { color: var(--muted); font-size: var(--t-xs); margin-right: var(--s-1); }
@@ -981,11 +993,11 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
   overflow: hidden; display: flex; flex-direction: column;
   transition: transform var(--t-state) var(--ease-out), box-shadow var(--t-state) ease;
 }
-.story-card:hover { transform: translateY(-3px); box-shadow: var(--lift-hi); }
+.story-card:hover { transform: translateY(-2px); box-shadow: var(--lift-hi); }
 .story-cover {
-  aspect-ratio: 3 / 2; background: linear-gradient(150deg, var(--canopy-top), var(--canopy-bottom));
+  aspect-ratio: 3 / 2; background: linear-gradient(160deg, var(--canopy-top), var(--canopy-bottom));
   display: flex; flex-direction: column; justify-content: flex-end; padding: var(--s-4);
-  color: var(--on-violet); position: relative;
+  color: var(--on-canopy); position: relative;
 }
 .story-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .story-cover-id {
@@ -994,7 +1006,7 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
   font-family: var(--display); font-weight: 800; font-size: var(--t-xs);
   min-width: 26px; height: 26px; display: grid; place-items: center; padding: 0 var(--s-2);
 }
-.story-cover-pages { font-size: var(--t-xs); font-weight: 700; color: var(--on-violet); position: relative; }
+.story-cover-pages { font-size: var(--t-xs); font-weight: 700; color: var(--on-canopy); position: relative; }
 .story-body { padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-1); flex: 1; }
 .story-title { font-family: var(--display); font-weight: 800; font-size: var(--t-base); color: var(--ink); line-height: 1.3; }
 .story-kasi { font-size: var(--t-sm); color: var(--violet); }
@@ -1007,7 +1019,7 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
   background: none; border: 1px solid var(--hair-strong); color: var(--muted);
   flex-shrink: 0; padding: 6px 13px;
 }
-.btn-quiet-danger:hover { background: var(--status-rejected-tint); border-color: var(--red); color: var(--status-rejected); }
+.btn-quiet-danger:hover { background: var(--status-rejected-tint); border-color: var(--status-rejected); color: var(--status-rejected); }
 
 /* ══ Releases ═════════════════════════════════════════════════════════════════
    Publishing happens a handful of times a year; checking what shipped happens constantly. The
@@ -1149,14 +1161,14 @@ tr.user-row-clickable {
   transition: background var(--t-quick) ease;
 }
 tr.user-row-clickable:hover td {
-  background: var(--violet-wash, rgba(91, 76, 219, 0.05)) !important;
+  background: var(--violet-wash) !important;
 }
 .user-avatar-sm {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #ede9fe;
-  color: #6366f1;
+  background: var(--violet-wash);
+  color: var(--violet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1185,8 +1197,8 @@ tr.user-row-clickable:hover td {
   color: var(--ink);
 }
 .appeal-banner-pending {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--status-pending-tint);
+  border: 1px solid rgba(245, 200, 106, .4);
   border-radius: var(--r-ctl);
   padding: 14px 16px;
   display: flex;
@@ -1194,11 +1206,56 @@ tr.user-row-clickable:hover td {
   gap: 8px;
 }
 .appeal-banner-rejected {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--status-rejected-tint);
+  border: 1px solid rgba(255, 107, 91, .4);
   border-radius: var(--r-ctl);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
+/* ══ Jepjep's Forest additions ═══════════════════════════════════════════════ */
+aside { background: var(--ground); }
+
+/* Status never rests on colour alone: each badge draws its own glyph. Clock, check, cross. */
+.badge-pending, .badge-approved, .badge-rejected { display: inline-flex; align-items: center; gap: 5px; }
+.badge-pending::before, .badge-approved::before, .badge-rejected::before {
+  content: ''; width: 12px; height: 12px; flex-shrink: 0; background: currentColor;
+  -webkit-mask: var(--badge-glyph) center / contain no-repeat; mask: var(--badge-glyph) center / contain no-repeat;
+}
+.badge-pending  { --badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20zm1 5v4.6l3.2 1.9l-1 1.7L11 12.7V7z'/%3E%3C/svg%3E"); }
+.badge-approved { --badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.5 16.2L4.8 11.5l-1.6 1.6l6.3 6.3L21 7.9l-1.6-1.6z'/%3E%3C/svg%3E"); }
+.badge-rejected { --badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18.3 5.7L16.9 4.3L12 9.2L7.1 4.3L5.7 5.7l4.9 4.9l-4.9 4.9l1.4 1.4l4.9-4.9l4.9 4.9l1.4-1.4l-4.9-4.9z'/%3E%3C/svg%3E"); }
+
+/* Sign-in: Jepjep in the app's green glow above the card, as on the app's first screen. */
+.login-hero { position: relative; display: grid; place-items: center; height: 168px; margin-bottom: -14px; }
+.login-hero::before {
+  content: ''; position: absolute; width: 380px; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(closest-side, #0A250B 0%, #0A190C 55%, rgba(10, 14, 13, 0) 100%);
+}
+.login-hero img { position: relative; height: 168px; width: auto; }
+.login-card { position: relative; }
+.login-header h1 em { font-style: normal; color: var(--violet); }
+
+/* Empty states carry a Jepjep pose, the way the app's StateViews do. */
+.empty-jepjep { display: block; width: auto; height: 92px; margin: 0 auto 10px; }
+
+/* The in-page confirmation that replaced the last two confirm() calls. */
+.confirm-modal .modal-body { margin-top: calc(var(--s-2) * -1); }
+
+/* Names that generated markup in app.js reaches for without the stylesheet ever defining them;
+   before this each fell back to a light-theme literal. */
+:root { --border: var(--hair); --shadow-sm: none; --primary: var(--violet); --text: var(--ink); }
+
+/* Every empty state shows a sleeping Jepjep in place of its icon, as the app's empty screens do. */
+.empty::before {
+  content: ''; display: block; height: 92px; margin: 0 auto 10px;
+  background: url('../img/jepjep-sleeping.webp') center / contain no-repeat;
+}
+.empty iconsax-icon { display: none; }
+
+/* Badges that borrow a status colour without being a status (a forced update, a free story, a
+   gloss match) keep the colour but not the glyph; the aspect count is neutral. */
+.badge-plain::before { display: none; }
+.badge-aspect { background: var(--sunken); color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }

@@ -34,22 +34,23 @@ const SURFACES = {
 // Identity, not layout: colours and radii. A token earns a place here by being something
 // a user would notice differing between the two sites in the same browsing session.
 const CORE = [
-  '--violet', '--canopy-top', '--canopy-bottom',
-  '--ink', '--muted', '--faint', '--ground', '--surface',
+  // Jepjep's Forest, the app's world (Color.kt). The admin keeps its legacy name --violet for the
+  // action colour because generated markup references it; --lime is the shared name for it.
+  '--ground', '--surface', '--sunken', '--hair',
+  '--lime', '--lime-lip', '--on-lime', '--lime-tint', '--cream',
+  '--canopy-top', '--canopy-bottom',
+  '--ink', '--muted', '--faint',
   '--gold', '--coral',
   '--r-chip', '--r-tile', '--r-panel', '--r-pill',
 ];
 
 const KNOWN_DIVERGENT = {
-  '--hair':
-    'The download site draws hairlines over the violet band as well as over cards, so ' +
-    'it needs a translucent rule; the admin only ever draws them on white.',
-  '--sunken':
-    'A recessed area is tinted against the surface it sits in, and the two surfaces do ' +
-    'not share a ground.',
-  '--ease-out':
-    'Motion is tuned per surface: the download page overshoots for emphasis, the admin ' +
-    'settles quickly because its animations run during data entry.',
+  '--clay-lip':
+    'The admin sets many clay buttons in dense rows and tables, so its lip is 4px; the ' +
+    'download page has a few large calls to action and uses the app’s full 5px.',
+  '--gutter':
+    'The download page uses the app’s 20px phone gutter; the admin is a desktop console ' +
+    'first and widens to 24px (and 32px on wide screens).',
 };
 
 // Only :root blocks — a token redefined inside a component or a media query is that
