@@ -6,7 +6,8 @@
 > Aurora State College of Technology, School of Information Technology · May 2026
 >
 > Restructured to the format: Rationale · Literature Review · Synthesis · Conceptual Framework ·
-> Research Problem · Scope and Delimitations · Significance of the Study · Definition of Terms.
+> Research Problem · Objectives of the Study · Scope and Limitations · Significance of the Project ·
+> Definition of Terms.
 >
 > Word formatting: Times New Roman 12, double-spaced, justified, 0.5" first-line indent.
 
@@ -339,7 +340,43 @@ beginner learners of Kasiguranin?**
 
 ---
 
-## SCOPE AND DELIMITATIONS
+## OBJECTIVES OF THE STUDY
+
+### Research Objectives
+
+**General Objective**
+
+This study aims to develop and evaluate **KasiGuru**, a gamified mobile learning application for the
+preservation and learning of the Kasiguranin language, for the benefit of students and beginner
+learners in Casiguran, Aurora.
+
+**Specific Objectives**
+
+Specifically, the study aims to:
+
+1. Develop the application using the Phased Development Approach, in terms of:
+   - 1.1 Requirements;
+   - 1.2 Analysis;
+   - 1.3 Design;
+   - 1.4 Coding/Implementation;
+   - 1.5 Testing;
+   - 1.6 Deployment; and
+   - 1.7 Maintenance.
+
+2. Evaluate the application based on the ISO/IEC 25010 Software Quality Standards, in terms of:
+   - 2.1 Functional Suitability;
+   - 2.2 Performance Efficiency;
+   - 2.3 Usability;
+   - 2.4 Reliability;
+   - 2.5 Security; and
+   - 2.6 Maintainability.
+
+3. Determine the level of acceptability and user satisfaction of the application among students and
+   beginner learners of Kasiguranin.
+
+---
+
+## SCOPE AND LIMITATIONS
 
 ### Scope
 
@@ -373,51 +410,66 @@ The application targets Android 8.0 (API 26) and above and is distributed as a d
 Android package rather than through a public application store. Evaluation is conducted with student
 and beginner-learner respondents in Casiguran, Aurora.
 
-### Delimitations
-
-The following boundaries were set deliberately by the researchers and define what the study does not
-attempt.
+The study is further bounded by choices the researchers made deliberately:
 
 1. **Beginner-level pedagogy only.** The study is delimited to vocabulary, phonology, and basic
    sentence construction. Complex verbal focus subcategorization and advanced discourse structure are
    excluded, as they exceed what a beginner-level application can teach and what the available
    documentation supports.
 
-2. **Aspectual verb data is reserved for future work.** The database schema provides fields for all
-   four aspectual inflections and the Aspect Builder mini-game is implemented against them, but the
-   aspect dataset is still being documented with language experts and is not populated in the
-   evaluated build. The application handles this state explicitly and the game remains unavailable
-   until the dataset is supplied. Documenting aspect requires elicitation work with native speakers
-   beyond the timeframe of this study.
-
-3. **The audio corpus is excluded from the evaluated build.** Playback infrastructure is implemented,
-   but native-speaker recordings are not bundled; phonetic guidance is delivered through IPA
-   transcription and phonological markers instead. Recording is constrained by the availability of
-   native informants and of recording equipment.
-
-4. **No automated language generation or processing.** The system includes no natural language
+2. **No automated language generation or processing.** The system includes no natural language
    processing, speech recognition, or machine translation, and does not generate, infer, or translate
    Kasiguranin content automatically. This exclusion is deliberate rather than incidental:
    automatically generated Kasiguranin would fabricate primary linguistic data for an
    under-documented language and would compromise the corpus as a preservation record.
 
-5. **Content is bounded to expert-reviewed material.** Only vocabulary and narratives that have
+3. **Content is bounded to expert-reviewed material.** Only vocabulary and narratives that have
    passed review are included; the corpus is not scraped or crowd-sourced without moderation.
 
-6. **Android only.** iOS and web clients are outside the scope. The choice reflects device ownership
+4. **Android only.** iOS and web clients are outside the scope. The choice reflects device ownership
    at the deployment site.
 
-7. **Evaluation against the 2011 edition of ISO/IEC 25010.** The standard was revised in 2023; this
+5. **Evaluation against the 2011 edition of ISO/IEC 25010.** The standard was revised in 2023; this
    study adopts the 2011 model because it remains the edition in general use for capstone evaluation
    and because its six adopted characteristics map to an instrument that respondents can answer.
 
-8. **No longitudinal measurement.** The study measures software quality and user acceptability. It
-   does not measure long-term language acquisition outcomes or effects on intergenerational
-   transmission, which would require a longitudinal design beyond the study's timeframe.
+### Limitations
+
+Unlike the delimitations above, the following are constraints the researchers encountered rather than
+boundaries they chose. They are stated here because they bear on how the study's results should be
+read, not because the researchers judge them unimportant.
+
+1. **The aspectual verb dataset is incomplete.** The database schema provides fields for all four
+   aspectual inflections and the Aspect Builder mini-game is implemented against them, but populating
+   the dataset requires elicitation work with native speakers and community linguists that could not
+   be completed within the study's timeframe. The application handles the resulting gap explicitly —
+   the game remains unavailable until the dataset is supplied — but the evaluated build does not
+   exercise this feature, so functional suitability findings for it should be read as provisional
+   rather than as evidence the feature does not work.
+
+2. **No native-speaker audio was recorded.** Recording was constrained by the limited availability,
+   within the study period, of native informants and of recording equipment, so pronunciation
+   guidance is delivered through IPA transcription and phonological markers rather than audio. A
+   reader without training in phonetic notation may find this guidance less accessible than recorded
+   speech would have been.
+
+3. **The evaluation sample is confined to respondents reachable in Casiguran during the study
+   period.** Acceptability and satisfaction findings reflect this local, time-bound sample and have
+   not been tested against Kasiguranin speakers elsewhere — including those outside Casiguran or in
+   diaspora communities — so generalization beyond the studied group should be made cautiously.
+
+4. **No longitudinal measurement was possible.** The study measures software quality and user
+   acceptability at a single point in time. It does not measure long-term language acquisition,
+   retention, or effects on intergenerational transmission, each of which would require a
+   longitudinal design beyond the timeframe available to the researchers.
 
 ---
 
-## SIGNIFICANCE OF THE STUDY
+## SIGNIFICANCE OF THE PROJECT
+
+This section identifies who stands to benefit from KasiGuru and how. Its value is not concentrated in
+one place: the application, the corpus it digitizes, and the record it leaves behind serve six
+distinct audiences differently.
 
 **Students and Beginner Learners.** The primary beneficiaries receive a free, offline, structured
 means of learning Kasiguranin where none previously existed. For learners who already speak Tagalog,
