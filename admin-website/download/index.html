@@ -3,315 +3,255 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KasiGuru — Learn Kasiguranin</title>
-  <meta name="description" content="Download KasiGuru — the gamified mobile learning application for preserving and mastering the Kasiguranin language of Casiguran, Aurora. Free APK for Android 8.0+.">
-  <script src="js/iconsax.js?v=2026_10_playful"></script>
-  <link rel="stylesheet" href="css/styles.css?v=2026_10_playful">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0A0E0D">
+  <title>KasiGuru: Learn Kasiguranin</title>
+  <meta name="description" content="Download KasiGuru, the free Android app for learning Kasiguranin, the endangered language of Casiguran, Aurora. Over 1,200 words across 12 topics, each with its Tagalog and English meaning.">
+  <link rel="preload" href="fonts/fredoka-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dmsans-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css?v=2026_10_forest">
+  <script src="js/iconsax.js?v=2026_10_forest"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k" crossorigin="anonymous"></script>
 </head>
 <body>
 
-<header>
-  <div class="wrap masthead">
-    <a class="brand" href="#top" aria-label="KasiGuru, home">
-      <span class="logomark" aria-hidden="true">K</span>
-      <span class="logotype">Kasi<em>Guru</em></span>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-row">
+    <a class="brand" href="#top">
+      <img src="img/wordmark.svg" alt="KasiGuru" width="140" height="26">
     </a>
-    <!-- Nav order matches DOM order. It previously did not: the nav read Features,
-         How It Works, Heritage while the page ran Features, Heritage, How It Works,
-         so "How It Works" jumped past a section and scrolling back landed
-         somewhere unexpected. -->
-    <nav id="site-nav">
-      <a href="#how-it-works">How It Works</a>
-      <a href="#heritage">Why It Matters</a>
-      <a href="#practice">Practice</a>
-      <a href="#dictionary">The Words</a>
-      <a class="clay clay-primary clay-sm" href="#download-section">Download APK</a>
+    <!-- Nav order matches page order, so each link moves forward through the page. -->
+    <nav id="site-nav" aria-label="Sections">
+      <a href="#heritage">Why it matters</a>
+      <a href="#inside">Inside the app</a>
+      <a href="#dictionary">The words</a>
+      <a class="btn btn-primary btn-sm" href="#download-section">Download APK</a>
     </nav>
   </div>
 </header>
 
-<main id="top">
+<main id="main">
 
-  <!-- 1. Hero -->
-  <section class="hero-sec" id="how-it-works">
-    <span class="ghost" aria-hidden="true">KASI</span>
-    <div class="blob blob-tint" style="width:280px;height:280px;right:34%;top:-90px" aria-hidden="true"></div>
-    <div class="ring ring-coral" style="width:104px;height:104px;right:1.5%;bottom:8%" aria-hidden="true"></div>
-    <div class="ring ring-violet" style="width:58px;height:58px;left:3%;bottom:12%" aria-hidden="true"></div>
-    <div class="leaf" style="width:26px;height:26px;background:var(--canopy-bottom);opacity:.5;right:33%;top:16%;transform:rotate(24deg)" aria-hidden="true"></div>
-    <div class="dot" style="width:13px;height:13px;background:var(--coral);left:1.5%;top:46%" aria-hidden="true"></div>
-    <div class="dot" style="width:9px;height:9px;background:var(--violet);right:36%;bottom:18%" aria-hidden="true"></div>
-
-    <div class="wrap hero">
-      <div>
-        <h1>The language of Casiguran, <em>written down.</em></h1>
-        <p class="lede">An endangered Northern Philippine language, taught a word at a time and checked by the people who still speak it.</p>
-
-        <ol class="steps">
-          <li class="step">
-            <div class="step-chip step-1"><iconsax-icon name="document-download" size="26" aria-hidden="true"></iconsax-icon></div>
-            <span>Download the APK</span>
-          </li>
-          <li class="step">
-            <div class="step-chip step-2"><iconsax-icon name="mobile" size="26" aria-hidden="true"></iconsax-icon></div>
-            <span>Install and set a goal</span>
-          </li>
-          <li class="step">
-            <div class="step-chip step-3"><iconsax-icon name="game" size="26" aria-hidden="true"></iconsax-icon></div>
-            <span>Learn, play, contribute</span>
-          </li>
-        </ol>
+  <!-- Hero. The same scene as the app's first onboarding screen: Jepjep in the
+       green glow, one line of Fredoka with the place in lime. -->
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>Learn words from <em>Casiguran.</em></h1>
+        <p class="lede">Over <b id="word-count-hero">1,200</b> words of an endangered language, taught one at a time and checked by the people who speak it.</p>
 
         <div class="cta-row hero-cta-group">
-          <a class="clay clay-primary download-btn-large" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
-            <iconsax-icon name="document-download" size="20" aria-hidden="true"></iconsax-icon>
+          <a class="btn btn-primary btn-lg download-btn-large" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
+            <iconsax-icon name="document-download" size="22" aria-hidden="true"></iconsax-icon>
             <span>Download APK</span>
           </a>
-          <a class="clay clay-reward" href="#dictionary">Browse the words</a>
+          <a class="btn btn-quiet btn-lg" href="#dictionary">See the words</a>
         </div>
+        <p class="hero-meta">
+          <span><iconsax-icon name="android" size="16" aria-hidden="true"></iconsax-icon> Android 8.0 and newer</span>
+          <span><iconsax-icon name="heart" size="16" aria-hidden="true"></iconsax-icon> Free, no ads</span>
+        </p>
       </div>
 
-      <!-- Art slot A. Adrian authors all artwork; this wrapper already holds its
-           1:1 ratio, so the page lays out identically with or without a file
-           here. To fill it, drop a transparent 920x920 PNG at img/hero.png and
-           uncomment the img below. Subject should be bottom-anchored so it sits
-           on the gold blob. -->
-      <div class="art art-a">
-        <!-- <img src="img/hero.png" alt="" width="920" height="920"> -->
-        <div class="specimen">
-          <span class="verified"><iconsax-icon name="verify" size="14" aria-hidden="true"></iconsax-icon> Verified entry</span>
-          <span class="headword">aldew</span>
-          <span class="pos">noun &middot; Casiguran, Aurora</span>
-          <dl>
-            <div><dt>English</dt><dd>sun</dd></div>
-            <div><dt>Filipino</dt><dd class="fil">araw</dd></div>
+      <div class="hero-art">
+        <div class="glow" aria-hidden="true"></div>
+        <img class="jepjep" src="img/jepjep-waving.webp" srcset="img/jepjep-waving.webp 334w, img/jepjep-waving@2x.webp 669w" sizes="(min-width: 960px) 360px, 240px" width="669" height="720" alt="Jepjep, KasiGuru's frog guide, waving hello in a barong">
+        <!-- A real entry from the app's seeded dictionary (DatabaseSeeder.kt). -->
+        <article class="word-card hero-word" aria-label="Example entry: aldew">
+          <span class="word-cat">Numbers &amp; Time</span>
+          <span class="headword" lang="kas">aldew</span>
+          <span class="ipa">[ˈɁal.dɛw]</span>
+          <dl class="gloss">
+            <div><dt>English</dt><dd>day</dd></div>
+            <div><dt>Tagalog</dt><dd lang="tl">araw</dd></div>
           </dl>
-        </div>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- 2. Figures -->
-  <div class="wrap">
-    <div class="figures">
-      <div class="figure reveal"><b><span id="word-count-features">417</span>+</b><span>Words recorded</span></div>
-      <div class="figure reveal"><b>6</b><span>Game modes</span></div>
-      <div class="figure reveal"><b>IPA</b><span>Phonetic notation</span></div>
-      <div class="figure reveal"><b>Free</b><span>No ads, ever</span></div>
-    </div>
-  </div>
+  <!-- Why it matters. One photograph-sized scene beside a list, not a row of equal cards. -->
+  <section class="section heritage" id="heritage">
+    <div class="wrap heritage-grid">
+      <figure class="scene-panel">
+        <img src="img/scene-ontok-lighthouse.webp" srcset="img/scene-ontok-lighthouse.webp 405w, img/scene-ontok-lighthouse@2x.webp 810w" sizes="(min-width: 960px) 420px, 100vw" width="810" height="1439" alt="An illustration of Ontok Lighthouse above the sea in Casiguran" loading="lazy">
+        <figcaption>Ontok Lighthouse, Casiguran</figcaption>
+      </figure>
 
-  <!-- 3. Why it matters -->
-  <section class="heritage-sec" id="heritage">
-    <div class="blob blob-tint" style="width:340px;height:340px;left:-150px;top:14%" aria-hidden="true"></div>
-    <div class="plus" style="width:66px;height:66px;right:3%;top:10%;opacity:.75" aria-hidden="true"></div>
-    <div class="dot" style="width:11px;height:11px;background:var(--coral);right:14%;bottom:16%" aria-hidden="true"></div>
-
-    <div class="wrap heritage">
-      <div>
-        <h2>Why it matters</h2>
+      <div class="heritage-copy">
+        <h2>Why it <em>matters</em></h2>
         <p class="pull">A language is not lost all at once. It goes one word at a time.</p>
-        <p class="sec-lede">Kasiguranin is spoken in Casiguran, Aurora, and the people who speak it best are the oldest people in town. It is not taught in schools. KasiGuru exists to put the language somewhere it can be found later, by a child in Casiguran or by a grandchild somewhere else entirely.</p>
-      </div>
+        <p class="body-lg">Kasiguranin is spoken in Casiguran, Aurora, and the people who speak it best are the oldest people in town. It is not taught in schools. KasiGuru puts the language somewhere it can be found later, by a child in Casiguran or by a grandchild somewhere else entirely.</p>
 
-      <div class="cluster">
-        <article class="soft reveal">
-          <div class="card-icon"><iconsax-icon name="verify" size="24" aria-hidden="true"></iconsax-icon></div>
-          <h3>Verified by speakers</h3>
-          <p>Entries come from published thesis documentation and from speakers in Casiguran. Community submissions are checked by a moderator before they join the corpus.</p>
-        </article>
-        <article class="soft reveal">
-          <div class="card-icon"><iconsax-icon name="document-text" size="24" aria-hidden="true"></iconsax-icon></div>
-          <h3>IPA transcription</h3>
-          <p>Every entry carries phonetic notation, grammatical root tags, and both English and Filipino definitions.</p>
-        </article>
-        <article class="soft reveal">
-          <div class="card-icon"><iconsax-icon name="game" size="24" aria-hidden="true"></iconsax-icon></div>
-          <h3>Practice, not flashcards</h3>
-          <p>Streaks, XP and six game modes, so the words get used rather than only read.</p>
-        </article>
-        <article class="soft reveal">
-          <div class="card-icon"><iconsax-icon name="heart" size="24" aria-hidden="true"></iconsax-icon></div>
-          <h3>Free, and staying free</h3>
-          <p>No ads and no account needed to browse. The dictionary is open whether or not you ever install the app.</p>
-        </article>
+        <ul class="facts">
+          <li>
+            <span class="fact-icon"><iconsax-icon name="verify" size="22" aria-hidden="true"></iconsax-icon></span>
+            <div><b>Checked by speakers</b><span>Entries come from published documentation and from speakers in Casiguran. Words the community sends in are checked by a moderator before they join the dictionary.</span></div>
+          </li>
+          <li>
+            <span class="fact-icon"><iconsax-icon name="volume-high" size="22" aria-hidden="true"></iconsax-icon></span>
+            <div><b>Written the way it sounds</b><span>Entries carry IPA pronunciation, the word's root, and its meaning in Tagalog and English.</span></div>
+          </li>
+          <li>
+            <span class="fact-icon"><iconsax-icon name="flash-1" size="22" aria-hidden="true"></iconsax-icon></span>
+            <div><b>Practice, not flashcards</b><span>Short lessons, games, streaks and XP, so words get used instead of only read.</span></div>
+          </li>
+          <li>
+            <span class="fact-icon"><iconsax-icon name="heart" size="22" aria-hidden="true"></iconsax-icon></span>
+            <div><b>Free, and staying free</b><span>No ads, and no account needed to start learning.</span></div>
+          </li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <div class="wave" style="background:var(--ground)" aria-hidden="true">
-    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
-      <path d="M0,34 C220,86 470,4 720,28 C970,52 1210,88 1440,42 L1440,80 L0,80 Z" fill="var(--band)"/>
-    </svg>
-  </div>
-
-  <!-- 4. Practice -->
-  <section class="practice-sec" id="practice">
-    <div class="blob blob-gold-soft" style="width:260px;height:260px;left:-110px;bottom:6%" aria-hidden="true"></div>
-    <div class="blob blob-coral-soft" style="width:220px;height:220px;right:-90px;top:12%" aria-hidden="true"></div>
-    <div class="ring ring-gold" style="width:82px;height:82px;left:9%;top:7%" aria-hidden="true"></div>
-    <div class="dot" style="width:12px;height:12px;background:var(--violet);right:12%;bottom:14%" aria-hidden="true"></div>
-
+  <!-- Inside the app. Mirrors the app's own tabs: Learn, Practice, Library. -->
+  <section class="section inside" id="inside">
     <div class="wrap">
-      <div class="practice-head">
-        <h2>Six ways to practise</h2>
-        <p class="sec-lede">Each mode drills a different part of knowing a word: its shape, its sound, its place in a sentence.</p>
+      <div class="section-head">
+        <h2>Inside the <em>app</em></h2>
+        <p class="body-lg">The same three places you will find in the bottom bar once it is installed.</p>
       </div>
 
-      <div class="practice">
-        <div class="mode-col">
-          <div class="mode reveal">
-            <div class="mode-icon m-violet"><iconsax-icon name="element-3" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Aspect Builder</b><span>Build a verb from its root and aspect markers.</span></div>
+      <div class="bento">
+        <article class="tile tile-learn">
+          <img class="tile-scene" src="img/scene-forest.webp" srcset="img/scene-forest.webp 405w, img/scene-forest@2x.webp 810w" sizes="(min-width: 960px) 560px, 100vw" width="810" height="1439" alt="" loading="lazy">
+          <div class="tile-body">
+            <h3><span class="tab-icon"><iconsax-icon name="book-1" size="20" aria-hidden="true"></iconsax-icon></span> Learn</h3>
+            <p>A path through 12 topics: greetings, family, food, the weather, the body. Each is a trail of short lessons, seven words at a time.</p>
+            <ol class="path" aria-label="Example lesson path">
+              <li class="node done"><iconsax-icon name="tick-circle" size="22" aria-hidden="true"></iconsax-icon><span class="sr-only">Lesson 1, done</span></li>
+              <li class="node done"><iconsax-icon name="tick-circle" size="22" aria-hidden="true"></iconsax-icon><span class="sr-only">Lesson 2, done</span></li>
+              <li class="node now"><iconsax-icon name="star-1" size="22" aria-hidden="true"></iconsax-icon><span class="sr-only">Lesson 3, up next</span></li>
+              <li class="node"><iconsax-icon name="lock" size="20" aria-hidden="true"></iconsax-icon><span class="sr-only">Lesson 4, locked</span></li>
+            </ol>
           </div>
-          <div class="mode reveal">
-            <div class="mode-icon m-gold"><iconsax-icon name="document-text" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Sentence Construction</b><span>Order scrambled words into a sentence.</span></div>
-          </div>
-          <div class="mode reveal">
-            <div class="mode-icon m-coral"><iconsax-icon name="grid-5" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Word Match</b><span>Pair Kasiguranin with its English or Filipino gloss.</span></div>
-          </div>
-        </div>
+        </article>
 
-        <!-- Art slot B. Transparent 640x640 PNG at img/practice.png, centred
-             between the two mode columns. The 1:1 ratio is already reserved. -->
-        <div class="art art-b">
-          <!-- <img src="img/practice.png" alt="" width="640" height="640"> -->
-        </div>
+        <article class="tile tile-practice">
+          <div class="tile-body">
+            <h3><span class="tab-icon"><iconsax-icon name="game" size="20" aria-hidden="true"></iconsax-icon></span> Practice</h3>
+            <p>Games that put the words you learned to work.</p>
+            <ul class="chips" aria-label="Games you can play now">
+              <li class="chip chip-lime">Word Match</li>
+              <li class="chip chip-lime">Word Search</li>
+              <li class="chip chip-lime">Word Wheel</li>
+            </ul>
+            <p class="soon">Five more are on the way: Word Recall, Reverse Match, Fill in Blank, Sentence Order and Aspect Builder.</p>
+          </div>
+          <img class="tile-jepjep" src="img/jepjep-playing-a-game.webp" srcset="img/jepjep-playing-a-game.webp 278w, img/jepjep-playing-a-game@2x.webp 557w" sizes="140px" width="557" height="720" alt="" loading="lazy">
+        </article>
 
-        <div class="mode-col right">
-          <div class="mode reveal">
-            <div class="mode-icon m-coral"><iconsax-icon name="keyboard" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Word Recall</b><span>Given the meaning, write the word from memory.</span></div>
+        <article class="tile tile-library">
+          <div class="tile-body">
+            <h3><span class="tab-icon"><iconsax-icon name="document-text" size="20" aria-hidden="true"></iconsax-icon></span> Library</h3>
+            <p class="library-count"><b><span id="word-count-features">1,200</span>+</b> words, and stories from Casiguran.</p>
+            <p>Look up any word by Kasiguranin, Tagalog or English. Send in a word you know, and a moderator will check it.</p>
           </div>
-          <div class="mode reveal">
-            <div class="mode-icon m-violet"><iconsax-icon name="repeat" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Reverse Match</b><span>From the meaning back to the word.</span></div>
-          </div>
-          <div class="mode reveal">
-            <div class="mode-icon m-gold"><iconsax-icon name="edit" size="24" aria-hidden="true"></iconsax-icon></div>
-            <div><b>Fill in the Blanks</b><span>Supply the missing word from context alone.</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="practice-cta">
-        <a class="clay clay-primary" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
-          <iconsax-icon name="document-download" size="20" aria-hidden="true"></iconsax-icon>
-          <span>Download APK</span>
-        </a>
+        </article>
       </div>
     </div>
   </section>
 
-  <div class="wave" style="background:var(--band)" aria-hidden="true">
-    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
-      <path d="M0,46 C230,0 460,84 720,54 C980,24 1220,-6 1440,38 L1440,80 L0,80 Z" fill="var(--ground)"/>
-    </svg>
-  </div>
-
-  <!-- 5. The words -->
-  <section class="words-sec" id="dictionary">
-    <div class="blob blob-gold-soft" style="width:300px;height:300px;right:-120px;top:8%" aria-hidden="true"></div>
-    <div class="ring ring-coral" style="width:72px;height:72px;left:5%;bottom:16%;border-width:8px" aria-hidden="true"></div>
-    <div class="leaf" style="width:26px;height:26px;background:var(--canopy-bottom);opacity:.45;left:2.5%;top:10%;transform:rotate(-18deg)" aria-hidden="true"></div>
-    <div class="dot" style="width:10px;height:10px;background:var(--gold);right:6%;top:14%" aria-hidden="true"></div>
-
-    <div class="wrap words">
-      <!-- Art slot C. Transparent 560x700 PNG at img/words.png, sitting on the
-           gold blob. The 4:5 ratio is already reserved. -->
-      <div class="art art-c">
-        <!-- <img src="img/words.png" alt="" width="560" height="700"> -->
-      </div>
-
-      <div>
-        <h2>The words</h2>
-        <p class="sec-lede">Entries are drawn from published linguistic thesis documentation and from speakers in Casiguran, each with IPA phonetic transcription, grammatical root tags, and English and Filipino definitions. Community submissions are verified by a moderator before they join the corpus. Nothing here is machine-translated.</p>
-        <div class="entries">
-          <article class="entry reveal">
-            <div><span class="headword">tubig</span><span class="pos">noun</span></div>
-            <dl class="gloss"><div><dt>English</dt><dd>water</dd></div><div><dt>Filipino</dt><dd class="fil">tubig</dd></div></dl>
-          </article>
-          <article class="entry reveal">
-            <div><span class="headword">sing&euml;t</span><span class="pos">noun</span></div>
-            <dl class="gloss"><div><dt>English</dt><dd>ant</dd></div><div><dt>Filipino</dt><dd class="fil">langgam</dd></div></dl>
-          </article>
-          <article class="entry reveal">
-            <div><span class="headword">kumpit</span><span class="pos">noun</span></div>
-            <dl class="gloss"><div><dt>English</dt><dd>boat</dd></div><div><dt>Filipino</dt><dd class="fil">bangka</dd></div></dl>
-          </article>
-          <article class="entry reveal">
-            <div><span class="headword">aldew</span><span class="pos">noun</span></div>
-            <dl class="gloss"><div><dt>English</dt><dd>sun</dd></div><div><dt>Filipino</dt><dd class="fil">araw</dd></div></dl>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 6. Voices. Deliberately empty: real quotes only, supplied by the project. -->
-  <section class="voices-sec" id="voices">
+  <!-- The words. Real entries only, copied from the app's seeded dictionary. -->
+  <section class="section words" id="dictionary">
     <div class="wrap">
-      <div class="slot">
-        <b>Reserved for real voices</b>
-        <p>Testimonials from actual users, teachers and elders belong here. This slot is deliberately empty until those quotes exist &mdash; the same rule the project already applies to illustration. Nothing invented ships on this page.</p>
+      <div class="section-head words-head">
+        <div>
+          <h2>The <em>words</em></h2>
+          <p class="body-lg">Every entry comes from published documentation of the language or from speakers in Casiguran. Nothing is machine-translated.</p>
+        </div>
+        <img class="words-jepjep" src="img/jepjep-reading.webp" srcset="img/jepjep-reading.webp 216w, img/jepjep-reading@2x.webp 431w" sizes="120px" width="431" height="720" alt="" loading="lazy">
+      </div>
+
+      <div class="word-grid">
+        <article class="word-card reveal">
+          <span class="word-cat">Numbers &amp; Time</span>
+          <span class="headword" lang="kas">aldew</span>
+          <span class="ipa">[ˈɁal.dɛw]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>day</dd></div><div><dt>Tagalog</dt><dd lang="tl">araw</dd></div></dl>
+        </article>
+        <article class="word-card reveal">
+          <span class="word-cat">Emotions &amp; Feelings</span>
+          <span class="headword" lang="kas">taginëp</span>
+          <span class="ipa">[ta.ˈgiː.nəp]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>dream</dd></div><div><dt>Tagalog</dt><dd lang="tl">panaginip</dd></div></dl>
+        </article>
+        <article class="word-card reveal">
+          <span class="word-cat">Weather &amp; Climate</span>
+          <span class="headword" lang="kas">alapok</span>
+          <span class="ipa">[Ɂa.la.ˈpɔk]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>fog</dd></div><div><dt>Tagalog</dt><dd lang="tl">ulap</dd></div></dl>
+        </article>
+        <article class="word-card reveal">
+          <span class="word-cat">Animals &amp; Wildlife</span>
+          <span class="headword" lang="kas">singët</span>
+          <span class="ipa">[si.ˈŋət]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>ant</dd></div><div><dt>Tagalog</dt><dd lang="tl">langgam</dd></div></dl>
+        </article>
+        <article class="word-card reveal">
+          <span class="word-cat">Food &amp; Dining</span>
+          <span class="headword" lang="kas">sida</span>
+          <span class="ipa">[si.ˈdaɁ]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>fish</dd></div><div><dt>Tagalog</dt><dd lang="tl">isda</dd></div></dl>
+        </article>
+        <article class="word-card reveal">
+          <span class="word-cat">Occupations &amp; Tools</span>
+          <span class="headword" lang="kas">korkoran</span>
+          <span class="ipa">[kɔr.ˈkɔː.ran]</span>
+          <dl class="gloss"><div><dt>English</dt><dd>coconut grater</dd></div><div><dt>Tagalog</dt><dd lang="tl">kudkuran</dd></div></dl>
+        </article>
       </div>
     </div>
   </section>
 
-  <div class="wave" style="background:var(--ground)" aria-hidden="true">
-    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" focusable="false">
-      <path d="M0,40 C260,88 500,8 760,32 C1000,54 1230,86 1440,36 L1440,80 L0,80 Z" fill="var(--canopy-top)"/>
-    </svg>
-  </div>
+  <!-- Download. The canopy panel from the app's Home screen. -->
+  <section class="section hub-sec" id="download-section">
+    <div class="wrap">
+      <div class="hub">
+        <div class="glow glow-hub" aria-hidden="true"></div>
+        <img class="hub-jepjep" src="img/jepjep-with-backpack.webp" srcset="img/jepjep-with-backpack.webp 236w, img/jepjep-with-backpack@2x.webp 472w" sizes="(min-width: 960px) 220px, 150px" width="472" height="720" alt="Jepjep with his backpack, ready to go" loading="lazy">
 
-  <!-- 7. Download -->
-  <section class="hub-sec" id="download-section">
-    <div class="ring" style="width:200px;height:200px;border:14px solid rgba(255,255,255,.14);right:-40px;top:-40px" aria-hidden="true"></div>
-    <div class="blob" style="width:210px;height:210px;left:-80px;bottom:-70px;background:rgba(255,255,255,.14);border-radius:44% 56% 63% 37% / 57% 44% 56% 43%" aria-hidden="true"></div>
+        <div class="hub-main">
+          <h2>Start with <em>one word.</em></h2>
+          <p id="store-version-tag" class="version" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
+          <a class="btn btn-primary btn-lg download-btn-large" id="store-download-btn" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
+            <iconsax-icon name="document-download" size="22" aria-hidden="true"></iconsax-icon>
+            <span>Download APK</span>
+          </a>
 
-    <div class="wrap hub">
-      <div>
-        <span class="glass-chip"><iconsax-icon name="mobile" size="16" aria-hidden="true"></iconsax-icon> Android 8.0 and newer</span>
-        <h2>Start with one word.</h2>
-        <p id="store-version-tag" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
-        <a class="clay clay-white download-btn-large" id="store-download-btn" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
-          <iconsax-icon name="document-download" size="20" aria-hidden="true"></iconsax-icon>
-          <span>Download APK</span>
-        </a>
-      </div>
-      <div class="qr-panel">
-        <canvas id="qr-canvas" width="336" height="336" aria-label="QR code linking to the KasiGuru APK download"></canvas>
-        <p>Scan to download on your phone</p>
+          <ol class="install" id="how-it-works" aria-label="How to install">
+            <li><span class="install-node" aria-hidden="true">1</span><div><b>Download the APK</b><span>About 8 MB, straight from this page.</span></div></li>
+            <li><span class="install-node" aria-hidden="true">2</span><div><b>Allow the install</b><span>Android asks once to trust your browser. Tap Settings, then allow.</span></div></li>
+            <li><span class="install-node" aria-hidden="true">3</span><div><b>Open KasiGuru</b><span>Jepjep walks you through your first word.</span></div></li>
+          </ol>
+        </div>
+
+        <div class="qr-panel">
+          <canvas id="qr-canvas" width="336" height="336" aria-label="QR code linking to the KasiGuru APK download"></canvas>
+          <p>On a computer? Scan this with your phone's camera.</p>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
-<footer>
-  <div class="blob" style="width:300px;height:300px;right:-110px;top:-130px;background:var(--gold-deep);opacity:.32;border-radius:56% 44% 38% 62% / 46% 58% 42% 54%" aria-hidden="true"></div>
-  <div class="wrap foot">
-    <a class="brand" href="#top">
-      <span class="logomark" aria-hidden="true">K</span>
-      <span class="logotype">Kasi<em>Guru</em></span>
-    </a>
-    <nav>
-      <a href="#how-it-works">How It Works</a>
-      <a href="#heritage">Why It Matters</a>
-      <a href="#practice">Practice</a>
-      <a href="#dictionary">The Words</a>
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <a class="brand" href="#top"><img src="img/wordmark.svg" alt="KasiGuru" width="120" height="22" loading="lazy"></a>
+    <nav aria-label="Footer">
+      <a href="#heritage">Why it matters</a>
+      <a href="#inside">Inside the app</a>
+      <a href="#dictionary">The words</a>
+      <a href="#download-section">Download</a>
     </nav>
-    <div class="foot-legal">
-      <span>KasiGuru &middot; A language preservation project for Casiguran, Aurora.</span>
-      <span>Free APK, about 7.6 MB.</span>
-      <span>Android will ask you to allow installation from this source.</span>
-    </div>
+    <p class="foot-legal">A language preservation project for Casiguran, Aurora. Illustrations by the KasiGuru team.</p>
   </div>
 </footer>
 
-<script type="module" src="js/download.js"></script>
-<script src="js/site.js?v=2026_10_playful"></script>
+<script type="module" src="js/download.js?v=2026_10_forest"></script>
+<script src="js/site.js?v=2026_10_forest"></script>
 </body>
 </html>

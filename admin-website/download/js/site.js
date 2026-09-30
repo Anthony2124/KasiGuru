@@ -11,7 +11,10 @@
 // in its final, readable state from CSS alone, so nothing depends on this
 // script having run.
 (function () {
-  var links = Array.prototype.slice.call(document.querySelectorAll('#site-nav a[href^="#"]:not(.clay)'));
+  // Lets the stylesheet hide .reveal items only when this script is here to show them again.
+  document.documentElement.classList.add('js');
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('#site-nav a[href^="#"]:not(.btn)'));
   var byId = {};
   links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
   var targets = Object.keys(byId)

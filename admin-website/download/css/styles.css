@@ -1,87 +1,78 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   KasiGuru — download site, direction D: "Clay Canopy" on the web.
+   KasiGuru — download site, "Jepjep's Forest" on the web.
 
-   Layout language is taken from the supplied reference: organic blob grounds,
-   wave section dividers, chunky pill buttons with a solid lip, staggered offset
-   cards, big outline circles and confetti, a ghost outline watermark.
-
-   Every colour and every font here is lifted verbatim from the Android app
+   The app went dark-only in e9d8432 and this page follows it. Every colour,
+   font, radius and timing below is copied from the Android theme
    (app/src/main/java/com/kasiguru/ui/theme/Color.kt, Type.kt, Dimens.kt,
-   Motion.kt). Nothing was re-picked for the web. DESIGN.md stays the authority.
+   Motion.kt). Nothing was re-picked for the web; DESIGN.md is the authority.
 
-   Three rules from DESIGN.md shape what follows, each from a measured WCAG
-   failure rather than from taste:
-     1. Gold and Coral are FILLS carrying RewardInk. On white they measure 1.83
-        and 2.31, so neither is ever a text colour.
-     2. Clay (lip + lit top + press compression) is reserved for things you
-        press or earn. Ordinary content is a soft card. Content built out of
-        clay tips the page into a toy, and the audience includes a thesis panel.
+   Rules carried over from the app, each from a measured contrast failure:
+     1. Text on a lime, gold or coral fill is --on-lime / --reward-ink, never
+        white. White on lime measures 2.3:1.
+     2. Clay (a solid lip under the face that compresses on press) is only for
+        things you press. Content is a flat card with a 1px hairline; shadows
+        barely read on night, so depth comes from the lip and the hairline.
      3. Nothing may depend on an animation having run. Reduced motion is a
-        contract, so every revealed element is readable with motion disabled.
+        contract: every element is readable with motion disabled.
 
-   Measured with a WCAG calculator, both themes, worst text pairing 4.54:
-     ink/ground 14.43 light, 16.08 dark      muted/ground 5.67, 9.04
-     ink/card 16.46, 14.68                   muted/card 6.46, 8.25
-     violet/card 6.00, 6.15                  ink/band 12.46, 14.96
-     muted/band 4.89, 8.41                   violet on violet chip 4.59, 4.70
-     ink on gold chip 12.34, 8.21            ink on coral chip 11.96, 9.92
-     white/canopy-top 4.86                   white/canopy-bottom 7.60
-     reward-ink/gold 9.00                    reward-ink/coral 7.14
-     white on the glass chip 4.54 over the canopy's deep end, and 3.27 over its
-     top end, which is why the chip is placed where it is.
-   Nothing carrying text is below 4.5.
-
-   The primary button uses the canopy pair (#6C5CE7 face over #4A3FC0 lip)
-   rather than the interactive violet, because the canopy is fixed across both
-   themes while Violet lightens to #9C90F5 in dark, where white on it would
-   fail. White on the canopy top measures 4.86 and holds in either theme.
-   Ported from design/mockups/d-kasi-playful.html after Adrian's sign-off. The
-   markup differs from that mockup only in the parts download.js and the QR
-   canvas depend on (element ids/classes, direct-download hrefs); the visual
-   system is unchanged.
+   Contrast, from Color.kt's measured figures:
+     ink/ground 19.4   ink/surface 18.4   muted/surface 11.8   faint/surface 5.9
+     lime/ground 8.3   on-lime/lime 7.7   lime/lime-tint 6.2   white/olive 7.1
+     white/canopy-top 12.9   muted/canopy-top 8.9
+   Nothing that carries text is below 4.5.
    ───────────────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
+
+@font-face{font-family:'Fredoka';src:url('../fonts/fredoka-600.woff2') format('woff2');font-weight:500 600;font-display:swap}
+@font-face{font-family:'Fredoka';src:url('../fonts/fredoka-700.woff2') format('woff2');font-weight:700 900;font-display:swap}
+@font-face{font-family:'DM Sans';src:url('../fonts/dmsans-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'DM Sans';src:url('../fonts/dmsans-500.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'DM Sans';src:url('../fonts/dmsans-700.woff2') format('woff2');font-weight:600 900;font-display:swap}
 
 :root{
-  /* Ground and surfaces — theme-reactive */
-  --ground:#F1EEFF;
-  --surface:#FFFFFF;
-  --sunken:#E8E4F8;
-  --ink:#1F1B3A;
-  --muted:#5E5A80;
-  --faint:#8A86A6;
-  --hair:rgba(31,27,58,.12);
+  color-scheme:dark;
 
-  /* Interactive violet — theme-reactive */
-  --violet:#5B4CDB;
-  --violet-deep:#4034A8;
-  --violet-tint:#E7E3FF;
-  --band:#E3DCFB;
-  --shadow:rgba(91,76,219,.20);
+  /* Ground and surfaces */
+  --ground:#0A0E0D;
+  --surface:#141414;
+  --sunken:#1C211D;
+  --track:#2C312D;
+  --hair:#3A3F3B;
 
-  /* Fixed in both themes: the canopy and the reward fills. The canopy is
-     already a vivid self-contained accent surface, and the reward fills carry
-     a fixed ink label, so neither may move between themes. */
-  --canopy-top:#6C5CE7;
-  --canopy-bottom:#4A3FC0;
-  --on-canopy:#FFFFFF;
-  --gold:#FFB020;
-  --gold-deep:#D98200;
-  --coral:#FF8B5E;
-  --coral-deep:#E0651F;
-  --reward-ink:#1F1B3A;
-  --white-lip:#CFC7EE;
+  /* Canopy and glow */
+  --canopy-top:#0F3A10;
+  --canopy-bottom:#0A1A0C;
+  --glow-core:#0A250B;
+  --glow-mid:#0A190C;
 
-  /* Shape. One radius system, from Dimens.kt. Mixing 14/18/20/22/26 on
-     adjacent surfaces is what made the old app screens read as a pile of
-     cards rather than one designed system. */
+  /* Lime: the one thing to do */
+  --lime:#71BD1D;
+  --lime-lip:#3F6D0E;
+  --lime-tint:#1C2E12;
+  --on-lime:#0B1A05;
+  --brand-lime:#6CB619;
+  --olive:#446025;
+  --olive-deep:#2C4418;
+  --cream:#F2ECCA;
+
+  /* Ink */
+  --ink:#FFFFFF;
+  --muted:#C9D1C5;
+  --faint:#8C948A;
+
+  /* Reward fills. They carry --reward-ink. */
+  --gold:#FFC83D;
+  --coral:#FF9F1C;
+  --reward-ink:#0B1A05;
+  --node-locked:#1C211D;
+
+  /* Shape, from Dimens.kt: four radii only */
   --r-chip:14px;
   --r-tile:20px;
   --r-panel:28px;
   --r-sheet:32px;
   --r-pill:999px;
 
-  /* Clay geometry, from Dimens.kt object Clay */
+  /* Clay geometry */
   --clay-lip:5px;
   --clay-lip-pressed:1px;
 
@@ -89,374 +80,306 @@
   --quick:120ms;
   --standard:240ms;
   --emphasized:400ms;
-  --ease-out:cubic-bezier(0.05,0.7,0.1,1);
+  --ease-out:cubic-bezier(.05,.7,.1,1);
+  --ease-in:cubic-bezier(.3,0,.8,.15);
+
+  --display:'Fredoka','DM Sans',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Neither bundled face carries the IPA block, so pronunciation falls through
+     to the system face, as it does in the app. */
+  --ipa:'DM Sans',system-ui,'Segoe UI',Roboto,'Noto Sans','Lucida Sans Unicode',sans-serif;
 
   --tap:48px;
+  --gutter:20px;
   --wrap:1180px;
 }
 
-@media (prefers-color-scheme:dark){
-  :root{
-    --ground:#15131F;
-    --surface:#1E1B30;
-    --sunken:#282440;
-    --ink:#F1EEFF;
-    --muted:#B7B2D6;
-    --faint:#8B86AC;
-    --hair:rgba(241,238,255,.14);
-    --violet:#9C90F5;
-    --violet-deep:#6C5CE7;
-    --violet-tint:#2A2660;
-    --band:#1C1930;
-    --shadow:rgba(10,7,28,.55);
-  }
-  .step-2,.m-coral{background:rgba(255,139,94,.34)}
-  .step-3,.m-gold{background:rgba(255,176,32,.36)}
-  .step-1,.m-violet{background:rgba(156,144,245,.22)}
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0;padding:0}
+html{
+  scroll-behavior:smooth;
+  scroll-padding-top:80px;
+  scrollbar-color:var(--hair) var(--ground);
+  -webkit-text-size-adjust:100%;
+  accent-color:var(--lime);
 }
-
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-
 body{
   background:var(--ground);
   color:var(--ink);
-  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  font-size:17px;
-  line-height:1.55;
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.6;
   -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  caret-color:var(--lime);
   overflow-x:hidden;
 }
+img{display:block;max-width:100%;height:auto}
+ul,ol{list-style:none}
+a{color:var(--lime);text-underline-offset:3px;text-decoration-thickness:1px}
+::selection{background:var(--lime);color:var(--on-lime)}
+:focus-visible{outline:2px solid var(--cream);outline-offset:3px;border-radius:6px}
 
-h1,h2,h3,.figure b,.headword,.logotype,.step-n{font-family:'Nunito',system-ui,sans-serif}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.12;text-wrap:balance;letter-spacing:-.01em}
+h1 em,h2 em{font-style:normal;color:var(--brand-lime)}
 
-.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px;position:relative;z-index:2}
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--gutter)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* The sticky header offsets every anchor jump. Without this the header eats
-   the heading you just jumped to. */
-section[id],div[id]{scroll-margin-top:96px}
+.skip{
+  position:absolute;left:var(--gutter);top:-60px;z-index:100;
+  background:var(--lime);color:var(--on-lime);font-weight:700;
+  padding:12px 18px;border-radius:var(--r-chip);text-decoration:none;
+}
+.skip:focus{top:12px}
 
-a{color:var(--violet);text-decoration-thickness:1.5px;text-underline-offset:3px}
-:focus-visible{outline:3px solid var(--violet);outline-offset:3px;border-radius:6px}
-
-/* ── Decoration ───────────────────────────────────────────────────────────────
-   Every shape below is CSS or inline SVG. The live site's CSP is
-   img-src 'self' data: blob:, so no external image can load, and the project
-   ships no decorative rasters by policy: Adrian authors all artwork, and the
-   page has to look finished with none of it present. */
-.blob{position:absolute;pointer-events:none;z-index:0}
-.blob-gold{background:var(--gold);border-radius:58% 42% 47% 53% / 51% 40% 60% 49%}
-.blob-gold-soft{background:var(--gold);opacity:.32;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%}
-.blob-coral-soft{background:var(--coral);opacity:.26;border-radius:63% 37% 41% 59% / 40% 62% 38% 60%}
-.blob-tint{background:var(--violet-tint);border-radius:52% 48% 39% 61% / 61% 37% 63% 39%}
-
-.ring{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
-.ring-coral{border:10px solid var(--coral);opacity:.5}
-.ring-gold{border:9px solid var(--gold);opacity:.55}
-.ring-violet{border:8px solid var(--violet);opacity:.24}
-
-.dot{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
-.leaf{position:absolute;border-radius:0 100% 0 100%;pointer-events:none;z-index:0}
-
-/* The reference's plus mark, built from two rounded bars. Used once. */
-.plus{position:absolute;pointer-events:none;z-index:0}
-.plus::before,.plus::after{content:"";position:absolute;background:var(--gold);border-radius:8px}
-.plus::before{left:38%;top:0;width:24%;height:100%}
-.plus::after{top:38%;left:0;height:24%;width:100%}
-
-.wave{display:block;width:100%;height:clamp(44px,5.5vw,80px);position:relative;z-index:1;line-height:0}
-.wave svg{display:block;width:100%;height:100%}
-
-/* ── Clay ─────────────────────────────────────────────────────────────────────
-   Face, a solid darker lip beneath it, and a lit gradient over the top 45% of
-   the face. Pressing compresses the lip and drops the face onto it. */
-.clay{
-  position:relative;
+/* ── Buttons: clay, because a button is something you press ─────────────── */
+.btn{
+  --lip:var(--lime-lip);
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  min-height:var(--tap);padding:0 30px;
-  border:0;border-radius:var(--r-pill);
-  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;
-  letter-spacing:-0.2px;text-decoration:none;cursor:pointer;
-  transition:transform var(--quick) var(--ease-out),box-shadow var(--quick) var(--ease-out);
+  min-height:var(--tap);padding:0 24px;margin-bottom:var(--clay-lip);
+  border-radius:var(--r-pill);border:0;
+  font-family:var(--display);font-weight:600;font-size:16px;line-height:1.2;letter-spacing:.01em;
+  text-decoration:none;cursor:pointer;white-space:nowrap;
+  box-shadow:0 var(--clay-lip) 0 var(--lip);
+  transition:transform var(--quick) var(--ease-out),box-shadow var(--quick) var(--ease-out),filter var(--quick) linear;
+  touch-action:manipulation;
 }
-.clay:active{transform:translateY(4px)}
-/* The lit top is a background layer rather than a pseudo-element: an overlay
-   stacked behind an opaque background paints nothing and leaves a halo. */
-.clay-primary{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),var(--canopy-top);color:var(--on-canopy);box-shadow:0 var(--clay-lip) 0 var(--canopy-bottom),0 10px 20px var(--shadow)}
-.clay-primary:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--canopy-bottom),0 3px 8px var(--shadow)}
-.clay-reward{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,0) 45%),var(--gold);color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--gold-deep),0 10px 20px rgba(217,130,0,.24)}
-.clay-reward:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--gold-deep),0 3px 8px rgba(217,130,0,.24)}
-.clay-white{background:#FFFFFF;color:var(--reward-ink);box-shadow:0 var(--clay-lip) 0 var(--white-lip),0 10px 22px rgba(20,14,60,.28)}
-.clay-white:active{box-shadow:0 var(--clay-lip-pressed) 0 var(--white-lip),0 3px 8px rgba(20,14,60,.28)}
-.clay-sm{min-height:44px;padding:0 22px;font-size:.95rem}
-@media (prefers-reduced-motion:reduce){.clay{transition:none}}
-
-/* ── Soft card — the default surface for content ──────────────────────────── */
-.soft{
-  background:var(--surface);
-  border-radius:var(--r-tile);
-  box-shadow:0 8px 24px var(--shadow);
-  padding:26px;
-  position:relative;z-index:2;
+.btn:active{transform:translateY(calc(var(--clay-lip) - var(--clay-lip-pressed)));box-shadow:0 var(--clay-lip-pressed) 0 var(--lip)}
+.btn-primary{
+  background:var(--lime) linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0) 48%);
+  color:var(--on-lime);
 }
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-quiet{
+  --lip:var(--hair);
+  background:var(--surface);color:var(--ink);
+  border:1px solid var(--hair);
+}
+.btn-quiet:hover{background:var(--sunken)}
+.btn-lg{min-height:56px;padding:0 28px;font-size:18px}
+.btn-sm{min-height:40px;padding:0 18px;font-size:15px;margin-bottom:4px;box-shadow:0 4px 0 var(--lip)}
+.btn-sm:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lip)}
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
-header{
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+.masthead{
   position:sticky;top:0;z-index:50;
-  background:color-mix(in srgb,var(--ground) 88%,transparent);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:var(--ground);
   border-bottom:1px solid var(--hair);
 }
-.masthead{display:flex;align-items:center;gap:20px;height:72px}
-.brand{display:flex;align-items:center;text-decoration:none}
-.logomark{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:38px;height:38px;border-radius:var(--r-pill);
-  background:var(--canopy-top);color:#fff;font-weight:900;font-size:1.15rem;
-  margin-right:10px;box-shadow:0 3px 0 var(--canopy-bottom);
-  font-family:'Nunito',system-ui,sans-serif;
+.masthead-row{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:68px}
+.brand{display:inline-flex;align-items:center;min-height:var(--tap)}
+.brand img{width:140px;height:auto}
+#site-nav{display:flex;align-items:center;gap:6px}
+#site-nav a:not(.btn){
+  display:inline-flex;align-items:center;min-height:var(--tap);padding:0 14px;
+  color:var(--muted);text-decoration:none;font-weight:500;font-size:15px;border-radius:var(--r-pill);
+  transition:color var(--quick) linear,background var(--quick) linear;
 }
-.logotype{font-weight:900;font-size:1.35rem;letter-spacing:-0.6px;color:var(--ink);white-space:nowrap}
-.logotype em{font-style:normal;color:var(--violet)}
-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
-nav a:not(.clay){
-  display:inline-flex;align-items:center;height:44px;padding:0 14px;
-  color:var(--muted);text-decoration:none;font-weight:500;font-size:.98rem;
-  border-radius:var(--r-chip);white-space:nowrap;
-  transition:color var(--quick) var(--ease-out),background var(--quick) var(--ease-out);
-}
-nav a:not(.clay):hover{color:var(--ink);background:var(--violet-tint)}
-nav a:not(.clay)[aria-current="true"]{color:var(--violet);font-weight:700;background:var(--violet-tint)}
-nav .clay{margin-left:10px}
-
-/* ── Hero ────────────────────────────────────────────────────────────────── */
-.hero-sec{position:relative;overflow:hidden;padding:clamp(36px,5vw,68px) 0 clamp(16px,3vw,36px)}
-.hero{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr);gap:clamp(28px,4vw,52px);align-items:center}
-.ghost{
-  position:absolute;left:-4px;top:80px;z-index:0;
-  writing-mode:vertical-rl;transform:rotate(180deg);
-  font-family:'Nunito',system-ui,sans-serif;font-weight:900;
-  font-size:clamp(88px,8.5vw,128px);letter-spacing:8px;
-  color:transparent;-webkit-text-stroke:2px var(--hair);
-  user-select:none;
-}
-h1{font-size:clamp(2.2rem,4.4vw,3.05rem);font-weight:900;line-height:1.08;letter-spacing:-1.4px;margin-bottom:18px}
-h1 em{font-style:normal;color:var(--violet)}
-.lede{font-size:1.06rem;color:var(--muted);max-width:46ch;margin-bottom:30px}
-.lede strong{color:var(--ink);font-weight:700}
-
-/* Three-step row. The dotted connector is drawn on a pseudo-element so it
-   never affects layout or reflows as the fonts load. */
-.steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:32px;max-width:470px}
-.step{position:relative;text-align:center}
-.step:not(:last-child)::after{
-  content:"";position:absolute;top:28px;left:calc(50% + 36px);right:calc(-50% + 36px);
-  border-top:2px dashed var(--hair);
-}
-.step-chip{
-  width:56px;height:56px;margin:0 auto 10px;border-radius:var(--r-pill);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--ink);position:relative;z-index:1;
-}
-.step-1{background:rgba(91,76,219,.10);color:var(--violet)}
-.step-2{background:rgba(255,139,94,.26)}
-.step-3{background:rgba(255,176,32,.30)}
-.step span{display:block;font-size:.85rem;font-weight:500;color:var(--muted);line-height:1.35}
-.cta-row{display:flex;flex-wrap:wrap;gap:14px}
-
-/* Art slots. Each wrapper reserves its aspect ratio whether or not a file is
-   present, so dropping artwork in later shifts nothing on the page. */
-.art{position:relative;display:grid;place-items:center}
-/* The blob is part of the slot, not the section, so it tracks the slot's size
-   and reads as a deliberate ground for the artwork rather than a stray circle
-   while the slot is empty. */
-.art::before{
-  content:"";position:absolute;z-index:0;
-  background:var(--gold);
-  border-radius:64% 36% 42% 58% / 39% 62% 38% 61%;
-}
-.art-a::before{inset:16% 0 6% 10%;transform:rotate(-8deg)}
-.art-b::before{inset:8% 2% 8% 2%;background:var(--coral);opacity:.8;border-radius:52% 48% 63% 37% / 58% 41% 59% 42%}
-.art-c::before{inset:10% 4% 8% 0;border-radius:44% 56% 63% 37% / 57% 44% 56% 43%;transform:rotate(6deg)}
-
-/* ── The art-free state ───────────────────────────────────────────────────────
-   With no artwork present the hero's right column would be a bare blob, which
-   reads as decoration with nothing to decorate. A real dictionary entry sits on
-   it instead: it is the product, it is real corpus data, and it gives the shape
-   something to hold. If artwork is later dropped into slot A, this card can
-   stay beside it or be deleted; neither choice moves anything else. */
-.specimen{
-  position:relative;z-index:3;width:min(300px,86%);
-  background:var(--surface);border-radius:var(--r-panel);
-  box-shadow:0 18px 40px var(--shadow);
-  padding:24px 26px;transform:rotate(-2.5deg);
-}
-.specimen .headword{display:block;font-size:2.3rem;line-height:1.05;margin:10px 0 2px}
-.specimen .pos{margin-bottom:16px}
-.specimen dl{display:flex;gap:26px;border-top:1px solid var(--hair);padding-top:14px;margin:0}
-.specimen dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
-.specimen dd{font-size:1.02rem;font-weight:700;margin:0}
-.specimen dd.fil{font-weight:500;color:var(--muted)}
-.verified{
-  display:inline-flex;align-items:center;gap:7px;
-  background:rgba(21,128,61,.14);color:var(--ink);
-  border-radius:var(--r-pill);padding:5px 12px;font-size:.76rem;font-weight:700;
-}
-.verified svg{color:#15803D}
-.art-a{aspect-ratio:1/1;max-width:500px;margin-left:auto;width:100%}
-.art-b{aspect-ratio:1/1;width:100%;max-width:290px}
-.art-c{aspect-ratio:4/5;max-width:380px;width:100%}
-.art-b:not(:has(img)),.art-c:not(:has(img)){display:none}
-.art img{position:relative;z-index:2;width:100%;height:100%;object-fit:contain;object-position:bottom}
-
-/* ── Figures band ────────────────────────────────────────────────────────── */
-.figures{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:6px 0 clamp(24px,4vw,44px)}
-.figure{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:20px 18px;text-align:center}
-.figure b{display:block;font-size:1.9rem;font-weight:900;letter-spacing:-1px;color:var(--violet);line-height:1.1;font-variant-numeric:tabular-nums}
-/* Direct-child selector, not a descendant one: the live word count is a span
-   nested inside <b> (download.js targets it by id), and the earlier
-   descendant selector matched that span too, block-ifying it and pushing the
-   sibling "+" text onto its own line. */
-.figure > span{display:block;font-size:.86rem;color:var(--muted);margin-top:4px}
-
-/* ── Why it matters — offset cluster + aside ─────────────────────────────── */
-.heritage-sec{position:relative;overflow:hidden;padding:clamp(24px,4vw,56px) 0}
-.heritage{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(28px,4vw,60px);align-items:center}
-/* The section heading leads in the DOM so the heading order is h1, h2, h3.
-   Above the breakpoint the cluster is placed first visually; below it the
-   order is dropped and the heading leads its own cards. */
-.heritage > .cluster{order:-1}
-.cluster{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:40px}
-.cluster .soft:nth-child(2){background:var(--violet-tint)}
-.cluster .soft:nth-child(3){background:color-mix(in srgb,var(--gold) 16%,var(--surface))}
-.card-icon{width:44px;height:44px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;background:rgba(91,76,219,.10);color:var(--violet);margin-bottom:14px}
-.cluster h3{font-size:1.08rem;font-weight:800;letter-spacing:-0.3px;margin-bottom:7px}
-.cluster p{font-size:.9rem;color:var(--muted);line-height:1.5}
-h2{font-size:clamp(1.7rem,3.2vw,2.4rem);font-weight:900;letter-spacing:-1px;line-height:1.15;margin-bottom:16px}
-.sec-lede{color:var(--muted);max-width:52ch}
-.pull{
-  font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.3rem;
-  line-height:1.35;letter-spacing:-0.5px;color:var(--violet);
-  border-left:5px solid var(--gold);padding-left:18px;margin:22px 0;
+#site-nav a:not(.btn):hover{color:var(--ink);background:var(--surface)}
+#site-nav a[aria-current]{color:var(--ink);background:var(--lime-tint)}
+#site-nav .btn{margin-left:10px}
+@media (max-width:760px){
+  #site-nav a:not(.btn){display:none}
+  .brand img{width:122px}
 }
 
-/* ── Practice band ───────────────────────────────────────────────────────── */
-.practice-sec{background:var(--band);position:relative;overflow:hidden;padding:clamp(8px,1.5vw,20px) 0 clamp(32px,4vw,60px)}
-.practice-head{text-align:center;max-width:56ch;margin:0 auto clamp(24px,4vw,44px)}
-.practice-head .sec-lede{margin:0 auto}
-.practice{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:start;max-width:940px;margin:0 auto}
-.practice:has(img){grid-template-columns:1fr minmax(0,290px) 1fr;align-items:center;max-width:none}
-.mode-col{display:flex;flex-direction:column;gap:26px}
-.mode{display:flex;gap:14px;align-items:flex-start}
-.practice:has(img) .mode-col.right .mode{flex-direction:row-reverse;text-align:right}
-.mode-icon{flex:0 0 auto;width:48px;height:48px;border-radius:var(--r-chip);display:flex;align-items:center;justify-content:center;color:var(--ink)}
-.m-violet{background:rgba(91,76,219,.10);color:var(--violet)}
-.m-gold{background:rgba(255,176,32,.34)}
-.m-coral{background:rgba(255,139,94,.30)}
-.mode b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.2px;margin-bottom:2px}
-.mode span{display:block;font-size:.86rem;color:var(--muted);line-height:1.45}
-.practice-cta{text-align:center;margin-top:clamp(28px,4vw,48px)}
-
-/* ── The words ───────────────────────────────────────────────────────────── */
-.words-sec{position:relative;overflow:hidden;padding:clamp(32px,4.5vw,68px) 0}
-.words{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,56px);align-items:center}
-.words:has(img){grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr)}
-.entries{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
-.words:has(img) .entries{grid-template-columns:1fr}
-.entry{background:var(--surface);border-radius:var(--r-tile);box-shadow:0 6px 18px var(--shadow);padding:16px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
-.headword{font-size:1.45rem;font-weight:900;letter-spacing:-0.7px;line-height:1.15}
-.pos{display:block;font-size:.78rem;color:var(--faint);font-weight:500;margin-top:2px}
-.gloss{display:flex;gap:26px;flex-wrap:wrap;justify-content:flex-end;margin:0}
-.gloss dt{font-size:.72rem;color:var(--faint);letter-spacing:.3px}
-.gloss dd{font-size:1rem;font-weight:700;color:var(--ink);margin:0}
-.gloss dd.fil{font-weight:500;color:var(--muted)}
-
-/* ── Voices — an honest empty slot ───────────────────────────────────────── */
-.voices-sec{padding:0 0 clamp(32px,4.5vw,60px)}
-.slot{
-  border:2px dashed var(--hair);border-radius:var(--r-panel);
-  background:transparent;padding:34px;text-align:center;max-width:640px;margin:0 auto;
-}
-.slot b{display:block;font-family:'Nunito',system-ui,sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:8px}
-.slot p{color:var(--muted);font-size:.94rem;max-width:52ch;margin:0 auto}
-
-/* ── Download hub — the canopy ───────────────────────────────────────────── */
-.hub-sec{position:relative;background:linear-gradient(180deg,var(--canopy-top),var(--canopy-bottom));color:var(--on-canopy);overflow:hidden;padding:clamp(10px,2vw,22px) 0 clamp(40px,5vw,74px)}
-.hub{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(28px,4vw,56px);align-items:center}
-.hub h2{color:var(--on-canopy)}
-/* Text on the canopy is never faded: white at 0.70-0.90 alpha measures
-   3.23-4.27 and fails AA at every step. Secondary lines are pure white and
-   differentiated by size and weight instead. */
-.hub p{color:var(--on-canopy);font-size:1rem;font-weight:500;margin-bottom:24px}
-/* Glass is legal here and only here. It needs a genuinely vivid backdrop, and
-   the chip sits on the gradient's deep end where a white label measures 4.54
-   rather than the 3.27 it would measure on the top end. */
-.glass-chip{
-  display:inline-flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);
-  border-radius:var(--r-pill);padding:7px 16px;font-size:.85rem;font-weight:700;
-  color:#fff;margin-bottom:18px;
-}
-.qr-panel{background:#fff;border-radius:var(--r-panel);padding:20px;text-align:center;box-shadow:0 14px 34px rgba(20,14,60,.32)}
-.qr-panel canvas{width:168px;height:168px;display:block;margin:0 auto;border-radius:12px}
-.qr-panel p{color:var(--reward-ink);font-size:.84rem;font-weight:500;margin:12px 0 0}
-
-/* ── Footer ──────────────────────────────────────────────────────────────── */
-/* The footer is a reward fill, fixed in both themes exactly like the canopy
-   above it, carrying RewardInk at 9.00. It does not invert with the theme
-   because the fill itself never moves. */
-footer{background:var(--gold);color:var(--reward-ink);position:relative;overflow:hidden;padding:clamp(26px,3.5vw,42px) 0}
-.foot{display:flex;flex-wrap:wrap;gap:18px 30px;align-items:center}
-.foot .logotype,.foot .logotype em{color:var(--reward-ink)}
-.foot .logomark{background:var(--reward-ink);color:var(--gold);box-shadow:none}
-.foot nav{gap:22px}
-.foot nav a{color:var(--reward-ink);font-weight:700;text-decoration:underline;text-underline-offset:3px;height:auto;padding:0;background:none}
-.foot-legal{width:100%;font-size:.85rem;border-top:1px solid rgba(31,27,58,.22);padding-top:16px;margin-top:4px;display:flex;flex-wrap:wrap;gap:6px 22px}
-
-/* ── Reveal on scroll ────────────────────────────────────────────────────── */
-.reveal{opacity:0;transform:translateY(18px);transition:opacity var(--emphasized) var(--ease-out),transform var(--emphasized) var(--ease-out)}
-.reveal.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){
-  .reveal{opacity:1;transform:none;transition:none}
+/* ── Glow: the soft light behind Jepjep. Stops from Color.kt, no rings. ──── */
+.glow{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,var(--glow-core) 0%,var(--glow-mid) 55%,rgba(10,14,13,0) 100%);
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width:1100px){.ghost{display:none}}
-@media (max-width:900px){
-  header{height:112px;padding-bottom:8px}
-  .masthead{height:64px}
-  nav{
-    position:absolute;left:0;right:0;top:64px;
-    margin:0;gap:6px;padding:0 20px 8px;
-    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.hero{position:relative;padding:28px 0 72px;overflow:hidden}
+.hero-grid{display:grid;gap:8px;align-items:center}
+.hero-copy{position:relative;z-index:1}
+.hero h1{font-size:clamp(36px,9.6vw,64px);max-width:15ch}
+.lede{margin-top:16px;font-size:18px;line-height:1.6;color:var(--muted);max-width:52ch}
+.lede b{color:var(--lime);font-weight:700;font-variant-numeric:tabular-nums}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px 14px;margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:14px;color:var(--faint);font-size:14px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+
+.hero-art{position:relative;order:-1;display:grid;place-items:center;min-height:216px}
+.hero-art .glow{width:min(130vw,560px);aspect-ratio:1;left:50%;top:50%;translate:-50% -50%}
+.jepjep{position:relative;width:auto;height:200px}
+.word-card.hero-word{display:none}
+
+@media (min-width:960px){
+  .hero{padding:48px 0 112px}
+  .hero-grid{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:48px}
+  .hero-art{order:0;min-height:520px}
+  .hero-art .glow{width:720px}
+  .jepjep{height:420px;translate:40px -10px}
+  .word-card.hero-word{
+    display:flex;position:absolute;left:0;bottom:36px;width:252px;
+    rotate:-3deg;
   }
-  nav::-webkit-scrollbar{display:none}
-  nav a:not(.clay){height:38px;padding:0 12px;font-size:.9rem}
-  nav .clay{position:absolute;right:20px;top:-54px;margin:0}
-  section[id],div[id]{scroll-margin-top:124px}
-  .hero-sec{padding-top:26px}
-  .blob,.ring,.plus,.leaf,.dot{display:none}
-  .hero,.heritage,.words,.hub{grid-template-columns:1fr}
-  .heritage > .cluster{order:0}
-  .art-a{margin:0 auto;max-width:360px}
-  .art-c{margin:0 auto}
-  .figures{grid-template-columns:repeat(2,1fr)}
-  .practice{grid-template-columns:1fr;gap:28px}
-  .mode-col.right .mode{flex-direction:row;text-align:left}
-  .art-b{margin:0 auto;order:-1}
 }
-@media (max-width:620px){
-  body{font-size:16px}
-  .entries{grid-template-columns:1fr}
-  .cluster{grid-template-columns:1fr}
-  .cluster .soft:nth-child(2),.cluster .soft:nth-child(3){margin-top:0}
-  .steps{max-width:none}
-  .step:not(:last-child)::after{display:none}
-  .cta-row .clay{width:100%}
-  .entry{grid-template-columns:1fr}
-  .gloss{justify-content:flex-start}
-  .masthead{gap:12px}
-  .logotype{font-size:1.2rem}
+
+/* The page's one authored moment: Jepjep rises into the glow as it blooms. */
+@media (prefers-reduced-motion:no-preference){
+  .hero-art .glow{animation:bloom 900ms var(--ease-out) both}
+  .jepjep{animation:rise var(--emphasized) var(--ease-out) 120ms both}
+  .hero-word{animation:settle var(--emphasized) var(--ease-out) 320ms both}
+}
+@keyframes bloom{from{opacity:0;scale:.7}}
+@keyframes rise{from{opacity:0;transform:translateY(28px) scale(.96)}}
+@keyframes settle{from{opacity:0;transform:translateY(16px);rotate:0deg}}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+.section{padding:72px 0}
+@media (min-width:960px){.section{padding:112px 0}}
+.section h2{font-size:clamp(30px,6.4vw,46px)}
+.section-head{margin-bottom:36px}
+.body-lg{margin-top:14px;font-size:18px;line-height:1.6;color:var(--muted);max-width:60ch}
+
+/* ── Why it matters ───────────────────────────────────────────────────────── */
+.heritage{border-top:1px solid var(--hair)}
+.heritage-grid{display:grid;gap:36px}
+.scene-panel{position:relative}
+.scene-panel img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:50% 38%;border-radius:var(--r-panel);border:1px solid var(--hair);background:var(--surface)}
+.scene-panel figcaption{margin-top:10px;color:var(--faint);font-size:14px}
+.pull{margin-top:18px;font-family:var(--display);font-weight:600;font-size:clamp(21px,4.6vw,26px);line-height:1.3;color:var(--cream);max-width:26ch}
+.facts{margin-top:32px}
+.facts li{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:18px 0;border-top:1px solid var(--hair)}
+.fact-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--lime-tint);color:var(--lime)}
+.facts li div b{display:block;font-family:var(--display);font-weight:600;font-size:18px;line-height:1.3}
+.facts li div span{display:block;margin-top:4px;color:var(--muted)}
+@media (min-width:960px){
+  .heritage-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:72px;align-items:start}
+  .scene-panel{position:sticky;top:96px}
+  .scene-panel img{aspect-ratio:4/5}
+}
+
+/* ── Inside the app: a bento mirroring the app's three tabs ──────────────── */
+.bento{display:grid;gap:16px}
+.tile{
+  position:relative;overflow:hidden;
+  background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-panel);
+  padding:28px;
+}
+.tile h3{display:flex;align-items:center;gap:12px;font-size:26px}
+.tab-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r-chip);background:var(--lime-tint);color:var(--lime);flex:none}
+.tile p{margin-top:12px;color:var(--muted);max-width:46ch}
+.tile-body{position:relative;z-index:1}
+
+.tile-learn{display:flex;align-items:flex-end;min-height:480px;padding-top:180px}
+.tile-scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.tile-learn::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(0deg,var(--surface) 0%,rgba(20,20,20,.96) 42%,rgba(20,20,20,.55) 68%,rgba(20,20,20,0) 100%);
+}
+
+.path{display:flex;align-items:center;margin-top:24px}
+.node{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;flex:none;position:relative}
+.node + .node{margin-left:28px}
+.node + .node::before{content:"";position:absolute;right:100%;top:50%;width:28px;height:6px;translate:0 -50%;background:var(--track)}
+.node.done + .node::before{background:var(--lime)}
+.node.done{background:var(--lime);color:var(--on-lime);box-shadow:0 4px 0 var(--lime-lip)}
+.node.now{background:var(--gold);color:var(--reward-ink);box-shadow:0 4px 0 #C98A00,0 0 0 4px var(--ground),0 0 0 6px var(--gold)}
+.node:not(.done):not(.now){background:var(--node-locked);color:var(--faint);border:1px solid var(--hair)}
+
+.tile-practice{padding-bottom:28px}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:var(--r-chip);font-family:var(--display);font-weight:600;font-size:16px}
+.chip-lime{background:var(--lime-tint);color:var(--lime);border:1px solid var(--olive)}
+.tile p.soon{margin-top:18px;color:var(--faint);font-size:15px;max-width:34ch}
+.tile-jepjep{position:absolute;right:-8px;bottom:-18px;width:128px;opacity:.95}
+
+.library-count{font-size:18px}
+.library-count b{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:var(--lime);margin-right:4px;font-variant-numeric:tabular-nums}
+
+@media (max-width:959px){
+  .tile-practice .tile-body{padding-right:96px}
+}
+@media (min-width:960px){
+  .bento{grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-rows:auto auto}
+  .tile-learn{grid-row:span 2;min-height:600px;padding:40px}
+  .tile{padding:36px}
+  .tile-practice .tile-body{padding-right:120px}
+  .tile-jepjep{width:156px}
+}
+
+/* ── The words: app-style word cards ──────────────────────────────────────── */
+.words{border-top:1px solid var(--hair)}
+.words-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+.words-jepjep{width:92px;flex:none;margin-bottom:-8px}
+.word-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.word-card{
+  display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-tile);
+  padding:18px;min-width:0;
+}
+.word-cat{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--faint)}
+.headword{margin-top:10px;font-family:var(--display);font-weight:700;font-size:26px;line-height:1.1;overflow-wrap:anywhere}
+.ipa{margin-top:4px;font-family:var(--ipa);font-size:15px;color:var(--muted)}
+.gloss{margin-top:auto;padding-top:14px}
+.gloss div{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:10px;padding:8px 0;border-top:1px solid var(--hair);font-size:15px}
+.gloss div:first-child{margin-top:14px}
+.gloss dt{color:var(--faint)}
+.gloss dd{margin-left:auto;color:var(--ink);font-weight:500;text-align:right;overflow-wrap:break-word;min-width:0}
+@media (min-width:640px){
+  .word-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .word-card{padding:22px}
+  .headword{font-size:32px}
+  .words-jepjep{width:124px}
+}
+
+/* Reveal: additive only. Without the script, or under reduced motion, the
+   cards are simply there. */
+.js .reveal{opacity:0;transform:translateY(14px);transition:opacity var(--emphasized) var(--ease-out),transform var(--emphasized) var(--ease-out)}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none;transition:none}}
+
+/* ── Download: the canopy panel ───────────────────────────────────────────── */
+.hub{
+  position:relative;overflow:hidden;isolation:isolate;
+  display:grid;gap:28px;justify-items:start;
+  background:linear-gradient(160deg,var(--canopy-top) 0%,var(--canopy-bottom) 100%);
+  border:1px solid rgba(113,189,29,.28);
+  border-radius:var(--r-sheet);
+  padding:36px 24px 32px;
+}
+.glow-hub{width:520px;aspect-ratio:1;left:-160px;top:-180px;z-index:-1;background:radial-gradient(closest-side,rgba(113,189,29,.16),rgba(113,189,29,0))}
+.hub-jepjep{width:132px;justify-self:center}
+.hub h2{font-size:clamp(32px,7vw,48px)}
+.version{margin-top:10px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.6em}
+.hub .btn{margin-top:22px}
+
+.install{margin-top:30px;display:grid;gap:0}
+.install li{position:relative;display:grid;grid-template-columns:40px 1fr;gap:16px;padding-bottom:20px}
+.install li:last-child{padding-bottom:0}
+.install li:not(:last-child)::before{content:"";position:absolute;left:19px;top:44px;bottom:4px;width:2px;background:rgba(255,255,255,.18)}
+.install-node{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--olive);color:var(--ink);font-family:var(--display);font-weight:700;font-size:18px;border:1px solid rgba(113,189,29,.5)}
+.install b{display:block;font-family:var(--display);font-weight:600;font-size:18px;line-height:1.3;padding-top:8px}
+.install li div span{display:block;margin-top:2px;color:var(--muted);font-size:15px}
+
+.qr-panel{display:none}
+@media (min-width:960px){
+  .hub{grid-template-columns:200px minmax(0,1fr) 260px;align-items:center;gap:48px;padding:56px}
+  .hub-jepjep{width:200px;align-self:end;margin-bottom:-56px}
+  .qr-panel{display:block;text-align:center}
+  .qr-panel canvas{width:220px;height:220px;background:#fff;border-radius:var(--r-tile);padding:12px;margin-inline:auto}
+  .qr-panel p{margin-top:14px;color:var(--muted);font-size:14px;line-height:1.5}
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.foot{padding:48px 0 56px}
+.foot-grid{display:grid;gap:20px}
+.foot nav{display:flex;flex-wrap:wrap;gap:4px 18px}
+.foot nav a{display:inline-flex;align-items:center;min-height:40px;color:var(--muted);text-decoration:none;font-size:15px}
+.foot nav a:hover{color:var(--ink);text-decoration:underline}
+.foot-legal{color:var(--faint);font-size:14px;max-width:60ch}
+@media (min-width:960px){
+  .foot-grid{grid-template-columns:auto 1fr;align-items:center;gap:24px 48px}
+  .foot nav{justify-content:flex-end}
+  .foot-legal{grid-column:1 / -1;padding-top:20px;border-top:1px solid var(--hair);max-width:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:0ms !important;animation:none !important}
 }

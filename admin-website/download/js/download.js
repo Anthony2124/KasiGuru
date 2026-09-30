@@ -66,8 +66,10 @@ try {
       const rounded = Math.max(0, Math.floor(total / 10) * 10);
       const hero = document.getElementById('word-count-hero');
       const feat = document.getElementById('word-count-features');
-      if (hero) hero.textContent = `${rounded}+ Kasiguranin words`;
-      if (feat) feat.textContent = String(rounded);
+      if (rounded === 0) return;
+      const shown = rounded.toLocaleString('en-US');
+      if (hero) hero.textContent = shown;
+      if (feat) feat.textContent = shown;
     })
     .catch(() => { /* keep static fallback */ });
 } catch (e) { /* keep static fallback */ }
