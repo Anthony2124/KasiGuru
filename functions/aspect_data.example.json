@@ -10,6 +10,6 @@
       { "form": "magaabenën", "tense": "imperfective", "affixType": "Circumfix" },
       { "form": "magaabben", "tense": "contemplative", "affixType": "Prefix" }
     ],
-    "source": "Supnet (2016) grammar sketch, via kasiguranin_database_schema.sql"
+    "source": "Supnet (2016) grammar sketch, via data/sql/kasiguranin_database_schema.sql"
   }
 }

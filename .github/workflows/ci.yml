@@ -100,6 +100,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Project folders and local imports agree
+        run: node scripts/check-project-structure.js
       # This check used to grep only admin-website/index.html for the admin script, so it
       # passed while a full duplicate portal sat at the root loading its script from
       # dashboard.html instead. That copy drifted 199 lines behind the real one and lost

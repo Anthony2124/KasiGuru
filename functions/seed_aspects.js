@@ -13,7 +13,7 @@
 //     "alternates": [
 //       { "form": "inumabben", "tense": "perfective", "affixType": "Infix" }
 //     ],
-//     "source": "Supnet (2016) via kasiguranin_database_schema.sql"
+//     "source": "Supnet (2016) via data/sql/kasiguranin_database_schema.sql"
 //   }
 // }
 //

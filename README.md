@@ -11,12 +11,23 @@ the Kasiguranin dialect.**
 
 ## Repo layout
 
+Start with [docs/CODE_MAP.md](docs/CODE_MAP.md) to find a feature's screens,
+ViewModels, repositories, tests and maintenance tools. [AGENTS.md](AGENTS.md)
+records folder conventions for future changes.
+
 | Path | What it is |
 |---|---|
 | `app/` | The Android app (Compose UI, Room DB, Firestore sync, FCM, Crashlytics) |
 | `admin-website/` | Three Vercel projects: root placeholder, `admin/` (login + dashboard), `download/` (public APK page) |
 | `functions/` | Free-plan helper scripts: `set_admin_claim.js`, `backup_firestore.js`, `restore_firestore.js`, `send_push.js` |
-| `scripts/` | `deploy_web.ps1` — one-command deploy of all web portals |
+| `scripts/` | Project checks and established deploy, release and backup entry points |
+| `scripts/dictionary/` | Dictionary import, audit, repair and definition tools |
+| `scripts/lib/` | Shared project paths for local tools |
+| `scripts/diagnostics/` | Read-only Firebase vocabulary diagnostics |
+| `data/dictionary/` | Authored meanings and elicitation notes |
+| `data/sql/` | Reference database schemas and historical SQL imports |
+| `design/` | Mockups, screenshots and source design assets |
+| `Voice/` | Source pronunciation recordings by category |
 | `firestore.rules` | The security rules (source of truth; deploy with `firebase deploy --only firestore:rules`) |
 | `docs/` | Runbooks and guides (see below) |
 
@@ -24,6 +35,11 @@ the Kasiguranin dialect.**
 
 | Doc | Contents |
 |---|---|
+| [docs/CODE_MAP.md](docs/CODE_MAP.md) | Feature entry points, folder conventions, search commands and relocated paths |
+| [scripts/README.md](scripts/README.md) | Local tooling and dictionary workflow |
+| [docs/DICTIONARY_MEANINGS.md](docs/DICTIONARY_MEANINGS.md) | Corpus sources, definitions and repair rules |
+| [docs/design/](docs/design/) | Design plans and historical audits |
+| [docs/prompts/](docs/prompts/) | Project prompt documents |
 | [docs/PHASE1_RUNBOOK.md](docs/PHASE1_RUNBOOK.md) | Production setup: rules deploy, admin claim, backups, CI |
 | [docs/PHASE1_TUTORIAL.md](docs/PHASE1_TUTORIAL.md) | Step-by-step deployment walkthrough |
 | [docs/MONITORING.md](docs/MONITORING.md) | Monitoring, costs, failure runbook, free-plan limits |
@@ -55,6 +71,14 @@ infrastructure, or data-layer:
    (`users/{uid}/progress` with merge logic + tests), monitoring guide.
 
 ## Key operational commands
+
+Local verification after code changes:
+
+```powershell
+npm run check:structure
+npm run check:web
+.\gradlew.bat testDebugUnitTest assembleDebug lintDebug
+```
 
 ```powershell
 # Deploy the Firestore rules (source of truth)

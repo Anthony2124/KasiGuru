@@ -34,7 +34,7 @@ that read them take the path as an argument so they can be pointed elsewhere.
 - Categories for the imported 808 senses. The elicitation wordlist has no category column, so
   categories were assigned from the wordlist's own semantic ordering — it is a standard instrument
   that runs geography, then kinship, then animals, then the body, and so on — with a small keyword
-  override for unambiguous glosses. The bands are written out in `scripts/import_wordlist.js`.
+  override for unambiguous glosses. The bands are written out in `scripts/dictionary/import_wordlist.js`.
   These are an editorial convenience for navigation, not a claim about Kasiguranin semantics.
 
 **Editorial writing, not research data:**
@@ -52,7 +52,7 @@ that read them take the path as an argument so they can be pointed elsewhere.
 ## Things deliberately left alone
 
 Three entries carry a headword whose correct reading could not be established, and were not guessed
-at. They are listed under `NEEDS_A_HUMAN` in `scripts/repair_dictionary.js` and reported every time
+at. They are listed under `NEEDS_A_HUMAN` in `scripts/dictionary/repair_dictionary.js` and reported every time
 that script runs:
 
 - `kaliwa kariwe` / *left* and `kasinungalingan kabulean` / *lie* — both tokens are real words, and
@@ -68,13 +68,13 @@ work, not code work.
 
 | Script | What it does |
 |---|---|
-| `scripts/audit_dictionary.js` | Read-only. Compares the corpus against both sources and reports scrambled rows, English text in the Tagalog field, trailing-comma glosses, missing IPA, missing or over-long definitions. Exits non-zero on a blocking defect, so it can gate a release. |
-| `scripts/repair_dictionary.js` | The record of the 40 one-time corrections applied to the corpus, each matched against its exact prior value so the script is idempotent. |
-| `scripts/import_wordlist.js` | Merges the elicitation wordlist into the corpus. Keeps every existing entry as it stands and appends only senses the corpus lacks. Also splits the list across nine private methods — a single Kotlin method is capped at 64 KB of bytecode and a corpus this size does not compile in one. |
-| `scripts/meanings.json` | The definitions, keyed by `kasiguranin|english`, so they can be reviewed as one document and re-applied after any regeneration of the corpus. |
-| `scripts/apply_meanings.js` | Writes `meanings.json` into `DatabaseSeeder.kt`. Reports keys that match no entry rather than ignoring them. |
-| `scripts/merge_meanings.js` | Merges an authored batch into `meanings.json`, reporting collisions. |
-| `scripts/wordlist_notes.json` | The field linguist's elicitation notes and the alternate forms a single-headword corpus cannot hold. Reference material; not shipped in the app. |
+| `scripts/dictionary/audit_dictionary.js` | Read-only. Compares the corpus against both sources and reports scrambled rows, English text in the Tagalog field, trailing-comma glosses, missing IPA, missing or over-long definitions. Exits non-zero on a blocking defect, so it can gate a release. |
+| `scripts/dictionary/repair_dictionary.js` | The record of the 40 one-time corrections applied to the corpus, each matched against its exact prior value so the script is idempotent. |
+| `scripts/dictionary/import_wordlist.js` | Merges the elicitation wordlist into the corpus. Keeps every existing entry as it stands and appends only senses the corpus lacks. Also splits the list across nine private methods — a single Kotlin method is capped at 64 KB of bytecode and a corpus this size does not compile in one. |
+| `data/dictionary/meanings.json` | The definitions, keyed by `kasiguranin|english`, so they can be reviewed as one document and re-applied after any regeneration of the corpus. |
+| `scripts/dictionary/apply_meanings.js` | Writes `meanings.json` into `DatabaseSeeder.kt`. Reports keys that match no entry rather than ignoring them. |
+| `scripts/dictionary/merge_meanings.js` | Merges an authored batch into `meanings.json`, reporting collisions. |
+| `data/dictionary/wordlist_notes.json` | The field linguist's elicitation notes and the alternate forms a single-headword corpus cannot hold. Reference material; not shipped in the app. |
 | `functions/backfill_meanings.js` | Pushes definitions and parts of speech into Firestore. Local Node script with a service-account key — this project stays on the Spark plan. |
 | `functions/audit_firestore_corpus.js` | Read-only. Sorts every Firestore document the corpus does not account for into corrupted twins, multi-form cells, and genuine additions. |
 
@@ -124,6 +124,6 @@ definition can now be authored without a code change.
 
 Thirty-seven wordlist cells record more than one Kasiguranin form for a single sense
 (`diget,sabeng`; `balbal/ yabat/ hablug`). The corpus stores one headword per entry, so the first
-form was taken and the rest preserved in `scripts/wordlist_notes.json`. Nothing was discarded, but
+form was taken and the rest preserved in `data/dictionary/wordlist_notes.json`. Nothing was discarded, but
 the app does not yet display alternates — that would need a field on `VocabularyEntity` and a place
 to show it.

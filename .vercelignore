@@ -6,4 +6,4 @@ scripts/
 *.aab
 node_modules/
 .git/
-check_pos.js
+data/

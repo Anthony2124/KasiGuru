@@ -92,7 +92,7 @@ class UserPreferencesRepository @Inject constructor(
 
     /**
      * Mini-game types whose rules dialog the learner opted out of re-seeing. Before this existed,
-     * [com.kasiguru.ui.screens.games.GameRulesDialog] reappeared in full on every single entry to a
+     * [com.kasiguru.ui.screens.games.shared.GameRulesDialog] reappeared in full on every single entry to a
      * game, even the 50th time.
      */
     val gameRulesSeen: Flow<Set<String>> = dataStore.data.map { prefs ->

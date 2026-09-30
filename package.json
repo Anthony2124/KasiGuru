@@ -2,5 +2,12 @@
   "dependencies": {
     "firebase": "^12.17.1",
     "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "check:structure": "node scripts/check-project-structure.js",
+    "check:web": "node scripts/check-web-tokens.js",
+    "dictionary:audit": "node scripts/dictionary/audit_dictionary.js",
+    "dictionary:repair:preview": "node scripts/dictionary/repair_dictionary.js --dry-run",
+    "dictionary:meanings:preview": "node scripts/dictionary/apply_meanings.js --dry-run"
   }
 }

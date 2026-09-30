@@ -12,11 +12,11 @@
 //
 // This corrects those documents in place rather than deleting them:
 //
-//   1. Documents matching a row in scripts/repair_dictionary.js get exactly the correction the
+//   1. Documents matching a row in scripts/dictionary/repair_dictionary.js get exactly the correction the
 //      corpus got. One table, so the two can never drift apart.
 //   2. Documents whose headword holds several forms are normalised the way the importer normalises
 //      them -- first form, parentheticals stripped -- but only when the result matches a real
-//      corpus sense. The alternates are already preserved in scripts/wordlist_notes.json.
+//      corpus sense. The alternates are already preserved in data/dictionary/wordlist_notes.json.
 //
 // Nothing is deleted, nothing is created, and a rewrite that would collide with a document that
 // already holds that sense is skipped and reported instead. Every skip is printed, so a document
@@ -35,7 +35,7 @@ if (!keyPath) {
   process.exit(1);
 }
 
-const { REPAIRS } = require('../scripts/repair_dictionary.js');
+const { REPAIRS } = require('../scripts/dictionary/repair_dictionary.js');
 
 const SEEDER = path.join(__dirname, '..', 'app', 'src', 'main', 'java', 'com', 'kasiguru', 'data', 'local', 'DatabaseSeeder.kt');
 const ENTITY = /VocabularyEntity\(([\s\S]*?)\n {8}\)/g;
