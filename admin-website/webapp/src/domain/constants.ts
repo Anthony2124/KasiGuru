@@ -1,25 +1,14 @@
 /** util/Constants.kt, the parts the learner app reads. */
+import { LEVEL_THRESHOLDS, levelFor, MAX_LEVEL } from './xp';
 
-export const XP_PER_WORD_LEARNED = 100;
-export const XP_PER_STORY_PAGE = 15;
-export const XP_PER_STORY_COMPLETE = 50;
-export const XP_PER_GAME_CORRECT = 20;
-export const XP_BONUS_PERFECT_GAME = 100;
+// Values from Constants.kt under XP policy 2. Rewards themselves are granted by the reward ledger
+// (./xp.ts); these remain for the few places that describe them.
+export const XP_PER_WORD_LEARNED = 5;
+export const XP_PER_STORY_COMPLETE = 20;
+export const XP_PER_GAME_CORRECT = 2;
+export const XP_BONUS_PERFECT_GAME = 5;
 
-export const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2200, 3000, 4000, 5000];
-
-export const LEVEL_TITLES = [
-  'Baguhan',
-  'Nag-aaral',
-  'Nagsisimula',
-  'Lumalago',
-  'Sumusulong',
-  'Mahusay',
-  'Dalubhasa',
-  'Pantas',
-  'Guro',
-  'Mæstro',
-];
+export { LEVEL_THRESHOLDS, MAX_LEVEL } from './xp';
 
 /** Must stay identical to CategoryRegistry on Android. */
 export const CATEGORIES = [
@@ -78,27 +67,25 @@ export const GAME_UNLOCK_STARS: Record<string, number> = {
 
 export const LEVELS_PER_GAME = 30;
 
-export function calculateLevel(totalXp: number): number {
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (totalXp >= LEVEL_THRESHOLDS[i]) return i + 1;
-  }
-  return 1;
-}
+export const calculateLevel = (totalXp: number) => levelFor(totalXp);
 
+/** Progress through the current level, 0 to 1; 1 at the cap, where lifetime XP keeps counting. */
 export function levelProgress(totalXp: number): number {
-  const level = calculateLevel(totalXp);
-  if (level >= LEVEL_THRESHOLDS.length) return 1;
+  const level = levelFor(totalXp);
+  if (level >= MAX_LEVEL) return 1;
   const current = LEVEL_THRESHOLDS[level - 1];
   const next = LEVEL_THRESHOLDS[level];
   return Math.min(1, Math.max(0, (totalXp - current) / (next - current)));
 }
 
+/** getLevelTitle: account levels describe participation, so the title is just the level. */
 export function levelTitle(level: number): string {
-  return LEVEL_TITLES[level - 1] ?? LEVEL_TITLES[LEVEL_TITLES.length - 1];
+  return `Level ${Math.min(MAX_LEVEL, Math.max(1, level))}`;
 }
 
+/** XP still needed for the next level, or null at level 30 (there is no next target). */
 export function xpToNextLevel(totalXp: number): number | null {
-  const level = calculateLevel(totalXp);
-  if (level >= LEVEL_THRESHOLDS.length) return null;
+  const level = levelFor(totalXp);
+  if (level >= MAX_LEVEL) return null;
   return LEVEL_THRESHOLDS[level] - totalXp;
 }

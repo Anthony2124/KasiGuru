@@ -1,12 +1,11 @@
 /**
  * The story reader (StoryReaderScreen): one page at a time, Kasiguranin first when a page has it,
- * Tagalog and English alongside. Each page turned pays 15 XP; finishing a story the first time pays
- * 50 and counts toward the story badges. Page pictures, when an admin has uploaded one, come from
+ * Tagalog and English alongside. Pages save the reading position; finishing a story the first time
+ * pays 20 XP and counts toward Story Reader. Page pictures, when an admin has uploaded one, come from
  * Firestore one page at a time.
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { doc, getDoc } from 'firebase/firestore/lite';
-import { XP_PER_STORY_COMPLETE } from '../../domain/constants';
 import { normaliseToken } from '../../domain/lesson';
 import type { StoryPage, Word } from '../../domain/types';
 import { parsePages } from '../../lib/content';
@@ -62,6 +61,7 @@ export function StoryReaderScreen({ id }: { id: number }) {
   const pages: StoryPage[] = useMemo(() => (story ? parsePages(story) : []), [story]);
   const [index, setIndex] = useState(() => (progress && !progress.isCompleted ? Math.min(progress.currentPage, Math.max(0, pages.length - 1)) : 0));
   const [finished, setFinished] = useState(false);
+  const [earned, setEarned] = useState(0);
   const [selected, setSelected] = useState<Word | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [image, setImage] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function StoryReaderScreen({ id }: { id: number }) {
       </GroundScaffold>
     );
   }
-  if (!isStoryUnlocked(story, learner.progress.totalXp)) {
+  if (!isStoryUnlocked(story, learner)) {
     return (
       <GroundScaffold title={story.title}>
         <EmptyState
@@ -108,7 +108,7 @@ export function StoryReaderScreen({ id }: { id: number }) {
             <Jepjep pose="reading" height={170} breathe />
           </div>
           <h1 class="t-display">Story complete!</h1>
-          <p class="t-body-l muted">You finished “{story.title}”{progress?.isCompleted ? '.' : ` and earned ${XP_PER_STORY_COMPLETE} XP.`}</p>
+          <p class="t-body-l muted">You finished “{story.title}”{earned > 0 ? ` and earned ${earned} XP.` : '.'}</p>
           <ClayButton label="Continue" onClick={() => back('/library?tab=stories')} />
         </div>
       </main>
@@ -124,17 +124,17 @@ export function StoryReaderScreen({ id }: { id: number }) {
 
   const next = () => {
     if (index < pages.length - 1) {
-      act((d) => d.storyPageTurned(id, index + 1));
+      act((d) => d.storyPage(id, index + 1), { celebrate: false });
       setIndex(index + 1);
       window.scrollTo(0, 0);
     } else {
-      act((d) => d.completeStory(id, pages.length));
+      setEarned(act((d) => d.completeStory(id)));
       setFinished(true);
     }
   };
   const prev = () => {
     if (index === 0) return;
-    act((d) => d.storyPageBack(id, index - 1), { celebrate: false });
+    act((d) => d.storyPage(id, index - 1), { celebrate: false });
     setIndex(index - 1);
     window.scrollTo(0, 0);
   };

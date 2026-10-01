@@ -1,19 +1,43 @@
 /**
- * Cross-device progress sync: ProgressSyncManager, for the browser.
+ * Cross-device progress sync: ProgressSyncManager (XP policy 2), for the browser.
  *
- * On every account change, pull users/{uid}/progress/{main,achievements,gameLevels,lessonProgress,
- * wordStates}, merge each with what this device holds (additively - see domain/merge.ts), keep the
- * result, and push it back. After that, every local change is uploaded five seconds after it settles.
- * An Android learner and a web learner signed into the same account therefore converge on the same
- * state, whichever device they used last.
+ * On every account change: pull users/{uid}/progress/main, then every reward receipt under
+ * users/{uid}/rewardReceipts, then the learning documents (achievements, gameLevels, lessonProgress,
+ * wordStates); merge each with this device (domain/merge.ts, domain/learner.ts) and push the result
+ * back. Receipts go first and in transactions, so a device can never overwrite stronger evidence,
+ * and main progress is only written once they are in. After that, every local change is uploaded
+ * five seconds after it settles. An Android learner and a web learner signed into the same account
+ * converge on the same state, whichever device they used last.
  */
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore/lite';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  documentId,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  startAfter,
+  Timestamp,
+  where,
+  writeBatch,
+  type QueryDocumentSnapshot,
+  type QuerySnapshot,
+} from 'firebase/firestore/lite';
+import { publicDisplayName } from '../domain/publicProfile';
 import { isoWeekId } from '../domain/dates';
-import { initialLearner, type LearnerData } from '../domain/learner';
+import { earnedBadgeIds, initialLearner, treeAccess, weeklyXp, type LearnerData } from '../domain/learner';
+import { buildTree, Mastery } from '../domain/lesson';
+import { isBadgeId, normalizeBackground } from '../domain/badges';
 import {
   fromMainDoc,
-  mergeAchievements,
   mergeGameLevels,
+  mergeLegacyAchievements,
   mergeLessonProgress,
   mergeProgress,
   mergeWordStates,
@@ -23,22 +47,35 @@ import {
   parseWordStates,
   toMainDoc,
 } from '../domain/merge';
-import { db } from './firebase';
+import { decodeReceipt, encodeReceipt, mergeRecord, receiptDocumentId, RECEIPTS_COLLECTION, XP_POLICY_VERSION, type RewardRecord } from '../domain/xp';
+import { auth, db } from './firebase';
 import { load, save } from './persist';
-import { getState, onLearnerChanged, persistLearnerNow, replaceLearner, setState } from './store';
+import { act, getCorpus, getState, onLearnerChanged, persistLearnerNow, replaceLearner, setState } from './store';
 
 export const PROGRESS_DOCS = ['main', 'achievements', 'gameLevels', 'lessonProgress', 'wordStates'] as const;
 type LearningDoc = Exclude<(typeof PROGRESS_DOCS)[number], 'main'>;
 
 const DEBOUNCE_MS = 5_000;
+const PAGE = 400;
 
 let activeUid: string | null = null;
 let session = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 /** Last payload uploaded per `${uid}/${doc}`, so an unchanged document is never rewritten. */
 const lastUploaded = new Map<string, string>();
+/** Main progress is written only after a full pull: before that it could carry another device's past. */
+let readyForUpload = false;
+/** Receipts already in the cloud as they are now, by `${uid}/${id}`. */
+const uploadedRewards = new Map<string, string>();
+/** Newest server `updatedAt` seen; the next pull asks only for receipts at or after it. */
+let rewardCursor: Timestamp | null = null;
+let rewardLock: Promise<unknown> = Promise.resolve();
 
 const progressRef = (uid: string, name: string) => doc(db, 'users', uid, 'progress', name);
+const rewardCollection = (uid: string) => collection(db, 'users', uid, RECEIPTS_COLLECTION);
+
+/** True while `uid` is still the account this device is syncing. */
+const stillActive = (uid: string, mine: number) => mine === session && activeUid === uid && auth.currentUser?.uid === uid;
 
 /** Called by the auth layer whenever the signed-in uid changes (including to a new guest). */
 export async function startSession(uid: string) {
@@ -46,13 +83,14 @@ export async function startSession(uid: string) {
   clearTimeout(timer);
   activeUid = uid;
   lastUploaded.clear();
+  uploadedRewards.clear();
+  rewardCursor = null;
+  readyForUpload = false;
   const mine = ++session;
   setState({ syncStatus: 'syncing' });
   try {
-    await pullAndMerge(uid, mine);
-    if (mine !== session) return;
-    await uploadAll(uid, mine);
-    setState({ syncStatus: 'synced', lastSyncedAt: Date.now() });
+    await syncNow(uid, mine);
+    if (mine === session) setState({ syncStatus: 'synced', lastSyncedAt: Date.now() });
   } catch (e) {
     console.warn('progress sync failed', e);
     if (mine === session) setState({ syncStatus: navigator.onLine ? 'error' : 'offline' });
@@ -64,34 +102,107 @@ export function endSession() {
   activeUid = null;
   session++;
   lastUploaded.clear();
+  uploadedRewards.clear();
+  rewardCursor = null;
+  readyForUpload = false;
 }
 
-async function readEntries(uid: string, name: string): Promise<Record<string, Record<string, unknown>> | null> {
+/** Pull everything, then push. Throws if any read failed, so nothing is uploaded half-merged. */
+async function syncNow(uid: string, mine: number) {
+  const legacyCloud = await pullMain(uid, mine);
+  if (!stillActive(uid, mine)) return;
+  await pullRewards(uid, mine);
+  if (!stillActive(uid, mine)) return;
+  await pullLearning(uid, mine);
+  if (!stillActive(uid, mine)) return;
+  if (legacyCloud) act((d) => d.importLegacyLearningState(), { celebrate: false });
+  readyForUpload = true;
+  await uploadAll(uid, mine);
+}
+
+/** Merges main progress. Returns whether the cloud copy predates XP policy 2. */
+async function pullMain(uid: string, mine: number): Promise<boolean> {
+  const snap = await getDoc(progressRef(uid, 'main'));
+  if (!stillActive(uid, mine) || !snap.exists()) return false;
+  const remote = fromMainDoc(snap.data());
+  act(
+    (d) => {
+      d.ensureNormalized();
+      d.d.progress = mergeProgress(d.d.progress, remote);
+      withAccountIdentity(d.d);
+      if (remote.xpPolicyVersion < XP_POLICY_VERSION) d.archiveLegacy(remote);
+    },
+    { celebrate: false }
+  );
+  return remote.xpPolicyVersion < XP_POLICY_VERSION;
+}
+
+/**
+ * Reads receipts: the first scan in document-id order, later ones by server `updatedAt` from the
+ * cursor (inclusive). A receipt whose document id is not the hash of its own id is ignored.
+ */
+async function pullRewards(uid: string, mine: number) {
+  const cursor = rewardCursor;
+  let newest = cursor;
+  let last: QueryDocumentSnapshot | null = null;
+  for (;;) {
+    const base = cursor
+      ? query(rewardCollection(uid), where('updatedAt', '>=', cursor), orderBy('updatedAt'), orderBy(documentId()), limit(PAGE))
+      : query(rewardCollection(uid), orderBy(documentId()), limit(PAGE));
+    const page: QuerySnapshot = await getDocs(last ? query(base, startAfter(last)) : base);
+    if (!stillActive(uid, mine)) return;
+    const rows: RewardRecord[] = [];
+    for (const snap of page.docs) {
+      const row = decodeReceipt(snap.data());
+      if (row && (await receiptDocumentId(row.id)) === snap.id) rows.push(row);
+      const at = snap.get('updatedAt');
+      if (at instanceof Timestamp && (!newest || at.toMillis() > newest.toMillis())) newest = at;
+    }
+    // The cursor is inclusive, so the newest receipts come back every time. Only evidence that
+    // changes something is applied; anything else would schedule another sync, forever.
+    const local = getState().learner.receipts;
+    const fresh = rows.filter((r) => {
+      const mine = local[r.id];
+      return !mine || JSON.stringify(mergeRecord(mine, r)) !== JSON.stringify(mine);
+    });
+    if (fresh.length) act((d) => d.mergeRewards(fresh), { celebrate: false });
+    for (const row of rows) uploadedRewards.set(`${uid}/${row.id}`, JSON.stringify(row));
+    last = page.docs[page.docs.length - 1] ?? null;
+    if (page.size < PAGE) break;
+  }
+  // A first scan is ordered by document id, so an insert landing behind it could be missed; the
+  // next scan starts from the epoch by timestamp to catch it.
+  rewardCursor = cursor ? newest : new Timestamp(0, 0);
+}
+
+async function readEntries(uid: string, name: string): Promise<Record<string, Record<string, unknown>>> {
   const snap = await getDoc(progressRef(uid, name));
   if (!snap.exists()) return {};
   const entries = snap.data().entries;
   return entries && typeof entries === 'object' ? (entries as Record<string, Record<string, unknown>>) : {};
 }
 
-async function pullAndMerge(uid: string, mine: number) {
-  const [mainSnap, ach, levels, lessons, words] = await Promise.all([
-    getDoc(progressRef(uid, 'main')),
+async function pullLearning(uid: string, mine: number) {
+  const [ach, levels, lessons, words] = await Promise.all([
     readEntries(uid, 'achievements'),
     readEntries(uid, 'gameLevels'),
     readEntries(uid, 'lessonProgress'),
     readEntries(uid, 'wordStates'),
   ]);
-  if (mine !== session) return;
-
-  const local = getState().learner;
-  const merged: LearnerData = { ...local };
-  if (mainSnap.exists()) merged.progress = mergeProgress(local.progress, fromMainDoc(mainSnap.data()));
-  if (ach) merged.achievements = mergeAchievements(local.achievements, parseAchievements(ach));
-  if (levels) merged.gameLevels = mergeGameLevels(local.gameLevels, parseGameLevels(levels));
-  if (lessons) merged.lessons = mergeLessonProgress(local.lessons, parseLessons(lessons));
-  if (words) merged.wordStates = mergeWordStates(local.wordStates, parseWordStates(words));
-  withAccountIdentity(merged);
-  replaceLearner(merged);
+  if (!stillActive(uid, mine)) return;
+  act(
+    (d) => {
+      const local = d.d;
+      const tiers = Object.fromEntries(Object.entries(local.achievements).filter(([id]) => isBadgeId(id)));
+      local.achievements = { ...tiers, ...mergeLegacyAchievements(local.achievements, parseAchievements(ach)) };
+      local.gameLevels = mergeGameLevels(local.gameLevels, parseGameLevels(levels));
+      local.lessons = mergeLessonProgress(local.lessons, parseLessons(lessons));
+      local.wordStates = mergeWordStates(local.wordStates, parseWordStates(words));
+      // Restored lessons and levels can complete badge criteria; project them without celebrating.
+      d.mergeRewards([]);
+    },
+    { celebrate: false }
+  );
 }
 
 /** Fills a blank email or name from the signed-in account. Never overwrites what is there. */
@@ -99,6 +210,52 @@ function withAccountIdentity(d: LearnerData) {
   const { account } = getState();
   if (!d.progress.email && account.email) d.progress.email = account.email;
   if (!d.progress.fullName && account.displayName) d.progress.fullName = account.displayName;
+}
+
+/** Serialises reward uploads: two overlapping ones would each read the other's stale state. */
+function withRewardLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = rewardLock.then(fn, fn);
+  rewardLock = run.catch(() => undefined);
+  return run;
+}
+
+/**
+ * Writes every changed receipt in transactions that read the cloud copy first and keep the stronger
+ * evidence, so concurrent devices cannot erase each other's. Returns false if anything failed.
+ */
+function uploadRewards(uid: string, mine: number): Promise<boolean> {
+  return withRewardLock(async () => {
+    if (!readyForUpload || !stillActive(uid, mine)) return false;
+    try {
+      await pullRewards(uid, mine);
+      if (!stillActive(uid, mine)) return false;
+      const changed = Object.values(getState().learner.receipts).filter(
+        (r) => uploadedRewards.get(`${uid}/${r.id}`) !== JSON.stringify(r)
+      );
+      for (let i = 0; i < changed.length; i += 200) {
+        const chunk = await Promise.all(
+          changed.slice(i, i + 200).map(async (row) => ({ row, ref: doc(rewardCollection(uid), await receiptDocumentId(row.id)) }))
+        );
+        const merged = await runTransaction(db, async (tx) => {
+          const results: { ref: (typeof chunk)[number]['ref']; row: RewardRecord }[] = [];
+          for (const { row, ref } of chunk) {
+            const snap = await tx.get(ref);
+            const old = snap.exists() ? decodeReceipt(snap.data()) : null;
+            results.push({ ref, row: old && old.id === row.id && old.kind === row.kind && old.source === row.source ? mergeRecord(row, old) : row });
+          }
+          for (const { ref, row } of results) tx.set(ref, { ...encodeReceipt(row), updatedAt: serverTimestamp() });
+          return results.map((r) => r.row);
+        });
+        if (!stillActive(uid, mine)) return false;
+        act((d) => d.mergeRewards(merged), { celebrate: false });
+        for (const row of merged) uploadedRewards.set(`${uid}/${row.id}`, JSON.stringify(row));
+      }
+      return true;
+    } catch (e) {
+      console.warn('reward upload failed', e);
+      return false;
+    }
+  });
 }
 
 async function uploadIfChanged(uid: string, name: string, payload: Record<string, unknown>, fingerprint: string) {
@@ -131,17 +288,26 @@ function learningPayload(d: LearnerData, name: LearningDoc): Record<string, unkn
 }
 
 async function uploadAll(uid: string, mine: number) {
-  const d = getState().learner;
+  if (!readyForUpload) return;
   let failure: unknown = null;
-  const fingerprint = JSON.stringify({ ...d.progress, updatedAt: 0 });
-  const mainChanged = await uploadIfChanged(uid, 'main', toMainDoc(d.progress, Date.now()), fingerprint).catch((e) => {
-    // A rejected write here means firestore.rules refused the document - most often the per-write
-    // XP cap. Nothing retries it into existence, so say so rather than failing silently.
-    console.warn('main progress upload rejected', e);
-    failure = e;
-    return false;
-  });
-  if (mine !== session) return;
+  // Receipts first: main progress is a projection of them, and the rules expect them to exist.
+  const rewardsSaved = await uploadRewards(uid, mine);
+  if (!stillActive(uid, mine)) return;
+  const d = getState().learner;
+  let mainChanged = false;
+  if (rewardsSaved) {
+    const fingerprint = JSON.stringify({ ...d.progress, updatedAt: 0 });
+    mainChanged = await uploadIfChanged(uid, 'main', toMainDoc(d.progress, Date.now()), fingerprint).catch((e) => {
+      // A rejected write means firestore.rules refused the document. Nothing retries it into
+      // existence, so say so rather than failing silently.
+      console.warn('main progress upload rejected', e);
+      failure = e;
+      return false;
+    });
+  } else {
+    failure = new Error('Your rewards could not be saved.');
+  }
+  if (!stillActive(uid, mine)) return;
   // The learning documents are independent of main; one being refused must not strand the others.
   for (const name of ['achievements', 'gameLevels', 'lessonProgress', 'wordStates'] as LearningDoc[]) {
     const payload = learningPayload(d, name);
@@ -151,13 +317,13 @@ async function uploadAll(uid: string, mine: number) {
       console.warn(`${name} upload failed`, e);
       failure = e;
     });
-    if (mine !== session) return;
+    if (!stillActive(uid, mine)) return;
   }
-  if (mainChanged) await publishLeaderboard(uid, d);
+  if (mainChanged) await publishPublicRows(uid, d);
   if (failure) throw failure;
 }
 
-// ── Leaderboard row ───────────────────────────────────────────────────────────
+// ── Leaderboard row and public profile ───────────────────────────────────────
 
 interface WeekBaseline {
   uid: string;
@@ -166,16 +332,14 @@ interface WeekBaseline {
 }
 
 /**
- * Publishes leaderboard_public/{uid}. Guests are not ranked (the rules refuse them), and a guest's
- * leftover row is withdrawn. The weekly baseline is read once a week and then remembered, rather
- * than read on every publish.
+ * Publishes leaderboard_public/{uid} and public_profiles/{uid}: allowlisted projections, never the
+ * private progress document. Guests are not ranked and have no public profile (the rules refuse
+ * both). Weekly XP is this week's dated activity receipts; badge bonuses never count.
  */
-async function publishLeaderboard(uid: string, d: LearnerData) {
+async function publishPublicRows(uid: string, d: LearnerData) {
   const { account } = getState();
+  if (account.isAnonymous || auth.currentUser?.uid !== uid || auth.currentUser.isAnonymous) return;
   const ref = doc(db, 'leaderboard_public', uid);
-  if (account.isAnonymous) {
-    return;
-  }
   const week = isoWeekId();
   let baseline = await load<WeekBaseline>('leaderboard-week');
   if (!baseline || baseline.uid !== uid || baseline.weekStartDate !== week) {
@@ -189,11 +353,11 @@ async function publishLeaderboard(uid: string, d: LearnerData) {
   }
   const p = d.progress;
   const created = account.creationTime ?? Date.now();
-  // No email, and never an email as the name: the row is public. Same rule as Android's
-  // PublicProfileDto.displayName, and firestore.rules refuses an `email` key.
-  const name = p.userName.trim().slice(0, 40);
+  const displayName = publicDisplayName(p.userName);
+  // The rules require weeklyXp <= activityXp under policy 2.
+  const thisWeek = Math.min(weeklyXp(d), p.activityXp);
   await setDoc(ref, {
-    displayName: name && !name.includes('@') ? name : 'Learner',
+    displayName,
     isAnonymous: false,
     createdAt: created,
     registeredAt: created,
@@ -202,11 +366,47 @@ async function publishLeaderboard(uid: string, d: LearnerData) {
     currentStreak: p.currentStreak,
     profileIconId: p.profileIconId,
     titleBadge: p.titleBadge,
-    weeklyXp: Math.max(0, p.totalXp - baseline.weekStartXp),
+    weeklyXp: thisWeek,
     weekStartXp: baseline.weekStartXp,
     weekStartDate: baseline.weekStartDate,
+    xpPolicyVersion: p.xpPolicyVersion,
+    activityXp: p.activityXp,
     updatedAt: Date.now(),
   }).catch((e) => console.warn('leaderboard publish failed', e));
+
+  try {
+    const tree = buildTree(getCorpus(), d.lessons, treeAccess(d));
+    const sections: Record<string, number> = {};
+    const sectionTotals: Record<string, number> = {};
+    for (const s of tree) {
+      const core = s.nodes.filter((n) => n.node.kind === 'lesson' && !n.isDeepDive);
+      sections[s.definition.id] = core.filter((n) => n.mastery >= Mastery.FAMILIAR).length;
+      sectionTotals[s.definition.id] = core.length;
+    }
+    await setDoc(doc(db, 'public_profiles', uid), {
+      displayName,
+      profileIconId: Math.min(1000, Math.max(0, p.profileIconId)),
+      profileBackgroundId: normalizeBackground(p.profileBackgroundId),
+      level: Math.min(30, Math.max(1, p.level)),
+      totalXp: p.totalXp,
+      currentStreak: p.currentStreak,
+      wordsLearned: Object.values(d.wordStates).filter((w) => w.isLearned).length,
+      lessonsCompleted: Object.entries(d.lessons).filter(([k, s]) => s.isComplete && !k.startsWith('mastery:')).length,
+      weeklyXp: thisWeek,
+      weekId: week,
+      createdAt: created,
+      updatedAt: Date.now(),
+      badgeIds: earnedBadgeIds(d),
+      sections,
+      sectionTotals,
+      masteredSections: tree
+        .filter((s) => s.nodes.some((n) => n.node.kind === 'mastery' && n.mastery >= Mastery.FAMILIAR))
+        .map((s) => s.definition.id),
+      unlockedSections: tree.filter((s) => s.isUnlocked).map((s) => s.definition.id),
+    });
+  } catch (e) {
+    console.warn('public profile publish failed', e);
+  }
 }
 
 // ── Scheduling ────────────────────────────────────────────────────────────────
@@ -219,18 +419,21 @@ function schedule() {
   }, DEBOUNCE_MS);
 }
 
-/** Uploads now. Used before sign-out and when the page is being hidden. */
-export async function flush() {
+/** Uploads now (after completing the first pull if it never finished). Used before sign-out too. */
+export async function flush(): Promise<boolean> {
   clearTimeout(timer);
   const uid = activeUid;
-  if (!uid || !navigator.onLine) return;
+  if (!uid || !navigator.onLine) return false;
   const mine = session;
   try {
     setState({ syncStatus: 'syncing' });
-    await uploadAll(uid, mine);
+    if (!readyForUpload) await syncNow(uid, mine);
+    else await uploadAll(uid, mine);
     if (mine === session) setState({ syncStatus: 'synced', lastSyncedAt: Date.now() });
+    return mine === session;
   } catch {
     if (mine === session) setState({ syncStatus: 'error' });
+    return false;
   }
 }
 
@@ -243,9 +446,15 @@ export async function onAccountLinked() {
   await flush();
 }
 
-/** Signing out keeps nothing on the device: push first, then reset to a clean guest. */
-export async function wipeLocal(uploadFirst: boolean) {
-  if (uploadFirst) await flush();
+/**
+ * Signing out keeps nothing on the device, so rewards must reach the cloud first. With
+ * [requireSaved], an upload that fails stops the sign-out instead of losing them.
+ */
+export async function wipeLocal(uploadFirst: boolean, requireSaved = false) {
+  if (uploadFirst) {
+    const saved = await flush();
+    if (requireSaved && !saved) throw new Error('Connect to the internet before signing out so your progress can be saved.');
+  }
   endSession();
   replaceLearner(initialLearner());
   await persistLearnerNow();
@@ -254,6 +463,15 @@ export async function wipeLocal(uploadFirst: boolean) {
 
 export async function deleteCloudData(uid: string) {
   for (const name of PROGRESS_DOCS) await deleteDoc(progressRef(uid, name));
+  // Receipts in bounded batches, as AuthRepository.deleteAccount.
+  for (;;) {
+    const page = await getDocs(query(rewardCollection(uid), limit(PAGE)));
+    if (page.empty) break;
+    const batch = writeBatch(db);
+    page.docs.forEach((s) => batch.delete(s.ref));
+    await batch.commit();
+  }
+  await deleteDoc(doc(db, 'public_profiles', uid));
   await deleteDoc(doc(db, 'leaderboard_public', uid));
   await deleteDoc(doc(db, 'device_tokens', uid)).catch(() => undefined);
 }

@@ -4,7 +4,7 @@
  */
 import type { Corpus } from '../domain/corpus';
 import { daysBetween, epochDay, isoDate, now, today as todayIso } from '../domain/dates';
-import { dailyXpEarned } from '../domain/learner';
+import { dailyXpEarned, storyUnlocked } from '../domain/learner';
 import { nextLesson, sectionForUnit, wordsFor, type LessonRef } from '../domain/lesson';
 import { meaningFor } from '../domain/recall';
 import type { LearnerData } from '../domain/learner';
@@ -12,6 +12,13 @@ import type { Story, UserProgress } from '../domain/types';
 import type { Pose } from './kit';
 
 export const wordsToReview = (n: number) => (n === 1 ? '1 word' : `${n} words`);
+
+/** Word of the day: seeded by the day, so it is the same for everyone and rotates tomorrow. */
+export function wordOfTheDay(corpus: Corpus) {
+  const eligible = corpus.all.filter((w) => w.kasiguranin && w.tagalog).sort((a, b) => (a.id < b.id ? -1 : 1));
+  if (!eligible.length) return null;
+  return eligible[(epochDay(todayIso()) ?? 0) % eligible.length];
+}
 
 export interface ContinueCardData {
   heroWord: string;
@@ -72,7 +79,7 @@ export function activities(corpus: Corpus, learner: LearnerData, stories: Story[
   if (due === 0) out.push(review);
   else out.unshift(review);
   out.push({ kind: 'game', title: 'Practice game', subtitle: 'Earn stars and XP', isDone: false });
-  const unlocked = stories.filter((s) => s.requiredXp <= learner.progress.totalXp);
+  const unlocked = stories.filter((s) => storyUnlocked(learner, s));
   if (unlocked.length) {
     const unread = unlocked.find((s) => !learner.stories[String(s.id)]?.isCompleted);
     out.push({ kind: 'story', title: unread?.title ?? 'Folk tales', subtitle: unread ? 'Read and listen' : 'All stories read', isDone: !unread });
@@ -111,8 +118,9 @@ export interface DayGoal {
   wordsDue: number;
 }
 
-export function dayGoal(p: UserProgress, wordsDue: number): DayGoal {
-  const earned = dailyXpEarned(p);
+export function dayGoal(learner: LearnerData, wordsDue: number): DayGoal {
+  const p = learner.progress;
+  const earned = dailyXpEarned(learner);
   const goal = p.dailyGoalXp;
   const met = earned >= goal && wordsDue === 0;
   let remainder: string;
@@ -132,4 +140,5 @@ export function jepjepLine(p: UserProgress, wordsDue: number, goalMet: boolean):
   return { pose: 'waving', text: "Ready for today's lesson?" };
 }
 
-export const isStoryUnlocked = (s: Story, totalXp: number) => s.requiredXp <= totalXp;
+/** Open once its XP is reached, or for good once an access receipt says it was (XP policy 2). */
+export const isStoryUnlocked = (s: Story, learner: LearnerData) => storyUnlocked(learner, s);

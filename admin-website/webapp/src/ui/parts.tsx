@@ -1,12 +1,13 @@
 /**
- * App-specific composites shared by more than one screen: the story cover, the streak dialog, the
- * audio button, a word row.
+ * App-specific composites shared by more than one screen: the story cover, the streak quota and
+ * week strip, the audio button, a word row.
  */
 import { useState } from 'preact/hooks';
 import type { Word } from '../domain/types';
 import { hasAudio, playWord } from '../lib/audio';
 import { navigate } from '../lib/router';
-import { ClayButton, Dialog, Icon, sceneForIndex, sceneUrl } from './kit';
+import type { DayMark } from './derive';
+import { Icon, sceneForIndex, sceneUrl } from './kit';
 
 export function StoryCover({
   id, title, titleKasiguranin, totalPages, unlocked, completed, requiredXp, width, onClick,
@@ -47,52 +48,60 @@ export function StoryCover({
   );
 }
 
-export function StreakDialog({ current, longest, quota, onClose }: { current: number; longest: number; quota: { reviewCompleted: boolean; gamesPlayed: number; requiredGames: number; isMet: boolean }; onClose: () => void }) {
+export interface Quota {
+  reviewCompleted: boolean;
+  gamesPlayed: number;
+  requiredGames: number;
+  isMet: boolean;
+}
+
+/** The day's streak quota: the review deck plus three mini-game levels. */
+export function QuotaList({ quota }: { quota: Quota }) {
   const games = Math.min(quota.gamesPlayed, quota.requiredGames);
   return (
-    <Dialog label="Your streak" onClose={onClose} glow>
-      <div class="stack">
-        <div class="row">
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--coral)', display: 'grid', placeItems: 'center', flex: 'none' }}>
-            <Icon name="flash" size={36} color="var(--reward-ink)" />
-          </div>
-          <div class="grow">
-            <h2 class="t-headline">{current} day streak</h2>
-            <p class="t-body muted">Longest streak: {longest} {longest === 1 ? 'day' : 'days'}</p>
-          </div>
+    <div class="list">
+      <div class="list-row">
+        <span class="ico">
+          <Icon name={quota.reviewCompleted ? 'tickCircle' : 'repeat'} size={20} color={quota.reviewCompleted ? 'var(--lime)' : 'var(--info)'} />
+        </span>
+        <div class="grow">
+          <p class="t-title-s">Complete review words</p>
+          <p class="t-body-s muted">{quota.reviewCompleted ? 'Daily review completed' : 'Finish the review deck'}</p>
         </div>
-        <p class="t-body-l">
-          {quota.isMet ? 'Your streak is active for today! Keep up the momentum!' : "Complete your daily goals below to activate today's streak!"}
-        </p>
-        <div class="list">
-          <div class="list-row">
-            <span class="ico">
-              <Icon name={quota.reviewCompleted ? 'tickCircle' : 'repeat'} size={20} color={quota.reviewCompleted ? 'var(--lime)' : 'var(--info)'} />
-            </span>
-            <div class="grow">
-              <p class="t-title-s">Complete review words</p>
-              <p class="t-body-s muted">{quota.reviewCompleted ? 'Daily review completed' : 'Finish the review deck'}</p>
-            </div>
-            <span class="tag" style={quota.reviewCompleted ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
-              {quota.reviewCompleted ? 'Done' : 'Pending'}
-            </span>
-          </div>
-          <div class="list-row">
-            <span class="ico">
-              <Icon name={games >= quota.requiredGames ? 'tickCircle' : 'game'} size={20} color={games >= quota.requiredGames ? 'var(--lime)' : 'var(--gold)'} />
-            </span>
-            <div class="grow">
-              <p class="t-title-s">Play 3 mini-game levels</p>
-              <p class="t-body-s muted">{games >= quota.requiredGames ? '3 of 3 levels played' : `${games} of ${quota.requiredGames} played today`}</p>
-            </div>
-            <span class="tag" style={games >= quota.requiredGames ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
-              {games}/{quota.requiredGames}
-            </span>
-          </div>
-        </div>
-        <ClayButton label="Keep it up!" onClick={onClose} />
+        <span class="tag" style={quota.reviewCompleted ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
+          {quota.reviewCompleted ? 'Done' : 'Pending'}
+        </span>
       </div>
-    </Dialog>
+      <div class="list-row">
+        <span class="ico">
+          <Icon name={games >= quota.requiredGames ? 'tickCircle' : 'game'} size={20} color={games >= quota.requiredGames ? 'var(--lime)' : 'var(--gold)'} />
+        </span>
+        <div class="grow">
+          <p class="t-title-s">Play 3 mini-game levels</p>
+          <p class="t-body-s muted">{games >= quota.requiredGames ? '3 of 3 levels played' : `${games} of ${quota.requiredGames} played today`}</p>
+        </div>
+        <span class="tag" style={games >= quota.requiredGames ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
+          {games}/{quota.requiredGames}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Seven days, today last: a flame on each practised day. */
+export function WeekStrip({ week }: { week: DayMark[] }) {
+  return (
+    <div class="week" role="list">
+      {week.map((d, i) => {
+        const state = d.isToday ? (d.practised ? 'today-done' : 'today') : d.practised ? 'done' : 'missed';
+        return (
+          <div key={i} class={`day ${state}`} role="listitem" aria-label={`${d.dayOfMonth}${d.practised ? ', practised' : d.isToday ? ', today, not yet practised' : ', missed'}`}>
+            <span class="t-label-s muted">{d.label}</span>
+            <span class="dot">{d.practised ? <Icon name="flash" size={16} /> : d.dayOfMonth}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

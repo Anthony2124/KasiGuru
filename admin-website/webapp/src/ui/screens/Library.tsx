@@ -3,12 +3,11 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CATEGORIES } from '../../domain/constants';
-import { epochDay, today } from '../../domain/dates';
 import { navigate } from '../../lib/router';
 import { useApp, useCorpus, useLearner } from '../../lib/store';
 import { EmptyState, GroundScaffold, Icon, Scene, SectionHeading, sceneForCategory } from '../kit';
 import { AudioButton, StoryCover, WordRow } from '../parts';
-import { isStoryUnlocked } from '../derive';
+import { isStoryUnlocked, wordOfTheDay } from '../derive';
 
 const CATEGORY_BLURB: Record<string, string> = {
   'Greetings & Essentials': 'Hellos, politeness, questions & basic phrases',
@@ -36,12 +35,7 @@ function WordsTab() {
   }, [query]);
   const results = useMemo(() => (settled ? corpus.search(settled) : []), [settled, corpus]);
   const catMatches = settled ? CATEGORIES.filter((c) => c.toLowerCase().includes(settled.toLowerCase())) : [];
-  // Word of the day: seeded by the day, so it is the same for everyone and rotates tomorrow.
-  const featured = useMemo(() => {
-    const eligible = corpus.all.filter((w) => w.kasiguranin && w.tagalog).sort((a, b) => (a.id < b.id ? -1 : 1));
-    if (!eligible.length) return null;
-    return eligible[(epochDay(today()) ?? 0) % eligible.length];
-  }, [corpus]);
+  const featured = useMemo(() => wordOfTheDay(corpus), [corpus]);
   const known = new Set(CATEGORIES);
   const extra = corpus.categories().filter((c) => !known.has(c));
 
@@ -139,10 +133,9 @@ function WordsTab() {
 export function StoriesList() {
   const stories = useApp((s) => s.stories);
   const learner = useLearner();
-  const xp = learner.progress.totalXp;
   const inProgress = stories.filter((s) => {
     const p = learner.stories[String(s.id)];
-    return p && !p.isCompleted && p.currentPage > 0 && isStoryUnlocked(s, xp);
+    return p && !p.isCompleted && p.currentPage > 0 && isStoryUnlocked(s, learner);
   });
   if (!stories.length) {
     return <EmptyState pose="reading" title="No stories yet" message="The folk tales arrive with the next sync. Know one? You can share it." actionLabel="Share a story or poem" onAction={() => navigate('/submit-literature')} />;
@@ -176,7 +169,7 @@ export function StoriesList() {
               title={s.title}
               titleKasiguranin={s.titleKasiguranin}
               totalPages={s.totalPages}
-              unlocked={isStoryUnlocked(s, xp)}
+              unlocked={isStoryUnlocked(s, learner)}
               completed={!!learner.stories[String(s.id)]?.isCompleted}
               requiredXp={s.requiredXp}
               onClick={() => navigate(`/story/${s.id}`)}

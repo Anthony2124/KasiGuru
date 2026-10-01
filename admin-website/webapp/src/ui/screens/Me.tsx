@@ -1,28 +1,17 @@
 /**
- * Me (ui/screens/profile/ProfileScreen): who you are, how far you have come, your badges, and the
- * way into settings and your account.
+ * Me (ui/screens/profile/ProfileScreen): your scenery and avatar, level, streak and weekly rank,
+ * your badges with the pinned ones first, and the way into settings and your account.
  */
-import { ACHIEVEMENTS, METRIC, RANKS, rankFor } from '../../domain/gamification';
+import { useEffect, useState } from 'preact/hooks';
+import { BADGE_ROWS, familyFor, tierFor } from '../../domain/badges';
+import { levelProgress, levelTitle, xpToNextLevel } from '../../domain/constants';
+import { pinnedFamilies } from '../../domain/learner';
+import { weeklyRank } from '../../lib/remote';
 import { navigate } from '../../lib/router';
-import { useApp, useCorpus, useLearner } from '../../lib/store';
-import { Avatar, ClayButton, GroundScaffold, Icon, ProgressBar, SectionHeading } from '../kit';
+import { act, useApp, useCorpus, useLearner } from '../../lib/store';
+import { BackgroundPicker, BadgeMedal } from '../badges';
+import { Avatar, GroundScaffold, Icon, ProgressBar, SectionHeading, sceneUrl, toast, type SceneId } from '../kit';
 import type { IconName } from '../icons.generated';
-import type { LearnerData } from '../../domain/learner';
-
-/** A badge's live progress: the stored value, or the counter it measures if that is higher. */
-export function badgeValue(metric: string, stored: number, d: LearnerData): number {
-  const p = d.progress;
-  const live: Record<string, number> = {
-    [METRIC.WORDS_LEARNED]: p.wordsLearned,
-    [METRIC.STORIES_COMPLETED]: p.storiesCompleted,
-    [METRIC.GAMES_PLAYED]: p.gamesPlayed,
-    [METRIC.STREAK]: p.currentStreak,
-    [METRIC.LEVEL]: p.level,
-    [METRIC.SUBMISSIONS_MADE]: p.submissionsMade,
-    [METRIC.GAME_MODES_PLAYED]: new Set(d.gameScores.map((s) => s.gameType)).size,
-  };
-  return Math.max(stored, live[metric] ?? 0);
-}
 
 function LinkRow({ icon, tint, title, subtitle, onClick }: { icon: IconName; tint: string; title: string; subtitle: string; onClick: () => void }) {
   return (
@@ -53,22 +42,49 @@ export function MeScreen() {
   const learner = useLearner();
   const corpus = useCorpus();
   const account = useApp((s) => s.account);
+  const [picking, setPicking] = useState(false);
+  const [overview, setOverview] = useState(false);
+  const [rank, setRank] = useState<number | null>(null);
   const p = learner.progress;
   const displayName = p.fullName || p.userName;
-  const rank = rankFor(p.totalXp);
-  const next = RANKS.find((r) => r.level > rank.level);
+  const toNext = xpToNextLevel(p.totalXp);
   const mastered = corpus.learnedCount();
   const practised = Object.values(learner.wordStates).filter((s) => s.timesReviewed > 0).length;
   const lessons = Object.entries(learner.lessons).filter(([k, s]) => s.isComplete && !k.startsWith('mastery:')).length;
-  const unlocked = ACHIEVEMENTS.filter((a) => learner.achievements[a.id]?.isUnlocked);
-  const recent = unlocked
-    .slice()
-    .sort((a, b) => (learner.achievements[b.id]?.unlockedDate ?? '').localeCompare(learner.achievements[a.id]?.unlockedDate ?? ''))
-    .slice(0, 4);
-  const closest = ACHIEVEMENTS.filter((a) => !learner.achievements[a.id]?.isUnlocked && a.metricType in { wordsLearned: 1, storiesCompleted: 1, gamesPlayed: 1, streak: 1, level: 1, submissionsMade: 1 })
-    .map((a) => ({ a, v: badgeValue(a.metricType, learner.achievements[a.id]?.currentValue ?? 0, learner) }))
-    .sort((x, y) => y.v / y.a.requiredValue - x.v / x.a.requiredValue)[0];
   const isGuest = account.isAnonymous;
+
+  // ProfileViewModel.recentBadges: the highest earned tier of each family, pinned ones first.
+  const pins = pinnedFamilies(p);
+  const earned = BADGE_ROWS.filter((r) => learner.achievements[r.id]?.isUnlocked);
+  const best = new Map<string, (typeof earned)[number]>();
+  for (const r of earned) {
+    const cur = best.get(r.family.id);
+    if (!cur || r.tier.index > cur.tier.index) best.set(r.family.id, r);
+  }
+  const shown = [...best.values()]
+    .sort((a, b) => {
+      const ia = pins.indexOf(a.family.id);
+      const ib = pins.indexOf(b.family.id);
+      if ((ia < 0 ? Infinity : ia) !== (ib < 0 ? Infinity : ib)) return (ia < 0 ? Infinity : ia) - (ib < 0 ? Infinity : ib);
+      return (learner.achievements[b.id]?.unlockedDate ?? '').localeCompare(learner.achievements[a.id]?.unlockedDate ?? '');
+    })
+    .slice(0, 6);
+
+  useEffect(() => {
+    if (!account.uid || isGuest) return;
+    weeklyRank(account.uid)
+      .then(setRank)
+      .catch(() => setRank(null));
+  }, [account.uid, isGuest]);
+
+  const selectBackground = (id: string) => {
+    try {
+      act((d) => d.selectBackground(id), { celebrate: false });
+      setPicking(false);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Couldn't change your background.");
+    }
+  };
 
   return (
     <GroundScaffold
@@ -86,32 +102,48 @@ export function MeScreen() {
         </>
       }
     >
+      {picking && <BackgroundPicker progress={p} onSelect={selectBackground} onClose={() => setPicking(false)} />}
       <div class="stack-lg">
-        <section class="card panel glow center stack-sm" style={{ '--gx': '50%', '--gy': '25%', padding: 'var(--s-lg)' } as never}>
-          <div style={{ display: 'grid', placeItems: 'center' }}>
-            <Avatar id={p.profileIconId} size={104} level={p.level} onClick={() => navigate('/edit-profile')} label="Your avatar. Edit profile" />
+        <section class="card panel center" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 176 }}>
+            <img src={sceneUrl((p.profileBackgroundId || 'forest') as SceneId)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.25)' }} />
+            <button class="text-btn" style={{ position: 'absolute', top: 8, right: 8, color: '#fff' }} onClick={() => setPicking(true)}>
+              Change background
+            </button>
           </div>
-          <h1 class="t-headline">{displayName}</h1>
-          <p class="t-title muted">{rank.title}</p>
-          <div style={{ display: 'grid', placeItems: 'center' }}>
-            <span class="tag">{p.titleBadge}</span>
-          </div>
-          <div class="readable" style={{ maxWidth: 320 }}>
-            <ProgressBar value={next ? (p.totalXp - rank.minXp) / (next.minXp - rank.minXp) : 1} label="Progress to the next rank" />
-          </div>
-          <p class="t-body-s faint">{next ? `${Math.max(0, next.minXp - p.totalXp)} XP to ${next.title}` : 'Highest rank reached'}</p>
-          <div class="stats3" style={{ marginTop: 'var(--s-sm)' }}>
-            <div><p class="t-headline-s">{p.currentStreak}</p><p class="t-label-s muted">day streak</p></div>
-            <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label-s muted">total XP</p></div>
-            <div><p class="t-headline-s">{practised}</p><p class="t-label-s muted">words practised</p></div>
+          <div class="stack-sm" style={{ padding: '0 var(--s-lg) var(--s-lg)', marginTop: -44 }}>
+            <div style={{ display: 'grid', placeItems: 'center' }}>
+              <Avatar id={p.profileIconId} size={96} level={p.level} onClick={() => navigate('/edit-profile')} label="Your avatar. Edit profile" />
+            </div>
+            <h1 class="t-headline">{displayName}</h1>
+            <p class="t-title" style={{ color: 'var(--lime)' }}>{levelTitle(p.level)}</p>
+            <div style={{ display: 'grid', placeItems: 'center' }}>
+              <span class="tag">{p.titleBadge}</span>
+            </div>
+            <div class="readable" style={{ maxWidth: 320 }}>
+              <ProgressBar value={levelProgress(p.totalXp)} label="Progress to the next level" />
+            </div>
+            <p class="t-body-s faint">{toNext == null ? 'Highest level reached' : `${toNext} XP to Level ${p.level + 1}`}</p>
+            <div class="stats3" style={{ marginTop: 'var(--s-sm)' }}>
+              <button onClick={() => navigate('/streak')} aria-label={`${p.currentStreak} day streak. Open your streak`} style={{ background: 'none', border: 0, color: 'inherit' }}>
+                <p class="t-headline-s">{p.currentStreak}</p>
+                <p class="t-label-s muted">day streak</p>
+              </button>
+              <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label-s muted">total XP</p></div>
+              <div><p class="t-headline-s">{practised}</p><p class="t-label-s muted">words practised</p></div>
+            </div>
+            <button class="text-btn lime" onClick={() => navigate('/leaderboard')}>
+              {rank ? `Your rank: #${rank} this week` : 'View leaderboard'}
+            </button>
           </div>
         </section>
 
         {isGuest && (
-          <section class="card stack-sm" style={{ borderColor: 'rgba(245,200,106,.4)' }}>
-            <p class="t-title">Sign in so you don't lose your progress</p>
-            <p class="t-body muted">Right now your XP, streak and badges live only in this browser.</p>
-            <ClayButton label="Sign in" onClick={() => navigate('/account')} />
+          <section class="card row" style={{ padding: 'var(--s-sm) var(--s-md)' }}>
+            <Icon name="lock" size={22} color="var(--lime)" />
+            <p class="t-body-s grow">Save your progress with an account</p>
+            <button class="text-btn lime" onClick={() => navigate('/account')}>Sign in</button>
           </section>
         )}
 
@@ -125,46 +157,41 @@ export function MeScreen() {
             }
           />
           <button class="card" onClick={() => navigate('/achievements')}>
-            <p class="t-body muted">{unlocked.length} of {ACHIEVEMENTS.length} earned</p>
-            {recent.length > 0 ? (
-              <div class="row wrap" style={{ marginTop: 'var(--s-sm)' }}>
-                {recent.map((a) => (
-                  <span key={a.id} class="chip" style={{ background: 'var(--sunken)' }}>
-                    <Icon name="medalStar" size={16} color="var(--gold)" /> {a.name}
-                  </span>
+            <p class="t-body muted">{earned.length} of 66 tiers earned</p>
+            {shown.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-sm)', marginTop: 'var(--s-sm)' }}>
+                {shown.map((r) => (
+                  <div key={r.id} class="center" style={{ display: 'grid', justifyItems: 'center', gap: 2 }}>
+                    <BadgeMedal tier={tierFor(r.id)} earned size={48} />
+                    <p class="t-label-s">{familyFor(r.id)?.name}</p>
+                    <p class="t-label-s faint">{r.tier.label}{pins.includes(r.family.id) ? ' · pinned' : ''}</p>
+                  </div>
                 ))}
               </div>
             ) : (
               <p class="t-body" style={{ marginTop: 8 }}>No badges yet. Finish a lesson to earn your first.</p>
             )}
-            {closest && (
-              <div style={{ marginTop: 'var(--s-sm)' }}>
-                <p class="t-label muted">Closest: {closest.a.name}</p>
-                <div class="row" style={{ marginTop: 6 }}>
-                  <div class="grow">
-                    <ProgressBar value={closest.v / closest.a.requiredValue} color="var(--gold)" />
-                  </div>
-                  <span class="t-label-s muted">{Math.min(closest.v, closest.a.requiredValue)} of {closest.a.requiredValue}</span>
-                </div>
-              </div>
-            )}
           </button>
         </section>
 
         <section class="stack-sm">
-          <SectionHeading text="Learning overview" />
-          <div class="list">
-            <Stat icon="book" label="Words mastered" value={`${mastered}`} />
-            <Stat icon="medal" label="Longest streak" value={`${p.longestStreak} ${p.longestStreak === 1 ? 'day' : 'days'}`} />
-            <Stat icon="teacher" label="Lessons completed" value={`${lessons}`} />
-            <Stat icon="game" label="Games played" value={`${p.gamesPlayed}`} />
-            <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />
-            <Stat
-              icon="tickCircle"
-              label="Accuracy"
-              value={p.totalQuestionsAnswered === 0 ? 'Not measured yet' : `${Math.round((p.totalCorrectAnswers / p.totalQuestionsAnswered) * 100)}%`}
-            />
-          </div>
+          <button class="text-btn lime" style={{ alignSelf: 'flex-start' }} aria-expanded={overview} onClick={() => setOverview(!overview)}>
+            {overview ? 'Hide learning overview' : 'Learning overview'}
+          </button>
+          {overview && (
+            <div class="list">
+              <Stat icon="book" label="Words mastered" value={`${mastered}`} />
+              <Stat icon="medal" label="Longest streak" value={`${p.longestStreak} ${p.longestStreak === 1 ? 'day' : 'days'}`} />
+              <Stat icon="teacher" label="Lessons completed" value={`${lessons}`} />
+              <Stat icon="game" label="Games played" value={`${p.gamesPlayed}`} />
+              <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />
+              <Stat
+                icon="tickCircle"
+                label="Accuracy"
+                value={p.totalQuestionsAnswered === 0 ? 'Not measured yet' : `${Math.round((p.totalCorrectAnswers / p.totalQuestionsAnswered) * 100)}%`}
+              />
+            </div>
+          )}
         </section>
 
         <section class="stack-sm">
@@ -179,7 +206,7 @@ export function MeScreen() {
               onClick={() => navigate('/account')}
             />
             <LinkRow icon="edit" tint="var(--lime)" title="Edit profile" subtitle="Name, avatar and details" onClick={() => navigate('/edit-profile')} />
-            <LinkRow icon="cup" tint="var(--gold)" title="Leaderboard" subtitle="Learners of Kasiguranin, ranked" onClick={() => navigate('/leaderboard')} />
+            <LinkRow icon="cup" tint="var(--gold)" title="Leaderboard" subtitle="This week, all-time and streaks" onClick={() => navigate('/leaderboard')} />
           </div>
         </section>
 

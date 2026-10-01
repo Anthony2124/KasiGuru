@@ -7,6 +7,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { getSecurityAnswers, saveSecurityQuestions, SECURITY_QUESTIONS } from '../../lib/auth';
 import { refreshContent } from '../../lib/content';
 import { navigate } from '../../lib/router';
+import { canVibrate } from '../../lib/audio';
 import { setPrefs, useApp } from '../../lib/store';
 import { flush } from '../../lib/sync';
 import { APP_VERSION } from '../../lib/remote';
@@ -50,14 +51,27 @@ export function SettingsScreen() {
             <label class="list-row" style={{ cursor: 'pointer' }}>
               <Icon name="volumeHigh" size={22} color="var(--info)" />
               <div class="grow">
-                <p class="t-title-s">Answer sounds</p>
-                <p class="t-body-s muted">A short tone for right and wrong answers</p>
+                <p class="t-title-s">Lesson sounds</p>
+                <p class="t-body-s muted">Small sounds for answers and level ups</p>
               </div>
               <span class="switch">
                 <input type="checkbox" checked={prefs.soundEnabled} onChange={(e) => setPrefs({ soundEnabled: (e.target as HTMLInputElement).checked })} />
                 <i />
               </span>
             </label>
+            {canVibrate() && (
+              <label class="list-row" style={{ cursor: 'pointer' }}>
+                <Icon name="flash" size={22} color="var(--lime)" />
+                <div class="grow">
+                  <p class="t-title-s">Lesson vibrations</p>
+                  <p class="t-body-s muted">Feel answer feedback</p>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" checked={prefs.hapticsEnabled} onChange={(e) => setPrefs({ hapticsEnabled: (e.target as HTMLInputElement).checked })} />
+                  <i />
+                </span>
+              </label>
+            )}
             <button class="list-row" onClick={() => navigate('/install')}>
               <Icon name="mobile" size={22} color="var(--lime)" />
               <div class="grow">

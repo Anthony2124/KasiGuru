@@ -173,9 +173,12 @@ export async function sendPasswordReset(email: string) {
   await sendPasswordResetEmail(auth, email.trim());
 }
 
-/** Uploads, wipes this device, and returns to a fresh guest session. */
+/**
+ * Uploads, wipes this device, and returns to a fresh guest session. Refuses (throws) while the
+ * rewards cannot be saved, as flushToCloud does on Android, rather than losing them.
+ */
 export async function signOutToGuest() {
-  await wipeLocal(true);
+  await wipeLocal(true, true);
   await fbSignOut(auth);
   // onAuthStateChanged(null) starts the new anonymous session.
 }

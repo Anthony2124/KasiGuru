@@ -19,6 +19,7 @@ function serviceWorker(): Plugin {
       const publicDir = path.resolve(__dirname, 'public');
       const statics = ['manifest.webmanifest', 'content/vocabulary.json', 'content/stories.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/wordmark.svg']
         .concat(fs.readdirSync(path.join(publicDir, 'fonts')).map((f) => `fonts/${f}`))
+        .concat(fs.readdirSync(path.join(publicDir, 'sounds')).map((f) => `sounds/${f}`))
         .filter((f) => fs.existsSync(path.join(publicDir, f)));
       const files = ['/', '/index.html', ...[...built, ...statics].filter((f) => f !== 'index.html').map((f) => `/${f}`)];
       const version = crypto.createHash('sha1').update(files.join('|')).digest('hex').slice(0, 10);

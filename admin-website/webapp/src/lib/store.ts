@@ -8,6 +8,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { Corpus } from '../domain/corpus';
+import { today as todayIso } from '../domain/dates';
 import { Draft, initialLearner, type LearnerData, type LearnerEvent } from '../domain/learner';
 import type { AnnouncementDto, Story, WordContent } from '../domain/types';
 import { load, save } from './persist';
@@ -24,6 +25,10 @@ export interface Account {
 
 export interface Prefs {
   soundEnabled: boolean;
+  /** Answer vibrations in lessons, where the browser supports them (not iOS). */
+  hapticsEnabled: boolean;
+  /** The day of the last finished lesson, so the streak page shows after the day's first one. */
+  lastLessonDate: string;
   backupPromptDismissed: boolean;
   gameRulesSeen: string[];
   /** The one-time "About you" details were collected (Android asks before the first sign-in). */
@@ -62,6 +67,8 @@ export interface AppState {
 
 const defaultPrefs: Prefs = {
   soundEnabled: true,
+  hapticsEnabled: true,
+  lastLessonDate: '',
   backupPromptDismissed: false,
   gameRulesSeen: [],
   aboutYouDone: false,
@@ -153,7 +160,7 @@ export function persistLearnerNow() {
  * event the action produced (level up, streak, badge) is queued for the celebration dialogs.
  */
 export function act<T>(fn: (d: Draft) => T, opts: { celebrate?: boolean } = {}): T {
-  const draft = new Draft(structuredClone(state.learner));
+  const draft = new Draft(structuredClone(state.learner), todayIso(), { words: state.words, stories: state.stories });
   const result = fn(draft);
   setState((s) => ({
     learner: draft.d,

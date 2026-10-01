@@ -139,7 +139,47 @@ export async function playWord(word: WordContent): Promise<boolean> {
 }
 
 /** Short UI sounds for right and wrong answers, synthesised so there is nothing to download. */
+// ── Lesson sounds (UiFeedbackSounds) ─────────────────────────────────────────
+
+type UiSound = 'correct' | 'wrong' | 'level-up';
+const uiSounds = new Map<UiSound, AudioBuffer>();
+let uiLoading: Promise<void> | null = null;
+
+/** Adrian's three answer and level-up sounds, decoded once. Until they arrive, a synthesised tone stands in. */
+function loadUiSounds(c: AudioContext) {
+  uiLoading ??= Promise.all(
+    (['correct', 'wrong', 'level-up'] as UiSound[]).map(async (name) => {
+      try {
+        const res = await fetch(`/sounds/${name}.wav`);
+        if (res.ok) uiSounds.set(name, await c.decodeAudioData(await res.arrayBuffer()));
+      } catch {
+        // The synthesised fallback keeps working.
+      }
+    })
+  ).then(() => undefined);
+}
+
+function playUiSound(name: UiSound): boolean {
+  const c = context();
+  if (!c || c.state !== 'running') return false;
+  loadUiSounds(c);
+  const buffer = uiSounds.get(name);
+  if (!buffer) return false;
+  const src = c.createBufferSource();
+  const gain = c.createGain();
+  gain.gain.value = 0.35;
+  src.buffer = buffer;
+  src.connect(gain).connect(c.destination);
+  src.start();
+  return true;
+}
+
+export function levelUpSound() {
+  playUiSound('level-up');
+}
+
 export function feedbackTone(correct: boolean) {
+  if (playUiSound(correct ? 'correct' : 'wrong')) return;
   const c = context();
   if (!c || c.state !== 'running') return;
   const now = c.currentTime;
@@ -155,4 +195,12 @@ export function feedbackTone(correct: boolean) {
   osc.connect(gain).connect(c.destination);
   osc.start(now);
   osc.stop(now + 0.3);
+}
+
+/** Whether this browser can vibrate (Android Chrome can; iOS Safari cannot). */
+export const canVibrate = () => typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+
+/** A short buzz for an answer, as the lesson player's haptics on Android. */
+export function answerHaptic(correct: boolean) {
+  if (canVibrate()) navigator.vibrate(correct ? 18 : [28, 40, 28]);
 }

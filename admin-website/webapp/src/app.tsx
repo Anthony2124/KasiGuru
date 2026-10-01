@@ -3,11 +3,10 @@
  * screens on top, the app-wide celebrations (level up, streak), and the suspension gate.
  */
 import { useEffect } from 'preact/hooks';
-import { RANKS } from './domain/gamification';
-import { ACHIEVEMENTS } from './domain/gamification';
 import { dismissCelebration, useApp } from './lib/store';
 import { match, navigate, switchTab, useLocation } from './lib/router';
-import { ClayButton, Confetti, Dialog, Icon, Jepjep, Loading, ToastHost, toast } from './ui/kit';
+import { ClayButton, Confetti, Dialog, Icon, Loading, ToastHost } from './ui/kit';
+import { RewardDialog } from './ui/badges';
 import type { IconName } from './ui/icons.generated';
 import { HomeScreen } from './ui/screens/Home';
 import { LearnScreen } from './ui/screens/Learn';
@@ -35,6 +34,8 @@ import { ReportIssueScreen } from './ui/screens/ReportIssue';
 import { NotificationsScreen } from './ui/screens/Notifications';
 import { SuspendedScreen } from './ui/screens/Suspended';
 import { StoryListScreen } from './ui/screens/StoryList';
+import { StreakScreen } from './ui/screens/Streak';
+import { PublicProfileScreen } from './ui/screens/PublicProfile';
 
 const TABS: { path: string; label: string; icon: IconName }[] = [
   { path: '/', label: 'Home', icon: 'home' },
@@ -76,6 +77,8 @@ const ROUTES: Route[] = [
   { pattern: '/games/word_wheel/:level', render: (p) => <WordWheelGame level={Number(p.level) || 1} /> },
   { pattern: '/games/word_search/:key/:level', render: (p) => <WordSearchGame levelKey={p.key} level={Number(p.level) || 1} /> },
   { pattern: '/leaderboard', render: () => <LeaderboardScreen /> },
+  { pattern: '/player/:uid', render: (p) => <PublicProfileScreen uid={p.uid} /> },
+  { pattern: '/streak', render: () => <StreakScreen /> },
   { pattern: '/word/:id', render: (p) => <WordDetailScreen id={p.id} /> },
   { pattern: '/category/:name', render: (p) => <CategoryScreen category={p.name} /> },
   { pattern: '/stories', render: () => <StoryListScreen /> },
@@ -93,45 +96,16 @@ const ROUTES: Route[] = [
   { pattern: '/notifications', render: () => <NotificationsScreen /> },
 ];
 
-/** Level-up, streak and badge moments, one at a time, in the order they happened. */
+/**
+ * Reward and streak moments, one at a time, in the order they happened. A level reached or a badge
+ * tier earned is one reward celebration (RewardCelebrationDialog); the streak dialog waits behind it.
+ */
 function Celebrations() {
   const next = useApp((s) => s.celebrations[0]);
-  const quota = useApp((s) => s.learner.progress);
-  useEffect(() => {
-    if (next?.type === 'badge') {
-      const def = ACHIEVEMENTS.find((a) => a.id === next.id);
-      if (def) toast(`Badge unlocked: ${def.name} (+${def.xpReward} XP)`);
-      dismissCelebration();
-    } else if (next?.type === 'levelUp' && !RANKS.some((r) => r.level === next.level)) {
-      // GamificationEngine names five display ranks; later levels have no dialog on Android either.
-      dismissCelebration();
-    }
-  }, [next]);
-  if (!next || next.type === 'badge') return null;
-
-  if (next.type === 'levelUp') {
-    const rank = RANKS.find((r) => r.level === next.level);
-    if (!rank) return null;
-    return (
-      <>
-        <Confetti />
-        <Dialog glow label={`Level ${rank.level}`} onClose={dismissCelebration}>
-          <div class="stack center">
-            <div style={{ display: 'grid', placeItems: 'center' }}>
-              <Jepjep pose="celebrating" height={150} breathe />
-            </div>
-            <p class="t-label" style={{ color: 'var(--gold)' }}>Level {rank.level}</p>
-            <h2 class="t-display">{rank.title}</h2>
-            <p class="t-body-l muted">You unlocked new mini-game modes & badges!</p>
-            <ClayButton label="Awesome!" tone="reward" onClick={dismissCelebration} />
-          </div>
-        </Dialog>
-      </>
-    );
-  }
+  if (!next) return null;
+  if (next.type === 'reward') return <RewardDialog event={next} onClose={dismissCelebration} />;
 
   // Streak activated: the day's quota (review + three games) was met.
-  void quota;
   return (
     <>
       <Confetti pieces={40} />
@@ -156,6 +130,15 @@ function Celebrations() {
             </div>
           </div>
           <ClayButton label="Keep the flame lit" tone="coral" onClick={dismissCelebration} />
+          <button
+            class="text-btn lime"
+            onClick={() => {
+              dismissCelebration();
+              navigate('/streak');
+            }}
+          >
+            See your streak
+          </button>
         </div>
       </Dialog>
     </>

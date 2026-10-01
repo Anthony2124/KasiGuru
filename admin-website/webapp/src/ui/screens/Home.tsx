@@ -1,16 +1,17 @@
 /**
  * Home: the one thing to do next, and how today is going (ui/screens/home/HomeScreen.kt).
  */
-import { useEffect, useMemo, useState } from 'preact/hooks';
-import { Draft } from '../../domain/learner';
+import { useEffect, useMemo } from 'preact/hooks';
+import { gameTitle } from '../../domain/gamification';
 import { navigate, enc } from '../../lib/router';
 import { setPrefs, useApp, useCorpus, useLearner } from '../../lib/store';
 import { useInstall } from '../../lib/install';
-import { approvedSubmissionCount } from '../../lib/remote';
+import { approvedContributions } from '../../lib/remote';
 import { act } from '../../lib/store';
 import { Avatar, ClayButton, Icon, Jepjep, ProgressRing, SectionHeading } from '../kit';
-import { StoryCover, StreakDialog } from '../parts';
-import { activities, buildWeek, continueCard, dayGoal, isStoryUnlocked, jepjepLine, wordsToReview } from '../derive';
+import { WeekStrip } from '../parts';
+import { openGame } from './Practice';
+import { activities, buildWeek, continueCard, dayGoal, isStoryUnlocked, jepjepLine, wordOfTheDay, wordsToReview } from '../derive';
 
 const BACKUP_PROMPT_MIN_XP = 150;
 
@@ -22,25 +23,29 @@ export function HomeScreen() {
   const prefs = useApp((s) => s.prefs);
   const announcements = useApp((s) => s.announcements);
   const install = useInstall();
-  const [streakOpen, setStreakOpen] = useState(false);
   const p = learner.progress;
 
   useEffect(() => {
     document.title = 'KasiGuru';
-    // Trusted Voice / Corpus Builder: approvals are only visible from here, as on Android.
+    // Community Contributor: each approved submission is a one-time 10 XP receipt. Approvals are only
+    // visible from here, as on Android.
     if (!account.uid) return;
-    approvedSubmissionCount().then((n) => {
-      if (n != null && n > 0) act((d) => d.checkAchievements('submissionsApproved', n));
+    approvedContributions().then((list) => {
+      const fresh = list?.filter((c) => !learner.receipts[`approved:${c.id}`]) ?? [];
+      if (fresh.length) act((d) => d.approved(fresh));
     });
   }, [account.uid]);
 
   const wordsDue = Math.min(corpus.countScheduledDue(), 20);
-  const goal = dayGoal(p, wordsDue);
+  const goal = dayGoal(learner, wordsDue);
   const line = jepjepLine(p, wordsDue, goal.met);
   const card = useMemo(() => continueCard(corpus, learner), [corpus, learner.lessons]);
   const acts = useMemo(() => activities(corpus, learner, stories), [corpus, learner, stories]);
   const week = buildWeek(p);
-  const quota = new Draft(learner).quota;
+  const featured = useMemo(() => wordOfTheDay(corpus), [corpus]);
+  const lastGame = learner.gameScores[learner.gameScores.length - 1]?.gameType;
+  const quickGame = lastGame && ['word_match', 'word_search', 'word_wheel'].includes(lastGame) ? lastGame : null;
+  const firstStory = stories.slice().sort((a, b) => a.requiredXp - b.requiredXp).find((s) => isStoryUnlocked(s, learner));
   const displayName = p.fullName || p.userName;
   const showBackup = !prefs.backupPromptDismissed && account.isAnonymous && p.totalXp >= BACKUP_PROMPT_MIN_XP;
   const showInstall = !install.installed && !prefs.installHintDismissed && (install.ios || install.canPrompt);
@@ -61,7 +66,6 @@ export function HomeScreen() {
 
   return (
     <main class="page wide">
-      {streakOpen && <StreakDialog current={p.currentStreak} longest={p.longestStreak} quota={quota} onClose={() => setStreakOpen(false)} />}
       <div class="home-grid">
         <div class="stack">
           {/* Hero: who you are, how today stands, and Jepjep's one line. */}
@@ -79,7 +83,7 @@ export function HomeScreen() {
               </button>
             </div>
             <div class="row-xs" style={{ marginTop: 'var(--s-sm)' }}>
-              <button class="chip" onClick={() => setStreakOpen(true)} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
+              <button class="chip" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
                 <Icon name="flash" size={16} color="var(--coral)" />
                 {p.currentStreak === 1 ? '1 day streak' : `${p.currentStreak} day streak`}
               </button>
@@ -190,51 +194,38 @@ export function HomeScreen() {
         </div>
 
         <div class="stack">
-          {stories.length > 0 && (
+          <section>
+            <SectionHeading text="Quick practice" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-xs)' }}>
+              {[
+                { label: 'Flashcards', icon: 'repeat' as const, go: () => navigate('/review') },
+                { label: quickGame ? gameTitle(quickGame) : 'Games', icon: 'game' as const, go: () => (quickGame ? openGame(quickGame) : navigate('/practice')) },
+                { label: 'Story', icon: 'book' as const, go: () => (firstStory ? navigate(`/story/${firstStory.id}`) : navigate('/library?tab=stories')) },
+              ].map((q) => (
+                <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 6, padding: 'var(--s-sm) var(--s-xs)' }}>
+                  <Icon name={q.icon} size={24} color="var(--lime)" />
+                  <span class="t-label">{q.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {featured && (
             <section>
-              <SectionHeading
-                text="Stories"
-                action={
-                  <button class="text-btn lime" style={{ fontSize: 13, fontFamily: 'var(--body)', fontWeight: 700 }} onClick={() => navigate('/library?tab=stories')} aria-label="See all stories">
-                    See all
-                  </button>
-                }
-              />
-              <div class="shelf">
-                {stories
-                  .slice()
-                  .sort((a, b) => a.requiredXp - b.requiredXp)
-                  .map((s) => (
-                    <StoryCover
-                      key={s.id}
-                      id={s.id}
-                      title={s.title}
-                      titleKasiguranin={s.titleKasiguranin}
-                      totalPages={s.totalPages}
-                      unlocked={isStoryUnlocked(s, p.totalXp)}
-                      completed={!!learner.stories[String(s.id)]?.isCompleted}
-                      requiredXp={s.requiredXp}
-                      width={160}
-                      onClick={() => navigate(`/story/${s.id}`)}
-                    />
-                  ))}
-              </div>
+              <SectionHeading text="Word of the day" />
+              <button class="card row" onClick={() => navigate(`/word/${enc(featured.id)}`)} style={{ textAlign: 'left' }}>
+                <div class="grow" style={{ minWidth: 0 }}>
+                  <p class="headword" style={{ overflowWrap: 'anywhere' }}>{featured.kasiguranin}</p>
+                  <p class="t-body muted">{[featured.english, featured.tagalog].filter(Boolean).join(' · ')}</p>
+                </div>
+                <Jepjep pose="curious" height={84} />
+              </button>
             </section>
           )}
 
           <section>
             <SectionHeading text="This week" />
-            <div class="week" role="list">
-              {week.map((d, i) => {
-                const state = d.isToday ? (d.practised ? 'today-done' : 'today') : d.practised ? 'done' : 'missed';
-                return (
-                  <div key={i} class={`day ${state}`} role="listitem" aria-label={`${d.dayOfMonth}${d.practised ? ', practised' : d.isToday ? ', today, not yet practised' : ', missed'}`}>
-                    <span class="t-label-s muted">{d.label}</span>
-                    <span class="dot">{d.practised ? <Icon name="flash" size={16} /> : d.dayOfMonth}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <WeekStrip week={week} />
           </section>
         </div>
       </div>

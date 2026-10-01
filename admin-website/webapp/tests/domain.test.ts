@@ -176,20 +176,24 @@ describe('learning tree (LearningTreeTest)', () => {
 });
 
 describe('learner actions', () => {
-  it('onboarding grants 50 XP and day one of the streak', () => {
+  it('onboarding preferences grant no XP and no practice-day streak', () => {
     const d = new Draft(initialLearner(), TODAY);
-    d.completeOnboarding('Ana', 3, 100, 'Kasiguranin Apprentice');
-    expect(d.d.progress.totalXp).toBe(50);
-    expect(d.d.progress.currentStreak).toBe(1);
-    expect(d.d.progress.lastActiveDate).toBe(TODAY);
+    d.completeOnboarding('Ana', 3, 50, 'Kasiguranin Apprentice');
+    expect(d.d.progress.totalXp).toBe(0);
+    expect(d.d.progress.currentStreak).toBe(0);
+    expect(d.d.progress.isOnboardingCompleted).toBe(true);
+    expect(d.d.progress.xpPolicyVersion).toBe(2);
   });
-  it('a lesson pays 30, or 45 when perfect, and can level up', () => {
+  it('a lesson pays 20, or 25 when perfect, and a same-day repeat pays nothing more', () => {
     const d = new Draft(initialLearner(), TODAY);
-    expect(d.completeLesson({ unitId: 'theme:pamilya', lessonIndex: 0 }, 1)).toBe(45);
-    expect(d.completeLesson({ unitId: 'theme:pamilya', lessonIndex: 1 }, 0.8)).toBe(30);
-    d.addXp(100);
-    expect(d.d.progress.level).toBe(calculateLevel(d.d.progress.totalXp));
-    expect(d.events.some((e) => e.type === 'levelUp')).toBe(true);
+    expect(d.completeLesson({ unitId: 'theme:pamilya', lessonIndex: 0 }, 1)).toBe(25);
+    expect(d.completeLesson({ unitId: 'theme:pamilya', lessonIndex: 1 }, 0.8)).toBe(20);
+    expect(d.completeLesson({ unitId: 'theme:pamilya', lessonIndex: 1 }, 0.8)).toBe(0);
+    // 45 activity XP plus the Lesson Pathfinder Beginner bonus of 20.
+    expect(d.d.progress.totalXp).toBe(65);
+    expect(d.d.progress.level).toBe(calculateLevel(65));
+    expect(d.d.progress.totalXp).toBe(d.d.progress.activityXp + d.d.progress.badgeBonusXp);
+    expect(d.events.some((e) => e.type === 'reward' && e.badgeIds.includes('badge:lesson_pathfinder:1'))).toBe(true);
   });
   it('the streak advances only when review and three games are done', () => {
     const d = new Draft(initialLearner(), TODAY);
@@ -202,7 +206,8 @@ describe('learner actions', () => {
     d.incrementGamesPlayed();
     expect(d.d.progress.currentStreak).toBe(3);
     expect(d.events).toContainEqual({ type: 'streak', days: 3 });
-    expect(d.d.achievements.three_day_streak.isUnlocked).toBe(true);
+    expect(d.d.achievements['badge:consistent_learner:2'].isUnlocked).toBe(true);
+    expect(d.d.achievements['badge:consistent_learner:3']?.isUnlocked ?? false).toBe(false);
   });
   it('a game level earning a star opens the next one', () => {
     const d = new Draft(initialLearner(), TODAY);

@@ -7,8 +7,10 @@
  * date-aware streak merge. firestore.rules' isValidMainProgress() rejects a document carrying any key
  * outside MAIN_PROGRESS_KEYS, so toMap() must never grow a field the rules do not list.
  */
+import { isBadgeId, normalizeBackground } from './badges';
 import { daysBetween, today as todayIso } from './dates';
 import type { AchievementState, GameLevelState, LessonState, UserProgress, WordState } from './types';
+import { XP_POLICY_VERSION } from './xp';
 
 type Map_<T> = Record<string, T>;
 
@@ -71,6 +73,9 @@ function ledger(lDate: string, lCount: number, rDate: string, rCount: number): [
 
 export function mergeProgress(local: UserProgress, remote: UserProgress, today: string = todayIso()): UserProgress {
   const remoteNewer = remote.updatedAt >= local.updatedAt;
+  // Version-2 totals are projected from receipts. Legacy aggregate XP must never restore itself.
+  const normalized =
+    local.xpPolicyVersion >= XP_POLICY_VERSION ? local : remote.xpPolicyVersion >= XP_POLICY_VERSION ? remote : null;
 
   const [ledgerDate, ledgerXp] = ledger(local.dailyXpDate, local.dailyXpEarned, remote.dailyXpDate, remote.dailyXpEarned);
   const mergedReviewDate =
@@ -110,8 +115,9 @@ export function mergeProgress(local: UserProgress, remote: UserProgress, today: 
     age: remoteNewer ? remote.age ?? local.age : local.age ?? remote.age,
     address: pick(local.address, remote.address, remoteNewer),
     profileIconId: remoteNewer ? remote.profileIconId : local.profileIconId,
-    totalXp: Math.max(local.totalXp, remote.totalXp),
-    level: Math.max(local.level, remote.level),
+    profileBackgroundId: pick(local.profileBackgroundId, remote.profileBackgroundId, remoteNewer),
+    totalXp: normalized?.totalXp ?? Math.max(local.totalXp, remote.totalXp),
+    level: normalized?.level ?? Math.max(local.level, remote.level),
     currentStreak: streak,
     longestStreak: Math.max(local.longestStreak, remote.longestStreak),
     lastActiveDate: lastActive,
@@ -123,8 +129,13 @@ export function mergeProgress(local: UserProgress, remote: UserProgress, today: 
     lessonsCompleted: Math.max(local.lessonsCompleted, remote.lessonsCompleted),
     isOnboardingCompleted: local.isOnboardingCompleted || remote.isOnboardingCompleted,
     dailyGoalXp: remoteNewer ? remote.dailyGoalXp : local.dailyGoalXp,
-    dailyXpEarned: ledgerXp,
-    dailyXpDate: ledgerDate,
+    dailyXpEarned: normalized?.dailyXpEarned ?? ledgerXp,
+    dailyXpDate: normalized?.dailyXpDate ?? ledgerDate,
+    xpPolicyVersion: normalized?.xpPolicyVersion ?? 0,
+    activityXp: normalized?.activityXp ?? 0,
+    badgeBonusXp: normalized?.badgeBonusXp ?? 0,
+    pinnedBadgeIds:
+      remoteNewer && remote.xpPolicyVersion >= XP_POLICY_VERSION ? remote.pinnedBadgeIds : local.pinnedBadgeIds,
     titleBadge: pick(local.titleBadge, remote.titleBadge, remoteNewer),
     submissionsMade: Math.max(local.submissionsMade, remote.submissionsMade),
     dailyReviewCompletedDate: mergedReviewDate,
@@ -136,12 +147,13 @@ export function mergeProgress(local: UserProgress, remote: UserProgress, today: 
 
 /** The keys firestore.rules' isValidMainProgress() allows, in toMap() order. */
 export const MAIN_PROGRESS_KEYS = [
-  'id', 'userName', 'email', 'fullName', 'age', 'address', 'profileIconId',
+  'id', 'userName', 'email', 'fullName', 'age', 'address', 'profileIconId', 'profileBackgroundId',
   'totalXp', 'level', 'currentStreak', 'longestStreak', 'lastActiveDate',
   'wordsLearned', 'storiesCompleted', 'gamesPlayed', 'totalCorrectAnswers',
   'totalQuestionsAnswered', 'lessonsCompleted', 'isOnboardingCompleted',
   'dailyGoalXp', 'dailyXpEarned', 'dailyXpDate', 'titleBadge', 'submissionsMade',
   'dailyReviewCompletedDate', 'dailyGamesDate', 'dailyGamesPlayedCount',
+  'xpPolicyVersion', 'activityXp', 'badgeBonusXp', 'pinnedBadgeIds',
   'updatedAt',
 ] as const;
 
@@ -150,9 +162,14 @@ export function toMainDoc(p: UserProgress, stampedAt: number): Record<string, un
   const out: Record<string, unknown> = {};
   for (const k of MAIN_PROGRESS_KEYS) out[k] = k === 'updatedAt' ? stampedAt : p[k];
   // The rules type-check these as ints; guard against a fractional value ever slipping through.
-  for (const k of ['totalXp', 'level', 'currentStreak', 'longestStreak', 'wordsLearned', 'dailyGamesPlayedCount'] as const) {
+  for (const k of [
+    'totalXp', 'level', 'currentStreak', 'longestStreak', 'wordsLearned', 'dailyGamesPlayedCount',
+    'xpPolicyVersion', 'activityXp', 'badgeBonusXp',
+  ] as const) {
     out[k] = Math.max(0, Math.trunc(Number(out[k]) || 0));
   }
+  // The rules accept only the seven catalogue ids, and a blank one would refuse the whole document.
+  out.profileBackgroundId = normalizeBackground(p.profileBackgroundId);
   return out;
 }
 
@@ -169,6 +186,7 @@ export function fromMainDoc(d: Record<string, unknown>): UserProgress {
     age: typeof d.age === 'number' ? d.age : null,
     address: str(d.address),
     profileIconId: num(d.profileIconId, 1),
+    profileBackgroundId: str(d.profileBackgroundId),
     totalXp: num(d.totalXp, 0),
     level: num(d.level, 1),
     currentStreak: num(d.currentStreak, 0),
@@ -189,6 +207,10 @@ export function fromMainDoc(d: Record<string, unknown>): UserProgress {
     dailyReviewCompletedDate: str(d.dailyReviewCompletedDate),
     dailyGamesDate: str(d.dailyGamesDate),
     dailyGamesPlayedCount: num(d.dailyGamesPlayedCount, 0),
+    xpPolicyVersion: num(d.xpPolicyVersion, 0),
+    activityXp: num(d.activityXp, 0),
+    badgeBonusXp: num(d.badgeBonusXp, 0),
+    pinnedBadgeIds: str(d.pinnedBadgeIds),
     updatedAt: num(d.updatedAt, 0),
   };
 }
@@ -240,6 +262,21 @@ export function parseAchievements(entries: Record<string, Record<string, unknown
     };
   }
   return out;
+}
+
+/**
+ * mergeLegacyAchievementRows: the original achievements, archived under policy 2. An earned one
+ * comes back with its name and earliest date; an unearned one is never created from the cloud, and
+ * a cloud `badge:` flag cannot grant an active tier (tiers come from reward receipts alone).
+ */
+export function mergeLegacyAchievements(
+  local: Map_<AchievementState>,
+  remote: Map_<AchievementState>
+): Map_<AchievementState> {
+  const legacy = (m: Map_<AchievementState>) => Object.fromEntries(Object.entries(m).filter(([id]) => !isBadgeId(id)));
+  const mine = legacy(local);
+  const merged = mergeAchievements(mine, legacy(remote));
+  return Object.fromEntries(Object.entries(merged).filter(([id, s]) => id in mine || s.isUnlocked));
 }
 
 /** Words are keyed by their Kasiguranin headword, lowercased, as ProgressSyncManager.wordKey. */

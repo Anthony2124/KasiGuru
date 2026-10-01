@@ -144,7 +144,13 @@ export function AccountScreen() {
             onConfirm={async () => {
               setConfirmOut(false);
               setBusy(true);
-              await signOutToGuest();
+              try {
+                await signOutToGuest();
+              } catch (e) {
+                setBusy(false);
+                toast(e instanceof Error ? e.message : 'Your progress could not be saved. Please try again.');
+                return;
+              }
               setBusy(false);
               toast('Signed out. Sign back in any time to restore your progress.');
               navigate('/', { replace: true });

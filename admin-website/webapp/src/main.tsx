@@ -11,8 +11,15 @@ import { initSync } from './lib/sync';
 async function boot() {
   initSync();
   await Promise.all([loadLocal(), loadContent()]);
-  // A streak that lapsed while the app was closed is reset before anything reads it.
-  act((d) => d.validateStreak(), { celebrate: false });
+  // A streak that lapsed while the app was closed is reset before anything reads it, and progress
+  // from before XP policy 2 is normalized once, now that the stories it may have opened are loaded.
+  act(
+    (d) => {
+      d.validateStreak();
+      d.ensureNormalized();
+    },
+    { celebrate: false }
+  );
   initAuth();
   void refreshContent();
   void fetchAnnouncements();

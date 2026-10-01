@@ -10,13 +10,15 @@ import {
   Mastery,
   masteryUnitId,
   nodeKey,
+  openSectionKeys,
   sectionGateFraction,
   sectionIsComplete,
   type TreeNodeState,
   type TreeSection,
 } from '../../domain/lesson';
 import { navigate, enc } from '../../lib/router';
-import { useCorpus, useLearner } from '../../lib/store';
+import { act, useCorpus, useLearner } from '../../lib/store';
+import { treeAccess } from '../../domain/learner';
 import { EmptyState, GroundScaffold, Icon, Jepjep, Scene, sceneForSection } from '../kit';
 
 const WIND = [0, 0.55, 0.85, 0.55, 0, -0.55, -0.85, -0.55];
@@ -216,8 +218,16 @@ function SectionBlock({ section, previous, guideKey, first }: { section: TreeSec
 export function LearnScreen() {
   const corpus = useCorpus();
   const learner = useLearner();
-  const tree = useMemo(() => buildTree(corpus, learner.lessons), [corpus, learner.lessons]);
+  const access = treeAccess(learner);
+  const tree = useMemo(() => buildTree(corpus, learner.lessons, access), [corpus, learner.lessons, access]);
   const arrived = useRef(false);
+
+  // LessonRepository.treeSections: a section seen open is saved as an access receipt, so it stays
+  // open (here and on Android) even if the XP gate it passed is later recalculated.
+  useEffect(() => {
+    const missing = openSectionKeys(tree).filter((k) => !access.savedAccess.has(k));
+    if (missing.length) act((d) => d.preserveAccess(missing), { celebrate: false });
+  }, [tree]);
 
   const guide = tree.flatMap((s) => s.nodes).find((n) => n.isCurrent && n.isUnlocked);
   const guideKey = guide ? nodeKey(guide) : null;

@@ -32,33 +32,62 @@ needs a Mac and the paid Apple account either way.
   bundled Fredoka/DM Sans fonts, the Iconsax icons (converted from the Android library's own
   vectors), Jepjep, the avatars and the Casiguran scenes.
 - **Lessons** — the learning tree, the lesson player (all seven exercise shapes), expanding
-  rehearsal of misses, remediation lines, mastery checkpoints.
+  rehearsal of misses, remediation lines, mastery checkpoints, the "N in a row" chip, and the
+  streak page after the day's first lesson.
 - **Review** — the flashcard deck, SM-2 with lapses and the relearning ladder.
 - **Games** — Word Match, Word Search (per category, drag or tap) and Word Wheel (swipe or tap).
   The other five show *Coming soon*, exactly as the Android app ships them.
 - **Library** — dictionary with search, categories, word of the day, recordings from `word_audio`;
   stories with page pictures from `story_page_images`.
-- **Me** — profile, badges, settings, account (Google or email, sign-out, delete account),
-  leaderboard, contribute a word, share a story (PDF), report an issue (with a photo).
+- **Me** — profile with scenery (seven places, unlocked by level or streak), badges with up to three
+  pinned, your weekly rank, settings, account (Google or email, sign-out, delete account),
+  contribute a word, share a story (PDF), report an issue (with a photo).
+- **Badges, streak, rankings** — eleven badge families with six permanent tiers each (and the
+  original badges under Legacy), the streak page, and the weekly / all-time / streak leaderboards,
+  where a row opens that learner's public profile.
 
 ## How it stays compatible with Android
 
 The rules that decide what a learner's progress *is* are ports of the Kotlin, with the Android
-unit tests ported alongside them (`tests/domain.test.ts`):
+unit tests ported alongside them (`tests/domain.test.ts`, `tests/xp.test.ts`):
 
 | Web (`src/domain/`) | Android |
 |---|---|
 | `sm2.ts` | `util/srs/Sm2Algorithm.kt`, `ReviewRatingMapper.kt` |
 | `merge.ts` | `LearningStateMerge.kt`, `mergeProgress` / `toMap` / `toEntity` in `ProgressSyncManager.kt` |
 | `lesson.ts` | `domain/lesson/*`, `LessonRepository.kt` |
-| `learner.ts` | `UserProgressRepository`, `VocabularyRepository.processWordReview`, `GameLevelRepository` |
+| `xp.ts` | `domain/gamification/XpPolicy.kt` (`XpPolicy`, `RewardLedger`), `data/remote/RewardReceiptCodec.kt` |
+| `badges.ts` | `BadgeCatalog`, `LegacyBadgeCatalog`, `BadgeShowcase`, `ProfileBackgroundCatalog` |
+| `learner.ts` | `GamificationRepository`, `UserProgressRepository`, `VocabularyRepository.processWordReview` |
+| `publicProfile.ts` | `data/remote/model/PublicProfileDto.kt` |
 | `wordSearch.ts`, `wordWheel.ts` | `domain/wordsearch`, `domain/wordwheel` |
 | `kotlinRandom.ts` | `kotlin.random.Random` (XorWow), checked against kotlin-stdlib output |
 
 Sync (`src/lib/sync.ts`) reads and writes the same five documents under
 `users/{uid}/progress/` with the same keys (`theme:pamilya#0`, `word_match_1`, lowercase
-headwords…), merges additively, and publishes `leaderboard_public/{uid}` for signed-in accounts
-only. The main document carries exactly the keys `isValidMainProgress()` allows; a test asserts it.
+headwords…), merges additively, and publishes `leaderboard_public/{uid}` and
+`public_profiles/{uid}` for signed-in accounts only. The main document carries exactly the keys
+`isValidMainProgress()` allows; a test asserts it.
+
+### XP policy 2 (Android 1.18)
+
+XP is never added to a counter. Every reward is a **receipt** with a stable id (`lesson:<unit>#<i>:<day>`,
+`review:word:<headword>:<day>`, `badge:<family>:<tier>`…), stored one document each under
+`users/{uid}/rewardReceipts/{sha256(id)}`, and total XP, level, today's XP and the badge tiers are
+recomputed from their union (`totals()` in `xp.ts`, `settle()` in `learner.ts`). So two devices
+cannot pay the same lesson twice, and the 60-a-day review cap applies after combining them.
+
+- Sync reads receipts first by document id, then by server `updatedAt` from a cursor; uploads read
+  each receipt in a transaction and keep the stronger evidence. Main progress is written only after
+  the receipts are in, because it is their projection (`totalXp = activityXp + badgeBonusXp`).
+- A device that still holds pre-1.18 progress is **normalized** once: completed lessons, starred
+  game levels and finished stories become imported receipts, the old XP and level are archived and
+  shown once on the badges page, and stories and sections the old XP had opened stay open (access
+  receipts). A version-1 cloud document is archived the same way and never restores old XP.
+- `firestore.rules` refuses any write that lowers `xpPolicyVersion`, so a web app on the old
+  rules could not have saved progress for an account that had used Android 1.18.
+- The level table (`LEVEL_THRESHOLDS`) and the receipt document ids are checked in the tests
+  against values printed by the JVM, so they match Android to the digit.
 
 **If you change a rule on Android, change it here too** — the merge rules, the progress fields, the
 XP values, the lesson slicing and the badge list above all. A field added to
@@ -70,15 +99,22 @@ XP values, the lesson slicing and the badge list above all. A field added to
 - **Word Match options** use the lesson's meaning format ("tagalog · english", English when the
   Tagalog only repeats the headword). On Android a word like *mainit* offers "mainit" as its own
   answer. Worth porting back to `WordMatchViewModel`.
-- **Badge XP recalculates the level** straight away. Android adds a badge's XP to `totalXp` but
-  leaves `level` until the next XP award, so Profile can briefly show the next rank beside the old
-  level. The merge takes the higher level, so the two converge.
+- **Onboarding says only what it grants.** Android 1.18 still shows "+50 XP" and "Day 1 streak"
+  after the first word and previews four retired badges, though onboarding now grants neither
+  XP nor a streak. The web shows "First word" and previews four of the eleven current families.
+  Worth porting back to `OnboardingSteps.kt`.
+- **A badge tier earned on another device stays earned** here as soon as its receipt arrives;
+  Android re-derives it from the same evidence, so the two agree.
 - **A listening exercise whose clip cannot load** shows the word's meaning instead, so it stays
   answerable offline.
 - **Copy that was no longer true** was adjusted: "Over 1,100 words" (the live corpus is 1,172),
   and the Word Match rules no longer promise a combo multiplier the game does not have. The
   streak dialog does not claim a "+25 XP streak bonus", which neither app awards.
 - **No guided tour, notifications, or profile switching.** The Help page covers the tabs instead.
+- **Not yet ported from 1.18:** the Light and System themes and the text-size setting (the web app
+  stays dark, and browsers have their own text size), and the tutorial chapters.
+- **Vibrations** follow the Android setting where the browser supports them (Android Chrome);
+  iPhone browsers cannot vibrate, so the setting is hidden there.
 
 ## Content and the free-plan read budget
 
@@ -166,5 +202,7 @@ npx firebase emulators:start --only auth,firestore --project kasiguru-86042
 $env:VITE_FIREBASE_EMULATORS = '1'; npx vite
 ```
 
-`npm run icons` regenerates the icons, art and fonts from the Android sources (it finds the Iconsax
-library in the Gradle cache), and `npm run content` refreshes the content snapshot.
+`npm run icons` regenerates the icons, art, sounds and fonts from the Android sources (it finds the
+Iconsax library in the Gradle cache). The home-screen icons are cut from Adrian's Jepjep launcher art
+(`mipmap-xxxhdpi/ic_launcher_foreground.png`) and need sharp, which the app does not depend on:
+run `npm i --no-save sharp` first. `npm run content` refreshes the content snapshot.

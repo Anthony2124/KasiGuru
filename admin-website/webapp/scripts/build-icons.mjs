@@ -93,7 +93,6 @@ const ICONS = {
 /** Brand vectors kept in their own colours. */
 const BRAND = {
   wordmark: 'kasiguru_wordmark',
-  launcherK: 'ic_launcher_foreground',
   googleG: 'ic_google_g',
 };
 
@@ -189,7 +188,7 @@ function convert(xml, iconMode) {
   return { viewBox: `0 0 ${vw} ${vh}`, body: out.join('') };
 }
 
-function main() {
+async function main() {
   const drawable = findIconsaxDrawables(process.argv[2]);
   if (!drawable) {
     console.error('Iconsax drawables not found. Build the Android app once, or pass the path.');
@@ -219,12 +218,7 @@ function main() {
     `export const BRAND = ${JSON.stringify(brand, null, 1)} as const;\n`;
   fs.writeFileSync(path.join(webapp, 'src', 'ui', 'icons.generated.ts'), ts);
 
-  // Brand SVG files for the manifest, favicon and apple-touch-icon.
-  const k = brand.launcherK;
-  const appIcon = (pad) =>
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><rect width="108" height="108" rx="${pad}" fill="#0A0E0D"/>${k.body}</svg>`;
-  fs.writeFileSync(path.join(webapp, 'public', 'icons', 'icon.svg'), appIcon(24));
-  fs.writeFileSync(path.join(webapp, 'public', 'icons', 'icon-maskable.svg'), appIcon(0));
+  await appIcons();
   fs.writeFileSync(
     path.join(webapp, 'public', 'icons', 'wordmark.svg'),
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${brand.wordmark.viewBox}">${brand.wordmark.body}</svg>`
@@ -241,6 +235,12 @@ function main() {
     copied++;
   }
 
+  // Lesson sounds (UiFeedbackSounds), the same files the APK ships.
+  fs.mkdirSync(path.join(webapp, 'public', 'sounds'), { recursive: true });
+  for (const [from, to] of [['ui_correct.wav', 'correct.wav'], ['ui_wrong.wav', 'wrong.wav'], ['ui_level_up.wav', 'level-up.wav']]) {
+    fs.copyFileSync(path.join(res, 'raw', from), path.join(webapp, 'public', 'sounds', to));
+  }
+
   // Bundled fonts, the same files the APK ships.
   for (const f of ['fredoka_semibold.ttf', 'fredoka_bold.ttf', 'dm_sans_regular.ttf', 'dm_sans_medium.ttf', 'dm_sans_bold.ttf']) {
     fs.copyFileSync(path.join(res, 'font', f), path.join(webapp, 'public', 'fonts', f));
@@ -249,4 +249,36 @@ function main() {
   console.log(`icons: ${Object.keys(icons).length}, brand: ${Object.keys(brand).length}, images: ${copied}, fonts: 5`);
 }
 
-main();
+/**
+ * The home-screen and tab icons, cut from Adrian's Jepjep launcher art (mipmap ic_launcher_foreground,
+ * on its #067000 backing). Android shows the 72dp safe zone of the 108dp foreground, so the "any"
+ * icons are that centre square; the maskable one puts it inside the 80% circle browsers keep.
+ * Needs sharp, which is not a dependency of the app: `npm i --no-save sharp` first.
+ */
+async function appIcons() {
+  let sharp;
+  try {
+    sharp = (await import('sharp')).default;
+  } catch {
+    console.warn('sharp not installed: app icons skipped (npm i --no-save sharp, then run again).');
+    return;
+  }
+  const foreground = path.join(res, 'mipmap-xxxhdpi', 'ic_launcher_foreground.png');
+  const size = (await sharp(foreground).metadata()).width;
+  const inset = Math.round((size * 18) / 108);
+  const safe = () => sharp(foreground).extract({ left: inset, top: inset, width: size - 2 * inset, height: size - 2 * inset });
+  const out = (name) => path.join(webapp, 'public', 'icons', name);
+  for (const [name, px] of [['icon-512.png', 512], ['icon-192.png', 192], ['apple-touch-icon.png', 180], ['favicon-32.png', 32]]) {
+    await safe().resize(px, px, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(out(name));
+  }
+  const inner = Math.round(512 * 0.8);
+  await sharp({ create: { width: 512, height: 512, channels: 3, background: '#067000' } })
+    .composite([{ input: await safe().resize(inner, inner, { kernel: 'lanczos3' }).png().toBuffer(), gravity: 'centre' }])
+    .png({ compressionLevel: 9 })
+    .toFile(out('icon-maskable-512.png'));
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

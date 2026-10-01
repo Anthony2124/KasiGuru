@@ -15,7 +15,7 @@
       "destination": "https://kasiguru-86042.firebaseapp.com/__/firebase/:path*"
     },
     {
-      "source": "/((?!assets/|fonts/|img/|icons/|content/|__/|sw.js$|manifest.webmanifest$).*)",
+      "source": "/((?!assets/|fonts/|img/|icons/|sounds/|content/|__/|sw.js$|manifest.webmanifest$).*)",
       "destination": "/index.html"
     }
   ],
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "source": "/(fonts|img|icons)/(.*)",
+      "source": "/(fonts|img|icons|sounds)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

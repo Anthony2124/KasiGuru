@@ -17,8 +17,8 @@ import { lessonKey } from './merge';
 
 export const WORDS_PER_LESSON = 7;
 export const EXERCISES_PER_LESSON = 11;
-export const XP_PER_LESSON = 30;
-export const XP_PERFECT_BONUS = 15;
+export const XP_PER_LESSON = 20;
+export const XP_PERFECT_BONUS = 5;
 
 export const lessonCountFor = (wordCount: number) =>
   wordCount <= 0 ? 0 : Math.floor((wordCount + WORDS_PER_LESSON - 1) / WORDS_PER_LESSON);
@@ -222,16 +222,32 @@ export function wordsByUnit(corpus: Corpus): Map<string, Word[]> {
   return units;
 }
 
-export function buildTree(corpus: Corpus, lessons: Record<string, LessonState>): TreeSection[] {
+/**
+ * What keeps a section open regardless of today's XP gate (LessonRepository.treeSections under
+ * policy 2): an `access` receipt for `section:<id>`, saved the first time it was seen open, and,
+ * for learners who had lessons before normalization, the gate measured with the old lesson XP.
+ */
+export interface TreeAccess {
+  savedAccess: ReadonlySet<string>;
+  /** Imported lesson receipts: source (`lesson:<unit>#<index>`) to their XP, 20 or 25. */
+  importedLessons: Readonly<Record<string, number>>;
+}
+
+const NO_ACCESS: TreeAccess = { savedAccess: new Set(), importedLessons: {} };
+
+export function buildTree(corpus: Corpus, lessons: Record<string, LessonState>, access: TreeAccess = NO_ACCESS): TreeSection[] {
   const units = wordsByUnit(corpus);
   let previousOpensNext: boolean = true;
+  let legacyOpensNext = true;
+  const hasImported = Object.keys(access.importedLessons).length > 0;
   const out: TreeSection[] = [];
   for (const def of SECTIONS) {
     const unitId = unitIdFor(def);
     const words = units.get(unitId) ?? [];
     if (!isViable(words.length)) continue;
 
-    const isUnlocked: boolean = previousOpensNext;
+    const isUnlocked: boolean =
+      previousOpensNext || access.savedAccess.has(`section:${def.id}`) || (hasImported && legacyOpensNext);
     const nodes = buildNodes(def, unitId, words, lessons, isUnlocked);
     let earnedXp = 0;
     for (const [key, state] of Object.entries(lessons)) {
@@ -246,10 +262,21 @@ export function buildTree(corpus: Corpus, lessons: Record<string, LessonState>):
       isUnlocked,
     };
     previousOpensNext = isUnlocked && sectionOpensNext(section);
+    // The pre-normalization gate: 30 XP a lesson, 45 when perfect, against 60% of 30 per lesson.
+    let legacyXp = 0;
+    for (const key of Object.keys(lessons)) {
+      const imported = access.importedLessons[`lesson:${key}`];
+      if (imported !== undefined && key.slice(0, key.lastIndexOf('#')) === unitId) legacyXp += 30 + (imported === 25 ? 15 : 0);
+    }
+    const coreLessons = nodes.filter((n) => n.node.kind === 'lesson' && !n.isDeepDive).length;
+    legacyOpensNext = legacyOpensNext && legacyXp >= Math.min(Math.trunc(coreLessons * 30 * GATE_FRACTION), GATE_XP_CAP);
     out.push(section);
   }
   return out;
 }
+
+/** The `section:<id>` access keys a tree shows open, for preserving them as receipts. */
+export const openSectionKeys = (tree: TreeSection[]) => tree.filter((s) => s.isUnlocked).map((s) => `section:${s.definition.id}`);
 
 function buildNodes(
   def: SectionDefinition,

@@ -8,11 +8,10 @@ import { ReviewRating } from '../../domain/sm2';
 import type { Word } from '../../domain/types';
 import { playWord, unlockAudio } from '../../lib/audio';
 import { back } from '../../lib/router';
-import { act, getCorpus, getState, useApp } from '../../lib/store';
+import { act, getCorpus, useApp } from '../../lib/store';
 import { ClayButton, Confetti, GroundScaffold, Icon, Jepjep, Loading, ProgressBar } from '../kit';
 
 const DECK_SIZE = 10;
-const XP_FOR: Record<ReviewRating, number> = { [ReviewRating.AGAIN]: 2, [ReviewRating.HARD]: 5, [ReviewRating.GOOD]: 10, [ReviewRating.EASY]: 15 };
 
 export function ReviewScreen() {
   const ready = useApp((s) => s.contentReady);
@@ -76,8 +75,8 @@ export function ReviewScreen() {
   const rate = (rating: ReviewRating) => {
     act((d) => {
       const fresh = getCorpus().byId(card.id) ?? card;
-      d.reviewWord(fresh, rating, getState().words);
-      d.addXp(XP_FOR[rating]);
+      // A due card is a scheduled review (1-3 XP, capped at 60 a day); practising ahead earns none.
+      d.reviewWord(fresh, rating, !extra);
       if (index + 1 >= cards.length) d.recordDailyReviewCompleted();
     });
     if (index + 1 >= cards.length) setComplete(true);

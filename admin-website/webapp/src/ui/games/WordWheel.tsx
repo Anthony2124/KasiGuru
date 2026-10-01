@@ -3,7 +3,7 @@
  * crossword. Swipe across the letters, or tap them and press Check. Three hints per level.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { GAMES, XP_PER_GAME_CORRECT } from '../../domain/constants';
+import { GAMES } from '../../domain/constants';
 import { shuffled } from '../../domain/random';
 import { cellKey, generateWordWheel, MAX_HINTS, MIN_WORD_LENGTH, slotCells, WORD_WHEEL_MAX_LEVEL, wordWheelTier } from '../../domain/wordWheel';
 import { feedbackTone } from '../../lib/audio';
@@ -85,12 +85,12 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     return done.length ? [...fs, ...done] : fs;
   };
 
-  const maybeFinish = (fs: number[], hints: number, bonusCount: number) => {
+  const maybeFinish = (fs: number[], hints: number) => {
     if (fs.length < puzzle.slots.length) return;
     const board = puzzle.slots.length;
     const stars = hints === 0 ? 3 : hints <= 2 ? 2 : 1;
-    const xp = board * (XP_PER_GAME_CORRECT / 2) + bonusCount * (XP_PER_GAME_CORRECT / 4);
-    act((d) => d.finishGame({ gameType: GAMES.WORD_WHEEL, level, score: board, total: board, statsTotal: board + hints, xp, stars, perfect: hints === 0 }));
+    // Bonus words earn nothing extra: XP comes from completing the board (XP policy 2).
+    const xp = act((d) => d.finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 }));
     setTimeout(() => setResult({ xp, stars }), 700);
   };
 
@@ -112,7 +112,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
       setFoundSlots(fs);
       setFeedback({ kind: 'found', word: w.word, gloss: glossFor(w.id) });
       if (soundOn) feedbackTone(true);
-      maybeFinish(fs, hintsUsed, bonus.length);
+      maybeFinish(fs, hintsUsed);
     } else if (b && bonus.includes(b.key)) setFeedback({ kind: 'already', word: b.word });
     else if (b) {
       setBonus([...bonus, b.key]);
@@ -141,7 +141,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     setSelection([]);
     setFoundSlots(fs);
     setFeedback({ kind: 'revealed', left: MAX_HINTS - used });
-    maybeFinish(fs, used, bonus.length);
+    maybeFinish(fs, used);
   };
 
   const tapLetter = (i: number) => {

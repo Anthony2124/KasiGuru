@@ -36,10 +36,10 @@ const FRAMED_COUNT = STEPS.filter((s) => s.framed).length;
 const FIRST_WORD_INDEX = STEPS.findIndex((s) => s.id === 'FirstWord');
 
 const GOALS = [
-  { xp: 50, minutes: 5, label: 'Casual' },
-  { xp: 100, minutes: 10, label: 'Regular' },
-  { xp: 150, minutes: 15, label: 'Serious' },
-  { xp: 200, minutes: 20, label: 'Intense' },
+  { xp: 30, minutes: 5, label: 'Casual' },
+  { xp: 50, minutes: 10, label: 'Regular' },
+  { xp: 80, minutes: 15, label: 'Serious' },
+  { xp: 100, minutes: 20, label: 'Intense' },
 ];
 const LEVELS = [
   { label: "I'm new to it", goal: 0 },
@@ -50,13 +50,14 @@ const LEVELS = [
 const FIRST_WORD = { word: 'aldew', ipa: '[ˈɁal.dɛw]', meaning: 'Day, sun', options: ['Water', 'Day, sun'], correct: 1 };
 const MAX_NAME_LENGTH = 30;
 
-const BADGES: { name: string; condition: string; tier: 'Bronze' | 'Silver' | 'Gold'; icon: IconName }[] = [
-  { name: 'Limampûng Salitâ', condition: 'Learn 50 Kasiguranin words', tier: 'Bronze', icon: 'book' },
-  { name: 'Isáng Linggo', condition: 'Maintain a 7-day learning streak', tier: 'Bronze', icon: 'flash' },
-  { name: 'Tagapagsalaysay', condition: 'Complete 3 stories', tier: 'Silver', icon: 'document' },
-  { name: 'Mæstro', condition: 'Reach Level 10 — Master of Kasiguranin!', tier: 'Gold', icon: 'medalStar' },
+/** One milestone from four of the eleven badge families (XP policy 2), each six tiers deep. */
+const BADGES: { name: string; condition: string; tier: number; icon: IconName }[] = [
+  { name: 'Word Explorer', condition: 'Verify 50 words in review', tier: 3, icon: 'book' },
+  { name: 'Consistent Learner', condition: 'Keep a 7-day streak', tier: 3, icon: 'flash' },
+  { name: 'Story Reader', condition: 'Finish 3 stories', tier: 3, icon: 'document' },
+  { name: 'Journey Rank', condition: 'Reach Level 10', tier: 4, icon: 'medalStar' },
 ];
-const TIER_FILL = { Bronze: ['var(--tier-bronze)', 'var(--tier-bronze-deep)'], Silver: ['var(--tier-silver)', 'var(--tier-silver-deep)'], Gold: ['var(--tier-gold)', 'var(--tier-gold-deep)'] } as const;
+const TIER_LABEL = ['', 'Beginner', 'Learner', 'Achiever', 'Expert', 'Master', 'Legend'];
 
 function Option({ label, state, onClick, disabled, center }: { label: string; state: 'idle' | 'selected' | 'correct' | 'wrong'; onClick: () => void; disabled?: boolean; center?: boolean }) {
   const cls = state === 'idle' ? '' : state;
@@ -375,12 +376,10 @@ export function OnboardingScreen() {
               <Jepjep pose="celebrating" height={Math.min(220, window.innerHeight * 0.28)} breathe />
             </div>
             <WordCard subtitle={FIRST_WORD.meaning} />
+            {/* Onboarding grants no XP or streak under XP policy 2; the first lesson does. */}
             <div class="row" style={{ justifyContent: 'center' }}>
               <span class="chip" style={{ background: 'var(--gold)', color: 'var(--reward-ink)', border: 0 }}>
-                <Icon name="star" size={16} /> +50 XP
-              </span>
-              <span class="chip" style={{ background: 'var(--coral)', color: 'var(--reward-ink)', border: 0 }}>
-                <Icon name="flash" size={16} /> Day 1 streak
+                <Icon name="star" size={16} /> First word
               </span>
             </div>
           </div>
@@ -406,18 +405,18 @@ export function OnboardingScreen() {
         {step.id === 'Badges' && (
           <div class="stack">
             <Title text="Earn badges as you learn" words={['badges']} />
-            <Body text="Learn words, keep your streak and read stories to unlock them." />
+            <Body text="Eleven badges, six tiers each. Every tier you earn stays earned." />
             <div class="grid-2">
               {BADGES.map((b) => (
                 <div key={b.name} class="card center stack-sm" style={{ padding: 'var(--s-md) var(--s-sm)' }}>
                   <div style={{ display: 'grid', placeItems: 'center' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: TIER_FILL[b.tier][0], boxShadow: `0 4px 0 ${TIER_FILL[b.tier][1]}`, display: 'grid', placeItems: 'center' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: `var(--tier-${b.tier})`, display: 'grid', placeItems: 'center' }}>
                       <Icon name={b.icon} size={28} color="var(--reward-ink)" />
                     </div>
                   </div>
                   <p class="t-title-s">{b.name}</p>
                   <p class="t-body-s muted">{b.condition}</p>
-                  <p class="t-label-s" style={{ color: TIER_FILL[b.tier][0] }}>{b.tier}</p>
+                  <p class="t-label-s" style={{ color: `var(--tier-${b.tier})` }}>{TIER_LABEL[b.tier]}</p>
                 </div>
               ))}
             </div>

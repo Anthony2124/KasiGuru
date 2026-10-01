@@ -1,13 +1,14 @@
 /**
  * Word Match (WordMatchViewModel): a Kasiguranin word, four Tagalog meanings. Rounds draw due words
- * first, every answer is an SM-2 review, and a perfect round earns a 100 XP bonus.
+ * first and every answer is an SM-2 review. A cleared round earns 5 XP + 2 per correct answer, and an
+ * unassisted perfect round 5 more (XP policy 2).
  */
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { GAMES, XP_BONUS_PERFECT_GAME, XP_PER_GAME_CORRECT } from '../../domain/constants';
+import { GAMES } from '../../domain/constants';
 import { questionsForLevel, starsFor } from '../../domain/gamification';
 import { shuffled } from '../../domain/random';
 import { meaningOf } from '../../domain/lesson';
-import { ratingForAnswer, ReviewRating } from '../../domain/sm2';
+import { ratingForAnswer } from '../../domain/sm2';
 import type { Word } from '../../domain/types';
 import { feedbackTone, playWord } from '../../lib/audio';
 import { navigate } from '../../lib/router';
@@ -32,7 +33,7 @@ export function WordMatchGame({ level }: { level: number }) {
   const [hint, setHint] = useState(false);
   const [score, setScore] = useState(0);
   const [result, setResult] = useState<{ xp: number; stars: number; next: number | null } | null>(null);
-  const xp = useRef(0);
+  const usedHint = useRef(false);
   const review = useRef<ReviewItem[]>([]);
   const shownAt = useRef(Date.now());
   const total = questionsForLevel(level);
@@ -55,7 +56,7 @@ export function WordMatchGame({ level }: { level: number }) {
     setHint(false);
     setScore(0);
     setResult(null);
-    xp.current = 0;
+    usedHint.current = false;
     review.current = [];
     shownAt.current = Date.now();
   }, [ready, level, round]);
@@ -86,14 +87,13 @@ export function WordMatchGame({ level }: { level: number }) {
   const choose = (option: string) => {
     if (answered) return;
     const isCorrect = option === answerOf(q.word);
-    const rating = hint ? ReviewRating.HARD : ratingForAnswer(isCorrect, Date.now() - shownAt.current);
-    xp.current += isCorrect ? (rating === ReviewRating.HARD ? 5 : XP_PER_GAME_CORRECT) : 0;
+    const rating = ratingForAnswer(isCorrect, Date.now() - shownAt.current, hint);
     if (isCorrect) setScore((s) => s + 1);
     review.current.push({ prompt: q.word.kasiguranin, subPrompt: q.word.english || undefined, userAnswer: option, correctAnswer: answerOf(q.word), isCorrect });
     setSelected(option);
     if (soundOn) feedbackTone(isCorrect);
     const word = getCorpus().byId(q.word.id) ?? q.word;
-    act((d) => d.reviewWord(word, rating, getState().words));
+    act((d) => d.reviewWord(word, rating));
   };
 
   const next = () => {
@@ -105,10 +105,9 @@ export function WordMatchGame({ level }: { level: number }) {
       return;
     }
     const finalScore = score;
-    const perfect = finalScore >= total;
-    const earned = xp.current + (perfect ? XP_BONUS_PERFECT_GAME : 0);
+    const perfect = finalScore >= total && !usedHint.current;
     const stars = starsFor(finalScore / total);
-    act((d) => d.finishGame({ gameType: GAMES.WORD_MATCH, level, score: finalScore, total, xp: earned, stars, perfect }));
+    const earned = act((d) => d.finishGame({ mode: GAMES.WORD_MATCH, level, correct: finalScore, total, stars, perfect }));
     const nextUnlocked = level < 30 && (stars >= 1 || !!getState().learner.gameLevels[`word_match_${level + 1}`]?.isUnlocked);
     setResult({ xp: earned, stars, next: nextUnlocked ? level + 1 : null });
   };
@@ -146,7 +145,7 @@ export function WordMatchGame({ level }: { level: number }) {
           </button>
         )}
       </div>
-      {!answered && <HintButton hint={hintText} revealed={hint} onReveal={() => setHint(true)} />}
+      {!answered && <HintButton hint={hintText} revealed={hint} onReveal={() => { setHint(true); usedHint.current = true; }} />}
       <div class="stack-sm" role="radiogroup" aria-label="Meanings">
         {q.options.map((o) => {
           const cls = answered ? (o === answerOf(q.word) ? 'correct' : o === selected ? 'wrong' : 'dim') : '';

@@ -71,8 +71,10 @@ export function calculateNextReview(card: WordState, rating: ReviewRating, curre
 }
 
 /** ReviewRatingMapper: a tap's speed read as fluency. */
-export function ratingForAnswer(isCorrect: boolean, responseTimeMs: number): ReviewRating {
+export function ratingForAnswer(isCorrect: boolean, responseTimeMs: number, usedHint = false): ReviewRating {
   if (!isCorrect) return ReviewRating.AGAIN;
+  // A hinted answer was recognised, not recalled.
+  if (usedHint) return ReviewRating.HARD;
   if (responseTimeMs < 1_500) return ReviewRating.EASY;
   if (responseTimeMs < 5_000) return ReviewRating.GOOD;
   return ReviewRating.HARD;

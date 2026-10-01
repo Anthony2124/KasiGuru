@@ -3,15 +3,15 @@
  * Word Match, Word Search and Word Wheel are playable; the other five show "Coming soon", exactly as
  * the Android app ships them today.
  */
-import { useEffect, useState } from 'preact/hooks';
-import { GAME_ENTRIES, gameTitle, rankFor, type GameEntry } from '../../domain/gamification';
+import { useState } from 'preact/hooks';
+import { GAME_ENTRIES, gameTitle, type GameEntry } from '../../domain/gamification';
+import { levelTitle } from '../../domain/constants';
 import { GAMES } from '../../domain/constants';
 import { totalStars } from '../../domain/learner';
 import { navigate } from '../../lib/router';
-import { fetchLeaderboard, type LeaderboardEntry } from '../../lib/remote';
 import { setPrefs, useApp, useCorpus, useLearner } from '../../lib/store';
 import { ClayButton, Dialog, GroundScaffold, Icon, SectionHeading } from '../kit';
-import { LeaderRow } from './Leaderboard';
+import { LeaderboardContent } from './Leaderboard';
 import { wordsToReview } from '../derive';
 
 const TONE: Record<GameEntry['tone'], { fill: string; ink: string }> = {
@@ -26,8 +26,8 @@ export const GAME_RULES: Record<string, { title: string; description: string; ru
     description: 'Match each Kasiguranin word to its meaning.',
     rules: [
       'Pick the right meaning from four choices.',
-      'Stuck? Show the definition. A hinted answer still counts, for fewer XP.',
-      'A perfect round earns a 100 XP bonus. Each round also schedules the words for review.',
+      'Stuck? Show the definition. A hinted answer still counts, but the round is no longer perfect.',
+      'Clear a round for 5 XP + 2 per correct answer. An unassisted perfect round adds 5, up to 40 XP total.',
     ],
   },
   [GAMES.WORD_SEARCH]: {
@@ -44,7 +44,7 @@ export const GAME_RULES: Record<string, { title: string; description: string; ru
     description: 'Spell Kasiguranin words from the letters on the wheel to fill the crossword.',
     rules: [
       'Swipe across the letters, or tap them and press Check. Words need 3 letters or more.',
-      'Other real words you spell are bonus words and earn extra XP.',
+      'Other real words you spell are bonus words; XP comes from completing the board.',
       'Solve the board with no hints for three stars.',
     ],
   },
@@ -102,21 +102,11 @@ export function PracticeScreen() {
   const learner = useLearner();
   const corpus = useCorpus();
   const seen = useApp((s) => s.prefs.gameRulesSeen);
-  const uid = useApp((s) => s.account.uid);
   const [rules, setRules] = useState<string | null>(null);
-  const [board, setBoard] = useState<LeaderboardEntry[] | null>(null);
-  const [boardError, setBoardError] = useState(false);
+  const [segment, setSegment] = useState<'games' | 'leaderboard'>('games');
   const p = learner.progress;
   const stars = totalStars(learner.gameLevels);
-  const rank = rankFor(p.totalXp);
   const due = Math.min(corpus.countScheduledDue(), 20);
-
-  useEffect(() => {
-    if (!uid) return;
-    fetchLeaderboard('totalXp')
-      .then(setBoard)
-      .catch(() => setBoardError(true));
-  }, [uid]);
 
   const highScores = new Map<string, number>();
   for (const s of learner.gameScores) highScores.set(s.gameType, Math.max(highScores.get(s.gameType) ?? 0, s.score));
@@ -129,8 +119,15 @@ export function PracticeScreen() {
   const recent = learner.gameScores.slice(-5).reverse();
 
   return (
-    <GroundScaffold title="Practice" onBack={false} nav largeTitle subtitle={`Level ${rank.level} · ${rank.title}`}>
+    <GroundScaffold title="Practice" onBack={false} nav largeTitle subtitle={levelTitle(p.level)}>
       {rules && <GameRulesDialog type={rules} onClose={() => setRules(null)} />}
+      <div class="segmented" role="tablist" style={{ marginBottom: 'var(--s-md)' }}>
+        <button role="tab" aria-selected={segment === 'games'} onClick={() => setSegment('games')}>Games</button>
+        <button role="tab" aria-selected={segment === 'leaderboard'} onClick={() => setSegment('leaderboard')}>Leaderboard</button>
+      </div>
+      {segment === 'leaderboard' ? (
+        <LeaderboardContent />
+      ) : (
       <div class="stack-lg">
         <div class="card">
           <div class="stats3">
@@ -173,30 +170,6 @@ export function PracticeScreen() {
             </button>
           </section>
         )}
-
-        <section class="stack-sm">
-          <SectionHeading
-            text="Leaderboard"
-            action={
-              <button class="text-btn lime" style={{ fontSize: 13, fontFamily: 'var(--body)', fontWeight: 700 }} onClick={() => navigate('/leaderboard')} aria-label="See the full leaderboard">
-                See all
-              </button>
-            }
-          />
-          {board == null && !boardError ? (
-            <p class="t-body muted">Loading the rankings…</p>
-          ) : boardError ? (
-            <p class="t-body muted">The rankings could not be loaded. Check your connection.</p>
-          ) : board!.length === 0 ? (
-            <p class="t-body muted">No one is ranked yet. Yours could be the first name here.</p>
-          ) : (
-            <div class="list">
-              {board!.slice(0, 3).map((e, i) => (
-                <LeaderRow key={e.uid} rank={i + 1} entry={e} mode="totalXp" />
-              ))}
-            </div>
-          )}
-        </section>
 
         <section class="stack-sm">
           <SectionHeading text="All mini-games" />
@@ -242,6 +215,7 @@ export function PracticeScreen() {
           </section>
         )}
       </div>
+      )}
     </GroundScaffold>
   );
 }

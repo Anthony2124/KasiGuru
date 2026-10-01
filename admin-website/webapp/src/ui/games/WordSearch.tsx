@@ -4,7 +4,7 @@
  * a meaning, and the review schedule is a thesis claim that must stay exact.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { categoryForWordSearchKey, GAMES, XP_PER_GAME_CORRECT } from '../../domain/constants';
+import { categoryForWordSearchKey, GAMES } from '../../domain/constants';
 import {
   generateWordSearch,
   lineBetween,
@@ -99,9 +99,8 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
   const finish = (missCount: number) => {
     const count = board.placements.length;
     const stars = missCount === 0 ? 3 : missCount <= 2 ? 2 : 1;
-    const xp = count * (XP_PER_GAME_CORRECT / 2);
-    act((d) =>
-      d.finishGame({ gameType: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, score: count, total: count, statsTotal: count + missCount, xp, stars, perfect: missCount === 0 })
+    const xp = act((d) =>
+      d.finishGame({ mode: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, correct: count, total: count, statsTotal: count + missCount, stars, perfect: missCount === 0 })
     );
     setResult({ xp, stars });
   };

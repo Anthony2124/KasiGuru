@@ -3,7 +3,7 @@
  */
 import { useMemo, useState } from 'preact/hooks';
 import { navigate } from '../../lib/router';
-import { act, getState, useCorpus } from '../../lib/store';
+import { act, useCorpus } from '../../lib/store';
 import { EmptyState, GroundScaffold, Icon, ProgressBar, Scene, sceneForCategory, toast } from '../kit';
 import { AudioButton, WordRow } from '../parts';
 import { categoryBlurb } from './Library';
@@ -39,8 +39,8 @@ export function WordDetailScreen({ id }: { id: string }) {
       act((d) => d.unmarkAsLearned(word));
       toast('Marked as not learned yet');
     } else {
-      act((d) => d.markAsLearned(word, getState().words));
-      toast(`${word.kasiguranin} marked as learned (+100 XP)`);
+      act((d) => d.markAsLearned(word));
+      toast(`${word.kasiguranin} marked as learned`);
     }
   };
   return (

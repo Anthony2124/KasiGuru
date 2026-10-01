@@ -77,6 +77,8 @@ export interface UserProgress {
   age: number | null;
   address: string;
   profileIconId: number;
+  /** A ProfileBackgroundCatalog id; the rules accept only those seven. */
+  profileBackgroundId: string;
   totalXp: number;
   level: number;
   currentStreak: number;
@@ -97,6 +99,13 @@ export interface UserProgress {
   dailyReviewCompletedDate: string;
   dailyGamesDate: string;
   dailyGamesPlayedCount: number;
+  /** 2 once totals are projected from reward receipts; the rules refuse any later write below it. */
+  xpPolicyVersion: number;
+  /** Dated and imported activity XP. Under policy 2, totalXp is activityXp + badgeBonusXp. */
+  activityXp: number;
+  badgeBonusXp: number;
+  /** Up to three badge family ids, comma-separated, in the order they were pinned. */
+  pinnedBadgeIds: string;
   updatedAt: number;
 }
 
@@ -164,6 +173,7 @@ export function initialProgress(): UserProgress {
     age: null,
     address: '',
     profileIconId: 1,
+    profileBackgroundId: 'forest',
     totalXp: 0,
     level: 1,
     currentStreak: 0,
@@ -176,7 +186,7 @@ export function initialProgress(): UserProgress {
     totalQuestionsAnswered: 0,
     lessonsCompleted: 0,
     isOnboardingCompleted: false,
-    dailyGoalXp: 100,
+    dailyGoalXp: 50,
     dailyXpEarned: 0,
     dailyXpDate: '',
     titleBadge: 'Kasiguranin Apprentice',
@@ -184,6 +194,10 @@ export function initialProgress(): UserProgress {
     dailyReviewCompletedDate: '',
     dailyGamesDate: '',
     dailyGamesPlayedCount: 0,
+    xpPolicyVersion: 0,
+    activityXp: 0,
+    badgeBonusXp: 0,
+    pinnedBadgeIds: '',
     updatedAt: 0,
   };
 }
