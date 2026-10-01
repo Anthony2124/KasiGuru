@@ -36,8 +36,12 @@ fun LeaderboardContent(onOpenPlayer: (String) -> Unit, modifier: Modifier = Modi
     val weekly = state.selectedFilter == "Weekly XP"
     val top = state.leaderboard.filter { it.rank in 1..50 }.sortedBy { it.rank }
     Column(modifier.fillMaxSize()) {
-        SegmentedToggle(listOf("This week", "All-time", "Streaks"), keys.indexOf(state.selectedFilter).coerceAtLeast(0),
-            { viewModel.setFilter(keys[it]) }, Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.sm))
+        FilterPills(
+            options = listOf("This week", "All-time", "Streaks"),
+            selectedIndex = keys.indexOf(state.selectedFilter).coerceAtLeast(0),
+            onSelect = { viewModel.setFilter(keys[it]) },
+            modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.xs)
+        )
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(Space.gutter), verticalArrangement = Arrangement.spacedBy(Space.sm)) {
             if (state.isLoading) item { LoadingState(label = "Loading rankings") }
             else if (top.isEmpty()) item { EmptyState(JepjepPose.Curious, "No one ranked yet", "Signed-in learners appear here when they practise.") }

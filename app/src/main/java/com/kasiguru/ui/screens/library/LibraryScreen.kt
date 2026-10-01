@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
-import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SegmentedToggle
 import com.kasiguru.ui.screens.stories.StoryListContent
 import com.kasiguru.ui.screens.vocabulary.DictionaryContent
@@ -70,15 +69,6 @@ fun LibraryScreen(
 
     val header: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth()) {
-            GroundTitleBlock(
-                title = "Library",
-                subtitle = if (segment == LibrarySegment.WORDS) {
-                    "Every word, with its meaning and how it sounds"
-                } else {
-                    "Folk tales with Tagalog and English alongside"
-                }
-            )
-            Spacer(Modifier.height(Space.xs))
             SegmentedToggle(
                 options = listOf("Words", "Stories"),
                 selectedIndex = segment,
@@ -99,6 +89,8 @@ fun LibraryScreen(
     GroundScaffold(
         title = "Library",
         pattern = GroundPattern.None,
+        // The name lives in the bar, so Words | Stories sits right under it like Practice's toggle.
+        compactTitle = true,
         actions = refreshAction,
         content = {
             sides.SaveableStateProvider(key = segment) {

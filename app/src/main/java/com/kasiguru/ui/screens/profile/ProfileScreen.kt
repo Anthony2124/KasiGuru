@@ -13,6 +13,7 @@ import com.kasiguru.ui.theme.Scenery
 import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.screens.leaderboard.LeaderboardViewModel
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,6 +80,7 @@ import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
@@ -164,12 +166,42 @@ fun ProfileScreen(
                         Box(Modifier.fillMaxWidth().height(176.dp).clip(Shapes.panel)) {
                             Image(painterResource(Scenery.forProfile(progress.profileBackgroundId).res), null,
                                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .25f)))
-                            TextButton(onClick = { showBackgrounds = true }, modifier = Modifier.align(Alignment.TopEnd).tourAnchor(TourAnchor.ProfileBackground)) {
-                                Text("Change background", color = Color.White)
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            0f to Color.Black.copy(alpha = .35f),
+                                            0.5f to Color.Transparent
+                                        )
+                                    )
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(Space.sm)
+                                    .tourAnchor(TourAnchor.ProfileBackground)
+                                    .clip(Shapes.pill)
+                                    .background(Color.Black.copy(alpha = .55f))
+                                    .clickable(onClickLabel = "Change background") { showBackgrounds = true }
+                                    .padding(horizontal = Space.sm, vertical = Space.xs),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painterResource(Iconsax.Edit),
+                                    null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(Space.xxs))
+                                Text(
+                                    "Background",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color.White
+                                )
                             }
                         }
-                        Box(Modifier.height(88.dp), contentAlignment = Alignment.TopCenter) {
+                        Box(Modifier.height(72.dp), contentAlignment = Alignment.TopCenter) {
                         ProgressRing(
                             modifier = Modifier.offset(y = (-42).dp),
                             progress = levelFraction,
@@ -189,7 +221,6 @@ fun ProfileScreen(
                             )
                         }
                         }
-                        Spacer(Modifier.height(Space.sm))
                         Text(
                             text = displayName,
                             style = MaterialTheme.typography.headlineLarge,
@@ -204,13 +235,14 @@ fun ProfileScreen(
                             color = BrandLime,
                             textAlign = TextAlign.Center
                         )
-                        TextButton(onClick = onNavigateToLeaderboard) {
-                            Text(if (leaderboard.currentUserRank > 0) "Your rank: #${leaderboard.currentUserRank} this week" else "View leaderboard", color = BrandLime)
-                        }
-                        if (progress.titleBadge.isNotBlank()) {
-                            Spacer(Modifier.height(Space.xs))
+                        Spacer(Modifier.height(Space.sm))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Space.xs),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             // Stored for every learner since onboarding; an earned title, so it shows.
-                            TagChip(label = progress.titleBadge)
+                            if (progress.titleBadge.isNotBlank()) TagChip(label = progress.titleBadge)
+                            RankChip(rank = leaderboard.currentUserRank, onClick = onNavigateToLeaderboard)
                         }
                         Spacer(Modifier.height(Space.xs))
                         Text(
@@ -268,11 +300,31 @@ fun ProfileScreen(
 
                 // ── Overview ──
                 item(key = "overview") {
-                    TextButton(onClick = { showOverview = !showOverview }) { Text(if (showOverview) "Hide learning overview" else "Learning overview", color = BrandLime) }
-                    AnimatedVisibility(showOverview) { Column {
-                    Spacer(Modifier.height(Space.sm))
-                    SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.tile) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                    SoftCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderHairline,
+                        shape = Shapes.tile,
+                        onClick = { showOverview = !showOverview }
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Learning overview",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Ink,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                painter = painterResource(if (showOverview) Iconsax.ArrowUp else Iconsax.ArrowDown),
+                                contentDescription = if (showOverview) "Hide" else "Show",
+                                tint = Muted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    AnimatedVisibility(showOverview) {
+                        Column(
+                            modifier = Modifier.padding(top = Space.md),
+                            verticalArrangement = Arrangement.spacedBy(Space.sm)
+                        ) {
                             // Two different, both-honest numbers. "Mastered" counts words that
                             // currently satisfy the SM-2 bar and can fall when one lapses;
                             // "practised" is the lifetime tally and only rises.
@@ -289,7 +341,7 @@ fun ProfileScreen(
                             )
                         }
                     }
-                    } }
+                    }
                 }
 
                 if (isGuest) item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
@@ -330,6 +382,33 @@ fun ProfileScreen(
             }
         }
     )
+}
+
+/** "#12 this week", or the way to the leaderboard before there is a rank. Opens the leaderboard. */
+@Composable
+private fun RankChip(rank: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(Shapes.pill)
+            .background(Surface)
+            .border(1.dp, BorderHairline, Shapes.pill)
+            .clickable(onClickLabel = "Open the leaderboard", onClick = onClick)
+            .padding(horizontal = Space.sm, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(Iconsax.CupBold),
+            contentDescription = null,
+            tint = Gold,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(Modifier.width(Space.xxs))
+        Text(
+            text = if (rank > 0) "#$rank this week" else "Leaderboard",
+            style = MaterialTheme.typography.labelMedium,
+            color = Ink
+        )
+    }
 }
 
 /**

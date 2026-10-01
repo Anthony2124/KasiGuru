@@ -100,15 +100,19 @@ fun LearnScreen(
                 )
 
                 else -> Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Muted,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Space.gutter)
-                            .padding(bottom = Space.xs)
-                    )
+                    // The section banner already says where the learner is; this line only speaks
+                    // when there is no current section to show.
+                    if (uiState.currentSection == null) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Muted,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Space.gutter)
+                                .padding(bottom = Space.xs)
+                        )
+                    }
                     LazyColumn(
                         state = listState,
                         modifier = Modifier

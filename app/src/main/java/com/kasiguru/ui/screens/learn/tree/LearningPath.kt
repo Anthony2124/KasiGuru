@@ -76,7 +76,9 @@ import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.LimeLip
 import com.kasiguru.ui.theme.LocalReducedMotion
+import com.kasiguru.ui.theme.LimeText
 import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.PathTrackIdle
 import com.kasiguru.ui.theme.Olive
 import com.kasiguru.ui.theme.OliveDeep
 import com.kasiguru.ui.theme.OnLime
@@ -126,7 +128,7 @@ fun LazyListScope.learningPath(
     sections.forEachIndexed { sectionIndex, section ->
         item(key = "section-${section.id}") {
             Spacer(Modifier.height(if (sectionIndex == 0) Space.xs else Space.xl))
-            SectionBanner(section = section)
+            SectionBanner(section = section, number = sectionIndex + 1)
             Spacer(Modifier.height(Space.sm))
             SectionGate(
                 section = section,
@@ -151,14 +153,15 @@ fun LazyListScope.learningPath(
                 }
             }
             val key = nodeKey(node)
+            val next = section.nodes.getOrNull(nodeIndex + 1)
             item(key = "node-$key") {
                 PathRow(
                     node = node,
                     showGuide = key == guideKey,
                     positionInPath = nodeIndex,
                     isFirstInSection = nodeIndex == 0,
-                    isLastInSection = nodeIndex == section.nodes.lastIndex,
-                    previousMastery = section.nodes.getOrNull(nodeIndex - 1)?.mastery,
+                    // The deep-dive header sits between the two tiers, so the trail stops short of it.
+                    trailToNext = next != null && !(next.isDeepDive && !node.isDeepDive),
                     onOpenLesson = onOpenLesson,
                     onOpenMastery = onOpenMastery
                 )
@@ -240,7 +243,7 @@ private val Greyscale: ColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply
  * bottom edge where the title is - white on the scrim's dark end, never on raw sky.
  */
 @Composable
-private fun SectionBanner(section: TreeSection) {
+private fun SectionBanner(section: TreeSection, number: Int) {
     val scenery = Scenery.forSection(section.id)
     val locked = !section.isUnlocked
     val status = when {
@@ -308,6 +311,12 @@ private fun SectionBanner(section: TreeSection) {
                 .align(Alignment.BottomStart)
                 .padding(horizontal = Space.md, vertical = Space.sm)
         ) {
+            val done = section.nodes.count { it.node is TreeNode.Lesson && it.mastery >= Mastery.FAMILIAR }
+            Text(
+                text = "Section $number · $done of ${section.lessonNodeCount} done",
+                style = MaterialTheme.typography.labelMedium,
+                color = Cream
+            )
             Text(
                 text = section.definition.title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -315,16 +324,16 @@ private fun SectionBanner(section: TreeSection) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            val done = section.nodes.count { it.node is TreeNode.Lesson && it.mastery >= Mastery.FAMILIAR }
-            Text("$done of ${section.lessonNodeCount} lessons done", style = MaterialTheme.typography.labelMedium, color = Cream)
-            SegmentedProgress(done, section.lessonNodeCount, Modifier.fillMaxWidth().padding(top = Space.xs))
             Text(
                 text = section.definition.gloss,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = Cream,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (!locked) {
+                SegmentedProgress(done, section.lessonNodeCount, Modifier.fillMaxWidth().padding(top = Space.xs))
+            }
         }
     }
 }
@@ -353,13 +362,13 @@ private fun BannerChip(iconRes: Int, label: String, tint: Color, modifier: Modif
 /** The journey line, and either how close the section is to opening the next or what opens it. */
 @Composable
 private fun SectionGate(section: TreeSection, previousTitle: String?) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = Space.xxs)) {
         Text(
             text = section.definition.journeyLine,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Muted
+            style = MaterialTheme.typography.titleSmall,
+            color = Ink
         )
-        Spacer(Modifier.height(Space.xs))
+        Spacer(Modifier.height(Space.xxs))
         if (section.isUnlocked) {
             GateMeter(section = section)
         } else {
@@ -376,25 +385,17 @@ private fun SectionGate(section: TreeSection, previousTitle: String?) {
  */
 @Composable
 private fun GateMeter(section: TreeSection) {
+    val open = section.earnedXp >= section.requiredXp
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .weight(1f)
-                .height(6.dp)
-                .clip(Shapes.pill)
-                .background(TrackNeutral)
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(section.gateFraction)
-                    .height(6.dp)
-                    .clip(Shapes.pill)
-                    .background(BrandLime)
-            )
-        }
-        Spacer(Modifier.size(Space.sm))
+        Icon(
+            painter = painterResource(id = if (open) Iconsax.TickCircle else Iconsax.StarBold),
+            contentDescription = null,
+            tint = if (open) BrandLime else Gold,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.size(Space.xs))
         Text(
-            text = "${section.earnedXp} / ${section.requiredXp} XP",
+            text = if (open) "Next section open" else "${section.earnedXp} / ${section.requiredXp} XP opens the next section",
             style = MaterialTheme.typography.labelMedium,
             color = Muted
         )
@@ -429,11 +430,12 @@ private fun LockedGate(section: TreeSection, previousTitle: String?) {
 private val WindOffsets = listOf(0f, 0.55f, 0.85f, 0.55f, 0f, -0.55f, -0.85f, -0.55f)
 
 /** Half the width of the wind. Keeps the widest node clear of the gutter on a 360 dp screen. */
-private val WindAmplitude = 64.dp
+private val WindAmplitude = 76.dp
 
 private val NodeSize = 72.dp
 private val CurrentNodeSize = 72.dp
 private val ConnectorHeight = 40.dp
+private val TrailWidth = 18.dp
 private val RingInset = 10.dp
 
 /** Jepjep's height beside the current node, and how far his centre sits from the node's edge. */
@@ -476,41 +478,66 @@ private fun TreeNodeState.look(): NodeLook {
     }
 }
 
-/** One stop on the path: the connector reaching it, then the node, then its label if it has one. */
+/**
+ * One stop on the path: room for the trail arriving from above, the node, then its label.
+ *
+ * Each row draws the trail leaving its own node, one smooth S-curve down to the centre of the next,
+ * underneath everything. Rows are drawn top to bottom, so the next node paints over the end of the
+ * curve and the line always meets the circle, with no straight stubs or gaps where labels sit.
+ */
 @Composable
 private fun PathRow(
     node: TreeNodeState,
     showGuide: Boolean,
     positionInPath: Int,
     isFirstInSection: Boolean,
-    isLastInSection: Boolean,
-    previousMastery: Mastery?,
+    trailToNext: Boolean,
     onOpenLesson: (String, Int) -> Unit,
     onOpenMastery: (String) -> Unit
 ) {
     val lean = WindOffsets[positionInPath % WindOffsets.size]
+    val nextLean = WindOffsets[(positionInPath + 1) % WindOffsets.size]
     val look = node.look()
     val nodeOffset = WindAmplitude * lean
 
-    val trailColor = if (node.mastery >= Mastery.FAMILIAR) Olive else TrackNeutral
-    Column(Modifier.fillMaxWidth().drawBehind {
-        val x = size.width / 2f + nodeOffset.toPx()
-        val top = if (isFirstInSection) 0f else ConnectorHeight.toPx()
-        val nodeCenter = top + (NodeSize + RingInset * 2).toPx() / 2f
-        drawLine(trailColor, androidx.compose.ui.geometry.Offset(x, top),
-            androidx.compose.ui.geometry.Offset(x, if (isLastInSection) nodeCenter else size.height),
-            strokeWidth = 10.dp.toPx(), cap = StrokeCap.Round)
-    }, horizontalAlignment = Alignment.CenterHorizontally) {
-        if (!isFirstInSection) {
-            val previousLean = WindOffsets[(positionInPath - 1) % WindOffsets.size]
-            Connector(
-                fromLean = previousLean,
-                toLean = lean,
-                // The line is solid behind ground already covered and dotted ahead of it, so the
-                // path reads as walked-and-remaining without a second colour doing the work.
-                walked = (previousMastery ?: Mastery.NONE) >= Mastery.FAMILIAR
-            )
-        }
+    val idle = PathTrackIdle
+    val walkedColour = Olive
+    // Ground already covered is olive: the stretch leaving a finished node. It fills as you walk it.
+    val walked by animateFloatAsState(
+        targetValue = if (node.mastery >= Mastery.FAMILIAR) 1f else 0f,
+        animationSpec = tween(if (LocalReducedMotion.current) 0 else 450),
+        label = "walked trail"
+    )
+    val topRoom = if (isFirstInSection) 0.dp else ConnectorHeight
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                if (!trailToNext) return@drawBehind
+                val amplitude = WindAmplitude.toPx()
+                val ringHalf = (NodeSize + RingInset * 2).toPx() / 2f
+                val x1 = size.width / 2f + lean * amplitude
+                val y1 = topRoom.toPx() + ringHalf
+                val x2 = size.width / 2f + nextLean * amplitude
+                val y2 = size.height + ConnectorHeight.toPx() + ringHalf
+                val bend = (y2 - y1) * 0.5f
+                val trail = Path().apply {
+                    moveTo(x1, y1)
+                    cubicTo(x1, y1 + bend, x2, y2 - bend, x2, y2)
+                }
+                val stroke = Stroke(width = TrailWidth.toPx(), cap = StrokeCap.Round)
+                drawPath(trail, idle, style = stroke)
+                if (walked > 0f) {
+                    val measure = PathMeasure().apply { setPath(trail, false) }
+                    val filled = Path()
+                    measure.getSegment(0f, measure.length * walked, filled)
+                    drawPath(filled, walkedColour, style = stroke)
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(topRoom))
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             PathNode(
@@ -543,53 +570,40 @@ private fun PathRow(
 }
 
 /**
- * One line under the nodes that need one: what the current node starts, and what a locked mastery
- * test is waiting for. Every other node says enough with its face.
+ * The node's name under it, and on the node to take next, what tapping it does. Drawn straight over
+ * the trail, which runs behind it.
  */
 @Composable
 private fun NodeCaption(node: TreeNodeState, look: NodeLook, offset: Dp) {
-    val isTest = node.node is TreeNode.MasteryTest
-    val text = node.title + when {
-        look == NodeLook.Current -> "\nStart"
-        look == NodeLook.Test && node.isCurrent -> "\nTake the test"
-        else -> ""
+    val action = when {
+        look == NodeLook.Current -> "Start"
+        look == NodeLook.Test && node.isCurrent -> "Take the test"
+        else -> null
     }
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = if (look == NodeLook.Locked) Faint else Ink,
-        textAlign = TextAlign.Center,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         // The node's own description already says this; reading it twice is noise.
         modifier = Modifier
             .width(160.dp)
             .offset(x = offset)
-            .background(Ground, Shapes.chip)
             .padding(top = Space.xxs)
             .clearAndSetSemantics { }
-    )
-}
-
-/** The winding trail between two stops; olive marks the ground already covered. */
-@Composable
-private fun Connector(fromLean: Float, toLean: Float, walked: Boolean) {
-    val colour = Olive
-    val idle = TrackNeutral
-    val completed by animateFloatAsState(if (walked) 1f else 0f,
-        tween(if (LocalReducedMotion.current) 0 else 450), label = "walked trail")
-    Canvas(Modifier.fillMaxWidth().height(ConnectorHeight).clearAndSetSemantics { }) {
-        val amplitude = WindAmplitude.toPx()
-        val x1 = size.width / 2f + fromLean * amplitude
-        val x2 = size.width / 2f + toLean * amplitude
-        val trail = Path().apply {
-            moveTo(x1, 0f)
-            cubicTo(x1, size.height * .45f, x2, size.height * .55f, x2, size.height)
+    ) {
+        Text(
+            text = node.title,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (look == NodeLook.Locked) Muted else Ink,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+        if (action != null) {
+            Text(
+                text = action,
+                style = MaterialTheme.typography.labelMedium,
+                color = LimeText,
+                textAlign = TextAlign.Center
+            )
         }
-        val stroke = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
-        drawPath(trail, idle, style = stroke)
-        val measure = PathMeasure().apply { setPath(trail, false) }
-        val filled = Path()
-        measure.getSegment(0f, measure.length * completed, filled)
-        drawPath(filled, colour, style = stroke)
     }
 }
 

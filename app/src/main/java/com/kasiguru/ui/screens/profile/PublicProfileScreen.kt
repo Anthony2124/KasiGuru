@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -32,7 +33,9 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
     var menu by remember { mutableStateOf(false) }
     GroundScaffold(title = state.profile?.displayName ?: "Player profile", onBack = onBack, compactTitle = true, pattern = GroundPattern.None,
         actions = { Box {
-            TextButton(onClick = { menu = true }) { Text("More", color = Ink) }
+            IconButton(onClick = { menu = true }) {
+                Icon(androidx.compose.material.icons.Icons.Default.MoreHoriz, contentDescription = "More", tint = Ink)
+            }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("Report player") }, onClick = { menu = false; onReport() })
             }
@@ -42,16 +45,32 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
         else if (profile == null) EmptyState(JepjepPose.Curious, "Profile unavailable", state.error ?: "This learner hasn't shared a public profile yet.", actionLabel = "Try again", onAction = viewModel::refresh)
         else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(Space.gutter), verticalArrangement = Arrangement.spacedBy(Space.md)) {
             item {
-                Box(Modifier.fillMaxWidth().height(184.dp).clip(Shapes.panel)) {
+                Box(Modifier.fillMaxWidth().height(160.dp).clip(Shapes.panel)) {
                     Image(painterResource(Scenery.forProfile(profile.profileBackgroundId).res), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .65f)))))
-                    Text(state.weeklyRank?.let { "#$it this week" } ?: "Learning profile", color = Cream, modifier = Modifier.align(Alignment.BottomEnd).padding(Space.md))
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = .35f), Color.Transparent))))
+                    state.weeklyRank?.let { rank ->
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(Space.sm)
+                                .clip(Shapes.pill)
+                                .background(Color.Black.copy(alpha = .55f))
+                                .padding(horizontal = Space.sm, vertical = Space.xxs),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(painterResource(Iconsax.CupBold), null, tint = Gold, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(Space.xxs))
+                            Text("#$rank this week", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                        }
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Space.sm)) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = Space.sm).offset(y = (-36).dp)) {
                     JepjepAvatarPortrait(JepjepAvatar.fromId(profile.profileIconId), size = 88.dp, level = profile.level)
-                    Column(Modifier.weight(1f).padding(start = Space.sm)) {
+                }
+                Column(Modifier.fillMaxWidth().offset(y = (-24).dp)) {
+                    Column {
                         Text(profile.displayName, style = MaterialTheme.typography.headlineMedium, color = Ink)
-                        Text(com.kasiguru.util.gamification.GamificationEngine.getLevelInfo(profile.totalXp).title, color = BrandLime)
+                        Text(com.kasiguru.util.gamification.GamificationEngine.getLevelInfo(profile.totalXp).title, style = MaterialTheme.typography.titleSmall, color = BrandLime)
                         val joined = if (profile.createdAt > 0) Instant.ofEpochMilli(profile.createdAt).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("MMM yyyy")) else null
                         val active = if (profile.updatedAt > 0) Instant.ofEpochMilli(profile.updatedAt).atZone(ZoneId.systemDefault()).toLocalDate() else null
                         Text(listOfNotNull(joined?.let { "Joined $it" }, active?.let { if (it == java.time.LocalDate.now()) "active today" else "active $it" }).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Muted)
@@ -60,13 +79,26 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
             }
             if (state.error != null) item { TextButton(onClick = viewModel::refresh) { Text(state.error.orEmpty(), color = Muted) } }
             item {
-                listOf("day streak" to profile.currentStreak, "total XP" to profile.totalXp,
-                    "words learned" to profile.wordsLearned, "lessons done" to profile.lessonsCompleted).chunked(2).forEach { stats ->
+                data class PublicStat(val icon: Int, val tint: Color, val value: Int, val label: String)
+                listOf(
+                    PublicStat(Iconsax.FlashBold, Coral, profile.currentStreak, "day streak"),
+                    PublicStat(Iconsax.StarBold, Gold, profile.totalXp, "total XP"),
+                    PublicStat(Iconsax.BookBold, Lime, profile.wordsLearned, "words learned"),
+                    PublicStat(Iconsax.Teacher, Info, profile.lessonsCompleted, "lessons done")
+                ).chunked(2).forEach { stats ->
                     Row(Modifier.fillMaxWidth().padding(bottom = Space.sm), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                        stats.forEach { (label, value) -> SoftCard(Modifier.weight(1f)) {
-                            Text("$value", color = Ink, style = MaterialTheme.typography.headlineMedium)
-                            Text(label, color = Muted, style = MaterialTheme.typography.labelMedium)
-                        } }
+                        stats.forEach { stat ->
+                            SoftCard(Modifier.weight(1f), shape = Shapes.tile, border = BorderHairline) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(painterResource(stat.icon), null, tint = stat.tint, modifier = Modifier.size(24.dp))
+                                    Spacer(Modifier.width(Space.sm))
+                                    Column {
+                                        Text("%,d".format(stat.value), color = Ink, style = MaterialTheme.typography.titleLarge)
+                                        Text(stat.label, color = Muted, style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -85,9 +117,14 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
                 val theirs = viewModel.weeklyXp(profile)
                 val max = maxOf(theirs, state.myWeeklyXp, 1)
                 Column(Modifier.padding(top = Space.sm), verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                    listOf(profile.displayName to theirs, "You" to state.myWeeklyXp).forEach { (name, xp) ->
-                        Text("$name · $xp XP", color = Ink)
-                        com.kasiguru.ui.components.KasiGuruProgressBar(xp.toFloat() / max, modifier = Modifier.fillMaxWidth(), height = 8.dp)
+                    listOf(Triple(profile.displayName, theirs, Gold), Triple("You", state.myWeeklyXp, Lime)).forEach { (name, xp, colour) ->
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(name, color = Ink, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                            Text("$xp XP", color = Muted, style = MaterialTheme.typography.labelLarge)
+                        }
+                        Box(Modifier.fillMaxWidth().height(10.dp).clip(Shapes.pill).background(TrackNeutral)) {
+                            Box(Modifier.fillMaxWidth((xp.toFloat() / max).coerceIn(0f, 1f)).fillMaxHeight().clip(Shapes.pill).background(colour))
+                        }
                     }
                 }
             }

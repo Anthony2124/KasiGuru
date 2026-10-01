@@ -46,7 +46,6 @@ import com.kasiguru.ui.screens.leaderboard.LeaderboardViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
-import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionCaption
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
@@ -68,7 +67,6 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.WidthClass
 import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.theme.Lime
-import com.kasiguru.util.gamification.GamificationEngine
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
 
@@ -88,7 +86,6 @@ fun GameHubScreen(
     val haptic = LocalHapticFeedback.current
 
     val totalXp = uiState.userProgress?.totalXp ?: 0
-    val levelInfo = remember(totalXp) { GamificationEngine.getLevelInfo(totalXp) }
 
     // remember's calculation runs outside composition, so themed colours must be resolved here first.
     val violet = Lime
@@ -156,49 +153,57 @@ fun GameHubScreen(
         return
     }
 
+    // The name sits in the bar from the start, with Games | Leaderboard right under it, so the
+    // toggle reads as this screen's two halves rather than something floating above its title.
     GroundScaffold(
         title = "Practice",
-        subtitle = "Level ${levelInfo.level} · ${levelInfo.title}",
         pattern = GroundPattern.Orbs,
+        compactTitle = true,
         content = {
             Column(Modifier.fillMaxSize()) {
-                SegmentedToggle(listOf("Games", "Leaderboard"), segment, { segment = it },
-                    Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.xs).tourAnchor(TourAnchor.PracticeLeaderboard))
-                if (segment == 1) LeaderboardContent(onOpenPlayer, modifier = Modifier.weight(1f).padding(bottom = Space.navBarClearance), viewModel = leaderboardViewModel)
-                else
+                SegmentedToggle(
+                    options = listOf("Games", "Leaderboard"),
+                    selectedIndex = segment,
+                    onSelect = { segment = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Space.gutter)
+                        .padding(top = Space.xxs, bottom = Space.xs)
+                        .tourAnchor(TourAnchor.PracticeLeaderboard)
+                )
+                if (segment == 1) {
+                    LeaderboardContent(
+                        onOpenPlayer,
+                        modifier = Modifier.weight(1f).padding(bottom = Space.navBarClearance),
+                        viewModel = leaderboardViewModel
+                    )
+                } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = Space.gutter, end = Space.gutter, top = Space.lg, bottom = Space.navBarClearance
+                    start = Space.gutter, end = Space.gutter, top = Space.sm, bottom = Space.navBarClearance
                 )
             ) {
                 item {
-                    GroundTitleBlock(
-                        title = "Practice",
-                        subtitle = "Level ${levelInfo.level} · ${levelInfo.title}",
-                        // StatStrip already branches for off-canopy use; it just never had a caller.
-                        // The card gives it a surface so it does not float on bare Ground.
-                        lead = {
-                            SoftCard(modifier = Modifier.fillMaxWidth()) {
-                                StatStrip(
-                        modifier = Modifier.tourAnchor(TourAnchor.PracticeStats),
-                                    stats = listOf(
-                                        Stat("XP", "$totalXp"),
-                                        Stat("Stars", "${uiState.totalStars}"),
-                                        // accuracyRate is 1.0 during the repository's grace period, which
-                                        // would show a learner who has answered nothing as 100% accurate.
-                                        // Same rule as Me's "Not measured yet".
-                                        Stat(
-                                            "Accuracy",
-                                            if ((uiState.userProgress?.totalQuestionsAnswered ?: 0) == 0) "–"
-                                            else "${(uiState.accuracyRate * 100).toInt()}%"
-                                        )
-                                    ),
-                                    onCanopy = false
+                    SoftCard(modifier = Modifier.fillMaxWidth()) {
+                        StatStrip(
+                            modifier = Modifier.tourAnchor(TourAnchor.PracticeStats),
+                            stats = listOf(
+                                Stat("XP", "$totalXp"),
+                                Stat("Stars", "${uiState.totalStars}"),
+                                // accuracyRate is 1.0 during the repository's grace period, which
+                                // would show a learner who has answered nothing as 100% accurate.
+                                // Same rule as Me's "Not measured yet".
+                                Stat(
+                                    "Accuracy",
+                                    if ((uiState.userProgress?.totalQuestionsAnswered ?: 0) == 0) "–"
+                                    else "${(uiState.accuracyRate * 100).toInt()}%"
                                 )
-                            }
-                        }
-                    )
+                            ),
+                            onCanopy = false
+                        )
+                    }
+                    Spacer(Modifier.height(Space.lg))
                 }
                 recommended?.let { game ->
                     item {
@@ -259,6 +264,7 @@ fun GameHubScreen(
                     }
                 }
             }
+                }
             }
         }
     )

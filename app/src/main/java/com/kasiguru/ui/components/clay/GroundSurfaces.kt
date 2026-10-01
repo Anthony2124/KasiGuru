@@ -219,9 +219,12 @@ fun GroundScaffold(
                     modifier = Modifier.weight(1f)
                 ) { isScrolled ->
                     if (isScrolled) {
+                        // A tab root's name is its page heading, so it is set larger than a detail
+                        // screen's bar title.
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleLarge,
+                            style = if (onBack == null) MaterialTheme.typography.headlineSmall
+                            else MaterialTheme.typography.titleLarge,
                             color = Ink,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis

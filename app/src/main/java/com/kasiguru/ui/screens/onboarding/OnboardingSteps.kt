@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepAvatar
 import com.kasiguru.ui.components.brand.JepjepAvatarPicker
+import com.kasiguru.ui.components.brand.JepjepHello
 import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.brand.KasiGuruWordmark
 import com.kasiguru.ui.components.clay.ClayButton
@@ -197,13 +198,15 @@ internal fun WelcomeStage(
  * A full-screen moment on the glow. The whole screen is the button, and says so.
  *
  * @param jump Jepjep hops once as he arrives (the wake-up). Skipped with reduced motion.
+ * @param animatedHello draw Adrian's animated waving Jepjep ([JepjepHello]) instead of [pose].
  */
 @Composable
 internal fun StoryMoment(
     pose: JepjepPose,
     jump: Boolean,
     jepjepAnchor: Modifier,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    animatedHello: Boolean = false
 ) {
     val reducedMotion = LocalReducedMotion.current
     val hop = remember { Animatable(0f) }
@@ -228,17 +231,27 @@ internal fun StoryMoment(
             .navigationBarsPadding()
     ) {
         val height = (maxHeight * 0.42f).coerceIn(160.dp, 340.dp)
-        Jepjep(
-            pose = pose,
-            height = height,
-            breathe = true,
-            contentDescription = pose.description,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .then(jepjepAnchor)
-                // After the anchor, so the glow stays put while he hops.
-                .graphicsLayer { translationY = hop.value * 56.dp.toPx() }
-        )
+        if (animatedHello) {
+            // The SVG's canvas has room for his hop and the sparkles, so it draws a little taller.
+            JepjepHello(
+                height = height * 1.25f,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .then(jepjepAnchor)
+            )
+        } else {
+            Jepjep(
+                pose = pose,
+                height = height,
+                breathe = true,
+                contentDescription = pose.description,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .then(jepjepAnchor)
+                    // After the anchor, so the glow stays put while he hops.
+                    .graphicsLayer { translationY = hop.value * 56.dp.toPx() }
+            )
+        }
         Text(
             text = "Tap anywhere to continue",
             style = MaterialTheme.typography.bodyLarge,

@@ -303,26 +303,28 @@ private fun CaptionCard(
 
             Spacer(Modifier.height(Space.sm))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Jepjep(JepjepPose.Peeking, height = 72.dp)
+            // Jepjep beside the words, so the title and its explanation read as one thing he says.
+            Row(verticalAlignment = Alignment.Top) {
+                Jepjep(JepjepPose.Peeking, height = 64.dp)
                 Spacer(Modifier.width(Space.sm))
-            Text(
-                text = stop.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = Ink,
-                modifier = Modifier.weight(1f)
-            )
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stop.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Ink
+                    )
+                    Spacer(Modifier.height(Space.xxs))
+                    Text(
+                        text = stop.body,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Muted
+                    )
+                    stop.gesture?.let {
+                        GestureHint(swipe = it == TourGesture.SWIPE, modifier = Modifier.padding(top = Space.sm))
+                    }
+                }
             }
-
-            Spacer(Modifier.height(Space.xxs))
-
-            Text(
-                text = stop.body,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Muted
-            )
-            stop.gesture?.let { GestureHint(swipe = it == TourGesture.SWIPE, modifier = Modifier.padding(top = Space.sm)) }
         }
 
         Spacer(Modifier.height(Space.md))

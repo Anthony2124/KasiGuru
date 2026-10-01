@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -220,6 +223,44 @@ fun TagChip(
             style = MaterialTheme.typography.labelSmall,
             color = labelColor
         )
+    }
+}
+
+/**
+ * A row of small filter pills, for narrowing what a view already shows (This week / All-time /
+ * Streaks). Deliberately lighter than [SegmentedToggle], so a filter under a toggle reads as a
+ * second level rather than a second toggle. The selected pill is tinted and bold; the rest are
+ * outlined, so the choice does not rest on colour alone.
+ */
+@Composable
+fun FilterPills(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+        options.forEachIndexed { index, label ->
+            val selected = index == selectedIndex
+            Box(
+                modifier = Modifier
+                    .defaultMinSize(minHeight = 36.dp)
+                    .clip(Shapes.pill)
+                    .background(if (selected) LimeTint else Color.Transparent)
+                    .border(1.dp, if (selected) Lime else BorderHairline, Shapes.pill)
+                    .clickable(role = Role.Tab, onClick = { onSelect(index) })
+                    .semantics { this.selected = selected }
+                    .padding(horizontal = Space.md),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (selected) com.kasiguru.ui.theme.LimeText else Muted
+                )
+            }
+        }
     }
 }
 

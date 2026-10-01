@@ -4,97 +4,129 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kasiguru.data.remote.model.AppReleaseDto
+import com.kasiguru.ui.components.clay.ClayButton
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.BorderHairline
+import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.LimeText
+import com.kasiguru.ui.theme.LimeTint
+import com.kasiguru.ui.theme.Muted
+import com.kasiguru.ui.theme.OnLime
+import com.kasiguru.ui.theme.Shapes
+import com.kasiguru.ui.theme.Space
 
+/**
+ * A new version of the app is out. One compact card: what it is, a line of its notes, and the
+ * download. Optional updates can be put off with "Later"; a forced one cannot.
+ */
 @Composable
 fun AppUpdateBanner(
     release: AppReleaseDto,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val download: () -> Unit = {
+        val targetUrl = release.apkUrl.ifBlank { "https://kasiguru.web.app/download.html" }
+        val uri = Uri.parse(targetUrl)
+        // Only allow http/https update links (defense against
+        // javascript:/intent:/etc. URLs in release metadata).
+        if (uri.scheme == "https" || uri.scheme == "http") {
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        } else {
+            Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: ${uri.scheme}")
+        }
+    }
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        ),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+    SoftCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.tile,
+        border = BorderHairline
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(LimeTint),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.SystemUpdate,
-                    contentDescription = "App Update",
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                Text(
-                    text = "New Update Available! (v${release.versionName})",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    painter = painterResource(id = Iconsax.ArrowDown),
+                    contentDescription = null,
+                    tint = LimeText,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-
-            if (release.releaseNotes.isNotBlank()) {
+            Spacer(Modifier.width(Space.sm))
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = release.releaseNotes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    text = "Version ${release.versionName} is ready",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!release.forceUpdate) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Later", color = MaterialTheme.colorScheme.onTertiaryContainer)
-                    }
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        val targetUrl = release.apkUrl.ifBlank { "https://kasiguru.web.app/download.html" }
-                        val uri = Uri.parse(targetUrl)
-                        // Only allow http/https update links (defense against
-                        // javascript:/intent:/etc. URLs in release metadata).
-                        if (uri.scheme == "https" || uri.scheme == "http") {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                        } else {
-                            Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: ${uri.scheme}")
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary
+                if (release.releaseNotes.isNotBlank()) {
+                    Text(
+                        text = release.releaseNotes.lineSequence()
+                            .map { it.trim().removePrefix("-").removePrefix("•").trim() }
+                            .firstOrNull { it.isNotEmpty() }
+                            .orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                ) {
-                    Icon(imageVector = Icons.Default.Download, contentDescription = "Download")
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Download Update")
                 }
             }
+        }
+        Spacer(Modifier.height(Space.sm))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.xs, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!release.forceUpdate) {
+                TextButton(onClick = onDismiss) {
+                    Text("Later", color = Muted, style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            ClayButton(
+                label = "Download",
+                onClick = download,
+                leading = {
+                    Icon(
+                        painter = painterResource(id = Iconsax.ArrowDown),
+                        contentDescription = null,
+                        tint = OnLime,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
         }
     }
 }

@@ -58,6 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.domain.lesson.TreeNode
 import com.kasiguru.ui.components.AnnouncementBanner
 import com.kasiguru.ui.components.AppUpdateBanner
 import com.kasiguru.ui.components.SecureProgressBanner
@@ -92,6 +93,7 @@ import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.theme.LimeTint
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Shapes
@@ -105,6 +107,7 @@ import com.kasiguru.ui.theme.rememberWidthClass
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.TourRevealInScroll
 import com.kasiguru.ui.tour.tourAnchor
+import io.eyram.iconsax.IconSax
 
 /**
  * Home: the one thing to do next, and how today is going.
@@ -189,22 +192,27 @@ fun HomeScreen(
     val later: @Composable () -> Unit = {
         SectionHeading(text = "Quick practice")
         Spacer(Modifier.height(Space.sm))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-            val game = uiState.lastGameType?.takeIf { it in setOf("word_match", "word_search", "word_wheel") }
-            val gameName = game?.substringBefore(":")?.split("_")?.joinToString(" ") { it.replaceFirstChar(Char::uppercase) } ?: "Games"
-            listOf(Triple("Flashcards", Iconsax.Repeat, onOpenReview),
-                Triple(gameName, Iconsax.Game, { if (game == null) onOpenGames() else onOpenGame(game) }),
-                Triple("Story", Iconsax.BookBold, { uiState.stories.firstOrNull { it.isUnlocked }?.let { onOpenStory(it.id) } ?: onOpenStories() })
-            ).forEach { (label, icon, action) ->
-                SoftCard(modifier = Modifier.weight(1f), shape = Shapes.tile, onClick = action,
-                    contentPadding = PaddingValues(horizontal = Space.xs, vertical = Space.sm)) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(painterResource(icon), null, tint = BrandLime, modifier = Modifier.size(24.dp))
-                        Spacer(Modifier.height(Space.xs))
-                        Text(label, style = MaterialTheme.typography.labelMedium, color = Ink, textAlign = TextAlign.Center)
-                    }
-                }
-            }
+        val game = uiState.lastGameType?.takeIf { it in setOf("word_match", "word_search", "word_wheel") }
+        val gameName = game?.split("_")?.joinToString(" ") { it.replaceFirstChar(Char::uppercase) } ?: "Games"
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm)
+        ) {
+            QuickPracticeTile("Flashcards", IconSax.Bold.Repeat, onOpenReview, Modifier.weight(1f))
+            QuickPracticeTile(
+                label = gameName,
+                iconRes = IconSax.Bold.Game,
+                onClick = { if (game == null) onOpenGames() else onOpenGame(game) },
+                modifier = Modifier.weight(1f)
+            )
+            QuickPracticeTile(
+                label = "Story",
+                iconRes = IconSax.Bold.Book1,
+                onClick = { uiState.stories.firstOrNull { it.isUnlocked }?.let { onOpenStory(it.id) } ?: onOpenStories() },
+                modifier = Modifier.weight(1f)
+            )
         }
         uiState.wordOfDay?.let { word ->
             Spacer(Modifier.height(Space.lg))
@@ -220,17 +228,8 @@ fun HomeScreen(
                 }
             }
         }
-        Spacer(Modifier.height(Space.lg))
-        uiState.announcements.forEach { announcement ->
-            Spacer(Modifier.height(Space.md))
-            AnnouncementBanner(announcement = announcement, collapsed = true)
-        }
-        if (uiState.showBackupPrompt) {
-            Spacer(Modifier.height(Space.md))
-            SecureProgressBanner(onSecure = onOpenAccount, onDismiss = viewModel::dismissBackupPrompt, collapsed = true)
-        }
-
         // The week, where history belongs: below the work, not pinned above it.
+        Spacer(Modifier.height(Space.xl))
         SectionHeading(text = "This week")
         Spacer(Modifier.height(Space.sm))
         WeekStrip(
@@ -248,19 +247,42 @@ fun HomeScreen(
             },
             onCanopy = false
         )
+
+        // Notices last, one line each: they are news, not the day's work.
+        val optionalUpdate = uiState.updateRelease?.takeIf { !it.forceUpdate }
+        if (optionalUpdate != null || uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
+            Spacer(Modifier.height(Space.xl))
+            SectionHeading(text = "News")
+            Spacer(Modifier.height(Space.sm))
+            Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                optionalUpdate?.let { release ->
+                    AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
+                }
+                uiState.announcements.forEach { announcement ->
+                    AnnouncementBanner(announcement = announcement, collapsed = true)
+                }
+                if (uiState.showBackupPrompt) {
+                    SecureProgressBanner(
+                        onSecure = onOpenAccount,
+                        onDismiss = viewModel::dismissBackupPrompt,
+                        collapsed = true
+                    )
+                }
+            }
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Ground)
-            .verticalScroll(scroll)
             .statusBarsPadding()
+            .verticalScroll(scroll)
             .padding(horizontal = Space.gutter)
             .padding(top = Space.sm, bottom = Space.navBarClearance)
     ) {
-        // Rare, and when it is a forced update it outranks everything else on the screen.
-        uiState.updateRelease?.let { release ->
+        // A forced update outranks everything else on the screen; an optional one waits below the work.
+        uiState.updateRelease?.takeIf { it.forceUpdate }?.let { release ->
             AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
             Spacer(Modifier.height(Space.md))
         }
@@ -333,44 +355,55 @@ private fun HomeHero(
 ) {
     val displayName = progress.fullName.ifBlank { progress.userName }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.panel)
-            .glowBackground(centerX = 0.2f, centerY = 0.8f)
-            .border(1.dp, BorderHairline, Shapes.panel)
-            .padding(Space.md)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             JepjepAvatarPortrait(
                 avatar = JepjepAvatar.fromId(progress.profileIconId),
-                size = 56.dp,
+                size = 48.dp,
                 level = progress.level,
                 contentDescription = "Your profile, level ${progress.level}",
                 onClick = onOpenProfile
             )
             Spacer(Modifier.width(Space.sm))
-            // The name is the highlighted word in the heading, as on the onboarding's "Nice to meet
-            // you" screen.
-            Text(
-                text = buildAnnotatedString {
-                    append("Magandang aldew, ")
-                    withStyle(SpanStyle(color = BrandLime)) { append(displayName) }
-                },
-                style = MaterialTheme.typography.headlineSmall,
-                color = Ink,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            // The name is the highlighted word, as on the onboarding's "Nice to meet you" screen.
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Magandang aldew,",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted,
+                    maxLines = 1
+                )
+                Text(
+                    text = displayName,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = BrandLime,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Spacer(Modifier.width(Space.xs))
+            HeroChip(
+                iconRes = Iconsax.FlashBold,
+                tint = Coral,
+                text = "${progress.currentStreak}",
+                spoken = "Streak, ${progress.currentStreak} ${if (progress.currentStreak == 1) "day" else "days"}. " +
+                    "Shows what keeps it going.",
+                onClick = onOpenStreak,
+                modifier = Modifier.tourAnchor(TourAnchor.StreakBadge)
+            )
+            Spacer(Modifier.width(Space.xxs))
+            HeroChip(
+                iconRes = Iconsax.StarBold,
+                tint = Gold,
+                text = "${progress.totalXp}",
+                spoken = "${progress.totalXp} XP in total"
+            )
+            Spacer(Modifier.width(Space.xxs))
             Box(
                 modifier = Modifier
                     .tourAnchor(TourAnchor.NotificationBell)
                     .size(Touch.minTarget)
                     .clip(CircleShape)
-                    .background(Surface)
-                    .border(1.dp, BorderHairline, CircleShape)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
@@ -387,28 +420,6 @@ private fun HomeHero(
                 )
             }
         }
-
-        Spacer(Modifier.height(Space.sm))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-            HeroChip(
-                iconRes = Iconsax.FlashBold,
-                tint = Coral,
-                text = if (progress.currentStreak == 1) "1 day streak" else "${progress.currentStreak} day streak",
-                spoken = "Streak, ${progress.currentStreak} ${if (progress.currentStreak == 1) "day" else "days"}. " +
-                    "Shows what keeps it going.",
-                onClick = onOpenStreak,
-                modifier = Modifier.tourAnchor(TourAnchor.StreakBadge)
-            )
-            HeroChip(
-                iconRes = Iconsax.StarBold,
-                tint = Gold,
-                text = "${progress.totalXp} XP",
-                spoken = "${progress.totalXp} XP in total"
-            )
-        }
-
-
     }
 }
 
@@ -445,11 +456,11 @@ private fun HeroChip(
     Row(
         modifier = modifier
             .then(touch)
-            .heightIn(min = 40.dp)
+            .heightIn(min = 36.dp)
             .clip(Shapes.pill)
             .background(Surface)
             .border(1.dp, BorderHairline, Shapes.pill)
-            .padding(horizontal = Space.sm)
+            .padding(horizontal = 10.dp)
             .clearAndSetSemantics {
                 contentDescription = spoken
                 if (onClick != null) role = Role.Button
@@ -463,7 +474,7 @@ private fun HeroChip(
             modifier = Modifier.size(16.dp)
         )
         Spacer(Modifier.width(Space.xxs))
-        Text(text = text, style = MaterialTheme.typography.labelMedium, color = Ink)
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = Ink, maxLines = 1)
     }
 }
 
@@ -525,7 +536,10 @@ private fun PrimaryAction(
         uiState.continueCard?.let { card ->
             ContinueCard(
                 card = card,
-                onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) }
+                onClick = { onStartLesson(card.lessonRef.unitId, card.lessonRef.lessonIndex) },
+                section = uiState.tree.firstOrNull { section ->
+                    section.nodes.any { (it.node as? TreeNode.Lesson)?.ref == card.lessonRef }
+                }
             )
         } ?: ClayButton(
             label = label,
@@ -540,6 +554,38 @@ private fun PrimaryAction(
                 )
             }
         )
+    }
+}
+
+/** One of Home's three shortcuts: the icon on a lime disc, the name under it. */
+@Composable
+private fun QuickPracticeTile(label: String, iconRes: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SoftCard(
+        modifier = modifier.fillMaxHeight(),
+        shape = Shapes.tile,
+        border = BorderHairline,
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = Space.xs, vertical = Space.md)
+    ) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(LimeTint),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(painterResource(iconRes), null, tint = LimeText, modifier = Modifier.size(22.dp))
+            }
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = Ink,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
     }
 }
 

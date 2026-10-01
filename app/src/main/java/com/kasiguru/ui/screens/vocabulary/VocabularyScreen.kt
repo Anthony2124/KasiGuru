@@ -54,6 +54,7 @@ import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
+import com.kasiguru.ui.components.categoryDoodle
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionHeading
@@ -69,6 +70,8 @@ import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Info
+import com.kasiguru.ui.theme.CoralText
+import com.kasiguru.ui.theme.GoldText
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.KasiguraninHeadword
 import com.kasiguru.ui.theme.Lime
@@ -141,8 +144,12 @@ fun DictionaryRefreshAction(isSyncing: Boolean, onRefresh: () -> Unit) {
     }
 }
 
-/** Status hues the category tiles cycle through, so neighbouring tiles differ without new colours. */
-private val CategoryAccents: List<Color> @Composable get() = listOf(Lime, Info, Gold, Coral)
+/**
+ * Status hues the category tiles cycle through, so neighbouring tiles differ without new colours. The
+ * text variants: the same bright hues on night, deepened on the light theme so a doodle on its pale
+ * tint still reads.
+ */
+private val CategoryAccents: List<Color> @Composable get() = listOf(LimeText, Info, GoldText, CoralText)
 
 /**
  * The dictionary's body: one search field, the word of the day, Add a word, and the categories.
@@ -489,7 +496,7 @@ private fun CategoryTile(
         contentPadding = PaddingValues(Space.md)
     ) {
         Box(
-            modifier = Modifier.size(40.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
+            modifier = Modifier.size(44.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center
         ) {
             if (meta.customDrawableRes != null) {
@@ -499,11 +506,12 @@ private fun CategoryTile(
                     modifier = Modifier.size(24.dp)
                 )
             } else {
+                // The hand-drawn doodle for the category, the same one its flashcards carry.
                 Icon(
-                    painter = painterResource(id = meta.iconRes),
+                    painter = painterResource(id = categoryDoodle(meta.name)),
                     contentDescription = null,
                     tint = accent,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
         }

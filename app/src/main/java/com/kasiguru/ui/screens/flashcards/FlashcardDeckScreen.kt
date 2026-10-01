@@ -1,25 +1,19 @@
 package com.kasiguru.ui.screens.flashcards
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import com.kasiguru.ui.tour.TourAnchor
-import com.kasiguru.ui.tour.tourAnchor
-import com.kasiguru.ui.components.FlashcardFirstNote
-import com.kasiguru.ui.components.GestureHint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontStyle
-import com.kasiguru.ui.components.FlashCard
-import com.kasiguru.ui.components.SegmentedProgress
-import com.kasiguru.util.srs.Sm2Algorithm
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,9 +23,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,13 +35,21 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.AudioPlayButton
 import com.kasiguru.ui.components.ConfettiView
+import com.kasiguru.ui.components.FlashCard
+import com.kasiguru.ui.components.FlashcardFirstNote
+import com.kasiguru.ui.components.GestureHint
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.SegmentedProgress
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
 import com.kasiguru.util.audio.AudioPlayerManager
 import com.kasiguru.util.srs.ReviewRating
+import com.kasiguru.util.srs.Sm2Algorithm
+import kotlinx.coroutines.launch
 
 /**
  * Immersive on purpose, like Lesson Player and the mini-games: no canopy, no bottom nav, just the
@@ -92,6 +96,7 @@ fun FlashcardDeckScreen(
             contentAlignment = Alignment.Center
         ) {
             ConfettiView()
+            CloseCorner(onNavigateBack, Modifier.align(Alignment.TopStart).offset(x = (-Space.gutter), y = (-Space.gutter)))
 
             SoftCard(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -164,18 +169,38 @@ fun FlashcardDeckScreen(
             }
         }
     }
+    // Header, the card filling the middle, and a fixed answer area at the foot: the card keeps its
+    // size when the rating buttons appear, so nothing jumps as it is turned over.
     Column(Modifier.fillMaxSize().background(Ground).statusBarsPadding()
-        .navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = Space.gutter)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) { Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Ink) }
-            Text(currentCard.category, style = MaterialTheme.typography.titleMedium, color = Ink, modifier = Modifier.weight(1f))
-            Text("${uiState.currentIndex + 1} / ${uiState.cards.size}", color = Muted)
+        .navigationBarsPadding().padding(horizontal = Space.gutter)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(56.dp)) {
+            IconButton(onClick = onNavigateBack, modifier = Modifier.offset(x = (-12).dp)) {
+                Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Ink)
+            }
+            Text(
+                currentCard.category,
+                style = MaterialTheme.typography.titleMedium,
+                color = Ink,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                "${uiState.currentIndex + 1} / ${uiState.cards.size}",
+                style = MaterialTheme.typography.labelLarge,
+                color = Muted
+            )
         }
         SegmentedProgress(uiState.currentIndex, uiState.cards.size, Modifier.fillMaxWidth())
+        BoxWithConstraints(
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = Space.md),
+            contentAlignment = Alignment.Center
+        ) {
+        // A portrait card, as large as the space allows with room for its tilt and the fanned card.
+        val cardWidth = minOf(maxWidth * 0.86f, maxHeight * CardAspect * 0.94f)
         FlashCard(currentCard, uiState.currentIndex + 1, side,
             onFlip = { if (!ratingPending) side = if (side < 2) side + 1 else 1 },
             onAudio = { audioPlayerManager.playWord(currentCard) },
-            modifier = Modifier.fillMaxWidth().height(360.dp).tourAnchor(TourAnchor.FlashcardCard)
+            modifier = Modifier.width(cardWidth).aspectRatio(CardAspect).tourAnchor(TourAnchor.FlashcardCard)
                 .graphicsLayer { translationX = drag.value; alpha = if (reduced && ratingPending) 0f else 1f }
                 .pointerInput(currentCard.id, side, ratingPending) {
                     if (side == 2 && !ratingPending) detectHorizontalDragGestures(
@@ -188,10 +213,12 @@ fun FlashcardDeckScreen(
                         }
                     )
                 })
+        }
+        Box(Modifier.fillMaxWidth().height(AnswerAreaHeight), contentAlignment = Alignment.TopCenter) {
         if (uiState.currentIndex == 0 && side != 2) {
             FlashcardFirstNote(modifier = Modifier.padding(vertical = Space.sm))
         }
-        AnimatedVisibility(visible = side == 2) {
+        androidx.compose.animation.AnimatedVisibility(visible = side == 2) {
             Column {
                 Text("How well did you remember?", style = MaterialTheme.typography.titleSmall, color = Ink)
                 Spacer(Modifier.height(Space.sm))
@@ -209,7 +236,21 @@ fun FlashcardDeckScreen(
                 }
             }
         }
-        Spacer(Modifier.height(Space.lg))
+        }
+    }
+}
+
+/** Width over height of a flashcard: a portrait paper card. */
+private const val CardAspect = 0.74f
+
+/** Room kept at the foot for the rating buttons, so the card does not resize when they appear. */
+private val AnswerAreaHeight = 168.dp
+
+/** A close button in the top corner of the full-screen deck states. */
+@Composable
+private fun CloseCorner(onClose: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClose, modifier = modifier.statusBarsPadding().padding(Space.xs)) {
+        Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Ink)
     }
 }
 
@@ -236,6 +277,7 @@ private fun NothingDueState(
             .padding(Space.gutter),
         contentAlignment = Alignment.Center
     ) {
+        CloseCorner(onNavigateBack, Modifier.align(Alignment.TopStart).offset(x = (-Space.gutter), y = (-Space.gutter)))
         SoftCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.fillMaxWidth(),

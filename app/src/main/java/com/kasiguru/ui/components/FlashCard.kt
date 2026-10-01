@@ -25,9 +25,10 @@ fun FlashCard(word: VocabularyEntity, number: Int, side: Int, onFlip: () -> Unit
     val paperInk = RewardInk
     val coverColors = listOf(Olive, Olive)
     val shape = RoundedCornerShape(28.dp)
-    Box(modifier.padding(12.dp)) {
-        Box(Modifier.matchParentSize().graphicsLayer { rotationZ = 8f; translationY = 8.dp.toPx() }
-            .clip(shape).background(Cream.copy(alpha = .5f)).border(3.dp, Lime, shape))
+    Box(modifier) {
+        // The next card, fanned out behind at 8 degrees: a closed cover, dimmer than the one in hand.
+        Box(Modifier.matchParentSize().graphicsLayer { rotationZ = 8f; translationY = 6.dp.toPx() }
+            .clip(shape).background(OliveDeep).border(3.dp, Lime.copy(alpha = .45f), shape))
         Box(Modifier.fillMaxSize().graphicsLayer { rotationZ = -2f }.clip(shape)
             .background(Cream).border(3.dp, Lime, shape).clickable(onClick = onFlip)) {
             Crossfade(targetState = side == 2, animationSpec = tween(if (reduced) 0 else 180), label = "paper side") { answer ->
@@ -37,7 +38,13 @@ fun FlashCard(word: VocabularyEntity, number: Int, side: Int, onFlip: () -> Unit
                     Spacer(Modifier.height(20.dp))
                     if (answer) {
                         Text("Meaning", style = MaterialTheme.typography.labelLarge, color = paperInk)
-                        Text(word.meaningEnglish.ifBlank { word.english }, style = MaterialTheme.typography.headlineSmall, color = paperInk)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            word.meaningEnglish.ifBlank { word.english },
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = paperInk,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                         Spacer(Modifier.height(12.dp))
                         Text("Tagalog: ${word.tagalog}", style = MaterialTheme.typography.bodyLarge, color = paperInk)
                         if (word.exampleSentence.isNotBlank()) {
@@ -46,8 +53,16 @@ fun FlashCard(word: VocabularyEntity, number: Int, side: Int, onFlip: () -> Unit
                             if (word.exampleTranslation.isNotBlank()) Text(word.exampleTranslation, color = paperInk)
                         }
                     } else {
-                        Text(word.kasiguranin, style = MaterialTheme.typography.headlineLarge, color = paperInk)
-                        if (word.ipaNotation.isNotBlank()) Text("[${word.ipaNotation}]", color = paperInk)
+                        Text(
+                            word.kasiguranin,
+                            style = MaterialTheme.typography.displaySmall,
+                            color = paperInk,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        if (word.ipaNotation.isNotBlank()) {
+                            Text("[${word.ipaNotation}]", style = MaterialTheme.typography.bodyLarge, color = paperInk)
+                        }
+                        Spacer(Modifier.height(8.dp))
                         IconButton(onClick = onAudio, modifier = Modifier.size(48.dp)) {
                             Icon(painterResource(Iconsax.VolumeHigh), "Listen to the word", tint = paperInk)
                         }

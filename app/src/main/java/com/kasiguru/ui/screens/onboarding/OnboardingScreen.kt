@@ -216,10 +216,11 @@ fun OnboardingScreen(
                     jepjepAnchor = spots.anchor(OnboardingStep.Asleep),
                     onContinue = { advanceFrom(OnboardingStep.Asleep) }
                 )
-                // Adrian's wake-up screen draws the arms-open jumping pose, which is the Waving art.
+                // Adrian's animated wake-up: Jepjep pops in, hops and waves (jepjep_splash.svg).
                 OnboardingStep.Awake -> StoryMoment(
                     pose = JepjepPose.Waving,
-                    jump = true,
+                    jump = false,
+                    animatedHello = true,
                     jepjepAnchor = spots.anchor(OnboardingStep.Awake),
                     onContinue = { advanceFrom(OnboardingStep.Awake) }
                 )
