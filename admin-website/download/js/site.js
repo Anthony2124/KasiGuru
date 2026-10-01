@@ -10,6 +10,15 @@
 // prefers-reduced-motion it is skipped entirely and every element is already
 // in its final, readable state from CSS alone, so nothing depends on this
 // script having run.
+
+// iPhone and iPad cannot install an APK, so the page leads with the browser version there
+// (see .is-ios in css/styles.css). iPadOS reports itself as a Mac; touch support tells them apart.
+(function () {
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios) document.documentElement.classList.add('is-ios');
+})();
+
 (function () {
   // Lets the stylesheet hide .reveal items only when this script is here to show them again.
   document.documentElement.classList.add('js');

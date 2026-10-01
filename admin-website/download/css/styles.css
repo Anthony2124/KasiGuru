@@ -383,3 +383,14 @@ h1 em,h2 em{font-style:normal;color:var(--brand-lime)}
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:0ms !important;animation:none !important}
 }
+
+/* The browser version (admin-website/webapp) is the way in for iPhone, iPad and computers, which
+   cannot install the APK. js/site.js adds .is-ios on Apple mobile devices: there the web app is
+   the main action and everything about the APK, which would only fail, is hidden. !important
+   because this is a visibility switch over components (.hero-meta span, .install) that set their
+   own display; without JS the page is the Android one. */
+html:not(.is-ios) .ios-only,.is-ios .not-ios,.is-ios .apk-cta{display:none !important}
+.web-note{margin-top:18px;color:var(--muted);font-size:15px;line-height:1.5;max-width:52ch}
+.web-note a{font-weight:600}
+.hub .hub-cta{margin-top:22px}
+.hub .hub-cta .btn{margin-top:0}

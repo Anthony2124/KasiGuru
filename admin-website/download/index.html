@@ -9,8 +9,8 @@
   <meta name="description" content="Download KasiGuru, the free Android app for learning Kasiguranin, the endangered language of Casiguran, Aurora. Over 1,200 words across 12 topics, each with its Tagalog and English meaning.">
   <link rel="preload" href="fonts/fredoka-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/dmsans-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=2026_10_forest">
-  <script src="js/iconsax.js?v=2026_10_forest"></script>
+  <link rel="stylesheet" href="css/styles.css?v=2026_10_forest_web">
+  <script src="js/iconsax.js?v=2026_10_forest_web"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -27,7 +27,7 @@
       <a href="#heritage">Why it matters</a>
       <a href="#inside">Inside the app</a>
       <a href="#dictionary">The words</a>
-      <a class="btn btn-primary btn-sm" href="#download-section">Download APK</a>
+      <a class="btn btn-primary btn-sm" href="#download-section"><span class="not-ios">Download APK</span><span class="ios-only">Get KasiGuru</span></a>
     </nav>
   </div>
 </header>
@@ -43,16 +43,24 @@
         <p class="lede">Over <b id="word-count-hero">1,200</b> words of an endangered language, taught one at a time and checked by the people who speak it.</p>
 
         <div class="cta-row hero-cta-group">
-          <a class="btn btn-primary btn-lg download-btn-large" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
+          <!-- iPhone and iPad cannot install an APK, so there the browser version is the main
+               action and the APK buttons are hidden (js/site.js adds .is-ios). -->
+          <a class="btn btn-primary btn-lg ios-only" href="https://kasiguru-app.vercel.app/">
+            <iconsax-icon name="mobile" size="22" aria-hidden="true"></iconsax-icon>
+            <span>Open KasiGuru</span>
+          </a>
+          <a class="btn btn-primary btn-lg download-btn-large apk-cta" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
             <iconsax-icon name="document-download" size="22" aria-hidden="true"></iconsax-icon>
             <span>Download APK</span>
           </a>
           <a class="btn btn-quiet btn-lg" href="#dictionary">See the words</a>
         </div>
         <p class="hero-meta">
-          <span><iconsax-icon name="android" size="16" aria-hidden="true"></iconsax-icon> Android 8.0 and newer</span>
+          <span class="not-ios"><iconsax-icon name="android" size="16" aria-hidden="true"></iconsax-icon> Android 8.0 and newer</span>
+          <span class="ios-only"><iconsax-icon name="mobile" size="16" aria-hidden="true"></iconsax-icon> Runs in Safari, nothing to install</span>
           <span><iconsax-icon name="heart" size="16" aria-hidden="true"></iconsax-icon> Free, no ads</span>
         </p>
+        <p class="web-note not-ios">On an iPhone, iPad or computer? <a href="https://kasiguru-app.vercel.app/">Use KasiGuru in your browser</a>, with the same account and progress as the Android app.</p>
       </div>
 
       <div class="hero-art">
@@ -216,20 +224,32 @@
 
         <div class="hub-main">
           <h2>Start with <em>one word.</em></h2>
-          <p id="store-version-tag" class="version" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
-          <a class="btn btn-primary btn-lg download-btn-large" id="store-download-btn" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
-            <iconsax-icon name="document-download" size="22" aria-hidden="true"></iconsax-icon>
-            <span>Download APK</span>
-          </a>
+          <p id="store-version-tag" class="version not-ios" role="status" aria-live="polite">Checking for the latest version&hellip;</p>
+          <div class="cta-row hub-cta">
+            <a class="btn btn-primary btn-lg ios-only" href="https://kasiguru-app.vercel.app/">
+              <iconsax-icon name="mobile" size="22" aria-hidden="true"></iconsax-icon>
+              <span>Open KasiGuru</span>
+            </a>
+            <a class="btn btn-primary btn-lg download-btn-large apk-cta" id="store-download-btn" href="https://github.com/Anthony2124/KasiGuru/releases/latest/download/kasiguru-latest.apk" download>
+              <iconsax-icon name="document-download" size="22" aria-hidden="true"></iconsax-icon>
+              <span>Download APK</span>
+            </a>
+            <a class="btn btn-quiet btn-lg not-ios" href="https://kasiguru-app.vercel.app/">Use it in your browser</a>
+          </div>
 
-          <ol class="install" id="how-it-works" aria-label="How to install">
+          <ol class="install not-ios" id="how-it-works" aria-label="How to install">
             <li><span class="install-node" aria-hidden="true">1</span><div><b>Download the APK</b><span>About 8 MB, straight from this page.</span></div></li>
             <li><span class="install-node" aria-hidden="true">2</span><div><b>Allow the install</b><span>Android asks once to trust your browser. Tap Settings, then allow.</span></div></li>
             <li><span class="install-node" aria-hidden="true">3</span><div><b>Open KasiGuru</b><span>Jepjep walks you through your first word.</span></div></li>
           </ol>
+          <ol class="install ios-only" aria-label="How to add KasiGuru to your Home Screen">
+            <li><span class="install-node" aria-hidden="true">1</span><div><b>Open it in Safari</b><span>Tap Open KasiGuru. There is nothing to download.</span></div></li>
+            <li><span class="install-node" aria-hidden="true">2</span><div><b>Add to Home Screen</b><span>Tap Share, then Add to Home Screen.</span></div></li>
+            <li><span class="install-node" aria-hidden="true">3</span><div><b>Open KasiGuru</b><span>It opens full screen from its own icon, and works offline.</span></div></li>
+          </ol>
         </div>
 
-        <div class="qr-panel">
+        <div class="qr-panel not-ios">
           <canvas id="qr-canvas" width="336" height="336" aria-label="QR code linking to the KasiGuru APK download"></canvas>
           <p>On a computer? Scan this with your phone's camera.</p>
         </div>
@@ -251,7 +271,7 @@
   </div>
 </footer>
 
-<script type="module" src="js/download.js?v=2026_10_forest"></script>
-<script src="js/site.js?v=2026_10_forest"></script>
+<script type="module" src="js/download.js?v=2026_10_forest_web"></script>
+<script src="js/site.js?v=2026_10_forest_web"></script>
 </body>
 </html>
