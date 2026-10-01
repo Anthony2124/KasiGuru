@@ -52,22 +52,22 @@ object DatabaseModule {
                             vocabularyDaoProvider.get().insertAll(DatabaseSeeder.getInitialVocabulary())
                         }
                         if (storyDaoProvider.get().getStoryCount() == 0) {
-                            storyDaoProvider.get().insertAll(DatabaseSeeder.getInitialStories())
+                            storyDaoProvider.get().insertMissing(DatabaseSeeder.getInitialStories())
                         }
                         if (achievementDaoProvider.get().getAchievementCount() == 0) {
-                            achievementDaoProvider.get().insertAll(DatabaseSeeder.getInitialAchievements())
+                            achievementDaoProvider.get().insertMissing(DatabaseSeeder.getInitialAchievements())
                         }
                         if (notificationDaoProvider.get().getNotificationCount() == 0) {
                             notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
                         }
                         if (gameLevelDaoProvider.get().getLevelCount() == 0) {
-                            gameLevelDaoProvider.get().insertAll(DatabaseSeeder.getInitialGameLevels())
+                            gameLevelDaoProvider.get().insertMissing(DatabaseSeeder.getInitialGameLevels())
                         }
                         // The single user_progress row must exist before anything else runs: almost
                         // every write in UserProgressDao is an `UPDATE ... WHERE id = 1`, which
                         // silently affects zero rows when the row is missing rather than failing.
                         if (userProgressDaoProvider.get().getUserProgressDirect() == null) {
-                            userProgressDaoProvider.get().insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
+                            userProgressDaoProvider.get().insertIfMissing(DatabaseSeeder.getInitialUserProgress())
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()

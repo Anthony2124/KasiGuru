@@ -53,8 +53,21 @@ object KasiGuruMigrations {
         MIGRATION_27_28,
         MIGRATION_28_29,
         MIGRATION_29_30,
-        MIGRATION_30_31
+        MIGRATION_30_31,
+        MIGRATION_31_32
         )
+    }
+
+    private val MIGRATION_31_32 = object : Migration(31, 32) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE user_progress ADD COLUMN xpPolicyVersion INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE user_progress ADD COLUMN activityXp INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE user_progress ADD COLUMN badgeBonusXp INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE user_progress ADD COLUMN pinnedBadgeIds TEXT NOT NULL DEFAULT ''")
+            db.execSQL("CREATE TABLE IF NOT EXISTS reward_receipts (id TEXT NOT NULL, kind TEXT NOT NULL, source TEXT NOT NULL, day TEXT NOT NULL, xp INTEGER NOT NULL, value INTEGER NOT NULL, imported INTEGER NOT NULL, PRIMARY KEY(id))")
+            db.execSQL("CREATE TABLE IF NOT EXISTS progress_normalization (version INTEGER NOT NULL, originalXp INTEGER NOT NULL, originalLevel INTEGER NOT NULL, normalizedXp INTEGER NOT NULL, unsupportedHistory TEXT NOT NULL, acknowledged INTEGER NOT NULL, PRIMARY KEY(version))")
+            db.execSQL("CREATE TABLE IF NOT EXISTS reward_celebrations (id TEXT NOT NULL, activityXp INTEGER NOT NULL, bonusXp INTEGER NOT NULL, level INTEGER NOT NULL, levelChanged INTEGER NOT NULL, badgeIds TEXT NOT NULL, createdAt INTEGER NOT NULL, acknowledged INTEGER NOT NULL, PRIMARY KEY(id))")
+        }
     }
 
     // -- v30 -> v31 -----------------------------------------------------------

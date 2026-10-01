@@ -30,7 +30,7 @@ data class UserProgressEntity(
     val totalQuestionsAnswered: Int = 0,
     val lessonsCompleted: Int = 0,
     val isOnboardingCompleted: Boolean = false,
-    val dailyGoalXp: Int = 100,
+    val dailyGoalXp: Int = 50,
     /**
      * XP earned on [dailyXpDate]. Together these form a one-day ledger so the daily-goal ring shows
      * real progress; the previous UI faked it with `totalXp % dailyGoalXp`, which drifted from the
@@ -49,5 +49,9 @@ data class UserProgressEntity(
     /** ISO date the [dailyGamesPlayedCount] counter belongs to. */
     val dailyGamesDate: String = "",
     /** Number of mini games played today. */
-    val dailyGamesPlayedCount: Int = 0
+    val dailyGamesPlayedCount: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0") val xpPolicyVersion: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0") val activityXp: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "0") val badgeBonusXp: Int = 0,
+    @androidx.room.ColumnInfo(defaultValue = "''") val pinnedBadgeIds: String = ""
 )

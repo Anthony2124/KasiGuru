@@ -64,9 +64,7 @@ class SettingsViewModel @Inject constructor(
     /** Pulls the account's cloud progress and merges it into the local database. */
     suspend fun syncNow(): Boolean {
         val uid = authRepository.currentAccount().uid ?: return false
-        progressSyncManager.syncFromCloud(uid)
-        progressSyncManager.syncLearningStateFromCloud(uid)
-        return true
+        return progressSyncManager.syncNow(uid)
     }
 
     val securityQuestions: List<String> = AuthRepository.SECURITY_QUESTIONS

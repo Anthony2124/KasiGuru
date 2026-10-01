@@ -37,6 +37,7 @@ data class SentenceOrderUiState(
     val isCorrect: Boolean? = null,
     val score: Int = 0,
     val isGameFinished: Boolean = false,
+    val finalXp: Int = 0,
     val starsEarned: Int = 0,
     val totalQuestions: Int = 5,
     val reviewItems: List<GameReviewItem> = emptyList(),
@@ -54,6 +55,7 @@ class SentenceOrderViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
+    private var finishing = false
     private val _uiState = MutableStateFlow(SentenceOrderUiState())
     val uiState: StateFlow<SentenceOrderUiState> = _uiState.asStateFlow()
 
@@ -188,12 +190,7 @@ class SentenceOrderViewModel @Inject constructor(
 
         val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
 
-        val questionXp = if (isCorrect) {
-            if (rating == ReviewRating.HARD) 10
-            else 20
-        } else 0
-
-        val newScore = currentState.score + questionXp
+        val newScore = currentState.score + if (isCorrect) 1 else 0
 
         reviewItems.add(
             GameReviewItem(
@@ -259,6 +256,8 @@ class SentenceOrderViewModel @Inject constructor(
                 )
             }
         } else {
+            if (finishing) return
+            finishing = true
             viewModelScope.launch {
                 val totalQs = questionQueue.size
                 val successRate = currentState.score.toFloat() / totalQs.coerceAtLeast(1)
@@ -268,15 +267,15 @@ class SentenceOrderViewModel @Inject constructor(
                     successRate >= 0.4f -> 1
                     else -> 0
                 }
+                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs)
                 gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
 
                 gameRepository.saveGameScore(
                     gameType = Constants.Games.SENTENCE_ORDER,
                     score = currentState.score,
                     totalQuestions = totalQs,
-                    xpEarned = currentState.score
+                    xpEarned = earned
                 )
-                userProgressRepository.addXp(currentState.score)
                 userProgressRepository.incrementGamesPlayed()
                 userProgressRepository.updateGameStats(currentState.score, totalQs)
                 val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("sentence_order", levelNumber + 1)?.isUnlocked == true)) {
@@ -286,6 +285,7 @@ class SentenceOrderViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isGameFinished = true,
+                        finalXp = earned,
                         starsEarned = starsEarned,
                         totalQuestions = totalQs,
                         reviewItems = reviewItems.toList(),
@@ -297,6 +297,8 @@ class SentenceOrderViewModel @Inject constructor(
     }
 
     fun resetGame() {
+        finishing = false
+        reviewItems.clear()
         _uiState.update {
             SentenceOrderUiState(
                 questions = emptyList(),

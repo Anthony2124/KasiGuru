@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StoryDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMissing(stories: List<StoryEntity>)
+    @Query("UPDATE stories SET isCompleted = 0, currentPage = 0, isUnlocked = (requiredXp = 0)")
+    suspend fun resetAllProgress()
 
     @Query("SELECT * FROM stories ORDER BY requiredXp ASC")
     fun getAllStories(): Flow<List<StoryEntity>>

@@ -119,9 +119,8 @@ class StoryReaderViewModel @Inject constructor(
             _uiState.value = state.copy(currentPageIndex = newIndex)
             ensureImagesAround(newIndex)
             
-            // Award XP for reading a page
+            // Save the reading position; XP is granted only on first completion.
             viewModelScope.launch {
-                userProgressRepository.addXp(Constants.XP_PER_STORY_PAGE)
                 if (!state.story!!.isCompleted) {
                     storyRepository.updateCurrentPage(storyId, newIndex)
                 }
@@ -147,16 +146,17 @@ class StoryReaderViewModel @Inject constructor(
     }
 
     private fun completeStory() {
+        if(_uiState.value.isFinished || _uiState.value.isFinishing) return
+        _uiState.value = _uiState.value.copy(isFinishing = true)
         viewModelScope.launch {
             val story = _uiState.value.story ?: return@launch
             if (!story.isCompleted) {
-                storyRepository.markAsCompleted(storyId)
-                userProgressRepository.addXp(Constants.XP_PER_STORY_COMPLETE)
-                userProgressRepository.incrementStoriesCompleted()
+                val earned = userProgressRepository.awardStory(storyId)
+                _uiState.value = _uiState.value.copy(finalXp = earned)
                 // Inside the !isCompleted guard: a reread is not a second completion.
                 LearningAnalytics.storyFinished(storyId)
             }
-            _uiState.value = _uiState.value.copy(isFinished = true)
+            _uiState.value = _uiState.value.copy(isFinished = true,isFinishing = false)
         }
     }
 
@@ -172,6 +172,8 @@ data class StoryReaderUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val isFinished: Boolean = false,
+    val isFinishing: Boolean = false,
+    val finalXp: Int = 0,
     val vocabulary: List<VocabularyEntity> = emptyList(),
     /** Cached illustration files by page `imageId`. Absent means "no picture", which is a normal state. */
     val pageImages: Map<String, java.io.File> = emptyMap()

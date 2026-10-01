@@ -6,27 +6,16 @@ package com.kasiguru.util
 object Constants {
 
     // Gamification
-    const val XP_PER_WORD_LEARNED = 100
-    const val XP_PER_STORY_PAGE = 15
-    const val XP_PER_STORY_COMPLETE = 50
-    const val XP_PER_GAME_CORRECT = 20
-    const val XP_BONUS_PERFECT_GAME = 100
+    const val XP_PER_WORD_LEARNED = 5
+    const val XP_PER_STORY_PAGE = 0
+    const val XP_PER_STORY_COMPLETE = 20
+    const val XP_PER_GAME_CORRECT = 2
+    const val XP_BONUS_PERFECT_GAME = 5
     const val XP_STREAK_BONUS = 25
     const val STREAK_RESET_HOURS = 24
 
     // Levels — XP thresholds
-    val LEVEL_THRESHOLDS = listOf(
-        0,      // Level 1
-        100,    // Level 2
-        300,    // Level 3
-        600,    // Level 4
-        1000,   // Level 5
-        1500,   // Level 6
-        2200,   // Level 7
-        3000,   // Level 8
-        4000,   // Level 9
-        5000    // Level 10
-    )
+    val LEVEL_THRESHOLDS = com.kasiguru.domain.gamification.XpPolicy.thresholds
 
     // Level titles in Kasiguranin
     val LEVEL_TITLES = listOf(

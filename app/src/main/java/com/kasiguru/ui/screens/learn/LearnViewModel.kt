@@ -213,8 +213,8 @@ class LearnViewModel @Inject constructor(
      */
     private fun checkSubmissionAchievements() {
         viewModelScope.launch {
-            submissionRepository.getApprovedSubmissionCount().onSuccess { count ->
-                userProgressRepository.checkAchievements(MetricType.SUBMISSIONS_APPROVED, count)
+            submissionRepository.getApprovedSubmissions().onSuccess { contributions ->
+                userProgressRepository.recordApprovals(contributions)
             }
         }
     }

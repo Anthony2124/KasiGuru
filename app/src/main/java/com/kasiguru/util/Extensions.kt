@@ -57,6 +57,5 @@ fun calculateLevelProgress(totalXp: Int): Float {
  * Get the level title from Constants.
  */
 fun getLevelTitle(level: Int): String {
-    val titles = Constants.LEVEL_TITLES
-    return titles.getOrElse(level - 1) { titles.last() }
+    return "Level ${level.coerceIn(1, 30)}"
 }

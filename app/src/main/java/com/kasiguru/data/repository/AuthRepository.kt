@@ -192,6 +192,13 @@ class AuthRepository @Inject constructor(
         for (docId in ProgressDocuments.ALL) {
             progress.document(docId).delete().await()
         }
+        val rewards = firestore.collection("users").document(uid)
+            .collection(com.kasiguru.data.remote.RewardReceiptCodec.COLLECTION)
+        do {
+            val page = rewards.limit(400).get(com.google.firebase.firestore.Source.SERVER).await()
+            if(page.isEmpty) break
+            firestore.batch().apply { page.documents.forEach { delete(it.reference) } }.commit().await()
+        } while(true)
         firestore.collection("leaderboard_public").document(uid).delete().await()
         firestore.collection("device_tokens").document(uid).delete().await()
         try {

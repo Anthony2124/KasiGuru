@@ -144,7 +144,12 @@ class AccountViewModel @Inject constructor(
             // Flushes the local state to the account first: the promise in the message below
             // is only true if today's quota and review work actually reached the cloud before
             // this wipes them.
-            userDataResetManager.resetAllLocalUserData()
+            val reset = runCatching { userDataResetManager.resetAllLocalUserData() }
+            if(reset.isFailure) {
+                _uiState.value = _uiState.value.copy(isBusy = false,
+                    error = reset.exceptionOrNull()?.message ?: "Your progress could not be saved. Please try again.")
+                return@launch
+            }
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(
                 isBusy = false,
@@ -166,8 +171,10 @@ class AccountViewModel @Inject constructor(
     fun deleteAccount() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBusy = true, error = null)
+            progressSyncManager.onUserSignedOut()
             val result = authRepository.deleteAccount()
             if (result.isFailure) {
+                progressSyncManager.restartSync()
                 _uiState.value = _uiState.value.copy(
                     isBusy = false,
                     error = result.exceptionOrNull()?.message?.takeIf { it.isNotBlank() }

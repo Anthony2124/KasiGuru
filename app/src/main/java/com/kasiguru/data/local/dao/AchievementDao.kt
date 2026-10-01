@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AchievementDao {
+    @Query("DELETE FROM achievements") suspend fun clearAll()
 
     @Query("SELECT * FROM achievements ORDER BY isUnlocked DESC, name ASC")
     fun getAllAchievements(): Flow<List<AchievementEntity>>
@@ -17,11 +18,7 @@ interface AchievementDao {
     @Query("SELECT * FROM achievements WHERE id = :id")
     suspend fun getAchievementById(id: String): AchievementEntity?
 
-    /**
-     * The one query the generic evaluator needs: every not-yet-unlocked badge in a metric
-     * family, so UserProgressRepository.checkAchievements can compare [AchievementEntity.requiredValue]
-     * itself rather than a threshold hardcoded per badge id.
-     */
+    /** Original metric lookup retained for existing data readers. */
     @Query("SELECT * FROM achievements WHERE metricType = :metricType AND isUnlocked = 0")
     suspend fun getLockedByMetricType(metricType: String): List<AchievementEntity>
 
@@ -48,6 +45,8 @@ interface AchievementDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(achievements: List<AchievementEntity>)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMissing(achievements: List<AchievementEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(achievement: AchievementEntity)

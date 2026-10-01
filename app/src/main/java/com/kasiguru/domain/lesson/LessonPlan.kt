@@ -51,10 +51,10 @@ object LessonPlan {
     const val EXERCISES_PER_LESSON = 11
 
     /** XP for finishing a lesson, before the accuracy bonus. */
-    const val XP_PER_LESSON = 30
+    const val XP_PER_LESSON = 20
 
     /** Extra XP for a lesson completed without a single wrong first answer. */
-    const val XP_PERFECT_BONUS = 15
+    const val XP_PERFECT_BONUS = 5
 
     fun lessonCountFor(wordCount: Int): Int =
         if (wordCount <= 0) 0 else (wordCount + WORDS_PER_LESSON - 1) / WORDS_PER_LESSON

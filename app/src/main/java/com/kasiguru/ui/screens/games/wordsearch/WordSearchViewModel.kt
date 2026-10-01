@@ -133,6 +133,7 @@ class WordSearchViewModel @Inject constructor(
 
     private fun finish() {
         val state = _uiState.value
+        if (state.isGameOver) return
         val wordCount = state.puzzle?.words?.size ?: return
         val stars = when {
             state.misses == 0 -> 3
@@ -141,9 +142,10 @@ class WordSearchViewModel @Inject constructor(
         }
         // Half the per-answer XP of the choice games: spotting a word's letters is recognition of
         // spelling, a lighter task than recalling what a word means.
-        val xp = wordCount * (Constants.XP_PER_GAME_CORRECT / 2)
+        _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
+            val xp = userProgressRepository.awardGame("word_search",levelKey,levelNumber,wordCount,wordCount,stars,state.misses == 0)
             gameRepository.saveScore(
                 GameScoreEntity(
                     gameType = Constants.Games.WORD_SEARCH,
@@ -154,11 +156,9 @@ class WordSearchViewModel @Inject constructor(
                 )
             )
             gameLevelRepository.saveLevelResult(levelKey, levelNumber, stars)
-            userProgressRepository.addXp(xp)
             userProgressRepository.incrementGamesPlayed()
             // Wrong lines count against accuracy: every attempt is a question, only the hits correct.
             userProgressRepository.updateGameStats(wordCount, wordCount + state.misses)
-            if (state.misses == 0) userProgressRepository.checkPerfectGameAchievement()
 
             // Deliberately no SM-2 review for the words found. Finding a run of letters is not
             // evidence of remembering a meaning, and the review schedule is a thesis claim that must

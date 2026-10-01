@@ -7,6 +7,10 @@ import com.kasiguru.data.remote.model.WordSubmissionDto
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.time.Instant
+import java.time.ZoneId
+
+data class ApprovedContribution(val id: String,val approvedDay: String?)
 
 @Singleton
 class SubmissionRepository @Inject constructor(
@@ -55,5 +59,22 @@ class SubmissionRepository @Inject constructor(
         }
     } catch (e: Exception) {
         Result.failure(e)
+    }
+
+    suspend fun getApprovedSubmissions(): Result<List<ApprovedContribution>> = runCatching {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@runCatching emptyList()
+        val words = submissionsCollection.whereEqualTo("uid",uid).whereEqualTo("status","approved").get().await()
+        val literature = literatureSubmissionsCollection.whereEqualTo("uid",uid).whereEqualTo("status","approved").get().await()
+        fun contribution(prefix: String,doc: com.google.firebase.firestore.DocumentSnapshot): ApprovedContribution {
+            val timestamp = doc.get("approvedAt") ?: doc.get("reviewedAt")
+            val millis = when(timestamp) {
+                is Number -> timestamp.toLong()
+                is com.google.firebase.Timestamp -> timestamp.toDate().time
+                else -> null
+            }
+            val day = millis?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().toString() }
+            return ApprovedContribution("$prefix:${doc.id}",day)
+        }
+        words.documents.map { contribution("word",it) } + literature.documents.map { contribution("literature",it) }
     }
 }

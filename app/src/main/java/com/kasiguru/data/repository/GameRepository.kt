@@ -2,15 +2,13 @@ package com.kasiguru.data.repository
 
 import com.kasiguru.data.local.dao.GameScoreDao
 import com.kasiguru.data.local.entity.GameScoreEntity
-import com.kasiguru.data.local.entity.MetricType
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class GameRepository @Inject constructor(
-    private val gameScoreDao: GameScoreDao,
-    private val userProgressRepository: UserProgressRepository
+    private val gameScoreDao: GameScoreDao
 ) {
     fun getAllScores(): Flow<List<GameScoreEntity>> =
         gameScoreDao.getAllScores()
@@ -32,10 +30,6 @@ class GameRepository @Inject constructor(
                 totalQuestions = totalQuestions,
                 xpEarned = xpEarned
             )
-        )
-        userProgressRepository.checkAchievements(
-            MetricType.GAME_MODES_PLAYED,
-            gameScoreDao.getDistinctGameTypesPlayed()
         )
     }
 }

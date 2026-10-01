@@ -84,13 +84,20 @@ service cloud.firestore {
         'totalQuestionsAnswered', 'lessonsCompleted', 'isOnboardingCompleted',
         'dailyGoalXp', 'dailyXpEarned', 'dailyXpDate', 'titleBadge', 'submissionsMade',
         'dailyReviewCompletedDate', 'dailyGamesDate', 'dailyGamesPlayedCount',
-        'updatedAt'
+        'updatedAt', 'xpPolicyVersion', 'activityXp', 'badgeBonusXp', 'pinnedBadgeIds'
       ])
         && isSaneCounter(d.totalXp, maxXp())
         && isSaneCounter(d.level, maxLevel())
         && isSaneCounter(d.currentStreak, maxStreak())
         && isSaneCounter(d.longestStreak, maxStreak())
         && isSaneCounter(d.wordsLearned, maxWords())
+        && isSaneCounter(d.get('xpPolicyVersion', 0), 2)
+        && (!('activityXp' in d) || isSaneCounter(d.activityXp, maxXp()))
+        && (!('badgeBonusXp' in d) || isSaneCounter(d.badgeBonusXp, 6200))
+        && (!('pinnedBadgeIds' in d) || d.pinnedBadgeIds is string && d.pinnedBadgeIds.size() <= 128)
+        && (isFirstWrite || d.get('xpPolicyVersion', 0) >= resource.data.get('xpPolicyVersion', 0))
+        && (d.get('xpPolicyVersion', 0) != 2 ||
+            (d.level <= 30 && d.totalXp == d.activityXp + d.badgeBonusXp))
         && (!('userName' in d) || d.userName is string && d.userName.size() <= 100)
         && (!('fullName' in d) || d.fullName is string && d.fullName.size() <= 100)
         && (!('titleBadge' in d) || d.titleBadge is string && d.titleBadge.size() <= 100)
@@ -109,13 +116,15 @@ service cloud.firestore {
         // isSaneCounter bounds above; XP is the one that needs its own first-write
         // ceiling. See firstWriteMaxXp().
         && (!isFirstWrite || d.totalXp <= firstWriteMaxXp())
-        && (isFirstWrite || (d.totalXp - resource.data.totalXp) <= 2000)
+        && (isFirstWrite || (d.get('xpPolicyVersion', 0) == 2 && resource.data.get('xpPolicyVersion', 0) < 2)
+            || (d.totalXp - resource.data.totalXp) <= 2000)
         && (isFirstWrite || (d.currentStreak - resource.data.currentStreak) <= 1)
         && (isFirstWrite || (d.wordsLearned - resource.data.wordsLearned) <= 50)
         // level and longestStreak were range-checked but never delta-capped, so they
         // could be pinned to the ceiling in one write. main progress is the floor the
         // sync merge treats as permanent (maxOf(local, remote)), so that stuck.
-        && (isFirstWrite || (d.level - resource.data.level) <= 5)
+        && (isFirstWrite || (d.get('xpPolicyVersion', 0) == 2 && resource.data.get('xpPolicyVersion', 0) < 2)
+            || (d.level - resource.data.level) <= 5)
         && (isFirstWrite || (d.longestStreak - resource.data.longestStreak) <= 1);
     }
 
@@ -151,7 +160,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
         'displayName', 'totalXp', 'level', 'currentStreak', 'profileIconId',
         'titleBadge', 'weeklyXp', 'weekStartXp', 'weekStartDate', 'updatedAt',
-        'email', 'isAnonymous', 'createdAt', 'registeredAt'
+        'email', 'isAnonymous', 'createdAt', 'registeredAt', 'xpPolicyVersion', 'activityXp'
       ])
         && d.displayName is string && d.displayName.size() <= 40
         && isSaneCounter(d.totalXp, maxXp())
@@ -163,6 +172,10 @@ service cloud.firestore {
         && isSaneCounter(d.weekStartXp, maxXp())
         && d.weekStartDate is string && d.weekStartDate.size() <= 20
         && d.updatedAt is int
+        && isSaneCounter(d.get('xpPolicyVersion', 0), 2)
+        && (!('activityXp' in d) || isSaneCounter(d.activityXp, maxXp()))
+        && (isFirstPublish || d.get('xpPolicyVersion', 0) >= resource.data.get('xpPolicyVersion', 0))
+        && (d.get('xpPolicyVersion', 0) != 2 || (d.level <= 30 && d.weeklyXp <= d.activityXp))
         && (!('email' in d) || d.email is string && d.email.size() <= 120)
         && (!('isAnonymous' in d) || d.isAnonymous is bool)
         && (!('createdAt' in d) || d.createdAt is int)
@@ -170,12 +183,29 @@ service cloud.firestore {
         // Bounded, not exempt: deleting your own row and re-creating it used to reset
         // every cap below and mint rank #1 in two writes. See firstWriteMaxXp().
         && (!isFirstPublish || (d.totalXp <= firstWriteMaxXp() && d.weeklyXp <= firstWriteMaxXp()))
-        && (isFirstPublish || (d.totalXp - resource.data.totalXp) <= 2000)
+        && (isFirstPublish || (d.get('xpPolicyVersion', 0) == 2 && resource.data.get('xpPolicyVersion', 0) < 2)
+            || (d.totalXp - resource.data.totalXp) <= 2000)
         // Same reasoning as the totalXp cap above: streak legitimately moves by exactly
         // 1 per day, and a 2000 XP burst can cross a handful of level thresholds at
         // once but never hundreds.
         && (isFirstPublish || (d.currentStreak - resource.data.currentStreak) <= 1)
-        && (isFirstPublish || (d.level - resource.data.level) <= 5);
+        && (isFirstPublish || (d.get('xpPolicyVersion', 0) == 2 && resource.data.get('xpPolicyVersion', 0) < 2)
+            || (d.level - resource.data.level) <= 5);
+    }
+
+    function isValidRewardReceipt() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['policyVersion','id','kind','source','day','xp','value','imported','updatedAt'])
+        && d.policyVersion == 2
+        && d.id is string && d.id.size() > 0 && d.id.size() <= 512
+        && d.source is string && d.source.size() > 0 && d.source.size() <= 256
+        && d.day is string && (d.day.size() == 0 || d.day.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'))
+        && d.kind in ['lesson','game','replay','review','story','mastery','approved','badge','perfect','retrieval','category','access']
+        && isSaneCounter(d.xp, 200) && isSaneCounter(d.value, 1) && d.imported is bool
+        && d.updatedAt == request.time
+        && (resource == null || (d.id == resource.data.id && d.kind == resource.data.kind &&
+            d.source == resource.data.source && d.xp >= resource.data.xp &&
+            d.value >= resource.data.value && (!resource.data.imported || d.imported)));
     }
 
     // Allowed fields and size limits for community word submissions.
@@ -378,9 +408,15 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidProgressDoc(docId);
     }
 
+    match /users/{userId}/rewardReceipts/{receiptId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidRewardReceipt();
+    }
+
     // Any other per-user subcollection stays owner-only (no schema assumptions).
     match /users/{userId}/{collection}/{docId} {
-      allow read, write: if isOwner(userId) && collection != 'progress';
+      allow read, write: if isOwner(userId) && collection != 'progress' && collection != 'rewardReceipts';
     }
 
     // Public leaderboard rows. Readable by any signed-in client so the app can

@@ -1,5 +1,9 @@
 package com.kasiguru.data.repository
 
+import com.kasiguru.data.local.entity.AchievementEntity
+import com.kasiguru.domain.gamification.BadgeCatalog
+import com.kasiguru.domain.gamification.LegacyBadgeCatalog
+
 /**
  * Merge rules for the progress that lives outside `user_progress` (achievements,
  * per-game level stars, per-lesson completion, per-word review state).
@@ -57,6 +61,24 @@ internal fun mergeAchievements(
             )
         }
     }
+
+/** Fresh installs have no retired definitions; restore earned legacy rows without granting XP. */
+internal fun mergeLegacyAchievementRows(
+    localRows: List<AchievementEntity>,
+    remote: Map<String, AchievementState>
+): List<AchievementEntity> {
+    val local = localRows.filter { !it.id.startsWith(BadgeCatalog.PREFIX) }.associateBy { it.id }
+    val states = mergeAchievements(
+        local.mapValues { (_, row) -> AchievementState(row.isUnlocked, row.currentValue, row.unlockedDate) },
+        remote.filterKeys { !it.startsWith(BadgeCatalog.PREFIX) }
+    )
+    return states.mapNotNull { (id, state) ->
+        if (id !in local && !state.isUnlocked) return@mapNotNull null
+        val row = local[id] ?: LegacyBadgeCatalog.definition(id)
+        row.copy(isUnlocked = state.isUnlocked, currentValue = state.currentValue,
+            unlockedDate = state.unlockedDate)
+    }
+}
 
 internal fun mergeGameLevels(
     local: Map<String, GameLevelState>,

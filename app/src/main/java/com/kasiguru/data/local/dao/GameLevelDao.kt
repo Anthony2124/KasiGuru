@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GameLevelDao {
+    @Query("UPDATE game_levels SET starsEarned = 0, isUnlocked = (levelNumber = 1)")
+    suspend fun resetAllProgress()
 
     @Query("SELECT * FROM game_levels WHERE gameType = :gameType ORDER BY levelNumber ASC")
     fun getLevelsByGame(gameType: String): Flow<List<GameLevelEntity>>

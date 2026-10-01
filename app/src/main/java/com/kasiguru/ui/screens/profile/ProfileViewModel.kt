@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.domain.gamification.BadgeCatalog
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.LessonRepository
@@ -49,10 +50,17 @@ data class ProfileUiState(
      * sort last rather than being mistaken for the newest.
      */
     val recentlyUnlocked: List<AchievementEntity>
-        get() = achievements
-            .filter { it.isUnlocked }
-            .sortedByDescending { it.unlockedDate ?: "" }
-            .take(6)
+        get() {
+            val pins = userProgress?.pinnedBadgeIds.orEmpty().split(',').filter { it.isNotBlank() }
+            return achievements.filter { it.isUnlocked }
+                .groupBy { BadgeCatalog.familyFor(it.id)?.id ?: it.id }
+                .map { (_,rows) -> rows.maxBy { BadgeCatalog.tierFor(it.id)?.ordinal ?: it.requiredValue } }
+                .sortedWith(compareBy<AchievementEntity> {
+                    val index = pins.indexOf(BadgeCatalog.familyFor(it.id)?.id)
+                    if(index < 0) Int.MAX_VALUE else index
+                }.thenByDescending { it.unlockedDate.orEmpty() })
+                .take(6)
+        }
 
     /**
      * The locked achievement closest to completion, for the empty state. A learner with no badges yet

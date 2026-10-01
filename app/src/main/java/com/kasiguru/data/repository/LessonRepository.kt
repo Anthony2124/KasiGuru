@@ -32,7 +32,8 @@ class LessonRepository @Inject constructor(
     private val lessonDao: LessonDao,
     private val vocabularyRepository: VocabularyRepository,
     private val userProgressRepository: UserProgressRepository,
-    private val exerciseGenerator: ExerciseGenerator
+    private val exerciseGenerator: ExerciseGenerator,
+    private val gamification: GamificationRepository
 ) {
 
     fun observeProgress(): Flow<List<LessonProgressEntity>> = lessonDao.observeAll()
@@ -73,14 +74,20 @@ class LessonRepository @Inject constructor(
     suspend fun treeSections(): List<TreeSection> {
         val wordsByUnit = allWordsByUnit()
         val progress = lessonDao.getAllOnce().associateBy { it.unitId to it.lessonIndex }
+        val savedAccess = gamification.accessKeys()
+        val imported = gamification.importedLessons()
+        val openSections = mutableListOf<String>()
 
         var previousOpensNext = true
+        var legacyOpensNext = true
         return LearningTree.sections.mapNotNull { definition ->
             val units = unitIdsFor(definition)
             val words = units.flatMap { wordsByUnit[it].orEmpty() }
             if (!LearningTree.isViable(words.size)) return@mapNotNull null
 
-            val isUnlocked = previousOpensNext
+            val isUnlocked = previousOpensNext || "section:${definition.id}" in savedAccess ||
+                (imported.isNotEmpty() && legacyOpensNext)
+            if(isUnlocked) openSections += "section:${definition.id}"
             val nodes = buildNodes(definition, units, wordsByUnit, progress, isUnlocked)
             val earnedXp = units.sumOf { unitId ->
                 progress.values
@@ -104,8 +111,14 @@ class LessonRepository @Inject constructor(
             // A locked section cannot open the one after it, or a single unreachable section would
             // cascade the whole rest of the tree open.
             previousOpensNext = isUnlocked && section.opensNext
+            val legacyXp = progress.values.filter {
+                it.unitId in units && "lesson:${it.unitId}#${it.lessonIndex}" in imported
+            }.sumOf { 30 + if(imported["lesson:${it.unitId}#${it.lessonIndex}"] == 25) 15 else 0 }
+            val oldRequirement = minOf((nodes.count { it.node is TreeNode.Lesson && !it.isDeepDive } *
+                30 * LearningTree.GATE_FRACTION).toInt(),LearningTree.GATE_XP_CAP)
+            legacyOpensNext = legacyOpensNext && legacyXp >= oldRequirement
             section
-        }
+        }.also { gamification.preserveAccess(openSections) }
     }
 
     /**
@@ -290,20 +303,7 @@ class LessonRepository @Inject constructor(
      * Best accuracy is kept rather than last, so replaying a lesson can only improve the record.
      */
     suspend fun completeLesson(ref: LessonRef, accuracy: Float): Int {
-        val existing = lessonDao.get(ref.unitId, ref.lessonIndex)
-        lessonDao.upsert(
-            LessonProgressEntity(
-                unitId = ref.unitId,
-                lessonIndex = ref.lessonIndex,
-                isComplete = true,
-                bestAccuracy = maxOf(existing?.bestAccuracy ?: 0f, accuracy),
-                timesCompleted = (existing?.timesCompleted ?: 0) + 1,
-                lastCompletedAt = System.currentTimeMillis()
-            )
-        )
-
-        val xp = LessonPlan.xpFor(accuracy)
-        userProgressRepository.addXp(xp)
+        val xp = userProgressRepository.awardLesson(ref.unitId,ref.lessonIndex,accuracy)
         userProgressRepository.recordLearningActivity()
         return xp
     }

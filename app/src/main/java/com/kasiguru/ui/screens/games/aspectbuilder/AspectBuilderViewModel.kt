@@ -61,6 +61,8 @@ class AspectBuilderViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
+    private var usedHint = false
+    private var finishing = false
     private val _uiState = MutableStateFlow(AspectBuilderUiState())
     val uiState: StateFlow<AspectBuilderUiState> = _uiState.asStateFlow()
 
@@ -150,6 +152,7 @@ class AspectBuilderViewModel @Inject constructor(
     /** The learner asked for the definition. Costs the speed bonus; see the rating in submitAnswer. */
     fun revealHint() {
         if (_uiState.value.selectedAnswer != null) return
+        usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
     }
 
@@ -164,19 +167,8 @@ class AspectBuilderViewModel @Inject constructor(
         // A hinted answer is graded HARD however fast it came back: it forfeits the speed bonus,
         // and it keeps the SM-2 signal honest, since recall that needed the definition shown is not
         // the same evidence of memory as recall that did not.
-        val rating = if (state.hintRevealed) {
-            ReviewRating.HARD
-        } else {
-            ReviewRatingMapper.ratingForAnswer(correct, responseTimeMs)
-        }
-        val questionXp = if (correct) {
-            if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
-        } else {
-            0
-        }
-
+        val rating = ReviewRatingMapper.ratingForAnswer(correct, responseTimeMs, state.hintRevealed)
         val newScore = if (correct) state.score + 1 else state.score
-        val newXp = state.xpEarned + questionXp
 
         reviewItems.add(
             GameReviewItem(
@@ -193,7 +185,6 @@ class AspectBuilderViewModel @Inject constructor(
                 selectedAnswer = answer,
                 isCorrect = correct,
                 score = newScore,
-                xpEarned = newXp,
                 questions = questionQueue.toList()
             )
         }
@@ -206,9 +197,10 @@ class AspectBuilderViewModel @Inject constructor(
     fun nextQuestion() {
         val state = _uiState.value
         if (state.currentIndex + 1 >= questionQueue.size) {
+            if (finishing) return
+            finishing = true
             viewModelScope.launch {
-                val isPerfect = state.score >= totalInitialQuestions
-                val finalXp = state.xpEarned + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
+                val isPerfect = state.score >= totalInitialQuestions && !usedHint
 
                 val successRate = state.score.toFloat() / totalInitialQuestions
                 val starsEarned = when {
@@ -217,6 +209,7 @@ class AspectBuilderViewModel @Inject constructor(
                     successRate >= 0.4f -> 1
                     else -> 0
                 }
+                val finalXp = userProgressRepository.awardGame("aspect_builder","aspect_builder",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
                 gameLevelRepository.saveLevelResult("aspect_builder", levelNumber, starsEarned)
 
                 gameRepository.saveGameScore(
@@ -225,13 +218,9 @@ class AspectBuilderViewModel @Inject constructor(
                     totalQuestions = totalInitialQuestions,
                     xpEarned = finalXp
                 )
-                userProgressRepository.addXp(finalXp)
                 userProgressRepository.incrementGamesPlayed()
                 userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
 
-                if (isPerfect) {
-                    userProgressRepository.checkPerfectGameAchievement()
-                }
 
                 val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("aspect_builder", levelNumber + 1)?.isUnlocked == true)) {
                     levelNumber + 1

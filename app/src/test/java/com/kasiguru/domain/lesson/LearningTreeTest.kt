@@ -123,8 +123,8 @@ class LearningTreeTest {
 
     @Test
     fun theGateIsSixtyPercentOfASectionsLessonXp() {
-        // 10 lesson nodes at 30 XP is 300 available; 60% of that is 180.
-        assertEquals(180, LearningTree.requiredXpToOpenNext(lessonNodeCount = 10))
+        // 10 lesson nodes at 20 XP is 200 available; 60% is 120.
+        assertEquals(120, LearningTree.requiredXpToOpenNext(lessonNodeCount = 10))
     }
 
     @Test
@@ -185,7 +185,7 @@ class LearningTreeTest {
         // Six core lessons at 30 XP is 180 available; 60% is 108. The same number whether the stage
         // carries fifty words or two hundred and fifty, which is the point: before this, the biggest
         // stage set the hardest gate purely for being biggest.
-        assertEquals(108, LearningTree.requiredXpToOpenNext(LearningTree.CORE_LESSONS_PER_STAGE))
+        assertEquals(72, LearningTree.requiredXpToOpenNext(LearningTree.CORE_LESSONS_PER_STAGE))
     }
 
     @Test

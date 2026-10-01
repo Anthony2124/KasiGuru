@@ -10,6 +10,11 @@ import org.junit.Test
  * fast fluent recall = EASY, normal = GOOD, slow = HARD, wrong = AGAIN.
  */
 class ReviewRatingMapperTest {
+    @Test
+    fun hintsDoNotTurnWrongAnswersIntoSuccessfulRetrievals() {
+        assertEquals(ReviewRating.AGAIN,ReviewRatingMapper.ratingForAnswer(false,100,true))
+        assertEquals(ReviewRating.HARD,ReviewRatingMapper.ratingForAnswer(true,100,true))
+    }
 
     @Test
     fun fastCorrectAnswerIsEasy() {

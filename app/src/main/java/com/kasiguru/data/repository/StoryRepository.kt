@@ -15,7 +15,7 @@ class StoryRepository @Inject constructor(
     fun getAllStories(): Flow<List<StoryEntity>> = flow {
         val count = storyDao.getStoryCount()
         if (count == 0) {
-            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+            storyDao.insertMissing(DatabaseSeeder.getInitialStories())
         }
         storyDao.getAllStories().collect { emit(it) }
     }
@@ -30,14 +30,14 @@ class StoryRepository @Inject constructor(
      */
     fun getUnlockedStories(): Flow<List<StoryEntity>> = flow {
         if (storyDao.getStoryCount() == 0) {
-            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+            storyDao.insertMissing(DatabaseSeeder.getInitialStories())
         }
         storyDao.getUnlockedStories().collect { emit(it) }
     }
 
     suspend fun getStoryById(id: Int): StoryEntity? {
         if (storyDao.getStoryCount() == 0) {
-            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+            storyDao.insertMissing(DatabaseSeeder.getInitialStories())
         }
         return storyDao.getStoryById(id)
     }
@@ -53,7 +53,7 @@ class StoryRepository @Inject constructor(
 
     suspend fun unlockStoriesByXp(xp: Int) {
         if (storyDao.getStoryCount() == 0) {
-            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+            storyDao.insertMissing(DatabaseSeeder.getInitialStories())
         }
         storyDao.unlockStoriesByXp(xp)
     }

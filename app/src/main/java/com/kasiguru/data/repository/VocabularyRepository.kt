@@ -113,7 +113,7 @@ class VocabularyRepository @Inject constructor(
      * Processes a spaced repetition review for a word using SM-2.
      * Updates SM-2 fields and increments user progress stats if learned threshold is passed.
      */
-    suspend fun processWordReview(word: VocabularyEntity, rating: ReviewRating): VocabularyEntity {
+    suspend fun processWordReview(word: VocabularyEntity, rating: ReviewRating, scheduled: Boolean = false): VocabularyEntity {
         val sm2Result = Sm2Algorithm.calculateNextReview(word, rating)
         val updatedWord = word.copy(
             easinessFactor = sm2Result.easinessFactor,
@@ -124,33 +124,12 @@ class VocabularyRepository @Inject constructor(
             lapses = sm2Result.lapses,
             relearningStep = sm2Result.relearningStep
         )
-        vocabularyDao.updateVocabulary(updatedWord)
-
         // A retrieval is the smallest unit of real learning in the app, so it is what keeps the
         // streak alive. Same-day repeats are cheap: the streak write returns early once set.
         userProgressRepository.recordLearningActivity()
 
-        if (!word.isLearned && sm2Result.isLearned) {
-            userProgressRepository.incrementWordsLearned()
-            userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
-            checkCategoryMastery(word.category)
-        }
+        userProgressRepository.recordWordReview(word.id,rating.name,scheduled,sm2Result.isLearned,updatedWord)
         return updatedWord
-    }
-
-    /**
-     * Backs the "Category Master" badge. Lives here rather than in UserProgressRepository because
-     * that would need VocabularyRepository injected there, which already depends on
-     * UserProgressRepository - a cycle Hilt can't build.
-     */
-    private suspend fun checkCategoryMastery(category: String) {
-        val words = vocabularyDao.getVocabularyByCategory(category).first()
-        if (words.isNotEmpty() && words.all { it.isLearned }) {
-            userProgressRepository.checkAchievements(
-                com.kasiguru.data.local.entity.MetricType.CATEGORY_MASTERED,
-                currentValue = 1
-            )
-        }
     }
 
     /**
@@ -180,9 +159,7 @@ class VocabularyRepository @Inject constructor(
         )
         vocabularyDao.updateVocabulary(updatedWord)
 
-        userProgressRepository.incrementWordsLearned()
-        userProgressRepository.addXp(Constants.XP_PER_WORD_LEARNED)
-        checkCategoryMastery(word.category)
+        // Manual knowledge is retained by SM-2, but only verified retrieval earns mastery XP.
     }
 
     suspend fun unmarkAsLearned(id: Int) {

@@ -34,13 +34,14 @@ class FillBlankViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
+    private var usedHint = false
+    private var finishing = false
     private val _uiState = MutableStateFlow(FillBlankUiState())
     val uiState: StateFlow<FillBlankUiState> = _uiState.asStateFlow()
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
-    private var earnedXpTotal = 0
     private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
@@ -64,7 +65,6 @@ class FillBlankViewModel @Inject constructor(
 
             questionQueue.clear()
             questionQueue.addAll(verbs)
-            earnedXpTotal = 0
             reviewItems.clear()
             
             if (questionQueue.isEmpty()) {
@@ -155,6 +155,7 @@ class FillBlankViewModel @Inject constructor(
     /** The learner asked for the definition. Costs the speed bonus; see the rating above. */
     fun revealHint() {
         if (_uiState.value.selectedOption != null) return
+        usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
     }
 
@@ -169,18 +170,7 @@ class FillBlankViewModel @Inject constructor(
         // A hinted answer is graded HARD however fast it came back: it forfeits the speed bonus,
         // and it keeps the SM-2 signal honest, since recall that needed the definition shown is not
         // the same evidence of memory as recall that did not.
-        val rating = if (state.hintRevealed) {
-            ReviewRating.HARD
-        } else {
-            ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs)
-        }
-        val questionXp = if (isCorrect) {
-            if (rating == ReviewRating.HARD) 5 else Constants.XP_PER_GAME_CORRECT
-        } else {
-            0
-        }
-
-        earnedXpTotal += questionXp
+        val rating = ReviewRatingMapper.ratingForAnswer(isCorrect, responseTimeMs, state.hintRevealed)
         val newScore = if (isCorrect) state.score + 1 else state.score
 
         reviewItems.add(
@@ -210,11 +200,20 @@ class FillBlankViewModel @Inject constructor(
     }
 
     private fun endGame() {
+        if (finishing) return
+        finishing = true
         val state = _uiState.value
-        val isPerfect = state.score >= totalInitialQuestions
-        val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
+        val isPerfect = state.score >= totalInitialQuestions && !usedHint
 
         viewModelScope.launch {
+            val successRate = state.score.toFloat() / totalInitialQuestions
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            val xpEarned = userProgressRepository.awardGame("fill_blank","fill_blank",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
             val scoreEntity = GameScoreEntity(
                 gameType = "fill_blank",
                 score = state.score,
@@ -224,22 +223,11 @@ class FillBlankViewModel @Inject constructor(
             )
             gameRepository.saveScore(scoreEntity)
             
-            val successRate = state.score.toFloat() / totalInitialQuestions
-            val starsEarned = when {
-                successRate >= 1.0f -> 3
-                successRate >= 0.7f -> 2
-                successRate >= 0.4f -> 1
-                else -> 0
-            }
             gameLevelRepository.saveLevelResult("fill_blank", levelNumber, starsEarned)
 
-            userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
             userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
             
-            if (isPerfect) {
-                userProgressRepository.checkPerfectGameAchievement()
-            }
 
             val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("fill_blank", levelNumber + 1)?.isUnlocked == true)) {
                 levelNumber + 1

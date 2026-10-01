@@ -18,27 +18,8 @@ interface UserProgressDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(progress: UserProgressEntity)
-
-    @Query("UPDATE user_progress SET totalXp = totalXp + :xp WHERE id = 1")
-    suspend fun addXp(xp: Int)
-
-    /**
-     * Adds to today's XP ledger, resetting it first when the stored date is not [today].
-     * Done in SQL so the read-modify-write cannot interleave with another coroutine.
-     */
-    @Query(
-        """UPDATE user_progress
-           SET dailyXpEarned = CASE WHEN dailyXpDate = :today THEN dailyXpEarned + :xp ELSE :xp END,
-               dailyXpDate = :today
-           WHERE id = 1"""
-    )
-    suspend fun addDailyXp(xp: Int, today: String)
-
-    @Query("UPDATE user_progress SET wordsLearned = wordsLearned + 1 WHERE id = 1")
-    suspend fun incrementWordsLearned()
-
-    @Query("UPDATE user_progress SET storiesCompleted = storiesCompleted + 1 WHERE id = 1")
-    suspend fun incrementStoriesCompleted()
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfMissing(progress: UserProgressEntity)
 
     @Query("UPDATE user_progress SET gamesPlayed = gamesPlayed + 1 WHERE id = 1")
     suspend fun incrementGamesPlayed()
@@ -55,9 +36,6 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET currentStreak = 0 WHERE id = 1")
     suspend fun resetStreak()
 
-    @Query("UPDATE user_progress SET level = :level WHERE id = 1")
-    suspend fun updateLevel(level: Int)
-
     @Query("UPDATE user_progress SET userName = :name WHERE id = 1")
     suspend fun updateUserName(name: String)
 
@@ -67,8 +45,8 @@ interface UserProgressDao {
     @Query("UPDATE user_progress SET fullName = :fullName, age = :age, address = :address WHERE id = 1")
     suspend fun updatePersonalDetails(fullName: String, age: Int?, address: String)
 
-    @Query("UPDATE user_progress SET isOnboardingCompleted = 1, userName = :userName, profileIconId = :avatarId, dailyGoalXp = :dailyGoalXp, titleBadge = :titleBadge, totalXp = totalXp + 50, currentStreak = CASE WHEN currentStreak < 1 THEN 1 ELSE currentStreak END, longestStreak = CASE WHEN longestStreak < 1 THEN 1 ELSE longestStreak END, lastActiveDate = :today WHERE id = 1")
-    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String, today: String)
+    @Query("UPDATE user_progress SET isOnboardingCompleted = 1, userName = :userName, profileIconId = :avatarId, dailyGoalXp = :dailyGoalXp, titleBadge = :titleBadge")
+    suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String)
 
     @Query("UPDATE user_progress SET dailyReviewCompletedDate = :today WHERE id = 1")
     suspend fun recordDailyReviewCompleted(today: String)

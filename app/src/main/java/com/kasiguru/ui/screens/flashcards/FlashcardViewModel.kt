@@ -112,17 +112,7 @@ class FlashcardViewModel @Inject constructor(
             // checking category mastery — so a word first mastered on a flashcard raised the row
             // flag but not the counter the profile displays, and the two drifted apart
             // permanently. One path for reviews, whatever surface they happen on.
-            vocabularyRepository.processWordReview(currentCard, rating)
-
-            // Per-card XP for the act of reviewing, on top of any word-learned bonus the
-            // repository awards when a word crosses the threshold.
-            val xpGain = when (rating) {
-                ReviewRating.AGAIN -> 2
-                ReviewRating.HARD -> 5
-                ReviewRating.GOOD -> 10
-                ReviewRating.EASY -> 15
-            }
-            userProgressRepository.addXp(xpGain)
+            vocabularyRepository.processWordReview(currentCard, rating, scheduled = !state.isExtraPractice)
 
             // 4. Advance deck
             val nextIndex = state.currentIndex + 1

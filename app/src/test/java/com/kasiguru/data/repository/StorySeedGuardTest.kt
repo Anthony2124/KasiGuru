@@ -51,6 +51,14 @@ class StorySeedGuardTest {
             insertAllCalls++
             rows.addAll(stories)
         }
+        override suspend fun insertMissing(stories: List<StoryEntity>) {
+            insertAllCalls++
+            val existing = rows.map { it.id }.toSet()
+            rows.addAll(stories.filter { it.id !in existing })
+        }
+        override suspend fun resetAllProgress() {
+            rows.replaceAll { it.copy(isCompleted = false,currentPage = 0,isUnlocked = it.requiredXp == 0) }
+        }
         override suspend fun insert(story: StoryEntity) {
             rows.add(story)
         }

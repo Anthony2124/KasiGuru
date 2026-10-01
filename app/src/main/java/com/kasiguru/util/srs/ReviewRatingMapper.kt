@@ -13,8 +13,9 @@ object ReviewRatingMapper {
     private const val EASY_THRESHOLD_MS = 1_500L
     private const val GOOD_THRESHOLD_MS = 5_000L
 
-    fun ratingForAnswer(isCorrect: Boolean, responseTimeMs: Long): ReviewRating {
+    fun ratingForAnswer(isCorrect: Boolean, responseTimeMs: Long, usedHint: Boolean = false): ReviewRating {
         if (!isCorrect) return ReviewRating.AGAIN
+        if (usedHint) return ReviewRating.HARD
         return when {
             responseTimeMs < EASY_THRESHOLD_MS -> ReviewRating.EASY
             responseTimeMs < GOOD_THRESHOLD_MS -> ReviewRating.GOOD

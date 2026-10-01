@@ -22,7 +22,7 @@ android {
         versionCode = 18
         versionName = "1.17.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.kasiguru.data.local.LocalDatabaseTestRunner"
 
         // Room schema export for migration testing
         ksp {

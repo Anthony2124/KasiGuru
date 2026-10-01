@@ -33,7 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
-import com.kasiguru.ui.components.LevelUpDialog
+import com.kasiguru.ui.components.RewardCelebrationDialog
 import com.kasiguru.ui.components.StreakCelebrationDialog
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.help.HowToUseScreen
@@ -91,16 +91,16 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
     val showBottomBar = currentRoute in Screen.tabRoots
 
-    val levelUpViewModel: LevelUpViewModel = hiltViewModel()
-    val pendingLevelUp by levelUpViewModel.pendingLevelUp.collectAsState()
-    pendingLevelUp?.let { levelInfo ->
-        LevelUpDialog(newLevelInfo = levelInfo, onDismiss = levelUpViewModel::dismiss)
+    val rewardViewModel: RewardCelebrationViewModel = hiltViewModel()
+    val pendingReward by rewardViewModel.pending.collectAsState()
+    pendingReward?.let { reward ->
+        RewardCelebrationDialog(reward,onDismiss = rewardViewModel::dismiss)
     }
 
     val streakCelebrationViewModel: StreakCelebrationViewModel = hiltViewModel()
     val pendingStreakActivation by streakCelebrationViewModel.pendingStreakActivation.collectAsState()
     pendingStreakActivation?.let { streakDays ->
-        StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
+        if(pendingReward == null) StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
     }
 
     // ── Ban gate ─────────────────────────────────────────────────────────────────
@@ -619,7 +619,19 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
             // Badges, pushed from Me and from Home's goal ring.
             composable(Screen.Achievements.route) {
-                AchievementsScreen(onNavigateBack = { navController.popBackStack() })
+                AchievementsScreen(onNavigateBack = { navController.popBackStack() },
+                    onNavigateToActivity = { family ->
+                        val route = when(family) {
+                            "word_explorer","review_keeper" -> Screen.FlashcardDeck.route
+                            "game_adventurer","precision_player","mode_explorer" -> Screen.GameHub.route
+                            "story_reader" -> Screen.StoryList.route
+                            "category_scholar" -> Screen.VocabularyList.route
+                            "community_contributor" -> Screen.SubmitWord.route
+                            "consistent_learner" -> Screen.Home.route
+                            else -> Screen.Learn.route
+                        }
+                        navController.navigate(route) { launchSingleTop = true }
+                    })
             }
 
             // Review (Daily Spaced-Repetition Deck)

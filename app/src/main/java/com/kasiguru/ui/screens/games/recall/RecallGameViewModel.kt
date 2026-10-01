@@ -51,13 +51,14 @@ class RecallGameViewModel @Inject constructor(
 
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
+    private var usedHint = false
+    private var finishing = false
     private val _uiState = MutableStateFlow(RecallGameUiState())
     val uiState: StateFlow<RecallGameUiState> = _uiState.asStateFlow()
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
     private var questionStartTimeMs: Long = 0L
-    private var earnedXpTotal = 0
     private val reviewItems = mutableListOf<GameReviewItem>()
 
     init {
@@ -85,7 +86,6 @@ class RecallGameViewModel @Inject constructor(
             // a sentence. See RecallPrompt.
             questionQueue.clear()
             questionQueue.addAll(words.filter { promptFor(it) != null })
-            earnedXpTotal = 0
             reviewItems.clear()
 
             if (questionQueue.isEmpty()) {
@@ -128,6 +128,7 @@ class RecallGameViewModel @Inject constructor(
     /** The learner asked for the definition of the word they are trying to produce. */
     fun revealHint() {
         if (_uiState.value.hasAnswered) return
+        usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
     }
 
@@ -152,7 +153,6 @@ class RecallGameViewModel @Inject constructor(
             .let { if (state.hintRevealed && it == ReviewRating.EASY) ReviewRating.GOOD else it }
         val isCorrect = RecallGrading.isCorrect(match)
 
-        earnedXpTotal += RecallGrading.xpFor(match)
         val newScore = if (isCorrect) state.score + 1 else state.score
 
         reviewItems.add(
@@ -178,11 +178,20 @@ class RecallGameViewModel @Inject constructor(
     }
 
     private fun endGame() {
+        if (finishing) return
+        finishing = true
         val state = _uiState.value
-        val isPerfect = state.score >= totalInitialQuestions
-        val xpEarned = earnedXpTotal + if (isPerfect) Constants.XP_BONUS_PERFECT_GAME else 0
+        val isPerfect = state.score >= totalInitialQuestions && !usedHint
 
         viewModelScope.launch {
+            val successRate = state.score.toFloat() / totalInitialQuestions
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            val xpEarned = userProgressRepository.awardGame("audio_quiz","audio_quiz",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
             val scoreEntity = GameScoreEntity(
                 gameType = Constants.Games.RECALL,
                 score = state.score,
@@ -192,22 +201,11 @@ class RecallGameViewModel @Inject constructor(
             )
             gameRepository.saveScore(scoreEntity)
 
-            val successRate = state.score.toFloat() / totalInitialQuestions
-            val starsEarned = when {
-                successRate >= 1.0f -> 3
-                successRate >= 0.7f -> 2
-                successRate >= 0.4f -> 1
-                else -> 0
-            }
             gameLevelRepository.saveLevelResult(Constants.Games.RECALL, levelNumber, starsEarned)
 
-            userProgressRepository.addXp(xpEarned)
             userProgressRepository.incrementGamesPlayed()
             userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
 
-            if (isPerfect) {
-                userProgressRepository.checkPerfectGameAchievement()
-            }
 
             val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel(Constants.Games.RECALL, levelNumber + 1)?.isUnlocked == true)) {
                 levelNumber + 1

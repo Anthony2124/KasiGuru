@@ -69,7 +69,7 @@ fun StoryReaderScreen(
     if (uiState.isFinished) {
         StoryCompleteContent(
             storyTitle = uiState.story?.title ?: "Story",
-            xpEarned = Constants.XP_PER_STORY_COMPLETE,
+            xpEarned = uiState.finalXp,
             onDone = onNavigateBack
         )
         return

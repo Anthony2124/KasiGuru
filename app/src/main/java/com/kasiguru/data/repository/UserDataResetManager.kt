@@ -2,6 +2,7 @@ package com.kasiguru.data.repository
 
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.dao.*
+import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -25,7 +26,8 @@ class UserDataResetManager @Inject constructor(
     private val leaderboardDao: LeaderboardDao,
     private val profileDao: ProfileDao,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val progressSyncManager: dagger.Lazy<ProgressSyncManager>
+    private val progressSyncManager: dagger.Lazy<ProgressSyncManager>,
+    private val database: com.kasiguru.data.local.KasiGuruDatabase
 ) {
 
     /**
@@ -48,32 +50,40 @@ class UserDataResetManager @Inject constructor(
 
         // 1. Tell SyncManager to cancel active uploads and clear cached sync hashes
         progressSyncManager.get().onUserSignedOut()
-
         // 2. Clear DataStore daily streak quota and session preferences
         userPreferencesRepository.clearUserSessionData()
 
-        // 3. Reset user progress row to clean default state
-        userProgressDao.insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
+        database.withTransaction {
+            database.rewardDao().clearReceipts()
+            database.rewardDao().clearNormalization()
+            database.rewardDao().clearCelebrations()
+            achievementDao.clearAll()
 
-        // 4. Reset vocabulary review and learning schedules back to unlearned
-        vocabularyDao.resetAllLearningProgress()
+            gameLevelDao.resetAllProgress()
+            storyDao.resetAllProgress()
+            // 3. Reset user progress row to clean default state
+            userProgressDao.insertOrUpdate(DatabaseSeeder.getInitialUserProgress())
 
-        // 5. Clear completed lesson progress and game score history
-        lessonDao.clearAll()
-        gameScoreDao.clearAll()
-        profileDao.clearAll()
-        leaderboardDao.clearAll()
+            // 4. Reset vocabulary review and learning schedules back to unlearned
+            vocabularyDao.resetAllLearningProgress()
 
-        // 6. Reset game levels, achievements, stories, and notifications to initial state
-        gameLevelDao.insertAll(DatabaseSeeder.getInitialGameLevels())
-        achievementDao.insertAll(DatabaseSeeder.getInitialAchievements())
-        storyDao.insertAll(DatabaseSeeder.getInitialStories())
-        notificationDao.deleteAll()
-        notificationDao.insertAll(DatabaseSeeder.getInitialNotifications())
+            // 5. Clear completed lesson progress and game score history
+            lessonDao.clearAll()
+            gameScoreDao.clearAll()
+            profileDao.clearAll()
+            leaderboardDao.clearAll()
 
-        // 7. Ensure vocabulary dictionary has entries if it was somehow empty
-        if (vocabularyDao.getTotalCountDirect() == 0) {
-            vocabularyDao.insertAll(DatabaseSeeder.getInitialVocabulary())
+            // 6. Reset game levels, achievements, stories, and notifications to initial state
+            gameLevelDao.insertAll(DatabaseSeeder.getInitialGameLevels())
+            achievementDao.insertAll(DatabaseSeeder.getInitialAchievements())
+            storyDao.insertAll(DatabaseSeeder.getInitialStories())
+            notificationDao.deleteAll()
+            notificationDao.insertAll(DatabaseSeeder.getInitialNotifications())
+
+            // 7. Ensure vocabulary dictionary has entries if it was somehow empty
+            if (vocabularyDao.getTotalCountDirect() == 0) {
+                vocabularyDao.insertAll(DatabaseSeeder.getInitialVocabulary())
+            }
         }
     }
 }

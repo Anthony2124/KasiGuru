@@ -235,11 +235,10 @@ class WordWheelViewModel @Inject constructor(
         }
         // Half the per-answer XP of the choice games per board word, and half again per bonus word:
         // spelling a word from its letters is a recall of form, not of meaning.
-        val xp = boardWords * (Constants.XP_PER_GAME_CORRECT / 2) +
-            state.bonusFound.size * (Constants.XP_PER_GAME_CORRECT / 4)
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
+            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0)
             gameRepository.saveScore(
                 GameScoreEntity(
                     gameType = Constants.Games.WORD_WHEEL,
@@ -250,12 +249,10 @@ class WordWheelViewModel @Inject constructor(
                 )
             )
             gameLevelRepository.saveLevelResult(Constants.Games.WORD_WHEEL, levelNumber, stars)
-            userProgressRepository.addXp(xp)
             userProgressRepository.incrementGamesPlayed()
             // Wrong guesses are how this game is played, so they do not count against accuracy.
             // A hint does: it is a word the learner could not produce.
             userProgressRepository.updateGameStats(boardWords, boardWords + state.hintsUsed)
-            if (state.hintsUsed == 0) userProgressRepository.checkPerfectGameAchievement()
 
             // No SM-2 review for these words: spelling a word from its letters is not evidence of
             // remembering what it means, and the review schedule is a thesis claim (PRODUCT.md).

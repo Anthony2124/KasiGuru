@@ -37,7 +37,7 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 31
+        const val CURRENT_VERSION = 32
     }
 
     /**
@@ -66,6 +66,33 @@ class MigrationTest {
             "KasiGuruDatabase is at v$declared but this suite only migrates to v$CURRENT_VERSION - " +
                 "bump CURRENT_VERSION and add a case for the new migration."
         }
+    }
+
+    @Test
+    fun migrateV31ToV32PreservesTheLegacyBaselineForTransactionalNormalization() {
+        helper.createDatabase("migration-normalization-test",31).apply {
+            val values = android.content.ContentValues()
+            query("PRAGMA table_info(user_progress)").use { cursor ->
+                while(cursor.moveToNext()) {
+                    val name = cursor.getString(1)
+                    val type = cursor.getString(2)
+                    if(type == "TEXT") values.put(name,"") else values.put(name,0)
+                }
+            }
+            values.put("id",1)
+            values.put("totalXp",4321)
+            values.put("level",7)
+            insert("user_progress",android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE,values)
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("migration-normalization-test",CURRENT_VERSION,true,*KasiGuruMigrations.ALL)
+        db.query("SELECT totalXp,level,xpPolicyVersion,activityXp,badgeBonusXp,pinnedBadgeIds FROM user_progress WHERE id = 1").use {
+            check(it.moveToFirst())
+            check(it.getInt(0) == 4321 && it.getInt(1) == 7)
+            check(it.getInt(2) == 0 && it.getInt(3) == 0 && it.getInt(4) == 0 && it.getString(5) == "")
+        }
+        db.query("SELECT COUNT(*) FROM reward_receipts").use { check(it.moveToFirst() && it.getInt(0) == 0) }
+        db.close()
     }
 
     private val testDbName = "migration-test"

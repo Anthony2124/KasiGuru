@@ -85,10 +85,10 @@ enum class OnboardingStep(
  * `dailyGoalXp`; the minute figures are the same estimates the goal tiles have always shown.
  */
 enum class DailyGoal(val xp: Int, val minutes: Int, val label: String) {
-    Casual(xp = 50, minutes = 5, label = "Casual"),
-    Regular(xp = 100, minutes = 10, label = "Regular"),
-    Serious(xp = 150, minutes = 15, label = "Serious"),
-    Intense(xp = 200, minutes = 20, label = "Intense");
+    Casual(xp = 30, minutes = 5, label = "Casual"),
+    Regular(xp = 50, minutes = 10, label = "Regular"),
+    Serious(xp = 80, minutes = 15, label = "Serious"),
+    Intense(xp = 100, minutes = 20, label = "Intense");
 
     companion object {
         /** Used when the learner skips past both the level question and the goal. */

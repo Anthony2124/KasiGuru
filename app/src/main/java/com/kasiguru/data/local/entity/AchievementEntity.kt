@@ -6,14 +6,9 @@ import androidx.room.PrimaryKey
 /**
  * Represents a gamification achievement/badge.
  *
- * [metricType] is what makes this scale without a schema change per new badge: unlock logic
- * lives once, in UserProgressRepository.checkAchievements(metricType, currentValue), reading
- * [requiredValue] off the row itself instead of a hardcoded threshold per badge id. Adding a
- * badge is a new seeded row with an existing metricType (free) or a new one plus one place that
- * calls checkAchievements for it (see [MetricType]).
- *
- * [tier] is optional and wires the app's existing TierGold/TierSilver/TierBronze theme tokens to
- * real badges instead of leaving them unused.
+ * Active IDs come from BadgeCatalog. GamificationRepository projects receipt evidence into
+ * progress and permanent tier attainment. Original rows remain unchanged for the Legacy view.
+ * [MetricType] describes the archived catalogue; active metrics are defined by BadgeCatalog.
  */
 @Entity(tableName = "achievements")
 data class AchievementEntity(

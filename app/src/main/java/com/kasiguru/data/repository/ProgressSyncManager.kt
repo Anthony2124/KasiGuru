@@ -10,6 +10,18 @@ import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.LessonProgressEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.data.local.KasiGuruDatabase
+import com.kasiguru.data.local.entity.RewardReceiptEntity
+import com.kasiguru.data.remote.RewardReceiptCodec
+import com.kasiguru.domain.gamification.BadgeCatalog
+import com.kasiguru.domain.gamification.RewardLedger
+import com.kasiguru.domain.gamification.XpPolicy
+import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.Source
+import androidx.room.withTransaction
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,7 +56,9 @@ class ProgressSyncManager @Inject constructor(
     private val lessonDao: LessonDao,
     private val vocabularyDao: VocabularyDao,
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val db: KasiGuruDatabase,
+    private val gamification: GamificationRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -73,30 +87,49 @@ class ProgressSyncManager @Inject constructor(
 
     @Volatile
     private var activeUid: String? = null
+    @Volatile private var readyForNormalizedUpload = false
+    private var legacyCloud = false
+    private val rewardUploadMutex = Mutex()
+    private val uploadedRewards = java.util.concurrent.ConcurrentHashMap<String,RewardReceiptEntity>()
+    private var rewardCursor: com.google.firebase.Timestamp? = null
 
     // Declared before init: addAuthStateListener can fire synchronously.
     init {
         auth.addAuthStateListener { firebaseAuth ->
-            val uid = firebaseAuth.currentUser?.uid ?: return@addAuthStateListener
-            if (uid == activeUid) return@addAuthStateListener
-            // The account changed (sign-in, link, sign-out): stop uploading to the
-            // previous uid before touching local data, so nothing leaks across accounts.
-            sessionJob?.cancel()
-            uploadJobs.forEach { it.cancel() }
-            activeUid = uid
-            lastUploaded = null
-            lastUploadedLearning.clear()
-            sessionJob = scope.launch {
-                syncFromCloud(uid)
-                syncLearningStateFromCloud(uid)
-                uploadJobs = listOf(
-                    launch { observeAndUpload(uid) },
-                    launch { observeAndUploadAchievements(uid) },
-                    launch { observeAndUploadGameLevels(uid) },
-                    launch { observeAndUploadLessonProgress(uid) },
-                    launch { observeAndUploadWordStates(uid) }
-                )
+            val uid = firebaseAuth.currentUser?.uid
+            if(uid == null) onUserSignedOut() else if(uid != activeUid) startSync(uid)
+        }
+    }
+
+    fun restartSync() { auth.currentUser?.uid?.let(::startSync) }
+
+    private fun startSync(uid: String) {
+        // The account changed (sign-in, link, sign-out): stop uploading to the
+        // previous uid before touching local data, so nothing leaks across accounts.
+        sessionJob?.cancel()
+        uploadJobs.forEach { it.cancel() }
+        activeUid = uid
+        lastUploaded = null
+        lastUploadedLearning.clear()
+        readyForNormalizedUpload = false
+        uploadedRewards.clear()
+        rewardCursor = null
+        sessionJob = scope.launch {
+            while(activeUid == uid) {
+                if(syncFromCloud(uid) && syncRewardsFromCloud(uid) && syncLearningStateFromCloud(uid)) break
+                delay(5_000)
             }
+            if(activeUid != uid) return@launch
+            if(legacyCloud) gamification.importLegacyLearningState()
+            readyForNormalizedUpload = true
+            uploadJobs = listOf(
+                launch { observeAndUploadRewards(uid) },
+                launch { observeAndUpload(uid) },
+                launch { observeAndUploadAchievements(uid) },
+                launch { observeAndUploadGameLevels(uid) },
+                launch { observeAndUploadLessonProgress(uid) },
+                launch { observeAndUploadWordStates(uid) }
+            )
         }
     }
 
@@ -111,6 +144,9 @@ class ProgressSyncManager @Inject constructor(
         activeUid = null
         lastUploaded = null
         lastUploadedLearning.clear()
+        readyForNormalizedUpload = false
+        uploadedRewards.clear()
+        rewardCursor = null
     }
 
     /**
@@ -129,6 +165,10 @@ class ProgressSyncManager @Inject constructor(
      */
     suspend fun flushToCloud() {
         val uid = auth.currentUser?.uid ?: return
+        check(syncFromCloud(uid) && syncRewardsFromCloud(uid) && syncLearningStateFromCloud(uid)) { "Connect to the internet before signing out so your progress can be saved." }
+        if(legacyCloud) gamification.importLegacyLearningState()
+        readyForNormalizedUpload = true
+        check(uploadRewards(uid)) { "Your rewards could not be saved. Please try again." }
         userProgressDao.getUserProgressOnce()?.let { upload(uid, it) }
 
         uploadAchievements(
@@ -163,19 +203,23 @@ class ProgressSyncManager @Inject constructor(
             .collection("progress").document(name)
 
     /** Pulls remote progress, merges with local, persists, and reflects it back. */
-    suspend fun syncFromCloud(uid: String) {
-        val remote = runCatching {
-            progressDoc(uid).get().await()
-        }.getOrNull()?.data?.let { toEntity(it) }
-
-        val local = userProgressDao.getUserProgressOnce()
-        if (local == null) return
-        val merged = if (remote != null) mergeProgress(local, remote) else local
-        val updated = withAccountIdentity(merged)
-        if (updated != local) {
-            userProgressDao.insertOrUpdate(updated)
+    suspend fun syncFromCloud(uid: String): Boolean {
+        val snapshot = runCatching { progressDoc(uid).get(Source.SERVER).await() }.getOrElse {
+            Log.w(TAG,"Read main progress failed; waiting before upload",it)
+            return false
         }
-        upload(uid, updated)
+        if(activeUid != uid || auth.currentUser?.uid != uid) return false
+        val remote = snapshot.data?.let(::toEntity)
+        legacyCloud = remote != null && remote.xpPolicyVersion < XpPolicy.VERSION
+        db.withTransaction {
+            val local = userProgressDao.getUserProgressOnce() ?: UserProgressEntity()
+            val merged = if(remote != null) mergeProgress(local,remote) else local
+            val updated = withAccountIdentity(merged)
+            if(updated != local) userProgressDao.insertOrUpdate(updated)
+        }
+        gamification.ensureNormalized()
+        if(legacyCloud && remote != null) gamification.archiveLegacy(remote)
+        return true
     }
 
     /**
@@ -215,13 +259,18 @@ class ProgressSyncManager @Inject constructor(
     }
 
     suspend fun upload(uid: String, progress: UserProgressEntity) {
-        val key = uid to progress.toString()
+        if(auth.currentUser?.uid != uid || activeUid != uid) return
+        if(progress.xpPolicyVersion >= XpPolicy.VERSION && !readyForNormalizedUpload) return
+        if(!uploadRewards(uid)) return
+        val projected = userProgressDao.getUserProgressOnce() ?: return
+        if(auth.currentUser?.uid != uid || activeUid != uid) return
+        val key = uid to projected.toString()
         if (key == lastUploaded) return
         runCatching {
-            progressDoc(uid).set(toMap(progress)).await()
+            progressDoc(uid).set(toMap(projected)).await()
         }.onSuccess {
             lastUploaded = key
-            publishLeaderboardEntry(uid, progress)
+            publishLeaderboardEntry(uid, projected)
         }.onFailure { e ->
             // Reaching here means the document is NOT in the cloud, and nothing above this
             // notices. firestore.rules' isValidMainProgress() rejects the whole write when
@@ -266,7 +315,9 @@ class ProgressSyncManager @Inject constructor(
             } else {
                 progress.totalXp to currentWeekId
             }
-        val weeklyXp = (progress.totalXp - weekStartXp).coerceAtLeast(0)
+        val weekStart = java.time.LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).toString()
+        val weeklyXp = RewardLedger.totals(db.rewardDao().all().map { it.record() })
+            .byDay.filterKeys { it >= weekStart && it <= java.time.LocalDate.now().toString() }.values.sum()
 
         val resolvedEmail = progress.email.ifBlank { auth.currentUser?.accountEmail().orEmpty() }
         val displayName = progress.fullName.ifBlank { progress.userName }
@@ -290,6 +341,8 @@ class ProgressSyncManager @Inject constructor(
             "weeklyXp" to weeklyXp,
             "weekStartXp" to weekStartXp,
             "weekStartDate" to weekStartDate,
+            "xpPolicyVersion" to progress.xpPolicyVersion,
+            "activityXp" to progress.activityXp,
             "updatedAt" to System.currentTimeMillis()
         )
         runCatching { leaderboardDoc(uid).set(payload).await() }
@@ -311,11 +364,20 @@ class ProgressSyncManager @Inject constructor(
     // result locally, then push the merged view back so the other side catches up.
 
     /** Pulls the learning-state documents and merges them into Room. */
-    suspend fun syncLearningStateFromCloud(uid: String) {
+    suspend fun syncLearningStateFromCloud(uid: String): Boolean = runCatching {
         mergeAchievementsFromCloud(uid)
         mergeGameLevelsFromCloud(uid)
         mergeLessonProgressFromCloud(uid)
         mergeWordStatesFromCloud(uid)
+        true
+    }.getOrElse { Log.w(TAG,"Learning history download failed",it); false }
+
+    suspend fun syncNow(uid: String): Boolean {
+        if(!syncFromCloud(uid) || !syncRewardsFromCloud(uid) || !syncLearningStateFromCloud(uid)) return false
+        if(legacyCloud) gamification.importLegacyLearningState()
+        readyForNormalizedUpload = true
+        upload(uid,userProgressDao.getUserProgressOnce() ?: return false)
+        return true
     }
 
     private suspend fun mergeAchievementsFromCloud(uid: String) {
@@ -327,19 +389,13 @@ class ProgressSyncManager @Inject constructor(
             )
         } ?: return
 
-        val localRows = achievementDao.getAllAchievementsOnce()
+        val localRows = achievementDao.getAllAchievementsOnce().filter { !it.id.startsWith(BadgeCatalog.PREFIX) }
         val local = localRows.associate { it.id to AchievementState(it.isUnlocked, it.currentValue, it.unlockedDate) }
         val merged = mergeAchievements(local, remote)
 
-        val updated = localRows.mapNotNull { row ->
-            val state = merged[row.id] ?: return@mapNotNull null
-            val next = row.copy(
-                isUnlocked = state.isUnlocked,
-                currentValue = state.currentValue,
-                unlockedDate = state.unlockedDate
-            )
-            next.takeIf { it != row }
-        }
+        val localById = localRows.associateBy { it.id }
+        val updated = mergeLegacyAchievementRows(localRows, remote)
+            .filter { it != localById[it.id] }
         if (updated.isNotEmpty()) achievementDao.insertAll(updated)
         uploadAchievements(uid, merged)
     }
@@ -538,11 +594,72 @@ class ProgressSyncManager @Inject constructor(
     ): Map<String, T>? {
         val snapshot = runCatching { learningDoc(uid, name).get().await() }.getOrElse {
             Log.w(TAG, "read $name FAILED", it)
-            return null
+            throw it
         }
         @Suppress("UNCHECKED_CAST")
         val entries = snapshot.data?.get("entries") as? Map<String, Map<String, Any?>> ?: return emptyMap()
         return entries.mapValues { parse(it.value) }
+    }
+
+    private fun rewardCollection(uid: String) = firestore.collection("users").document(uid)
+        .collection(RewardReceiptCodec.COLLECTION)
+
+    private suspend fun syncRewardsFromCloud(uid: String): Boolean = runCatching {
+        val cursor = rewardCursor
+        var newest = cursor
+        var last: com.google.firebase.firestore.DocumentSnapshot? = null
+        do {
+            var query = if(cursor == null) rewardCollection(uid).orderBy(FieldPath.documentId()).limit(400)
+                else rewardCollection(uid).whereGreaterThanOrEqualTo("updatedAt",cursor)
+                    .orderBy("updatedAt").orderBy(FieldPath.documentId()).limit(400)
+            last?.let { query = query.startAfter(it) }
+            val page = query.get(Source.SERVER).await()
+            if(activeUid != uid || auth.currentUser?.uid != uid) return false
+            val rows = page.documents.mapNotNull { doc ->
+                doc.data?.let(RewardReceiptCodec::decode)?.takeIf { RewardReceiptCodec.documentId(it.id) == doc.id }
+            }
+            gamification.mergeRewards(rows)
+            page.documents.mapNotNull { it.getTimestamp("updatedAt") }.maxOrNull()?.let {
+                if(newest == null || it > newest!!) newest = it
+            }
+            last = page.documents.lastOrNull()
+        } while(page.size() == 400)
+        // A first scan is ordered by document ID; a concurrent insert may fall before its cursor.
+        // Follow it with a timestamp scan from epoch so that insert cannot be skipped.
+        rewardCursor = if(cursor == null) com.google.firebase.Timestamp(0,0) else newest
+        true
+    }.getOrElse { Log.w(TAG,"Reward download failed; keeping local rewards",it); false }
+
+    private suspend fun observeAndUploadRewards(uid: String) {
+        db.rewardDao().observe().distinctUntilChanged().debounce(DEBOUNCE_MS).collect { _ ->
+            if(uploadRewards(uid)) userProgressDao.getUserProgressOnce()?.let { upload(uid,it) }
+        }
+    }
+
+    /** Reads each remote receipt before writing, so concurrent devices cannot erase stronger evidence. */
+    private suspend fun uploadRewards(uid: String): Boolean = rewardUploadMutex.withLock {
+        if(activeUid != uid || auth.currentUser?.uid != uid || !readyForNormalizedUpload) return@withLock false
+        if(!syncRewardsFromCloud(uid)) return@withLock false
+        val changed = db.rewardDao().all().filter { uploadedRewards[uid + "/" + it.id] != it }
+        runCatching {
+            changed.chunked(200).forEach { chunk ->
+                val merged = firestore.runTransaction { tx ->
+                    val results = chunk.map { row ->
+                        val ref = rewardCollection(uid).document(RewardReceiptCodec.documentId(row.id))
+                        val old = tx.get(ref).data?.let(RewardReceiptCodec::decode)
+                        val record = if(old == null) row.record() else RewardLedger.merge(row.record(),old.record())
+                        ref to row.copy(day = record.day,xp = record.xp,value = record.value,imported = record.imported)
+                    }
+                    results.forEach { (ref,row) -> tx.set(ref,RewardReceiptCodec.encode(row) +
+                        ("updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp())) }
+                    results.map { it.second }
+                }.await()
+                if(activeUid != uid || auth.currentUser?.uid != uid) return@withLock false
+                gamification.mergeRewards(merged)
+                merged.forEach { uploadedRewards[uid + "/" + it.id] = it }
+            }
+            true
+        }.getOrElse { Log.w(TAG,"Reward upload failed",it); false }
     }
 
     private companion object {
@@ -621,7 +738,7 @@ internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
     "dailyXpDate" to p.dailyXpDate,
     "titleBadge" to p.titleBadge,
     // Lifetime contribution counter behind the "First Contribution" badge
-    // (UserProgressRepository.checkAchievements(MetricType.SUBMISSIONS_MADE, ...)). It was
+    // kept for contribution statistics. It was
     // missing here, so it never reached the cloud and toEntity rebuilt it as 0 — a second
     // device, or a reinstall restoring from cloud, silently wiped the user's submission count
     // and the badge progress resting on it.
@@ -629,6 +746,10 @@ internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
     "dailyReviewCompletedDate" to p.dailyReviewCompletedDate,
     "dailyGamesDate" to p.dailyGamesDate,
     "dailyGamesPlayedCount" to p.dailyGamesPlayedCount,
+    "xpPolicyVersion" to p.xpPolicyVersion,
+    "activityXp" to p.activityXp,
+    "badgeBonusXp" to p.badgeBonusXp,
+    "pinnedBadgeIds" to p.pinnedBadgeIds,
     "updatedAt" to System.currentTimeMillis()
     // password intentionally omitted
 )
@@ -661,6 +782,10 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
     dailyReviewCompletedDate = data["dailyReviewCompletedDate"] as? String ?: "",
     dailyGamesDate = data["dailyGamesDate"] as? String ?: "",
     dailyGamesPlayedCount = (data["dailyGamesPlayedCount"] as? Number)?.toInt() ?: 0,
+    xpPolicyVersion = (data["xpPolicyVersion"] as? Number)?.toInt() ?: 0,
+    activityXp = (data["activityXp"] as? Number)?.toInt() ?: 0,
+    badgeBonusXp = (data["badgeBonusXp"] as? Number)?.toInt() ?: 0,
+    pinnedBadgeIds = data["pinnedBadgeIds"] as? String ?: "",
     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: 0L
 )
 
@@ -690,6 +815,12 @@ internal fun mergeProgress(
     today: java.time.LocalDate = java.time.LocalDate.now()
 ): UserProgressEntity {
     val remoteNewer = remote.updatedAt >= local.updatedAt
+    // Version-2 totals are projected from receipts. Legacy aggregate XP must never restore itself.
+    val normalized = when {
+        local.xpPolicyVersion >= XpPolicy.VERSION -> local
+        remote.xpPolicyVersion >= XpPolicy.VERSION -> remote
+        else -> null
+    }
 
     // Daily-XP ledger. ISO dates compare lexicographically, so the later date wins outright and a
     // shared date takes the higher count — a second device cannot erase XP earned on this one.
@@ -749,8 +880,8 @@ internal fun mergeProgress(
         age = if (remoteNewer) remote.age ?: local.age else local.age ?: remote.age,
         address = pick(local.address, remote.address, remoteNewer),
         profileIconId = if (remoteNewer) remote.profileIconId else local.profileIconId,
-        totalXp = maxOf(local.totalXp, remote.totalXp),
-        level = maxOf(local.level, remote.level),
+        totalXp = normalized?.totalXp ?: maxOf(local.totalXp, remote.totalXp),
+        level = normalized?.level ?: maxOf(local.level, remote.level),
         currentStreak = mergedStreak,
         longestStreak = maxOf(local.longestStreak, remote.longestStreak),
         lastActiveDate = mergedLastActiveDate,
@@ -762,8 +893,12 @@ internal fun mergeProgress(
         lessonsCompleted = maxOf(local.lessonsCompleted, remote.lessonsCompleted),
         isOnboardingCompleted = local.isOnboardingCompleted || remote.isOnboardingCompleted,
         dailyGoalXp = if (remoteNewer) remote.dailyGoalXp else local.dailyGoalXp,
-        dailyXpEarned = ledgerXp,
-        dailyXpDate = ledgerDate,
+        dailyXpEarned = normalized?.dailyXpEarned ?: ledgerXp,
+        dailyXpDate = normalized?.dailyXpDate ?: ledgerDate,
+        xpPolicyVersion = normalized?.xpPolicyVersion ?: 0,
+        activityXp = normalized?.activityXp ?: 0,
+        badgeBonusXp = normalized?.badgeBonusXp ?: 0,
+        pinnedBadgeIds = if(remoteNewer && remote.xpPolicyVersion >= XpPolicy.VERSION) remote.pinnedBadgeIds else local.pinnedBadgeIds,
         titleBadge = pick(local.titleBadge, remote.titleBadge, remoteNewer),
         // A lifetime total, so it takes the max like the other counters rather than the
         // newer side's value — a device that synced before a submission must not undo it.

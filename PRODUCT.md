@@ -35,7 +35,9 @@ exercises), alongside the dictionary and eight mini-games.
 - **The learning model is real**: SuperMemo-2 spaced repetition (`Sm2Algorithm`) drives review scheduling.
   This is a thesis claim; it stays exact.
 - **Offline-first**: Room is the source of truth; Firestore syncs progress and receives admin edits.
-- **Gamification already in the data**: XP, 10 levels, streaks, achievements, stars, public leaderboard.
+- **Gamification already in the data**: normalized activity and badge XP, 30 account levels, streaks,
+  11 achievement families with six permanent tiers each, stars and a public leaderboard. Daily goals
+  and weekly rankings count activity XP; existing earned badges remain in the Legacy collection.
 - **Accounts**: anonymous by default, upgradeable via Google Sign-In or email; guest progress is at risk
   and the app warns about it.
 - **Distribution**: side-loaded APK attached to a GitHub Release (permanent per-version URLs), announced

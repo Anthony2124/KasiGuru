@@ -46,10 +46,11 @@ are relative to that directory.
 | Flashcards and review | `ui/screens/flashcards/` | `util/srs/`, `util/Recall*` |
 | Stories and cultural material | `ui/screens/stories/`, `ui/screens/cultural/` | `StoryRepository.kt`, `data/remote/StoryImageRepository.kt` |
 | Sign-in and profile | `ui/screens/auth/`, `ui/screens/profile/` | `AuthRepository.kt`, `ProfileRepository.kt` |
-| Progress, leaderboard and achievements | Corresponding `ui/screens/` feature | `UserProgressRepository.kt`, `LeaderboardRepository.kt`, `util/gamification/` |
+| Progress, leaderboard and achievements | Corresponding `ui/screens/` feature | `GamificationRepository.kt`, `UserProgressRepository.kt`, `LeaderboardRepository.kt`, `domain/gamification/` |
 | Offline data or database upgrade | `data/local/KasiGuruDatabase.kt`, `KasiGuruMigrations.kt` | `dao/`, `entity/`, `ContentTopUp.kt`, `DatabaseSeeder.kt` |
 | Firebase content sync | `data/remote/FirestoreSyncManager.kt` | `data/repository/FirestoreSyncRepository.kt` |
 | Cross-device progress | `data/repository/ProgressSyncManager.kt` | `LearningStateMerge.kt`, `UserProgressRepository.kt` |
+| XP accounting and badge tiers | `domain/gamification/XpPolicy.kt`, `BadgeCatalog.kt` | `GamificationRepository.kt`, `data/remote/RewardReceiptCodec.kt`, `RewardDao.kt`; policy in `docs/design/XP_AND_TIERED_BADGES_PLAN.md` |
 | Push notifications and reminders | `util/notification/`, `util/worker/` | `ui/screens/notifications/`, `NotificationRepository.kt` |
 | Shared appearance | `ui/theme/`, `ui/components/` | `ui/components/brand/`, `clay/`, `states/` |
 | Guided onboarding tour | `ui/tour/`, `ui/screens/onboarding/` | Tour tests in `app/src/test/` |

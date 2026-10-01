@@ -24,11 +24,10 @@ class LevelConsistencyTest {
     }
 
     @Test
-    fun gamificationLevelsCapAtLegendForHighXp() {
-        // Stored level can reach 10, but the display rank caps at 5.
-        for (xp in listOf(1000, 1500, 3000, 5000, 100000)) {
-            assertEquals(5, GamificationEngine.getLevelInfo(xp).level)
-            assertTrue(calculateLevel(xp) >= 5)
+    fun gamificationLevelsCapAtThirtyForHighXp() {
+        for (xp in listOf(15620,100000,Int.MAX_VALUE)) {
+            assertEquals(30, GamificationEngine.getLevelInfo(xp).level)
+            assertEquals(30,calculateLevel(xp))
         }
     }
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.AchievementEntity
+import com.kasiguru.domain.gamification.BadgeCatalog
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepAvatar
@@ -376,7 +377,7 @@ private fun BadgesSection(
             }
         )
         Text(
-            text = "$unlocked of $total earned",
+            text = "$unlocked of $total tiers earned",
             style = MaterialTheme.typography.bodySmall,
             color = Faint
         )
@@ -412,6 +413,9 @@ private fun BadgesSection(
                             maxLines = 2,
                             textAlign = TextAlign.Center
                         )
+                        BadgeCatalog.tierFor(badge.id)?.let {
+                            Text(it.label,style = MaterialTheme.typography.labelSmall,color = Faint)
+                        }
                     }
                 }
             }

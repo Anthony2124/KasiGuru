@@ -3,10 +3,8 @@ package com.kasiguru.data.repository
 import com.kasiguru.data.local.dao.AchievementDao
 import com.kasiguru.data.local.dao.UserProgressDao
 import com.kasiguru.data.local.entity.AchievementEntity
-import com.kasiguru.data.local.entity.MetricType
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.util.LearningAnalytics
-import com.kasiguru.util.calculateLevel
 import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,10 +20,11 @@ import javax.inject.Singleton
 class UserProgressRepository @Inject constructor(
     private val userProgressDao: UserProgressDao,
     private val achievementDao: AchievementDao,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val gamification: GamificationRepository
 ) {
     // A level-up is a screen-agnostic celebratory moment (LevelUpDialog): XP is earned from lessons,
-    // flashcards and all six mini-games, so the event lives here at the one place that already
+    // flashcards and all eight mini-games, so the event lives here at the one place that already
     // detects a level change, rather than being duplicated at every XP-awarding call site.
     private val _levelUpEvents = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     val levelUpEvents: SharedFlow<Int> = _levelUpEvents.asSharedFlow()
@@ -33,11 +32,15 @@ class UserProgressRepository @Inject constructor(
     private val _streakActivatedEvents = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     val streakActivatedEvents: SharedFlow<Int> = _streakActivatedEvents.asSharedFlow()
 
-    fun getUserProgress(): Flow<UserProgressEntity?> =
-        userProgressDao.getUserProgress()
+    fun getUserProgress(): Flow<UserProgressEntity?> = kotlinx.coroutines.flow.flow {
+        gamification.ensureNormalized()
+        userProgressDao.getUserProgress().collect { emit(it) }
+    }
 
-    suspend fun getUserProgressOnce(): UserProgressEntity? =
-        userProgressDao.getUserProgressOnce()
+    suspend fun getUserProgressOnce(): UserProgressEntity? {
+        gamification.ensureNormalized()
+        return userProgressDao.getUserProgressOnce()
+    }
 
     fun getDailyStreakQuota(today: String): Flow<DailyStreakQuota> =
         userProgressDao.getUserProgress().map { progress ->
@@ -88,52 +91,35 @@ class UserProgressRepository @Inject constructor(
         userProgressDao.updatePersonalDetails(fullName, age, address)
     }
 
-    /**
-     * The row is created if it is missing before the update runs.
-     *
-     * [UserProgressDao.completeOnboarding] is an `UPDATE ... WHERE id = 1`, so on a fresh install it
-     * would otherwise affect zero rows and fail silently — the learner would finish the whole wizard,
-     * lose the +50 XP welcome bonus and the day-1 streak, and be shown onboarding again on the next
-     * cold start. The database callback seeds this row on create, but that seed runs asynchronously,
-     * so this guard closes the race rather than relying on the ordering.
-     */
+    /** Personal onboarding preferences grant no XP or practice-day streak. */
     suspend fun completeOnboarding(userName: String, avatarId: Int, dailyGoalXp: Int, titleBadge: String) {
+        gamification.ensureNormalized()
         if (userProgressDao.getUserProgressOnce() == null) {
             userProgressDao.insertOrUpdate(UserProgressEntity())
         }
-        // Onboarding grants day 1 of the streak, so today is also the day it was last active. Without
-        // the date, Home calls a brand-new streak "at risk" and practising tomorrow restarts it at 1.
-        userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge, LocalDate.now().toIsoString())
+        userProgressDao.completeOnboarding(userName, avatarId, dailyGoalXp, titleBadge)
     }
 
-    suspend fun addXp(xp: Int) {
-        userProgressDao.addXp(xp)
-        // Every XP award also lands in today's ledger, so the daily-goal ring reflects real activity
-        // no matter which surface earned it.
-        userProgressDao.addDailyXp(xp, LocalDate.now().toIsoString())
-        // Recalculate level
-        val progress = userProgressDao.getUserProgressOnce() ?: return
-        val newLevel = calculateLevel(progress.totalXp)
-        if (newLevel != progress.level) {
-            userProgressDao.updateLevel(newLevel)
-            // Check level achievements
-            checkLevelAchievements(newLevel)
-            LearningAnalytics.levelReached(newLevel)
-            _levelUpEvents.tryEmit(newLevel)
+    private suspend fun award(action: suspend () -> RewardOutcome): Int {
+        val oldLevel = getUserProgressOnce()?.level ?: 1
+        val result = action()
+        if(result.level > oldLevel) {
+            LearningAnalytics.levelReached(result.level)
+            _levelUpEvents.tryEmit(result.level)
         }
+        return result.activityXp
     }
 
-    suspend fun incrementWordsLearned() {
-        userProgressDao.incrementWordsLearned()
-        val progress = userProgressDao.getUserProgressOnce() ?: return
-        checkWordAchievements(progress.wordsLearned)
-    }
-
-    suspend fun incrementStoriesCompleted() {
-        userProgressDao.incrementStoriesCompleted()
-        val progress = userProgressDao.getUserProgressOnce() ?: return
-        checkStoryAchievements(progress.storiesCompleted)
-    }
+    suspend fun awardLesson(unit: String, index: Int, accuracy: Float): Int =
+        award { gamification.lesson(unit,index,accuracy) }
+    suspend fun awardGame(mode: String, key: String, number: Int, correct: Int, total: Int, stars: Int, perfect: Boolean): Int =
+        award { gamification.game(mode,key,number,correct,total,stars,perfect) }
+    suspend fun awardStory(id: Int): Int = award { gamification.story(id) }
+    suspend fun recordWordReview(id: Int, rating: String, due: Boolean, mastered: Boolean,
+        updatedWord: com.kasiguru.data.local.entity.VocabularyEntity? = null): Int =
+        award { gamification.review(id,rating,due,mastered,updatedWord) }
+    suspend fun recordApprovals(contributions: List<ApprovedContribution>): Int =
+        award { gamification.approved(contributions.map { it.id },contributions.associate { it.id to it.approvedDay }) }
 
     suspend fun incrementGamesPlayed() {
         userProgressDao.incrementGamesPlayed()
@@ -141,8 +127,6 @@ class UserProgressRepository @Inject constructor(
         userProgressDao.recordDailyGamePlayed(today)
         userPreferencesRepository.recordDailyGamePlayed(today)
         checkStreakQuotaAndAdvance()
-        val progress = userProgressDao.getUserProgressOnce() ?: return
-        checkGameAchievements(progress.gamesPlayed)
     }
 
     suspend fun recordDailyReviewCompleted() {
@@ -212,7 +196,7 @@ class UserProgressRepository @Inject constructor(
         }
 
         userProgressDao.updateStreak(newStreak, today)
-        checkStreakAchievements(newStreak)
+        gamification.updateMetrics()
         _streakActivatedEvents.tryEmit(newStreak)
     }
 
@@ -222,75 +206,18 @@ class UserProgressRepository @Inject constructor(
     /** Called on every successful word/story/poem submission, approved or not. */
     suspend fun incrementSubmissionsMade() {
         userProgressDao.incrementSubmissionsMade()
-        val progress = userProgressDao.getUserProgressOnce() ?: return
-        checkAchievements(MetricType.SUBMISSIONS_MADE, progress.submissionsMade)
-    }
-
-    // ─── Achievement Checks ───
-    //
-    // One generic evaluator replaces what used to be five near-identical functions, each
-    // hardcoding its own thresholds instead of reading AchievementEntity.requiredValue. Adding a
-    // badge in an existing metric family (e.g. a 30-day streak badge) is now a seeded row, not a
-    // new `if` here - see AchievementEntity's MetricType doc.
-
-    private suspend fun checkWordAchievements(wordsLearned: Int) =
-        checkAchievements(MetricType.WORDS_LEARNED, wordsLearned)
-
-    private suspend fun checkStoryAchievements(storiesCompleted: Int) =
-        checkAchievements(MetricType.STORIES_COMPLETED, storiesCompleted)
-
-    private suspend fun checkGameAchievements(gamesPlayed: Int) =
-        checkAchievements(MetricType.GAMES_PLAYED, gamesPlayed)
-
-    /** Not a threshold comparison - a perfect game either just happened or it didn't. */
-    suspend fun checkPerfectGameAchievement() =
-        checkAchievements(MetricType.PERFECT_GAME, currentValue = 1)
-
-    private suspend fun checkStreakAchievements(streak: Int) =
-        checkAchievements(MetricType.STREAK, streak)
-
-    private suspend fun checkLevelAchievements(level: Int) =
-        checkAchievements(MetricType.LEVEL, level)
-
-    /**
-     * Unlocks every not-yet-unlocked badge in [metricType] whose requiredValue [currentValue]
-     * now meets. The single place unlock logic lives, regardless of which metric family it is.
-     */
-    suspend fun checkAchievements(metricType: String, currentValue: Int) {
-        val today = LocalDate.now().toIsoString()
-        achievementDao.getLockedByMetricType(metricType)
-            .filter { currentValue >= it.requiredValue }
-            .forEach { tryUnlock(it.id, today) }
-    }
-
-    private suspend fun tryUnlock(id: String, date: String) {
-        val achievement = achievementDao.getAchievementById(id)
-        if (achievement != null && !achievement.isUnlocked) {
-            achievementDao.unlockAchievement(id, date)
-            // Award bonus XP for unlocking
-            userProgressDao.addXp(achievement.xpReward)
-        }
-    }
-
-    /**
-     * Adds any achievement DatabaseSeeder now defines that an existing install's table (seeded
-     * before this badge was added) doesn't have yet. A fresh install already gets every badge
-     * through the normal empty-table seed; this is only for upgrading installs, called once from
-     * AchievementsViewModel's init so a new badge type appears without the user reinstalling.
-     */
-    suspend fun seedNewAchievements(all: List<AchievementEntity>) {
-        val existingIds = achievementDao.getAllIds().toSet()
-        val missing = all.filter { it.id !in existingIds }
-        if (missing.isNotEmpty()) achievementDao.insertAll(missing)
     }
 
     // Achievements
     fun getAllAchievements(): Flow<List<AchievementEntity>> =
-        achievementDao.getAllAchievements()
+        achievementDao.getAllAchievements().map { rows -> rows.filter { it.id.startsWith(com.kasiguru.domain.gamification.BadgeCatalog.PREFIX) } }
+
+    fun getLegacyAchievements(): Flow<List<AchievementEntity>> =
+        achievementDao.getAllAchievements().map { rows -> rows.filter { !it.id.startsWith(com.kasiguru.domain.gamification.BadgeCatalog.PREFIX) && it.isUnlocked } }
 
     fun getUnlockedAchievements(): Flow<List<AchievementEntity>> =
-        achievementDao.getUnlockedAchievements()
+        getAllAchievements().map { it.filter { row -> row.isUnlocked } }
 
     fun getUnlockedAchievementCount(): Flow<Int> =
-        achievementDao.getUnlockedCount()
+        getUnlockedAchievements().map { it.size }
 }
