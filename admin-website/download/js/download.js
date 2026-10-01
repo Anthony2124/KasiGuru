@@ -44,12 +44,13 @@ function applyReleaseInfo(release) {
     tag.textContent = `Version ${release.versionName} (Build ${release.versionCode}) • Free & Safe APK`;
   }
 
-  // 4. Update hero CTA button text & href
-  const heroBtnSpan = document.querySelector('.hero-cta-group .download-btn-large span');
+  // 4. Update hero CTA button text & href. .apk-cta, not the first large button: the hero also
+  // carries the browser-version button for iPhone, which must keep its own link.
+  const heroBtnSpan = document.querySelector('.hero-cta-group .apk-cta span');
   if (heroBtnSpan) {
     heroBtnSpan.textContent = `Download APK (v${release.versionName})`;
   }
-  const heroBtn = document.querySelector('.hero-cta-group .download-btn-large');
+  const heroBtn = document.querySelector('.hero-cta-group .apk-cta');
   if (heroBtn && release.apkUrl) {
     heroBtn.setAttribute('href', release.apkUrl);
   }
