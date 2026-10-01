@@ -18,6 +18,7 @@ fun AppearanceScreen(onBack: () -> Unit, viewModel: AppearanceViewModel = hiltVi
     val size by viewModel.textSize.collectAsState()
     GroundScaffold("Appearance", onBack = onBack, compactTitle = true, pattern = GroundPattern.None) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.gutter), verticalArrangement = Arrangement.spacedBy(Space.lg)) {
+            com.kasiguru.ui.components.clay.GroundTitleBlock(title = "Appearance", subtitle = "Theme and text size")
             Column {
                 SectionHeading("Theme")
                 Spacer(Modifier.height(Space.sm))

@@ -78,6 +78,7 @@ fun RecallGameScreen(
     GroundScaffold(
         title = "Word Recall",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

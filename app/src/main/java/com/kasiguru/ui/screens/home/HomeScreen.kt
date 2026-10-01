@@ -68,13 +68,10 @@ import com.kasiguru.ui.components.brand.JepjepAvatar
 import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
 import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.ClayButton
-import com.kasiguru.ui.components.clay.DayMark
-import com.kasiguru.ui.components.clay.DayState
 import com.kasiguru.ui.components.clay.ProgressRing
 import com.kasiguru.ui.components.clay.SectionHeading
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.components.clay.StoryCoverCard
-import com.kasiguru.ui.components.clay.WeekStrip
 import com.kasiguru.ui.components.clay.glowBackground
 import com.kasiguru.ui.components.clay.rememberStoryCoverRes
 import com.kasiguru.ui.components.states.LoadingState
@@ -114,8 +111,8 @@ import io.eyram.iconsax.IconSax
  *
  * Split out of the old Learn screen, which carried both today's plan and the whole learning path and
  * so answered "what now?" three times over. Home answers it once - with the single lime action - and
- * everything under it is context: the day goal, what is due for review, a shelf of stories, and the
- * week. The path itself lives on the Learn tab.
+ * everything under it is context: the day goal, what is due for review, quick practice and the word
+ * of the day. The week lives on the streak page, one tap from the streak chip; the path on Learn.
  *
  * Backed by [LearnViewModel], which already derives all of this from real progress; nothing here is
  * computed twice. Jepjep's line is picked from the same state, so it only ever says something true.
@@ -228,26 +225,6 @@ fun HomeScreen(
                 }
             }
         }
-        // The week, where history belongs: below the work, not pinned above it.
-        Spacer(Modifier.height(Space.xl))
-        SectionHeading(text = "This week")
-        Spacer(Modifier.height(Space.sm))
-        WeekStrip(
-            days = uiState.week.map { day ->
-                DayMark(
-                    label = day.label,
-                    dayOfMonth = day.dayOfMonth,
-                    state = when {
-                        day.isToday && day.practised -> DayState.TodayDone
-                        day.isToday -> DayState.Today
-                        day.practised -> DayState.Done
-                        else -> DayState.Missed
-                    }
-                )
-            },
-            onCanopy = false
-        )
-
         // Notices last, one line each: they are news, not the day's work.
         val optionalUpdate = uiState.updateRelease?.takeIf { !it.forceUpdate }
         if (optionalUpdate != null || uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
@@ -288,8 +265,8 @@ fun HomeScreen(
         }
 
         if (wide) {
-            // Two columns from 600dp: the next action and today on the left, stories and the week on
-            // the right, so a tablet shows the whole day without scrolling.
+            // Two columns from 600dp: the next action and today on the left, practice and the word of
+            // the day on the right, so a tablet shows the whole day without scrolling.
             Row(horizontalArrangement = Arrangement.spacedBy(Space.lg)) {
                 Column(Modifier.weight(1f)) { today() }
                 Column(Modifier.weight(1f)) { later() }

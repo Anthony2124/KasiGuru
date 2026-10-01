@@ -1,10 +1,10 @@
 <resources>
-    <!-- Android 12+ draws the splash itself. Same splash as values/themes.xml, plus the KasiGuru wordmark
-         as the branding image at the bottom (the platform allows up to 200 x 80 dp). -->
+    <!-- Android 12+ draws the splash itself. Same plain brand-green splash as values/themes.xml:
+         no icon and no branding image, so nothing sits on the green. -->
     <style name="Theme.KasiGuru.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/night</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
-        <item name="android:windowSplashScreenBrandingImage">@drawable/kasiguru_wordmark</item>
+        <item name="windowSplashScreenBackground">@color/brand_lime</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/brand_lime</item>
         <item name="postSplashScreenTheme">@style/Theme.KasiGuru</item>
     </style>
 </resources>

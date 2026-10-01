@@ -53,3 +53,21 @@ The subsequent [focused lint cleanup](LINT_CLEANUP_2026-10-01.md) corrected tour
 input, image metadata, backup rules and locale formatting. Its final checks have
 312 passing unit tests, six passing focused device tests, and 86 lint warnings
 with zero errors.
+
+## UI revisions — 2026-10-02
+
+Adrian's revision list, applied on top of the cleanup above.
+
+1. **Launch.** The system splash is plain brand green (`@color/brand_lime`) with no letter mark and no wordmark; the Splash route paints the same green so there is no dark frame before onboarding or Home.
+2. **Onboarding · Nice to meet you.** Jepjep (Peeking) is sized from the screen width, his head filling the right half and cropped by the edge and the buttons, as in the reference.
+3. **I already have an account.** From onboarding the Account screen becomes a welcome-back sign-in: Google, email and password with in-place validation, Forgot password, and "Start learning without an account" to go back. No guest card, create-account tab, about-you form or delete button. Elsewhere, the about-you form now gates only account creation, not sign-in.
+4. **Recovery questions.** One settings row with an answered count that opens into numbered questions with their own fields, a tick per answer, a Save that lights only on change and says Saved in place. Guests are offered sign-in instead of a form that could only fail.
+5. **Top bars.** Detail screens no longer draw a back chevron and a bar title above their own heading; Android Back does that job (`GroundScaffold(showBack = false)` is the default). Games in progress keep their close button (`showBack = true`) because leaving asks for confirmation. Screens whose only name was the bar title now carry a `GroundTitleBlock`.
+6. **Home.** "This week" is removed; the week lives on the streak page.
+7. **Me.** The scenery banner carries the avatar inside a lime XP ring on a solid disc (the ring was invisible over green scenery). Level progress is spelled out under the name; streak, XP and words share one card; the overview is an always-open two-column grid; the guest prompt sits near the top.
+8. **Streak.** Hero number, a Today checklist built from the real quota (review + games) with the action button, a week of flames, and the Consistent Learner milestones as a ladder with progress to the next rung.
+9. **Flashcards.** Each side of the card states its own next tap at its foot ("Tap to open", "Tap to flip", "Tap to see the word"); the script-face hint is gone. Word and meaning turn over around the vertical axis. Below the card, an Open · Flip · Rate stepper; ratings are four side-by-side buttons with the interval on a second line.
+10. **Lesson player.** Close, segmented progress and the combo on one line; the instruction as the heading; Jepjep asks the prompt from a speech bubble and reacts to the verdict in place (no second Jepjep in the feedback panel); numbered answer rows, a grid only for four one-word answers. The section scenery fades behind the header instead of a strip of its own.
+11. **Badges.** Summary card with tiers earned, the six tier colours and how many badges sit on each; filter pills; a two-column grid of medals in their current tier colour with six pips and progress; earned badges first. Details open in a bottom sheet with the whole ladder, pinning and the way to earn more.
+12. **Stories.** No narration button (no recordings exist). The reader is a picture book: header with page segments, the illustration, then one language at a time behind a Kasiguranin / Tagalog / English switch that carries across pages; Kasiguranin words are tappable running text. The list is a two-column shelf with a progress bar on Continue reading.
+13. **Word entry.** Tapping a word opens a full dictionary entry: headword with play button, IPA and part of speech, labels, the numbered sense (English gloss and definition, Tagalog gloss and definition), examples, verb forms as a table, pronunciation notes, "Same meaning" and "More from <category>" links, the learner's record and the report link. Only recorded corpus content is shown.

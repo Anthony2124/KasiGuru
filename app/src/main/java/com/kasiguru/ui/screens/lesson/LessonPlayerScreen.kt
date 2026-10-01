@@ -103,6 +103,10 @@ import com.kasiguru.util.audio.AudioPlayerManager
  * Immersive on purpose: no top app bar, no bottom nav, nothing but the question and one action. The
  * old game screens carried full app chrome around a quiz, which made a five-second answer feel like a
  * detour through the app rather than a step in a lesson.
+ *
+ * Top to bottom: quit, progress and the combo; the instruction as the heading; Jepjep asking the
+ * prompt from a speech bubble; the answers; Check. Jepjep reacts to the verdict in place, so the
+ * feedback panel carries no second mascot.
  */
 @Composable
 fun LessonPlayerScreen(
@@ -173,132 +177,165 @@ fun LessonPlayerScreen(
         )
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Ground)
+    ) {
+    // The section's scene, faded into the night behind the header: where in Casiguran this lesson
+    // lives, without a strip of its own taking the space the question needs.
+    Box(Modifier.fillMaxWidth().height(220.dp)) {
+        Image(
+            painterResource(Scenery.forSection(viewModel.sectionId).res), null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.32f }
+        )
+        Box(
+            Modifier.fillMaxSize().background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    0f to Ground.copy(alpha = 0.35f),
+                    1f to Ground
+                )
+            )
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
             .statusBarsPadding()
     ) {
-        // ── Header: exit and progress ──
+        // ── Header: quit, progress and the combo ──
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Space.gutter, vertical = Space.sm),
+                .padding(start = Space.xs, end = Space.gutter, top = Space.xs, bottom = Space.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = Iconsax.ArrowLeft),
-                contentDescription = "Leave lesson",
-                tint = Muted,
+            Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable(onClick = { showExitConfirm = true })
-                    .padding(10.dp)
-            )
-            Spacer(Modifier.width(Space.sm))
+                    .clip(Shapes.pill)
+                    .clickable(onClickLabel = "Leave lesson", onClick = { showExitConfirm = true }),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.CloseCircle),
+                    contentDescription = "Leave lesson",
+                    tint = Muted,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Spacer(Modifier.width(Space.xs))
             SegmentedProgress(
                 completed = uiState.solvedCount, total = uiState.totalExercises,
                 modifier = Modifier.weight(1f)
             )
-        }
-
-        Box(Modifier.fillMaxWidth().height(88.dp)) {
-            Image(painterResource(Scenery.forSection(viewModel.sectionId).res), null,
-                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .6f)))
-            Row(Modifier.fillMaxSize().padding(horizontal = Space.gutter), verticalAlignment = Alignment.CenterVertically) {
-                if (!uiState.hasAnswered) Jepjep(JepjepPose.Pointing, height = 76.dp)
-                Text("Take your time. You're learning.", style = MaterialTheme.typography.bodyMedium,
-                    color = OnCanopy, modifier = Modifier.weight(1f))
-                if (uiState.combo >= 3) TagChip(label = "${uiState.combo} in a row", tint = Olive, labelColor = OnCanopy)
-            }
+            Spacer(Modifier.width(Space.sm))
+            ComboCounter(combo = uiState.combo)
         }
 
         // ── Question ──
         //
-        // Two regions, not one scrolling stack. The prompt takes the free space and centres itself
-        // in it; the answers sit directly above the Check button. Previously everything was
-        // top-anchored inside one scroller, which left roughly half the screen empty below the last
-        // option on every ordinary question, and put the thing the learner reaches for -- the
-        // options -- as far from the thumb as it could be.
+        // The instruction, then Jepjep "asking" the prompt from a speech bubble, then the answers
+        // directly above the Check button where the thumb already is. The old scenery strip and its
+        // fixed "Take your time" line pushed the prompt halfway down the screen and said nothing
+        // about the question.
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = Space.gutter)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = exercise.instruction,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Muted
-                )
-                Spacer(Modifier.height(Space.md))
-
-                ExercisePrompt(
-                    exercise = exercise,
-                    onPlayAudio = {
-                        audioPlayer.playWord(exercise.word)
-                    }
-                )
-            }
-
+          Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+          ) {
+            Spacer(Modifier.height(Space.sm))
+            Text(
+                text = exercise.instruction,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Ink
+            )
             Spacer(Modifier.height(Space.lg))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                if (exercise is Exercise.TypeWord) {
-                    RecallAnswerField(
-                        value = uiState.selectedOption.orEmpty(),
-                        enabled = !uiState.hasAnswered,
-                        onValueChange = viewModel::updateTypedAnswer,
-                        onSubmit = viewModel::check
-                    )
-                } else if (exercise is Exercise.SentenceBuild) {
-                    SentenceBuilder(
-                        exercise = exercise,
-                        enabled = !uiState.hasAnswered,
-                        // The built sentence lands in the same slot a chosen option would, so
-                        // checking and grading need no special case for this shape.
-                        onSentenceChanged = viewModel::updateTypedAnswer
-                    )
-                } else if (exercise is Exercise.MatchPairs) {
-                    MatchPairsBoard(
-                        exercise = exercise,
-                        enabled = !uiState.hasAnswered,
-                        // Self-grading: finishing the board *is* the correct answer, so it fills the
-                        // answer slot with what the grader expects rather than inventing a second
-                        // path through checking.
-                        onSolved = { viewModel.selectOption(exercise.answer) }
-                    )
-                } else {
-                    val short = exercise.options.size in 2..4 && exercise.options.all { it.length <= 24 }
-                    val optionContent: @androidx.compose.runtime.Composable (String, Modifier) -> Unit = { option, modifier ->
-                        AnswerOption(label = option, isSelected = uiState.selectedOption == option,
-                            isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
-                            isRevealedWrong = uiState.hasAnswered && uiState.selectedOption == option && option != exercise.answer,
-                            enabled = !uiState.hasAnswered, onClick = { viewModel.selectOption(option) }, modifier = modifier)
+            if (exercise !is Exercise.MatchPairs) {
+                PromptWithJepjep(
+                    // One Jepjep on screen: he reacts here instead of again in the feedback panel.
+                    pose = when (uiState.isCorrect) {
+                        true -> JepjepPose.Encouraging
+                        false -> JepjepPose.Confused
+                        null -> if (exercise is Exercise.ListenAndChoose) JepjepPose.Listening else JepjepPose.Pointing
                     }
-                    if (short) exercise.options.chunked(2).forEach { options ->
+                ) {
+                    ExercisePrompt(
+                        exercise = exercise,
+                        onPlayAudio = { audioPlayer.playWord(exercise.word) }
+                    )
+                }
+            }
+          }
+
+          Spacer(Modifier.height(Space.md))
+
+          // The answers sit directly above Check. Measured before the question region, so they keep
+          // the room they need and the question scrolls if a long one runs short of space.
+          Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+          ) {
+            if (exercise is Exercise.TypeWord) {
+                RecallAnswerField(
+                    value = uiState.selectedOption.orEmpty(),
+                    enabled = !uiState.hasAnswered,
+                    onValueChange = viewModel::updateTypedAnswer,
+                    onSubmit = viewModel::check
+                )
+            } else if (exercise is Exercise.SentenceBuild) {
+                SentenceBuilder(
+                    exercise = exercise,
+                    enabled = !uiState.hasAnswered,
+                    // The built sentence lands in the same slot a chosen option would, so
+                    // checking and grading need no special case for this shape.
+                    onSentenceChanged = viewModel::updateTypedAnswer
+                )
+            } else if (exercise is Exercise.MatchPairs) {
+                MatchPairsBoard(
+                    exercise = exercise,
+                    enabled = !uiState.hasAnswered,
+                    // Self-grading: finishing the board *is* the correct answer, so it fills the
+                    // answer slot with what the grader expects rather than inventing a second
+                    // path through checking.
+                    onSolved = { viewModel.selectOption(exercise.answer) }
+                )
+            } else {
+                // A 2 x 2 grid only when every option is a single short word; anything longer
+                // reads as a list, one full-width row each, so a gloss never wraps mid-phrase.
+                val grid = exercise.options.size == 4 && exercise.options.all { it.length <= 12 }
+                val optionContent: @Composable (Int, String, Modifier) -> Unit = { index, option, modifier ->
+                    AnswerOption(label = option, number = index + 1, isSelected = uiState.selectedOption == option,
+                        isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
+                        isRevealedWrong = uiState.hasAnswered && uiState.selectedOption == option && option != exercise.answer,
+                        enabled = !uiState.hasAnswered, onClick = { viewModel.selectOption(option) }, modifier = modifier)
+                }
+                if (grid) {
+                    exercise.options.chunked(2).forEachIndexed { row, options ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                            options.forEach { optionContent(it, Modifier.weight(1f)) }
-                            if (options.size == 1) Spacer(Modifier.weight(1f))
+                            options.forEachIndexed { col, option -> optionContent(row * 2 + col, option, Modifier.weight(1f)) }
                         }
                         Spacer(Modifier.height(Space.sm))
-                    } else exercise.options.forEach { optionContent(it, Modifier.fillMaxWidth()); Spacer(Modifier.height(Space.sm)) }
-
+                    }
+                } else {
+                    exercise.options.forEachIndexed { index, option ->
+                        optionContent(index, option, Modifier.fillMaxWidth())
+                        Spacer(Modifier.height(Space.sm))
+                    }
                 }
-                Spacer(Modifier.height(Space.sm))
             }
+            Spacer(Modifier.height(Space.xs))
+          }
         }
 
         // ── Action area: the check button, replaced by feedback once answered ──
@@ -317,6 +354,7 @@ fun LessonPlayerScreen(
             onContinue = viewModel::advance,
             onPlayAudio = { audioPlayer.playWord(exercise.word) }
         )
+    }
     }
 }
 
@@ -353,9 +391,9 @@ private fun LessonActionArea(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(Surface)
                     .navigationBarsPadding()
-                    .padding(Space.gutter)
+                    .padding(horizontal = Space.gutter)
+                    .padding(top = Space.xs, bottom = Space.md)
             ) {
                 ClayButton(
                     label = "Check",
@@ -379,7 +417,6 @@ private fun LessonActionArea(
                 word = shown.word,
                 correction = shown.remediation,
                 onContinue = onContinue,
-                mascot = true,
                 onPlayAudio = onPlayAudio
             )
         }
@@ -407,7 +444,7 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
             // nothing on screen may show it before they commit an answer.
             Text(
                 text = exercise.promptMeaning,
-                style = KasiguraninHeadword,
+                style = MaterialTheme.typography.headlineSmall,
                 color = Ink
             )
         }
@@ -415,7 +452,8 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
         is Exercise.ChooseTranslation -> {
             Text(
                 text = exercise.prompt,
-                style = KasiguraninHeadword,
+                style = if (exercise.promptIsKasiguranin) KasiguraninHeadword
+                else MaterialTheme.typography.headlineSmall,
                 color = Ink
             )
             if (exercise.promptIsKasiguranin && exercise.word.ipaNotation.isNotBlank()) {
@@ -435,13 +473,13 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
                 ClayFab(
                     onClick = onPlayAudio,
                     contentDescription = "Play the word again",
-                    size = 92.dp
+                    size = 72.dp
                 ) {
                     Icon(
                         painter = painterResource(id = Iconsax.VolumeHigh),
                         contentDescription = null,
                         tint = OnLime,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
@@ -450,7 +488,7 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
         is Exercise.FillBlank -> {
             Text(
                 text = exercise.sentenceWithBlank,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = Ink
             )
             if (exercise.translation.isNotBlank()) {
@@ -495,6 +533,7 @@ private fun ExercisePrompt(exercise: Exercise, onPlayAudio: () -> Unit) {
 @Composable
 private fun AnswerOption(
     label: String,
+    number: Int,
     isSelected: Boolean,
     isRevealedCorrect: Boolean,
     isRevealedWrong: Boolean,
@@ -525,7 +564,7 @@ private fun AnswerOption(
 
     Row(
         modifier = modifier
-            .heightIn(min = 72.dp)
+            .heightIn(min = 60.dp)
             .graphicsLayer {
                 translationX = if (isRevealedWrong) motion.value * 7.dp.toPx() else 0f
                 scaleX = 1f + if (isRevealedCorrect) motion.value * .04f else 0f
@@ -540,9 +579,25 @@ private fun AnswerOption(
                 enabled = enabled,
                 onClick = onClick
             )
-            .padding(horizontal = Space.md, vertical = 18.dp),
+            .padding(horizontal = Space.md, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // A key in the corner, as on a quiz card: something to point at besides the words, and a
+        // second cue for the selected state that does not rely on colour.
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(Shapes.chip)
+                .background(if (isSelected || isRevealedCorrect || isRevealedWrong) borderColor else TrackNeutral),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "$number",
+                style = MaterialTheme.typography.labelLarge,
+                color = if (isSelected || isRevealedCorrect || isRevealedWrong) OnLime else Muted
+            )
+        }
+        Spacer(Modifier.width(Space.sm))
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
@@ -580,5 +635,70 @@ private fun LessonProgressBar(fraction: Float, modifier: Modifier = Modifier) {
                 .clip(Shapes.pill)
                 .background(Lime)
         )
+    }
+}
+
+/**
+ * Jepjep with the prompt in a speech bubble beside him: he is the one asking. The bubble's tail
+ * points at him, and the bubble takes every dp he does not, so a long sentence wraps inside it.
+ */
+@Composable
+private fun PromptWithJepjep(pose: JepjepPose, content: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Jepjep(pose = pose, height = 112.dp)
+        Spacer(Modifier.width(Space.xxs))
+        Box(Modifier.weight(1f)) {
+            // The tail: a small rotated square tucked under the bubble's lower-left corner.
+            Box(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 22.dp)
+                    .size(16.dp)
+                    .graphicsLayer { rotationZ = 45f; translationX = -7.dp.toPx() }
+                    .background(Surface)
+                    .border(1.dp, TrackNeutral)
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Space.sm)
+                    .clip(Shapes.tile)
+                    .background(Surface)
+                    .border(1.dp, TrackNeutral, Shapes.tile)
+                    .padding(horizontal = Space.md, vertical = Space.md)
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+/** "3 in a row" with a flame, from the third correct answer on. Holds its width otherwise, so the progress bar does not jump. */
+@Composable
+private fun ComboCounter(combo: Int) {
+    AnimatedVisibility(visible = combo >= 3, enter = fadeIn(tween(150)), exit = fadeOut(tween(100))) {
+        Row(
+            modifier = Modifier
+                .clip(Shapes.pill)
+                .background(com.kasiguru.ui.theme.AmberTint)
+                .padding(horizontal = Space.sm, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = Iconsax.FlashBold),
+                contentDescription = null,
+                tint = com.kasiguru.ui.theme.Coral,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(Space.xxs))
+            Text(
+                text = "$combo in a row",
+                style = MaterialTheme.typography.labelLarge,
+                color = Ink
+            )
+        }
     }
 }

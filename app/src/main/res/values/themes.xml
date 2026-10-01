@@ -6,10 +6,12 @@
         <item name="android:windowBackground">@color/night</item>
     </style>
 
-    <!-- Splash screen theme — extends SplashScreen from core-splashscreen library -->
+    <!-- Splash screen theme — extends SplashScreen from core-splashscreen library. Plain brand green:
+         no letter mark and no wordmark, so the app opens on its colour and goes straight into
+         onboarding or Home. -->
     <style name="Theme.KasiGuru.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/night</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="windowSplashScreenBackground">@color/brand_lime</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
         <item name="postSplashScreenTheme">@style/Theme.KasiGuru</item>
     </style>
 </resources>

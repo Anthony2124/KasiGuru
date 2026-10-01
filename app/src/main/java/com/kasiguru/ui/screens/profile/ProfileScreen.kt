@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -96,9 +97,10 @@ import com.kasiguru.util.gamification.GamificationEngine
 /**
  * Me: who you are and what you have earned. The old Profile and Progress tabs, merged.
  *
- * Reads top to bottom as identity, then record, then the ways out: the avatar inside its level ring
- * with the rank it has earned; streak, XP and words as three figures; the latest badges with a way
- * into the whole wall; and finally the rows for settings, the account and the rest of the app. The
+ * Reads top to bottom as identity, then record, then the ways out: the avatar standing on the scenery
+ * inside its XP ring, with the level spelled out under the name; streak, XP and words on one card;
+ * the latest badges; a two-column overview; and finally the rows for settings, the account and the
+ * rest of the app. The
  * leaderboard lives on Practice, where XP is earned. A guest sees one calm prompt near the top, because an anonymous account is the one
  * thing here that can be lost.
  *
@@ -122,7 +124,6 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val leaderboard by leaderboardViewModel.uiState.collectAsState()
     var showBackgrounds by rememberSaveable { mutableStateOf(false) }
-    var showOverview by rememberSaveable { mutableStateOf(false) }
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
     val displayName = progress.fullName.ifBlank { progress.userName }
     val isGuest = !uiState.account.isRecoverable
@@ -162,65 +163,21 @@ fun ProfileScreen(
             ) {
                 // ── Identity ──
                 item(key = "identity") {
-                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.fillMaxWidth().height(176.dp).clip(Shapes.panel)) {
-                            Image(painterResource(Scenery.forProfile(progress.profileBackgroundId).res), null,
-                                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                            Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                                            0f to Color.Black.copy(alpha = .35f),
-                                            0.5f to Color.Transparent
-                                        )
-                                    )
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(Space.sm)
-                                    .tourAnchor(TourAnchor.ProfileBackground)
-                                    .clip(Shapes.pill)
-                                    .background(Color.Black.copy(alpha = .55f))
-                                    .clickable(onClickLabel = "Change background") { showBackgrounds = true }
-                                    .padding(horizontal = Space.sm, vertical = Space.xs),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    painterResource(Iconsax.Edit),
-                                    null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(Modifier.width(Space.xxs))
-                                Text(
-                                    "Background",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                        Box(Modifier.height(72.dp), contentAlignment = Alignment.TopCenter) {
-                        ProgressRing(
-                            modifier = Modifier.offset(y = (-42).dp),
-                            progress = levelFraction,
-                            size = 120.dp,
-                            strokeWidth = 6.dp,
-                            color = BrandLime,
-                            contentDescription = "Level ${progress.level}, " +
-                                (nextLevel?.let { "${(it.minXp - progress.totalXp).coerceAtLeast(0)} XP to ${it.title}" }
-                                    ?: "highest rank reached")
-                        ) {
-                            JepjepAvatarPortrait(
-                                avatar = JepjepAvatar.fromId(progress.profileIconId),
-                                size = 96.dp,
-                                level = progress.level,
-                                contentDescription = "Your avatar. Edit profile",
-                                onClick = onNavigateToEditProfile
-                            )
-                        }
-                        }
+                    ProfileHero(
+                        backgroundRes = Scenery.forProfile(progress.profileBackgroundId).res,
+                        avatar = JepjepAvatar.fromId(progress.profileIconId),
+                        level = levelInfo.level,
+                        levelFraction = levelFraction,
+                        ringDescription = "Level ${levelInfo.level}, " +
+                            (nextLevel?.let { "${(it.minXp - progress.totalXp).coerceAtLeast(0)} XP to level ${it.level}" }
+                                ?: "highest rank reached"),
+                        onChangeBackground = { showBackgrounds = true },
+                        onEditProfile = onNavigateToEditProfile
+                    )
+                    Column(
+                        Modifier.fillMaxWidth().padding(top = Space.sm),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             text = displayName,
                             style = MaterialTheme.typography.headlineLarge,
@@ -229,9 +186,15 @@ fun ProfileScreen(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
+                        Spacer(Modifier.height(Space.xxs))
+                        // What the ring around the avatar measures, in words.
                         Text(
-                            text = levelInfo.title,
-                            style = MaterialTheme.typography.titleMedium,
+                            text = nextLevel?.let {
+                                val inLevel = (progress.totalXp - levelInfo.minXp).coerceAtLeast(0)
+                                val span = (it.minXp - levelInfo.minXp).coerceAtLeast(1)
+                                "${levelInfo.title} · $inLevel / $span XP"
+                            } ?: "${levelInfo.title} · highest rank reached",
+                            style = MaterialTheme.typography.titleSmall,
                             color = BrandLime,
                             textAlign = TextAlign.Center
                         )
@@ -244,47 +207,22 @@ fun ProfileScreen(
                             if (progress.titleBadge.isNotBlank()) TagChip(label = progress.titleBadge)
                             RankChip(rank = leaderboard.currentUserRank, onClick = onNavigateToLeaderboard)
                         }
-                        Spacer(Modifier.height(Space.xs))
-                        Text(
-                            text = nextLevel?.let {
-                                "${(it.minXp - progress.totalXp).coerceAtLeast(0)} XP to ${it.title}"
-                            } ?: "Highest rank reached",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Faint
-                        )
                     }
                 }
 
-                // ── Record ──
+                // A guest's progress lives only on this phone: said once, near the top, calmly.
+                if (isGuest) item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
+
+                // ── Record: three figures on one card ──
                 item(key = "stats") {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Space.sm)
-                    ) {
-                        StatTile(
-                            iconRes = Iconsax.FlashBold,
-                            tint = Coral,
-                            value = "${progress.currentStreak}",
-                            label = "day streak",
-                            modifier = Modifier.weight(1f).clickable(onClick = onNavigateToStreak)
-                        )
-                        StatTile(
-                            iconRes = Iconsax.StarBold,
-                            tint = Gold,
-                            value = "${progress.totalXp}",
-                            label = "total XP",
-                            modifier = Modifier.weight(1f)
-                        )
+                    StatsCard(
+                        streak = progress.currentStreak,
+                        totalXp = progress.totalXp,
                         // Words practised: the lifetime tally, which only rises. Mastered - the
                         // honest retention figure, which can fall - is in the overview below.
-                        StatTile(
-                            iconRes = Iconsax.BookBold,
-                            tint = BrandLime,
-                            value = "${progress.wordsLearned}",
-                            label = "words practised",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                        wordsPractised = progress.wordsLearned,
+                        onOpenStreak = onNavigateToStreak
+                    )
                 }
 
                 // ── Badges ──
@@ -298,53 +236,36 @@ fun ProfileScreen(
                     )
                 }
 
-                // ── Overview ──
+                // ── Overview: always open, two columns ──
                 item(key = "overview") {
-                    SoftCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderHairline,
-                        shape = Shapes.tile,
-                        onClick = { showOverview = !showOverview }
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Learning overview",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = Ink,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                painter = painterResource(if (showOverview) Iconsax.ArrowUp else Iconsax.ArrowDown),
-                                contentDescription = if (showOverview) "Hide" else "Show",
-                                tint = Muted,
-                                modifier = Modifier.size(18.dp)
-                            )
+                    SectionHeading(text = "Learning overview")
+                    Spacer(Modifier.height(Space.sm))
+                    // Two different, both-honest numbers. "Mastered" counts words that currently
+                    // satisfy the SM-2 bar and can fall when one lapses; "practised" is the lifetime
+                    // tally and only rises.
+                    val facts = listOf(
+                        Triple(Iconsax.BookBold, "${uiState.masteredCount}", "words mastered"),
+                        Triple(Iconsax.Medal, "${progress.longestStreak}", if (progress.longestStreak == 1) "day longest streak" else "days longest streak"),
+                        Triple(Iconsax.Teacher, "${uiState.lessonsCompleted}", "lessons completed"),
+                        Triple(Iconsax.Game, "${progress.gamesPlayed}", "games played"),
+                        Triple(Iconsax.Book, "${progress.storiesCompleted}", "stories read"),
+                        Triple(
+                            Iconsax.TickCircle,
+                            if (progress.totalQuestionsAnswered == 0) "-" else "${(uiState.accuracy * 100).toInt()}%",
+                            if (progress.totalQuestionsAnswered == 0) "accuracy, not measured yet" else "accuracy"
+                        )
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                        facts.chunked(2).forEach { pair ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                                pair.forEach { (icon, value, label) ->
+                                    OverviewTile(icon, value, label, Modifier.weight(1f))
+                                }
+                            }
                         }
-                    AnimatedVisibility(showOverview) {
-                        Column(
-                            modifier = Modifier.padding(top = Space.md),
-                            verticalArrangement = Arrangement.spacedBy(Space.sm)
-                        ) {
-                            // Two different, both-honest numbers. "Mastered" counts words that
-                            // currently satisfy the SM-2 bar and can fall when one lapses;
-                            // "practised" is the lifetime tally and only rises.
-                            StatDetailRow("Words mastered", "${uiState.masteredCount}", Iconsax.BookBold)
-                            StatDetailRow("Longest streak", "${progress.longestStreak} ${if (progress.longestStreak == 1) "day" else "days"}", Iconsax.Medal)
-                            StatDetailRow("Lessons completed", "${uiState.lessonsCompleted}", Iconsax.Teacher)
-                            StatDetailRow("Games played", "${progress.gamesPlayed}", Iconsax.Game)
-                            StatDetailRow("Stories read", "${progress.storiesCompleted}", Iconsax.Book)
-                            StatDetailRow(
-                                "Accuracy",
-                                if (progress.totalQuestionsAnswered == 0) "Not measured yet"
-                                else "${(uiState.accuracy * 100).toInt()}%",
-                                Iconsax.TickCircle
-                            )
-                        }
-                    }
                     }
                 }
 
-                if (isGuest) item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
                 if (uiState.error != null) item(key = "error") { Text(uiState.error.orEmpty(), color = com.kasiguru.ui.theme.RedText) }
 
                 // ── Settings and account ──
@@ -427,31 +348,167 @@ private fun GuestBanner(onSignIn: () -> Unit) {
     }
 }
 
-/** A figure with its icon and unit. The colour tints the icon only; the words carry the meaning. */
+/**
+ * The scenery banner with the avatar standing on its lower edge inside the XP ring.
+ *
+ * The ring sits on a solid Ground disc. Drawn straight over the scenery its lime arc vanished into
+ * the green forest and its track into the night below, which is why the XP ring looked missing.
+ */
 @Composable
-private fun StatTile(iconRes: Int, tint: Color, value: String, label: String, modifier: Modifier = Modifier) {
+private fun ProfileHero(
+    backgroundRes: Int,
+    avatar: JepjepAvatar,
+    level: Int,
+    levelFraction: Float,
+    ringDescription: String,
+    onChangeBackground: () -> Unit,
+    onEditProfile: () -> Unit
+) {
+    val bannerHeight = 156.dp
+    val ringSize = 132.dp
+    Box(Modifier.fillMaxWidth().height(bannerHeight + ringSize / 2)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(bannerHeight)
+                .clip(Shapes.panel)
+        ) {
+            Image(
+                painterResource(backgroundRes), null,
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = .30f),
+                            0.45f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = .25f)
+                        )
+                    )
+            )
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(Space.sm)
+                    .tourAnchor(TourAnchor.ProfileBackground)
+                    .clip(Shapes.pill)
+                    .background(Color.Black.copy(alpha = .55f))
+                    .clickable(onClickLabel = "Change background", onClick = onChangeBackground)
+                    .padding(horizontal = Space.sm, vertical = Space.xs),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(painterResource(Iconsax.Edit), null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(Space.xxs))
+                Text("Background", style = MaterialTheme.typography.labelLarge, color = Color.White)
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .size(ringSize)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(com.kasiguru.ui.theme.Ground),
+            contentAlignment = Alignment.Center
+        ) {
+            ProgressRing(
+                progress = levelFraction,
+                size = ringSize - 8.dp,
+                strokeWidth = 8.dp,
+                color = Lime,
+                contentDescription = ringDescription
+            ) {
+                JepjepAvatarPortrait(
+                    avatar = avatar,
+                    size = ringSize - 32.dp,
+                    level = level,
+                    contentDescription = "Your avatar. Edit profile",
+                    onClick = onEditProfile
+                )
+            }
+        }
+    }
+}
+
+/** Streak, XP and words as three columns on one card, split by hairlines. The streak opens its page. */
+@Composable
+private fun StatsCard(streak: Int, totalXp: Int, wordsPractised: Int, onOpenStreak: () -> Unit) {
     SoftCard(
-        modifier = modifier.clearAndSetSemantics { contentDescription = "$value $label" },
+        modifier = Modifier.fillMaxWidth(),
         shape = Shapes.tile,
         border = BorderHairline,
-        contentPadding = PaddingValues(Space.sm)
+        contentPadding = PaddingValues(vertical = Space.sm)
     ) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(Modifier.height(Space.xxs))
+        Row(Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+            StatColumn(Iconsax.FlashBold, Coral, "$streak", "day streak",
+                Modifier.weight(1f).clickable(onClickLabel = "Open your streak", onClick = onOpenStreak))
+            StatDivider()
+            StatColumn(Iconsax.StarBold, Gold, "$totalXp", "total XP", Modifier.weight(1f))
+            StatDivider()
+            StatColumn(Iconsax.BookBold, BrandLime, "$wordsPractised", "words practised", Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatDivider() {
+    Box(
+        Modifier
+            .width(1.dp)
+            .fillMaxHeight()
+            .padding(vertical = Space.xs)
+            .background(BorderHairline)
+    )
+}
+
+/** A figure with its icon and unit. The colour tints the icon only; the words carry the meaning. */
+@Composable
+private fun StatColumn(iconRes: Int, tint: Color, value: String, label: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .padding(vertical = Space.xs)
+            .clearAndSetSemantics { contentDescription = "$value $label" },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(id = iconRes), null, tint = tint, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(Space.xxs))
             Text(text = value, style = MaterialTheme.typography.headlineSmall, color = Ink, maxLines = 1)
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = Muted,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = Muted,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+    }
+}
+
+/** One fact in the overview grid: a tinted icon, the figure, and what it counts. */
+@Composable
+private fun OverviewTile(iconRes: Int, value: String, label: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(Shapes.tile)
+            .background(com.kasiguru.ui.theme.Surface)
+            .border(1.dp, BorderHairline, Shapes.tile)
+            .padding(Space.sm)
+            .clearAndSetSemantics { contentDescription = "$value $label" },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).clip(Shapes.chip).background(com.kasiguru.ui.theme.LimeTint),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(painterResource(iconRes), null, tint = BrandLime, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(Space.sm))
+        Column(Modifier.weight(1f)) {
+            Text(value, style = MaterialTheme.typography.titleLarge, color = Ink, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Muted, maxLines = 2)
         }
     }
 }
@@ -607,21 +664,5 @@ private fun LinkRow(iconRes: Int, accent: Color, title: String, subtitle: String
             )
         }
         Icon(painter = painterResource(id = Iconsax.ArrowRight), contentDescription = null, tint = Faint, modifier = Modifier.size(16.dp))
-    }
-}
-
-@Composable
-private fun StatDetailRow(label: String, value: String, iconRes: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(painter = painterResource(id = iconRes), contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(Space.xs))
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Muted)
-        }
-        Text(text = value, style = MaterialTheme.typography.titleMedium, color = Ink)
     }
 }

@@ -113,6 +113,7 @@ fun WordWheelGameScreen(
         title = "Word Wheel",
         subtitle = "Level ${uiState.level} · ${uiState.tier.name}",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

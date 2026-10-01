@@ -432,52 +432,11 @@ fun SettingsScreen(
 
                 // Recovery questions. A lightweight identity hint, not a secret - see
                 // AuthRepository.saveSecurityQuestions for why this is not a password-reset gate.
-                SoftCard(modifier = Modifier.fillMaxWidth()) {
-                    val securityAnswers by viewModel.securityAnswers.collectAsState()
-                    val securityStatus by viewModel.securityQuestionsStatus.collectAsState()
-                    LaunchedEffect(Unit) { viewModel.loadSecurityQuestions() }
-
-                    Text(
-                        text = "Recovery Questions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Ink
-                    )
-                    Spacer(Modifier.height(Space.xs))
-                    Text(
-                        text = "A lightweight hint to help confirm it's you, not a secret. " +
-                            "Anyone who unlocks this device can read them.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Muted
-                    )
-                    Spacer(Modifier.height(Space.sm))
-
-                    viewModel.securityQuestions.forEachIndexed { index, question ->
-                        KasiGuruTextField(
-                            value = securityAnswers.getOrElse(index) { "" },
-                            onValueChange = { viewModel.onSecurityAnswerChanged(index, it) },
-                            label = { Text(question) },
-                            modifier = Modifier.fillMaxWidth().padding(bottom = Space.xs),
-                            singleLine = true
-                        )
-                    }
-
-                    ClayButton(
-                        label = "Save answers",
-                        onClick = { viewModel.saveSecurityQuestions() },
-                        tone = ClayButtonTone.Quiet,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    securityStatus?.let { message ->
-                        Spacer(Modifier.height(Space.xs))
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Muted
-                        )
-                    }
-                }
+                RecoveryQuestionsCard(
+                    signedIn = account.isRecoverable,
+                    onSignIn = onNavigateToAccount,
+                    viewModel = viewModel
+                )
 
                 // Support & Feedback Section
                 SoftCard(modifier = Modifier.fillMaxWidth(), onClick = onNavigateToReport) {

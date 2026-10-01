@@ -116,7 +116,8 @@ fun EditProfileScreen(
                     .padding(Space.gutter),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(Space.lg))
+                com.kasiguru.ui.components.clay.GroundTitleBlock(title = "Edit profile")
+                Spacer(Modifier.height(Space.sm))
                 JepjepAvatarPortrait(
                     avatar = avatar,
                     size = 96.dp,

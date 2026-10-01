@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -50,6 +51,12 @@ fun AccountScreen(
     onNavigateBack: () -> Unit,
     onAuthSuccess: (() -> Unit)? = null,
     initialSignInMode: Boolean = true,
+    /**
+     * Reached from onboarding's "I already have an account": someone who already has an account and
+     * only wants back in. They get a plain welcome-back sign-in and nothing else - no guest status,
+     * no "about you" form, no create-account tab, no delete button.
+     */
+    returningLearner: Boolean = false,
     viewModel: AccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -123,7 +130,13 @@ fun AccountScreen(
         }
     }
 
-    uiState.pendingSignIn?.let {
+    // A returning learner asked to sign in; the "this account already exists" question is the
+    // answer they came for, so it is accepted for them rather than asked.
+    LaunchedEffect(uiState.pendingSignIn, returningLearner) {
+        if (returningLearner && uiState.pendingSignIn != null) viewModel.confirmSignIn()
+    }
+
+    if (!returningLearner) uiState.pendingSignIn?.let {
         AlertDialog(
             onDismissRequest = { viewModel.cancelSignIn() },
             title = { Text("Account already exists", fontWeight = FontWeight.Bold) },
@@ -151,6 +164,23 @@ fun AccountScreen(
         onBack = attemptBack,
         pattern = GroundPattern.Orbs,
         content = {
+            if (returningLearner) {
+                Box(Modifier.fillMaxSize()) {
+                    ReturningSignIn(
+                        email = email,
+                        onEmailChange = { email = it },
+                        password = password,
+                        onPasswordChange = { password = it },
+                        isBusy = uiState.isBusy,
+                        onSignIn = { viewModel.signIn(email.trim(), password) },
+                        onGoogle = googleSignIn,
+                        onForgotPassword = { viewModel.sendPasswordReset(email.trim()) },
+                        onStartNew = onNavigateBack
+                    )
+                    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+                }
+                return@GroundScaffold
+            }
             Box(Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -178,7 +208,9 @@ fun AccountScreen(
                         )
                     } else if (uiState.hasPersonalDetails == null) {
                         // Still reading the progress row; show nothing rather than the wrong card.
-                    } else if (uiState.hasPersonalDetails == false && !skippedDetails) {
+                    } else if (uiState.hasPersonalDetails == false && !skippedDetails && !isSignInMode) {
+                        // Only creating an account asks for these. Signing in restores the ones the
+                        // account already has, so a returning learner goes straight to the form.
                         PersonalDetailsCard(
                             isBusy = uiState.isBusy,
                             fullName = fullName,
@@ -302,6 +334,10 @@ fun AccountScreen(
                                     keyboardType = KeyboardType.Password,
                                     imeAction = ImeAction.Done
                                 ),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    if (isSignInMode) viewModel.signIn(email.trim(), password)
+                                    else viewModel.createOrLinkAccount(email.trim(), password)
+                                }),
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -787,5 +823,190 @@ private fun DeleteAccountSection(isBusy: Boolean, onDelete: () -> Unit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Text("Delete my account and data", color = RedText, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Loose on purpose: the server is the real check. This only stops an obvious typo being sent. */
+private fun looksLikeEmail(text: String): Boolean {
+    val t = text.trim()
+    val at = t.indexOf('@')
+    return at > 0 && t.indexOf('.', at) > at + 1 && !t.endsWith(".") && ' ' !in t
+}
+
+/**
+ * "I already have an account", from onboarding: welcome back, one way in with Google, one with email,
+ * and a way back for someone who tapped it by mistake.
+ *
+ * Built for the person it serves. They already know the app, so there is no pitch; they may be on a
+ * new phone, so the copy says their progress comes with them; and every field says what is wrong
+ * with it in place, so a typo is fixed where it was made instead of in a dialog.
+ */
+@Composable
+private fun ReturningSignIn(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    isBusy: Boolean,
+    onSignIn: () -> Unit,
+    onGoogle: (() -> Unit)?,
+    onForgotPassword: () -> Unit,
+    onStartNew: () -> Unit
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+    var triedSubmit by remember { mutableStateOf(false) }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val emailProblem = when {
+        !triedSubmit && email.isBlank() -> null
+        email.isBlank() -> "Enter the email you signed up with."
+        !looksLikeEmail(email) -> "That doesn't look like an email address."
+        else -> null
+    }
+    val passwordProblem = if (triedSubmit && password.isBlank()) "Enter your password." else null
+    val submit: () -> Unit = {
+        triedSubmit = true
+        if (looksLikeEmail(email) && password.isNotBlank()) {
+            focus.clearFocus()
+            onSignIn()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
+            .padding(horizontal = Space.gutter)
+            .padding(bottom = Space.lg),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        com.kasiguru.ui.components.brand.Jepjep(
+            pose = com.kasiguru.ui.components.brand.JepjepPose.Waving,
+            height = 132.dp
+        )
+        Spacer(Modifier.height(Space.sm))
+        Text(
+            text = "Welcome back!",
+            style = MaterialTheme.typography.displaySmall,
+            color = Ink
+        )
+        Spacer(Modifier.height(Space.xs))
+        Text(
+            text = "Sign in to pick up where you left off. Your XP, streak, badges and words come with you.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Muted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        Spacer(Modifier.height(Space.lg))
+
+        if (onGoogle != null) {
+            OutlinedButton(
+                onClick = onGoogle,
+                enabled = !isBusy,
+                shape = Shapes.pill,
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface),
+                border = BorderStroke(1.dp, BorderHairline),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_google_g),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(Space.sm))
+                Text("Continue with Google", color = Ink, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(Space.md))
+            AuthDivider(text = "or sign in with email")
+            Spacer(Modifier.height(Space.md))
+        }
+
+        KasiGuruTextField(
+            value = email,
+            onValueChange = onEmailChange,
+            label = { Text("Email") },
+            placeholder = { Text("you@example.com") },
+            singleLine = true,
+            enabled = !isBusy,
+            isError = emailProblem != null,
+            supportingText = emailProblem?.let { { Text(it) } },
+            leadingIcon = {
+                Icon(painterResource(Iconsax.Sms), null, tint = LimeText, modifier = Modifier.size(20.dp))
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = {
+                focus.moveFocus(androidx.compose.ui.focus.FocusDirection.Down)
+            }),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(Space.sm))
+        KasiGuruTextField(
+            value = password,
+            onValueChange = onPasswordChange,
+            label = { Text("Password") },
+            singleLine = true,
+            enabled = !isBusy,
+            isError = passwordProblem != null,
+            supportingText = passwordProblem?.let { { Text(it) } },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            leadingIcon = {
+                Icon(painterResource(Iconsax.Lock), null, tint = LimeText, modifier = Modifier.size(20.dp))
+            },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        tint = Muted
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { submit() }),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onForgotPassword, enabled = !isBusy) {
+                Text(
+                    text = "Forgot password?",
+                    color = LimeText,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+        Spacer(Modifier.height(Space.xs))
+        ClayButton(
+            label = if (isBusy) "Signing in…" else "Sign in",
+            onClick = submit,
+            enabled = !isBusy,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (isBusy) {
+            Spacer(Modifier.height(Space.sm))
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                color = Lime,
+                trackColor = TrackNeutral
+            )
+        }
+
+        Spacer(Modifier.height(Space.xl))
+        HorizontalDivider(color = BorderHairline)
+        Spacer(Modifier.height(Space.md))
+        Text(
+            text = "New to KasiGuru?",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted
+        )
+        TextButton(onClick = onStartNew, enabled = !isBusy) {
+            Text(
+                text = "Start learning without an account",
+                color = LimeText,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
 }

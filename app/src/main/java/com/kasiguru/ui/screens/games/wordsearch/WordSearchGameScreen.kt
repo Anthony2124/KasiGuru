@@ -150,6 +150,7 @@ fun WordSearchGameScreen(
         title = uiState.category.ifBlank { "Word Search" },
         subtitle = "Level ${uiState.level} · ${uiState.tier.name}",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

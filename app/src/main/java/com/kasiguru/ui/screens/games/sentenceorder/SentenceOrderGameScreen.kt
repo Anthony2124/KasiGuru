@@ -41,6 +41,7 @@ fun SentenceOrderGameScreen(
     GroundScaffold(
         title = "Sentence Order",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

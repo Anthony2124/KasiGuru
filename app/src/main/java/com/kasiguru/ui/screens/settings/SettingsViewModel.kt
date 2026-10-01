@@ -75,13 +75,27 @@ class SettingsViewModel @Inject constructor(
     private val _securityAnswers = MutableStateFlow(List(securityQuestions.size) { "" })
     val securityAnswers: StateFlow<List<String>> = _securityAnswers.asStateFlow()
 
+    /** What is stored on the account, so the screen can tell an edit from what is already saved. */
+    private val _savedSecurityAnswers = MutableStateFlow(List(securityQuestions.size) { "" })
+    val savedSecurityAnswers: StateFlow<List<String>> = _savedSecurityAnswers.asStateFlow()
+
+    private val _securitySaving = MutableStateFlow(false)
+    val securitySaving: StateFlow<Boolean> = _securitySaving.asStateFlow()
+
     private val _securityQuestionsStatus = MutableStateFlow<String?>(null)
     val securityQuestionsStatus: StateFlow<String?> = _securityQuestionsStatus.asStateFlow()
+
+    /** True when [securityQuestionsStatus] reports a failure rather than a save. */
+    private val _securityStatusIsError = MutableStateFlow(false)
+    val securityStatusIsError: StateFlow<Boolean> = _securityStatusIsError.asStateFlow()
 
     fun loadSecurityQuestions() {
         viewModelScope.launch {
             authRepository.getSecurityQuestionAnswers()
-                .onSuccess { _securityAnswers.value = it }
+                .onSuccess {
+                    _securityAnswers.value = it
+                    _savedSecurityAnswers.value = it
+                }
         }
     }
 
@@ -90,15 +104,25 @@ class SettingsViewModel @Inject constructor(
         if (index !in current.indices) return
         current[index] = value
         _securityAnswers.value = current
+        // An edit after a save makes the old "Saved" untrue.
+        _securityQuestionsStatus.value = null
     }
 
     fun saveSecurityQuestions() {
+        if (_securitySaving.value) return
         viewModelScope.launch {
-            val result = authRepository.saveSecurityQuestions(_securityAnswers.value)
-            _securityQuestionsStatus.value = if (result.isSuccess) {
-                "Saved. These are a lightweight identity hint, not a secret - anyone who unlocks this device is able to read them."
+            _securitySaving.value = true
+            val answers = _securityAnswers.value.map { it.trim() }
+            val result = authRepository.saveSecurityQuestions(answers)
+            _securitySaving.value = false
+            if (result.isSuccess) {
+                _securityAnswers.value = answers
+                _savedSecurityAnswers.value = answers
+                _securityStatusIsError.value = false
+                _securityQuestionsStatus.value = "Saved to your account."
             } else {
-                "Couldn't save right now. Please try again."
+                _securityStatusIsError.value = true
+                _securityQuestionsStatus.value = "Couldn't save right now. Check your connection and try again."
             }
         }
     }

@@ -61,6 +61,7 @@ fun FillBlankGameScreen(
     GroundScaffold(
         title = "Fill in the Blank",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

@@ -24,7 +24,10 @@ import com.kasiguru.ui.tour.*
 @Composable
 fun LeaderboardScreen(onNavigateBack: () -> Unit, onOpenPlayer: (String) -> Unit = {}, viewModel: LeaderboardViewModel = hiltViewModel()) {
     GroundScaffold(title = "Leaderboard", onBack = onNavigateBack, compactTitle = true, pattern = GroundPattern.None) {
-        LeaderboardContent(onOpenPlayer, viewModel = viewModel)
+        Column(Modifier.fillMaxSize()) {
+            GroundTitleBlock(title = "Leaderboard", modifier = Modifier.padding(horizontal = Space.gutter))
+            LeaderboardContent(onOpenPlayer, modifier = Modifier.weight(1f), viewModel = viewModel)
+        }
     }
 }
 

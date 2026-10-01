@@ -125,6 +125,11 @@ fun Modifier.groundTexture(pattern: GroundPattern, seed: String): Modifier {
  *
  * @param onBack null on the five tab roots. They are reached by switching tabs rather than by
  *   navigating forward, so a back affordance would answer a question nobody asked.
+ * @param showBack draw [onBack] as a chevron in the bar, with the screen's name beside it. Only a
+ *   round in progress asks for this (a game, where leaving needs its own confirm). Every other
+ *   detail screen leaves it false: Android's own Back already does the job, and a chevron plus a
+ *   bar title above a page that names itself again in its heading was two lines of chrome saying
+ *   the same thing. Such a screen draws no bar at all unless it has [actions].
  * @param compactTitle true for screens that render no [GroundTitleBlock] — a word detail, a game in
  *   play, anything whose name needs saying once and no more. The title then sits in the bar from the
  *   start instead of waiting for a scroll that may never come, which is what an ordinary Android
@@ -143,9 +148,15 @@ fun GroundScaffold(
     pattern: GroundPattern = GroundPattern.Orbs,
     @DrawableRes patternOverlay: Int? = null,
     compactTitle: Boolean = false,
+    showBack: Boolean = false,
     actions: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val backShown = onBack != null && showBack
+    // Tab roots keep their name in the bar: it is their page heading. Detail screens name
+    // themselves in their own content, so only a round in progress repeats it up here.
+    val titleInBar = onBack == null || backShown
+    val hasBar = titleInBar || actions != null
     // Night is dark, so the status-bar glyphs are light.
     StatusBarIcons()
 
@@ -193,7 +204,8 @@ fun GroundScaffold(
             .nestedScroll(scrollWatcher)
     ) {
         Column(Modifier.fillMaxSize()) {
-            Row(
+            if (!hasBar) Spacer(Modifier.statusBarsPadding().height(Space.sm))
+            if (hasBar) Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
@@ -201,10 +213,10 @@ fun GroundScaffold(
                     // A 48dp target around a 24dp icon carries 12dp of its own padding. Starting the
                     // row at Space.xs puts the icon itself on the 20dp gutter (8 + 12), so the chevron
                     // lines up with the title below it instead of sitting a half-target inside.
-                    .padding(start = if (onBack != null) Space.xs else Space.gutter, end = Space.xs),
+                    .padding(start = if (backShown) Space.xs else Space.gutter, end = Space.xs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (onBack != null) {
+                if (backShown && onBack != null) {
                     GroundBackButton(
                         onClick = onBack,
                         iconRes = navIcon,
@@ -213,7 +225,7 @@ fun GroundScaffold(
                 }
 
                 Crossfade(
-                    targetState = scrolled || compactTitle,
+                    targetState = titleInBar && (scrolled || compactTitle),
                     animationSpec = motionTween(Motion.Quick),
                     label = "GroundBarTitle",
                     modifier = Modifier.weight(1f)
@@ -238,7 +250,7 @@ fun GroundScaffold(
             }
 
             AnimatedVisibility(
-                visible = scrolled,
+                visible = scrolled && hasBar,
                 enter = fadeIn(motionTween(Motion.Quick)),
                 exit = fadeOut(motionTween(Motion.exit(Motion.Quick)))
             ) {

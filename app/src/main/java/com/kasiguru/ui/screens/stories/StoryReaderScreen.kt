@@ -11,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -38,9 +40,28 @@ import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.util.Constants
 import com.kasiguru.util.audio.AudioPlayerManager
 
+/** The languages a page can be read in, in the order the switch offers them. */
+private enum class PageLanguage(val label: String) { Kasiguranin("Kasiguranin"), Tagalog("Tagalog"), English("English") }
+
+private fun StoryPage.textIn(language: PageLanguage): String = when (language) {
+    PageLanguage.Kasiguranin -> kasiguranin
+    PageLanguage.Tagalog -> tagalog
+    PageLanguage.English -> english
+}
+
 /**
  * Immersive on purpose, like Lesson Player and Flashcards: no canopy, no bottom nav, so reading one
  * page doesn't feel like a detour through app chrome.
+ *
+ * Laid out as a picture book: a slim header (close, title, page count, a bar of page segments), the
+ * illustration, then the page's text in one language at a time with a switch above it. The old page
+ * stacked all three languages under each other, so the eye had to find its place again on every
+ * page; one language at a time reads like a book, and the switch is one tap away for a word the
+ * learner wants to check. The choice carries from page to page.
+ *
+ * There is no narration control. No recorded narration exists for the stories, and a Listen button
+ * that played nothing promised something the app could not do. Single words still have their
+ * pronunciation in the word sheet.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -75,30 +96,51 @@ fun StoryReaderScreen(
         return
     }
 
+    // Which language the learner is reading in. Saved, so it survives rotation and carries across pages.
+    var languageOrdinal by rememberSaveable { mutableStateOf(-1) }
+    var selectedWord by remember { mutableStateOf<String?>(null) }
+    var wordNotFound by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize().background(Ground)) {
-        Row(
+        // ── Header: close, title, count, and the page segments ──
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = Space.gutter, vertical = Space.sm),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(start = Space.xs, end = Space.gutter, top = Space.xs)
         ) {
-            Icon(
-                painter = painterResource(id = Iconsax.ArrowLeft),
-                contentDescription = "Back",
-                tint = Muted,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onNavigateBack)
-            )
-            Spacer(Modifier.width(Space.sm))
-            Text(
-                text = uiState.story?.title ?: "",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Ink,
-                maxLines = 1
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.CloseCircle),
+                        contentDescription = "Close story",
+                        tint = Muted
+                    )
+                }
+                Text(
+                    text = uiState.story?.title ?: "",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Ink,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                if (uiState.pages.isNotEmpty()) {
+                    Text(
+                        text = "Page ${uiState.currentPageIndex + 1} of ${uiState.pages.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Muted
+                    )
+                }
+            }
+            if (uiState.pages.isNotEmpty()) {
+                com.kasiguru.ui.components.SegmentedProgress(
+                    completed = uiState.currentPageIndex + 1,
+                    total = uiState.pages.size,
+                    modifier = Modifier.fillMaxWidth().padding(start = Space.sm, top = Space.xxs)
+                )
+            }
         }
 
         if (uiState.isLoading) {
@@ -122,17 +164,24 @@ fun StoryReaderScreen(
         AnimatedContent(
             targetState = page,
             transitionSpec = {
-                slideInHorizontally { width -> width } + fadeIn() togetherWith
-                        slideOutHorizontally { width -> -width } + fadeOut()
+                slideInHorizontally { width -> width / 4 } + fadeIn() togetherWith
+                        slideOutHorizontally { width -> -width / 4 } + fadeOut()
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            label = "StoryPage"
         ) { targetPage ->
+            // Only the languages this page actually has; a story without authored Kasiguranin
+            // simply opens in Tagalog.
+            val available = PageLanguage.entries.filter { targetPage.textIn(it).isNotBlank() }
+            val language = PageLanguage.entries.getOrNull(languageOrdinal)?.takeIf { it in available }
+                ?: available.firstOrNull()
+                ?: PageLanguage.Tagalog
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(Space.gutter),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = Space.gutter, vertical = Space.md)
             ) {
                 // The page's illustration. Square, because that is the shape the artwork is
                 // authored and stored in -- the admin centre-crops every upload to 1:1 -- so any
@@ -142,160 +191,130 @@ fun StoryReaderScreen(
                 // finished state for a page with no picture, not a placeholder waiting to be
                 // replaced, which is what DESIGN.md asks of every art slot.
                 val pageImage = uiState.pageImages[targetPage.imageId]
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(Shapes.panel)
-                        .background(brush = Brush.linearGradient(colors = listOf(CanopyTop, CanopyBottom))),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (pageImage != null) {
-                        AsyncImage(
-                            model = pageImage,
-                            // The description was written as an art brief; it doubles as the alt text.
-                            contentDescription = targetPage.illustrationDesc.takeIf { it.isNotBlank() },
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Text(
-                            text = targetPage.illustrationDesc,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(Space.md)
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(Space.lg))
-
-                // Kasiguranin Interactive Words
-                var selectedWord by remember { mutableStateOf<String?>(null) }
-                var wordNotFound by remember { mutableStateOf(false) }
-
-                // A story whose Kasiguranin has not been authored yet shows none of this rather than a
-                // row of empty chips: "".split(" ") returns a single blank entry, not nothing.
-                val hasKasiguranin = targetPage.kasiguranin.isNotBlank()
-
-                if (hasKasiguranin) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(Space.xs),
-                    verticalArrangement = Arrangement.spacedBy(Space.xs),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    targetPage.kasiguranin.split(" ").forEach { word ->
-                        SuggestionChip(
-                            onClick = {
-                                val vocab = viewModel.findWord(word)
-                                if (vocab != null) {
-                                    selectedWord = word
-                                } else {
-                                    wordNotFound = true
-                                }
-                            },
-                            label = {
-                                Text(
-                                    text = word,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = LimeText,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },
-                            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = Lime.copy(alpha = 0.12f)),
-                            border = null,
-                            shape = Shapes.chip
-                        )
-                    }
-                }
-
-                selectedWord?.let { word ->
-                    val vocab = remember(word, uiState.vocabulary) { viewModel.findWord(word) }
-                    if (vocab != null) {
-                        WordDetailBottomSheet(
-                            vocab = vocab,
-                            onDismissRequest = { selectedWord = null },
-                            onPlayAudio = { audioPlayerManager.playWord(vocab) }
-                        )
-                    }
-                }
-
-                if (wordNotFound) {
-                    AlertDialog(
-                        onDismissRequest = { wordNotFound = false },
-                        title = { Text("Not in the dictionary yet") },
-                        text = { Text("This word isn't in the vocabulary list yet, so there's no definition to show.") },
-                        confirmButton = {
-                            TextButton(onClick = { wordNotFound = false }) { Text("Got it") }
+                BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    // Square, but never taller than about 40 % of the screen, so the text starts
+                    // above the fold on a short phone.
+                    val side = minOf(maxWidth, 340.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(side)
+                            .clip(Shapes.panel)
+                            .background(brush = Brush.linearGradient(colors = listOf(CanopyTop, CanopyBottom))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (pageImage != null) {
+                            AsyncImage(
+                                model = pageImage,
+                                // The description was written as an art brief; it doubles as the alt text.
+                                contentDescription = targetPage.illustrationDesc.takeIf { it.isNotBlank() },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Text(
+                                text = targetPage.illustrationDesc,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(Space.md)
+                            )
                         }
-                    )
+                    }
                 }
 
-                Spacer(Modifier.height(Space.md))
-
-                // Audio Button
-                Button(
-                    onClick = { audioPlayerManager.playAudio(targetPage.kasiguranin, targetPage.audioFileName) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Lime),
-                    shape = Shapes.tile
-                ) {
-                    Icon(
-                        painter = painterResource(id = Iconsax.VolumeHigh),
-                        contentDescription = "Play Audio",
-                        tint = OnLime,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(Space.xs))
-                    Text("Pakinggan (Listen)", color = OnLime, fontWeight = FontWeight.Bold)
-                }
-                }
-
-                if (hasKasiguranin) {
-                    Spacer(Modifier.height(Space.lg))
-                    HorizontalDivider(color = Faint.copy(alpha = 0.3f))
-                }
                 Spacer(Modifier.height(Space.lg))
 
-                // Tagalog. Promoted to the page's own voice when no Kasiguranin sits above it, rather
-                // than staying a supporting translation of something absent.
-                Text(text = "Tagalog", style = MaterialTheme.typography.labelMedium, color = Muted)
-                Spacer(Modifier.height(Space.xxs))
-                Text(
-                    text = targetPage.tagalog,
-                    style = if (hasKasiguranin) {
-                        MaterialTheme.typography.bodyLarge
-                    } else {
-                        MaterialTheme.typography.titleMedium
-                    },
-                    color = Ink,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
+                if (available.size > 1) {
+                    com.kasiguru.ui.components.clay.SegmentedToggle(
+                        options = available.map { it.label },
+                        selectedIndex = available.indexOf(language).coerceAtLeast(0),
+                        onSelect = { languageOrdinal = available[it].ordinal },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(Space.md))
+                }
 
-                Spacer(Modifier.height(Space.md))
+                // The page's text, in the chosen language, set for reading rather than scanning.
+                if (language == PageLanguage.Kasiguranin) {
+                    // Every word can be looked up: set as running text, each word a quiet link
+                    // with a dotted rule beneath, instead of a wall of chips.
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(Space.xs),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        targetPage.kasiguranin.split(" ").filter { it.isNotBlank() }.forEach { word ->
+                            Text(
+                                text = word,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Ink,
+                                modifier = Modifier
+                                    .clip(Shapes.chip)
+                                    .clickable(onClickLabel = "Look up $word") {
+                                        if (viewModel.findWord(word) != null) selectedWord = word else wordNotFound = true
+                                    }
+                                    .drawBehind {
+                                        val y = size.height - 2.dp.toPx()
+                                        drawLine(
+                                            color = Lime,
+                                            start = androidx.compose.ui.geometry.Offset(0f, y),
+                                            end = androidx.compose.ui.geometry.Offset(size.width, y),
+                                            strokeWidth = 2.dp.toPx(),
+                                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                                                floatArrayOf(3.dp.toPx(), 3.dp.toPx())
+                                            )
+                                        )
+                                    }
+                                    .padding(horizontal = 2.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(Space.sm))
+                    Text(
+                        text = "Tap a word to look it up.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Faint
+                    )
+                } else {
+                    Text(
+                        text = targetPage.textIn(language),
+                        style = MaterialTheme.typography.titleLarge.copy(lineHeight = 32.sp),
+                        fontWeight = FontWeight.Medium,
+                        fontStyle = if (language == PageLanguage.English && available.size > 1) FontStyle.Italic else FontStyle.Normal,
+                        color = Ink
+                    )
+                }
+            }
+        }
 
-                // English Translation
-                Text(text = "English", style = MaterialTheme.typography.labelMedium, color = Muted)
-                Spacer(Modifier.height(Space.xxs))
-                Text(
-                    text = targetPage.english,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontStyle = FontStyle.Italic,
-                    color = Muted,
-                    textAlign = TextAlign.Center
+        selectedWord?.let { word ->
+            val vocab = remember(word, uiState.vocabulary) { viewModel.findWord(word) }
+            if (vocab != null) {
+                WordDetailBottomSheet(
+                    vocab = vocab,
+                    onDismissRequest = { selectedWord = null },
+                    onPlayAudio = { audioPlayerManager.playWord(vocab) }
                 )
             }
         }
 
-        if (uiState.pages.isNotEmpty()) {
-            StoryBottomBar(
-                currentPage = uiState.currentPageIndex + 1,
-                totalPages = uiState.pages.size,
-                onPrevious = viewModel::previousPage,
-                onNext = viewModel::nextPage
+        if (wordNotFound) {
+            AlertDialog(
+                onDismissRequest = { wordNotFound = false },
+                title = { Text("Not in the dictionary yet") },
+                text = { Text("This word isn't in the vocabulary list yet, so there's no definition to show.") },
+                confirmButton = {
+                    TextButton(onClick = { wordNotFound = false }) { Text("Got it") }
+                }
             )
         }
+
+        StoryBottomBar(
+            currentPage = uiState.currentPageIndex + 1,
+            totalPages = uiState.pages.size,
+            onPrevious = viewModel::previousPage,
+            onNext = viewModel::nextPage
+        )
     }
 }
 
@@ -346,6 +365,7 @@ private fun StoryCompleteContent(storyTitle: String, xpEarned: Int, onDone: () -
     }
 }
 
+/** Previous as a quiet round button, Next (or Finish) as the one lime action. The progress lives in the header. */
 @Composable
 fun StoryBottomBar(
     currentPage: Int,
@@ -353,60 +373,34 @@ fun StoryBottomBar(
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ) {
-    Surface(color = Surface, tonalElevation = 8.dp, shadowElevation = 8.dp) {
-        Column(modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.sm)) {
-            KasiGuruProgressBar(
-                progress = currentPage.toFloat() / totalPages.toFloat(),
-                height = 4.dp,
-                gradientColors = listOf(CanopyTop, CanopyBottom),
-                animated = true
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = Space.gutter, vertical = Space.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val canGoBack = currentPage > 1
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(Shapes.pill)
+                .background(SurfaceSunken)
+                .clickable(enabled = canGoBack, onClickLabel = "Previous page", onClick = onPrevious),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = Iconsax.ArrowLeft),
+                contentDescription = "Previous page",
+                tint = if (canGoBack) Ink else Faint,
+                modifier = Modifier.size(22.dp)
             )
-            Spacer(Modifier.height(Space.sm))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onPrevious, enabled = currentPage > 1) {
-                    Icon(
-                        painter = painterResource(id = Iconsax.ArrowLeft),
-                        contentDescription = "Previous",
-                        tint = if (currentPage > 1) Ink else Faint,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(Space.xxs))
-                    Text("Back", color = if (currentPage > 1) Ink else Faint)
-                }
-
-                Text(
-                    text = "$currentPage / $totalPages",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Muted,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Button(onClick = onNext, colors = ButtonDefaults.buttonColors(containerColor = Lime), shape = Shapes.pill) {
-                    if (currentPage == totalPages) {
-                        Text("Finish", color = OnLime, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.width(Space.xxs))
-                        Icon(
-                            painter = painterResource(id = Iconsax.TickCircle),
-                            contentDescription = "Finish",
-                            tint = OnLime,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    } else {
-                        Text("Next", color = OnLime, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.width(Space.xxs))
-                        Icon(
-                            painter = painterResource(id = Iconsax.ArrowRight),
-                            contentDescription = "Next",
-                            tint = OnLime,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
         }
+        Spacer(Modifier.width(Space.sm))
+        ClayButton(
+            label = if (currentPage == totalPages) "Finish story" else "Next page",
+            onClick = onNext,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

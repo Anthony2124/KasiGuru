@@ -257,7 +257,14 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             composable(Screen.Splash.route) {
                 val viewModel: SplashViewModel = hiltViewModel()
                 val startDestination by viewModel.startDestination.collectAsState()
-                
+                // The same plain green as the system splash, so the hand-off to the first real
+                // screen is one cut from green rather than green, then a dark frame, then the app.
+                androidx.compose.foundation.layout.Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(androidx.compose.ui.graphics.Color(0xFF6CB619))
+                )
+
                 LaunchedEffect(startDestination) {
                     if (startDestination != null) {
                         // SplashViewModel still names Learn as the everyday landing; the landing is
@@ -452,6 +459,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             ) {
                 VocabularyDetailScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenWord = { wordId ->
+                        navController.navigate(Screen.VocabularyDetail.createRoute(wordId))
+                    },
                     onReportWord = { word ->
                         navController.navigate(
                             Screen.ReportIssue.createRoute(
@@ -683,6 +693,8 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             }
             composable(Screen.Account.route) {
                 AccountScreen(
+                    returningLearner = navController.previousBackStackEntry?.destination?.route ==
+                        Screen.Onboarding.route,
                     onNavigateBack = { navController.popBackStack() },
                     onAuthSuccess = {
                         val previousRoute = navController.previousBackStackEntry?.destination?.route

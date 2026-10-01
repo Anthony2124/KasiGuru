@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
@@ -323,7 +324,12 @@ internal fun NameStep(
 // 5 · Nice to meet you
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Jepjep peeks in from the right edge, the door edge of the artwork hidden just past the screen. */
+/**
+ * Jepjep peeks in from the right edge, big, as in Adrian's design: his head fills the right half of
+ * the screen, his far eye and the door edge of the artwork run off past the edge, and his body is
+ * cropped by the buttons below. Sized from the screen's width rather than its height, so the crop
+ * looks the same on a short phone and a tall one.
+ */
 @Composable
 internal fun GreetingStep(ctx: StepContext, name: String) {
     val trimmed = name.trim()
@@ -337,19 +343,34 @@ internal fun GreetingStep(ctx: StepContext, name: String) {
         text = highlighted("I'll show you what we'll do together."),
         modifier = Modifier.readable()
     )
-    Spacer(Modifier.height(Space.md))
+    Spacer(Modifier.height(Space.lg))
 
-    val height = (ctx.viewportHeight * 0.62f).coerceIn(200.dp, 420.dp)
-    // The artwork is 369 × 720 with the door edge at ~90 % of its width.
-    val width = height * (369f / 720f)
-    Box(Modifier.fillMaxWidth().height(height)) {
-        Jepjep(
-            pose = JepjepPose.Peeking,
-            height = height,
-            breathe = true,
+    // Whatever is left of the frame below the text; never so little that he shrinks to a sticker.
+    val boxHeight = (ctx.viewportHeight - 160.dp).coerceAtLeast(300.dp)
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .height(boxHeight)
+            .clipToBounds()
+            // He runs on behind the buttons rather than stopping at a hard edge above them.
+            .fadeOutBottom(solidUntil = 0.82f)
+    ) {
+        // The artwork is 369 x 720, the head spanning roughly its left 80 % and the door edge at
+        // ~90 %. At 0.84 of the screen's width the head fills the right half like the reference.
+        val artWidth = maxWidth * 0.84f
+        val artHeight = artWidth * (720f / 369f)
+        // Drawn with both dimensions fixed rather than through Jepjep(height = ...): given only a
+        // height, an Image keeps the bitmap's own pixel width, so this 369 px pose never drew wider
+        // than ~140 dp however tall it was asked to be - which is why he looked small here.
+        Image(
+            painter = painterResource(id = JepjepPose.Peeking.res),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = width * 0.14f)
+                .align(Alignment.TopStart)
+                .offset(x = maxWidth * 0.40f)
+                .wrapContentSize(Alignment.TopStart, unbounded = true)
+                .size(width = artWidth, height = artHeight)
                 .then(ctx.jepjepAnchor)
         )
     }

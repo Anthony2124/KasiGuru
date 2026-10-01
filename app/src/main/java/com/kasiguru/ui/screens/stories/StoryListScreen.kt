@@ -1,6 +1,9 @@
 package com.kasiguru.ui.screens.stories
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -86,7 +89,9 @@ fun StoryListContent(
     viewModel: StoriesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 1 else 2
+    // A bookshelf: two covers side by side on a phone, three on a tablet. One full-width cover per
+    // row made each story a screen of its own and hid how many there are.
+    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
 
     // A story opened but not finished. The reader stores its page, so this is a real bookmark.
     val continueReading = uiState.stories.firstOrNull {
@@ -126,11 +131,20 @@ fun StoryListContent(
                     item(span = { GridItemSpan(maxLineSpan) }, key = "continue") {
                         Column(Modifier.fillMaxWidth()) {
                             SectionHeading(text = "Continue reading")
-                            Text(
-                                text = "Page ${story.currentPage + 1} of ${story.totalPages}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Muted
-                            )
+                            Spacer(Modifier.height(Space.xxs))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                com.kasiguru.ui.components.KasiGuruProgressBar(
+                                    progress = (story.currentPage + 1).toFloat() / story.totalPages.coerceAtLeast(1),
+                                    modifier = Modifier.weight(1f),
+                                    height = 6.dp
+                                )
+                                Spacer(Modifier.width(Space.sm))
+                                Text(
+                                    text = "Page ${story.currentPage + 1} of ${story.totalPages}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Muted
+                                )
+                            }
                             Spacer(Modifier.height(Space.sm))
                             StoryCoverCard(
                                 titleKasiguranin = story.titleKasiguranin,

@@ -36,8 +36,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.AudioPlayButton
 import com.kasiguru.ui.components.ConfettiView
 import com.kasiguru.ui.components.FlashCard
-import com.kasiguru.ui.components.FlashcardFirstNote
-import com.kasiguru.ui.components.GestureHint
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.SegmentedProgress
 import com.kasiguru.ui.components.clay.ClayButton
@@ -173,35 +171,39 @@ fun FlashcardDeckScreen(
     // size when the rating buttons appear, so nothing jumps as it is turned over.
     Column(Modifier.fillMaxSize().background(Ground).statusBarsPadding()
         .navigationBarsPadding().padding(horizontal = Space.gutter)) {
+        // Quit, progress and the count on one line, as in a lesson. The category now sits on the card.
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(56.dp)) {
             IconButton(onClick = onNavigateBack, modifier = Modifier.offset(x = (-12).dp)) {
-                Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Ink)
+                Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Muted)
             }
-            Text(
-                currentCard.category,
-                style = MaterialTheme.typography.titleMedium,
-                color = Ink,
-                maxLines = 1,
-                modifier = Modifier.weight(1f)
+            SegmentedProgress(
+                uiState.currentIndex, uiState.cards.size,
+                Modifier.weight(1f).offset(x = (-4).dp)
             )
+            Spacer(Modifier.width(Space.sm))
             Text(
                 "${uiState.currentIndex + 1} / ${uiState.cards.size}",
                 style = MaterialTheme.typography.labelLarge,
                 color = Muted
             )
         }
-        SegmentedProgress(uiState.currentIndex, uiState.cards.size, Modifier.fillMaxWidth())
         BoxWithConstraints(
             modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = Space.md),
             contentAlignment = Alignment.Center
         ) {
         // A portrait card, as large as the space allows with room for its tilt and the fanned card.
-        val cardWidth = minOf(maxWidth * 0.86f, maxHeight * CardAspect * 0.94f)
+        val cardWidth = minOf(maxWidth * 0.9f, maxHeight * CardAspect * 0.96f)
         FlashCard(currentCard, uiState.currentIndex + 1, side,
             onFlip = { if (!ratingPending) side = if (side < 2) side + 1 else 1 },
             onAudio = { audioPlayerManager.playWord(currentCard) },
+            total = uiState.cards.size,
             modifier = Modifier.width(cardWidth).aspectRatio(CardAspect).tourAnchor(TourAnchor.FlashcardCard)
-                .graphicsLayer { translationX = drag.value; alpha = if (reduced && ratingPending) 0f else 1f }
+                .graphicsLayer {
+                    translationX = drag.value
+                    // Tilts with the swipe, so the direction it will be filed reads before it lands.
+                    rotationZ = (drag.value / 40f).coerceIn(-12f, 12f)
+                    alpha = if (reduced && ratingPending) 0f else 1f
+                }
                 .pointerInput(currentCard.id, side, ratingPending) {
                     if (side == 2 && !ratingPending) detectHorizontalDragGestures(
                         onHorizontalDrag = { change, amount -> change.consume(); scope.launch { drag.snapTo(drag.value + amount) } },
@@ -215,27 +217,124 @@ fun FlashcardDeckScreen(
                 })
         }
         Box(Modifier.fillMaxWidth().height(AnswerAreaHeight), contentAlignment = Alignment.TopCenter) {
-        if (uiState.currentIndex == 0 && side != 2) {
-            FlashcardFirstNote(modifier = Modifier.padding(vertical = Space.sm))
-        }
-        androidx.compose.animation.AnimatedVisibility(visible = side == 2) {
-            Column {
-                Text("How well did you remember?", style = MaterialTheme.typography.titleSmall, color = Ink)
-                Spacer(Modifier.height(Space.sm))
-                ReviewRating.entries.chunked(2).forEach { ratings ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-                        ratings.forEach { rating ->
+            // Until the meaning is showing, the foot says where the learner is in the three steps;
+            // the card itself carries the tap instruction.
+            androidx.compose.animation.AnimatedVisibility(visible = side != 2) {
+                ReviewSteps(side = side, modifier = Modifier.padding(top = Space.sm))
+            }
+            androidx.compose.animation.AnimatedVisibility(visible = side == 2) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "How well did you remember?",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Ink,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text("or swipe", style = MaterialTheme.typography.labelMedium, color = Faint)
+                    }
+                    Spacer(Modifier.height(Space.sm))
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                        ReviewRating.entries.forEach { rating ->
                             val days = Sm2Algorithm.calculateNextReview(currentCard, rating).intervalDays
-                            ClayButton(label = "${rating.name.lowercase().replaceFirstChar(Char::uppercase)} · $days ${if (days == 1) "day" else "days"}",
-                                onClick = { rate(rating) }, enabled = !uiState.isRating && !ratingPending,
-                                tone = if (rating == ReviewRating.GOOD) ClayButtonTone.Primary else ClayButtonTone.Quiet,
-                                modifier = Modifier.weight(1f))
+                            RatingButton(
+                                rating = rating,
+                                days = days,
+                                enabled = !uiState.isRating && !ratingPending,
+                                onClick = { rate(rating) },
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
                         }
                     }
-                    Spacer(Modifier.height(Space.xs))
                 }
             }
         }
+    }
+}
+
+/** Open, flip, rate: the three steps of one card, with the current one lit. */
+@Composable
+private fun ReviewSteps(side: Int, modifier: Modifier = Modifier) {
+    val steps = listOf("Open", "Flip", "Rate")
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        steps.forEachIndexed { index, label ->
+            val done = index < side
+            val current = index == side
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (current) LimeTint else Color.Transparent)
+                    .padding(horizontal = Space.sm, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(if (current || done) Lime else TrackNeutral),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (done) {
+                        Icon(painterResource(Iconsax.TickCircle), null, tint = OnLime, modifier = Modifier.size(14.dp))
+                    } else {
+                        Text("${index + 1}", style = MaterialTheme.typography.labelMedium, color = if (current) OnLime else Muted)
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (current) Ink else Muted
+                )
+            }
+            if (index < steps.lastIndex) {
+                Box(Modifier.width(16.dp).height(2.dp).background(if (done) Lime else TrackNeutral))
+            }
+        }
+    }
+}
+
+/**
+ * One rating, with its next interval on a second line so four fit side by side. Good is the lime
+ * default; Again and Easy carry their meaning in words, the tint only backs it up.
+ */
+@Composable
+private fun RatingButton(rating: ReviewRating, days: Int, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val (face, lip, ink) = when (rating) {
+        ReviewRating.GOOD -> Triple(Lime, LimeLip, OnLime)
+        else -> Triple(SurfaceSunken, BorderHairline, Ink)
+    }
+    val accent = when (rating) {
+        ReviewRating.AGAIN -> RedText
+        ReviewRating.HARD -> AmberText
+        ReviewRating.GOOD -> OnLime
+        ReviewRating.EASY -> Info
+    }
+    com.kasiguru.ui.components.clay.ClaySurface(
+        face = face,
+        lipColor = lip,
+        modifier = modifier,
+        onClick = onClick,
+        enabled = enabled,
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
+    ) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                rating.name.lowercase().replaceFirstChar(Char::uppercase),
+                style = MaterialTheme.typography.titleSmall,
+                color = if (rating == ReviewRating.GOOD) ink else accent,
+                maxLines = 1
+            )
+            Text(
+                "$days ${if (days == 1) "day" else "days"}",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (rating == ReviewRating.GOOD) ink else Muted,
+                maxLines = 1
+            )
         }
     }
 }
@@ -244,7 +343,7 @@ fun FlashcardDeckScreen(
 private const val CardAspect = 0.74f
 
 /** Room kept at the foot for the rating buttons, so the card does not resize when they appear. */
-private val AnswerAreaHeight = 168.dp
+private val AnswerAreaHeight = 112.dp
 
 /** A close button in the top corner of the full-screen deck states. */
 @Composable

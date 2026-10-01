@@ -57,6 +57,7 @@ fun ReverseMatchGameScreen(
     GroundScaffold(
         title = "Reverse Match",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

@@ -59,6 +59,7 @@ fun WordMatchGameScreen(
     GroundScaffold(
         title = "Word Match",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,

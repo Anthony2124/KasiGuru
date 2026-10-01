@@ -43,6 +43,7 @@ fun AspectBuilderGameScreen(
     GroundScaffold(
         title = "Aspect Builder",
         onBack = exitGuard,
+        showBack = true,
         navIcon = Iconsax.CloseCircle,
         pattern = GroundPattern.None,
         compactTitle = true,
