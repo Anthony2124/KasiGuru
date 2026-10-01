@@ -1,0 +1,27 @@
+{
+  "name": "kasiguru-webapp",
+  "private": true,
+  "version": "1.17.0",
+  "type": "module",
+  "description": "KasiGuru in the browser: the learner app as an installable web app, for iPhone and anyone without the APK.",
+  "scripts": {
+    "dev": "vite",
+    "content": "node scripts/export-content.mjs",
+    "icons": "node scripts/build-icons.mjs",
+    "build": "node scripts/export-content.mjs --if-online && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "idb-keyval": "^6.3.0",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7"
+  }
+}

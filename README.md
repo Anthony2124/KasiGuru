@@ -4,7 +4,7 @@
 the Kasiguranin dialect.**
 
 - 📱 **Android app** — Kotlin / Jetpack Compose / Room (SQLite) / Hilt / Firebase
-- 🌐 **Web portals** (Vercel) — admin dashboard, public download page
+- 🌐 **Web** (Vercel) — the learner app for iPhone/iPad/computers, admin dashboard, public download page
 - ☁️ **Backend** — Firebase Firestore (+ Auth, FCM, Crashlytics) on the free plan
 
 ---
@@ -18,7 +18,7 @@ records folder conventions for future changes.
 | Path | What it is |
 |---|---|
 | `app/` | The Android app (Compose UI, Room DB, Firestore sync, FCM, Crashlytics) |
-| `admin-website/` | Three Vercel projects: root placeholder, `admin/` (login + dashboard), `download/` (public APK page) |
+| `admin-website/` | Vercel projects: root placeholder, `admin/` (login + dashboard), `download/` (public APK page), `webapp/` (the learner app as an installable web app, for iPhone and anyone without the APK) |
 | `functions/` | Free-plan helper scripts: `set_admin_claim.js`, `backup_firestore.js`, `restore_firestore.js`, `send_push.js` |
 | `scripts/` | Project checks and established deploy, release and backup entry points |
 | `scripts/dictionary/` | Dictionary import, audit, repair and definition tools |
@@ -43,6 +43,7 @@ records folder conventions for future changes.
 | [docs/PHASE1_RUNBOOK.md](docs/PHASE1_RUNBOOK.md) | Production setup: rules deploy, admin claim, backups, CI |
 | [docs/PHASE1_TUTORIAL.md](docs/PHASE1_TUTORIAL.md) | Step-by-step deployment walkthrough |
 | [docs/MONITORING.md](docs/MONITORING.md) | Monitoring, costs, failure runbook, free-plan limits |
+| [docs/WEB_APP.md](docs/WEB_APP.md) | The web app: why a PWA for iOS, parity with Android, deploying, testing |
 
 ## Security & hardening (what changed)
 
