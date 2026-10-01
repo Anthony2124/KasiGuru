@@ -267,7 +267,7 @@ fun LessonPlayerScreen(
         // ── Action area: the check button, replaced by feedback once answered ──
         LessonActionArea(
             hasAnswered = uiState.hasAnswered,
-            isCorrect = uiState.isCorrect == true,
+            isCorrect = uiState.isCorrect,
             // Blank input must not be submittable: for a typed prompt selectedOption holds the
             // live text, which is "" before the learner types anything rather than null.
             canCheck = !uiState.selectedOption.isNullOrBlank(),
@@ -289,7 +289,7 @@ fun LessonPlayerScreen(
 @Composable
 private fun LessonActionArea(
     hasAnswered: Boolean,
-    isCorrect: Boolean,
+    isCorrect: Boolean?,
     canCheck: Boolean,
     correctAnswer: String,
     word: com.kasiguru.data.local.entity.VocabularyEntity,
@@ -297,6 +297,14 @@ private fun LessonActionArea(
     onCheck: () -> Unit,
     onContinue: () -> Unit
 ) {
+    // The panel keeps the verdict it opened with while it slides away. By the time it exits the view
+    // model has already cleared isCorrect and moved to the next exercise, so reading live values
+    // there would flash the "wrong" state -- and the next question's answer -- on every Continue.
+    val held = remember { HeldFeedback() }
+    if (isCorrect != null) {
+        held.content = FeedbackContent(isCorrect, correctAnswer, word, remediation)
+    }
+
     Box(Modifier.fillMaxWidth()) {
         AnimatedVisibility(
             visible = !hasAnswered,
@@ -325,15 +333,28 @@ private fun LessonActionArea(
                 fadeIn(tween(220)),
             exit = slideOutVertically(tween(140)) { it } + fadeOut(tween(140))
         ) {
+            val shown = held.content ?: return@AnimatedVisibility
             GameAnswerFeedback(
-                isCorrect = isCorrect,
-                correctAnswer = correctAnswer,
-                word = word,
-                correction = remediation,
+                isCorrect = shown.isCorrect,
+                correctAnswer = shown.correctAnswer,
+                word = shown.word,
+                correction = shown.remediation,
                 onContinue = onContinue
             )
         }
     }
+}
+
+private data class FeedbackContent(
+    val isCorrect: Boolean,
+    val correctAnswer: String,
+    val word: com.kasiguru.data.local.entity.VocabularyEntity,
+    val remediation: String?
+)
+
+/** Plain holder rather than state: it only needs to outlive the exit animation, not trigger one. */
+private class HeldFeedback {
+    var content: FeedbackContent? = null
 }
 
 /** The prompt, which differs by exercise type. */

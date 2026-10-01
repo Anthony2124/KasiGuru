@@ -317,6 +317,12 @@
         ],
         "createdAt": "2026-09-03T17:17:32.415Z",
         "reason": "Claude decided: #evidence-modal-img is a hidden modal placeholder whose src is assigned at runtime by viewReportEvidence() (js/app.js:2117). The tag must exist in markup for getElementById; it has no src by design, and src=\"\" was removed because it makes some browsers re-request the page."
+      },
+      {
+        "rule": "radial-halo",
+        "value": "#0a250b",
+        "createdAt": "2026-09-30T05:51:27.777Z",
+        "reason": "Design system: the Jepjep glow is the Android app's committed motif (Color.kt GlowCore #0A250B -> GlowMid), ported because Adrian asked the web to look the same as the app"
       }
     ]
   }
