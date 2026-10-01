@@ -199,6 +199,7 @@ class AuthRepository @Inject constructor(
             if(page.isEmpty) break
             firestore.batch().apply { page.documents.forEach { delete(it.reference) } }.commit().await()
         } while(true)
+        firestore.collection("public_profiles").document(uid).delete().await()
         firestore.collection("leaderboard_public").document(uid).delete().await()
         firestore.collection("device_tokens").document(uid).delete().await()
         try {

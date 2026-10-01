@@ -10,12 +10,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.kasiguru.ui.theme.BrandLime
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.Faint
 
 /** Uses the app's existing medal icon; tier and family are labelled by the caller. */
 @Composable
 fun BadgeTierIcon(modifier: Modifier = Modifier, locked: Boolean = false) {
-    Box(modifier.alpha(if(locked) 0.35f else 1f),contentAlignment = Alignment.Center) {
-        Icon(painterResource(Iconsax.MedalStar),null,tint = BrandLime,
+    Box(modifier,contentAlignment = Alignment.Center) {
+        Icon(painterResource(if (locked) Iconsax.Lock else Iconsax.MedalStar),
+            if (locked) "Locked badge" else "Earned badge", tint = if (locked) Faint else BrandLime,
             modifier = Modifier.fillMaxSize(0.55f))
     }
 }

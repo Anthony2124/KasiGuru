@@ -1,5 +1,9 @@
 package com.kasiguru.ui.screens.vocabulary
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.GreenText
+import com.kasiguru.ui.theme.LimeText
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +27,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,7 +54,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.theme.LimeLip
-import com.kasiguru.ui.components.clay.FloatingSearchBar
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
@@ -87,8 +89,6 @@ fun CategoryDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var unlearningWord by remember { mutableStateOf<VocabularyEntity?>(null) }
-    var dictionaryQuery by remember { mutableStateOf("") }
-    val dictionaryResults by viewModel.dictionarySearchResults.collectAsState()
 
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -116,7 +116,7 @@ fun CategoryDetailScreen(
             text = { Text("Reset \"${word.kasiguranin}\" back to unlearned so you can review it again?") },
             confirmButton = {
                 TextButton(onClick = { viewModel.unmarkWordAsLearned(word.id); unlearningWord = null }) {
-                    Text("Reset word", color = Red)
+                    Text("Reset word", color = RedText)
                 }
             },
             dismissButton = { TextButton(onClick = { unlearningWord = null }) { Text("Cancel") } }
@@ -159,12 +159,13 @@ fun CategoryDetailScreen(
                     )
                 }
                 item {
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search in ${meta.name}…") },
+                        label = { Text("Search in this category") },
+                        placeholder = { Text("e.g. a word or meaning") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Lime)
+                            Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = LimeText)
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -179,13 +180,6 @@ fun CategoryDetailScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = Shapes.tile,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Surface,
-                            unfocusedContainerColor = Surface,
-                            focusedBorderColor = Lime,
-                            unfocusedBorderColor = SurfaceSunken
-                        ),
                         singleLine = true
                     )
                 }
@@ -213,27 +207,7 @@ fun CategoryDetailScreen(
                 }
             }
 
-            // Overlays the list rather than pushing it. Distinct from the field above: that one
-            // filters this category's already-loaded list, this one queries every category so a
-            // word from elsewhere in the dictionary can be reached without leaving this screen.
-            FloatingSearchBar(
-                query = dictionaryQuery,
-                onQueryChange = {
-                    dictionaryQuery = it
-                    viewModel.onDictionarySearchQueryChange(it)
-                },
-                results = dictionaryResults,
-                onResultClick = { word ->
-                    dictionaryQuery = ""
-                    viewModel.onDictionarySearchQueryChange("")
-                    onNavigateToWord(word.id)
-                },
-                placeholder = "Search the whole dictionary…",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(horizontal = Space.gutter)
-                    .padding(top = 64.dp)
-            )
+
         }
     )
 }
@@ -277,7 +251,7 @@ private fun CategoryWordCard(
                 Icon(
                     painter = painterResource(id = Iconsax.VolumeHigh),
                     contentDescription = "Listen",
-                    tint = Lime,
+                    tint = LimeText,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -290,7 +264,7 @@ private fun CategoryWordCard(
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircle),
                         contentDescription = "Learned",
-                        tint = Green,
+                        tint = GreenText,
                         modifier = Modifier.size(22.dp)
                     )
                 } else {
@@ -319,7 +293,7 @@ private fun CategoryWordCard(
                     }
 
                     if (vocab.meaningEnglish.isNotEmpty() || vocab.meaningTagalog.isNotEmpty()) {
-                        Text(text = "Meaning", style = MaterialTheme.typography.labelLarge, color = Lime)
+                        Text(text = "Meaning", style = MaterialTheme.typography.labelLarge, color = LimeText)
                         Spacer(Modifier.height(Space.xxs))
                         if (vocab.meaningEnglish.isNotEmpty()) {
                             Text(text = vocab.meaningEnglish, style = MaterialTheme.typography.bodyMedium, color = Ink)
@@ -331,7 +305,7 @@ private fun CategoryWordCard(
                     }
 
                     if (vocab.neutralForm.isNotEmpty()) {
-                        Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = Lime)
+                        Text(text = "Verb aspect inflections", style = MaterialTheme.typography.labelLarge, color = LimeText)
                         Spacer(Modifier.height(Space.xs))
                         AspectRow("Neutral (infinitive)", vocab.neutralForm)
                         AspectRow("Imperfective (present)", vocab.imperfectiveForm)

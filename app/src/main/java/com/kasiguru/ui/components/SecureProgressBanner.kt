@@ -3,7 +3,11 @@ package com.kasiguru.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import com.kasiguru.ui.components.clay.SoftCard
+import com.kasiguru.ui.theme.AmberText
+import com.kasiguru.ui.theme.Space
+import com.kasiguru.ui.theme.RewardInk
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -21,8 +25,21 @@ import com.kasiguru.ui.theme.Warning
 @Composable
 fun SecureProgressBanner(
     onSecure: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    collapsed: Boolean = false
 ) {
+    var expanded by remember { mutableStateOf(!collapsed) }
+    if (!expanded) {
+        SoftCard(modifier = Modifier.fillMaxWidth(), onClick = { expanded = true }, contentPadding = PaddingValues(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(Iconsax.Lock), null, tint = AmberText, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(Space.sm))
+                Text("Secure your progress", color = Ink, modifier = Modifier.weight(1f))
+                Icon(painterResource(Iconsax.ArrowRight), "Show account options", tint = AmberText, modifier = Modifier.size(20.dp))
+            }
+        }
+        return
+    }
     Card(
         colors = CardDefaults.cardColors(containerColor = Warning.copy(alpha = 0.14f)),
         shape = RoundedCornerShape(16.dp),
@@ -39,7 +56,7 @@ fun SecureProgressBanner(
                 Icon(
                     painter = painterResource(id = Iconsax.Lock),
                     contentDescription = null,
-                    tint = Warning,
+                    tint = AmberText,
                     modifier = Modifier.size(22.dp)
                 )
                 Text(
@@ -70,7 +87,7 @@ fun SecureProgressBanner(
                     onClick = onSecure,
                     colors = ButtonDefaults.buttonColors(containerColor = Warning)
                 ) {
-                    Text("Add account", color = Ink, fontWeight = FontWeight.Bold)
+                    Text("Add account", color = RewardInk, fontWeight = FontWeight.Bold)
                 }
             }
         }

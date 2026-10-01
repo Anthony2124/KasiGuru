@@ -179,6 +179,13 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun selectBackground(id: String) {
+        viewModelScope.launch {
+            try { userProgressRepository.updateBackground(id) }
+            catch (e: Exception) { _uiState.value = _uiState.value.copy(error = e.message ?: "Couldn't change your background.") }
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

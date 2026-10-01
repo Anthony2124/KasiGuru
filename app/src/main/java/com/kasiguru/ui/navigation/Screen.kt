@@ -25,6 +25,9 @@ sealed class Screen(val route: String) {
     }
     /** The Me tab. The route keeps its old name so notification deep links written against it still land. */
     data object Profile : Screen("profile")
+    data object PublicProfile : Screen("player/{uid}") {
+        fun createRoute(uid: String) = "player/${encodeRouteArg(uid)}"
+    }
     data object EditProfile : Screen("edit_profile")
     /** The stories list on its own, pushed. The Library tab shows the same content under its Stories segment. */
     data object StoryList : Screen("stories")
@@ -85,6 +88,8 @@ sealed class Screen(val route: String) {
     data object FlashcardDeck : Screen("flashcards")
     data object Leaderboard : Screen("leaderboard")
     data object Notifications : Screen("notifications")
+    data object Streak : Screen("streak")
+    data object Appearance : Screen("appearance")
     data object Settings : Screen("settings")
     data object Account : Screen("account")
     data object About : Screen("about")

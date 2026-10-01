@@ -27,7 +27,11 @@ class UserPreferencesRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
     private object PreferencesKeys {
+        val APPEARANCE_MODE = stringPreferencesKey("appearance_mode")
+        val TEXT_SIZE = intPreferencesKey("text_size_percent")
         val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
+        val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
+        val LAST_LESSON_VISIT_DATE = stringPreferencesKey("last_lesson_visit_date")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val STREAK_REMINDERS = booleanPreferencesKey("streak_reminders")
         val WORD_OF_DAY_REMINDERS = booleanPreferencesKey("word_of_day_reminders")
@@ -46,6 +50,26 @@ class UserPreferencesRepository @Inject constructor(
         val DAILY_REVIEW_COMPLETED_DATE = stringPreferencesKey("daily_review_completed_date")
         val DAILY_GAMES_DATE = stringPreferencesKey("daily_games_date")
         val DAILY_GAMES_COUNT = intPreferencesKey("daily_games_count")
+    }
+
+    val appearanceMode: Flow<com.kasiguru.domain.preferences.AppearanceMode> = dataStore.data.map {
+        runCatching { com.kasiguru.domain.preferences.AppearanceMode.valueOf(it[PreferencesKeys.APPEARANCE_MODE].orEmpty()) }
+            .getOrDefault(com.kasiguru.domain.preferences.AppearanceMode.SYSTEM)
+    }
+    val textSizePercent: Flow<Int> = dataStore.data.map { com.kasiguru.domain.preferences.TextSize.normalize(it[PreferencesKeys.TEXT_SIZE] ?: 100) }
+    suspend fun setAppearanceMode(mode: com.kasiguru.domain.preferences.AppearanceMode) { dataStore.edit { it[PreferencesKeys.APPEARANCE_MODE] = mode.name } }
+    suspend fun setTextSizePercent(percent: Int) { dataStore.edit { it[PreferencesKeys.TEXT_SIZE] = com.kasiguru.domain.preferences.TextSize.normalize(percent) } }
+
+    val hapticsEnabled: Flow<Boolean> = dataStore.data.map { it[PreferencesKeys.HAPTICS_ENABLED] ?: true }
+    suspend fun setHapticsEnabled(enabled: Boolean) { dataStore.edit { it[PreferencesKeys.HAPTICS_ENABLED] = enabled } }
+    suspend fun markFirstLessonOfDay(): Boolean {
+        val today = java.time.LocalDate.now().toString()
+        var first = false
+        dataStore.edit {
+            first = it[PreferencesKeys.LAST_LESSON_VISIT_DATE] != today
+            it[PreferencesKeys.LAST_LESSON_VISIT_DATE] = today
+        }
+        return first
     }
 
     /**
@@ -333,6 +357,7 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun clearUserSessionData() {
         dataStore.edit { prefs ->
+            prefs.remove(PreferencesKeys.LAST_LESSON_VISIT_DATE)
             prefs.remove(PreferencesKeys.DAILY_REVIEW_COMPLETED_DATE)
             prefs.remove(PreferencesKeys.DAILY_GAMES_DATE)
             prefs.remove(PreferencesKeys.DAILY_GAMES_COUNT)

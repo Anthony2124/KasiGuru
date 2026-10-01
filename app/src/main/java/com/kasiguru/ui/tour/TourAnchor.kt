@@ -52,6 +52,10 @@ enum class TourAnchor {
     SubmitButton,
 
     // ── Practice ─────────────────────────────────────────────────────────────
+    FlashcardCard,
+    StreakWeek,
+    PracticeLeaderboard,
+    LeaderboardPlayer,
     PracticeStats,
     PracticeFeatured,
 
@@ -60,10 +64,12 @@ enum class TourAnchor {
     ProgressFilter,
 
     // ── Profile and Settings ─────────────────────────────────────────────────
+    ProfileBackground,
     ProfileSettingsIcon,
     ProfileExplore,
     SettingsAccount,
     SettingsPreferences,
+    SettingsAppearance,
     SettingsReplayTutorial,
 
     // Notifications and stories

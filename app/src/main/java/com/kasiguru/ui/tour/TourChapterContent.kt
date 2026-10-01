@@ -172,8 +172,13 @@ val profileSettingsChapter: TourChapter = TourChapter(
     title = "Me and settings",
     subtitle = "Your record, and the switches that change how the app behaves",
     // 2: Profile and Progress merged into the Me tab.
-    version = 2,
+    version = 3,
     stops = listOf(
+        TourStop(TourTarget.Fixed(Screen.Profile.route), TourAnchor.ProfileBackground, "Choose your place",
+            "Forest and Casapsapan are yours from the start. Change your background here; more places unlock as your level and streak grow."),
+        TourStop(TourTarget.Fixed(Screen.Settings.route), TourAnchor.SettingsAppearance, "Make reading comfortable",
+            "Choose System, Light or Dark in Appearance. The text-size control adds to your phone's setting and previews your choice."),
+
         TourStop(
             target = TourTarget.Fixed(Screen.Profile.route),
             anchor = TourAnchor.ProfileExplore,
@@ -200,8 +205,8 @@ val profileSettingsChapter: TourChapter = TourChapter(
         TourStop(
             target = TourTarget.Fixed(Screen.Settings.route),
             anchor = TourAnchor.SettingsPreferences,
-            title = "Dark mode and audio",
-            body = "The app follows whichever you choose here, everywhere - including this tour.",
+            title = "Sound and vibrations",
+            body = "Turn lesson sounds and vibrations on or off here. Vocabulary audio stays available from each word’s speaker button.",
             corner = Radius.panel
         ),
         TourStop(
@@ -260,3 +265,18 @@ val inboxChapter: TourChapter = TourChapter(
         )
     )
 )
+
+val flashcardsChapter = TourChapter(TourChapterId.Flashcards, "Flashcards and streaks", "Opening, flipping, rating, and keeping your week going", 1, listOf(
+    TourStop(TourTarget.Fixed(Screen.FlashcardDeck.route), TourAnchor.FlashcardCard, "Open a word",
+        "Tap the cover to open it, then tap the paper to reveal the meaning. If nothing is due today, you can choose extra practice.", gesture = TourGesture.TAP),
+    TourStop(TourTarget.Fixed(Screen.FlashcardDeck.route), TourAnchor.FlashcardCard, "Rate what you remembered",
+        "On the answer side, swipe right for Good or left for Again. The rating buttons show when each word will return.", gesture = TourGesture.SWIPE),
+    TourStop(TourTarget.Fixed(Screen.Streak.route), TourAnchor.StreakWeek, "Keep the week growing",
+        "This week shows the days that counted. Finish your review and today's games to keep your streak and earn its next badge.")
+))
+val socialChapter = TourChapter(TourChapterId.Social, "Rankings and players", "Compare this week and visit a learner's public profile", 1, listOf(
+    TourStop(TourTarget.Fixed(Screen.GameHub.route), TourAnchor.PracticeLeaderboard, "Rankings in Practice",
+        "Switch from Games to Leaderboard to see this week's activity, all-time XP, or streaks. Your row stays within reach."),
+    TourStop(TourTarget.Fixed(Screen.Leaderboard.route), TourAnchor.LeaderboardPlayer, "Meet a learner",
+        "Tap a player to see their badges, scenery and learning path. Only the display name and game stats are public; personal details stay private.", gesture = TourGesture.TAP)
+))

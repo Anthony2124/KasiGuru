@@ -57,5 +57,7 @@ interface UserProgressDao {
                dailyGamesDate = :today
            WHERE id = 1"""
     )
-    suspend fun recordDailyGamePlayed(today: String)
+    suspend fun recordDailyGamePlayed(today: String)    @Query("UPDATE user_progress SET profileBackgroundId = :backgroundId, updatedAt = :updatedAt WHERE id = 1")
+    suspend fun updateBackground(backgroundId: String, updatedAt: Long)
+
 }

@@ -4,7 +4,11 @@
 > "Casiguran Coast" system. Every contrast figure below was measured with the WCAG relative-luminance
 > formula, not estimated; the validator lives in the scratchpad and the numbers are reproducible.
 
-## The world: **Violet Sheet**
+## Current Android authority: Forest cleanup
+
+The Android app follows the Forest palette in `ui/theme/Color.kt` and the screen requirements in [UI_CLEANUP.md](docs/design/UI_CLEANUP.md). It supports System, Light and Dark appearance, plus text scaling. The Violet Sheet material below records an earlier design pass; it does not override the current Forest screens. Web surfaces retain their independently validated tokens.
+
+## Historical world: **Violet Sheet**
 
 Synthesised from five reference designs Adrian supplied. They are one family, not five directions: all
 use violet as the single brand hue, a very light ground, white rounded cards floating on soft diffuse

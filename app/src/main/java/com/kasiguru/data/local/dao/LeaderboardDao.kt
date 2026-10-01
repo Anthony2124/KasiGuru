@@ -33,4 +33,11 @@ interface LeaderboardDao {
 
     @Query("DELETE FROM leaderboard")
     suspend fun clearAll()
+    @Query("SELECT * FROM leaderboard WHERE boardId = :boardId ORDER BY rank ASC")
+    fun board(boardId: String): Flow<List<LeaderboardEntity>>
+    @Query("DELETE FROM leaderboard WHERE boardId = :boardId")
+    suspend fun clearBoard(boardId: String)
+    @Transaction
+    suspend fun replaceBoard(boardId: String, entries: List<LeaderboardEntity>) { clearBoard(boardId); insertAll(entries) }
+
 }

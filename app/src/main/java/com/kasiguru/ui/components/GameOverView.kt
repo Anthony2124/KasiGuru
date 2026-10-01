@@ -115,7 +115,7 @@ fun GameOverView(
                         Icon(
                             painter = painterResource(id = Iconsax.StarBold),
                             contentDescription = null,
-                            tint = if (isEarned) Gold else Color(0xFFE2E8F0),
+                            tint = if (isEarned) GoldText else Color(0xFFE2E8F0),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -193,7 +193,7 @@ fun GameOverView(
                         }
                     ) {
                         Text(
-                            text = "Return to Games Hub",
+                            text = "Back to levels",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = Muted
@@ -201,7 +201,7 @@ fun GameOverView(
                     }
                 } else {
                     ClayButton(
-                        label = "Return to Games Hub",
+                        label = "Back to levels",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFinish()
@@ -261,20 +261,20 @@ private fun ReviewItemCard(index: Int, item: GameReviewItem) {
                     Text(
                         text = "Your answer: ${item.userAnswer}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Green,
+                        color = GreenText,
                         fontWeight = FontWeight.SemiBold
                     )
                 } else {
                     Text(
                         text = "Your answer: ${item.userAnswer.ifBlank { "(No answer)" }}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Red,
+                        color = RedText,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = "Correct answer: ${item.correctAnswer}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Green,
+                        color = GreenText,
                         fontWeight = FontWeight.Bold
                     )
                 }

@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.contribute
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -32,6 +33,7 @@ import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import java.util.Locale
 
 /**
  * Submitting a full story or poem, not just a single word - the extension of
@@ -76,7 +78,7 @@ fun SubmitLiteratureScreen(
             text = { Text("What you've written hasn't been submitted yet.") },
             confirmButton = {
                 TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
-                    Text("Discard", color = Red)
+                    Text("Discard", color = RedText)
                 }
             },
             dismissButton = {
@@ -99,7 +101,7 @@ fun SubmitLiteratureScreen(
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircle),
                         contentDescription = "Success",
-                        tint = Green,
+                        tint = GreenText,
                         modifier = Modifier.size(44.dp)
                     )
                 }
@@ -151,21 +153,21 @@ fun SubmitLiteratureScreen(
                 // Title & Author details
                 SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.titleKasiguranin,
                             onValueChange = viewModel::onTitleKasiguraninChanged,
                             label = { Text("Title, in Kasiguranin") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.title,
                             onValueChange = viewModel::onTitleChanged,
                             label = { Text("Title, translated") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.contributorName,
                             onValueChange = viewModel::onContributorNameChanged,
                             label = { Text("Your name (optional)") },
@@ -198,7 +200,7 @@ fun SubmitLiteratureScreen(
                             }
                             if (uiState.pdfUri != null) {
                                 TextButton(onClick = { viewModel.onRemovePdf() }) {
-                                    Text("Remove", color = Red, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text("Remove", color = RedText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 }
                             }
                         }
@@ -222,14 +224,14 @@ fun SubmitLiteratureScreen(
                                     Text(
                                         text = "Reading and attaching PDF…",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Lime
+                                        color = LimeText
                                     )
                                 }
                             }
                         } else if (uiState.pdfUri != null && uiState.pdfBase64.isNotBlank()) {
                             val formattedSize = if (uiState.pdfFileSize > 0) {
                                 val kb = uiState.pdfFileSize / 1024
-                                if (kb >= 1024) String.format("%.1f MB", kb / 1024.0) else "$kb KB"
+                                if (kb >= 1024) String.format(Locale.getDefault(), "%.1f MB", kb / 1024.0) else "$kb KB"
                             } else ""
 
                             Surface(
@@ -256,7 +258,7 @@ fun SubmitLiteratureScreen(
                                         Icon(
                                             painter = painterResource(id = Iconsax.Document),
                                             contentDescription = "PDF Document",
-                                            tint = Lime,
+                                            tint = LimeText,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -277,7 +279,7 @@ fun SubmitLiteratureScreen(
                                         }
                                     }
                                     TextButton(onClick = openPdfPicker) {
-                                        Text("Change", color = Lime, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                        Text("Change", color = LimeText, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                                     }
                                 }
                             }
@@ -311,7 +313,7 @@ fun SubmitLiteratureScreen(
                                         Icon(
                                             painter = painterResource(id = Iconsax.Document),
                                             contentDescription = "Attach PDF",
-                                            tint = Lime,
+                                            tint = LimeText,
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
@@ -319,7 +321,7 @@ fun SubmitLiteratureScreen(
                                         text = "Attach Story / Poem (PDF) *",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
-                                        color = Lime
+                                        color = LimeText
                                     )
                                     Text(
                                         text = "Tap to choose a .pdf document from your device",
@@ -358,7 +360,7 @@ fun SubmitLiteratureScreen(
                                 Text(
                                     text = "Page ${index + 1}",
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = Lime
+                                    color = LimeText
                                 )
                                 if (uiState.pages.size > 1) {
                                     IconButton(onClick = { viewModel.removePage(index) }) {
@@ -370,21 +372,21 @@ fun SubmitLiteratureScreen(
                                     }
                                 }
                             }
-                            OutlinedTextField(
+                            KasiGuruTextField(
                                 value = page.kasiguranin,
                                 onValueChange = { viewModel.onPageChanged(index, page.copy(kasiguranin = it)) },
                                 label = { Text("Kasiguranin") },
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 2
                             )
-                            OutlinedTextField(
+                            KasiGuruTextField(
                                 value = page.tagalog,
                                 onValueChange = { viewModel.onPageChanged(index, page.copy(tagalog = it)) },
                                 label = { Text("Tagalog (optional)") },
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 2
                             )
-                            OutlinedTextField(
+                            KasiGuruTextField(
                                 value = page.english,
                                 onValueChange = { viewModel.onPageChanged(index, page.copy(english = it)) },
                                 label = { Text("English (optional)") },

@@ -61,7 +61,7 @@ fun StreakDialog(
                     Icon(
                         painter = painterResource(id = Iconsax.FlashBold),
                         contentDescription = "Streak Flame",
-                        tint = Coral,
+                        tint = CoralText,
                         modifier = Modifier.size(40.dp)
                     )
                 }
@@ -121,7 +121,7 @@ fun StreakDialog(
                                     text = if (streakQuota.isQuotaMet) "Active Today 🔥" else "In Progress",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = if (streakQuota.isQuotaMet) Green else GoldDeep,
+                                    color = if (streakQuota.isQuotaMet) GreenText else GoldDeep,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
@@ -147,7 +147,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = if (streakQuota.reviewCompleted) Iconsax.TickCircleBold else Iconsax.Refresh),
                                         contentDescription = null,
-                                        tint = if (streakQuota.reviewCompleted) Green else Muted,
+                                        tint = if (streakQuota.reviewCompleted) GreenText else Muted,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -169,7 +169,7 @@ fun StreakDialog(
                                 text = if (streakQuota.reviewCompleted) "Done" else "Pending",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (streakQuota.reviewCompleted) Green else Muted
+                                color = if (streakQuota.reviewCompleted) GreenText else Muted
                             )
                         }
 
@@ -195,7 +195,7 @@ fun StreakDialog(
                                     Icon(
                                         painter = painterResource(id = if (isGamesDone) Iconsax.TickCircleBold else Iconsax.PlayCircle),
                                         contentDescription = null,
-                                        tint = if (isGamesDone) Green else CanopyTop,
+                                        tint = if (isGamesDone) GreenText else CanopyTop,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -217,7 +217,7 @@ fun StreakDialog(
                                 text = "$gamesClamped/${streakQuota.requiredGames}",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isGamesDone) Green else CanopyTop
+                                color = if (isGamesDone) GreenText else CanopyTop
                             )
                         }
                     }

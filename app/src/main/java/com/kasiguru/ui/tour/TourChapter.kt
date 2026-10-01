@@ -18,7 +18,9 @@ enum class TourChapterId {
     Lessons,
     Progress,
     ProfileSettings,
-    Inbox
+    Inbox,
+    Flashcards,
+    Social
 }
 
 /**
@@ -86,7 +88,9 @@ val tourChapters: List<TourChapter> = listOf(
     lessonsChapter,
     progressChapter,
     profileSettingsChapter,
-    inboxChapter
+    inboxChapter,
+    flashcardsChapter,
+    socialChapter
 )
 
 fun chapterById(id: TourChapterId): TourChapter? = tourChapters.firstOrNull { it.id == id }

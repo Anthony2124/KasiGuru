@@ -199,7 +199,7 @@ fun StoryReaderScreen(
                                 Text(
                                     text = word,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Lime,
+                                    color = LimeText,
                                     fontWeight = FontWeight.Bold
                                 )
                             },

@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.help
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -297,7 +298,7 @@ private fun TabGuideRow(entry: TabGuideEntry) {
                 Icon(
                     painter = painterResource(id = entry.iconRes),
                     contentDescription = null,
-                    tint = Lime,
+                    tint = LimeText,
                     modifier = Modifier.size(20.dp)
                 )
             }

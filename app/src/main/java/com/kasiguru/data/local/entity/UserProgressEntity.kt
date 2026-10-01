@@ -53,5 +53,6 @@ data class UserProgressEntity(
     @androidx.room.ColumnInfo(defaultValue = "0") val xpPolicyVersion: Int = 0,
     @androidx.room.ColumnInfo(defaultValue = "0") val activityXp: Int = 0,
     @androidx.room.ColumnInfo(defaultValue = "0") val badgeBonusXp: Int = 0,
-    @androidx.room.ColumnInfo(defaultValue = "''") val pinnedBadgeIds: String = ""
+    @androidx.room.ColumnInfo(defaultValue = "''") val pinnedBadgeIds: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "'forest'") val profileBackgroundId: String = "forest"
 )

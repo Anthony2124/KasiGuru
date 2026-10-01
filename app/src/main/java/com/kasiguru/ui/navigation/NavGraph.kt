@@ -326,7 +326,19 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onOpenProgress = { navController.navigate(Screen.Achievements.route) },
                     onOpenNotifications = { navController.navigate(Screen.Notifications.route) },
                     onOpenProfile = { switchTab(Screen.Profile.route) },
-                    onOpenAccount = { navController.navigate(Screen.Account.route) }
+                    onOpenAccount = { navController.navigate(Screen.Account.route) },
+                    onOpenStreak = { navController.navigate(Screen.Streak.route) },
+                    onOpenWord = { navController.navigate(Screen.VocabularyDetail.createRoute(it)) },
+                    onOpenGame = { game ->
+                        navController.navigate(if (game == Constants.Games.WORD_SEARCH) Screen.WordSearchCategories.route else Screen.LevelSelection.createRoute(game))
+                    }
+                )
+            }
+
+            composable(Screen.Streak.route) {
+                com.kasiguru.ui.screens.streak.StreakScreen(
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.popBackStack(); switchTab(Screen.Home.route) }
                 )
             }
 
@@ -370,11 +382,20 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onExit = { navController.popBackStack() },
                     // Finishing returns to Home or Learn, both of which re-derive on resume, so the
                     // completed lesson is replaced by the next one rather than still marked to do.
-                    onFinished = { navController.popBackStack() }
+                    onFinished = { showStreak ->
+                        navController.popBackStack()
+                        if (showStreak) navController.navigate(Screen.Streak.route)
+                    }
                 )
             }
 
             // Me. The route keeps its old name so deep links written against it still land.
+            composable(Screen.PublicProfile.route, arguments = listOf(navArgument("uid") { type = NavType.StringType })) { entry ->
+                val uid = entry.arguments?.getString("uid").orEmpty()
+                com.kasiguru.ui.screens.profile.PublicProfileScreen(onBack = { navController.popBackStack() },
+                    onReport = { navController.navigate(Screen.ReportIssue.createRoute(category = "Other", screenContext = "Public player profile: $uid")) })
+            }
+
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -384,7 +405,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onNavigateToCultural = { navController.navigate(Screen.CulturalContext.route) },
                     onNavigateToAbout = { navController.navigate(Screen.About.route) },
                     onNavigateToHelp = { navController.navigate(Screen.Help.route) },
-                    onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+                    onNavigateToAccount = { navController.navigate(Screen.Account.route) },
+                    onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
+                    onNavigateToStreak = { navController.navigate(Screen.Streak.route) }
                 )
             }
             
@@ -462,6 +485,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
 
             composable(Screen.GameHub.route) {
                 GameHubScreen(
+                    onOpenPlayer = { navController.navigate(Screen.PublicProfile.createRoute(it)) },
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLeaderboard = { navController.navigate(Screen.Leaderboard.route) },
                     onNavigateToLevelSelection = { gameType ->
@@ -640,8 +664,16 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             }
 
             // Expanded Inventory Screens
+            composable(Screen.Appearance.route) {
+                com.kasiguru.ui.screens.settings.AppearanceScreen(onBack = { navController.popBackStack() })
+            }
+
             composable(Screen.Settings.route) {
+                val chapterStates by tourViewModel.chapterStates.collectAsState()
+                val resumePoint by tourViewModel.resumePoint.collectAsState()
                 SettingsScreen(
+                    chapterStates = chapterStates, resumePoint = resumePoint, onStartChapter = startChapter,
+                    onOpenAppearance = { navController.navigate(Screen.Appearance.route) },
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToAccount = { navController.navigate(Screen.Account.route) },
                     onNavigateToProfiles = { navController.navigate(Screen.ProfileSelection.route) },
@@ -668,7 +700,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 CulturalScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(Screen.Leaderboard.route) {
-                LeaderboardScreen(onNavigateBack = { navController.popBackStack() })
+                LeaderboardScreen(onNavigateBack = { navController.popBackStack() }, onOpenPlayer = { navController.navigate(Screen.PublicProfile.createRoute(it)) })
             }
             composable(Screen.Notifications.route) {
                 NotificationInboxScreen(

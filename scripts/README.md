@@ -23,6 +23,19 @@ paths and local JavaScript imports without running maintenance scripts.
 may report existing corpus defects. It defaults to the corresponding workbook
 names in the current user's Downloads directory.
 
+## Launcher artwork
+
+The user-authored icon source is `design/assets/app-icon.png`. To export all
+Android launcher densities after replacing that square image, run:
+
+```powershell
+python scripts/generate-launcher-icons.py
+```
+
+This requires Pillow. It exports opaque legacy icons and adaptive foreground
+layers with the artwork centered in the 72 dp visible area, plus an 18 dp edge
+extension on each side for launcher motion. Android applies the icon shape.
+
 ## Dictionary workflow
 
 | Tool under `dictionary/` | Purpose and invocation |

@@ -163,7 +163,7 @@ fun SegmentedToggle(
                 label = "SegmentBg"
             )
             val fg by animateColorAsState(
-                targetValue = if (isSelected) Ink else Muted,
+                targetValue = if (isSelected) com.kasiguru.ui.theme.OnCanopy else Muted,
                 animationSpec = tween(200),
                 label = "SegmentFg"
             )
@@ -207,7 +207,7 @@ fun TagChip(
     label: String,
     modifier: Modifier = Modifier,
     tint: Color = LimeTint,
-    labelColor: Color = Lime
+    labelColor: Color = com.kasiguru.ui.theme.LimeText
 ) {
     Box(
         modifier = modifier

@@ -244,6 +244,7 @@ internal fun Modifier.readable(): Modifier =
  * [text] with [words] in [BrandLime]: the one highlighted word or phrase in each heading. Matches the
  * last occurrence, so a learner named "Nice" still gets their name, not the greeting, highlighted.
  */
+@Composable
 internal fun highlighted(text: String, vararg words: String): AnnotatedString = buildAnnotatedString {
     append(text)
     words.forEach { word ->

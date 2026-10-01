@@ -206,7 +206,7 @@ fun WordVerificationDialog(
                                         Icon(
                                             painter = painterResource(id = Iconsax.TickCircle),
                                             contentDescription = "Correct",
-                                            tint = Green,
+                                            tint = GreenText,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -235,14 +235,14 @@ fun WordVerificationDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.TickCircle),
                                         contentDescription = null,
-                                        tint = Green,
+                                        tint = GreenText,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
                                         text = "Correct! +100 XP",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Green
+                                        color = GreenText
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
@@ -280,14 +280,14 @@ fun WordVerificationDialog(
                                     Icon(
                                         painter = painterResource(id = Iconsax.InfoCircle),
                                         contentDescription = null,
-                                        tint = Red,
+                                        tint = RedText,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
                                         text = "Incorrect! Try again",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Red
+                                        color = RedText
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))

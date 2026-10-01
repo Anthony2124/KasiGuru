@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.games.hub
 
+import com.kasiguru.ui.theme.GreenText
 import com.kasiguru.ui.screens.games.shared.GameRulesDialog
 
 import androidx.compose.foundation.background
@@ -37,6 +38,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.ui.components.clay.SegmentedToggle
+import com.kasiguru.ui.screens.leaderboard.LeaderboardContent
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.kasiguru.ui.screens.leaderboard.LeaderboardPreview
 import com.kasiguru.ui.screens.leaderboard.LeaderboardViewModel
 import com.kasiguru.data.local.entity.GameScoreEntity
@@ -74,11 +78,12 @@ fun GameHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLevelSelection: (String) -> Unit,
     onNavigateToLeaderboard: () -> Unit = {},
+    onOpenPlayer: (String) -> Unit = {},
     viewModel: GamesViewModel = hiltViewModel(),
     leaderboardViewModel: LeaderboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val leaderboardState by leaderboardViewModel.uiState.collectAsState()
+    var segment by rememberSaveable { mutableStateOf(0) }
     var selectedGameRulesType by remember { mutableStateOf<String?>(null) }
     val haptic = LocalHapticFeedback.current
 
@@ -156,6 +161,11 @@ fun GameHubScreen(
         subtitle = "Level ${levelInfo.level} · ${levelInfo.title}",
         pattern = GroundPattern.Orbs,
         content = {
+            Column(Modifier.fillMaxSize()) {
+                SegmentedToggle(listOf("Games", "Leaderboard"), segment, { segment = it },
+                    Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.xs).tourAnchor(TourAnchor.PracticeLeaderboard))
+                if (segment == 1) LeaderboardContent(onOpenPlayer, modifier = Modifier.weight(1f).padding(bottom = Space.navBarClearance), viewModel = leaderboardViewModel)
+                else
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -207,13 +217,6 @@ fun GameHubScreen(
                     }
                 }
 
-                // Moved here from Me: Practice is where XP is earned, so this is where a learner
-                // wants to see the rankings move.
-                item {
-                    LeaderboardPreview(state = leaderboardState, onSeeAll = onNavigateToLeaderboard)
-                    Spacer(Modifier.height(Space.lg))
-                }
-
                 item {
                     SectionHeading(text = "All mini-games")
                     SectionCaption(text = "More games are on the way")
@@ -255,6 +258,7 @@ fun GameHubScreen(
                         Spacer(Modifier.height(Space.xs))
                     }
                 }
+            }
             }
         }
     )
@@ -434,7 +438,7 @@ private fun GameScoreRow(score: GameScoreEntity) {
                 Icon(
                     painter = painterResource(id = Iconsax.TickCircle),
                     contentDescription = null,
-                    tint = Green,
+                    tint = GreenText,
                     modifier = Modifier.size(20.dp)
                 )
             }

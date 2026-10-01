@@ -17,13 +17,16 @@ import com.kasiguru.ui.theme.Radius
  *   mid-falloff.
  * @param corner the hole's corner radius. Matches the shape of the thing underneath.
  */
+enum class TourGesture { TAP, SWIPE }
+
 data class TourStop(
     val target: TourTarget,
     val anchor: TourAnchor?,
     val title: String,
     val body: String,
     val pad: Dp = 8.dp,
-    val corner: Dp = Radius.tile
+    val corner: Dp = Radius.tile,
+    val gesture: TourGesture? = null
 )
 
 /**
@@ -91,7 +94,7 @@ val coreChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.Library.route),
             anchor = TourAnchor.NavLibrary,
             title = "Library",
-            body = "The whole dictionary with audio on every entry, and the folk tales beside it. All " +
+            body = "The whole dictionary with pronunciation where a recording is available, and the folk tales beside it. All " +
                 "of it works offline, and you can add a word or share a story from here.",
             corner = Radius.pill
         ),

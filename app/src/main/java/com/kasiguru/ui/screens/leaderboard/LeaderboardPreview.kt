@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.leaderboard
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +45,7 @@ fun LeaderboardPreview(
                     onClick = onSeeAll,
                     modifier = Modifier.semantics { contentDescription = "See the full leaderboard" }
                 ) {
-                    Text("See all", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Text("See all", color = LimeText, style = MaterialTheme.typography.labelMedium)
                 }
             }
         )

@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.vocabulary
 
+import com.kasiguru.ui.theme.GreenText
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -147,7 +149,7 @@ private fun VocabularyDetailBody(
                             Icon(
                                 painter = painterResource(id = Iconsax.TickCircle),
                                 contentDescription = "Learned",
-                                tint = Green,
+                                tint = GreenText,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(Modifier.width(4.dp))
@@ -155,7 +157,7 @@ private fun VocabularyDetailBody(
                                 text = "Learned",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Green
+                                color = GreenText
                             )
                         }
                     }
@@ -174,7 +176,7 @@ private fun VocabularyDetailBody(
                             Icon(
                                 painter = painterResource(id = Iconsax.TickCircle),
                                 contentDescription = "Mark as learned",
-                                tint = Lime,
+                                tint = LimeText,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(Modifier.width(4.dp))
@@ -182,7 +184,7 @@ private fun VocabularyDetailBody(
                                 text = "Mark Learned",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Lime
+                                color = LimeText
                             )
                         }
                     }
@@ -220,7 +222,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Meaning",
                 style = MaterialTheme.typography.titleSmall,
-                color = Lime,
+                color = LimeText,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xxs))
@@ -249,7 +251,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Verb Aspect Inflections",
                 style = MaterialTheme.typography.titleSmall,
-                color = Lime,
+                color = LimeText,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xs))
@@ -265,7 +267,7 @@ private fun VocabularyDetailBody(
             Text(
                 text = "Example Sentence",
                 style = MaterialTheme.typography.titleSmall,
-                color = Lime,
+                color = LimeText,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(Space.xxs))
@@ -337,7 +339,7 @@ private fun DetailBadge(text: String) {
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.ExtraBold,
-            color = Lime
+            color = LimeText
         )
     }
 }

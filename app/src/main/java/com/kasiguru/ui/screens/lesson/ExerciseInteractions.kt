@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.lesson
 
+import com.kasiguru.ui.theme.GreenText
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -313,7 +314,7 @@ private fun MatchTile(
             Icon(
                 painter = painterResource(id = Iconsax.TickCircle),
                 contentDescription = null,
-                tint = Green,
+                tint = GreenText,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(Space.xxs))

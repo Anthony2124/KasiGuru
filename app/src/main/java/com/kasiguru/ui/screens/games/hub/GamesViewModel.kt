@@ -58,34 +58,16 @@ class GamesViewModel @Inject constructor(
             }
             launch {
                 gameRepository.getRecentScores(5).collect { scores ->
+                    val highScores = listOf(
+                        "word_match", "reverse_match", "fill_blank", Constants.Games.RECALL,
+                        "aspect_builder", "sentence_order", Constants.Games.WORD_SEARCH, Constants.Games.WORD_WHEEL
+                    ).associateWith { gameRepository.getHighScore(it)?.score ?: 0 }
                     _uiState.value = _uiState.value.copy(
                         recentScores = scores,
+                        highScores = highScores,
                         isLoading = false
                     )
                 }
-            }
-            launch {
-                val wmHigh = gameRepository.getHighScore("word_match")
-                val rmHigh = gameRepository.getHighScore("reverse_match")
-                val fbHigh = gameRepository.getHighScore("fill_blank")
-                val recallHigh = gameRepository.getHighScore(Constants.Games.RECALL)
-                val abHigh = gameRepository.getHighScore("aspect_builder")
-                val soHigh = gameRepository.getHighScore("sentence_order")
-                val wsHigh = gameRepository.getHighScore(Constants.Games.WORD_SEARCH)
-                val wwHigh = gameRepository.getHighScore(Constants.Games.WORD_WHEEL)
-                
-                _uiState.value = _uiState.value.copy(
-                    highScores = mapOf(
-                        "word_match" to (wmHigh?.score ?: 0),
-                        "reverse_match" to (rmHigh?.score ?: 0),
-                        "fill_blank" to (fbHigh?.score ?: 0),
-                        Constants.Games.RECALL to (recallHigh?.score ?: 0),
-                        "aspect_builder" to (abHigh?.score ?: 0),
-                        "sentence_order" to (soHigh?.score ?: 0),
-                        Constants.Games.WORD_SEARCH to (wsHigh?.score ?: 0),
-                        Constants.Games.WORD_WHEEL to (wwHigh?.score ?: 0)
-                    )
-                )
             }
         }
     }

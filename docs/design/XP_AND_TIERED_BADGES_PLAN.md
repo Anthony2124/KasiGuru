@@ -115,7 +115,11 @@ JVM tests cover reward scales/caps, replay improvement, imported activity,
 receipt merging, normalized sync and all tier/level boundaries. Isolated Android
 database tests cover historical normalization, repeat eligibility, verified
 mastery, atomic completions, persisted celebrations and restoration. The full
-Room migration suite validates v1 through v32, including a v31 progress row.
+Room migration suite validates v1 through v33, including a v31 progress row and
+preservation of normalized rewards during the UI cleanup's v32-to-v33 migration.
+
+The combined UI/XP verification checkpoint for 2026-10-01 is recorded in
+[UI_CLEANUP.md](UI_CLEANUP.md#resume-checkpoint--2026-10-01).
 
 Commands: `.\gradlew.bat testDebugUnitTest assembleDebug lintDebug connectedDebugAndroidTest`,
 `npm run check:structure`, `npm run check:web`.

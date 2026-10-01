@@ -1,5 +1,6 @@
 package com.kasiguru.ui.components.clay
 
+import com.kasiguru.ui.theme.GreenText
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -158,7 +159,7 @@ fun StoryCoverCard(
                         Icon(
                             painter = painterResource(id = Iconsax.TickCircle),
                             contentDescription = null,
-                            tint = Green,
+                            tint = GreenText,
                             modifier = Modifier.size(18.dp)
                         )
                     }

@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.home
 
+import com.kasiguru.ui.theme.GreenText
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -127,10 +129,12 @@ fun HomeScreen(
     onOpenNotifications: () -> Unit,
     onOpenProfile: () -> Unit,
     onOpenAccount: () -> Unit,
+    onOpenStreak: () -> Unit,
+    onOpenWord: (Int) -> Unit,
+    onOpenGame: (String) -> Unit,
     viewModel: LearnViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showStreakDialog by remember { mutableStateOf(false) }
 
     // Today's plan and the day goal are a snapshot taken when this screen was built, and all the work
     // that changes them -- a review session, a lesson, a game -- happens on another screen. Without
@@ -139,7 +143,7 @@ fun HomeScreen(
     // return to the tab rather than only on Activity resume.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPlan() }
 
-    StatusBarIcons(dark = false)
+    StatusBarIcons()
 
     if (uiState.isLoading) {
         Box(
@@ -155,15 +159,6 @@ fun HomeScreen(
 
     val progress = uiState.progress
 
-    if (showStreakDialog) {
-        StreakDialog(
-            currentStreak = progress.currentStreak,
-            longestStreak = progress.longestStreak,
-            streakQuota = uiState.streakQuota,
-            onDismiss = { showStreakDialog = false }
-        )
-    }
-
     val scroll = rememberScrollState()
     // Every Home anchor lives in this one column, so the tour can always scroll its target back.
     TourRevealInScroll(scroll)
@@ -176,7 +171,7 @@ fun HomeScreen(
             line = jepjepLine(uiState),
             onOpenProfile = onOpenProfile,
             onOpenNotifications = onOpenNotifications,
-            onOpenStreak = { showStreakDialog = true }
+            onOpenStreak = onOpenStreak
         )
         Spacer(Modifier.height(Space.md))
         PrimaryAction(
@@ -187,24 +182,54 @@ fun HomeScreen(
             onOpenStories = onOpenStories
         )
 
-        uiState.announcements.forEach { announcement ->
-            Spacer(Modifier.height(Space.md))
-            AnnouncementBanner(announcement = announcement)
-        }
-        if (uiState.showBackupPrompt) {
-            Spacer(Modifier.height(Space.md))
-            SecureProgressBanner(onSecure = onOpenAccount, onDismiss = viewModel::dismissBackupPrompt)
-        }
-
         Spacer(Modifier.height(Space.md))
         TodayTiles(uiState = uiState, onOpenProgress = onOpenProgress, onOpenReview = onOpenReview)
     }
 
     val later: @Composable () -> Unit = {
-        if (uiState.stories.isNotEmpty()) {
-            StoryShelf(uiState = uiState, onOpenStories = onOpenStories, onOpenStory = onOpenStory)
-            Spacer(Modifier.height(Space.xl))
+        SectionHeading(text = "Quick practice")
+        Spacer(Modifier.height(Space.sm))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+            val game = uiState.lastGameType?.takeIf { it in setOf("word_match", "word_search", "word_wheel") }
+            val gameName = game?.substringBefore(":")?.split("_")?.joinToString(" ") { it.replaceFirstChar(Char::uppercase) } ?: "Games"
+            listOf(Triple("Flashcards", Iconsax.Repeat, onOpenReview),
+                Triple(gameName, Iconsax.Game, { if (game == null) onOpenGames() else onOpenGame(game) }),
+                Triple("Story", Iconsax.BookBold, { uiState.stories.firstOrNull { it.isUnlocked }?.let { onOpenStory(it.id) } ?: onOpenStories() })
+            ).forEach { (label, icon, action) ->
+                SoftCard(modifier = Modifier.weight(1f), shape = Shapes.tile, onClick = action,
+                    contentPadding = PaddingValues(horizontal = Space.xs, vertical = Space.sm)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(painterResource(icon), null, tint = BrandLime, modifier = Modifier.size(24.dp))
+                        Spacer(Modifier.height(Space.xs))
+                        Text(label, style = MaterialTheme.typography.labelMedium, color = Ink, textAlign = TextAlign.Center)
+                    }
+                }
+            }
         }
+        uiState.wordOfDay?.let { word ->
+            Spacer(Modifier.height(Space.lg))
+            SectionHeading(text = "Word of the day")
+            Spacer(Modifier.height(Space.sm))
+            SoftCard(modifier = Modifier.fillMaxWidth(), onClick = { onOpenWord(word.id) }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(word.kasiguranin, style = MaterialTheme.typography.headlineMedium, color = Ink)
+                        Text("${word.english} · ${word.tagalog}", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                    }
+                    Jepjep(JepjepPose.Curious, height = 84.dp)
+                }
+            }
+        }
+        Spacer(Modifier.height(Space.lg))
+        uiState.announcements.forEach { announcement ->
+            Spacer(Modifier.height(Space.md))
+            AnnouncementBanner(announcement = announcement, collapsed = true)
+        }
+        if (uiState.showBackupPrompt) {
+            Spacer(Modifier.height(Space.md))
+            SecureProgressBanner(onSecure = onOpenAccount, onDismiss = viewModel::dismissBackupPrompt, collapsed = true)
+        }
+
         // The week, where history belongs: below the work, not pinned above it.
         SectionHeading(text = "This week")
         Spacer(Modifier.height(Space.sm))
@@ -383,23 +408,7 @@ private fun HomeHero(
             )
         }
 
-        Spacer(Modifier.height(Space.md))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Jepjep(pose = line.pose, height = 104.dp, breathe = true)
-            Spacer(Modifier.width(Space.sm))
-            Text(
-                text = line.text,
-                style = MaterialTheme.typography.titleMedium,
-                color = Ink,
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(Shapes.tile)
-                    .background(SurfaceSunken)
-                    .border(1.dp, BorderHairline, Shapes.tile)
-                    .padding(horizontal = Space.md, vertical = Space.sm)
-            )
-        }
     }
 }
 
@@ -584,7 +593,7 @@ private fun TodayTiles(
                         Icon(
                             painter = painterResource(id = Iconsax.TickCircle),
                             contentDescription = null,
-                            tint = Green,
+                            tint = GreenText,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(Modifier.width(Space.xxs))
@@ -658,7 +667,7 @@ private fun StoryShelf(
                 onClick = onOpenStories,
                 modifier = Modifier.semantics { contentDescription = "See all stories" }
             ) {
-                Text("See all", color = Lime, style = MaterialTheme.typography.labelMedium)
+                Text("See all", color = LimeText, style = MaterialTheme.typography.labelMedium)
             }
         }
     )

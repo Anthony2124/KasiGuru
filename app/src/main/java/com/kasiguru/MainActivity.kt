@@ -1,5 +1,9 @@
 package com.kasiguru
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.domain.preferences.AppearanceMode
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,10 +29,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var firestoreSyncRepository: FirestoreSyncRepository
 
+    @Inject lateinit var preferences: UserPreferencesRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-        // The app is dark only, so the system bars always get light icons, whatever the phone's theme.
+        // Each screen chooses system-bar contrast against the active appearance.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
@@ -52,7 +58,9 @@ class MainActivity : ComponentActivity() {
         firestoreSyncRepository.startRealtimeSync()
 
         setContent {
-            KasiGuruTheme {
+            val mode by preferences.appearanceMode.collectAsState(initial = AppearanceMode.SYSTEM)
+            val textSize by preferences.textSizePercent.collectAsState(initial = 100)
+            KasiGuruTheme(mode = mode, textSizePercent = textSize) {
                 KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
             }
         }

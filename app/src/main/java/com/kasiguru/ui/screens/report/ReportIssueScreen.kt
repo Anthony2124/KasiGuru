@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.report
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -99,7 +100,7 @@ fun ReportIssueScreen(
             text = { Text("What you've entered hasn't been submitted yet.") },
             confirmButton = {
                 TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
-                    Text("Discard", color = Red)
+                    Text("Discard", color = RedText)
                 }
             },
             dismissButton = {
@@ -127,7 +128,7 @@ fun ReportIssueScreen(
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircle),
                         contentDescription = "Success",
-                        tint = Green,
+                        tint = GreenText,
                         modifier = Modifier.size(44.dp)
                     )
                 }
@@ -155,7 +156,7 @@ fun ReportIssueScreen(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Lime
+                            color = LimeText
                         )
                     }
                 }
@@ -257,13 +258,13 @@ fun ReportIssueScreen(
                                         Icon(
                                             painter = painterResource(id = categoryIcon),
                                             contentDescription = null,
-                                            tint = if (isSelected) Lime else Muted,
+                                            tint = if (isSelected) LimeText else Muted,
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Text(
                                             text = cat,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) Lime else Ink,
+                                            color = if (isSelected) LimeText else Ink,
                                             fontSize = 14.sp
                                         )
                                     }
@@ -290,7 +291,7 @@ fun ReportIssueScreen(
                     Spacer(Modifier.height(Space.sm))
 
                     if (uiState.category == "Wrong Word / Translation") {
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.targetWord,
                             onValueChange = { viewModel.onTargetWordChanged(it) },
                             label = { Text("Kasiguranin Word *") },
@@ -299,19 +300,16 @@ fun ReportIssueScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.Book),
                                     contentDescription = null,
-                                    tint = Lime,
+                                    tint = LimeText,
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = Shapes.tile,
-                            colors = reportFieldColors()
-                        )
+                            singleLine = true)
                         Spacer(Modifier.height(Space.sm))
                     }
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.title,
                         onValueChange = { viewModel.onTitleChanged(it) },
                         label = { Text("Summary Title *") },
@@ -328,18 +326,15 @@ fun ReportIssueScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.Edit),
                                 contentDescription = null,
-                                tint = Lime,
+                                tint = LimeText,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = reportFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.description,
                         onValueChange = { viewModel.onDescriptionChanged(it) },
                         label = { Text("Detailed Description *") },
@@ -354,10 +349,7 @@ fun ReportIssueScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 110.dp),
-                        shape = Shapes.tile,
-                        colors = reportFieldColors()
-                    )
+                            .heightIn(min = 110.dp))
                 }
 
                 // 3. Photo Evidence
@@ -383,7 +375,7 @@ fun ReportIssueScreen(
 
                         if (uiState.photoUri != null) {
                             TextButton(onClick = { viewModel.onRemovePhoto() }) {
-                                Text("Remove", color = Red, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text("Remove", color = RedText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
                         }
                     }
@@ -419,7 +411,7 @@ fun ReportIssueScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.AddCircle),
                                         contentDescription = "Add photo",
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(26.dp)
                                     )
                                 }
@@ -427,7 +419,7 @@ fun ReportIssueScreen(
                                     text = "Add Screenshot / Photo Evidence *",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = Lime
+                                    color = LimeText
                                 )
                                 Text(
                                     text = "Tap to choose an image from your gallery",
@@ -478,12 +470,12 @@ fun ReportIssueScreen(
                                 Text(
                                     text = "✓ Photo attached successfully",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Green,
+                                    color = GreenText,
                                     fontWeight = FontWeight.SemiBold
                                 )
 
                                 TextButton(onClick = { openPhotoPicker() }) {
-                                    Text("Change Photo", color = Lime, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text("Change Photo", color = LimeText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 }
                             }
                         }
@@ -506,7 +498,7 @@ fun ReportIssueScreen(
                     )
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.reporterName,
                         onValueChange = { viewModel.onReporterNameChanged(it) },
                         label = { Text("Your Name *") },
@@ -515,15 +507,12 @@ fun ReportIssueScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.Profile),
                                 contentDescription = null,
-                                tint = Lime,
+                                tint = LimeText,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = reportFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
                     Surface(

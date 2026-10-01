@@ -31,6 +31,9 @@ data class LessonUiState(
     /** Total distinct exercises in the lesson, which is what the progress bar measures against. */
     val totalExercises: Int = 0,
     val solvedCount: Int = 0,
+    val combo: Int = 0,
+    val showStreakPage: Boolean = false,
+    val levelledUp: Boolean = false,
     val selectedOption: String? = null,
     /** Null until the learner commits an answer; then true or false. */
     val isCorrect: Boolean? = null,
@@ -64,8 +67,13 @@ data class LessonUiState(
 class LessonPlayerViewModel @Inject constructor(
     private val lessonRepository: LessonRepository,
     private val vocabularyRepository: VocabularyRepository,
+    private val preferences: com.kasiguru.data.repository.UserPreferencesRepository,
+    private val progressRepository: com.kasiguru.data.repository.UserProgressRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    val sectionId: String get() = com.kasiguru.domain.lesson.LearningTree.sectionForUnit(lessonRef.unitId)?.id.orEmpty()
+    private var startingLevel = 1
 
     private val lessonRef: LessonRef = LessonRef(
         // Navigation has already decoded this: Screen.LessonPlayer.createRoute percent-encodes the
@@ -117,6 +125,7 @@ class LessonPlayerViewModel @Inject constructor(
 
     private fun load() {
         viewModelScope.launch {
+            startingLevel = progressRepository.getUserProgressOnce()?.level ?: 1
             val exercises = lessonRepository.exercisesFor(lessonRef)
             // The practised set, not the slice: a lesson that revisited two older words covered
             // them too, and the summary is where the learner sees what they just worked on.
@@ -167,7 +176,7 @@ class LessonPlayerViewModel @Inject constructor(
         val identity = exerciseIdentity(state.position)
         if (!correct) missedFirstAttempt += identity
 
-        _uiState.update { it.copy(isCorrect = correct, remediation = null) }
+        _uiState.update { it.copy(isCorrect = correct, remediation = null, combo = if (correct) it.combo + 1 else 0) }
 
         if (!correct) explainChoice(selected, exercise)
 
@@ -277,6 +286,8 @@ class LessonPlayerViewModel @Inject constructor(
 
         viewModelScope.launch {
             val xp = lessonRepository.completeLesson(lessonRef, accuracy)
+            val showStreak = preferences.markFirstLessonOfDay()
+            val levelledUp = (progressRepository.getUserProgressOnce()?.level ?: startingLevel) > startingLevel
             // Recorded after the award, so a lesson that failed to save is not counted as finished.
             LearningAnalytics.lessonCompleted(
                 stageId = lessonRef.unitId,
@@ -288,6 +299,8 @@ class LessonPlayerViewModel @Inject constructor(
                 it.copy(
                     isComplete = true,
                     xpAwarded = xp,
+                    showStreakPage = showStreak,
+                    levelledUp = levelledUp,
                     accuracy = accuracy,
                     solvedCount = it.totalExercises,
                     selectedOption = null,

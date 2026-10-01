@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.contribute
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -58,7 +59,7 @@ fun SubmitWordScreen(
             text = { Text("What you've entered hasn't been submitted yet.") },
             confirmButton = {
                 TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
-                    Text("Discard", color = Red)
+                    Text("Discard", color = RedText)
                 }
             },
             dismissButton = {
@@ -88,7 +89,7 @@ fun SubmitWordScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.submitWord(confirmedDuplicate = true) }) {
-                    Text("Submit anyway", color = Amber)
+                    Text("Submit anyway", color = AmberText)
                 }
             },
             dismissButton = {
@@ -116,7 +117,7 @@ fun SubmitWordScreen(
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircle),
                         contentDescription = "Success",
-                        tint = Green,
+                        tint = GreenText,
                         modifier = Modifier.size(44.dp)
                     )
                 }
@@ -189,37 +190,31 @@ fun SubmitWordScreen(
                     )
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.kasiguranin,
                         onValueChange = { viewModel.onKasiguraninChanged(it) },
                         label = { Text("Kasiguranin Word *") },
                         placeholder = { Text("e.g. apak, singët, lukag") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Book), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Book), contentDescription = null, tint = LimeText, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth().tourAnchor(TourAnchor.SubmitWordField),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.tagalog,
                         onValueChange = { viewModel.onTagalogChanged(it) },
                         label = { Text("Tagalog Translation") },
                         placeholder = { Text("e.g. daras, langgam, gising") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Global), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Global), contentDescription = null, tint = LimeText, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.english,
                         onValueChange = { viewModel.onEnglishChanged(it) },
                         label = { Text("English Definition / Translation") },
@@ -228,10 +223,7 @@ fun SubmitWordScreen(
                             Icon(painter = painterResource(id = Iconsax.Global), contentDescription = null, tint = Muted, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.xs))
 
                     Text(
@@ -262,19 +254,16 @@ fun SubmitWordScreen(
                         onExpandedChange = { expandedCategoryDropdown = !expandedCategoryDropdown },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.category,
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Category") },
                             leadingIcon = {
-                                Icon(painter = painterResource(id = Iconsax.Element4Outline), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+                                Icon(painter = painterResource(id = Iconsax.Element4Outline), contentDescription = null, tint = LimeText, modifier = Modifier.size(20.dp))
                             },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            shape = Shapes.tile,
-                            colors = submitFieldColors()
-                        )
+                            modifier = Modifier.menuAnchor().fillMaxWidth())
                         ExposedDropdownMenu(expanded = expandedCategoryDropdown, onDismissRequest = { expandedCategoryDropdown = false }) {
                             viewModel.categories.forEach { category ->
                                 DropdownMenuItem(
@@ -295,19 +284,16 @@ fun SubmitWordScreen(
                         onExpandedChange = { expandedPartOfSpeechDropdown = !expandedPartOfSpeechDropdown },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = uiState.partOfSpeech.ifEmpty { "(Select Part of Speech)" },
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Part of Speech") },
                             leadingIcon = {
-                                Icon(painter = painterResource(id = Iconsax.HashtagDown), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+                                Icon(painter = painterResource(id = Iconsax.HashtagDown), contentDescription = null, tint = LimeText, modifier = Modifier.size(20.dp))
                             },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPartOfSpeechDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            shape = Shapes.tile,
-                            colors = submitFieldColors()
-                        )
+                            modifier = Modifier.menuAnchor().fillMaxWidth())
                         ExposedDropdownMenu(expanded = expandedPartOfSpeechDropdown, onDismissRequest = { expandedPartOfSpeechDropdown = false }) {
                             viewModel.partsOfSpeech.forEach { pos ->
                                 DropdownMenuItem(
@@ -322,7 +308,7 @@ fun SubmitWordScreen(
                     }
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.rootForm,
                         onValueChange = { viewModel.onRootFormChanged(it) },
                         label = { Text("Root Word (Optional)") },
@@ -331,13 +317,10 @@ fun SubmitWordScreen(
                             Icon(painter = painterResource(id = Iconsax.Edit), contentDescription = null, tint = Muted, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.exampleSentence,
                         onValueChange = { viewModel.onExampleSentenceChanged(it) },
                         label = { Text("Example Sentence (Optional)") },
@@ -346,10 +329,7 @@ fun SubmitWordScreen(
                             Icon(painter = painterResource(id = Iconsax.Document), contentDescription = null, tint = Muted, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        maxLines = 3)
                 }
 
                 // Section 3: Verb Tenses (Optional)
@@ -362,40 +342,31 @@ fun SubmitWordScreen(
                     )
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.pastTense,
                         onValueChange = { viewModel.onPastTenseChanged(it) },
                         label = { Text("Past Tense") },
                         placeholder = { Text("e.g. naglakaw") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.presentTense,
                         onValueChange = { viewModel.onPresentTenseChanged(it) },
                         label = { Text("Present Tense") },
                         placeholder = { Text("e.g. nagalakaw") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.futureTense,
                         onValueChange = { viewModel.onFutureTenseChanged(it) },
                         label = { Text("Future Tense") },
                         placeholder = { Text("e.g. magalakaw") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                 }
 
                 // Section 4: Contributor Credit
@@ -408,19 +379,16 @@ fun SubmitWordScreen(
                     )
                     Spacer(Modifier.height(Space.sm))
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = uiState.contributorName,
                         onValueChange = { viewModel.onContributorNameChanged(it) },
                         label = { Text("Your Name / Credit") },
                         placeholder = { Text("Enter your name") },
                         leadingIcon = {
-                            Icon(painter = painterResource(id = Iconsax.Profile), contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+                            Icon(painter = painterResource(id = Iconsax.Profile), contentDescription = null, tint = LimeText, modifier = Modifier.size(20.dp))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = Shapes.tile,
-                        colors = submitFieldColors()
-                    )
+                        singleLine = true)
                 }
 
                 ClayButton(
@@ -495,12 +463,12 @@ private fun DuplicateNotice(matches: List<DuplicateMatch>) {
                 Icon(
                     painter = painterResource(id = Iconsax.InfoCircle),
                     contentDescription = null,
-                    tint = Amber,
+                    tint = AmberText,
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
                     text = heading,
-                    color = Amber,
+                    color = AmberText,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     lineHeight = 17.sp
@@ -519,7 +487,7 @@ private fun DuplicateNotice(matches: List<DuplicateMatch>) {
                 // readable size rather than shouted in 10sp caps.
                 Text(
                     text = if (exact.isEmpty()) "Close spellings" else "Also close in spelling",
-                    color = Amber,
+                    color = AmberText,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )

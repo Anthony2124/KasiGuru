@@ -30,7 +30,7 @@ fun KasiGuruWordmark(
     contentDescription: String? = "KasiGuru"
 ) {
     Image(
-        painter = painterResource(id = R.drawable.kasiguru_wordmark),
+        painter = painterResource(id = if (com.kasiguru.ui.theme.LocalKasiGuruColors.current.isDark) R.drawable.kasiguru_wordmark else R.drawable.kasiguru_wordmark_light),
         contentDescription = contentDescription,
         modifier = modifier
             .width(width.coerceAtLeast(WordmarkMinWidth))

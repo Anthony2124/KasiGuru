@@ -186,7 +186,7 @@ fun OnboardingScreen(
     BackHandler(enabled = step != OnboardingStep.Welcome) { goBack() }
 
     // Light status-bar glyphs: every step is drawn on night or on a scrimmed scene.
-    StatusBarIcons(dark = false)
+    StatusBarIcons()
 
     // Resolved here because transitionSpec is not a @Composable lambda. Reduced motion cuts instantly.
     val reducedMotion = LocalReducedMotion.current

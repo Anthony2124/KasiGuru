@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.help
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -98,7 +99,7 @@ private fun ChapterRow(
                 Icon(
                     painter = painterResource(id = Iconsax.Teacher),
                     contentDescription = null,
-                    tint = Lime,
+                    tint = LimeText,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -149,7 +150,7 @@ private fun StateBadge(state: TourChapterState) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Lime,
+            color = LimeText,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }

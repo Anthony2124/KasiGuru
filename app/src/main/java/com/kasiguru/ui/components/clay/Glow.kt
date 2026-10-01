@@ -15,6 +15,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import com.kasiguru.ui.theme.KasiGuruColors
+import com.kasiguru.ui.theme.DarkKasiGuruColors
+import com.kasiguru.ui.theme.LocalKasiGuruColors
 import com.kasiguru.ui.theme.GlowCore
 import com.kasiguru.ui.theme.GlowMid
 import com.kasiguru.ui.theme.Ground
@@ -32,13 +35,13 @@ import com.kasiguru.ui.theme.LocalReducedMotion
  * Drawn, not shipped as a bitmap, so it costs no APK bytes and scales to any screen. If it ever shows
  * banding on a real phone, a 9:16 WebP with light noise is the fallback.
  */
-fun DrawScope.drawGlow(center: Offset, radius: Float, scale: Float = 1f) {
-    drawRect(Ground)
+fun DrawScope.drawGlow(center: Offset, radius: Float, scale: Float = 1f, palette: KasiGuruColors = DarkKasiGuruColors) {
+    drawRect(palette.ground)
     drawRect(
         brush = Brush.radialGradient(
-            0f to GlowCore,
-            0.5f to GlowMid,
-            1f to Ground,
+            0f to palette.glowCore,
+            0.5f to palette.glowMid,
+            1f to palette.ground,
             center = center,
             radius = (radius * scale).coerceAtLeast(1f)
         )
@@ -49,14 +52,13 @@ fun DrawScope.drawGlow(center: Offset, radius: Float, scale: Float = 1f) {
  * Paints the glow behind this element. [centerX] and [centerY] are fractions of the element's size:
  * put the centre on Jepjep, which is the middle of the screen when he is centred.
  */
-fun Modifier.glowBackground(centerX: Float = 0.5f, centerY: Float = 0.45f, scale: Float = 1f): Modifier =
-    this.drawBehind {
-        drawGlow(
-            center = Offset(size.width * centerX, size.height * centerY),
-            radius = size.width,
-            scale = scale
-        )
+@Composable
+fun Modifier.glowBackground(centerX: Float = 0.5f, centerY: Float = 0.45f, scale: Float = 1f): Modifier {
+    val palette = LocalKasiGuruColors.current
+    return this.drawBehind {
+        drawGlow(center = Offset(size.width * centerX, size.height * centerY), radius = size.width, scale = scale, palette = palette)
     }
+}
 
 /**
  * A full-bleed glow backdrop with content on top.

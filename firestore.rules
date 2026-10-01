@@ -84,7 +84,7 @@ service cloud.firestore {
         'totalQuestionsAnswered', 'lessonsCompleted', 'isOnboardingCompleted',
         'dailyGoalXp', 'dailyXpEarned', 'dailyXpDate', 'titleBadge', 'submissionsMade',
         'dailyReviewCompletedDate', 'dailyGamesDate', 'dailyGamesPlayedCount',
-        'updatedAt', 'xpPolicyVersion', 'activityXp', 'badgeBonusXp', 'pinnedBadgeIds'
+        'updatedAt', 'xpPolicyVersion', 'activityXp', 'badgeBonusXp', 'pinnedBadgeIds', 'profileBackgroundId'
       ])
         && isSaneCounter(d.totalXp, maxXp())
         && isSaneCounter(d.level, maxLevel())
@@ -94,6 +94,7 @@ service cloud.firestore {
         && isSaneCounter(d.get('xpPolicyVersion', 0), 2)
         && (!('activityXp' in d) || isSaneCounter(d.activityXp, maxXp()))
         && (!('badgeBonusXp' in d) || isSaneCounter(d.badgeBonusXp, 6200))
+        && (!('profileBackgroundId' in d) || d.profileBackgroundId in ['forest','casapsapan','farm','river','ermita_hill','ontok_lighthouse','tibu_tidal_pool'])
         && (!('pinnedBadgeIds' in d) || d.pinnedBadgeIds is string && d.pinnedBadgeIds.size() <= 128)
         && (isFirstWrite || d.get('xpPolicyVersion', 0) >= resource.data.get('xpPolicyVersion', 0))
         && (d.get('xpPolicyVersion', 0) != 2 ||
@@ -160,7 +161,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
         'displayName', 'totalXp', 'level', 'currentStreak', 'profileIconId',
         'titleBadge', 'weeklyXp', 'weekStartXp', 'weekStartDate', 'updatedAt',
-        'email', 'isAnonymous', 'createdAt', 'registeredAt', 'xpPolicyVersion', 'activityXp'
+        'isAnonymous', 'createdAt', 'registeredAt', 'xpPolicyVersion', 'activityXp'
       ])
         && d.displayName is string && d.displayName.size() <= 40
         && isSaneCounter(d.totalXp, maxXp())
@@ -176,7 +177,6 @@ service cloud.firestore {
         && (!('activityXp' in d) || isSaneCounter(d.activityXp, maxXp()))
         && (isFirstPublish || d.get('xpPolicyVersion', 0) >= resource.data.get('xpPolicyVersion', 0))
         && (d.get('xpPolicyVersion', 0) != 2 || (d.level <= 30 && d.weeklyXp <= d.activityXp))
-        && (!('email' in d) || d.email is string && d.email.size() <= 120)
         && (!('isAnonymous' in d) || d.isAnonymous is bool)
         && (!('createdAt' in d) || d.createdAt is int)
         && (!('registeredAt' in d) || d.registeredAt is int || (d.registeredAt is string && d.registeredAt.size() <= 30))
@@ -423,6 +423,64 @@ service cloud.firestore {
     // rank real players. Writable only by the row's own owner, and only within
     // the bounds of isValidLeaderboardEntry (see above) — free-plan tradeoff,
     // see that function's comment.
+    function validPublicSectionCounts(stats) {
+      return stats is map && stats.keys().hasOnly(['pagbati', 'pamilya', 'tahanan', 'pagkain', 'paglalakbay', 'katawan', 'kalikasan', 'hayop', 'bilang', 'kabuhayan', 'kilos', 'paglalarawan', 'araw_araw'])
+        && (!('pagbati' in stats) || isSaneCounter(stats.pagbati, 500))
+        && (!('pamilya' in stats) || isSaneCounter(stats.pamilya, 500))
+        && (!('tahanan' in stats) || isSaneCounter(stats.tahanan, 500))
+        && (!('pagkain' in stats) || isSaneCounter(stats.pagkain, 500))
+        && (!('paglalakbay' in stats) || isSaneCounter(stats.paglalakbay, 500))
+        && (!('katawan' in stats) || isSaneCounter(stats.katawan, 500))
+        && (!('kalikasan' in stats) || isSaneCounter(stats.kalikasan, 500))
+        && (!('hayop' in stats) || isSaneCounter(stats.hayop, 500))
+        && (!('bilang' in stats) || isSaneCounter(stats.bilang, 500))
+        && (!('kabuhayan' in stats) || isSaneCounter(stats.kabuhayan, 500))
+        && (!('kilos' in stats) || isSaneCounter(stats.kilos, 500))
+        && (!('paglalarawan' in stats) || isSaneCounter(stats.paglalarawan, 500))
+        && (!('araw_araw' in stats) || isSaneCounter(stats.araw_araw, 500));
+    }
+
+    function validPublicProfile() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['displayName','profileIconId','profileBackgroundId','level','totalXp','currentStreak',
+          'wordsLearned','lessonsCompleted','weeklyXp','weekId','createdAt','updatedAt','badgeIds',
+          'sections','sectionTotals','masteredSections','unlockedSections'])
+        && d.keys().hasOnly(['displayName','profileIconId','profileBackgroundId','level','totalXp','currentStreak',
+          'wordsLearned','lessonsCompleted','weeklyXp','weekId','createdAt','updatedAt','badgeIds',
+          'sections','sectionTotals','masteredSections','unlockedSections'])
+        && d.displayName is string && d.displayName.size() > 0 && d.displayName.size() <= 40
+        && isSaneCounter(d.profileIconId, 1000)
+        && d.profileBackgroundId in ['forest','casapsapan','farm','river','ermita_hill','ontok_lighthouse','tibu_tidal_pool']
+        && isSaneCounter(d.level, 30) && d.level >= 1
+        && isSaneCounter(d.totalXp, maxXp()) && isSaneCounter(d.currentStreak, maxStreak())
+        && isSaneCounter(d.wordsLearned, maxWords()) && isSaneCounter(d.lessonsCompleted, 5000)
+        && isSaneCounter(d.weeklyXp, maxXp())
+        && d.weekId is string && d.weekId.size() <= 20 && d.createdAt is int && d.updatedAt is int
+        && d.badgeIds is list && d.badgeIds.size() <= 66 && d.badgeIds.hasOnly([
+          'badge:word_explorer:1', 'badge:word_explorer:2', 'badge:word_explorer:3', 'badge:word_explorer:4', 'badge:word_explorer:5', 'badge:word_explorer:6',
+          'badge:lesson_pathfinder:1', 'badge:lesson_pathfinder:2', 'badge:lesson_pathfinder:3', 'badge:lesson_pathfinder:4', 'badge:lesson_pathfinder:5', 'badge:lesson_pathfinder:6',
+          'badge:review_keeper:1', 'badge:review_keeper:2', 'badge:review_keeper:3', 'badge:review_keeper:4', 'badge:review_keeper:5', 'badge:review_keeper:6',
+          'badge:consistent_learner:1', 'badge:consistent_learner:2', 'badge:consistent_learner:3', 'badge:consistent_learner:4', 'badge:consistent_learner:5', 'badge:consistent_learner:6',
+          'badge:game_adventurer:1', 'badge:game_adventurer:2', 'badge:game_adventurer:3', 'badge:game_adventurer:4', 'badge:game_adventurer:5', 'badge:game_adventurer:6',
+          'badge:precision_player:1', 'badge:precision_player:2', 'badge:precision_player:3', 'badge:precision_player:4', 'badge:precision_player:5', 'badge:precision_player:6',
+          'badge:mode_explorer:1', 'badge:mode_explorer:2', 'badge:mode_explorer:3', 'badge:mode_explorer:4', 'badge:mode_explorer:5', 'badge:mode_explorer:6',
+          'badge:story_reader:1', 'badge:story_reader:2', 'badge:story_reader:3', 'badge:story_reader:4', 'badge:story_reader:5', 'badge:story_reader:6',
+          'badge:category_scholar:1', 'badge:category_scholar:2', 'badge:category_scholar:3', 'badge:category_scholar:4', 'badge:category_scholar:5', 'badge:category_scholar:6',
+          'badge:community_contributor:1', 'badge:community_contributor:2', 'badge:community_contributor:3', 'badge:community_contributor:4', 'badge:community_contributor:5', 'badge:community_contributor:6',
+          'badge:journey_rank:1', 'badge:journey_rank:2', 'badge:journey_rank:3', 'badge:journey_rank:4', 'badge:journey_rank:5', 'badge:journey_rank:6'])
+        && validPublicSectionCounts(d.sections) && validPublicSectionCounts(d.sectionTotals)
+        && d.masteredSections is list && d.masteredSections.size() <= 13 && d.masteredSections.hasOnly(['pagbati', 'pamilya', 'tahanan', 'pagkain', 'paglalakbay', 'katawan', 'kalikasan', 'hayop', 'bilang', 'kabuhayan', 'kilos', 'paglalarawan', 'araw_araw'])
+        && d.unlockedSections is list && d.unlockedSections.size() <= 13 && d.unlockedSections.hasOnly(['pagbati', 'pamilya', 'tahanan', 'pagkain', 'paglalakbay', 'katawan', 'kalikasan', 'hayop', 'bilang', 'kabuhayan', 'kilos', 'paglalarawan', 'araw_araw']);
+    }
+
+    match /public_profiles/{userId} {
+      allow read: if true;
+      allow create, update: if isOwner(userId)
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && validPublicProfile();
+      allow delete: if isOwner(userId);
+    }
+
     match /leaderboard_public/{userId} {
       allow read: if isSignedIn();
       // Guests (anonymous sessions) are not ranked: only a real account may publish a row.

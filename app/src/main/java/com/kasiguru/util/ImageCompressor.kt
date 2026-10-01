@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.util.Base64
+import androidx.exifinterface.media.ExifInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -81,15 +82,15 @@ object ImageCompressor {
             // 3. Fix EXIF orientation if needed
             val rotatedBitmap = try {
                 contentResolver.openInputStream(imageUri)?.use { exifInput ->
-                    val exif = android.media.ExifInterface(exifInput)
+                    val exif = ExifInterface(exifInput)
                     val orientation = exif.getAttributeInt(
-                        android.media.ExifInterface.TAG_ORIENTATION,
-                        android.media.ExifInterface.ORIENTATION_NORMAL
+                        ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL
                     )
                     val rotationDegrees = when (orientation) {
-                        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                        ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                        ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                        ExifInterface.ORIENTATION_ROTATE_270 -> 270f
                         else -> 0f
                     }
                     if (rotationDegrees != 0f) {

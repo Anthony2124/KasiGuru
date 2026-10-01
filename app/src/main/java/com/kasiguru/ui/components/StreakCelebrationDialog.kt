@@ -102,14 +102,14 @@ fun StreakCelebrationDialog(
                             Icon(
                                 painter = painterResource(id = Iconsax.FlashBold),
                                 contentDescription = null,
-                                tint = Coral,
+                                tint = CoralText,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = "STREAK ACTIVATED 🔥",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Coral,
+                                color = CoralText,
                                 letterSpacing = 1.sp
                             )
                         }
@@ -204,7 +204,7 @@ fun StreakCelebrationDialog(
                                 Icon(
                                     painter = painterResource(id = Iconsax.TickCircleBold),
                                     contentDescription = null,
-                                    tint = Green,
+                                    tint = GreenText,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
@@ -222,7 +222,7 @@ fun StreakCelebrationDialog(
                                 Icon(
                                     painter = painterResource(id = Iconsax.TickCircleBold),
                                     contentDescription = null,
-                                    tint = Green,
+                                    tint = GreenText,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
@@ -237,7 +237,7 @@ fun StreakCelebrationDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Reward Chip
+                    // The streak records completed goals; it does not grant separate XP.
                     Surface(
                         shape = RoundedCornerShape(999.dp),
                         color = Gold.copy(alpha = 0.15f)
@@ -254,7 +254,7 @@ fun StreakCelebrationDialog(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = "+25 XP Daily Streak Bonus",
+                                text = "Daily goals complete",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = GoldDeep

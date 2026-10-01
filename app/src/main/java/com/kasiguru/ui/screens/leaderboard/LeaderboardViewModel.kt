@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 data class LeaderboardUiState(
     val leaderboard: List<LeaderboardEntity> = emptyList(),
-    val selectedFilter: String = "All-Time XP",
+    val selectedFilter: String = "Weekly XP",
     val currentUserRank: Int = 0,
     val currentUserEntry: LeaderboardEntity? = null,
     val isLoading: Boolean = true,
@@ -39,7 +39,7 @@ class LeaderboardViewModel @Inject constructor(
     private var filterJob: Job? = null
 
     init {
-        setFilter("All-Time XP")
+        setFilter("Weekly XP")
         viewModelScope.launch {
             userProgressRepository.getUserProgress().collect { progress ->
                 _uiState.value = _uiState.value.copy(myAvatarId = progress?.profileIconId)
@@ -60,7 +60,7 @@ class LeaderboardViewModel @Inject constructor(
 
             flow.collect { list ->
                 val userIndex = list.indexOfFirst { it.isCurrentUser }
-                val userRank = if (userIndex != -1) userIndex + 1 else list.size + 1
+                val userRank = if (userIndex != -1) list[userIndex].rank else 0
                 val userEntry = if (userIndex != -1) list[userIndex] else null
 
                 _uiState.value = _uiState.value.copy(

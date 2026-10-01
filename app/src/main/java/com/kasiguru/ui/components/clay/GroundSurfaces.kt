@@ -103,11 +103,12 @@ enum class GroundPattern {
  */
 @Composable
 fun Modifier.groundTexture(pattern: GroundPattern, seed: String): Modifier {
+    val palette = com.kasiguru.ui.theme.LocalKasiGuruColors.current
     val orbA = Lime
     val orbB = Coral
     val orbC = Gold
     val dot = Ink
-    return this.drawBehind { drawGroundPattern(pattern, seed, orbA, orbB, orbC, dot) }
+    return this.drawBehind { drawGroundPattern(pattern, seed, orbA, orbB, orbC, dot, palette) }
 }
 
 /**
@@ -146,7 +147,7 @@ fun GroundScaffold(
     content: @Composable BoxScope.() -> Unit
 ) {
     // Night is dark, so the status-bar glyphs are light.
-    StatusBarIcons(dark = false)
+    StatusBarIcons()
 
     val handoffPx = with(LocalDensity.current) { TitleHandoff.toPx() }
     var scrolled by remember { mutableStateOf(false) }
@@ -173,6 +174,7 @@ fun GroundScaffold(
     val orbB = Coral
     val orbC = Gold
     val dot = Ink
+    val palette = com.kasiguru.ui.theme.LocalKasiGuruColors.current
     val overlay: ImageBitmap? = patternOverlay?.let { ImageBitmap.imageResource(id = it) }
 
     Box(
@@ -180,7 +182,7 @@ fun GroundScaffold(
             .fillMaxSize()
             .background(Ground)
             .drawBehind {
-                drawGroundPattern(pattern, title, orbA, orbB, orbC, dot)
+                drawGroundPattern(pattern, title, orbA, orbB, orbC, dot, palette)
                 overlay?.let {
                     drawRect(
                         brush = ShaderBrush(ImageShader(it, TileMode.Repeated, TileMode.Repeated)),
@@ -360,7 +362,8 @@ private fun DrawScope.drawGroundPattern(
     @Suppress("UNUSED_PARAMETER") orbA: Color,
     @Suppress("UNUSED_PARAMETER") orbB: Color,
     @Suppress("UNUSED_PARAMETER") orbC: Color,
-    @Suppress("UNUSED_PARAMETER") dot: Color
+    @Suppress("UNUSED_PARAMETER") dot: Color,
+    palette: com.kasiguru.ui.theme.KasiGuruColors
 ) {
     when (pattern) {
         // Everyday screens are flat night: the Kasiguranin words should be the loudest thing on them.
@@ -369,7 +372,8 @@ private fun DrawScope.drawGroundPattern(
         // Screens about something earned get the soft glow from above. Never rings.
         GroundPattern.Arcs -> drawGlow(
             center = Offset(size.width * 0.5f, size.height * 0.10f),
-            radius = size.width
+            radius = size.width,
+            palette = palette
         )
     }
 }

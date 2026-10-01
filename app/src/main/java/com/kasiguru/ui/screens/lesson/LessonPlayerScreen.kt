@@ -1,5 +1,20 @@
 package com.kasiguru.ui.screens.lesson
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.GreenText
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import com.kasiguru.ui.theme.Scenery
+import com.kasiguru.ui.theme.OnCanopy
+import com.kasiguru.ui.theme.LocalReducedMotion
+import com.kasiguru.ui.components.SegmentedProgress
+import com.kasiguru.ui.components.FeedbackPreferencesViewModel
+import com.kasiguru.util.audio.UiFeedbackSounds
+import com.kasiguru.ui.components.brand.Jepjep
+import com.kasiguru.ui.components.brand.JepjepPose
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -92,21 +107,26 @@ import com.kasiguru.util.audio.AudioPlayerManager
 @Composable
 fun LessonPlayerScreen(
     onExit: () -> Unit,
-    onFinished: () -> Unit,
+    onFinished: (Boolean) -> Unit,
+    feedbackPreferences: FeedbackPreferencesViewModel = hiltViewModel(),
     viewModel: LessonPlayerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val soundEnabled by feedbackPreferences.soundEnabled.collectAsState()
+    val hapticsEnabled by feedbackPreferences.hapticsEnabled.collectAsState()
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val audioPlayer = remember { AudioPlayerManager(context) }
+    val sounds = remember { UiFeedbackSounds(context) }
 
     androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { audioPlayer.stopAudio() }
+        onDispose { audioPlayer.stopAudio(); sounds.release() }
     }
 
     // Feedback is felt before it is read.
     LaunchedEffect(uiState.isCorrect) {
-        when (uiState.isCorrect) {
+        if (soundEnabled) uiState.isCorrect?.let(sounds::answer)
+        if (hapticsEnabled) when (uiState.isCorrect) {
             true -> haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             false -> haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             null -> Unit
@@ -120,12 +140,14 @@ fun LessonPlayerScreen(
         return
     }
 
+    LaunchedEffect(uiState.levelledUp) { if (uiState.levelledUp && soundEnabled) sounds.levelUp() }
+
     if (uiState.isComplete) {
         LessonCompleteScreen(
             xpAwarded = uiState.xpAwarded,
             accuracy = uiState.accuracy,
             words = uiState.wordsCovered,
-            onContinue = onFinished
+            onContinue = { onFinished(uiState.showStreakPage) }
         )
         return
     }
@@ -142,7 +164,7 @@ fun LessonPlayerScreen(
             text = { Text("Your progress in this lesson won't be saved.") },
             confirmButton = {
                 TextButton(onClick = { showExitConfirm = false; onExit() }) {
-                    Text("Leave", color = Red)
+                    Text("Leave", color = RedText)
                 }
             },
             dismissButton = {
@@ -169,14 +191,27 @@ fun LessonPlayerScreen(
                 contentDescription = "Leave lesson",
                 tint = Muted,
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(48.dp)
                     .clickable(onClick = { showExitConfirm = true })
+                    .padding(10.dp)
             )
             Spacer(Modifier.width(Space.sm))
-            LessonProgressBar(
-                fraction = uiState.progressFraction,
+            SegmentedProgress(
+                completed = uiState.solvedCount, total = uiState.totalExercises,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        Box(Modifier.fillMaxWidth().height(88.dp)) {
+            Image(painterResource(Scenery.forSection(viewModel.sectionId).res), null,
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .6f)))
+            Row(Modifier.fillMaxSize().padding(horizontal = Space.gutter), verticalAlignment = Alignment.CenterVertically) {
+                if (!uiState.hasAnswered) Jepjep(JepjepPose.Pointing, height = 76.dp)
+                Text("Take your time. You're learning.", style = MaterialTheme.typography.bodyMedium,
+                    color = OnCanopy, modifier = Modifier.weight(1f))
+                if (uiState.combo >= 3) TagChip(label = "${uiState.combo} in a row", tint = Olive, labelColor = OnCanopy)
+            }
         }
 
         // ── Question ──
@@ -246,19 +281,21 @@ fun LessonPlayerScreen(
                         onSolved = { viewModel.selectOption(exercise.answer) }
                     )
                 } else {
-                    exercise.options.forEach { option ->
-                        AnswerOption(
-                            label = option,
-                            isSelected = uiState.selectedOption == option,
+                    val short = exercise.options.size in 2..4 && exercise.options.all { it.length <= 24 }
+                    val optionContent: @androidx.compose.runtime.Composable (String, Modifier) -> Unit = { option, modifier ->
+                        AnswerOption(label = option, isSelected = uiState.selectedOption == option,
                             isRevealedCorrect = uiState.hasAnswered && option == exercise.answer,
-                            isRevealedWrong = uiState.hasAnswered &&
-                                uiState.selectedOption == option &&
-                                option != exercise.answer,
-                            enabled = !uiState.hasAnswered,
-                            onClick = { viewModel.selectOption(option) }
-                        )
-                        Spacer(Modifier.height(Space.sm))
+                            isRevealedWrong = uiState.hasAnswered && uiState.selectedOption == option && option != exercise.answer,
+                            enabled = !uiState.hasAnswered, onClick = { viewModel.selectOption(option) }, modifier = modifier)
                     }
+                    if (short) exercise.options.chunked(2).forEach { options ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                            options.forEach { optionContent(it, Modifier.weight(1f)) }
+                            if (options.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                        Spacer(Modifier.height(Space.sm))
+                    } else exercise.options.forEach { optionContent(it, Modifier.fillMaxWidth()); Spacer(Modifier.height(Space.sm)) }
+
                 }
                 Spacer(Modifier.height(Space.sm))
             }
@@ -277,7 +314,8 @@ fun LessonPlayerScreen(
             // the verdict rather than with it, so the panel is never waiting on a query.
             remediation = uiState.remediation,
             onCheck = viewModel::check,
-            onContinue = viewModel::advance
+            onContinue = viewModel::advance,
+            onPlayAudio = { audioPlayer.playWord(exercise.word) }
         )
     }
 }
@@ -295,7 +333,8 @@ private fun LessonActionArea(
     word: com.kasiguru.data.local.entity.VocabularyEntity,
     remediation: String?,
     onCheck: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onPlayAudio: () -> Unit
 ) {
     // The panel keeps the verdict it opened with while it slides away. By the time it exits the view
     // model has already cleared isCorrect and moved to the next exercise, so reading live values
@@ -330,7 +369,7 @@ private fun LessonActionArea(
         AnimatedVisibility(
             visible = hasAnswered,
             enter = slideInVertically(tween(220, easing = FastOutSlowInEasing)) { it } +
-                fadeIn(tween(220)),
+                fadeIn(tween(if (LocalReducedMotion.current) 0 else 220)),
             exit = slideOutVertically(tween(140)) { it } + fadeOut(tween(140))
         ) {
             val shown = held.content ?: return@AnimatedVisibility
@@ -339,7 +378,9 @@ private fun LessonActionArea(
                 correctAnswer = shown.correctAnswer,
                 word = shown.word,
                 correction = shown.remediation,
-                onContinue = onContinue
+                onContinue = onContinue,
+                mascot = true,
+                onPlayAudio = onPlayAudio
             )
         }
     }
@@ -458,8 +499,16 @@ private fun AnswerOption(
     isRevealedCorrect: Boolean,
     isRevealedWrong: Boolean,
     enabled: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val motion = remember { Animatable(0f) }
+    val reduced = LocalReducedMotion.current
+    LaunchedEffect(isRevealedCorrect, isRevealedWrong) {
+        if (!reduced && (isRevealedCorrect || isRevealedWrong)) {
+            listOf(1f, -1f, .5f, 0f).forEach { motion.animateTo(it, tween(60)) }
+        }
+    }
     val background = when {
         isRevealedCorrect -> GreenTint
         isRevealedWrong -> RedTint
@@ -475,8 +524,13 @@ private fun AnswerOption(
     val borderWidth = if (isSelected || isRevealedCorrect || isRevealedWrong) 2.dp else 1.dp
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .heightIn(min = 72.dp)
+            .graphicsLayer {
+                translationX = if (isRevealedWrong) motion.value * 7.dp.toPx() else 0f
+                scaleX = 1f + if (isRevealedCorrect) motion.value * .04f else 0f
+                scaleY = scaleX
+            }
             .clip(Shapes.tile)
             .background(background)
             .border(borderWidth, borderColor, Shapes.tile)
@@ -492,14 +546,14 @@ private fun AnswerOption(
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
-            color = Ink,
+            color = if (isSelected && !isRevealedCorrect && !isRevealedWrong) OnCanopy else Ink,
             modifier = Modifier.weight(1f)
         )
         if (isRevealedCorrect) {
             Icon(
                 painter = painterResource(id = Iconsax.TickCircle),
                 contentDescription = "Correct answer",
-                tint = Green,
+                tint = GreenText,
                 modifier = Modifier.size(20.dp)
             )
         }

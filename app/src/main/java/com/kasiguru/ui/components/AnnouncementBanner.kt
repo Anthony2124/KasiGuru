@@ -1,5 +1,6 @@
 package com.kasiguru.ui.components
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -31,13 +34,14 @@ import com.kasiguru.ui.theme.Lime
  * clears themselves.
  */
 @Composable
-fun AnnouncementBanner(announcement: AnnouncementDto, modifier: Modifier = Modifier) {
-    SoftCard(modifier = modifier.fillMaxWidth()) {
+fun AnnouncementBanner(announcement: AnnouncementDto, modifier: Modifier = Modifier, collapsed: Boolean = false) {
+    var expanded by remember(announcement.id) { mutableStateOf(!collapsed) }
+    SoftCard(modifier = modifier.fillMaxWidth(), onClick = if (collapsed) ({ expanded = !expanded }) else null) {
         Row {
             Icon(
                 painter = painterResource(id = Iconsax.InfoCircle),
                 contentDescription = null,
-                tint = Lime,
+                tint = LimeText,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(Modifier.width(Space.sm))
@@ -46,14 +50,14 @@ fun AnnouncementBanner(announcement: AnnouncementDto, modifier: Modifier = Modif
                     Text(
                         text = announcement.title,
                         style = MaterialTheme.typography.titleSmall,
-                        color = Ink
+                        color = Ink, maxLines = if (expanded) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.height(Space.xxs))
                 }
-                Text(
+                if (expanded || announcement.title.isBlank()) Text(
                     text = announcement.message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Muted
+                    color = Muted, maxLines = if (expanded) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis
                 )
             }
         }

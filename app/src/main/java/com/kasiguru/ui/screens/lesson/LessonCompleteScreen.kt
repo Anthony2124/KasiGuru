@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.lesson
 
+import com.kasiguru.ui.theme.GreenText
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -161,7 +163,7 @@ fun LessonCompleteScreen(
                             Text(
                                 text = word.kasiguranin,
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Lime
+                                color = LimeText
                             )
                             Spacer(Modifier.width(Space.xs))
                             Text(
@@ -214,7 +216,7 @@ private fun RewardTile(
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    tint = Green,
+                    tint = GreenText,
                     modifier = Modifier.size(18.dp)
                 )
             }

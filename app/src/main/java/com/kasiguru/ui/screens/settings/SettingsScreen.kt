@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.settings
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +26,10 @@ import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.screens.help.TourChapterList
+import com.kasiguru.ui.tour.TourChapterId
+import com.kasiguru.ui.tour.TourChapterState
+import com.kasiguru.ui.tour.TourResumePoint
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
 import kotlinx.coroutines.launch
@@ -38,15 +43,21 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onOpenAppearance: () -> Unit = {},
     onNavigateToAccount: () -> Unit = {},
     onNavigateToProfiles: () -> Unit = {},
     onNavigateToReport: () -> Unit = {},
     onReplayTutorial: () -> Unit = {},
+    chapterStates: Map<TourChapterId, TourChapterState> = emptyMap(),
+    resumePoint: TourResumePoint? = null,
+    onStartChapter: (TourChapterId) -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    var showTutorialChapters by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val account by viewModel.account.collectAsState()
+    val hapticsEnabled by viewModel.hapticsEnabled.collectAsState()
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val streakReminders by viewModel.streakReminders.collectAsState()
     val wordOfDayReminders by viewModel.wordOfDayReminders.collectAsState()
@@ -91,7 +102,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Close", fontWeight = FontWeight.Bold, color = Lime)
+                    Text("Close", fontWeight = FontWeight.Bold, color = LimeText)
                 }
             }
         )
@@ -151,7 +162,7 @@ fun SettingsScreen(
                                             id = if (account.isRecoverable) Iconsax.TickCircle else Iconsax.Lock
                                         ),
                                         contentDescription = null,
-                                        tint = if (account.isRecoverable) Green else Warning,
+                                        tint = if (account.isRecoverable) GreenText else Warning,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -171,7 +182,7 @@ fun SettingsScreen(
                                             "Tap to sign in or create an account"
                                         },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = if (account.isRecoverable) Muted else Lime
+                                    color = if (account.isRecoverable) Muted else LimeText
                                 )
                             }
                         }
@@ -205,7 +216,7 @@ fun SettingsScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Profile2user),
                                         contentDescription = null,
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -302,7 +313,7 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Lime
+                                color = LimeText
                             )
                         }
                     }
@@ -318,9 +329,15 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.height(Space.sm))
 
+                    SettingActionRow(title = "Appearance", subtitle = "Theme and text size", iconRes = Iconsax.Setting,
+                        onClick = onOpenAppearance, modifier = Modifier.tourAnchor(TourAnchor.SettingsAppearance))
+                    Spacer(Modifier.height(Space.sm))
+                    SettingSwitchRow(title = "Lesson vibrations", subtitle = "Feel answer feedback", checked = hapticsEnabled,
+                        iconRes = Iconsax.FlashBold, onCheckedChange = viewModel::toggleHapticsEnabled)
+                    Spacer(Modifier.height(Space.sm))
                     SettingSwitchRow(
-                        title = "Audio Pronunciation",
-                        subtitle = "Play Kasiguranin voice audio",
+                        title = "Lesson sounds",
+                        subtitle = "Small sounds for answers and level ups",
                         checked = soundEnabled,
                         iconRes = Iconsax.VolumeHigh,
                         onCheckedChange = { viewModel.toggleSoundEnabled(it) }
@@ -337,6 +354,10 @@ fun SettingsScreen(
                         iconRes = Iconsax.Teacher,
                         onClick = onReplayTutorial
                     )
+                    SettingActionRow(title = "Tutorial chapters", subtitle = "Replay a guide to any feature", iconRes = Iconsax.Book,
+                        onClick = { showTutorialChapters = !showTutorialChapters })
+                    if (showTutorialChapters) TourChapterList(chapterStates, resumePoint, onStartChapter)
+
                 }
 
                 // Sync Section
@@ -403,7 +424,7 @@ fun SettingsScreen(
                         Text(
                             text = syncMessage,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Green,
+                            color = GreenText,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -432,7 +453,7 @@ fun SettingsScreen(
                     Spacer(Modifier.height(Space.sm))
 
                     viewModel.securityQuestions.forEachIndexed { index, question ->
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = securityAnswers.getOrElse(index) { "" },
                             onValueChange = { viewModel.onSecurityAnswerChanged(index, it) },
                             label = { Text(question) },
@@ -479,7 +500,7 @@ fun SettingsScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.InfoCircle),
                                         contentDescription = null,
-                                        tint = Red,
+                                        tint = RedText,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -518,7 +539,7 @@ fun SettingsScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = null,
-                                    tint = Lime,
+                                    tint = LimeText,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -571,7 +592,7 @@ fun SettingActionRow(
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    tint = Lime,
+                    tint = LimeText,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -623,7 +644,7 @@ fun SettingSwitchRow(
                     Icon(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
-                        tint = Lime,
+                        tint = LimeText,
                         modifier = Modifier.size(20.dp)
                     )
                 }

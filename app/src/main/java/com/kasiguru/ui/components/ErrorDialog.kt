@@ -1,5 +1,6 @@
 package com.kasiguru.ui.components
 
+import com.kasiguru.ui.theme.RedText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -65,7 +66,7 @@ fun ErrorDialog(
                     Icon(
                         painter = painterResource(id = Iconsax.InfoCircle),
                         contentDescription = null,
-                        tint = Red,
+                        tint = RedText,
                         modifier = Modifier.size(28.dp)
                     )
                 }

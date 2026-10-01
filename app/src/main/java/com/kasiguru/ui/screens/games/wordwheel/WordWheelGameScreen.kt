@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.games.wordwheel
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -299,7 +300,7 @@ private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState
                                     fontSize = letterSize,
                                     fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = if (isFound) OnLime else Lime
+                                    color = if (isFound) OnLime else LimeText
                                 )
                             }
                         }
@@ -537,7 +538,7 @@ private fun ControlIcon(
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = label,
-            tint = if (enabled) Lime else Muted,
+            tint = if (enabled) LimeText else Muted,
             modifier = Modifier.size(22.dp)
         )
     }

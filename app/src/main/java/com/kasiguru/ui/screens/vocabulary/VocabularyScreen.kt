@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.vocabulary
 
+import com.kasiguru.ui.theme.LimeText
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +26,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -141,7 +142,7 @@ fun DictionaryRefreshAction(isSyncing: Boolean, onRefresh: () -> Unit) {
 }
 
 /** Status hues the category tiles cycle through, so neighbouring tiles differ without new colours. */
-private val CategoryAccents = listOf(Lime, Info, Gold, Coral)
+private val CategoryAccents: List<Color> @Composable get() = listOf(Lime, Info, Gold, Coral)
 
 /**
  * The dictionary's body: one search field, the word of the day, Add a word, and the categories.
@@ -356,10 +357,11 @@ fun DictionaryContent(
 
 @Composable
 private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
-    OutlinedTextField(
+    KasiGuruTextField(
         value = query,
+            label = { Text("Search words") },
         onValueChange = onQueryChange,
-        placeholder = { Text("Search words and categories") },
+        placeholder = { Text("e.g. greetings, water, bahay") },
         leadingIcon = {
             Icon(painter = painterResource(id = Iconsax.Search), contentDescription = null, tint = Muted)
         },
@@ -375,18 +377,6 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
             }
         } else null,
         modifier = Modifier.fillMaxWidth(),
-        shape = Shapes.pill,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Surface,
-            unfocusedContainerColor = Surface,
-            focusedBorderColor = Lime,
-            unfocusedBorderColor = BorderHairline,
-            focusedTextColor = Ink,
-            unfocusedTextColor = Ink,
-            cursorColor = Lime,
-            focusedPlaceholderColor = Faint,
-            unfocusedPlaceholderColor = Faint
-        ),
         singleLine = true
     )
 }
@@ -413,7 +403,7 @@ private fun AddWordRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 Icon(
                     painter = painterResource(id = Iconsax.Add),
                     contentDescription = null,
-                    tint = Lime,
+                    tint = LimeText,
                     modifier = Modifier.size(22.dp)
                 )
             }

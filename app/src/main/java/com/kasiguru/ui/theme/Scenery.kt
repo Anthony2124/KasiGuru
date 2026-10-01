@@ -20,6 +20,16 @@ enum class Scenery(@DrawableRes val res: Int, val place: String) {
     TibuTidalPool(R.drawable.scene_tibu_tidal_pool, "Tibu Tidal Pool");
 
     companion object {
+        fun forProfile(id: String): Scenery = when (id) {
+            "casapsapan" -> Casapsapan
+            "farm" -> Farm
+            "river" -> River
+            "ermita_hill" -> ErmitaHill
+            "ontok_lighthouse" -> OntokLighthouse
+            "tibu_tidal_pool" -> TibuTidalPool
+            else -> Forest
+        }
+
         /**
          * One place per learning-path section (ids from `LearningTree`). Thirteen sections share seven
          * places by the nearest fit; to give a section its own, add a scene and point its entry at it.

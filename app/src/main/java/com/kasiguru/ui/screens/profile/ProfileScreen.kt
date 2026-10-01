@@ -1,5 +1,17 @@
 package com.kasiguru.ui.screens.profile
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.LimeText
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.animation.AnimatedVisibility
+import com.kasiguru.ui.theme.Scenery
+import com.kasiguru.ui.theme.SurfaceSunken
+import com.kasiguru.ui.screens.leaderboard.LeaderboardViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -100,12 +112,22 @@ fun ProfileScreen(
     onNavigateToAbout: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
     onNavigateToAccount: () -> Unit = {},
+    onNavigateToLeaderboard: () -> Unit = {},
+    onNavigateToStreak: () -> Unit = {},
+    leaderboardViewModel: LeaderboardViewModel = hiltViewModel(),
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val leaderboard by leaderboardViewModel.uiState.collectAsState()
+    var showBackgrounds by rememberSaveable { mutableStateOf(false) }
+    var showOverview by rememberSaveable { mutableStateOf(false) }
     val progress = uiState.userProgress ?: com.kasiguru.data.local.entity.UserProgressEntity()
     val displayName = progress.fullName.ifBlank { progress.userName }
     val isGuest = !uiState.account.isRecoverable
+    if (showBackgrounds) ProfileBackgroundPicker(progress, onSelect = {
+        viewModel.selectBackground(it); showBackgrounds = false
+    }, onDismiss = { showBackgrounds = false })
+
 
     GroundScaffold(
         title = displayName,
@@ -139,7 +161,17 @@ fun ProfileScreen(
                 // ── Identity ──
                 item(key = "identity") {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.fillMaxWidth().height(176.dp).clip(Shapes.panel)) {
+                            Image(painterResource(Scenery.forProfile(progress.profileBackgroundId).res), null,
+                                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .25f)))
+                            TextButton(onClick = { showBackgrounds = true }, modifier = Modifier.align(Alignment.TopEnd).tourAnchor(TourAnchor.ProfileBackground)) {
+                                Text("Change background", color = Color.White)
+                            }
+                        }
+                        Box(Modifier.height(88.dp), contentAlignment = Alignment.TopCenter) {
                         ProgressRing(
+                            modifier = Modifier.offset(y = (-42).dp),
                             progress = levelFraction,
                             size = 120.dp,
                             strokeWidth = 6.dp,
@@ -156,6 +188,7 @@ fun ProfileScreen(
                                 onClick = onNavigateToEditProfile
                             )
                         }
+                        }
                         Spacer(Modifier.height(Space.sm))
                         Text(
                             text = displayName,
@@ -171,6 +204,9 @@ fun ProfileScreen(
                             color = BrandLime,
                             textAlign = TextAlign.Center
                         )
+                        TextButton(onClick = onNavigateToLeaderboard) {
+                            Text(if (leaderboard.currentUserRank > 0) "Your rank: #${leaderboard.currentUserRank} this week" else "View leaderboard", color = BrandLime)
+                        }
                         if (progress.titleBadge.isNotBlank()) {
                             Spacer(Modifier.height(Space.xs))
                             // Stored for every learner since onboarding; an earned title, so it shows.
@@ -187,11 +223,6 @@ fun ProfileScreen(
                     }
                 }
 
-                // ── Guest ──
-                if (isGuest) {
-                    item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
-                }
-
                 // ── Record ──
                 item(key = "stats") {
                     Row(
@@ -203,7 +234,7 @@ fun ProfileScreen(
                             tint = Coral,
                             value = "${progress.currentStreak}",
                             label = "day streak",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).clickable(onClick = onNavigateToStreak)
                         )
                         StatTile(
                             iconRes = Iconsax.StarBold,
@@ -237,7 +268,8 @@ fun ProfileScreen(
 
                 // ── Overview ──
                 item(key = "overview") {
-                    SectionHeading(text = "Learning overview")
+                    TextButton(onClick = { showOverview = !showOverview }) { Text(if (showOverview) "Hide learning overview" else "Learning overview", color = BrandLime) }
+                    AnimatedVisibility(showOverview) { Column {
                     Spacer(Modifier.height(Space.sm))
                     SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.tile) {
                         Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
@@ -257,7 +289,11 @@ fun ProfileScreen(
                             )
                         }
                     }
+                    } }
                 }
+
+                if (isGuest) item(key = "guest") { GuestBanner(onSignIn = onNavigateToAccount) }
+                if (uiState.error != null) item(key = "error") { Text(uiState.error.orEmpty(), color = com.kasiguru.ui.theme.RedText) }
 
                 // ── Settings and account ──
                 item(key = "settings") {
@@ -302,27 +338,13 @@ fun ProfileScreen(
  */
 @Composable
 private fun GuestBanner(onSignIn: () -> Unit) {
-    SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.panel) {
+    SoftCard(modifier = Modifier.fillMaxWidth(), border = BorderHairline, shape = Shapes.tile, contentPadding = PaddingValues(Space.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Jepjep(pose = JepjepPose.Worried, height = 84.dp)
-            Spacer(Modifier.width(Space.md))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = "Sign in so you don't lose your progress",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Ink
-                )
-                Spacer(Modifier.height(Space.xxs))
-                Text(
-                    text = "Right now your XP, streak and badges live only on this phone.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted
-                )
-            }
+            Icon(painterResource(Iconsax.Lock), null, tint = BrandLime, modifier = Modifier.size(24.dp))
+            Text("Save your progress with an account", color = Ink, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f).padding(horizontal = Space.sm))
+            TextButton(onClick = onSignIn) { Text("Sign in", color = BrandLime) }
         }
-        Spacer(Modifier.height(Space.md))
-        // The one lime action on Me: for a guest, nothing here matters more.
-        ClayButton(label = "Sign in", onClick = onSignIn, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -372,7 +394,7 @@ private fun BadgesSection(
                     onClick = onSeeAll,
                     modifier = Modifier.semantics { contentDescription = "See all badges" }
                 ) {
-                    Text("See all", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Text("See all", color = LimeText, style = MaterialTheme.typography.labelMedium)
                 }
             }
         )

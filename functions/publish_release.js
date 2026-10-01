@@ -8,6 +8,8 @@
  */
 
 const admin = require('firebase-admin');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const [, , versionCodeArg, versionName, apkUrl] = process.argv;
 const versionCode = Number(versionCodeArg);
@@ -47,7 +49,10 @@ admin.initializeApp({
     versionName,
     apkUrl,
   };
-  if (typeof existing.releaseNotes !== 'string') doc.releaseNotes = '';
+  if (typeof existing.releaseNotes !== 'string') {
+    const notesPath = path.join(__dirname, '..', 'docs', 'releases', `${versionName}.md`);
+    doc.releaseNotes = fs.existsSync(notesPath) ? fs.readFileSync(notesPath, 'utf8').trim() : '';
+  }
   if (typeof existing.forceUpdate !== 'boolean') doc.forceUpdate = false;
   if (typeof existing.releasedAt !== 'number') doc.releasedAt = Date.now();
 

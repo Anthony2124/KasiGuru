@@ -75,6 +75,13 @@ class UserProgressRepository @Inject constructor(
         userProgressDao.insertOrUpdate(updated)
     }
 
+    suspend fun updateBackground(id: String) {
+        val background = com.kasiguru.domain.gamification.ProfileBackgroundCatalog.find(id) ?: return
+        val progress = getUserProgressOnce() ?: return
+        require(background.isUnlocked(progress.level, progress.longestStreak)) { "This background is still locked." }
+        userProgressDao.updateBackground(background.id, System.currentTimeMillis())
+    }
+
     suspend fun updateProfileDetails(fullName: String, age: Int?, address: String, iconId: Int) =
         userProgressDao.updateProfileDetails(fullName, age, address, iconId)
 

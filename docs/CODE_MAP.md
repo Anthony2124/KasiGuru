@@ -52,6 +52,9 @@ are relative to that directory.
 | Cross-device progress | `data/repository/ProgressSyncManager.kt` | `LearningStateMerge.kt`, `UserProgressRepository.kt` |
 | XP accounting and badge tiers | `domain/gamification/XpPolicy.kt`, `BadgeCatalog.kt` | `GamificationRepository.kt`, `data/remote/RewardReceiptCodec.kt`, `RewardDao.kt`; policy in `docs/design/XP_AND_TIERED_BADGES_PLAN.md` |
 | Push notifications and reminders | `util/notification/`, `util/worker/` | `ui/screens/notifications/`, `NotificationRepository.kt` |
+| Profile scenery and public player pages | `ui/screens/profile/`, `domain/gamification/ProfileBackgroundCatalog.kt` | `PublicProfileRepository.kt`, `data/remote/model/PublicProfileDto.kt`, Room 33 and `firestore.rules` |
+| Streak page | `ui/screens/streak/` | `learn/LearnViewModel.kt`, `BadgeCatalog.kt` |
+| Appearance and text size | `ui/screens/settings/AppearanceScreen.kt`, `domain/preferences/` | `UserPreferencesRepository.kt`, `ui/theme/Theme.kt`; screen guide in `docs/design/UI_CLEANUP.md` |
 | Shared appearance | `ui/theme/`, `ui/components/` | `ui/components/brand/`, `clay/`, `states/` |
 | Guided onboarding tour | `ui/tour/`, `ui/screens/onboarding/` | Tour tests in `app/src/test/` |
 

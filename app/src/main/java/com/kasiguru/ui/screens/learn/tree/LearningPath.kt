@@ -6,6 +6,12 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.animation.core.animateFloatAsState
+import com.kasiguru.ui.components.SegmentedProgress
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -150,6 +157,7 @@ fun LazyListScope.learningPath(
                     showGuide = key == guideKey,
                     positionInPath = nodeIndex,
                     isFirstInSection = nodeIndex == 0,
+                    isLastInSection = nodeIndex == section.nodes.lastIndex,
                     previousMastery = section.nodes.getOrNull(nodeIndex - 1)?.mastery,
                     onOpenLesson = onOpenLesson,
                     onOpenMastery = onOpenMastery
@@ -274,8 +282,8 @@ private fun SectionBanner(section: TreeSection) {
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to Ground.copy(alpha = 0.35f),
-                        1f to Ground.copy(alpha = 0.9f)
+                        0f to Color.Black.copy(alpha = 0.35f),
+                        1f to Color.Black.copy(alpha = 0.9f)
                     )
                 )
         )
@@ -303,14 +311,17 @@ private fun SectionBanner(section: TreeSection) {
             Text(
                 text = section.definition.title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = if (locked) Muted else Ink,
+                color = Cream,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            val done = section.nodes.count { it.node is TreeNode.Lesson && it.mastery >= Mastery.FAMILIAR }
+            Text("$done of ${section.lessonNodeCount} lessons done", style = MaterialTheme.typography.labelMedium, color = Cream)
+            SegmentedProgress(done, section.lessonNodeCount, Modifier.fillMaxWidth().padding(top = Space.xs))
             Text(
                 text = section.definition.gloss,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Muted,
+                color = Cream,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -420,9 +431,9 @@ private val WindOffsets = listOf(0f, 0.55f, 0.85f, 0.55f, 0f, -0.55f, -0.85f, -0
 /** Half the width of the wind. Keeps the widest node clear of the gutter on a 360 dp screen. */
 private val WindAmplitude = 64.dp
 
-private val NodeSize = 60.dp
+private val NodeSize = 72.dp
 private val CurrentNodeSize = 72.dp
-private val ConnectorHeight = 26.dp
+private val ConnectorHeight = 40.dp
 private val RingInset = 10.dp
 
 /** Jepjep's height beside the current node, and how far his centre sits from the node's edge. */
@@ -472,6 +483,7 @@ private fun PathRow(
     showGuide: Boolean,
     positionInPath: Int,
     isFirstInSection: Boolean,
+    isLastInSection: Boolean,
     previousMastery: Mastery?,
     onOpenLesson: (String, Int) -> Unit,
     onOpenMastery: (String) -> Unit
@@ -480,7 +492,15 @@ private fun PathRow(
     val look = node.look()
     val nodeOffset = WindAmplitude * lean
 
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    val trailColor = if (node.mastery >= Mastery.FAMILIAR) Olive else TrackNeutral
+    Column(Modifier.fillMaxWidth().drawBehind {
+        val x = size.width / 2f + nodeOffset.toPx()
+        val top = if (isFirstInSection) 0f else ConnectorHeight.toPx()
+        val nodeCenter = top + (NodeSize + RingInset * 2).toPx() / 2f
+        drawLine(trailColor, androidx.compose.ui.geometry.Offset(x, top),
+            androidx.compose.ui.geometry.Offset(x, if (isLastInSection) nodeCenter else size.height),
+            strokeWidth = 10.dp.toPx(), cap = StrokeCap.Round)
+    }, horizontalAlignment = Alignment.CenterHorizontally) {
         if (!isFirstInSection) {
             val previousLean = WindOffsets[(positionInPath - 1) % WindOffsets.size]
             Connector(
@@ -529,11 +549,10 @@ private fun PathRow(
 @Composable
 private fun NodeCaption(node: TreeNodeState, look: NodeLook, offset: Dp) {
     val isTest = node.node is TreeNode.MasteryTest
-    val text = when {
-        look == NodeLook.Current -> "Start"
-        look == NodeLook.Test && node.isCurrent -> "Take the test"
-        look == NodeLook.Locked && isTest -> "Finish the lessons above to unlock"
-        else -> return
+    val text = node.title + when {
+        look == NodeLook.Current -> "\nStart"
+        look == NodeLook.Test && node.isCurrent -> "\nTake the test"
+        else -> ""
     }
     Text(
         text = text,
@@ -542,35 +561,35 @@ private fun NodeCaption(node: TreeNodeState, look: NodeLook, offset: Dp) {
         textAlign = TextAlign.Center,
         // The node's own description already says this; reading it twice is noise.
         modifier = Modifier
+            .width(160.dp)
             .offset(x = offset)
+            .background(Ground, Shapes.chip)
             .padding(top = Space.xxs)
             .clearAndSetSemantics { }
     )
 }
 
-/** The line between two stops. Dotted ahead of the learner, solid behind them. */
+/** The winding trail between two stops; olive marks the ground already covered. */
 @Composable
 private fun Connector(fromLean: Float, toLean: Float, walked: Boolean) {
-    val colour = if (walked) BrandLime else Faint
-    Canvas(
-        Modifier
-            .fillMaxWidth()
-            .height(ConnectorHeight)
-            .clearAndSetSemantics { }
-    ) {
+    val colour = Olive
+    val idle = TrackNeutral
+    val completed by animateFloatAsState(if (walked) 1f else 0f,
+        tween(if (LocalReducedMotion.current) 0 else 450), label = "walked trail")
+    Canvas(Modifier.fillMaxWidth().height(ConnectorHeight).clearAndSetSemantics { }) {
         val amplitude = WindAmplitude.toPx()
-        val start = Offset(size.width / 2f + fromLean * amplitude, 0f)
-        val end = Offset(size.width / 2f + toLean * amplitude, size.height)
-        drawLine(
-            color = colour.copy(alpha = if (walked) 0.7f else 0.45f),
-            start = start,
-            end = end,
-            strokeWidth = 3.dp.toPx(),
-            cap = StrokeCap.Round,
-            pathEffect = if (walked) null else PathEffect.dashPathEffect(
-                floatArrayOf(4.dp.toPx(), 6.dp.toPx())
-            )
-        )
+        val x1 = size.width / 2f + fromLean * amplitude
+        val x2 = size.width / 2f + toLean * amplitude
+        val trail = Path().apply {
+            moveTo(x1, 0f)
+            cubicTo(x1, size.height * .45f, x2, size.height * .55f, x2, size.height)
+        }
+        val stroke = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
+        drawPath(trail, idle, style = stroke)
+        val measure = PathMeasure().apply { setPath(trail, false) }
+        val filled = Path()
+        measure.getSegment(0f, measure.length * completed, filled)
+        drawPath(filled, colour, style = stroke)
     }
 }
 
@@ -741,6 +760,7 @@ private fun MasteryRing(
 
 // ── Look to colour ──────────────────────────────────────────────────────────────
 
+@Composable
 private fun NodeLook.face(): Color = when (this) {
     NodeLook.Current -> Lime
     NodeLook.Done -> Olive
@@ -749,6 +769,7 @@ private fun NodeLook.face(): Color = when (this) {
     NodeLook.Locked -> Surface
 }
 
+@Composable
 private fun NodeLook.lip(): Color = when (this) {
     NodeLook.Current -> LimeLip
     NodeLook.Done -> OliveDeep
@@ -761,6 +782,7 @@ private fun NodeLook.lip(): Color = when (this) {
  * Content colour on the node face. Lime and gold are bright, so they carry dark ink (7.7 and 11.7);
  * white fails on both. Olive carries Jepjep's cream, and the dark open face carries white.
  */
+@Composable
 private fun NodeLook.content(): Color = when (this) {
     NodeLook.Current -> OnLime
     NodeLook.Done -> Cream

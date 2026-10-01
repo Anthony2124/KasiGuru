@@ -1,5 +1,7 @@
 package com.kasiguru.ui.components
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.GreenText
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -111,6 +113,7 @@ fun GameHeader(
  * A translucent fill made solid for a [CasiguranBackdrop], by laying it over [Ground] first: it then
  * looks exactly as it does on the page, instead of letting the full-strength scene show through.
  */
+@Composable
 private fun Color.solidOverScene(overScene: Boolean): Color = if (overScene) compositeOver(Ground) else this
 
 /** An answer option's revealed state. Colour never carries this alone — see [GameOptionRow]. */
@@ -160,13 +163,13 @@ fun GameOptionRow(
                 GameOptionState.Correct -> Icon(
                     painter = painterResource(id = Iconsax.TickCircle),
                     contentDescription = "Correct",
-                    tint = Green,
+                    tint = GreenText,
                     modifier = Modifier.size(22.dp)
                 )
                 GameOptionState.Wrong -> Icon(
                     painter = painterResource(id = Iconsax.CloseCircle),
                     contentDescription = "Your answer, incorrect",
-                    tint = Red,
+                    tint = RedText,
                     modifier = Modifier.size(22.dp)
                 )
                 GameOptionState.Idle -> {}
@@ -212,7 +215,8 @@ fun GameAnswerFeedback(
      * learner got it wrong, which hides the correct spelling in exactly the case that needs it.
      */
     correction: String? = null,
-    onPlayAudio: (() -> Unit)? = null
+    onPlayAudio: (() -> Unit)? = null,
+    mascot: Boolean = false
 ) {
     val tint = if (isCorrect) GreenTint else RedTint
     val accent = if (isCorrect) GreenDeep else RedDeep
@@ -249,6 +253,8 @@ fun GameAnswerFeedback(
                     color = accent
                 )
             }
+            if (mascot) com.kasiguru.ui.components.brand.Jepjep(
+                if (isCorrect) com.kasiguru.ui.components.brand.JepjepPose.Encouraging else com.kasiguru.ui.components.brand.JepjepPose.Confused, height = 64.dp)
             if (onPlayAudio != null) {
                 AudioPlayButton(
                     onClick = onPlayAudio,
@@ -319,7 +325,7 @@ fun rememberGameExitGuard(active: Boolean, onExit: () -> Unit): () -> Unit {
             text = { Text("Your progress in this round won't be saved.") },
             confirmButton = {
                 TextButton(onClick = { showConfirm = false; onExit() }) {
-                    Text("Quit", color = Red)
+                    Text("Quit", color = RedText)
                 }
             },
             dismissButton = {

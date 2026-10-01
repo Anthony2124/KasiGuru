@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.auth
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -86,7 +87,7 @@ fun AccountScreen(
             text = { Text("What you've typed hasn't been submitted yet.") },
             confirmButton = {
                 TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
-                    Text("Discard", fontWeight = FontWeight.Bold, color = Red)
+                    Text("Discard", fontWeight = FontWeight.Bold, color = RedText)
                 }
             },
             dismissButton = {
@@ -206,7 +207,7 @@ fun AccountScreen(
                                     text = "Step 2 of 2 · Sign in",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Lime
+                                    color = LimeText
                                 )
                                 Spacer(Modifier.height(Space.xxs))
                             }
@@ -252,7 +253,7 @@ fun AccountScreen(
                                 Spacer(Modifier.height(Space.md))
                             }
 
-                            OutlinedTextField(
+                            KasiGuruTextField(
                                 value = email,
                                 onValueChange = { email = it },
                                 label = { Text("Email address") },
@@ -262,7 +263,7 @@ fun AccountScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Sms),
                                         contentDescription = null,
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -270,12 +271,10 @@ fun AccountScreen(
                                     keyboardType = KeyboardType.Email,
                                     imeAction = ImeAction.Next
                                 ),
-                                shape = Shapes.tile,
-                                colors = accountFieldColors(),
                                 modifier = Modifier.fillMaxWidth()
                             )
                             Spacer(Modifier.height(Space.sm))
-                            OutlinedTextField(
+                            KasiGuruTextField(
                                 value = password,
                                 onValueChange = { password = it },
                                 label = { Text("Password") },
@@ -286,7 +285,7 @@ fun AccountScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Lock),
                                         contentDescription = null,
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 },
@@ -303,8 +302,6 @@ fun AccountScreen(
                                     keyboardType = KeyboardType.Password,
                                     imeAction = ImeAction.Done
                                 ),
-                                shape = Shapes.tile,
-                                colors = accountFieldColors(),
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -317,7 +314,7 @@ fun AccountScreen(
                                     TextButton(onClick = { viewModel.sendPasswordReset(email) }) {
                                         Text(
                                             text = "Forgot password?",
-                                            color = Lime,
+                                            color = LimeText,
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -354,7 +351,7 @@ fun AccountScreen(
                                 TextButton(onClick = { isSignInMode = !isSignInMode }) {
                                     Text(
                                         text = if (isSignInMode) "Create one" else "Sign in",
-                                        color = Lime,
+                                        color = LimeText,
                                         fontWeight = FontWeight.Bold,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -478,7 +475,7 @@ private fun PersonalDetailsCard(
             text = "Step 1 of 2 · About you",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = Lime
+            color = LimeText
         )
         Spacer(Modifier.height(Space.xxs))
         Text(
@@ -495,7 +492,7 @@ private fun PersonalDetailsCard(
         )
         Spacer(Modifier.height(Space.md))
 
-        OutlinedTextField(
+        KasiGuruTextField(
             value = fullName,
             onValueChange = onFullNameChange,
             label = { Text("Full name") },
@@ -506,12 +503,10 @@ private fun PersonalDetailsCard(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next
             ),
-            shape = Shapes.tile,
-            colors = accountFieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(Space.sm))
-        OutlinedTextField(
+        KasiGuruTextField(
             value = age,
             onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) onAgeChange(it) },
             label = { Text("Age") },
@@ -522,12 +517,10 @@ private fun PersonalDetailsCard(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
             ),
-            shape = Shapes.tile,
-            colors = accountFieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(Space.sm))
-        OutlinedTextField(
+        KasiGuruTextField(
             value = address,
             onValueChange = onAddressChange,
             label = { Text("Address") },
@@ -539,8 +532,6 @@ private fun PersonalDetailsCard(
                 imeAction = ImeAction.Done
             ),
             maxLines = 3,
-            shape = Shapes.tile,
-            colors = accountFieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -560,7 +551,7 @@ private fun PersonalDetailsCard(
         ) {
             Text(
                 text = "Already gave these before? Sign in to restore them",
-                color = Lime,
+                color = LimeText,
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -573,7 +564,7 @@ private fun DetailsFieldIcon(iconRes: Int) {
     Icon(
         painter = painterResource(id = iconRes),
         contentDescription = null,
-        tint = Lime,
+        tint = LimeText,
         modifier = Modifier.size(20.dp)
     )
 }
@@ -616,7 +607,7 @@ private fun AuthBenefitRow(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                tint = Lime,
+                tint = LimeText,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -666,7 +657,7 @@ private fun AccountStatusCard(
                             id = if (isRecoverable) Iconsax.TickCircle else Iconsax.InfoCircle
                         ),
                         contentDescription = null,
-                        tint = if (isRecoverable) Green else Warning,
+                        tint = if (isRecoverable) GreenText else Warning,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -711,7 +702,7 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
                 TextButton(onClick = {
                     confirming = false
                     onSignOut()
-                }) { Text("Sign out", fontWeight = FontWeight.Bold, color = Red) }
+                }) { Text("Sign out", fontWeight = FontWeight.Bold, color = RedText) }
             },
             dismissButton = {
                 TextButton(onClick = { confirming = false }) { Text("Cancel") }
@@ -742,11 +733,11 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
             Icon(
                 painter = painterResource(id = Iconsax.Logout),
                 contentDescription = null,
-                tint = Red,
+                tint = RedText,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(Space.xs))
-            Text("Sign Out", color = Red, fontWeight = FontWeight.Bold)
+            Text("Sign Out", color = RedText, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -775,7 +766,7 @@ private fun DeleteAccountSection(isBusy: Boolean, onDelete: () -> Unit) {
                 TextButton(onClick = {
                     confirming = false
                     onDelete()
-                }) { Text("Delete permanently", fontWeight = FontWeight.Bold, color = Red) }
+                }) { Text("Delete permanently", fontWeight = FontWeight.Bold, color = RedText) }
             },
             dismissButton = {
                 TextButton(onClick = { confirming = false }) { Text("Cancel") }
@@ -795,6 +786,6 @@ private fun DeleteAccountSection(isBusy: Boolean, onDelete: () -> Unit) {
         enabled = !isBusy,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("Delete my account and data", color = Red, fontWeight = FontWeight.Bold)
+        Text("Delete my account and data", color = RedText, fontWeight = FontWeight.Bold)
     }
 }

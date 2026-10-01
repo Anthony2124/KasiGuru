@@ -59,7 +59,7 @@ fun NotificationInboxScreen(
             text = { Text("This removes every notification from your inbox. This can't be undone.") },
             confirmButton = {
                 TextButton(onClick = { showClearConfirm = false; viewModel.clearAll() }) {
-                    Text("Clear all", color = Red, fontWeight = FontWeight.Bold)
+                    Text("Clear all", color = RedText, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -87,7 +87,7 @@ fun NotificationInboxScreen(
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
-                            text = { Text("Clear all", color = Red) },
+                            text = { Text("Clear all", color = RedText) },
                             onClick = { showMenu = false; showClearConfirm = true }
                         )
                     }
@@ -119,7 +119,7 @@ fun NotificationInboxScreen(
                                     text = "Mark all read",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Lime,
+                                    color = LimeText,
                                     modifier = Modifier
                                         .clip(Shapes.chip)
                                         .clickable { viewModel.markAllAsRead() }
@@ -175,7 +175,7 @@ fun NotificationInboxScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Notification),
                                         contentDescription = null,
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(36.dp)
                                     )
                                 }

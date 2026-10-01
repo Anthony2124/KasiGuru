@@ -1,5 +1,8 @@
 package com.kasiguru.ui.screens.profile
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.LimeText
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +18,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -154,7 +156,7 @@ private fun AddProfileDialog(
         title = { Text("New profile") },
         text = {
             Column {
-                OutlinedTextField(
+                KasiGuruTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Name") },
@@ -168,10 +170,10 @@ private fun AddProfileDialog(
         confirmButton = {
             TextButton(
                 onClick = { if (name.isNotBlank()) onConfirm(name.trim(), selected) }
-            ) { Text("Add", color = Lime) }
+            ) { Text("Add", color = LimeText) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Red) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = RedText) }
         }
     )
 }

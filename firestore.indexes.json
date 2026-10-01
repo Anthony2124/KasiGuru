@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "leaderboard_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "weekStartDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "weeklyXp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard_public",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "weekStartDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "weeklyXp",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

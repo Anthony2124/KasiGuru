@@ -25,6 +25,9 @@ class SettingsViewModel @Inject constructor(
     val account: StateFlow<AccountState> = authRepository.accountState
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), authRepository.currentAccount())
 
+    val hapticsEnabled = userPreferencesRepository.hapticsEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    fun toggleHapticsEnabled(enabled: Boolean) { viewModelScope.launch { userPreferencesRepository.setHapticsEnabled(enabled) } }
+
     val soundEnabled: StateFlow<Boolean> = userPreferencesRepository.soundEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 

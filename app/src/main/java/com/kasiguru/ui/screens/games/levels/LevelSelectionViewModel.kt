@@ -29,8 +29,11 @@ class LevelSelectionViewModel @Inject constructor(
 
     private fun loadLevels() {
         viewModelScope.launch {
-            val totalStars = gameLevelRepository.getTotalStars()
-            _uiState.value = _uiState.value.copy(totalStars = totalStars)
+            launch {
+                gameLevelRepository.getTotalStarsFlow().collect { totalStars ->
+                    _uiState.value = _uiState.value.copy(totalStars = totalStars)
+                }
+            }
 
             gameLevelRepository.getLevelsByGame(gameType).collect { levels ->
                 _uiState.value = _uiState.value.copy(

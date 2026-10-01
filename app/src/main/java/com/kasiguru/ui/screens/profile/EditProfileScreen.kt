@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.profile
 
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,7 +88,7 @@ fun EditProfileScreen(
             text = { Text("Your edits haven't been saved yet.") },
             confirmButton = {
                 TextButton(onClick = { showDiscardConfirm = false; onNavigateBack() }) {
-                    Text("Discard", color = Red)
+                    Text("Discard", color = RedText)
                 }
             },
             dismissButton = {
@@ -133,31 +134,25 @@ fun EditProfileScreen(
 
                 SoftCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = fullName,
                             onValueChange = { fullName = it },
                             label = { Text("Full name") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = Shapes.tile,
-                            colors = fieldColors(),
                             singleLine = true
                         )
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = age,
                             onValueChange = { if (it.isEmpty() || it.all(Char::isDigit)) age = it },
                             label = { Text("Age") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = Shapes.tile,
-                            colors = fieldColors(),
                             singleLine = true
                         )
-                        OutlinedTextField(
+                        KasiGuruTextField(
                             value = address,
                             onValueChange = { address = it },
                             label = { Text("Address") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = Shapes.tile,
-                            colors = fieldColors(),
                             singleLine = true
                         )
                     }

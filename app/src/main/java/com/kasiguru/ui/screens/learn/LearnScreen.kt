@@ -57,8 +57,7 @@ fun LearnScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
     val listState = rememberLazyListState()
-    // Only the first arrival jumps to the current node. After that the learner's own scroll position
-    // wins - including when they come back from a lesson and the next node is one row further down.
+    // Advance the view only when completing a lesson changes the current node.
     var arrivedAtCurrent by rememberSaveable { mutableStateOf(false) }
 
     val subtitle = uiState.currentSection?.let { "You are in ${it.definition.title}" }
@@ -68,13 +67,17 @@ fun LearnScreen(
             "Section by section, from greetings to everyday talk"
         }
 
-    LaunchedEffect(uiState.tree, arrivedAtCurrent) {
-        if (arrivedAtCurrent || uiState.tree.isEmpty()) return@LaunchedEffect
-        learningPathCurrentItemIndex(uiState.tree)?.let { index ->
-            // One item early, so the node arrives with the connector (or its section's banner) above
-            // it rather than pinned to the top edge.
-            listState.scrollToItem((index - 1).coerceAtLeast(0))
+    var lastCurrentIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    val reducedMotion = com.kasiguru.ui.theme.LocalReducedMotion.current
+    val currentIndex = learningPathCurrentItemIndex(uiState.tree)
+    LaunchedEffect(uiState.isLoading, currentIndex) {
+        if (uiState.isLoading || currentIndex == null) return@LaunchedEffect
+        val target = (currentIndex - 1).coerceAtLeast(0)
+        if (!arrivedAtCurrent) listState.scrollToItem(target)
+        else if (lastCurrentIndex != null && lastCurrentIndex != currentIndex) {
+            if (reducedMotion) listState.scrollToItem(target) else listState.animateScrollToItem(target)
         }
+        lastCurrentIndex = currentIndex
         arrivedAtCurrent = true
     }
 

@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.banned
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -122,7 +123,7 @@ fun AccountSuspendedScreen(
                 Icon(
                     painter = painterResource(id = Iconsax.InfoCircle),
                     contentDescription = "Account suspended",
-                    tint = Red,
+                    tint = RedText,
                     modifier = Modifier.size(48.dp)
                 )
             }
@@ -166,7 +167,7 @@ fun AccountSuspendedScreen(
                         Icon(
                             painter = painterResource(id = Iconsax.InfoCircle),
                             contentDescription = null,
-                            tint = Red,
+                            tint = RedText,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -218,14 +219,14 @@ fun AccountSuspendedScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.Calendar),
                                     contentDescription = null,
-                                    tint = Amber,
+                                    tint = AmberText,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
                                     text = "Appeal Under Review",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = Amber
+                                    color = AmberText
                                 )
                             }
                             if (appealSubmittedDate != null) {
@@ -270,13 +271,13 @@ fun AccountSuspendedScreen(
                                     Icon(
                                         painter = painterResource(id = Iconsax.Edit),
                                         contentDescription = null,
-                                        tint = Lime,
+                                        tint = LimeText,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
                                         text = "Update Appeal",
-                                        color = Lime,
+                                        color = LimeText,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -305,14 +306,14 @@ fun AccountSuspendedScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.CloseCircle),
                                     contentDescription = null,
-                                    tint = Red,
+                                    tint = RedText,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
                                     text = "Appeal Declined",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = Red
+                                    color = RedText
                                 )
                             }
                             if (appealReviewedDate != null) {
@@ -405,14 +406,14 @@ fun AccountSuspendedScreen(
                                 Icon(
                                     painter = painterResource(id = Iconsax.InfoCircle),
                                     contentDescription = null,
-                                    tint = Lime,
+                                    tint = LimeText,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
                                     text = "Believe this is a mistake?",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = Lime
+                                    color = LimeText
                                 )
                             }
                             Text(
@@ -530,7 +531,7 @@ fun AccountSuspendedScreen(
                             Icon(
                                 painter = painterResource(id = Iconsax.Edit),
                                 contentDescription = null,
-                                tint = Lime,
+                                tint = LimeText,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -549,8 +550,9 @@ fun AccountSuspendedScreen(
                         lineHeight = 18.sp
                     )
 
-                    OutlinedTextField(
+                    KasiGuruTextField(
                         value = appealInput,
+            label = { Text("Appeal") },
                         onValueChange = {
                             if (it.length <= 1000) {
                                 appealInput = it
@@ -568,14 +570,7 @@ fun AccountSuspendedScreen(
                             )
                         },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Ink),
-                        isError = (hasAttemptedSubmit && appealInput.trim().length < 10) || appealError != null,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Lime,
-                            unfocusedBorderColor = BorderHairline,
-                            errorBorderColor = Red
-                        )
-                    )
+                        isError = (hasAttemptedSubmit && appealInput.trim().length < 10) || appealError != null)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -586,14 +581,14 @@ fun AccountSuspendedScreen(
                             Text(
                                 text = appealError,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Red,
+                                color = RedText,
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                         } else if (hasAttemptedSubmit && appealInput.trim().length < 10) {
                             Text(
                                 text = "At least 10 characters required",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Red
+                                color = RedText
                             )
                         } else {
                             Spacer(Modifier.width(1.dp))
@@ -602,7 +597,7 @@ fun AccountSuspendedScreen(
                         Text(
                             text = "${appealInput.length}/1000",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (appealInput.length >= 1000) Red else Muted
+                            color = if (appealInput.length >= 1000) RedText else Muted
                         )
                     }
 

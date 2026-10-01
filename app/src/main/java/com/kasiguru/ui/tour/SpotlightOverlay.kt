@@ -1,9 +1,20 @@
 package com.kasiguru.ui.tour
 
+import com.kasiguru.ui.theme.LimeText
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import kotlinx.coroutines.delay
+import com.kasiguru.ui.theme.LocalReducedMotion
+import com.kasiguru.ui.components.brand.Jepjep
+import com.kasiguru.ui.components.brand.JepjepPose
+import com.kasiguru.ui.components.GestureHint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateValueAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,10 +140,17 @@ fun SpotlightOverlay(
     val animatedHole by animateValueAsState(
         targetValue = hole ?: lastHole ?: Rect.Zero,
         typeConverter = Rect.VectorConverter,
-        animationSpec = motionTween(Motion.Standard),
+        animationSpec = if (LocalReducedMotion.current) snap() else spring(dampingRatio = .9f, stiffness = 300f),
         label = "tourHole"
     )
     val drawnHole = if (hole != null) animatedHole else null
+
+    val reduced = LocalReducedMotion.current
+    val captionArrival = remember { Animatable(1f) }
+    LaunchedEffect(stop) {
+        captionArrival.snapTo(if (reduced) 1f else 0f)
+        if (!reduced) { delay(200); captionArrival.animateTo(1f, tween(180)) }
+    }
 
     val scrimColor = Scrim.copy(alpha = ScrimAlpha)
     val ringColor = OnCanopy.copy(alpha = 0.9f)
@@ -149,10 +167,11 @@ fun SpotlightOverlay(
                     // Swallow everything. The tour drives navigation across five tabs, so a stray
                     // tap on a live control would strand the overlay pointing at an anchor that no
                     // longer exists. Skip is one tap away on every stop, which is what pays for it.
-                    awaitPointerEventScope {
-                        while (true) {
-                            awaitPointerEvent().changes.forEach { it.consume() }
-                        }
+                    awaitEachGesture {
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.forEach { it.consume() }
+                        } while (event.changes.any { it.pressed })
                     }
                 }
         ) {
@@ -195,7 +214,8 @@ fun SpotlightOverlay(
                     val room = drawnHole?.let {
                         max(safeBottomPx - (it.bottom + gapPx), (it.top - gapPx) - safeTopPx)
                     } ?: (safeBottomPx - safeTopPx)
-                    val maxH = room.coerceIn(0f, containerH.toFloat()).roundToInt()
+                    val usable = (safeBottomPx - safeTopPx).coerceAtLeast(0f)
+                    val maxH = (if (room < 140.dp.toPx()) usable else room).coerceIn(0f, usable).roundToInt()
 
                     val placeable = measurable.measure(
                         constraints.copy(minHeight = 0, maxHeight = maxH)
@@ -225,6 +245,7 @@ fun SpotlightOverlay(
                     }
                 }
                 .padding(horizontal = Space.gutter)
+                .graphicsLayer { alpha = captionArrival.value; translationY = (1f - captionArrival.value) * 12.dp.toPx() }
         )
     }
 }
@@ -259,7 +280,8 @@ private fun CaptionCard(
                     // which of six things the learner is in the middle of.
                     text = "$chapterTitle  ·  ${stepIndex + 1} of $stepCount",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Muted
+                    color = Muted,
+                    modifier = Modifier.weight(1f)
                 )
                 if (!isLast) {
                     // A TextButton, not a ClayButton: ClayButton's inner row is fillMaxWidth, so in a
@@ -273,7 +295,7 @@ private fun CaptionCard(
                         Text(
                             text = "Skip",
                             style = MaterialTheme.typography.labelLarge,
-                            color = Lime
+                            color = LimeText
                         )
                     }
                 }
@@ -281,12 +303,17 @@ private fun CaptionCard(
 
             Spacer(Modifier.height(Space.sm))
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Jepjep(JepjepPose.Peeking, height = 72.dp)
+                Spacer(Modifier.width(Space.sm))
             Text(
                 text = stop.title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
-                color = Ink
+                color = Ink,
+                modifier = Modifier.weight(1f)
             )
+            }
 
             Spacer(Modifier.height(Space.xxs))
 
@@ -295,6 +322,7 @@ private fun CaptionCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted
             )
+            stop.gesture?.let { GestureHint(swipe = it == TourGesture.SWIPE, modifier = Modifier.padding(top = Space.sm)) }
         }
 
         Spacer(Modifier.height(Space.md))
@@ -314,7 +342,7 @@ private fun CaptionCard(
                     Text(
                         text = "Back",
                         style = MaterialTheme.typography.labelLarge,
-                        color = Lime
+                        color = LimeText
                     )
                 }
                 Spacer(Modifier.width(Space.sm))

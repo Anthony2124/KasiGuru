@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.games.wordsearch
 
+import com.kasiguru.ui.theme.RedText
 import com.kasiguru.domain.games.tagalogGloss
 
 import androidx.compose.foundation.background
@@ -318,7 +319,7 @@ private fun StatusLine(uiState: WordSearchUiState) {
         Icon(
             painter = painterResource(id = if (isMiss) Iconsax.CloseCircle else Iconsax.InfoCircle),
             contentDescription = null,
-            tint = if (isMiss) Red else Muted,
+            tint = if (isMiss) RedText else Muted,
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(Space.xs))

@@ -1,5 +1,7 @@
 package com.kasiguru.ui.screens.games.levels
 
+import com.kasiguru.ui.theme.GoldText
+import com.kasiguru.ui.theme.LimeText
 import com.kasiguru.ui.screens.games.shared.GameRulesRegistry
 
 import androidx.compose.foundation.layout.Arrangement
@@ -141,7 +143,7 @@ private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
                     Text(
                         text = "${level.levelNumber}",
                         style = MaterialTheme.typography.titleLarge,
-                        color = Lime
+                        color = LimeText
                     )
                 } else {
                     Icon(
@@ -163,7 +165,7 @@ private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
                     Icon(
                         painter = painterResource(id = Iconsax.StarBold),
                         contentDescription = null,
-                        tint = if (earned) Gold else NodeLocked,
+                        tint = if (earned) GoldText else NodeLocked,
                         modifier = Modifier.size(12.dp).alpha(if (earned) 1f else 0.7f)
                     )
                 }

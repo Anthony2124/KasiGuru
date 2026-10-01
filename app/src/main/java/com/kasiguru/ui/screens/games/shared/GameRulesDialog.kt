@@ -78,8 +78,8 @@ object GameRulesRegistry {
             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_MATCH,
             rules = listOf(
                 "Match 5 Kasiguranin words to their correct translation.",
-                "Consecutive correct matches build a Combo Multiplier (x2, x3 XP!).",
-                "Earn up to +100 XP per round."
+                "Each correct match adds to your score. Speed does not multiply XP.",
+                "Clear a round for 5 XP + 2 per correct answer. An unassisted perfect round adds 5, up to 40 XP total."
             ),
             gradient = listOf(FixedForest, FixedForestDeep)
         ),
@@ -92,7 +92,7 @@ object GameRulesRegistry {
             rules = listOf(
                 "Read the sentence context carefully.",
                 "Select the correct inflected word from 4 choices.",
-                "Earn +20 XP for each correct sentence completion."
+                "Clear a round for 5 XP + 2 per correct answer. An unassisted perfect round adds 5, up to 40 XP total."
             ),
             gradient = listOf(Gold, GoldDeep),
             onGradientIsInk = true
@@ -134,7 +134,7 @@ object GameRulesRegistry {
             rules = listOf(
                 "Kasiguranin uses Predicate-Initial word order.",
                 "Tap word blocks in order to construct authentic sentences.",
-                "Earn +150 XP for perfect syntax construction!"
+                "Clear a round for 5 XP + 3 per correct answer. An unassisted perfect round adds 5, up to 40 XP total."
             ),
             gradient = listOf(FixedForest, FixedForestDeep)
         ),
@@ -147,7 +147,7 @@ object GameRulesRegistry {
             rules = listOf(
                 "Read the Tagalog (or English) meaning.",
                 "Pick the matching Kasiguranin word from 4 choices.",
-                "Recall is harder than recognition — answer fast for bonus XP!"
+                "Correct answers earn XP; speed does not multiply it."
             ),
             gradient = listOf(Coral, CoralDeep),
             onGradientIsInk = true
@@ -159,7 +159,7 @@ object GameRulesRegistry {
             iconRes = Iconsax.Search,
             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_SEARCH,
             rules = listOf(
-                "Tap a word's first letter, then its last letter.",
+                "Drag across a word, from its first letter to its last.",
                 "Levels 1-10 run across and down, 11-20 add diagonals, 21-30 go any direction, even backwards.",
                 "Find every word with no wrong lines for three stars."
             ),
@@ -173,7 +173,7 @@ object GameRulesRegistry {
             unlockStars = com.kasiguru.util.Constants.GameUnlockStars.WORD_WHEEL,
             rules = listOf(
                 "Swipe across the letters, or tap them and press Check. Words need 3 letters or more.",
-                "Other real words you spell are bonus words and earn extra XP.",
+                "Other real words you spell are bonus words; XP comes from completing the board.",
                 "Solve the board with no hints for three stars."
             ),
             gradient = listOf(Gold, GoldDeep),

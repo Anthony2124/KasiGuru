@@ -1,5 +1,6 @@
 package com.kasiguru.ui.components
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -37,8 +37,9 @@ fun RecallAnswerField(
     val focusManager = LocalFocusManager.current
 
     Column(modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
+        KasiGuruTextField(
             value = value,
+            label = { Text("Your answer") },
             onValueChange = onValueChange,
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),

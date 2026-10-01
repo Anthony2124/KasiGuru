@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.onboarding
 
+import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -36,7 +37,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -290,29 +290,18 @@ internal fun NameStep(
         modifier = Modifier.readable()
     )
     Spacer(Modifier.height(Space.lg))
-    OutlinedTextField(
+    KasiGuruTextField(
         value = name,
+            label = { Text("Display name") },
         onValueChange = { onNameChange(it.take(MAX_NAME_LENGTH)) },
         placeholder = { Text("Enter your name") },
         singleLine = true,
-        shape = Shapes.pill,
         textStyle = MaterialTheme.typography.bodyLarge,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words,
             imeAction = ImeAction.Done
         ),
         keyboardActions = KeyboardActions(onDone = { onDone() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Ink,
-            unfocusedTextColor = Ink,
-            focusedContainerColor = Surface,
-            unfocusedContainerColor = Surface,
-            focusedBorderColor = Lime,
-            unfocusedBorderColor = BorderHairline,
-            focusedPlaceholderColor = Faint,
-            unfocusedPlaceholderColor = Faint,
-            cursorColor = Lime
-        ),
         modifier = Modifier.readable()
     )
 }

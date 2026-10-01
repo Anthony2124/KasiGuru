@@ -19,8 +19,8 @@ android {
         applicationId = "com.kasiguru"
         minSdk = 26
         targetSdk = 35
-        versionCode = 18
-        versionName = "1.17.0"
+        versionCode = 19
+        versionName = "1.18.0"
 
         testInstrumentationRunner = "com.kasiguru.data.local.LocalDatabaseTestRunner"
 
@@ -135,6 +135,7 @@ dependencies {
 
     // Image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
 
     // Lottie animations
     implementation("com.airbnb.android:lottie-compose:6.4.0")
@@ -154,7 +155,7 @@ dependencies {
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     

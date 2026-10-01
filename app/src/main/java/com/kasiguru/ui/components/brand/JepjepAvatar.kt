@@ -1,5 +1,6 @@
 package com.kasiguru.ui.components.brand
 
+import com.kasiguru.ui.theme.LimeText
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -149,7 +150,9 @@ fun JepjepAvatarPortrait(
                     color = RewardInk,
                     fontFamily = KasiGuruDisplay,
                     fontWeight = FontWeight.Bold,
-                    fontSize = (chip.value * 0.5f).sp
+                    fontSize = (chip.value * 0.5f).sp,
+                    lineHeight = (chip.value * 0.5f).sp,
+                    maxLines = 1
                 )
             }
         }
@@ -191,7 +194,7 @@ fun JepjepAvatarPicker(
                         Text(
                             text = avatar.displayName,
                             style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) Lime else com.kasiguru.ui.theme.Muted,
+                            color = if (isSelected) LimeText else com.kasiguru.ui.theme.Muted,
                             maxLines = 1
                         )
                     }

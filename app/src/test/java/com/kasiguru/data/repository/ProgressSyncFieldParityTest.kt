@@ -48,7 +48,7 @@ class ProgressSyncFieldParityTest {
             wordsLearned = 88, storiesCompleted = 3, gamesPlayed = 40, totalCorrectAnswers = 300,
             totalQuestionsAnswered = 350, lessonsCompleted = 9, isOnboardingCompleted = true,
             dailyGoalXp = 150, dailyXpEarned = 60, dailyXpDate = "2026-08-18",
-            titleBadge = "Kasiguranin Legend", updatedAt = 999
+            titleBadge = "Kasiguranin Legend", profileBackgroundId = "river", updatedAt = 999
         )
 
         // toMap() always stamps a fresh updatedAt, so compare everything else field by field
@@ -62,6 +62,7 @@ class ProgressSyncFieldParityTest {
         assertEquals(original.age, roundTripped.age)
         assertEquals(original.address, roundTripped.address)
         assertEquals(original.profileIconId, roundTripped.profileIconId)
+        assertEquals(original.profileBackgroundId, roundTripped.profileBackgroundId)
         assertEquals(original.totalXp, roundTripped.totalXp)
         assertEquals(original.level, roundTripped.level)
         assertEquals(original.currentStreak, roundTripped.currentStreak)
@@ -83,5 +84,13 @@ class ProgressSyncFieldParityTest {
         assertEquals(original.dailyGamesDate, roundTripped.dailyGamesDate)
         assertEquals(original.dailyGamesPlayedCount, roundTripped.dailyGamesPlayedCount)
         // updatedAt deliberately not compared — toMap() always overwrites it with "now".
+    }
+    @Test
+    fun backgroundSelectionUsesLatestEditAndSurvivesAnOlderClient() {
+        val local = UserProgressEntity(profileBackgroundId = "river", updatedAt = 20)
+        assertEquals("farm", mergeProgress(local, UserProgressEntity(profileBackgroundId = "farm", updatedAt = 30)).profileBackgroundId)
+        assertEquals("river", mergeProgress(local, UserProgressEntity(profileBackgroundId = "farm", updatedAt = 10)).profileBackgroundId)
+        val oldClient = toEntity(mapOf("updatedAt" to 30L))
+        assertEquals("river", mergeProgress(local, oldClient).profileBackgroundId)
     }
 }

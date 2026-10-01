@@ -104,6 +104,8 @@ data class LearnUiState(
     val announcements: List<AnnouncementDto> = emptyList(),
     /** Words still due for review right now. Part of the day goal, not just a number on a card. */
     val wordsDue: Int = 0,
+    val wordOfDay: VocabularyEntity? = null,
+    val lastGameType: String? = null,
     val streakQuota: com.kasiguru.data.repository.DailyStreakQuota = com.kasiguru.data.repository.DailyStreakQuota()
 ) {
     /**
@@ -167,6 +169,7 @@ class LearnViewModel @Inject constructor(
     private val lessonRepository: LessonRepository,
     private val storyRepository: StoryRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val gameRepository: com.kasiguru.data.repository.GameRepository,
     private val appUpdateRepository: AppUpdateRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val authRepository: AuthRepository,
@@ -233,6 +236,9 @@ class LearnViewModel @Inject constructor(
             userProgressRepository.validateAndResetExpiredStreak()
             val progress = userProgressRepository.getUserProgressOnce() ?: UserProgressEntity()
             val due = vocabularyRepository.getDueReviewWordsStrict(limit = 20)
+            val words = vocabularyRepository.getAllVocabularyOnce().filter { it.kasiguranin.isNotBlank() }.sortedBy { it.id }
+            val featured = if (words.isEmpty()) null else words[(LocalDate.now().toEpochDay() % words.size).toInt()]
+            val lastGame = gameRepository.getRecentScores(1).first().firstOrNull()?.gameType
             _uiState.update {
                 it.copy(
                     progress = progress,
@@ -242,6 +248,8 @@ class LearnViewModel @Inject constructor(
                     continueCard = buildContinueCard(),
                     stories = storyRepository.getAllStories().first(),
                     wordsDue = due.size,
+                    wordOfDay = featured,
+                    lastGameType = lastGame,
                     isLoading = false
                 )
             }

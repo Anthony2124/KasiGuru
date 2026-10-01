@@ -37,7 +37,7 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 32
+        const val CURRENT_VERSION = 33
     }
 
     /**
@@ -92,6 +92,38 @@ class MigrationTest {
             check(it.getInt(2) == 0 && it.getInt(3) == 0 && it.getInt(4) == 0 && it.getString(5) == "")
         }
         db.query("SELECT COUNT(*) FROM reward_receipts").use { check(it.moveToFirst() && it.getInt(0) == 0) }
+        db.close()
+    }
+
+    @Test
+    fun migrateV32PreservesNormalizedRewardsAndAddsProfileDefaults() {
+        val name = "migration-ui-cleanup-test"
+        helper.createDatabase(name, 32).apply {
+            val values = android.content.ContentValues()
+            query("PRAGMA table_info(user_progress)").use { cursor ->
+                while (cursor.moveToNext()) {
+                    if (cursor.getString(2) == "TEXT") values.put(cursor.getString(1), "")
+                    else values.put(cursor.getString(1), 0)
+                }
+            }
+            values.put("id", 1); values.put("totalXp", 420); values.put("level", 3)
+            values.put("xpPolicyVersion", 2); values.put("activityXp", 400); values.put("badgeBonusXp", 20)
+            values.put("currentStreak", 7); values.put("longestStreak", 30)
+            insert("user_progress", android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE, values)
+            execSQL("INSERT INTO reward_receipts VALUES ('test:receipt','lesson','unit:1','2026-10-01',25,1,0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(name, CURRENT_VERSION, true, *KasiGuruMigrations.ALL)
+        db.query("SELECT totalXp,level,xpPolicyVersion,activityXp,badgeBonusXp,currentStreak,longestStreak,profileBackgroundId FROM user_progress WHERE id=1").use {
+            check(it.moveToFirst())
+            check((0..6).map(it::getInt) == listOf(420,3,2,400,20,7,30))
+            check(it.getString(7) == "forest")
+        }
+        db.query("SELECT id,xp FROM reward_receipts").use {
+            check(it.moveToFirst() && it.getString(0) == "test:receipt" && it.getInt(1) == 25)
+        }
+        db.query("SELECT uid,payload FROM public_profile_cache").use { check(it.count == 0) }
+        db.query("SELECT firebaseUid,weeklyXp,weekId,level,boardId,rank FROM leaderboard").use { check(it.count == 0) }
         db.close()
     }
 

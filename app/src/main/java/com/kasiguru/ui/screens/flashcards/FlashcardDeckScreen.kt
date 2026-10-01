@@ -2,6 +2,20 @@ package com.kasiguru.ui.screens.flashcards
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import com.kasiguru.ui.tour.TourAnchor
+import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.ui.components.FlashcardFirstNote
+import com.kasiguru.ui.components.GestureHint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontStyle
+import com.kasiguru.ui.components.FlashCard
+import com.kasiguru.ui.components.SegmentedProgress
+import com.kasiguru.util.srs.Sm2Algorithm
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -112,7 +126,7 @@ fun FlashcardDeckScreen(
                     Spacer(Modifier.height(Space.xs))
 
                     Text(
-                        "You reviewed ${uiState.cards.size} Kasiguranin flashcards with SuperMemo-2 spaced repetition.",
+                        "You reviewed ${uiState.cards.size} words. They'll come back when it's time to practise again.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Muted,
                         textAlign = TextAlign.Center,
@@ -122,7 +136,7 @@ fun FlashcardDeckScreen(
                     Spacer(Modifier.height(Space.lg))
 
                     ClayButton(
-                        label = "Return to Dashboard",
+                        label = "Continue",
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onNavigateBack()
@@ -136,263 +150,66 @@ fun FlashcardDeckScreen(
     }
 
     val currentCard = uiState.cards.getOrNull(uiState.currentIndex) ?: return
-    var isFlipped by remember { mutableStateOf(false) }
-    val rotation by animateFloatAsState(
-        targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 400),
-        label = "CardFlip"
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Ground)
-            .statusBarsPadding()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Space.gutter, vertical = Space.sm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = Iconsax.ArrowLeft),
-                contentDescription = "Back",
-                tint = Muted,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onNavigateBack)
-            )
-            Spacer(Modifier.width(Space.sm))
-            KasiGuruProgressBar(
-                progress = (uiState.currentIndex + 1).toFloat() / uiState.cards.size,
-                showLabel = true,
-                gradientColors = listOf(CanopyTop, CanopyBottom),
-                modifier = Modifier.weight(1f)
-            )
+    var side by remember(currentCard.id) { mutableIntStateOf(0) }
+    var ratingPending by remember(currentCard.id) { mutableStateOf(false) }
+    val drag = remember(currentCard.id) { androidx.compose.animation.core.Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val reduced = LocalReducedMotion.current
+    val rate: (ReviewRating) -> Unit = { rating ->
+        if (!uiState.isRating && !ratingPending && side == 2) {
+            ratingPending = true
+            scope.launch {
+                drag.animateTo(if (rating == ReviewRating.AGAIN) -1000f else 1000f, tween(if (reduced) 0 else 180))
+                viewModel.rateCard(rating)
+            }
         }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = Space.gutter, vertical = Space.sm),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Flashcard with 3D Flip
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        isFlipped = !isFlipped
-                    }
-                    .graphicsLayer {
-                        rotationY = rotation
-                        cameraDistance = 12f * density
-                    },
-                shape = Shapes.panel,
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = if (rotation <= 90f) {
-                                Brush.linearGradient(listOf(CanopyTop, CanopyBottom))
-                            } else {
-                                Brush.linearGradient(listOf(CanopyBottom, CanopyTop))
-                            }
-                        )
-                        .padding(Space.lg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (rotation <= 90f) {
-                        // Front Side: Kasiguranin Word
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Surface(shape = Shapes.pill, color = Color.White.copy(alpha = 0.22f)) {
-                                Text(
-                                    text = currentCard.category.uppercase(),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                            Spacer(Modifier.height(Space.lg))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Space.sm)
-                            ) {
-                                Text(
-                                    text = currentCard.kasiguranin,
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    fontSize = 32.sp,
-                                    letterSpacing = (-0.5).sp
-                                )
-                                AudioPlayButton(
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        audioPlayerManager.playWord(currentCard)
-                                    },
-                                    size = 38.dp,
-                                    contentDescription = "Listen"
-                                )
-                            }
-                            if (currentCard.ipaNotation.isNotEmpty()) {
-                                Spacer(Modifier.height(Space.xs))
-                                Text(
-                                    text = "[${currentCard.ipaNotation}]",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.85f)
-                                )
-                            }
-                            Spacer(Modifier.height(Space.lg))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = Iconsax.Repeat),
-                                    contentDescription = null,
-                                    tint = Color.White.copy(alpha = 0.85f),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    "Tap card to flip",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+    }
+    Column(Modifier.fillMaxSize().background(Ground).statusBarsPadding()
+        .navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = Space.gutter)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onNavigateBack) { Icon(painterResource(Iconsax.CloseCircle), "Close flashcards", tint = Ink) }
+            Text(currentCard.category, style = MaterialTheme.typography.titleMedium, color = Ink, modifier = Modifier.weight(1f))
+            Text("${uiState.currentIndex + 1} / ${uiState.cards.size}", color = Muted)
+        }
+        SegmentedProgress(uiState.currentIndex, uiState.cards.size, Modifier.fillMaxWidth())
+        FlashCard(currentCard, uiState.currentIndex + 1, side,
+            onFlip = { if (!ratingPending) side = if (side < 2) side + 1 else 1 },
+            onAudio = { audioPlayerManager.playWord(currentCard) },
+            modifier = Modifier.fillMaxWidth().height(360.dp).tourAnchor(TourAnchor.FlashcardCard)
+                .graphicsLayer { translationX = drag.value; alpha = if (reduced && ratingPending) 0f else 1f }
+                .pointerInput(currentCard.id, side, ratingPending) {
+                    if (side == 2 && !ratingPending) detectHorizontalDragGestures(
+                        onHorizontalDrag = { change, amount -> change.consume(); scope.launch { drag.snapTo(drag.value + amount) } },
+                        onDragCancel = { scope.launch { drag.animateTo(0f) } },
+                        onDragEnd = {
+                            if (drag.value > 100f) rate(ReviewRating.GOOD)
+                            else if (drag.value < -100f) rate(ReviewRating.AGAIN)
+                            else scope.launch { drag.animateTo(0f) }
                         }
-                    } else {
-                        // Back Side: Tagalog & English Meanings + Example
-                        Column(
-                            modifier = Modifier.graphicsLayer { rotationY = 180f },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = currentCard.tagalog,
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White,
-                                letterSpacing = (-0.3).sp
-                            )
-                            Text(
-                                text = "(${currentCard.english})",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontWeight = FontWeight.Medium
-                            )
-
-                            if (currentCard.exampleSentence.isNotEmpty()) {
-                                Spacer(Modifier.height(Space.md))
-                                HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
-                                Spacer(Modifier.height(Space.md))
-                                Text(
-                                    text = "\"${currentCard.exampleSentence}\"",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center
-                                )
-                                Text(
-                                    text = currentCard.exampleTranslation,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
+                    )
+                })
+        if (uiState.currentIndex == 0 && side != 2) {
+            FlashcardFirstNote(modifier = Modifier.padding(vertical = Space.sm))
+        }
+        AnimatedVisibility(visible = side == 2) {
+            Column {
+                Text("How well did you remember?", style = MaterialTheme.typography.titleSmall, color = Ink)
+                Spacer(Modifier.height(Space.sm))
+                ReviewRating.entries.chunked(2).forEach { ratings ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                        ratings.forEach { rating ->
+                            val days = Sm2Algorithm.calculateNextReview(currentCard, rating).intervalDays
+                            ClayButton(label = "${rating.name.lowercase().replaceFirstChar(Char::uppercase)} · $days ${if (days == 1) "day" else "days"}",
+                                onClick = { rate(rating) }, enabled = !uiState.isRating && !ratingPending,
+                                tone = if (rating == ReviewRating.GOOD) ClayButtonTone.Primary else ClayButtonTone.Quiet,
+                                modifier = Modifier.weight(1f))
                         }
                     }
+                    Spacer(Modifier.height(Space.xs))
                 }
             }
-
-            Spacer(Modifier.height(Space.md))
-
-            // SM-2 4-Rating Buttons
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Rate your recall performance (SM-2 SRS):",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Muted,
-                    modifier = Modifier.padding(bottom = Space.xs),
-                    fontWeight = FontWeight.Medium
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Space.xs)
-                ) {
-                    Button(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            isFlipped = false
-                            viewModel.rateCard(ReviewRating.AGAIN)
-                        },
-                        enabled = !uiState.isRating,
-                        modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Red),
-                        shape = Shapes.chip,
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Again", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
-                    }
-
-                    Button(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            isFlipped = false
-                            viewModel.rateCard(ReviewRating.HARD)
-                        },
-                        enabled = !uiState.isRating,
-                        modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Warning),
-                        shape = Shapes.chip,
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        // All four faces are bright on night, so all four carry the dark reward ink.
-                        Text("Hard", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
-                    }
-
-                    Button(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            isFlipped = false
-                            viewModel.rateCard(ReviewRating.GOOD)
-                        },
-                        enabled = !uiState.isRating,
-                        modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Lime),
-                        shape = Shapes.chip,
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Good", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = OnLime)
-                    }
-
-                    Button(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            isFlipped = false
-                            viewModel.rateCard(ReviewRating.EASY)
-                        },
-                        enabled = !uiState.isRating,
-                        modifier = Modifier.weight(1f).height(46.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Info),
-                        shape = Shapes.chip,
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Easy", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = RewardInk)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(Space.navBarClearance))
         }
+        Spacer(Modifier.height(Space.lg))
     }
 }
 
@@ -434,7 +251,7 @@ private fun NothingDueState(
                     Icon(
                         painter = painterResource(id = Iconsax.TickCircleBold),
                         contentDescription = null,
-                        tint = Lime,
+                        tint = LimeText,
                         modifier = Modifier.size(40.dp)
                     )
                 }
@@ -462,7 +279,7 @@ private fun NothingDueState(
                 Spacer(Modifier.height(Space.lg))
 
                 ClayButton(
-                    label = "Back to Learn",
+                    label = "Continue",
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onNavigateBack()

@@ -19,6 +19,8 @@ import com.kasiguru.domain.gamification.XpPolicy
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.Source
 import androidx.room.withTransaction
+import kotlinx.coroutines.flow.first
+import com.kasiguru.data.remote.model.PublicProfileDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -58,7 +60,8 @@ class ProgressSyncManager @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val db: KasiGuruDatabase,
-    private val gamification: GamificationRepository
+    private val gamification: GamificationRepository,
+    private val lessons: dagger.Lazy<LessonRepository>
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -297,6 +300,7 @@ class ProgressSyncManager @Inject constructor(
         // Linking an account keeps the same uid, so the row appears on the next sync after
         // signing up. firestore.rules enforces the same thing on the server.
         if (auth.currentUser?.isAnonymous != false) {
+            runCatching { firestore.collection("public_profiles").document(uid).delete().await() }
             runCatching { leaderboardDoc(uid).delete().await() }
                 .onFailure { e -> Log.w(TAG, "guest leaderboard row removal FAILED", e) }
             return
@@ -319,17 +323,11 @@ class ProgressSyncManager @Inject constructor(
         val weeklyXp = RewardLedger.totals(db.rewardDao().all().map { it.record() })
             .byDay.filterKeys { it >= weekStart && it <= java.time.LocalDate.now().toString() }.values.sum()
 
-        val resolvedEmail = progress.email.ifBlank { auth.currentUser?.accountEmail().orEmpty() }
-        val displayName = progress.fullName.ifBlank { progress.userName }
-            .ifBlank { auth.currentUser?.displayName.orEmpty() }
-            .ifBlank { resolvedEmail.takeIf { it.isNotBlank() } }
-            .orEmpty()
-            .ifBlank { "Learner" }
+        val displayName = PublicProfileDto.displayName(progress.userName)
         val isAnonymous = auth.currentUser?.isAnonymous == true
         val creationTime = auth.currentUser?.metadata?.creationTimestamp ?: System.currentTimeMillis()
         val payload = mapOf(
             "displayName" to displayName.take(40),
-            "email" to resolvedEmail,
             "isAnonymous" to isAnonymous,
             "createdAt" to creationTime,
             "registeredAt" to creationTime,
@@ -347,6 +345,30 @@ class ProgressSyncManager @Inject constructor(
         )
         runCatching { leaderboardDoc(uid).set(payload).await() }
             .onFailure { e -> Log.w(TAG, "leaderboard publish FAILED", e) }
+        // A separate allowlisted projection: never serialize the private progress entity here.
+        runCatching {
+            if (auth.currentUser?.uid != uid || auth.currentUser?.isAnonymous != false) return@runCatching
+            val tree = lessons.get().treeSections()
+            val profile = PublicProfileDto(
+                displayName = displayName, profileIconId = progress.profileIconId,
+                profileBackgroundId = com.kasiguru.domain.gamification.ProfileBackgroundCatalog.normalize(progress.profileBackgroundId),
+                level = progress.level, totalXp = progress.totalXp, currentStreak = progress.currentStreak,
+                wordsLearned = vocabularyDao.getLearnedCount().first(),
+                lessonsCompleted = lessonDao.getAllOnce().count { it.isComplete && !it.unitId.startsWith("mastery:") },
+                weeklyXp = weeklyXp, weekId = currentWeekId, createdAt = creationTime, updatedAt = System.currentTimeMillis(),
+                badgeIds = achievementDao.getAllAchievementsOnce().filter { it.isUnlocked && BadgeCatalog.familyFor(it.id) != null }.map { it.id },
+                sections = tree.associate { section -> section.id to section.nodes.count {
+                    !it.isDeepDive && it.node is com.kasiguru.domain.lesson.TreeNode.Lesson && it.mastery >= com.kasiguru.domain.lesson.Mastery.FAMILIAR
+                } },
+                sectionTotals = tree.associate { it.id to it.coreLessonNodeCount },
+                masteredSections = tree.filter { section -> section.nodes.any {
+                    it.node is com.kasiguru.domain.lesson.TreeNode.MasteryTest && it.mastery >= com.kasiguru.domain.lesson.Mastery.FAMILIAR
+                } }.map { it.id },
+                unlockedSections = tree.filter { it.isUnlocked }.map { it.id }
+            )
+            firestore.collection("public_profiles").document(uid).set(profile.toMap()).await()
+        }.onFailure { e -> Log.w(TAG, "public profile publish FAILED", e) }
+
     }
 
     /** ISO calendar week id (e.g. "2026-W33"), used to roll the weekly board over. */
@@ -718,6 +740,7 @@ internal fun toMap(p: UserProgressEntity): Map<String, Any?> = mapOf(
     "age" to p.age,
     "address" to p.address,
     "profileIconId" to p.profileIconId,
+    "profileBackgroundId" to p.profileBackgroundId,
     "totalXp" to p.totalXp,
     "level" to p.level,
     "currentStreak" to p.currentStreak,
@@ -762,6 +785,7 @@ internal fun toEntity(data: Map<String, Any?>): UserProgressEntity = UserProgres
     age = (data["age"] as? Number)?.toInt(),
     address = data["address"] as? String ?: "",
     profileIconId = (data["profileIconId"] as? Number)?.toInt() ?: 1,
+    profileBackgroundId = data["profileBackgroundId"] as? String ?: "",
     totalXp = (data["totalXp"] as? Number)?.toInt() ?: 0,
     level = (data["level"] as? Number)?.toInt() ?: 1,
     currentStreak = (data["currentStreak"] as? Number)?.toInt() ?: 0,
@@ -880,6 +904,7 @@ internal fun mergeProgress(
         age = if (remoteNewer) remote.age ?: local.age else local.age ?: remote.age,
         address = pick(local.address, remote.address, remoteNewer),
         profileIconId = if (remoteNewer) remote.profileIconId else local.profileIconId,
+        profileBackgroundId = pick(local.profileBackgroundId, remote.profileBackgroundId, remoteNewer),
         totalXp = normalized?.totalXp ?: maxOf(local.totalXp, remote.totalXp),
         level = normalized?.level ?: maxOf(local.level, remote.level),
         currentStreak = mergedStreak,

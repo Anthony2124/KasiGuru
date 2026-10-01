@@ -54,8 +54,22 @@ object KasiGuruMigrations {
         MIGRATION_28_29,
         MIGRATION_29_30,
         MIGRATION_30_31,
-        MIGRATION_31_32
+        MIGRATION_31_32,
+        MIGRATION_32_33
         )
+    }
+
+    private val MIGRATION_32_33 = object : Migration(32, 33) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE user_progress ADD COLUMN profileBackgroundId TEXT NOT NULL DEFAULT 'forest'")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN firebaseUid TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN weeklyXp INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN weekId TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN level INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN boardId TEXT NOT NULL DEFAULT 'alltime'")
+            db.execSQL("ALTER TABLE leaderboard ADD COLUMN rank INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("CREATE TABLE IF NOT EXISTS public_profile_cache (uid TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(uid))")
+        }
     }
 
     private val MIGRATION_31_32 = object : Migration(31, 32) {

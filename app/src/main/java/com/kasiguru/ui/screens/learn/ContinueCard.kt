@@ -1,5 +1,9 @@
 package com.kasiguru.ui.screens.learn
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
+import com.kasiguru.ui.components.brand.Jepjep
+import com.kasiguru.ui.components.brand.JepjepPose
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -50,8 +54,10 @@ fun ContinueCard(card: ContinueCard, onClick: () -> Unit, modifier: Modifier = M
         contentPadding = PaddingValues(Space.lg)
     ) {
         Column(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
             Text(
-                text = card.sectionTitle,
+                text = "Continue · ${card.sectionTitle}",
                 style = MaterialTheme.typography.labelLarge,
                 color = Muted,
                 maxLines = 1,
@@ -85,6 +91,9 @@ fun ContinueCard(card: ContinueCard, onClick: () -> Unit, modifier: Modifier = M
                 color = Faint
             )
 
+            }
+            Jepjep(pose = JepjepPose.WithBackpack, height = 110.dp)
+            }
             Spacer(Modifier.height(Space.md))
 
             ClayButton(
