@@ -1,7 +1,17 @@
 package com.kasiguru.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+/**
+ * Height of the floating navigation bar over the current screen, or 0 where it is hidden. Provided by
+ * the navigation shell; read through [Space.navBarClearance].
+ */
+val LocalBottomBarInset = compositionLocalOf { 0.dp }
 
 /**
  * The single spacing / radius / elevation scale for KasiGuru.
@@ -30,14 +40,16 @@ object Space {
     val gutter = 20.dp
 
     /**
-     * Trailing breathing room at the end of a scrollable screen.
+     * Trailing room at the end of a scrollable screen: breathing space, plus the floating
+     * navigation bar's height on the tab screens that show it.
      *
-     * Deliberately small: the navigation shell insets the whole NavHost by the height of the bar
-     * and its raised action, so screens no longer guess at it. Content padding alone could never
-     * solve the overlap anyway - it only adds scroll room at the end, so a short screen still had
-     * the floating action sitting on top of it.
+     * The bar floats over the content, so content scrolls on underneath it rather than stopping at a
+     * solid strip; this padding is what lets the last item still scroll clear of the pill. The bar's
+     * height is measured by the navigation shell and published through [LocalBottomBarInset],
+     * because it depends on the gesture-navigation inset, which varies by device.
      */
-    val navBarClearance = 24.dp
+    val navBarClearance: Dp
+        @Composable @ReadOnlyComposable get() = 24.dp + LocalBottomBarInset.current
 }
 
 /**

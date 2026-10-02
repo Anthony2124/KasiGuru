@@ -25,7 +25,7 @@ fun RewardCelebrationDialog(reward: RewardCelebrationEntity,onDismiss: () -> Uni
                 LazyColumn(Modifier.heightIn(max = 320.dp)) {
                     items(badges,key = { it.first.id }) { (family,tier) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            BadgeTierIcon(Modifier.size(64.dp))
+                            StandardBadgeMedal(tier = tier, earned = true, size = 64.dp, familyId = family.id)
                             Column {
                                 Text(family.name,style = MaterialTheme.typography.titleMedium)
                                 Text(tier.label)

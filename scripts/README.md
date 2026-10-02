@@ -23,6 +23,34 @@ paths and local JavaScript imports without running maintenance scripts.
 may report existing corpus defects. It defaults to the corresponding workbook
 names in the current user's Downloads directory.
 
+## Badge artwork
+
+The user-authored six-tier boards live in `design/assets/badges/source/`, one
+per badge family. To cut them into the 60 transparent tier images in
+`app/src/main/res/drawable-nodpi/badge_<family>_<tier>.webp`, run:
+
+```powershell
+python scripts/generate-badge-art.py --preview
+```
+
+This requires numpy, scipy and Pillow. `--preview` also writes a dark and light
+contact sheet to `build/badge-preview.png`; check it before committing. The
+board-to-family mapping is at the top of the script, and
+`ui/components/BadgeArt.kt` names each drawable so release shrinking keeps it.
+
+## Dictionary category icons
+
+The user-authored category icons live in `design/assets/categories/source/`.
+To cut them into `app/src/main/res/drawable-nodpi/category_<slug>.webp`, run:
+
+```powershell
+python scripts/generate-category-icons.py --preview
+```
+
+This requires numpy, scipy and Pillow. The slug-to-image mapping is at the top
+of the script; `ui/theme/CategoryMetaData.kt` names each drawable.
+`category_general` is the fallback for any category the registry does not know.
+
 ## Launcher artwork
 
 The user-authored icon source is `design/assets/app-icon.png`. To export all

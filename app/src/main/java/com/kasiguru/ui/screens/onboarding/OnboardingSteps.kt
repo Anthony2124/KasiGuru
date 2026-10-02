@@ -1,6 +1,7 @@
 package com.kasiguru.ui.screens.onboarding
 
 import com.kasiguru.ui.components.KasiGuruTextField
+import com.kasiguru.ui.components.StandardBadgeMedal
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -61,6 +62,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.kasiguru.domain.gamification.BadgeCatalog
+import com.kasiguru.domain.gamification.BadgeTier
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepAvatar
 import com.kasiguru.ui.components.brand.JepjepAvatarPicker
@@ -69,13 +72,13 @@ import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.brand.KasiGuruWordmark
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
-import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.ui.theme.BorderHairline
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.theme.LimeText
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.KasiguraninHeadword
 import com.kasiguru.ui.theme.Lime
@@ -90,12 +93,6 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
-import com.kasiguru.ui.theme.TierBronze
-import com.kasiguru.ui.theme.TierBronzeDeep
-import com.kasiguru.ui.theme.TierGold
-import com.kasiguru.ui.theme.TierGoldDeep
-import com.kasiguru.ui.theme.TierSilver
-import com.kasiguru.ui.theme.TierSilverDeep
 import com.kasiguru.ui.theme.motionTween
 
 /** Longest display name the field accepts: room for a full name, short enough for a leaderboard row. */
@@ -953,31 +950,22 @@ internal fun AvatarStep(
 // 15 · Badges
 // ─────────────────────────────────────────────────────────────────────────────
 
-private enum class BadgeTier(val label: String, val face: Color, val lip: Color) {
-    Bronze("Bronze", TierBronze, TierBronzeDeep),
-    Silver("Silver", TierSilver, TierSilverDeep),
-    Gold("Gold", TierGold, TierGoldDeep)
-}
-
-/** A real seeded achievement: name, description and tier exactly as `DatabaseSeeder` has them. */
-private data class BadgePreview(
-    val name: String,
-    val condition: String,
-    val tier: BadgeTier,
-    @DrawableRes val iconRes: Int
-)
+/** One badge on the onboarding wall: the family, the tier shown, and what earning that tier takes. */
+private data class BadgePreview(val familyId: String, val tier: BadgeTier, val condition: (Int) -> String)
 
 /**
- * One badge from each family a new learner meets first (words, streaks, stories, levels), across the
- * three tiers. Copied from `DatabaseSeeder.getInitialAchievements()`; if those change, change these.
+ * Six of the eleven families, one at each tier from Beginner to Legend, so the wall shows the
+ * whole ladder a badge climbs as well as the range of things that earn one: words, streaks,
+ * stories, lessons, games and level. Thresholds are read from [BadgeCatalog], so they cannot drift.
  */
-private val badgePreviews: List<BadgePreview>
-    get() = listOf(
-        BadgePreview("Limampûng Salitâ", "Learn 50 Kasiguranin words", BadgeTier.Bronze, Iconsax.BookBold),
-        BadgePreview("Isáng Linggo", "Maintain a 7-day learning streak", BadgeTier.Bronze, Iconsax.FlashBold),
-        BadgePreview("Tagapagsalaysay", "Complete 3 stories", BadgeTier.Silver, Iconsax.Document),
-        BadgePreview("Mæstro", "Reach Level 10 — Master of Kasiguranin!", BadgeTier.Gold, Iconsax.MedalStarBold)
-    )
+private val badgePreviews = listOf(
+    BadgePreview("word_explorer", BadgeTier.BEGINNER) { n -> if (n == 1) "Master your first word" else "Master $n words" },
+    BadgePreview("consistent_learner", BadgeTier.LEARNER) { n -> "Keep a $n-day streak" },
+    BadgePreview("story_reader", BadgeTier.ACHIEVER) { n -> "Read $n stories" },
+    BadgePreview("lesson_pathfinder", BadgeTier.EXPERT) { n -> "Finish $n lessons" },
+    BadgePreview("precision_player", BadgeTier.MASTER) { n -> "Play $n perfect levels" },
+    BadgePreview("journey_rank", BadgeTier.LEGEND) { n -> "Reach level $n" }
+)
 
 @Composable
 internal fun BadgesStep() {
@@ -987,18 +975,18 @@ internal fun BadgesStep() {
     )
     Spacer(Modifier.height(Space.xs))
     StepBody(
-        text = highlighted("Learn words, keep your streak and read stories to unlock them."),
+        text = highlighted("Every badge climbs six tiers, from Beginner to Legend. Learn, read and play to rise."),
         modifier = Modifier.readable()
     )
     Spacer(Modifier.height(Space.lg))
     Column(
         modifier = Modifier.readable(),
-        verticalArrangement = Arrangement.spacedBy(Space.sm)
+        verticalArrangement = Arrangement.spacedBy(Space.xs)
     ) {
-        badgePreviews.chunked(2).forEach { row ->
+        badgePreviews.chunked(3).forEach { row ->
             Row(
                 modifier = Modifier.height(IntrinsicSize.Min),
-                horizontalArrangement = Arrangement.spacedBy(Space.sm)
+                horizontalArrangement = Arrangement.spacedBy(Space.xs)
             ) {
                 row.forEach { badge ->
                     BadgeTile(
@@ -1013,44 +1001,39 @@ internal fun BadgesStep() {
     }
 }
 
-/** A medal in its tier's colour, with the tier named in text so the colour is never the only clue. */
+/** The tier's artwork, the family, what it takes, and the tier named in text, never by frame alone. */
 @Composable
 private fun BadgeTile(badge: BadgePreview, modifier: Modifier = Modifier) {
+    val family = BadgeCatalog.families.first { it.id == badge.familyId }
     Column(
         modifier = modifier
             .clip(Shapes.tile)
             .background(Surface)
             .border(1.dp, BorderHairline, Shapes.tile)
-            .padding(Space.md),
+            .padding(horizontal = Space.xs, vertical = Space.sm),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ClayCircle(size = 56.dp, face = badge.tier.face, lipColor = badge.tier.lip) {
-            Icon(
-                painter = painterResource(id = badge.iconRes),
-                contentDescription = null,
-                tint = RewardInk,
-                modifier = Modifier.size(26.dp)
-            )
-        }
-        Spacer(Modifier.height(Space.sm))
+        StandardBadgeMedal(tier = badge.tier, earned = true, size = 72.dp, familyId = family.id)
+        Spacer(Modifier.height(Space.xs))
         Text(
-            text = badge.name,
-            style = MaterialTheme.typography.titleMedium,
+            text = family.name,
+            style = MaterialTheme.typography.titleSmall,
             color = Ink,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(Space.xxs))
         Text(
-            text = badge.condition,
+            text = badge.condition(family.thresholds[badge.tier.ordinal]),
             style = MaterialTheme.typography.bodySmall,
             color = Muted,
             textAlign = TextAlign.Center
         )
+        Spacer(Modifier.weight(1f))
         Spacer(Modifier.height(Space.xs))
         Text(
             text = badge.tier.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = badge.tier.face,
+            style = MaterialTheme.typography.labelMedium,
+            color = LimeText,
             textAlign = TextAlign.Center
         )
     }

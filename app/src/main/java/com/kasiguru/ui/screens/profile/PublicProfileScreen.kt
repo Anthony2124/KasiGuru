@@ -106,7 +106,7 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
                 SectionHeading("Showcase")
                 Row(Modifier.fillMaxWidth().padding(top = Space.sm), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
                     state.showcase.forEach { badge -> Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), true)
+                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), true, familyId = BadgeCatalog.familyFor(badge.id)?.id)
                         Text(badge.name, color = Ink, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
                         Text(BadgeCatalog.tierFor(badge.id)?.label.orEmpty(), color = Muted, style = MaterialTheme.typography.labelSmall)
                     } }
@@ -132,7 +132,7 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
             items(BadgeCatalog.rows().chunked(3)) { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
                     row.forEach { badge -> Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), badge.id in profile.badgeIds)
+                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), badge.id in profile.badgeIds, familyId = BadgeCatalog.familyFor(badge.id)?.id)
                         Text(badge.name, color = Ink, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
                         Text(BadgeCatalog.tierFor(badge.id)?.label.orEmpty(), color = Muted, style = MaterialTheme.typography.labelSmall)
                     } }

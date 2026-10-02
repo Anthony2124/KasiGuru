@@ -136,6 +136,16 @@ fun CategoryDetailScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Space.sm)
             ) {
+                // The category's illustration, the same one its tile in the dictionary carries.
+                meta.customDrawableRes?.let { art ->
+                    item(key = "category-art") {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(id = art),
+                            contentDescription = null,
+                            modifier = Modifier.size(88.dp)
+                        )
+                    }
+                }
                 item {
                     GroundTitleBlock(
                         title = meta.name,

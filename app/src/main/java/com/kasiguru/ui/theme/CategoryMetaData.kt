@@ -21,6 +21,7 @@ enum class BentoSpan {
 data class CategoryMetaData(
     val name: String,
     val iconRes: Int,
+    /** The category's illustrated icon, from design/assets/categories/ via scripts/generate-category-icons.py. */
     val customDrawableRes: Int? = null,
     val startColor: Color,
     val endColor: Color,
@@ -40,6 +41,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Greetings & Essentials",
             iconRes = Iconsax.BookBold,
+            customDrawableRes = R.drawable.category_greetings,
             startColor = FixedForest,
             endColor = FixedForestDeep,
             description = "Hellos, politeness, questions & basic phrases",
@@ -48,6 +50,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Food & Dining",
             iconRes = Iconsax.VolumeHighBold,
+            customDrawableRes = R.drawable.category_food,
             startColor = Gold,
             endColor = GoldDeep,
             description = "Rice, fruits, dishes, drinks & cooking",
@@ -56,6 +59,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Animals & Wildlife",
             iconRes = Iconsax.FlashBold,
+            customDrawableRes = R.drawable.category_animals,
             startColor = Coral,
             endColor = CoralDeep,
             description = "Carabao, birds, dogs, fish & forest life",
@@ -64,6 +68,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Body Parts & Health",
             iconRes = Iconsax.ProfileBold,
+            customDrawableRes = R.drawable.category_health,
             startColor = FixedForest,
             endColor = FixedForestDeep,
             description = "Anatomy, head, limbs, face & senses",
@@ -72,6 +77,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Numbers & Time",
             iconRes = Iconsax.Calendar,
+            customDrawableRes = R.drawable.category_numbers,
             startColor = Gold,
             endColor = GoldDeep,
             description = "Counting 1-10, days, times of day & seasons",
@@ -80,6 +86,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Weather & Climate",
             iconRes = Iconsax.Global,
+            customDrawableRes = R.drawable.category_weather,
             startColor = Coral,
             endColor = CoralDeep,
             description = "Rain, wind, sun, clouds & temperature",
@@ -88,6 +95,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Emotions & Feelings",
             iconRes = Iconsax.StarBold,
+            customDrawableRes = R.drawable.category_emotions,
             startColor = Coral,
             endColor = CoralDeep,
             description = "Happy, angry, sad, afraid & love",
@@ -96,6 +104,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "House & Daily Life",
             iconRes = Iconsax.HomeBold,
+            customDrawableRes = R.drawable.category_house,
             startColor = Gold,
             endColor = GoldDeep,
             description = "Home objects, clothing, tools & routines",
@@ -104,6 +113,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Nature & Environment",
             iconRes = Iconsax.Teacher,
+            customDrawableRes = R.drawable.category_nature,
             startColor = FixedForest,
             endColor = FixedForestDeep,
             description = "Ocean, rivers, mountains, soil & plants",
@@ -112,6 +122,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Family & People",
             iconRes = Iconsax.People,
+            customDrawableRes = R.drawable.category_family,
             startColor = FixedForest,
             endColor = FixedForestDeep,
             description = "Parents, siblings, children & community",
@@ -120,6 +131,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Colors & Shapes",
             iconRes = Iconsax.Element4Bold,
+            customDrawableRes = R.drawable.category_colors,
             startColor = Coral,
             endColor = CoralDeep,
             description = "Black, white, red, round, sharp & flat",
@@ -128,6 +140,7 @@ object CategoryRegistry {
         CategoryMetaData(
             name = "Occupations & Tools",
             iconRes = Iconsax.SettingBold,
+            customDrawableRes = R.drawable.category_occupations,
             startColor = Gold,
             endColor = GoldDeep,
             description = "Adze, grater, arrow, farming & crafts",
@@ -140,6 +153,7 @@ object CategoryRegistry {
             ?: CategoryMetaData(
                 name = categoryName,
                 iconRes = Iconsax.BookBold,
+                customDrawableRes = R.drawable.category_general,
                 startColor = FixedForest,
                 endColor = FixedForestDeep,
                 description = "Kasiguranin vocabulary",

@@ -226,15 +226,11 @@ fun HomeScreen(
             }
         }
         // Notices last, one line each: they are news, not the day's work.
-        val optionalUpdate = uiState.updateRelease?.takeIf { !it.forceUpdate }
-        if (optionalUpdate != null || uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
+        if (uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
             Spacer(Modifier.height(Space.xl))
             SectionHeading(text = "News")
             Spacer(Modifier.height(Space.sm))
             Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                optionalUpdate?.let { release ->
-                    AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
-                }
                 uiState.announcements.forEach { announcement ->
                     AnnouncementBanner(announcement = announcement, collapsed = true)
                 }
@@ -258,8 +254,10 @@ fun HomeScreen(
             .padding(horizontal = Space.gutter)
             .padding(top = Space.sm, bottom = Space.navBarClearance)
     ) {
-        // A forced update outranks everything else on the screen; an optional one waits below the work.
-        uiState.updateRelease?.takeIf { it.forceUpdate }?.let { release ->
+        // An update leads Home until it is installed or put off with "Later": at the bottom, under
+        // News, learners scrolled past it and stayed on old builds. An optional one keeps its
+        // Download button quiet, so Continue below is still the lime thing to do; a forced one is lime.
+        uiState.updateRelease?.let { release ->
             AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
             Spacer(Modifier.height(Space.md))
         }

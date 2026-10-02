@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.kasiguru.ui.components.StandardBadgeMedal
 import com.kasiguru.data.repository.DailyStreakQuota
 import com.kasiguru.domain.gamification.*
 import com.kasiguru.ui.components.KasiGuruProgressBar
@@ -285,26 +285,8 @@ private fun MilestoneRow(days: Int, tier: BadgeTier, longest: Int, isNext: Boole
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         // The ladder's rail: a dot per rung joined by a line, lime up to what has been earned.
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(40.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            earned -> Coral.copy(alpha = .22f)
-                            else -> SurfaceSunken
-                        }
-                    )
-                    .border(if (isNext) 2.dp else 1.dp, if (isNext) Coral else BorderHairline, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painterResource(if (earned) Iconsax.MedalStar else Iconsax.Lock),
-                    contentDescription = if (earned) "Earned" else "Locked",
-                    tint = if (earned) CoralText else Faint,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            // The rung's own Consistent Learner art: in colour once earned, greyed under a lock until then.
+            StandardBadgeMedal(tier = tier, earned = earned, size = 40.dp, familyId = "consistent_learner")
             if (!isLast) {
                 Box(
                     Modifier

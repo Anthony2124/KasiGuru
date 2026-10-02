@@ -56,12 +56,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.domain.gamification.BadgeCatalog
 import com.kasiguru.ui.components.KasiGuruProgressBar
+import com.kasiguru.ui.components.StandardBadgeMedal
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepAvatar
 import com.kasiguru.ui.components.brand.JepjepAvatarPortrait
 import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.ClayButton
-import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
@@ -75,20 +75,14 @@ import com.kasiguru.ui.theme.BrandLime
 import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Faint
 import com.kasiguru.ui.theme.Gold
-import com.kasiguru.ui.theme.GoldDeep
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Surface
-import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.TierBronze
-import com.kasiguru.ui.theme.TierBronzeDeep
-import com.kasiguru.ui.theme.TierSilver
-import com.kasiguru.ui.theme.TierSilverDeep
 import com.kasiguru.ui.theme.Touch
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
@@ -550,19 +544,12 @@ private fun BadgesSection(
                             .width(76.dp)
                             .clickable(onClick = onSeeAll)
                     ) {
-                        val (face, lip) = when (badge.tier) {
-                            "silver" -> TierSilver to TierSilverDeep
-                            "bronze" -> TierBronze to TierBronzeDeep
-                            else -> Gold to GoldDeep
-                        }
-                        ClayCircle(face = face, lipColor = lip, size = 56.dp) {
-                            Icon(
-                                painter = painterResource(id = Iconsax.MedalStar),
-                                contentDescription = null,
-                                tint = RewardInk,
-                                modifier = Modifier.size(26.dp).align(Alignment.Center)
-                            )
-                        }
+                        StandardBadgeMedal(
+                            tier = BadgeCatalog.tierFor(badge.id),
+                            earned = true,
+                            size = 56.dp,
+                            familyId = BadgeCatalog.familyFor(badge.id)?.id
+                        )
                         Spacer(Modifier.height(Space.xs))
                         Text(
                             text = badge.name,

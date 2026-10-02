@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Ground
+import com.kasiguru.ui.theme.LocalBottomBarInset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -233,21 +234,21 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     Box(
         modifier = Modifier.fillMaxSize().background(Ground)
     ) {
-        // The navigation cluster measures itself and insets the host by exactly its own height.
-        //
-        // Insetting is what actually prevents overlap: content padding inside a screen only adds
-        // scroll room at the end, so a short screen still had the raised action sitting on top of it.
-        // The height is measured rather than hardcoded because it depends on the gesture-navigation
-        // inset, which varies by device and by whether three-button navigation is in use.
+        // The navigation bar floats over the screens instead of insetting them. Insetting the host by
+        // the bar's height left a solid strip of ground behind the pill, so content stopped short of
+        // a block rather than passing under a floating bar. Screens scroll on underneath it, and
+        // Space.navBarClearance adds the bar's measured height to their end padding so the last item
+        // still clears it. Measured, not hardcoded: it depends on the gesture-navigation inset, which
+        // varies by device and by whether three-button navigation is in use.
         var navClusterHeight by remember { mutableStateOf(0.dp) }
         val density = LocalDensity.current
 
+        CompositionLocalProvider(LocalBottomBarInset provides if (showBottomBar) navClusterHeight else 0.dp) {
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = if (showBottomBar) navClusterHeight else 0.dp)
                 // While the tour is up, everything behind the dim is out of reach for a pointer, so
                 // it must be out of reach for TalkBack too - otherwise swipe traversal wanders
                 // through controls the learner cannot actually activate.
@@ -808,6 +809,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 }
             }
         } // end NavHost
+        }
 
         if (showBottomBar) {
             KasiGuruBottomBar(

@@ -4,7 +4,9 @@ import com.kasiguru.ui.theme.LimeText
 import com.kasiguru.ui.components.KasiGuruTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,11 +41,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +60,6 @@ import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.brand.JepjepPose
 import com.kasiguru.ui.components.clay.GroundIconButton
 import com.kasiguru.ui.components.clay.GroundPattern
-import com.kasiguru.ui.components.categoryDoodle
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SectionHeading
@@ -65,13 +70,9 @@ import com.kasiguru.ui.theme.BorderHairline
 import com.kasiguru.ui.theme.BrandLime
 import com.kasiguru.ui.theme.CategoryMetaData
 import com.kasiguru.ui.theme.CategoryRegistry
-import com.kasiguru.ui.theme.Coral
 import com.kasiguru.ui.theme.Faint
-import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Info
-import com.kasiguru.ui.theme.CoralText
-import com.kasiguru.ui.theme.GoldText
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.KasiguraninHeadword
 import com.kasiguru.ui.theme.Lime
@@ -145,13 +146,6 @@ fun DictionaryRefreshAction(isSyncing: Boolean, onRefresh: () -> Unit) {
 }
 
 /**
- * Status hues the category tiles cycle through, so neighbouring tiles differ without new colours. The
- * text variants: the same bright hues on night, deepened on the light theme so a doodle on its pale
- * tint still reads.
- */
-private val CategoryAccents: List<Color> @Composable get() = listOf(LimeText, Info, GoldText, CoralText)
-
-/**
  * The dictionary's body: one search field, the word of the day, Add a word, and the categories.
  *
  * Carries no bar or back button of its own, so it can sit under [VocabularyScreen]'s bar or inside
@@ -177,7 +171,13 @@ fun DictionaryContent(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayerManager(context) }
-    val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
+    // Categories are the grid's only cells (every other item spans the full width): three to a row on a
+    // phone, so all twelve fit in four rows; more on wider screens.
+    val columns = when (rememberWidthClass()) {
+        WidthClass.COMPACT -> 3
+        WidthClass.MEDIUM -> 4
+        WidthClass.EXPANDED -> 6
+    }
     val gridState = rememberLazyGridState()
 
     DisposableEffect(Unit) {
@@ -245,7 +245,7 @@ fun DictionaryContent(
             start = Space.gutter, end = Space.gutter, top = Space.xs, bottom = Space.navBarClearance
         ),
         horizontalArrangement = Arrangement.spacedBy(Space.sm),
-        verticalArrangement = Arrangement.spacedBy(Space.sm)
+        verticalArrangement = Arrangement.spacedBy(Space.md)
     ) {
         if (header != null) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "header") { header() }
@@ -320,12 +320,11 @@ fun DictionaryContent(
             item(span = { GridItemSpan(maxLineSpan) }, key = "categories-heading") {
                 SectionHeading(text = "Categories", modifier = Modifier.padding(top = Space.sm))
             }
-            itemsIndexed(matchingCategories, key = { _, meta -> "category-${meta.name}" }) { _, meta ->
+            items(matchingCategories, key = { meta -> "category-${meta.name}" }) { meta ->
                 val stats = uiState.categoryStats[meta.name] ?: CategoryProgressStats()
                 CategoryTile(
                     meta = meta,
                     stats = stats,
-                    accent = CategoryAccents[allCategoryMeta.indexOf(meta).coerceAtLeast(0) % CategoryAccents.size],
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onNavigateToCategory(meta.name)
@@ -479,71 +478,88 @@ private fun WordOfTheDayCard(
     }
 }
 
-/** A category: its icon on a tinted tile, its name, and how much of it is learned, in words and a bar. */
+/**
+ * A category as the user's illustration on a white tile, with its short name, size and progress under
+ * it. No card around the cell: twelve bordered boxes in a column was the page-of-cards this grid
+ * replaces, and the icons are distinct enough to carry each topic on their own.
+ *
+ * The visible name drops the "& ..." half ("Body Parts & Health" reads "Body Parts") so three fit to a
+ * row; TalkBack still hears the full name and the counts as one item.
+ */
 @Composable
 private fun CategoryTile(
     meta: CategoryMetaData,
     stats: CategoryProgressStats,
-    accent: Color,
     onClick: () -> Unit
 ) {
     val fraction = if (stats.totalWords > 0) stats.learnedWords.toFloat() / stats.totalWords else 0f
-    SoftCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = Shapes.tile,
-        border = BorderHairline,
-        onClick = onClick,
-        contentPadding = PaddingValues(Space.md)
+    val shortName = meta.name.substringBefore(" &")
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(Shapes.tile)
+            .clickable(onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = "${meta.name}, ${stats.totalWords} words, ${stats.learnedWords} learned"
+                role = Role.Button
+                onClick { onClick(); true }
+            }
+            .padding(bottom = Space.xxs),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(44.dp).clip(Shapes.chip).background(accent.copy(alpha = 0.16f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(Shapes.tile)
+                .background(Surface)
+                .border(1.dp, BorderHairline, Shapes.tile),
             contentAlignment = Alignment.Center
         ) {
-            if (meta.customDrawableRes != null) {
+            val art = meta.customDrawableRes
+            if (art != null) {
                 androidx.compose.foundation.Image(
-                    painter = painterResource(id = meta.customDrawableRes),
+                    painter = painterResource(id = art),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.fillMaxSize(0.72f)
                 )
             } else {
-                // The hand-drawn doodle for the category, the same one its flashcards carry.
                 Icon(
-                    painter = painterResource(id = categoryDoodle(meta.name)),
+                    painter = painterResource(id = meta.iconRes),
                     contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(26.dp)
+                    tint = LimeText,
+                    modifier = Modifier.fillMaxSize(0.4f)
                 )
             }
         }
-        Spacer(Modifier.height(Space.sm))
+        Spacer(Modifier.height(Space.xs))
         Text(
-            text = meta.name,
+            text = shortName,
             style = MaterialTheme.typography.titleSmall,
             color = Ink,
-            maxLines = 2,
-            minLines = 2,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(Space.xxs))
         Text(
-            text = "${stats.totalWords} words · ${stats.learnedWords} learned",
-            style = MaterialTheme.typography.bodySmall,
+            text = if (stats.learnedWords > 0) "${stats.learnedWords} of ${stats.totalWords}" else "${stats.totalWords} words",
+            style = MaterialTheme.typography.labelSmall,
             color = Muted,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(Space.xs))
+        Spacer(Modifier.height(Space.xxs))
         Box(
             Modifier
-                .fillMaxWidth()
-                .height(4.dp)
+                .fillMaxWidth(0.6f)
+                .height(3.dp)
                 .clip(Shapes.pill)
                 .background(TrackNeutral)
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                    .height(4.dp)
+                    .height(3.dp)
                     .clip(Shapes.pill)
                     .background(BrandLime)
             )
