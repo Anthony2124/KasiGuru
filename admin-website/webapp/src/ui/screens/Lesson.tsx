@@ -271,8 +271,10 @@ function Answers({ ex, selected, answered, onSelect, onSubmit }: { ex: Exercise;
   }
   if (ex.type === 'sentence') return <SentenceBuilder ex={ex} enabled={!answered} onChange={onSelect} />;
   if (ex.type === 'match') return <MatchBoard ex={ex} enabled={!answered} onSolved={() => onSelect(ex.answer)} />;
+  // Short options sit two to a row where there is room (a computer; see .options-2).
+  const short = ex.options.length >= 2 && ex.options.length <= 4 && ex.options.every((o) => o.length <= 24);
   return (
-    <div class="stack-sm" role="radiogroup">
+    <div class={short ? 'stack-sm options-2' : 'stack-sm'} role="radiogroup">
       {ex.options.map((o) => {
         const isSel = selected === o;
         const cls = answered ? (o === ex.answer ? 'correct' : isSel ? 'wrong' : 'dim') : isSel ? 'selected' : '';

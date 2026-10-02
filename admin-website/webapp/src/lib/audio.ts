@@ -197,8 +197,15 @@ export function feedbackTone(correct: boolean) {
   osc.stop(now + 0.3);
 }
 
-/** Whether this browser can vibrate (Android Chrome can; iOS Safari cannot). */
-export const canVibrate = () => typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+/**
+ * Whether this device can vibrate: Android phones can; iPhones cannot; a computer's browser may
+ * offer the call but has nothing to buzz, hence the touch check.
+ */
+export const canVibrate = () =>
+  typeof navigator !== 'undefined' &&
+  typeof navigator.vibrate === 'function' &&
+  typeof matchMedia === 'function' &&
+  matchMedia('(pointer: coarse)').matches;
 
 /** A short buzz for an answer, as the lesson player's haptics on Android. */
 export function answerHaptic(correct: boolean) {

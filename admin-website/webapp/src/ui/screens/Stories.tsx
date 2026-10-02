@@ -144,14 +144,16 @@ export function StoryReaderScreen({ id }: { id: number }) {
   };
 
   return (
-    <GroundScaffold title={story.titleKasiguranin || story.title}>
-      <div class="readable stack" style={{ paddingBottom: 96 }}>
+    <GroundScaffold title={story.titleKasiguranin || story.title} wide>
+      {/* One column on a phone; on a computer the picture sits beside the words. */}
+      <div class="readable stack story-page" style={{ paddingBottom: 96 }}>
         <ProgressBar value={(index + 1) / pages.length} label="Story progress" />
         <div class="story-art">
           <img src={image ?? sceneUrl(sceneForIndex(id))} alt={image ? page.illustrationDesc || '' : ''} />
           {!image && page.illustrationDesc && <p class="t-body-s">{page.illustrationDesc}</p>}
         </div>
 
+        <div class="stack">
         {page.kasiguranin?.trim() && (
           <section class="stack-sm">
             <div class="story-chips">
@@ -181,6 +183,7 @@ export function StoryReaderScreen({ id }: { id: number }) {
           <p class="t-label muted">English</p>
           <p class="t-body-l">{page.english}</p>
         </section>
+        </div>
       </div>
 
       <nav class="story-bar" aria-label="Pages">

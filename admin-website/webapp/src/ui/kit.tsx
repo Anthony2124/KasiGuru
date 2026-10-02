@@ -152,9 +152,11 @@ export function GroundScaffold({
     document.title = title === 'KasiGuru' ? 'KasiGuru' : `${title} · KasiGuru`;
   }, [title]);
   const showBack = onBack !== false;
+  // Tab screens and content-heavy screens use the wider column on a computer (see .wide in CSS).
+  const isWide = wide || nav;
   return (
     <>
-      <header class={`topbar${scrolled ? ' scrolled' : ''}`}>
+      <header class={`topbar${scrolled ? ' scrolled' : ''}${isWide ? ' wide' : ''}`}>
         <div class="topbar-inner">
           {showBack ? (
             <button class="icon-btn" onClick={() => (onBack ? onBack() : back())} aria-label={backLabel}>
@@ -169,7 +171,7 @@ export function GroundScaffold({
           {actions}
         </div>
       </header>
-      <main class={`page${nav ? '' : ' no-nav'}${wide ? ' wide' : ''}`} style={{ paddingTop: 'var(--s-xs)' }}>
+      <main class={`page${nav ? '' : ' no-nav'}${isWide ? ' wide' : ''}`} style={{ paddingTop: 'var(--s-xs)' }}>
         {largeTitle && (
           <div style={{ marginBottom: 'var(--s-md)' }}>
             <h2 class="t-headline">{title}</h2>

@@ -3,9 +3,9 @@
  * screens on top, the app-wide celebrations (level up, streak), and the suspension gate.
  */
 import { useEffect } from 'preact/hooks';
-import { dismissCelebration, useApp } from './lib/store';
+import { dismissCelebration, useApp, useProgress } from './lib/store';
 import { match, navigate, switchTab, useLocation } from './lib/router';
-import { ClayButton, Confetti, Dialog, Icon, Loading, ToastHost } from './ui/kit';
+import { Avatar, ClayButton, Confetti, Dialog, Icon, Loading, ToastHost, Wordmark } from './ui/kit';
 import { RewardDialog } from './ui/badges';
 import type { IconName } from './ui/icons.generated';
 import { HomeScreen } from './ui/screens/Home';
@@ -56,6 +56,57 @@ function BottomNav({ path }: { path: string }) {
           </button>
         ))}
       </div>
+    </nav>
+  );
+}
+
+/**
+ * Screens that take the whole window on a computer: a lesson, a game round, the review deck, the
+ * story reader and onboarding. Everything else keeps the sidebar.
+ */
+const isFocusRoute = (path: string) =>
+  /^\/(lesson|story)\//.test(path) ||
+  path === '/review' ||
+  path === '/onboarding' ||
+  /^\/games\/(word_match|word_wheel)\/\d+/.test(path) ||
+  /^\/games\/word_search\/[^/]+\/\d+/.test(path);
+
+/** The tab a pushed screen belongs to, so the sidebar keeps showing where you are. */
+function tabFor(path: string): string {
+  if (TABS.some((t) => t.path === path)) return path;
+  if (/^\/(games|leaderboard)/.test(path)) return '/practice';
+  if (/^\/(word|category|stories)/.test(path)) return '/library';
+  if (path === '/streak') return '/';
+  return '/me';
+}
+
+/** The computer layout's navigation: wordmark, the five tabs, and you (wide screens only, see CSS). */
+function SideNav({ path }: { path: string }) {
+  const p = useProgress();
+  const current = tabFor(path);
+  return (
+    <nav class="side-nav" aria-label="Main">
+      <button class="side-brand" onClick={() => switchTab('/')} aria-label="KasiGuru home">
+        <Wordmark width={136} />
+      </button>
+      <div class="side-tabs">
+        {TABS.map((t) => (
+          <button key={t.path} class="side-tab" aria-current={current === t.path ? 'page' : undefined} onClick={() => switchTab(t.path)}>
+            <Icon name={t.icon} size={24} />
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
+      <button class="side-me" onClick={() => switchTab('/me')} aria-label={`Your profile, level ${p.level}, ${p.totalXp} XP, ${p.currentStreak} day streak`}>
+        <Avatar id={p.profileIconId} size={44} level={p.level} />
+        <span class="grow">
+          <span class="t-title-s side-name">{p.fullName || p.userName}</span>
+          <span class="row-xs t-label-s muted">
+            <Icon name="flash" size={14} color="var(--coral)" /> {p.currentStreak}
+            <Icon name="star" size={14} color="var(--gold)" /> {p.totalXp} XP
+          </span>
+        </span>
+      </button>
     </nav>
   );
 }
@@ -193,9 +244,11 @@ export function App() {
   }
   if (!screen) screen = <HomeScreen />;
   const isTab = TABS.some((t) => t.path === path) && onboarded;
+  const withSide = onboarded && !isFocusRoute(path);
 
   return (
-    <div class="app">
+    <div class={withSide ? 'app with-side' : 'app'}>
+      {withSide && <SideNav path={path} />}
       {!online && <div class="offline-pill">Offline — progress is saved on this device</div>}
       {screen}
       {isTab && <BottomNav path={path} />}

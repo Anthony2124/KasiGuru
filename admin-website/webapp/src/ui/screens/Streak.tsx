@@ -20,8 +20,9 @@ export function StreakScreen() {
   const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
 
   return (
-    <GroundScaffold title="Your streak">
-      <div class="stack-lg" style={{ background: 'linear-gradient(to bottom, rgba(255,159,28,.15), transparent 320px)', borderRadius: 'var(--r-panel)' }}>
+    <GroundScaffold title="Your streak" wide>
+      <div class="cols streak-panel" style={{ background: 'linear-gradient(to bottom, rgba(255,159,28,.15), transparent 320px)', borderRadius: 'var(--r-panel)' }}>
+        <div class="stack-lg">
         <section class="center stack-sm" style={{ paddingTop: 'var(--s-md)' }}>
           <div style={{ display: 'grid', placeItems: 'center' }}>
             <Icon name="flash" size={88} color="var(--coral)" />
@@ -40,6 +41,9 @@ export function StreakScreen() {
           </div>
         )}
 
+        </div>
+
+        <div class="stack-lg">
         <section class="stack-sm">
           <p class="t-title">{quota.isMet ? 'Today counts. Your streak is safe!' : 'Today'}</p>
           <QuotaList quota={quota} />
@@ -64,6 +68,7 @@ export function StreakScreen() {
         </section>
 
         <ClayButton label="Continue practising" onClick={() => switchTab('/')} />
+        </div>
       </div>
     </GroundScaffold>
   );

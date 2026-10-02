@@ -61,7 +61,7 @@ export function AchievementsScreen() {
   const open = families.find((f) => f.family.id === selected);
 
   return (
-    <GroundScaffold title="Badges" largeTitle subtitle="Your collection">
+    <GroundScaffold title="Badges" largeTitle subtitle="Your collection" wide>
       <div class="stack-lg">
         <div class="card panel stack-sm">
           <p class="t-headline-s">
@@ -119,7 +119,7 @@ export function AchievementsScreen() {
             )}
           </section>
         ) : (
-          <div class="list">
+          <div class="list cols-2">
             {families
               .filter((f) => filter === 'All' || f.family.section === filter)
               .map((f) => (
