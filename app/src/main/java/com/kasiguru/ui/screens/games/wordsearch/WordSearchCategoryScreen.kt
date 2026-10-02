@@ -47,6 +47,7 @@ import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Lime
+import com.kasiguru.util.pluralize
 
 /**
  * The question Word Search asks before it starts: which category? Every category keeps its own 30
@@ -101,9 +102,9 @@ private fun CategoryRow(row: WordSearchCategoryRow, onClick: () -> Unit) {
     val allCleared = row.levelsCleared >= WordSearchTier.MAX_LEVEL
     val status = when {
         !row.isPlayable -> "Not enough short words in this category yet"
-        allCleared -> "All ${WordSearchTier.MAX_LEVEL} levels cleared · ${row.starsEarned} stars"
+        allCleared -> "All ${WordSearchTier.MAX_LEVEL} levels cleared · ${pluralize(row.starsEarned, "star")}"
         row.levelsCleared == 0 -> "Start at level 1"
-        else -> "Level ${row.levelsCleared + 1} of ${WordSearchTier.MAX_LEVEL} · ${row.starsEarned} stars"
+        else -> "Level ${row.levelsCleared + 1} of ${WordSearchTier.MAX_LEVEL} · ${pluralize(row.starsEarned, "star")}"
     }
 
     SoftCard(

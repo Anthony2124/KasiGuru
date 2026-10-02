@@ -48,6 +48,7 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.LimeTint
+import com.kasiguru.util.pluralize
 
 /**
  * Level picker for one mini-game: 30 levels across three difficulty bands. A pushed subscreen (no
@@ -96,9 +97,9 @@ fun LevelSelectionScreen(
                             lead = {
                                 TagChip(
                                     label = if (wordSearchCategory != null) {
-                                        "${uiState.levels.sumOf { it.starsEarned }} stars in this category"
+                                        "${pluralize(uiState.levels.sumOf { it.starsEarned }, "star")} in this category"
                                     } else {
-                                        "${uiState.totalStars} stars earned"
+                                        "${pluralize(uiState.totalStars, "star")} earned"
                                     },
                                     tint = Gold,
                                     labelColor = RewardInk

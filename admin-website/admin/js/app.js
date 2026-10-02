@@ -1306,7 +1306,7 @@ window.exportAuditLogs = function() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  notify(`Exported ${targetLogs.length} audit logs (${rangeLabel}) as a readable report!`, "success");
+  notify(`Exported ${plural(targetLogs.length, 'audit log')} (${rangeLabel}) as a readable report!`, "success");
 };
 
 
@@ -1824,6 +1824,11 @@ function toMillis(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+/** A count with its noun, so a single one never reads "1 entries". */
+function plural(count, one, many = `${one}s`) {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
 function relativeTime(ms) {
   if (!ms) return 'date unknown';
   const diff = Date.now() - ms;
@@ -2007,7 +2012,7 @@ function renderOutcomeFigure(approved, pending, rejected) {
     <div class="donut-wrap">
       <div class="donut">
         <svg width="132" height="132" viewBox="0 0 132 132" role="img"
-             aria-label="Of ${total} submissions, ${approved} approved, ${pending} awaiting review, ${rejected} rejected.">
+             aria-label="Of ${plural(total, 'submission')}, ${approved} approved, ${pending} awaiting review, ${rejected} rejected.">
           <circle cx="66" cy="66" r="${R}" fill="none" stroke="var(--sunken)" stroke-width="20"></circle>
           ${arcs}
         </svg>
@@ -3007,7 +3012,7 @@ function handleSqlFile(file) {
       }
 
       if (fresh.length === 0) {
-        notify(`Nothing to import from "${file.name}" — all ${entries.length} entries are already in the dictionary.`, 'error');
+        notify(`Nothing to import from "${file.name}" — ${entries.length === 1 ? 'its one entry is' : `all ${entries.length} entries are`} already in the dictionary.`, 'error');
         return;
       }
 
@@ -3092,7 +3097,7 @@ function handleExcelFile(file) {
       }
 
       if (!(await confirmDialog({
-        title: `Import ${rawRows.length} rows?`,
+        title: `Import ${plural(rawRows.length, 'row')}?`,
         body: `Parsed from <strong>${escapeHtml(file.name)}</strong> into the vocabulary collection.`,
         confirmLabel: 'Import'
       }))) return;
@@ -3166,13 +3171,13 @@ function handleExcelFile(file) {
       }
 
       if (batches.length > 0) {
-        notify(`Importing ${count} new entries (skipping ${skipped} duplicates)...`, 'success');
+        notify(`Importing ${plural(count, 'new entry', 'new entries')} (skipping ${plural(skipped, 'duplicate')})...`, 'success');
         for (const batch of batches) {
           await batch.commit();
         }
-        notify(`Successfully imported ${count} new Kasiguranin entries! Skipped ${skipped} duplicates.`, 'success');
+        notify(`Successfully imported ${plural(count, 'new Kasiguranin entry', 'new Kasiguranin entries')}! Skipped ${plural(skipped, 'duplicate')}.`, 'success');
       } else {
-        notify(`No new entries to import. Skipped ${skipped} duplicates.`, 'success');
+        notify(`No new entries to import. Skipped ${plural(skipped, 'duplicate')}.`, 'success');
       }
     } catch (err) {
       console.error("Excel Parsing Error:", err);
@@ -5054,7 +5059,7 @@ window.resetModerationQueues = async function () {
         `<p>This permanently deletes <strong>${escapeHtml(breakdown)}</strong>.</p>` +
         `<p style="color:var(--status-rejected); margin-top:8px;">Approved words already merged into the dictionary are not affected. ` +
         `Pending and rejected items are gone for good. Export a backup first if you have not.</p>`,
-      confirmLabel: `Delete ${total} items`,
+      confirmLabel: `Delete ${plural(total, 'item')}`,
       danger: true
     });
     if (!confirmed) return;
@@ -5080,7 +5085,7 @@ window.resetModerationQueues = async function () {
     await logAudit('reset_moderation_queues', {
       counts: Object.fromEntries(QUEUES.map((n) => [n, snaps[n].length]))
     });
-    notify(`Cleared ${removed} items from the moderation queues.`, 'success');
+    notify(`Cleared ${plural(removed, 'item')} from the moderation queues.`, 'success');
   } catch (e) {
     console.error('Queue reset failed:', e);
     notify('Reset failed: ' + e.message, 'danger');
@@ -5203,10 +5208,10 @@ function initBackupRestore() {
       }
 
       const skippedNote = notRecreatable
-        ? ` ${notRecreatable} reviewed moderation item(s) no longer in Firestore could not be recreated from the browser; restore those from the operator's full backup (functions/restore_firestore.js).`
+        ? ` ${plural(notRecreatable, 'reviewed moderation item')} no longer in Firestore could not be recreated from the browser; restore those from the operator's full backup (functions/restore_firestore.js).`
         : '';
-      if (statusEl) statusEl.textContent = `Restore completed! Restored ${totalRestored} documents.${skippedNote}`;
-      notify(`Restored ${totalRestored} documents from backup.${skippedNote}`, notRecreatable ? "info" : "success");
+      if (statusEl) statusEl.textContent = `Restore completed! Restored ${plural(totalRestored, 'document')}.${skippedNote}`;
+      notify(`Restored ${plural(totalRestored, 'document')} from backup.${skippedNote}`, notRecreatable ? "info" : "success");
       logAudit("backup_restore", { totalRestored, notRecreatable });
 
     } catch (e) {

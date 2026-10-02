@@ -5,6 +5,8 @@
  * never rename one.
  */
 
+import { plural } from './plural';
+
 export const BADGE_PREFIX = 'badge:';
 
 export interface BadgeTier {
@@ -28,7 +30,9 @@ export interface BadgeFamily {
   id: string;
   name: string;
   metric: string;
+  /** What the metric counts, singular ("day"); `units` is its plural. */
   unit: string;
+  units: string;
   thresholds: readonly number[];
   section: BadgeSection;
   action: string;
@@ -43,21 +47,29 @@ const family = (
   thresholds: number[],
   section: BadgeSection,
   action: string,
-  bonus = true
-): BadgeFamily => ({ id, name, metric, unit, thresholds, section, action, bonus });
+  bonus = true,
+  units = `${unit}s`
+): BadgeFamily => ({ id, name, metric, unit, units, thresholds, section, action, bonus });
+
+/** A count in this family's unit: "1 day", "30 days". The level family reads as a rank: "Level 6". */
+export const badgeAmount = (f: BadgeFamily, n: number) => (f.metric === 'level' ? `Level ${n}` : plural(n, f.unit, f.units));
+
+/** How far toward `target`: "0 / 1 day", "12 / 30 days", "Level 3 of 6". */
+export const badgeProgress = (f: BadgeFamily, value: number, target: number) =>
+  f.metric === 'level' ? `Level ${value} of ${target}` : `${value} / ${badgeAmount(f, target)}`;
 
 /** Stable identities; thresholds count distinct evidence, never screen visits. */
 export const BADGE_FAMILIES: readonly BadgeFamily[] = [
-  family('word_explorer', 'Word Explorer', 'verifiedWords', 'words', [1, 10, 50, 150, 400, 800], 'Learning', 'Review words'),
-  family('lesson_pathfinder', 'Lesson Pathfinder', 'distinctLessons', 'lessons', [1, 5, 10, 30, 75, 150], 'Learning', 'Continue learning'),
-  family('review_keeper', 'Review Keeper', 'scheduledReviews', 'reviews', [10, 20, 100, 300, 1000, 3000], 'Learning', 'Review words'),
-  family('consistent_learner', 'Consistent Learner', 'streak', 'days', [1, 3, 7, 30, 90, 180], 'Practice', "View today's tasks"),
-  family('game_adventurer', 'Game Adventurer', 'distinctGameLevels', 'levels', [1, 5, 10, 50, 150, 400], 'Games', 'Play a game'),
-  family('precision_player', 'Precision Player', 'perfectLevels', 'perfect levels', [1, 3, 5, 20, 75, 150], 'Games', 'Play a game'),
-  family('mode_explorer', 'Mode Explorer', 'gameModesPlayed', 'modes', [1, 2, 3, 4, 6, 8], 'Games', 'Explore games'),
-  family('story_reader', 'Story Reader', 'storiesCompleted', 'stories', [1, 2, 3, 4, 7, 10], 'Learning', 'Read a story'),
-  family('category_scholar', 'Category Scholar', 'verifiedCategories', 'categories', [1, 2, 3, 6, 9, 12], 'Learning', 'Explore vocabulary'),
-  family('community_contributor', 'Community Contributor', 'submissionsApproved', 'approvals', [1, 3, 5, 10, 25, 50], 'Community', 'Contribute a word'),
+  family('word_explorer', 'Word Explorer', 'verifiedWords', 'word', [1, 10, 50, 150, 400, 800], 'Learning', 'Review words'),
+  family('lesson_pathfinder', 'Lesson Pathfinder', 'distinctLessons', 'lesson', [1, 5, 10, 30, 75, 150], 'Learning', 'Continue learning'),
+  family('review_keeper', 'Review Keeper', 'scheduledReviews', 'review', [10, 20, 100, 300, 1000, 3000], 'Learning', 'Review words'),
+  family('consistent_learner', 'Consistent Learner', 'streak', 'day', [1, 3, 7, 30, 90, 180], 'Practice', "View today's tasks"),
+  family('game_adventurer', 'Game Adventurer', 'distinctGameLevels', 'level', [1, 5, 10, 50, 150, 400], 'Games', 'Play a game'),
+  family('precision_player', 'Precision Player', 'perfectLevels', 'perfect level', [1, 3, 5, 20, 75, 150], 'Games', 'Play a game'),
+  family('mode_explorer', 'Mode Explorer', 'gameModesPlayed', 'mode', [1, 2, 3, 4, 6, 8], 'Games', 'Explore games'),
+  family('story_reader', 'Story Reader', 'storiesCompleted', 'story', [1, 2, 3, 4, 7, 10], 'Learning', 'Read a story', true, 'stories'),
+  family('category_scholar', 'Category Scholar', 'verifiedCategories', 'category', [1, 2, 3, 6, 9, 12], 'Learning', 'Explore vocabulary', true, 'categories'),
+  family('community_contributor', 'Community Contributor', 'submissionsApproved', 'approval', [1, 3, 5, 10, 25, 50], 'Community', 'Contribute a word'),
   family('journey_rank', 'Journey Rank', 'level', 'account level', [2, 3, 6, 10, 20, 30], 'Practice', 'Continue learning', false),
 ];
 

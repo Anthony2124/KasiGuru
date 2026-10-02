@@ -17,6 +17,8 @@ import { calculateLevel } from '../src/domain/constants';
 import { generateWordSearch } from '../src/domain/wordSearch';
 import { generateWordWheel } from '../src/domain/wordWheel';
 import { KotlinRandom } from '../src/domain/kotlinRandom';
+import { BADGE_FAMILIES, badgeAmount, badgeProgress } from '../src/domain/badges';
+import { plural } from '../src/domain/plural';
 
 const TODAY = '2026-09-30';
 const card = (o: Partial<WordState> = {}): WordState => ({ ...DEFAULT_WORD_STATE, ...o });
@@ -259,5 +261,20 @@ describe('KotlinRandom matches kotlin.random.Random (reference values from kotli
     for (let i = 0; i < 3; i++) out.push(r.nextIntUntil(8));
     out.push(new KotlinRandom(seed).shuffled(['A', 'B', 'C', 'D', 'E', 'F']).join(','));
     expect(out.join(' ')).toBe(want);
+  });
+});
+
+describe('counts read in the right number', () => {
+  const fam = (id: string) => BADGE_FAMILIES.find((f) => f.id === id)!;
+  it('one takes the singular', () => {
+    expect(plural(1, 'day')).toBe('1 day');
+    expect(plural(0, 'day')).toBe('0 days');
+    expect(plural(4, 'story', 'stories')).toBe('4 stories');
+  });
+  it('badge counts and progress agree with their number', () => {
+    expect(badgeAmount(fam('consistent_learner'), 1)).toBe('1 day');
+    expect(badgeAmount(fam('story_reader'), 1)).toBe('1 story');
+    expect(badgeProgress(fam('consistent_learner'), 0, 1)).toBe('0 / 1 day');
+    expect(badgeProgress(fam('journey_rank'), 3, 6)).toBe('Level 3 of 6');
   });
 });

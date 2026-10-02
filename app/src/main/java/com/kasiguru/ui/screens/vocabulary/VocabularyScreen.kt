@@ -89,6 +89,7 @@ import com.kasiguru.ui.tour.TourRevealInLazyGrid
 import com.kasiguru.ui.tour.tourAnchor
 import com.kasiguru.util.audio.AudioPlayerManager
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import com.kasiguru.util.pluralize
 
 /**
  * The dictionary as a screen of its own, pushed - from a notification, a help link or the guided
@@ -500,7 +501,7 @@ private fun CategoryTile(
             .clip(Shapes.tile)
             .clickable(onClick = onClick)
             .clearAndSetSemantics {
-                contentDescription = "${meta.name}, ${stats.totalWords} words, ${stats.learnedWords} learned"
+                contentDescription = "${meta.name}, ${pluralize(stats.totalWords, "word")}, ${stats.learnedWords} learned"
                 role = Role.Button
                 onClick { onClick(); true }
             }
@@ -542,7 +543,7 @@ private fun CategoryTile(
             textAlign = TextAlign.Center
         )
         Text(
-            text = if (stats.learnedWords > 0) "${stats.learnedWords} of ${stats.totalWords}" else "${stats.totalWords} words",
+            text = if (stats.learnedWords > 0) "${stats.learnedWords} of ${stats.totalWords}" else pluralize(stats.totalWords, "word"),
             style = MaterialTheme.typography.labelSmall,
             color = Muted,
             maxLines = 1,

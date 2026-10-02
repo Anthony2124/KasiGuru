@@ -6,12 +6,13 @@ import type { Corpus } from '../domain/corpus';
 import { daysBetween, epochDay, isoDate, now, today as todayIso } from '../domain/dates';
 import { dailyXpEarned, storyUnlocked } from '../domain/learner';
 import { nextLesson, sectionForUnit, wordsFor, type LessonRef } from '../domain/lesson';
+import { plural } from '../domain/plural';
 import { meaningFor } from '../domain/recall';
 import type { LearnerData } from '../domain/learner';
 import type { Story, UserProgress } from '../domain/types';
 import type { Pose } from './kit';
 
-export const wordsToReview = (n: number) => (n === 1 ? '1 word' : `${n} words`);
+export const wordsToReview = (n: number) => plural(n, 'word');
 
 /** Word of the day: seeded by the day, so it is the same for everyone and rotates tomorrow. */
 export function wordOfTheDay(corpus: Corpus) {
@@ -41,7 +42,7 @@ export function continueCard(corpus: Corpus, learner: LearnerData): ContinueCard
     heroMeaning: meaningFor(hero.kasiguranin, hero.tagalog, hero.english) ?? hero.english,
     sectionTitle: section?.title ?? ref.unitId,
     journeyLine: section?.journeyLine ?? '',
-    lessonLabel: `Lesson ${ref.lessonIndex + 1} · ${words.length} words`,
+    lessonLabel: `Lesson ${ref.lessonIndex + 1} · ${plural(words.length, 'word')}`,
     ref,
   };
 }
@@ -62,7 +63,7 @@ export function activities(corpus: Corpus, learner: LearnerData, stories: Story[
     out.push({
       kind: 'lesson',
       title: sectionForUnit(next.unitId)?.title ?? next.unitId,
-      subtitle: `Lesson ${next.lessonIndex + 1} · ${wordsFor(corpus, next).length} words`,
+      subtitle: `Lesson ${next.lessonIndex + 1} · ${plural(wordsFor(corpus, next).length, 'word')}`,
       isDone: false,
       ref: next,
     });

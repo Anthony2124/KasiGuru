@@ -3,6 +3,7 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CATEGORIES } from '../../domain/constants';
+import { plural } from '../../domain/plural';
 import { navigate } from '../../lib/router';
 import { useApp, useCorpus, useLearner } from '../../lib/store';
 import { EmptyState, GroundScaffold, Icon, Scene, SectionHeading, sceneForCategory } from '../kit';
@@ -107,7 +108,7 @@ function WordsTab() {
                   <Scene id={sceneForCategory(c)} height={112} radius="0" style={{ border: 0 }}>
                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'var(--s-sm)', textAlign: 'left' }}>
                       <p class="t-title">{c}</p>
-                      <p class="t-body-s muted">{words.length} words · {learned} learned</p>
+                      <p class="t-body-s muted">{plural(words.length, 'word')} · {learned} learned</p>
                     </div>
                   </Scene>
                 </button>

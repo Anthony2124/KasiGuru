@@ -252,7 +252,7 @@ private fun BadgeTile(family: FamilyProgress, pinned: Boolean, onClick: () -> Un
                     )
                     Spacer(Modifier.height(Space.xxs))
                     Text(
-                        "${family.value.coerceAtMost(next.requiredValue)} / ${next.requiredValue} ${family.family.unit}",
+                        family.family.progress(family.value.coerceAtMost(next.requiredValue), next.requiredValue),
                         style = MaterialTheme.typography.labelSmall,
                         color = Muted,
                         maxLines = 1
@@ -306,7 +306,7 @@ private fun BadgeDetail(
                 Spacer(Modifier.height(Space.sm))
                 Text(family.family.name, style = MaterialTheme.typography.headlineSmall, color = Ink, textAlign = TextAlign.Center)
                 Text(
-                    if (earned) "${family.tier.label} · ${family.value} ${family.family.unit}" else "Not earned yet · ${family.value} ${family.family.unit}",
+                    if (earned) "${family.tier.label} · ${family.family.amount(family.value)}" else "Not earned yet · ${family.family.amount(family.value)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Muted
                 )
@@ -338,7 +338,7 @@ private fun BadgeDetail(
                         Text(tier.label, style = MaterialTheme.typography.titleSmall, color = Ink, modifier = Modifier.weight(1f))
                         if (row.xpReward > 0) Text("+${row.xpReward} XP", style = MaterialTheme.typography.labelMedium, color = GoldText)
                     }
-                    Text("${row.requiredValue} ${family.family.unit}", style = MaterialTheme.typography.bodySmall, color = Muted)
+                    Text(family.family.amount(row.requiredValue), style = MaterialTheme.typography.bodySmall, color = Muted)
                     if (row.isUnlocked) {
                         Text(
                             "Earned" + row.unlockedDate?.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(),

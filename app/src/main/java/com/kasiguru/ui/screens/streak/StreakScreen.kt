@@ -29,6 +29,7 @@ import com.kasiguru.ui.screens.learn.DayActivity
 import com.kasiguru.ui.screens.learn.LearnViewModel
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.tour.*
+import com.kasiguru.util.pluralize
 
 /**
  * The streak page, in the order a learner asks about it: how long is it, what does today still
@@ -183,7 +184,7 @@ private fun TodayCard(quota: DailyStreakQuota, onContinue: () -> Unit) {
         val games = quota.gamesPlayed.coerceAtMost(quota.requiredGames)
         QuotaRow(
             done = games >= quota.requiredGames,
-            title = "Play ${quota.requiredGames} games",
+            title = "Play ${pluralize(quota.requiredGames, "game")}",
             detail = "$games of ${quota.requiredGames} played",
             iconRes = Iconsax.Game,
             fraction = games.toFloat() / quota.requiredGames.coerceAtLeast(1)

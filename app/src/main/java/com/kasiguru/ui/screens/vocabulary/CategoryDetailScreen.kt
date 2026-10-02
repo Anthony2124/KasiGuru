@@ -74,6 +74,7 @@ import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.util.audio.AudioPlayerManager
+import com.kasiguru.util.pluralize
 
 /**
  * One category's word list. A pushed subscreen — no bottom bar, so the canopy carries its own back
@@ -195,7 +196,7 @@ fun CategoryDetailScreen(
                 }
                 item {
                     Text(
-                        text = "$totalWords words",
+                        text = pluralize(totalWords, "word"),
                         style = MaterialTheme.typography.labelLarge,
                         color = Muted,
                         modifier = Modifier.padding(top = Space.xs)

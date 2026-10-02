@@ -5,6 +5,7 @@
 import { CATEGORIES, categoryForWordSearchKey, GAMES, LEVELS_PER_GAME, wordSearchLevelKey } from '../../domain/constants';
 import { difficultyForLevel } from '../../domain/gamification';
 import { levelKey } from '../../domain/merge';
+import { plural } from '../../domain/plural';
 import { categoryPlayable } from '../../domain/wordSearch';
 import { navigate, enc } from '../../lib/router';
 import { useCorpus, useLearner } from '../../lib/store';
@@ -96,10 +97,10 @@ export function WordSearchCategoriesScreen() {
           const status = !playable
             ? 'Not enough short words in this category yet'
             : cleared >= LEVELS_PER_GAME
-              ? `All ${LEVELS_PER_GAME} levels cleared · ${stars} stars`
+              ? `All ${LEVELS_PER_GAME} levels cleared · ${plural(stars, 'star')}`
               : cleared === 0
                 ? 'Start at level 1'
-                : `Level ${cleared + 1} of ${LEVELS_PER_GAME} · ${stars} stars`;
+                : `Level ${cleared + 1} of ${LEVELS_PER_GAME} · ${plural(stars, 'star')}`;
           return (
             <button key={category} class="card flat" disabled={!playable} onClick={() => navigate(`/games/levels/${key}`)} style={{ opacity: playable ? 1 : 0.6 }}>
               <Scene id={sceneForCategory(category)} height={92} radius="0" style={{ border: 0 }}>

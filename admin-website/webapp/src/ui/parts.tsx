@@ -3,6 +3,7 @@
  * week strip, the audio button, a word row.
  */
 import { useState } from 'preact/hooks';
+import { plural } from '../domain/plural';
 import type { Word } from '../domain/types';
 import { hasAudio, playWord } from '../lib/audio';
 import { navigate } from '../lib/router';
@@ -35,7 +36,7 @@ export function StoryCover({
               </span>
             )}
           </div>
-          <span class="t-label-s muted">{totalPages} pages</span>
+          <span class="t-label-s muted">{plural(totalPages, 'page')}</span>
         </div>
       </div>
       <div style={{ padding: '10px 12px 12px' }}>

@@ -43,6 +43,7 @@ import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
+import com.kasiguru.util.pluralize
 
 /**
  * One story, as a cover.
@@ -95,8 +96,8 @@ fun StoryCoverCard(
 ) {
     val label = when {
         !isUnlocked -> "$title, locked. Earn $requiredXp XP to unlock."
-        isCompleted -> "$title, $totalPages pages, completed."
-        else -> "$title, $totalPages pages."
+        isCompleted -> "$title, ${pluralize(totalPages, "page")}, completed."
+        else -> "$title, ${pluralize(totalPages, "page")}."
     }
 
     SoftCard(
@@ -189,7 +190,7 @@ fun StoryCoverCard(
                 }
                 Spacer(Modifier.height(Space.xs))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TagChip(label = "$totalPages pages")
+                    TagChip(label = pluralize(totalPages, "page"))
                     if (!isUnlocked) {
                         Spacer(Modifier.width(Space.xs))
                         Text(
