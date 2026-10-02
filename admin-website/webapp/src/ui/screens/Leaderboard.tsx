@@ -4,13 +4,14 @@
  * Guests are not ranked, on either app.
  */
 import { useEffect, useState } from 'preact/hooks';
+import { plural } from '../../domain/plural';
 import { fetchLeaderboard, type LeaderboardEntry, type LeaderboardOrder } from '../../lib/remote';
 import { navigate } from '../../lib/router';
 import { useApp } from '../../lib/store';
 import { Avatar, EmptyState, GroundScaffold, Icon, Loading } from '../kit';
 
 const figure = (e: LeaderboardEntry, mode: LeaderboardOrder) =>
-  mode === 'currentStreak' ? `${e.currentStreak} days` : `${mode === 'weeklyXp' ? e.weeklyXp : e.totalXp} XP`;
+  mode === 'currentStreak' ? plural(e.currentStreak, 'day') : `${mode === 'weeklyXp' ? e.weeklyXp : e.totalXp} XP`;
 
 const openPlayer = (e: LeaderboardEntry) => navigate(`/player/${encodeURIComponent(e.uid)}`);
 

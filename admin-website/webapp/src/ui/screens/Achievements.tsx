@@ -3,7 +3,7 @@
  * originals under Legacy, and the one-time note explaining the XP recalculation.
  */
 import { useState } from 'preact/hooks';
-import { BADGE_FAMILIES, BADGE_ROWS, legacyDefinition, type BadgeFamily, type BadgeRow } from '../../domain/badges';
+import { BADGE_FAMILIES, BADGE_ROWS, badgeAmount, badgeProgress, legacyDefinition, type BadgeFamily, type BadgeRow } from '../../domain/badges';
 import { legacyAchievements, pinnedFamilies, type LearnerData } from '../../domain/learner';
 import { navigate } from '../../lib/router';
 import { act, useLearner } from '../../lib/store';
@@ -131,7 +131,7 @@ export function AchievementsScreen() {
                     {f.next ? (
                       <>
                         <p class="t-label-s" style={{ marginTop: 4 }}>
-                          {Math.min(f.value, f.next.requiredValue)} / {f.next.requiredValue} {f.family.unit} · Next: {f.next.tier.label}
+                          {badgeProgress(f.family, Math.min(f.value, f.next.requiredValue), f.next.requiredValue)} · Next: {f.next.tier.label}
                         </p>
                         <div style={{ marginTop: 6 }}>
                           <ProgressBar value={f.value / f.next.requiredValue} color="var(--gold)" height={6} />
@@ -163,7 +163,7 @@ export function AchievementsScreen() {
                   <BadgeMedal tier={row.tier} earned={row.isUnlocked} size={44} />
                   <div class="grow">
                     <p class="t-title-s">{row.tier.label}</p>
-                    <p class="t-body-s">{row.requiredValue} {open.family.unit}</p>
+                    <p class="t-body-s">{badgeAmount(open.family, row.requiredValue)}</p>
                     <p class="t-label-s muted">
                       {row.isUnlocked ? `Earned · ${row.unlockedDate ?? ''}` : `${Math.min(open.value, row.requiredValue)} / ${row.requiredValue}`}
                     </p>

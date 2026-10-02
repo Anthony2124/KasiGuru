@@ -23,6 +23,7 @@ import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.util.pluralize
 import java.time.LocalDate
 
 @Composable
@@ -201,7 +202,7 @@ fun StreakDialog(
                                 }
                                 Column {
                                     Text(
-                                        text = "Play 3 Mini Game Levels",
+                                        text = "Play 3 Mini-Game Levels",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = Ink
@@ -298,7 +299,7 @@ fun StreakDialog(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Longest Streak: $longestStreak Days",
+                            text = "Longest Streak: ${pluralize(longestStreak, "Day")}",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = GoldDeep

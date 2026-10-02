@@ -5,7 +5,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import com.kasiguru.ui.theme.LocalReducedMotion
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepPose
@@ -40,7 +44,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -77,6 +83,35 @@ import kotlin.math.roundToInt
 
 /** How opaque the dim is. Measured, not guessed: the app behind stays legible as context. */
 private const val ScrimAlpha = 0.72f
+
+/** The dim while a new screen arrives: light enough to see where the tour has gone. */
+private const val ArrivingScrimAlpha = 0.4f
+
+/** A stop on the screen already showing: a short beat so the hole lands before the words do. */
+private const val SameScreenBeatMs = 200L
+
+/**
+ * A stop on another screen waits for that screen to finish arriving before its caption appears.
+ *
+ * The tab crossfade is navigation-compose's default, 700ms. The caption used to arrive 200ms into
+ * it, so the five tab switches in the middle of the core chapter each showed words about a screen
+ * that was still fading in, and a quick double tap on Next skipped a stop. Together they made the
+ * middle of the tour feel rushed when its first and last stops, which stay on Home, did not.
+ */
+private const val NewScreenBeatMs = 700L
+
+/** Longest wait for a destination or its anchor. A missing anchor must never strand the caption. */
+private const val ArrivalTimeoutMs = 1_500L
+
+/**
+ * Whether a stop needs a new screen to arrive before it can be explained.
+ *
+ * @param alreadyThere whether the stop's destination is the one showing as the stop begins. A
+ *   chapter's first stop is usually somewhere else entirely - Settings, the dictionary - and has no
+ *   previous stop to compare with.
+ */
+internal fun opensNewScreen(previous: TourTarget?, next: TourTarget, alreadyThere: Boolean): Boolean =
+    !alreadyThere || (previous != null && previous != next)
 
 /**
  * The guided tour's spotlight: a dim over the whole app with one element cut out of it, and a card
@@ -146,13 +181,43 @@ fun SpotlightOverlay(
     val drawnHole = if (hole != null) animatedHole else null
 
     val reduced = LocalReducedMotion.current
-    val captionArrival = remember { Animatable(1f) }
+    // Starts hidden: the first stop waits for its anchor like every other, rather than drawing one
+    // frame of caption before the effect below has run.
+    val captionArrival = remember { Animatable(0f) }
+    // 0 is the full dim; 1 is lifted to ArrivingScrimAlpha while a new screen arrives.
+    val scrimLift = remember { Animatable(0f) }
+    // The caption's buttons only answer once it is showing, so a double tap cannot skip a stop.
+    var captionReady by remember { mutableStateOf(false) }
+    var shownTarget by remember { mutableStateOf<TourTarget?>(null) }
+    val destinationShowing by rememberUpdatedState(anchorVisible)
     LaunchedEffect(stop) {
-        captionArrival.snapTo(if (reduced) 1f else 0f)
-        if (!reduced) { delay(200); captionArrival.animateTo(1f, tween(180)) }
+        val newScreen = opensNewScreen(shownTarget, stop.target, alreadyThere = destinationShowing)
+        shownTarget = stop.target
+        captionReady = false
+        captionArrival.snapTo(0f)
+        if (newScreen && !reduced) launch { scrimLift.animateTo(1f, tween(Motion.Standard, easing = Motion.EaseOut)) }
+
+        // The caption describes what is behind it, so that has to be there first: the destination,
+        // and the anchor measured - which also keeps the card from appearing centred and then
+        // jumping beside a hole that lands a frame later.
+        withTimeoutOrNull(ArrivalTimeoutMs) {
+            snapshotFlow { destinationShowing && (stop.anchor == null || anchors.boundsOf(stop.anchor) != null) }
+                .first { it }
+        }
+        if (!reduced) delay(if (newScreen) NewScreenBeatMs else SameScreenBeatMs)
+
+        captionReady = true
+        if (reduced) {
+            scrimLift.snapTo(0f)
+            captionArrival.snapTo(1f)
+        } else {
+            coroutineScope {
+                launch { scrimLift.animateTo(0f, tween(Motion.Standard, easing = Motion.EaseOut)) }
+                captionArrival.animateTo(1f, tween(180))
+            }
+        }
     }
 
-    val scrimColor = Scrim.copy(alpha = ScrimAlpha)
     val ringColor = OnCanopy.copy(alpha = 0.9f)
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -175,7 +240,9 @@ fun SpotlightOverlay(
                     }
                 }
         ) {
-            drawRect(color = scrimColor)
+            // Read here rather than in composition, so the lift animates as redraws alone.
+            val scrimAlpha = ScrimAlpha + (ArrivingScrimAlpha - ScrimAlpha) * scrimLift.value
+            drawRect(color = Scrim.copy(alpha = scrimAlpha))
             drawnHole?.let { rect ->
                 drawRoundRect(
                     color = Color.Black,
@@ -200,9 +267,9 @@ fun SpotlightOverlay(
             stepIndex = stepIndex,
             stepCount = stepCount,
             isLast = isLast,
-            onBack = onBack,
-            onSkip = onSkip,
-            onNext = onNext,
+            onBack = { if (captionReady) onBack() },
+            onSkip = { if (captionReady) onSkip() },
+            onNext = { if (captionReady) onNext() },
             modifier = Modifier
                 .layout { measurable, constraints ->
                     val containerH = constraints.maxHeight

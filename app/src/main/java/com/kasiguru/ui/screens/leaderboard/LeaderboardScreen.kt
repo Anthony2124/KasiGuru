@@ -20,6 +20,7 @@ import com.kasiguru.ui.components.clay.*
 import com.kasiguru.ui.components.states.*
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.tour.*
+import com.kasiguru.util.pluralize
 
 @Composable
 fun LeaderboardScreen(onNavigateBack: () -> Unit, onOpenPlayer: (String) -> Unit = {}, viewModel: LeaderboardViewModel = hiltViewModel()) {
@@ -81,7 +82,7 @@ fun LeaderboardContent(onOpenPlayer: (String) -> Unit, modifier: Modifier = Modi
 }
 
 private fun figure(entry: LeaderboardEntity, streak: Boolean, weekly: Boolean): String =
-    if (streak) "${entry.currentStreak} days" else "${if (weekly) entry.weeklyXp else entry.totalXp} XP"
+    if (streak) pluralize(entry.currentStreak, "day") else "${if (weekly) entry.weeklyXp else entry.totalXp} XP"
 
 @Composable
 internal fun MyRankCard(entry: LeaderboardEntity?, rank: Int, avatarId: Int?, byStreak: Boolean, weekly: Boolean = false, onClick: () -> Unit = {}) {

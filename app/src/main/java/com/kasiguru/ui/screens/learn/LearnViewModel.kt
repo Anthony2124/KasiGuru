@@ -23,6 +23,7 @@ import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.domain.lesson.LessonRef
+import com.kasiguru.util.pluralize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.kasiguru.util.toIsoString
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +81,7 @@ data class DayActivity(val label: String, val dayOfMonth: Int, val practised: Bo
  * card, so "1 words due" is not a small thing: it is the first line of the app most learners see
  * every morning.
  */
-internal fun wordsToReview(count: Int): String = if (count == 1) "1 word" else "$count words"
+internal fun wordsToReview(count: Int): String = pluralize(count, "word")
 
 data class LearnUiState(
     val isLoading: Boolean = true,
@@ -313,7 +314,7 @@ class LearnViewModel @Inject constructor(
                 ?: hero.english,
             sectionTitle = section?.title ?: ref.unitId,
             journeyLine = section?.journeyLine.orEmpty(),
-            lessonLabel = "Lesson ${ref.lessonIndex + 1} · ${words.size} words",
+            lessonLabel = "Lesson ${ref.lessonIndex + 1} · ${pluralize(words.size, "word")}",
             lessonRef = ref
         )
     }
@@ -330,7 +331,7 @@ class LearnViewModel @Inject constructor(
                 // Never the raw unit key: `theme:pamilya` is storage, "Pamilya at Mga Tao" is what
                 // a learner is owed.
                 title = LearningTree.sectionForUnit(nextLesson.unitId)?.title ?: nextLesson.unitId,
-                subtitle = "Lesson ${nextLesson.lessonIndex + 1} · ${words.size} words",
+                subtitle = "Lesson ${nextLesson.lessonIndex + 1} · ${pluralize(words.size, "word")}",
                 isDone = false,
                 lessonRef = nextLesson
             )

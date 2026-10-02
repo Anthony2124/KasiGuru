@@ -129,7 +129,8 @@ fun FlashcardDeckScreen(
                     Spacer(Modifier.height(Space.xs))
 
                     Text(
-                        "You reviewed ${uiState.cards.size} words. They'll come back when it's time to practise again.",
+                        if (uiState.cards.size == 1) "You reviewed 1 word. It'll come back when it's time to practise again."
+                        else "You reviewed ${uiState.cards.size} words. They'll come back when it's time to practise again.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Muted,
                         textAlign = TextAlign.Center,
