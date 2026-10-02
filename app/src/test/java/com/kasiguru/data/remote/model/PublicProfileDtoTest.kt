@@ -23,4 +23,14 @@ class PublicProfileDtoTest {
         assertEquals("Learner", PublicProfileDto.displayName("  "))
         assertEquals("Kiko", PublicProfileDto.displayName("  Kiko  "))
     }
+    @Test fun aLearnerWhoNeverSetANicknameIsRankedByFullName() {
+        // Signed in from the first onboarding screen: the nickname is still the placeholder.
+        assertEquals("Ana Cruz", PublicProfileDto.displayName("Learner", "Ana Cruz"))
+        assertEquals("Ana Cruz", PublicProfileDto.displayName("", "  Ana Cruz "))
+        // A chosen nickname still wins over the full name.
+        assertEquals("Kiko", PublicProfileDto.displayName("Kiko", "Francisco Reyes"))
+        // Neither an email nor nothing at all is ever published.
+        assertEquals("Learner", PublicProfileDto.displayName("Learner", "ana@example.test"))
+        assertEquals("Learner", PublicProfileDto.displayName("Learner", ""))
+    }
 }

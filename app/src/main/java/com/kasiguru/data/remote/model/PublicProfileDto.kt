@@ -32,7 +32,25 @@ data class PublicProfileDto(
         "masteredSections" to masteredSections, "unlockedSections" to unlockedSections
     )
     companion object {
-        fun displayName(userName: String): String = userName.trim().take(40).takeUnless { it.isBlank() || '@' in it } ?: "Learner"
+        /** The nickname every progress row starts with, before onboarding asks for one. */
+        const val PLACEHOLDER_NAME = "Learner"
+
+        fun displayName(userName: String): String = displayName(userName, fullName = "")
+
+        /**
+         * The name the leaderboard and public profile show: the learner's nickname, or their full
+         * name when no nickname was ever set. Never an email.
+         *
+         * Someone who signs in from the first onboarding screen skips the step that asks for a
+         * nickname, so theirs stays [PLACEHOLDER_NAME]. Publishing that alone ranked them as
+         * "Learner" with no way out: Edit profile changes the full name, not the nickname, and the
+         * account screen already tells them the full name becomes their leaderboard name.
+         */
+        fun displayName(userName: String, fullName: String): String =
+            listOf(userName, fullName)
+                .map { it.trim().take(40) }
+                .firstOrNull { it.isNotBlank() && '@' !in it && it != PLACEHOLDER_NAME }
+                ?: PLACEHOLDER_NAME
         fun fromMap(data: Map<String, Any>): PublicProfileDto {
             fun count(key: String) = (data[key] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
             fun strings(key: String) = (data[key] as? List<*>)?.filterIsInstance<String>().orEmpty()

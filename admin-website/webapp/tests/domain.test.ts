@@ -97,6 +97,13 @@ describe('recall matching (RecallAnswerMatcherTest)', () => {
 
 describe('progress merge (ProgressSyncTest)', () => {
   const p = (o: Partial<UserProgress>): UserProgress => ({ ...initialProgress(), ...o });
+  it('a real nickname is not overwritten by the placeholder', () => {
+    const named = p({ userName: 'Kiko', updatedAt: 1 });
+    const fresh = p({ userName: 'Learner', updatedAt: 99 });
+    expect(mergeProgress(named, fresh, TODAY).userName).toBe('Kiko');
+    expect(mergeProgress(fresh, named, TODAY).userName).toBe('Kiko');
+    expect(mergeProgress(fresh, fresh, TODAY).userName).toBe('Learner');
+  });
   it('lifetime counters take the max whichever side is newer', () => {
     expect(mergeProgress(p({ submissionsMade: 7, updatedAt: 1 }), p({ submissionsMade: 3, updatedAt: 2 }), TODAY).submissionsMade).toBe(7);
     const m = mergeProgress(p({ totalXp: 100, wordsLearned: 5, updatedAt: 1 }), p({ totalXp: 250, wordsLearned: 3, updatedAt: 2 }), TODAY);

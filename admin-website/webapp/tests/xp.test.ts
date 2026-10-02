@@ -253,6 +253,13 @@ describe('PublicProfileDtoTest', () => {
     expect(publicDisplayName('  ')).toBe('Learner');
     expect(publicDisplayName('  Kiko  ')).toBe('Kiko');
   });
+  it('a learner who never set a nickname is ranked by full name', () => {
+    expect(publicDisplayName('Learner', 'Ana Cruz')).toBe('Ana Cruz');
+    expect(publicDisplayName('', '  Ana Cruz ')).toBe('Ana Cruz');
+    expect(publicDisplayName('Kiko', 'Francisco Reyes')).toBe('Kiko');
+    expect(publicDisplayName('Learner', 'ana@example.test')).toBe('Learner');
+    expect(publicDisplayName('Learner', '')).toBe('Learner');
+  });
 });
 
 describe('the learner under policy 2', () => {
