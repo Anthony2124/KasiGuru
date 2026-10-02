@@ -5,7 +5,7 @@
  */
 import { BADGE_ROWS, normalizeBackground } from './badges';
 import { SECTIONS } from './lesson';
-import { PLACEHOLDER_NAME } from './types';
+import { isPlaceholderName, PLACEHOLDER_NAME } from './types';
 
 export interface PublicProfile {
   displayName: string;
@@ -32,13 +32,13 @@ export interface PublicProfile {
  * Never an email, never blank. Port of PublicProfileDto.displayName.
  *
  * Someone who signs in from the first onboarding screen skips the nickname step, so theirs stays
- * the placeholder. Publishing that alone ranked them as "Learner" with no way out, since Edit
- * profile changes the full name rather than the nickname.
+ * the placeholder; leaving that step blank saves "Kasiguranin Learner". Publishing either ranked
+ * them under a default with no way out, since Edit profile changes the full name, not the nickname.
  */
 export function publicDisplayName(userName: string, fullName = ''): string {
   const name = [userName, fullName]
     .map((n) => n.trim().slice(0, 40))
-    .find((n) => n && !n.includes('@') && n !== PLACEHOLDER_NAME);
+    .find((n) => n && !n.includes('@') && !isPlaceholderName(n));
   return name ?? PLACEHOLDER_NAME;
 }
 

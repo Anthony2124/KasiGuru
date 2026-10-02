@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kasiguru.data.remote.model.PublicProfileDto
 import com.kasiguru.ui.components.ConfettiView
 import com.kasiguru.ui.components.brand.JepjepAvatar
 import com.kasiguru.ui.components.brand.JepjepPose
@@ -366,7 +367,8 @@ private fun OnboardingGlow(
 }
 
 // ── Defaults. Skipping applies these, so each has to be a sensible real value. ──
-private const val DEFAULT_NAME = "Kasiguranin Learner"
+// Shared with the public name, which reads it as no nickname and falls back to the full name.
+private const val DEFAULT_NAME = PublicProfileDto.ONBOARDING_DEFAULT_NAME
 private const val DEFAULT_TITLE = "Kasiguranin Apprentice"
 private const val DEFAULT_GLOW_X = 0.5f
 private const val DEFAULT_GLOW_Y = 0.45f

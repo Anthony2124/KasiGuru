@@ -40,6 +40,11 @@ class ProgressSyncTest {
         assertEquals("Kiko", mergeProgress(named, freshInstall).userName)
         assertEquals("Kiko", mergeProgress(freshInstall, named).userName)
         assertEquals("Learner", mergeProgress(freshInstall, freshInstall).userName)
+
+        val skippedName = UserProgressEntity(userName = "Kasiguranin Learner", updatedAt = 99)
+        assertEquals("Kiko", mergeProgress(named, skippedName).userName)
+        // Two defaults merge to a default, never to a blank.
+        assertEquals("Learner", mergeProgress(skippedName, freshInstall).userName)
     }
 
     @Test

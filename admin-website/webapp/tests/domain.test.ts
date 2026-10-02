@@ -103,6 +103,9 @@ describe('progress merge (ProgressSyncTest)', () => {
     expect(mergeProgress(named, fresh, TODAY).userName).toBe('Kiko');
     expect(mergeProgress(fresh, named, TODAY).userName).toBe('Kiko');
     expect(mergeProgress(fresh, fresh, TODAY).userName).toBe('Learner');
+    const skipped = p({ userName: 'Kasiguranin Learner', updatedAt: 99 });
+    expect(mergeProgress(named, skipped, TODAY).userName).toBe('Kiko');
+    expect(mergeProgress(skipped, fresh, TODAY).userName).toBe('Learner');
   });
   it('lifetime counters take the max whichever side is newer', () => {
     expect(mergeProgress(p({ submissionsMade: 7, updatedAt: 1 }), p({ submissionsMade: 3, updatedAt: 2 }), TODAY).submissionsMade).toBe(7);

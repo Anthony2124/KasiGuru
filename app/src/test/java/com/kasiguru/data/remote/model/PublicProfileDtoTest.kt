@@ -27,6 +27,8 @@ class PublicProfileDtoTest {
         // Signed in from the first onboarding screen: the nickname is still the placeholder.
         assertEquals("Ana Cruz", PublicProfileDto.displayName("Learner", "Ana Cruz"))
         assertEquals("Ana Cruz", PublicProfileDto.displayName("", "  Ana Cruz "))
+        // Left the onboarding name step blank.
+        assertEquals("vre", PublicProfileDto.displayName("Kasiguranin Learner", "vre"))
         // A chosen nickname still wins over the full name.
         assertEquals("Kiko", PublicProfileDto.displayName("Kiko", "Francisco Reyes"))
         // Neither an email nor nothing at all is ever published.

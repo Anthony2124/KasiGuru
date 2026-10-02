@@ -167,6 +167,15 @@ export const DEFAULT_WORD_STATE: WordState = {
 /** The nickname every progress row starts with, before onboarding asks for one. */
 export const PLACEHOLDER_NAME = 'Learner';
 
+/** What onboarding saves as the nickname when the name step is left blank. */
+export const ONBOARDING_DEFAULT_NAME = 'Kasiguranin Learner';
+
+/** Defaults the app filled in, not names anyone chose. Port of PublicProfileDto.isPlaceholderName. */
+export const isPlaceholderName = (name: string) => {
+  const n = name.trim();
+  return n === PLACEHOLDER_NAME || n === ONBOARDING_DEFAULT_NAME;
+};
+
 export function initialProgress(): UserProgress {
   return {
     id: 1,
