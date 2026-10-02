@@ -132,7 +132,7 @@ export function CategoryScreen({ category }: { category: string }) {
   const learned = words.filter((w) => w.isLearned).length;
   const shown = words.filter((w) => (filter === 'all' ? true : filter === 'learned' ? w.isLearned : !w.isLearned));
   return (
-    <GroundScaffold title={category}>
+    <GroundScaffold title={category} wide>
       <div class="stack">
         <Scene id={sceneForCategory(category)} height={150}>
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'var(--s-md)' }}>
@@ -154,7 +154,7 @@ export function CategoryScreen({ category }: { category: string }) {
           ))}
         </div>
         {shown.length ? (
-          <div class="list">
+          <div class="list cols-2">
             {shown.map((w) => (
               <WordRow key={w.id} word={w} />
             ))}

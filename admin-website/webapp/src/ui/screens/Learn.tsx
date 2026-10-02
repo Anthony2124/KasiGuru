@@ -20,6 +20,7 @@ import { navigate, enc } from '../../lib/router';
 import { act, useCorpus, useLearner } from '../../lib/store';
 import { treeAccess } from '../../domain/learner';
 import { EmptyState, GroundScaffold, Icon, Jepjep, Scene, sceneForSection } from '../kit';
+import { ProgressAside } from '../aside';
 
 const WIND = [0, 0.55, 0.85, 0.55, 0, -0.55, -0.85, -0.55];
 const AMPLITUDE = 64;
@@ -255,11 +256,14 @@ export function LearnScreen() {
       {!tree.length ? (
         <EmptyState pose="sleeping" title="Nothing on the path yet" message="The lessons appear once the dictionary has finished loading." />
       ) : (
-        <div style={{ maxWidth: 520, margin: '0 auto' }}>
-          <p class="t-body muted" style={{ marginBottom: 'var(--s-xs)' }}>{subtitle}</p>
-          {tree.map((s, i) => (
-            <SectionBlock key={s.definition.id} section={s} previous={tree[i - 1]} guideKey={guideKey} first={i === 0} />
-          ))}
+        <div class="cols aside">
+          <div style={{ maxWidth: 520, width: '100%', margin: '0 auto' }}>
+            <p class="t-body muted" style={{ marginBottom: 'var(--s-xs)' }}>{subtitle}</p>
+            {tree.map((s, i) => (
+              <SectionBlock key={s.definition.id} section={s} previous={tree[i - 1]} guideKey={guideKey} first={i === 0} />
+            ))}
+          </div>
+          <ProgressAside />
         </div>
       )}
     </GroundScaffold>

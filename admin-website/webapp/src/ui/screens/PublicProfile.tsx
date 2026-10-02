@@ -94,8 +94,9 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
   const sections = SECTIONS.filter((s) => s.id in profile.sectionTotals);
 
   return (
-    <GroundScaffold title={title} actions={actions}>
-      <div class="stack-lg">
+    <GroundScaffold title={title} actions={actions} wide>
+      <div class="cols">
+        <div class="stack-lg">
         <section>
           <div style={{ position: 'relative', height: 184, borderRadius: 'var(--r-panel)', overflow: 'hidden', border: '1px solid var(--hair)' }}>
             <img src={sceneUrl(profile.profileBackgroundId as SceneId)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -166,6 +167,9 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
           ))}
         </section>
 
+        </div>
+
+        <div class="stack-lg">
         <section class="stack-sm">
           <SectionHeading text={`Badges · ${profile.badgeIds.length} of 66 tiers`} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-sm)' }}>
@@ -201,6 +205,7 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
         </section>
 
         <p class="t-body-s muted">Only your display name and game stats are public. Personal details stay private.</p>
+        </div>
       </div>
     </GroundScaffold>
   );

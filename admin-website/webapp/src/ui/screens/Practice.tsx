@@ -137,6 +137,7 @@ export function PracticeScreen() {
           </div>
         </div>
 
+        <div class="cols">
         <section class="stack-sm">
           <SectionHeading text="Review" />
           <button class="card" onClick={() => navigate('/review')}>
@@ -170,6 +171,7 @@ export function PracticeScreen() {
             </button>
           </section>
         )}
+        </div>
 
         <section class="stack-sm">
           <SectionHeading text="All mini-games" />

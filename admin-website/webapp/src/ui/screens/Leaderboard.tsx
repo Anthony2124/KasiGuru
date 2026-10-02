@@ -74,7 +74,7 @@ const FILTERS: { key: LeaderboardOrder; label: string }[] = [
 
 export function LeaderboardScreen() {
   return (
-    <GroundScaffold title="Leaderboard" largeTitle subtitle="Learners of Kasiguranin, ranked">
+    <GroundScaffold title="Leaderboard" largeTitle subtitle="Learners of Kasiguranin, ranked" wide>
       <LeaderboardContent />
     </GroundScaffold>
   );
@@ -110,48 +110,51 @@ export function LeaderboardContent() {
           ))}
         </div>
 
-        {me ? (
-          <button class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)', textAlign: 'left' }} onClick={() => openPlayer(me)}>
-            <Avatar id={me.avatarIconId} size={48} />
-            <div class="grow">
-              <p class="t-title">You · #{me.rank}</p>
-              <p class="t-body-s muted">{figure(me, mode)}</p>
-            </div>
-            <Icon name="arrowRight" size={18} color="var(--faint)" />
-          </button>
-        ) : (
-          <div class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)' }}>
-            <Avatar id={avatar} size={48} />
-            <div class="grow">
-              <p class="t-title">Your rank</p>
-              <p class="t-body-s muted">{account.isAnonymous ? 'Only signed-in learners appear here.' : 'Practise to join the rankings'}</p>
-            </div>
-            {account.isAnonymous && (
-              <button class="text-btn lime" onClick={() => navigate('/account')}>
-                Sign in
+        {/* On a computer: your rank and the podium on the left, everyone else on the right. */}
+        <div class="cols board">
+          <div class="stack sticky-col">
+            {me ? (
+              <button class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)', textAlign: 'left' }} onClick={() => openPlayer(me)}>
+                <Avatar id={me.avatarIconId} size={48} />
+                <div class="grow">
+                  <p class="t-title">You · #{me.rank}</p>
+                  <p class="t-body-s muted">{figure(me, mode)}</p>
+                </div>
+                <Icon name="arrowRight" size={18} color="var(--faint)" />
               </button>
+            ) : (
+              <div class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)' }}>
+                <Avatar id={avatar} size={48} />
+                <div class="grow">
+                  <p class="t-title">Your rank</p>
+                  <p class="t-body-s muted">{account.isAnonymous ? 'Only signed-in learners appear here.' : 'Practise to join the rankings'}</p>
+                </div>
+                {account.isAnonymous && (
+                  <button class="text-btn lime" onClick={() => navigate('/account')}>
+                    Sign in
+                  </button>
+                )}
+              </div>
             )}
+            {!error && rows != null && ranked.length > 0 && <Podium rows={ranked} mode={mode} />}
           </div>
-        )}
 
-        {error ? (
-          <EmptyState pose="worried" title="Rankings unavailable" message="Check your connection and try again." />
-        ) : rows == null ? (
-          <Loading label="Loading rankings" />
-        ) : ranked.length === 0 ? (
-          <EmptyState pose="curious" title="No one ranked yet" message="Signed-in learners appear here when they practise." />
-        ) : (
-          <>
-            <Podium rows={ranked} mode={mode} />
-            {ranked.length > 3 && (
+          <div>
+            {error ? (
+              <EmptyState pose="worried" title="Rankings unavailable" message="Check your connection and try again." />
+            ) : rows == null ? (
+              <Loading label="Loading rankings" />
+            ) : ranked.length === 0 ? (
+              <EmptyState pose="curious" title="No one ranked yet" message="Signed-in learners appear here when they practise." />
+            ) : ranked.length > 3 ? (
               <div class="list">
                 {ranked.slice(3).map((r) => (
                   <LeaderRow key={r.uid} entry={r} mode={mode} />
                 ))}
               </div>
-            )}
-          </>
-        )}
+            ) : null}
+          </div>
+        </div>
       </div>
   );
 }

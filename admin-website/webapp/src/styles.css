@@ -225,6 +225,7 @@ p { margin: 0; }
 .card.flat { padding: 0; overflow: hidden; }
 .card.sunken { background: var(--sunken); }
 button.card { display: block; width: 100%; text-align: left; transition: transform var(--quick), background var(--quick); }
+button.card.row { display: flex; }
 button.card:active:not(:disabled) { transform: scale(0.985); background: var(--sunken); }
 .glow {
   background: radial-gradient(circle at var(--gx, 20%) var(--gy, 80%), var(--glow-core) 0%, var(--glow-mid) 45%, var(--ground) 100%);
@@ -602,3 +603,73 @@ button.avatar { cursor: pointer; }
 .lesson-scene > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .lesson-scene::before { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 1; }
 .lesson-scene > .row { z-index: 2; }
+
+/* ── Computer layout ──────────────────────────────────────────────────────────
+   Phones get the floating bottom bar and one column. From 1024px the bar becomes a
+   sidebar and pages widen into columns; lessons, games, the review deck, the story
+   reader and onboarding stay full-window (no .with-side, see isFocusRoute). */
+:root { --side-w: 248px; }
+.side-nav { display: none; }
+.cols { display: grid; gap: var(--s-lg); }
+.cols > * { min-width: 0; }
+.wide-only { display: none; }
+
+@media (min-width: 1024px) {
+  .app.with-side { padding-left: var(--side-w); --nav-h: 0px; }
+  .app.with-side .bottom-nav { display: none; }
+  .side-nav {
+    display: flex; flex-direction: column; gap: var(--s-lg);
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 30;
+    width: var(--side-w);
+    padding: var(--s-lg) var(--s-md);
+    background: var(--ground);
+    border-right: 1px solid var(--hair);
+  }
+  .side-brand { align-self: flex-start; padding: 6px 14px; border-radius: var(--r-chip); }
+  .side-tabs { display: grid; gap: 4px; }
+  .side-tab {
+    display: flex; align-items: center; gap: 14px;
+    min-height: 52px; padding: 0 16px; border-radius: var(--r-pill);
+    color: var(--muted); font-family: var(--display); font-weight: 600; font-size: 17px;
+    transition: background var(--quick), color var(--quick);
+  }
+  .side-tab:hover { background: var(--surface); color: var(--ink); }
+  .side-tab[aria-current='page'] { background: var(--sunken); color: var(--lime); box-shadow: inset 0 0 0 1px rgba(113, 189, 29, 0.35); }
+  .side-me {
+    margin-top: auto; display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: var(--r-tile);
+    background: var(--surface); border: 1px solid var(--hair); text-align: left;
+  }
+  .side-me:hover { background: var(--sunken); }
+  .side-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .page.wide, .topbar.wide .topbar-inner { max-width: 1120px; }
+  .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .cols.me { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); }
+  .cols.board { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
+  .sticky-col { position: sticky; top: 72px; }
+  .streak-panel { padding: var(--s-lg); }
+
+  /* A list of rows becomes two columns of rows, keeping its hairlines. */
+  .list.cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .list.cols-2 > .list-row { border-top: 1px solid var(--hair); }
+  .list.cols-2 > .list-row:nth-child(-n + 2) { border-top: 0; }
+  .list.cols-2 > .list-row:nth-child(even) { border-left: 1px solid var(--hair); }
+
+  /* Focus screens: wider, still one task at a time. */
+  .lesson, .game { max-width: 760px; }
+  .options-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-xs); }
+  .options-2 > * + * { margin-top: 0; }
+  .story-page { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-lg); align-items: start; }
+  .story-page > * + * { margin-top: 0; }
+  .story-page > :first-child { grid-column: 1 / -1; }
+  .story-page .story-art { position: sticky; top: 72px; }
+  .story-bar { max-width: 1040px; }
+}
+
+@media (min-width: 1200px) {
+  .cols.aside { grid-template-columns: minmax(0, 1fr) 340px; }
+  .wide-only { display: block; }
+  .game-grid { grid-template-columns: repeat(4, 1fr); }
+  .cat-grid, .story-grid { grid-template-columns: repeat(4, 1fr); }
+}

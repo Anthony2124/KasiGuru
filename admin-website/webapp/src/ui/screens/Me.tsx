@@ -103,7 +103,8 @@ export function MeScreen() {
       }
     >
       {picking && <BackgroundPicker progress={p} onSelect={selectBackground} onClose={() => setPicking(false)} />}
-      <div class="stack-lg">
+      <div class="cols me">
+        <div class="stack-lg sticky-col">
         <section class="card panel center" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ position: 'relative', height: 176 }}>
             <img src={sceneUrl((p.profileBackgroundId || 'forest') as SceneId)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -146,6 +147,9 @@ export function MeScreen() {
             <button class="text-btn lime" onClick={() => navigate('/account')}>Sign in</button>
           </section>
         )}
+        </div>
+
+        <div class="stack-lg">
 
         <section class="stack-sm">
           <SectionHeading
@@ -220,6 +224,7 @@ export function MeScreen() {
             <LinkRow icon="infoCircle" tint="var(--gold)" title="About KasiGuru" subtitle="The project, the language, the mission" onClick={() => navigate('/about')} />
           </div>
         </section>
+        </div>
       </div>
     </GroundScaffold>
   );
