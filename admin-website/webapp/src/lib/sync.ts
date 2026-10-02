@@ -353,7 +353,7 @@ async function publishPublicRows(uid: string, d: LearnerData) {
   }
   const p = d.progress;
   const created = account.creationTime ?? Date.now();
-  const displayName = publicDisplayName(p.userName);
+  const displayName = publicDisplayName(p.userName, p.fullName);
   // The rules require weeklyXp <= activityXp under policy 2.
   const thisWeek = Math.min(weeklyXp(d), p.activityXp);
   await setDoc(ref, {

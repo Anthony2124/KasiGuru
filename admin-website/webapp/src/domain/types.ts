@@ -164,10 +164,13 @@ export const DEFAULT_WORD_STATE: WordState = {
   relearningStep: 0,
 };
 
+/** The nickname every progress row starts with, before onboarding asks for one. */
+export const PLACEHOLDER_NAME = 'Learner';
+
 export function initialProgress(): UserProgress {
   return {
     id: 1,
-    userName: 'Learner',
+    userName: PLACEHOLDER_NAME,
     email: '',
     fullName: '',
     age: null,

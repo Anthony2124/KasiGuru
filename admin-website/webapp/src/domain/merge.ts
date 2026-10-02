@@ -9,7 +9,7 @@
  */
 import { isBadgeId, normalizeBackground } from './badges';
 import { daysBetween, today as todayIso } from './dates';
-import type { AchievementState, GameLevelState, LessonState, UserProgress, WordState } from './types';
+import { PLACEHOLDER_NAME, type AchievementState, type GameLevelState, type LessonState, type UserProgress, type WordState } from './types';
 import { XP_POLICY_VERSION } from './xp';
 
 type Map_<T> = Record<string, T>;
@@ -109,7 +109,14 @@ export function mergeProgress(local: UserProgress, remote: UserProgress, today: 
 
   return {
     id: 1,
-    userName: pick(local.userName, remote.userName, remoteNewer),
+    // The placeholder is not a name: a real nickname on either side wins over it, whichever synced
+    // last, or a fresh browser would overwrite the one set on another device.
+    userName:
+      pick(
+        local.userName === PLACEHOLDER_NAME ? '' : local.userName,
+        remote.userName === PLACEHOLDER_NAME ? '' : remote.userName,
+        remoteNewer
+      ) || PLACEHOLDER_NAME,
     email: local.email,
     fullName: pick(local.fullName, remote.fullName, remoteNewer),
     age: remoteNewer ? remote.age ?? local.age : local.age ?? remote.age,

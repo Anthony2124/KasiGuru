@@ -323,7 +323,7 @@ class ProgressSyncManager @Inject constructor(
         val weeklyXp = RewardLedger.totals(db.rewardDao().all().map { it.record() })
             .byDay.filterKeys { it >= weekStart && it <= java.time.LocalDate.now().toString() }.values.sum()
 
-        val displayName = PublicProfileDto.displayName(progress.userName)
+        val displayName = PublicProfileDto.displayName(progress.userName, progress.fullName)
         val isAnonymous = auth.currentUser?.isAnonymous == true
         val creationTime = auth.currentUser?.metadata?.creationTimestamp ?: System.currentTimeMillis()
         val payload = mapOf(
@@ -897,7 +897,13 @@ internal fun mergeProgress(
 
     return UserProgressEntity(
         id = 1,
-        userName = pick(local.userName, remote.userName, remoteNewer),
+        // The placeholder is not a name: a real nickname on either side wins over it, whichever
+        // synced last, or a fresh install would overwrite the one set on another device.
+        userName = pick(
+            local.userName.takeUnless { it == PublicProfileDto.PLACEHOLDER_NAME }.orEmpty(),
+            remote.userName.takeUnless { it == PublicProfileDto.PLACEHOLDER_NAME }.orEmpty(),
+            remoteNewer
+        ).ifBlank { PublicProfileDto.PLACEHOLDER_NAME },
         password = local.password,
         email = local.email,
         fullName = pick(local.fullName, remote.fullName, remoteNewer),

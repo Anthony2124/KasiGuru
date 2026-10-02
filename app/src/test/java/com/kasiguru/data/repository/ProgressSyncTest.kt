@@ -32,6 +32,17 @@ class ProgressSyncTest {
      * These pin the behaviour that fixes it: a lifetime counter, merged like the others.
      */
     @Test
+    fun aRealNicknameIsNotOverwrittenByThePlaceholder() {
+        val named = UserProgressEntity(userName = "Kiko", updatedAt = 1)
+        val freshInstall = UserProgressEntity(userName = "Learner", updatedAt = 99)
+
+        // The fresh install synced last, but "Learner" is a default, not a choice.
+        assertEquals("Kiko", mergeProgress(named, freshInstall).userName)
+        assertEquals("Kiko", mergeProgress(freshInstall, named).userName)
+        assertEquals("Learner", mergeProgress(freshInstall, freshInstall).userName)
+    }
+
+    @Test
     fun submissionsMadeTakesTheMaxLikeOtherLifetimeCounters() {
         val local = progress(submissionsMade = 7, updatedAt = 1)
         val remote = progress(submissionsMade = 3, updatedAt = 2)
