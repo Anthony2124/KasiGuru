@@ -35,6 +35,13 @@ data class PublicProfileDto(
         /** The nickname every progress row starts with, before onboarding asks for one. */
         const val PLACEHOLDER_NAME = "Learner"
 
+        /** What onboarding saves as the nickname when the name step is left blank. */
+        const val ONBOARDING_DEFAULT_NAME = "Kasiguranin Learner"
+
+        /** Defaults the app filled in, not names anyone chose. */
+        fun isPlaceholderName(name: String): Boolean =
+            name.trim().let { it == PLACEHOLDER_NAME || it == ONBOARDING_DEFAULT_NAME }
+
         fun displayName(userName: String): String = displayName(userName, fullName = "")
 
         /**
@@ -42,14 +49,15 @@ data class PublicProfileDto(
          * name when no nickname was ever set. Never an email.
          *
          * Someone who signs in from the first onboarding screen skips the step that asks for a
-         * nickname, so theirs stays [PLACEHOLDER_NAME]. Publishing that alone ranked them as
-         * "Learner" with no way out: Edit profile changes the full name, not the nickname, and the
-         * account screen already tells them the full name becomes their leaderboard name.
+         * nickname, so theirs stays [PLACEHOLDER_NAME]; someone who leaves that step blank gets
+         * [ONBOARDING_DEFAULT_NAME]. Publishing either ranked them under a default with no way out:
+         * Edit profile changes the full name, not the nickname, and the account screen already
+         * tells them the full name becomes their leaderboard name.
          */
         fun displayName(userName: String, fullName: String): String =
             listOf(userName, fullName)
                 .map { it.trim().take(40) }
-                .firstOrNull { it.isNotBlank() && '@' !in it && it != PLACEHOLDER_NAME }
+                .firstOrNull { it.isNotBlank() && '@' !in it && !isPlaceholderName(it) }
                 ?: PLACEHOLDER_NAME
         fun fromMap(data: Map<String, Any>): PublicProfileDto {
             fun count(key: String) = (data[key] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0

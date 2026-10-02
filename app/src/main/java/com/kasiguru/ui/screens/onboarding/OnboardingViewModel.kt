@@ -2,6 +2,7 @@ package com.kasiguru.ui.screens.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.data.remote.model.PublicProfileDto
 import com.kasiguru.data.repository.ProfileRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
@@ -67,7 +68,7 @@ class OnboardingViewModel @Inject constructor(
                 )
                 // Seeds the profile roster with this device's first profile, so a family that later
                 // adds a second one already has this one to switch back to.
-                val resolvedName = userName.ifBlank { "Kasiguranin Learner" }
+                val resolvedName = userName.ifBlank { PublicProfileDto.ONBOARDING_DEFAULT_NAME }
                 profileRepository.createProfile(name = resolvedName, residentName = residentName)
 
                 // Someone who just finished the wizard is owed the guided tour of the interface they are

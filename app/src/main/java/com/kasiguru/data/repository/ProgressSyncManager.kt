@@ -897,13 +897,15 @@ internal fun mergeProgress(
 
     return UserProgressEntity(
         id = 1,
-        // The placeholder is not a name: a real nickname on either side wins over it, whichever
-        // synced last, or a fresh install would overwrite the one set on another device.
+        // A default is not a name: a real nickname on either side wins over one, whichever synced
+        // last, or a fresh install would overwrite the one set on another device.
         userName = pick(
-            local.userName.takeUnless { it == PublicProfileDto.PLACEHOLDER_NAME }.orEmpty(),
-            remote.userName.takeUnless { it == PublicProfileDto.PLACEHOLDER_NAME }.orEmpty(),
+            local.userName.takeUnless(PublicProfileDto::isPlaceholderName).orEmpty(),
+            remote.userName.takeUnless(PublicProfileDto::isPlaceholderName).orEmpty(),
             remoteNewer
-        ).ifBlank { PublicProfileDto.PLACEHOLDER_NAME },
+        ).ifBlank {
+            pick(local.userName, remote.userName, remoteNewer).ifBlank { PublicProfileDto.PLACEHOLDER_NAME }
+        },
         password = local.password,
         email = local.email,
         fullName = pick(local.fullName, remote.fullName, remoteNewer),

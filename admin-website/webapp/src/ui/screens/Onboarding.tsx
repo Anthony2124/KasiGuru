@@ -5,6 +5,7 @@
  * KasiGuru to the home screen, which is what makes it behave like an app on an iPhone.
  */
 import { useState } from 'preact/hooks';
+import { ONBOARDING_DEFAULT_NAME } from '../../domain/types';
 import { act } from '../../lib/store';
 import { navigate } from '../../lib/router';
 import { useInstall, isIOSSafari } from '../../lib/install';
@@ -171,7 +172,7 @@ export function OnboardingScreen() {
     window.scrollTo(0, 0);
   };
   const finish = () => {
-    act((d) => d.completeOnboarding(name.trim() || 'Kasiguranin Learner', avatar, chosenGoal.xp, 'Kasiguranin Apprentice'));
+    act((d) => d.completeOnboarding(name.trim() || ONBOARDING_DEFAULT_NAME, avatar, chosenGoal.xp, 'Kasiguranin Apprentice'));
     navigate('/', { replace: true });
   };
   const advance = () => (index + 1 < STEPS.length ? goTo(index + 1) : finish());
