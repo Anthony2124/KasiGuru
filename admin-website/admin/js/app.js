@@ -17,8 +17,8 @@ import { normaliseWord, findExistingWord } from './word-normalize.js';
  * FirestoreSyncManager queries `vocabulary` and `stories` with
  * whereGreaterThan("updatedAt", lastSync) instead of reading the whole collection on
  * every pull, so a document written without this field is invisible to that query and
- * simply never reaches users. Its weekly full reconcile is the backstop, but that means
- * a missed stamp shows up as "my edit took a week to appear", which is a miserable thing
+ * simply never reaches users. Its daily full reconcile is the backstop, but that means
+ * a missed stamp shows up as "my edit took a day to appear", which is a miserable thing
  * to debug.
  *
  * Every write to those two collections goes through here so there is one place to get it
@@ -1734,7 +1734,7 @@ function initStoryForm() {
     // incremental query compares numerically, and Firestore never returns a string field
     // as greater-than a number, so an ISO timestamp here would have meant the stories
     // sync silently returned nothing on every incremental pull. Documents still carrying
-    // the old ISO value are picked up by the weekly full reconcile and rewritten as
+    // the old ISO value are picked up by the daily full reconcile and rewritten as
     // millis on their next save; the backfill script converts them in one pass.
     const payload = withUpdatedAt(basePayload);
 
@@ -3476,7 +3476,7 @@ function initFormListeners() {
           createdAt: Date.now(),
           // A new word needs updatedAt too, not just createdAt — the app's incremental
           // sync filters on updatedAt, so without it a freshly added word would not
-          // reach anyone until the next weekly full reconcile.
+          // reach anyone until the next daily full reconcile.
           updatedAt: Date.now(),
           ...audioFields
         });
@@ -5193,6 +5193,11 @@ function initBackupRestore() {
       // therefore cannot be recreated from a browser, and one in a batch sinks the whole batch.
       const APP_CREATED_QUEUES = new Set(['word_submissions', 'literature_submissions', 'issue_reports']);
 
+      // The file carries each document's updatedAt from when it was exported, which is older than
+      // most devices' last pull, so the app's incremental sync would skip what was just restored
+      // until its daily full reconcile. Stamping now makes a restore reach phones like any edit.
+      const APP_SYNCED_CONTENT = new Set(['vocabulary', 'stories']);
+
       let totalRestored = 0;
       let notRecreatable = 0;
 
@@ -5213,7 +5218,10 @@ function initBackupRestore() {
 
         for (let i = 0; i < writes.length; i += 450) {
           const batch = writeBatch(db);
-          for (const d of writes.slice(i, i + 450)) batch.set(doc(db, collName, d.id), d.data, { merge: true });
+          for (const d of writes.slice(i, i + 450)) {
+            const data = APP_SYNCED_CONTENT.has(collName) ? withUpdatedAt(d.data) : d.data;
+            batch.set(doc(db, collName, d.id), data, { merge: true });
+          }
           await batch.commit();
         }
         totalRestored += writes.length;
