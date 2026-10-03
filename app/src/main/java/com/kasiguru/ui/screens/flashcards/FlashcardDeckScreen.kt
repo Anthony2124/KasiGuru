@@ -48,6 +48,9 @@ import com.kasiguru.util.audio.AudioPlayerManager
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.Sm2Algorithm
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /**
  * Immersive on purpose, like Lesson Player and the mini-games: no canopy, no bottom nav, just the
@@ -85,6 +88,8 @@ fun FlashcardDeckScreen(
         return
     }
 
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(uiState.isDeckComplete) { if (uiState.isDeckComplete) sounds?.play(Sfx.Complete) }
     if (uiState.cards.isEmpty() || uiState.isDeckComplete) {
         Box(
             modifier = Modifier
@@ -195,7 +200,12 @@ fun FlashcardDeckScreen(
         // A portrait card, as large as the space allows with room for its tilt and the fanned card.
         val cardWidth = minOf(maxWidth * 0.9f, maxHeight * CardAspect * 0.96f)
         FlashCard(currentCard, uiState.currentIndex + 1, side,
-            onFlip = { if (!ratingPending) side = if (side < 2) side + 1 else 1 },
+            onFlip = {
+                if (!ratingPending) {
+                    sounds?.play(Sfx.Flip)
+                    side = if (side < 2) side + 1 else 1
+                }
+            },
             onAudio = { audioPlayerManager.playWord(currentCard) },
             total = uiState.cards.size,
             modifier = Modifier.width(cardWidth).aspectRatio(CardAspect).tourAnchor(TourAnchor.FlashcardCard)

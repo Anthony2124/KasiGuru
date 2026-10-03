@@ -53,6 +53,8 @@ import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.Lime
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /**
  * The moment the lesson pays off.
@@ -83,6 +85,8 @@ fun LessonCompleteScreen(
         label = "XpCount"
     )
 
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(Unit) { sounds?.play(Sfx.Complete) }
     Box(Modifier.fillMaxSize().background(Ground)) {
         ConfettiView()
 

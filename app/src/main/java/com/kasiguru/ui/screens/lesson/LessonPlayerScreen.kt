@@ -12,7 +12,6 @@ import com.kasiguru.ui.theme.OnCanopy
 import com.kasiguru.ui.theme.LocalReducedMotion
 import com.kasiguru.ui.components.SegmentedProgress
 import com.kasiguru.ui.components.FeedbackPreferencesViewModel
-import com.kasiguru.util.audio.UiFeedbackSounds
 import com.kasiguru.ui.components.brand.Jepjep
 import com.kasiguru.ui.components.brand.JepjepPose
 import androidx.activity.compose.BackHandler
@@ -116,20 +115,17 @@ fun LessonPlayerScreen(
     viewModel: LessonPlayerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val soundEnabled by feedbackPreferences.soundEnabled.collectAsState()
     val hapticsEnabled by feedbackPreferences.hapticsEnabled.collectAsState()
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val audioPlayer = remember { AudioPlayerManager(context) }
-    val sounds = remember { UiFeedbackSounds(context) }
 
     androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { audioPlayer.stopAudio(); sounds.release() }
+        onDispose { audioPlayer.stopAudio() }
     }
 
-    // Feedback is felt before it is read.
+    // Feedback is felt before it is read. The answer sound comes from GameAnswerFeedback.
     LaunchedEffect(uiState.isCorrect) {
-        if (soundEnabled) uiState.isCorrect?.let(sounds::answer)
         if (hapticsEnabled) when (uiState.isCorrect) {
             true -> haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             false -> haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -143,8 +139,6 @@ fun LessonPlayerScreen(
         }
         return
     }
-
-    LaunchedEffect(uiState.levelledUp) { if (uiState.levelledUp && soundEnabled) sounds.levelUp() }
 
     if (uiState.isComplete) {
         LessonCompleteScreen(

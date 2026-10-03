@@ -54,6 +54,9 @@ import androidx.compose.ui.graphics.compositeOver
 import com.kasiguru.ui.theme.Green
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Muted
+import androidx.compose.runtime.LaunchedEffect
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /**
  * Shared shell for the six mini-games. Before this, each game hand-rolled its own copy of the
@@ -220,6 +223,10 @@ fun GameAnswerFeedback(
 ) {
     val tint = if (isCorrect) GreenTint else RedTint
     val accent = if (isCorrect) GreenDeep else RedDeep
+
+    // The panel enters composition once per answer, so this sounds once per answer.
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(Unit) { sounds?.play(if (isCorrect) Sfx.Correct else Sfx.Wrong) }
 
     Column(
         modifier = modifier

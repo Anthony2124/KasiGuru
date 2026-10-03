@@ -54,6 +54,8 @@ import com.kasiguru.ui.theme.motionTween
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
 import io.eyram.iconsax.IconSax
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 data class BottomNavItem(
     val route: String,
@@ -107,6 +109,7 @@ fun KasiGuruBottomBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        val sounds = LocalSoundEffects.current
         items.forEach {
             val isSelected = currentRoute == it.route
             // The open tab takes the room its name needs; the rest share what is left evenly.
@@ -122,7 +125,10 @@ fun KasiGuruBottomBar(
                     .weight(weight)
                     .fillMaxHeight()
                     .tourAnchor(it.tourAnchor)
-            ) { onNavigateToRoute(it.route) }
+            ) {
+                if (!isSelected) sounds?.play(Sfx.Tap)
+                onNavigateToRoute(it.route)
+            }
         }
     }
 }

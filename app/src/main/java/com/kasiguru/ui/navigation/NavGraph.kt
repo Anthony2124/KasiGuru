@@ -84,6 +84,7 @@ import com.kasiguru.ui.screens.banned.AccountSuspendedScreen
 import com.kasiguru.ui.screens.banned.BanCheckViewModel
 import com.kasiguru.ui.screens.banned.BanState
 import com.kasiguru.util.Constants
+import com.kasiguru.domain.audio.musicMoodFor
 
 @Composable
 fun KasiGuruNavGraph(initialDeepLink: String? = null) {
@@ -92,6 +93,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in Screen.tabRoots
+
+    val musicViewModel: MusicViewModel = hiltViewModel()
+    LaunchedEffect(currentRoute) { musicViewModel.setMood(musicMoodFor(currentRoute)) }
 
     val rewardViewModel: RewardCelebrationViewModel = hiltViewModel()
     val pendingReward by rewardViewModel.pending.collectAsState()

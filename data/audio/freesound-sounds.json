@@ -1,0 +1,95 @@
+{
+  "_comment": "Sounds bundled in app/src/main/res/raw, sourced from Freesound under CC0. Regenerate with scripts/audio/freesound.js.",
+  "sounds": {
+    "ui_correct": {
+      "id": 456161,
+      "name": "Correct.wav",
+      "username": "bwg2020",
+      "url": "https://freesound.org/people/bwg2020/sounds/456161/",
+      "license": "Creative Commons 0",
+      "duration": 1.41324,
+      "quality": "hq"
+    },
+    "ui_wrong": {
+      "id": 483598,
+      "name": "Wrong",
+      "username": "Raclure",
+      "url": "https://freesound.org/people/Raclure/sounds/483598/",
+      "license": "Creative Commons 0",
+      "duration": 0.231361,
+      "quality": "hq"
+    },
+    "ui_found": {
+      "id": 244655,
+      "name": "Pop 1",
+      "username": "D.S.G.",
+      "url": "https://freesound.org/people/D.S.G./sounds/244655/",
+      "license": "Creative Commons 0",
+      "duration": 0.0997732,
+      "quality": "hq"
+    },
+    "ui_complete": {
+      "id": 522242,
+      "name": "result-11.mp3",
+      "username": "DZeDeNZ",
+      "url": "https://freesound.org/people/DZeDeNZ/sounds/522242/",
+      "license": "Creative Commons 0",
+      "duration": 3,
+      "quality": "hq"
+    },
+    "ui_streak": {
+      "id": 683185,
+      "name": "Power Up",
+      "username": "NearTheAtmoshphere",
+      "url": "https://freesound.org/people/NearTheAtmoshphere/sounds/683185/",
+      "license": "Creative Commons 0",
+      "duration": 1.96875,
+      "quality": "hq"
+    },
+    "ui_badge": {
+      "id": 715067,
+      "name": "achievement-sparkle",
+      "username": "SkySpeira",
+      "url": "https://freesound.org/people/SkySpeira/sounds/715067/",
+      "license": "Creative Commons 0",
+      "duration": 1.75864,
+      "quality": "hq"
+    },
+    "ui_tap": {
+      "id": 570754,
+      "name": "Keyboard - Press down",
+      "username": "Foxfire-",
+      "url": "https://freesound.org/people/Foxfire-/sounds/570754/",
+      "license": "Creative Commons 0",
+      "duration": 0.359909,
+      "quality": "hq"
+    },
+    "ui_flip": {
+      "id": 554208,
+      "name": "cardsound32562",
+      "username": "memes_hodachy",
+      "url": "https://freesound.org/people/memes_hodachy/sounds/554208/",
+      "license": "Creative Commons 0",
+      "duration": 0.753764,
+      "quality": "hq"
+    },
+    "music_menu": {
+      "id": 673525,
+      "name": "Lofi Loop 2023",
+      "username": "Seth_Makes_Sounds",
+      "url": "https://freesound.org/people/Seth_Makes_Sounds/sounds/673525/",
+      "license": "Creative Commons 0",
+      "duration": 102.857,
+      "quality": "hq"
+    },
+    "music_game": {
+      "id": 627858,
+      "name": "8 bit game loop 013  simple mix 1 long 120 bpm.wav",
+      "username": "josefpres",
+      "url": "https://freesound.org/people/josefpres/sounds/627858/",
+      "license": "Creative Commons 0",
+      "duration": 64,
+      "quality": "hq"
+    }
+  }
+}

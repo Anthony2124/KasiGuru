@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kasiguru.data.local.entity.RewardCelebrationEntity
 import com.kasiguru.domain.gamification.*
+import androidx.compose.runtime.LaunchedEffect
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 @Composable
 fun RewardCelebrationDialog(reward: RewardCelebrationEntity,onDismiss: () -> Unit) {
@@ -16,6 +19,8 @@ fun RewardCelebrationDialog(reward: RewardCelebrationEntity,onDismiss: () -> Uni
         .groupBy { BadgeCatalog.familyFor(it)!! }.map { (family, ids) ->
             family to ids.mapNotNull(BadgeCatalog::tierFor).maxBy { it.ordinal }
         }
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(reward) { sounds?.play(if (reward.levelChanged) Sfx.LevelUp else Sfx.Badge) }
     AlertDialog(onDismissRequest = onDismiss,
         title = { Text(if(reward.levelChanged) "Level ${reward.level} reached!" else "Badge upgraded!") },
         text = {

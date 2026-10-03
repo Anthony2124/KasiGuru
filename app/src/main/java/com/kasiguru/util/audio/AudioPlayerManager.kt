@@ -1,6 +1,9 @@
 package com.kasiguru.util.audio
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,6 +34,16 @@ class AudioPlayerManager @Inject constructor(
 ) {
 
     private var mediaPlayer: MediaPlayer? = null
+
+    private val audioManager = context.getSystemService(AudioManager::class.java)
+    private val speech = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_MEDIA)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build()
+    // Transient focus that may duck: background music lowers while a recording plays.
+    private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+        .setAudioAttributes(speech)
+        .build()
 
     // Built directly rather than injected: every screen constructs this class with
     // `remember { AudioPlayerManager(context) }` rather than through Hilt, so there is no graph to
@@ -78,11 +91,13 @@ class AudioPlayerManager @Inject constructor(
         val resId = context.resources.getIdentifier(resName, "raw", context.packageName)
         if (resId == 0) return
         try {
-            mediaPlayer = MediaPlayer.create(context, resId)?.apply {
+            mediaPlayer = MediaPlayer.create(context, resId, speech, audioManager.generateAudioSessionId())?.apply {
                 setOnCompletionListener {
                     it.release()
                     mediaPlayer = null
+                    audioManager.abandonAudioFocusRequest(focusRequest)
                 }
+                audioManager.requestAudioFocus(focusRequest)
                 start()
             }
         } catch (e: Exception) {
@@ -93,15 +108,21 @@ class AudioPlayerManager @Inject constructor(
     private fun playFile(file: File) {
         try {
             mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(speech)
                 setDataSource(file.path)
-                setOnPreparedListener { it.start() }
+                setOnPreparedListener {
+                    audioManager.requestAudioFocus(focusRequest)
+                    it.start()
+                }
                 setOnCompletionListener {
                     it.release()
                     mediaPlayer = null
+                    audioManager.abandonAudioFocusRequest(focusRequest)
                 }
                 setOnErrorListener { mp, _, _ ->
                     mp.release()
                     mediaPlayer = null
+                    audioManager.abandonAudioFocusRequest(focusRequest)
                     true
                 }
                 prepareAsync()
@@ -118,6 +139,7 @@ class AudioPlayerManager @Inject constructor(
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
+            audioManager.abandonAudioFocusRequest(focusRequest)
         } catch (e: Exception) {
             Log.e("AudioPlayerManager", "Error stopping audio", e)
         }

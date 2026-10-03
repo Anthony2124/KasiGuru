@@ -63,6 +63,9 @@ object Iconsax {
     val VolumeHigh: Int get() = IconSax.Bulk.VolumeHigh
     val VolumeHighBold: Int get() = IconSax.Bulk.VolumeHigh
     val VolumeUp: Int get() = IconSax.Bulk.VolumeUp
+    val Music: Int get() = IconSax.Bulk.Music
+    val VolumeLow: Int get() = IconSax.Bulk.VolumeLow
+    val FingerTap: Int get() = IconSax.Bulk.FingerCricle
     val Play: Int get() = IconSax.Bulk.Play
     val PlayBold: Int get() = IconSax.Bulk.Play
     val PlayCircle: Int get() = IconSax.Bulk.PlayCircle

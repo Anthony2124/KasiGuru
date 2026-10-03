@@ -22,6 +22,9 @@ data class DailyStreakQuota(
     val isQuotaMet: Boolean get() = reviewCompleted && gamesPlayed >= requiredGames
 }
 
+/** Where the sound and music volume sliders start: the level the sounds were tuned at. */
+const val DEFAULT_VOLUME_PERCENT = 50
+
 @Singleton
 class UserPreferencesRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
@@ -33,6 +36,10 @@ class UserPreferencesRepository @Inject constructor(
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val LAST_LESSON_VISIT_DATE = stringPreferencesKey("last_lesson_visit_date")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
+        val TAP_SOUNDS_ENABLED = booleanPreferencesKey("tap_sounds_enabled")
+        val MUSIC_ENABLED = booleanPreferencesKey("music_enabled")
+        val SFX_VOLUME = intPreferencesKey("sfx_volume_percent")
+        val MUSIC_VOLUME = intPreferencesKey("music_volume_percent")
         val STREAK_REMINDERS = booleanPreferencesKey("streak_reminders")
         val WORD_OF_DAY_REMINDERS = booleanPreferencesKey("word_of_day_reminders")
         val LEADERBOARD_ALERTS = booleanPreferencesKey("leaderboard_alerts")
@@ -284,6 +291,20 @@ class UserPreferencesRepository @Inject constructor(
             prefs[PreferencesKeys.SOUND_ENABLED] = enabled
         }
     }
+
+    /** Button and tab clicks, switchable apart from answer and celebration sounds. */
+    val tapSoundsEnabled: Flow<Boolean> = dataStore.data.map { it[PreferencesKeys.TAP_SOUNDS_ENABLED] ?: true }
+    suspend fun setTapSoundsEnabled(enabled: Boolean) { dataStore.edit { it[PreferencesKeys.TAP_SOUNDS_ENABLED] = enabled } }
+
+    val musicEnabled: Flow<Boolean> = dataStore.data.map { it[PreferencesKeys.MUSIC_ENABLED] ?: true }
+    suspend fun setMusicEnabled(enabled: Boolean) { dataStore.edit { it[PreferencesKeys.MUSIC_ENABLED] = enabled } }
+
+    /** 0–100. 50 is the app's designed level, so learners can go louder as well as quieter. */
+    val sfxVolumePercent: Flow<Int> = dataStore.data.map { it[PreferencesKeys.SFX_VOLUME] ?: DEFAULT_VOLUME_PERCENT }
+    suspend fun setSfxVolumePercent(percent: Int) { dataStore.edit { it[PreferencesKeys.SFX_VOLUME] = percent.coerceIn(0, 100) } }
+
+    val musicVolumePercent: Flow<Int> = dataStore.data.map { it[PreferencesKeys.MUSIC_VOLUME] ?: DEFAULT_VOLUME_PERCENT }
+    suspend fun setMusicVolumePercent(percent: Int) { dataStore.edit { it[PreferencesKeys.MUSIC_VOLUME] = percent.coerceIn(0, 100) } }
 
     val streakReminders: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[PreferencesKeys.STREAK_REMINDERS] ?: true

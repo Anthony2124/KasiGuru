@@ -10,6 +10,5 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FeedbackPreferencesViewModel @Inject constructor(preferences: UserPreferencesRepository) : ViewModel() {
-    val soundEnabled = preferences.soundEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     val hapticsEnabled = preferences.hapticsEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 }

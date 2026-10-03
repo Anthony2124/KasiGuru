@@ -39,6 +39,9 @@ import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.ClayCircle
 import com.kasiguru.util.Constants
 import com.kasiguru.util.audio.AudioPlayerManager
+import androidx.compose.runtime.LaunchedEffect
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /** The languages a page can be read in, in the order the switch offers them. */
 private enum class PageLanguage(val label: String) { Kasiguranin("Kasiguranin"), Tagalog("Tagalog"), English("English") }
@@ -320,6 +323,8 @@ fun StoryReaderScreen(
 
 @Composable
 private fun StoryCompleteContent(storyTitle: String, xpEarned: Int, onDone: () -> Unit) {
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(Unit) { sounds?.play(Sfx.Complete) }
     Box(modifier = Modifier.fillMaxSize().background(Ground)) {
         ConfettiView(modifier = Modifier.fillMaxSize())
         Column(

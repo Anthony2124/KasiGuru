@@ -85,6 +85,13 @@ fun AboutScreen(
 
                 faqs.forEach { faq -> FaqCard(faq = faq) }
 
+                Spacer(Modifier.height(Space.xs))
+                Text(
+                    text = "Sound effects and music from Freesound.org, shared under CC0.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+
                 Spacer(Modifier.height(Space.navBarClearance))
             }
         }

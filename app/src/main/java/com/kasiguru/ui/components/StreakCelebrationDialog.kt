@@ -29,6 +29,8 @@ import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /**
  * Full celebratory dialog presented immediately when a learner completes their daily streak requirements.
@@ -40,9 +42,11 @@ fun StreakCelebrationDialog(
     onDismiss: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val sounds = LocalSoundEffects.current
 
     LaunchedEffect(Unit) {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        sounds?.play(Sfx.Streak)
     }
 
     // Flame pulsing & glow animations

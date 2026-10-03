@@ -1,0 +1,136 @@
+{
+  "_comment": "Freesound search inputs for each app sound. Slot names are res/raw resource names. Edit queries here, then run `node scripts/audio/freesound.js shortlist`.",
+  "slots": {
+    "ui_correct": {
+      "label": "Correct answer",
+      "queries": [
+        "correct answer chime",
+        "success ding"
+      ],
+      "duration": [
+        0.1,
+        1.5
+      ],
+      "existing": true
+    },
+    "ui_wrong": {
+      "label": "Wrong answer",
+      "queries": [
+        "wrong",
+        "error",
+        "incorrect"
+      ],
+      "duration": [
+        0.1,
+        1.5
+      ],
+      "existing": true
+    },
+    "ui_found": {
+      "label": "Word found (Word Wheel, Word Search)",
+      "queries": [
+        "pop",
+        "collect",
+        "coin pickup"
+      ],
+      "duration": [
+        0.05,
+        1.0
+      ]
+    },
+    "ui_complete": {
+      "label": "Game or lesson complete",
+      "queries": [
+        "level complete jingle",
+        "win fanfare short"
+      ],
+      "duration": [
+        0.5,
+        3.0
+      ]
+    },
+    "ui_level_up": {
+      "label": "Level up",
+      "queries": [
+        "level up",
+        "power up rising"
+      ],
+      "duration": [
+        0.3,
+        3.0
+      ],
+      "existing": true
+    },
+    "ui_streak": {
+      "label": "Streak celebration",
+      "queries": [
+        "fire whoosh magic",
+        "sparkle whoosh"
+      ],
+      "duration": [
+        0.3,
+        2.5
+      ]
+    },
+    "ui_badge": {
+      "label": "Badge unlocked",
+      "queries": [
+        "achievement",
+        "reward",
+        "success"
+      ],
+      "duration": [
+        0.3,
+        3.0
+      ]
+    },
+    "ui_tap": {
+      "label": "Button and tab tap",
+      "queries": [
+        "ui click soft",
+        "button tap"
+      ],
+      "duration": [
+        0.02,
+        0.4
+      ]
+    },
+    "ui_flip": {
+      "label": "Flashcard flip",
+      "queries": [
+        "card flip",
+        "paper flip"
+      ],
+      "duration": [
+        0.05,
+        0.8
+      ]
+    },
+    "music_menu": {
+      "label": "Menu music (loop)",
+      "queries": [
+        "calm acoustic loop",
+        "ukulele loop",
+        "ambient guitar loop"
+      ],
+      "duration": [
+        30,
+        120
+      ],
+      "music": true
+    },
+    "music_game": {
+      "label": "Game music (loop)",
+      "queries": [
+        "game music loop",
+        "happy music loop",
+        "chiptune loop"
+      ],
+      "duration": [
+        30,
+        120
+      ],
+      "music": true
+    }
+  }
+}

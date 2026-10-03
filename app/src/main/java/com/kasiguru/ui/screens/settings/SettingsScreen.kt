@@ -33,6 +33,11 @@ import com.kasiguru.ui.tour.TourResumePoint
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.widthIn
 
 /**
  * Settings: the same grouped-card idiom every OS settings screen uses (Account / Notifications /
@@ -59,6 +64,10 @@ fun SettingsScreen(
     val account by viewModel.account.collectAsState()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsState()
     val soundEnabled by viewModel.soundEnabled.collectAsState()
+    val tapSoundsEnabled by viewModel.tapSoundsEnabled.collectAsState()
+    val musicEnabled by viewModel.musicEnabled.collectAsState()
+    val sfxVolume by viewModel.sfxVolume.collectAsState()
+    val musicVolume by viewModel.musicVolume.collectAsState()
     val streakReminders by viewModel.streakReminders.collectAsState()
     val wordOfDayReminders by viewModel.wordOfDayReminders.collectAsState()
     val leaderboardAlerts by viewModel.leaderboardAlerts.collectAsState()
@@ -336,12 +345,22 @@ fun SettingsScreen(
                         iconRes = Iconsax.FlashBold, onCheckedChange = viewModel::toggleHapticsEnabled)
                     Spacer(Modifier.height(Space.sm))
                     SettingSwitchRow(
-                        title = "Lesson sounds",
-                        subtitle = "Small sounds for answers and level ups",
+                        title = "Sound effects",
+                        subtitle = "Answers, wins and celebrations",
                         checked = soundEnabled,
                         iconRes = Iconsax.VolumeHigh,
                         onCheckedChange = { viewModel.toggleSoundEnabled(it) }
                     )
+                    VolumeSliderRow(label = "Sound effects volume", percent = sfxVolume, enabled = soundEnabled,
+                        onSave = viewModel::saveSfxVolume)
+                    Spacer(Modifier.height(Space.sm))
+                    SettingSwitchRow(title = "Tap sounds", subtitle = "A soft click on buttons and tabs", checked = tapSoundsEnabled,
+                        iconRes = Iconsax.FingerTap, onCheckedChange = viewModel::toggleTapSoundsEnabled)
+                    Spacer(Modifier.height(Space.sm))
+                    SettingSwitchRow(title = "Background music", subtitle = "Music in menus and games", checked = musicEnabled,
+                        iconRes = Iconsax.Music, onCheckedChange = viewModel::toggleMusicEnabled)
+                    VolumeSliderRow(label = "Music volume", percent = musicVolume, enabled = musicEnabled,
+                        onPreview = viewModel::previewMusicVolume, onSave = viewModel::saveMusicVolume)
 
                     Spacer(Modifier.height(Space.sm))
 
@@ -576,6 +595,66 @@ fun SettingActionRow(
             contentDescription = null,
             tint = Faint,
             modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+/**
+ * How loud a sound setting plays. The switch above it is the mute; this sits indented under that
+ * row's text so the two read as one setting. Steps of 5% keep TalkBack adjustments meaningful.
+ */
+@Composable
+fun VolumeSliderRow(
+    label: String,
+    percent: Int,
+    enabled: Boolean,
+    onSave: (Int) -> Unit,
+    onPreview: (Int) -> Unit = {}
+) {
+    // Local while dragging, so only the released value is written to disk. A saved value that
+    // arrives mid-gesture (the first read on a slow start) must not yank the thumb back.
+    var value by remember { mutableFloatStateOf(percent.toFloat()) }
+    var dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(percent) { if (!dragging) value = percent.toFloat() }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 40.dp + Space.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Space.xs)
+    ) {
+        Icon(painterResource(Iconsax.VolumeLow), contentDescription = null, tint = Muted, modifier = Modifier.size(18.dp))
+        Slider(
+            value = value,
+            onValueChange = {
+                dragging = true
+                value = it
+                onPreview(it.roundToInt())
+            },
+            onValueChangeFinished = {
+                dragging = false
+                onSave(value.roundToInt())
+            },
+            valueRange = 0f..100f,
+            steps = 19,
+            enabled = enabled,
+            modifier = Modifier.weight(1f).semantics { contentDescription = label },
+            colors = SliderDefaults.colors(
+                thumbColor = Lime,
+                activeTrackColor = Lime,
+                // The hairline token stays visible on the card in both themes; SurfaceSunken did not.
+                inactiveTrackColor = BorderHairline,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+                disabledActiveTickColor = Color.Transparent,
+                disabledInactiveTickColor = Color.Transparent
+            )
+        )
+        Icon(painterResource(Iconsax.VolumeHigh), contentDescription = null, tint = Muted, modifier = Modifier.size(18.dp))
+        Text(
+            text = "${value.roundToInt()}%",
+            style = MaterialTheme.typography.labelMedium,
+            color = if (enabled) Ink else Muted,
+            textAlign = TextAlign.End,
+            modifier = Modifier.widthIn(min = 40.dp)
         )
     }
 }

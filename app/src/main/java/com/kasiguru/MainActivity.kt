@@ -1,5 +1,6 @@
 package com.kasiguru
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.kasiguru.data.repository.UserPreferencesRepository
@@ -15,6 +16,9 @@ import com.kasiguru.data.remote.FirestoreSyncManager
 import com.kasiguru.data.repository.FirestoreSyncRepository
 import com.kasiguru.ui.navigation.KasiGuruNavGraph
 import com.kasiguru.ui.theme.KasiGuruTheme
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.MusicPlayer
+import com.kasiguru.util.audio.SoundEffects
 import com.kasiguru.util.worker.StreakReminderWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -30,6 +34,10 @@ class MainActivity : ComponentActivity() {
     lateinit var firestoreSyncRepository: FirestoreSyncRepository
 
     @Inject lateinit var preferences: UserPreferencesRepository
+
+    @Inject lateinit var soundEffects: SoundEffects
+
+    @Inject lateinit var musicPlayer: MusicPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -61,8 +69,22 @@ class MainActivity : ComponentActivity() {
             val mode by preferences.appearanceMode.collectAsState(initial = AppearanceMode.SYSTEM)
             val textSize by preferences.textSizePercent.collectAsState(initial = 100)
             KasiGuruTheme(mode = mode, textSizePercent = textSize) {
-                KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
+                CompositionLocalProvider(LocalSoundEffects provides soundEffects) {
+                    KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
+                }
             }
         }
+    }
+
+    // Music stops as soon as the app loses the foreground. onStop can arrive seconds after the
+    // learner has left, so pause/resume is the signal.
+    override fun onResume() {
+        super.onResume()
+        musicPlayer.onForeground()
+    }
+
+    override fun onPause() {
+        musicPlayer.onBackground()
+        super.onPause()
     }
 }

@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.DEFAULT_VOLUME_PERCENT
 import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.util.audio.MusicPlayer
+import com.kasiguru.util.audio.SoundEffects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +22,9 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val authRepository: AuthRepository,
-    private val progressSyncManager: ProgressSyncManager
+    private val progressSyncManager: ProgressSyncManager,
+    private val musicPlayer: MusicPlayer,
+    private val soundEffects: SoundEffects
 ) : ViewModel() {
 
     val account: StateFlow<AccountState> = authRepository.accountState
@@ -30,6 +35,23 @@ class SettingsViewModel @Inject constructor(
 
     val soundEnabled: StateFlow<Boolean> = userPreferencesRepository.soundEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val tapSoundsEnabled = userPreferencesRepository.tapSoundsEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    fun toggleTapSoundsEnabled(enabled: Boolean) { viewModelScope.launch { userPreferencesRepository.setTapSoundsEnabled(enabled) } }
+    val musicEnabled = userPreferencesRepository.musicEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    fun toggleMusicEnabled(enabled: Boolean) { viewModelScope.launch { userPreferencesRepository.setMusicEnabled(enabled) } }
+
+    val sfxVolume = userPreferencesRepository.sfxVolumePercent.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DEFAULT_VOLUME_PERCENT)
+    val musicVolume = userPreferencesRepository.musicVolumePercent.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DEFAULT_VOLUME_PERCENT)
+
+    /** While dragging: the music follows the thumb without writing every step to disk. */
+    fun previewMusicVolume(percent: Int) = musicPlayer.previewVolume(percent)
+    fun saveMusicVolume(percent: Int) { viewModelScope.launch { userPreferencesRepository.setMusicVolumePercent(percent) } }
+
+    /** On release: save, and play a sample at the new level so the learner hears what they chose. */
+    fun saveSfxVolume(percent: Int) {
+        soundEffects.preview(percent)
+        viewModelScope.launch { userPreferencesRepository.setSfxVolumePercent(percent) }
+    }
 
     val streakReminders: StateFlow<Boolean> = userPreferencesRepository.streakReminders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)

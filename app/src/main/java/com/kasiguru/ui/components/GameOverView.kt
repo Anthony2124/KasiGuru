@@ -23,6 +23,9 @@ import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import androidx.compose.runtime.LaunchedEffect
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 data class GameReviewItem(
     val prompt: String,
@@ -44,6 +47,8 @@ fun GameOverView(
     onNextLevel: (() -> Unit)? = null
 ) {
     val haptic = LocalHapticFeedback.current
+    val sounds = LocalSoundEffects.current
+    LaunchedEffect(Unit) { sounds?.play(Sfx.Complete) }
 
     Box(
         modifier = modifier

@@ -94,3 +94,22 @@ SQL references in `data/sql/` are historical inputs, not the active Room databas
 
 Deployment, Firebase writes, restore/reset and release commands affect external
 state. Folder restructuring does not run those commands.
+
+## App sounds and music
+
+Sound effects and music in `app/src/main/res/raw/` come from Freesound, CC0
+only. The search inputs per sound are in `data/audio/sound-slots.json`; the
+chosen sounds and their provenance are locked in
+`data/audio/freesound-sounds.json`. The API key is read from
+`FREESOUND_API_KEY` or `..\private\freesound-api-key.txt` (create one at
+https://freesound.org/apiv2/apply) and is never bundled in the app.
+
+```powershell
+node scripts/audio/freesound.js shortlist   # writes a page to listen to candidates and copy a selection
+node scripts/audio/freesound.js lock selection.json   # records the picks, rejecting anything not CC0
+node scripts/audio/freesound.js fetch       # downloads the locked previews into res/raw as <slot>.ogg
+```
+
+`fetch` re-checks each license before downloading and replaces any other
+format with the same resource name. If a music loop is over about 2.5 MB, set
+its `"quality"` to `"lq"` in the manifest and fetch again.

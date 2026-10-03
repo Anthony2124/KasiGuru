@@ -107,6 +107,10 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 /** A found word's fill and the letter colour that reads on it. */
 private data class WordHue(val fill: Color, val letter: Color)
@@ -134,6 +138,14 @@ fun WordSearchGameScreen(
     viewModel: WordSearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // Sounds when a word joins the found list, not for state restored on entry.
+    val sounds = LocalSoundEffects.current
+    val foundCount = uiState.foundIds.size
+    var heardCount by remember { mutableIntStateOf(foundCount) }
+    LaunchedEffect(foundCount) {
+        if (foundCount > heardCount) sounds?.play(Sfx.Found)
+        heardCount = foundCount
+    }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val audioPlayerManager = remember { AudioPlayerManager(context) }

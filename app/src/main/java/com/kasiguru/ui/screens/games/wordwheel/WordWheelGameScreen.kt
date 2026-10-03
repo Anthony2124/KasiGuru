@@ -96,6 +96,10 @@ import com.kasiguru.ui.theme.LimeLip
 import com.kasiguru.ui.theme.LimeTint
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import com.kasiguru.util.audio.LocalSoundEffects
+import com.kasiguru.util.audio.Sfx
 
 @Composable
 fun WordWheelGameScreen(
@@ -104,6 +108,14 @@ fun WordWheelGameScreen(
     viewModel: WordWheelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // Sounds when a word joins the found list, not for state restored on entry.
+    val sounds = LocalSoundEffects.current
+    val foundCount = uiState.foundSlots.size + uiState.bonusFound.size
+    var heardCount by remember { mutableIntStateOf(foundCount) }
+    LaunchedEffect(foundCount) {
+        if (foundCount > heardCount) sounds?.play(Sfx.Found)
+        heardCount = foundCount
+    }
     val exitGuard = rememberGameExitGuard(
         active = !uiState.isLoading && !uiState.isGameOver && !uiState.isUnavailable,
         onExit = onNavigateBack
