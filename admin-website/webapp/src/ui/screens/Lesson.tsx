@@ -148,7 +148,7 @@ export function LessonScreen({ unitId, lessonIndex }: { unitId: string; lessonIn
           }}
         />
       )}
-      <header class="row" style={{ padding: 'calc(var(--safe-top) + 8px) var(--gutter) 8px var(--s-xs)' }}>
+      <header class="row lesson-head">
         <button class="icon-btn" aria-label="Leave lesson" onClick={() => setConfirmExit(true)}>
           <Icon name="arrowLeft" size={24} />
         </button>

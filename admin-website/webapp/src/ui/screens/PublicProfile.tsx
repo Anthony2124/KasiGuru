@@ -1,19 +1,22 @@
 /**
  * A learner's public profile (ui/screens/profile/PublicProfileScreen), opened from the leaderboard:
  * scenery, stats, a three-badge showcase, this week against you, every tier, and path progress.
- * Only public_profiles is read; nothing personal is ever part of it.
+ * Only public_profiles is read; nothing personal is ever part of it. On the web the 66 tiers are
+ * grouped into one row per badge, so the page does not become a wall of small medals.
  */
 import { useEffect, useState } from 'preact/hooks';
-import { BADGE_ROWS, chooseShowcase, showcaseCandidates, type BadgeRow } from '../../domain/badges';
+import { BADGE_FAMILIES, BADGE_TIERS, badgeId, chooseShowcase, showcaseCandidates, type BadgeRow } from '../../domain/badges';
 import { isoWeekId } from '../../domain/dates';
 import { weeklyXp } from '../../domain/learner';
 import { SECTIONS } from '../../domain/lesson';
+import { plural } from '../../domain/plural';
 import type { PublicProfile } from '../../domain/publicProfile';
 import { badgeRarity, cachedPublicProfile, fetchPublicProfile, weeklyRank } from '../../lib/remote';
 import { navigate } from '../../lib/router';
 import { useLearner } from '../../lib/store';
-import { BadgeMedal } from '../badges';
-import { Avatar, EmptyState, GroundScaffold, Loading, ProgressBar, SectionHeading, sceneForSection, sceneUrl, type SceneId } from '../kit';
+import { BadgeMedal, TIER_LADDER } from '../badges';
+import type { IconName } from '../icons.generated';
+import { Avatar, EmptyState, GroundScaffold, Icon, Loading, ProgressBar, SectionHeading, sceneForSection, sceneUrl, type SceneId } from '../kit';
 
 const monthYear = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 
@@ -93,24 +96,31 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
   const activeLine = active ? (active.toDateString() === new Date().toDateString() ? 'active today' : `active ${active.toLocaleDateString()}`) : null;
   const sections = SECTIONS.filter((s) => s.id in profile.sectionTotals);
 
+  const stats: { icon: IconName; tint: string; value: number; label: string }[] = [
+    { icon: 'flash', tint: 'var(--coral)', value: profile.currentStreak, label: 'day streak' },
+    { icon: 'star', tint: 'var(--gold)', value: profile.totalXp, label: 'total XP' },
+    { icon: 'book', tint: 'var(--lime)', value: profile.wordsLearned, label: 'words learned' },
+    { icon: 'teacher', tint: 'var(--info)', value: profile.lessonsCompleted, label: 'lessons done' },
+  ];
+
   return (
     <GroundScaffold title={title} actions={actions} wide>
       <div class="cols">
         <div class="stack-lg">
         <section>
-          <div style={{ position: 'relative', height: 184, borderRadius: 'var(--r-panel)', overflow: 'hidden', border: '1px solid var(--hair)' }}>
-            <img src={sceneUrl(profile.profileBackgroundId as SceneId)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,.65))' }} />
-            <p class="t-label" style={{ position: 'absolute', right: 16, bottom: 12, color: 'var(--cream)' }}>
+          <div class="profile-banner">
+            <img src={sceneUrl(profile.profileBackgroundId as SceneId)} alt="" />
+            <span class="profile-rank row-xs t-label">
+              <Icon name="cup" size={16} color="var(--gold)" />
               {rank ? `#${rank} this week` : 'Learning profile'}
-            </p>
+            </span>
           </div>
-          <div class="row" style={{ marginTop: 'var(--s-sm)' }}>
-            <Avatar id={profile.profileIconId} size={88} level={profile.level} />
-            <div class="grow" style={{ minWidth: 0 }}>
-              <h2 class="t-headline" style={{ overflowWrap: 'anywhere' }}>{profile.displayName}</h2>
+          <div class="profile-id">
+            <Avatar id={profile.profileIconId} size={96} level={profile.level} />
+            <div class="grow">
+              <h2 class="t-headline">{profile.displayName}</h2>
               <p class="t-title" style={{ color: 'var(--lime)' }}>Level {profile.level}</p>
-              <p class="t-body-s muted">{[profile.createdAt > 0 ? `Joined ${monthYear(profile.createdAt)}` : null, activeLine].filter(Boolean).join(' · ')}</p>
+              <p class="t-body muted">{[profile.createdAt > 0 ? `Joined ${monthYear(profile.createdAt)}` : null, activeLine].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
         </section>
@@ -121,18 +131,16 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
           </button>
         )}
 
-        <div class="grid-2">
-          {(
-            [
-              ['day streak', profile.currentStreak],
-              ['total XP', profile.totalXp],
-              ['words learned', profile.wordsLearned],
-              ['lessons done', profile.lessonsCompleted],
-            ] as const
-          ).map(([label, value]) => (
-            <div key={label} class="card">
-              <p class="t-headline">{value}</p>
-              <p class="t-label-s muted">{label}</p>
+        <div class="stat-grid">
+          {stats.map((s) => (
+            <div key={s.label} class="card stat-tile">
+              <span class="ico" style={{ color: s.tint }}>
+                <Icon name={s.icon} size={24} color={s.tint} />
+              </span>
+              <div class="grow">
+                <p class="t-headline-s">{s.value.toLocaleString()}</p>
+                <p class="t-label muted">{s.label}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -140,12 +148,12 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
         {showcase.length > 0 && (
           <section class="stack-sm">
             <SectionHeading text="Showcase" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-sm)' }}>
+            <div class="card showcase">
               {showcase.map((b) => (
-                <div key={b.id} class="center" style={{ display: 'grid', justifyItems: 'center', gap: 4 }}>
-                  <BadgeMedal tier={b.tier} earned size={56} />
-                  <p class="t-label">{b.family.name}</p>
-                  <p class="t-label-s muted">{b.tier.label}</p>
+                <div key={b.id}>
+                  <BadgeMedal tier={b.tier} earned size={64} />
+                  <p class="t-title-s">{b.family.name}</p>
+                  <p class="t-body muted">{b.tier.label}</p>
                 </div>
               ))}
             </div>
@@ -154,17 +162,20 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
 
         <section class="stack-sm">
           <SectionHeading text={`You vs ${profile.displayName} · this week`} />
-          {[
-            [profile.displayName, theirs],
-            ['You', mine],
-          ].map(([name, xp]) => (
-            <div key={String(name)} class="stack-sm">
-              <p class="t-body">
-                {name} · {xp} XP
-              </p>
-              <ProgressBar value={Number(xp) / max} height={8} />
-            </div>
-          ))}
+          <div class="card stack">
+            {[
+              { name: profile.displayName, xp: theirs, color: 'var(--gold)' },
+              { name: 'You', xp: mine, color: 'var(--lime)' },
+            ].map((r) => (
+              <div key={r.name} class="stack-sm">
+                <div class="row">
+                  <p class="t-title-s grow">{r.name}</p>
+                  <p class="t-title-s" style={{ color: r.color }}>{r.xp.toLocaleString()} XP</p>
+                </div>
+                <ProgressBar value={r.xp / max} color={r.color} height={10} label={`${r.name}, ${r.xp} XP this week`} />
+              </div>
+            ))}
+          </div>
         </section>
 
         </div>
@@ -172,39 +183,70 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
         <div class="stack-lg">
         <section class="stack-sm">
           <SectionHeading text={`Badges · ${profile.badgeIds.length} of 66 tiers`} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-sm)' }}>
-            {BADGE_ROWS.map((b) => (
-              <div key={b.id} class="center" style={{ display: 'grid', justifyItems: 'center', gap: 2 }}>
-                <BadgeMedal tier={b.tier} earned={profile.badgeIds.includes(b.id)} size={44} />
-                <p class="t-label-s">{b.family.name}</p>
-                <p class="t-label-s muted">{b.tier.label}</p>
-              </div>
-            ))}
+          <p class="t-body muted">{TIER_LADDER}</p>
+          <div class="list">
+            {BADGE_FAMILIES.map((f) => {
+              const tiers = BADGE_TIERS.map((t) => profile.badgeIds.includes(badgeId(f.id, t.index)));
+              const count = tiers.filter(Boolean).length;
+              const top = BADGE_TIERS[tiers.lastIndexOf(true)];
+              return (
+                <div key={f.id} class="list-row badge-family" role="group" aria-label={`${f.name}: ${top ? top.label : 'not earned yet'}, ${count} of 6 tiers`}>
+                  <BadgeMedal tier={top} earned={!!top} size={52} />
+                  <div class="grow stack-sm">
+                    <div class="row wrap" style={{ gap: '0 var(--s-sm)' }}>
+                      <p class="t-title-s" style={{ flex: '1 1 auto' }}>{f.name}</p>
+                      <span class="t-label" style={{ color: top ? 'var(--ink)' : 'var(--faint)' }}>{top ? top.label : 'Not earned yet'}</span>
+                    </div>
+                    <div class="row">
+                      <div class="tier-track grow" aria-hidden="true">
+                        {tiers.map((on, i) => (
+                          <i key={i} style={on ? { background: `var(--tier-${i + 1})` } : undefined} />
+                        ))}
+                      </div>
+                      <span class="t-label muted">{count} / 6</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         <section class="stack-sm">
           <SectionHeading text="Path progress" />
           <div class="list">
-            {sections.map((s) => (
-              <div key={s.id} class="list-row">
-                <img src={sceneUrl(sceneForSection(s.id))} alt="" style={{ width: 56, height: 56, borderRadius: 'var(--r-tile)', objectFit: 'cover', flex: 'none' }} />
-                <div class="grow">
-                  <p class="t-title-s">{s.title}</p>
-                  <p class="t-body-s muted">
-                    {profile.masteredSections.includes(s.id)
-                      ? 'Mastered'
-                      : !profile.unlockedSections.includes(s.id)
-                        ? 'Locked'
-                        : `${profile.sections[s.id] ?? 0} / ${profile.sectionTotals[s.id] ?? 0} lessons`}
-                  </p>
+            {sections.map((s) => {
+              const mastered = profile.masteredSections.includes(s.id);
+              const unlocked = profile.unlockedSections.includes(s.id);
+              const done = profile.sections[s.id] ?? 0;
+              const total = profile.sectionTotals[s.id] ?? 0;
+              return (
+                <div key={s.id} class="list-row">
+                  <img class="section-thumb" src={sceneUrl(sceneForSection(s.id))} alt="" style={unlocked ? undefined : { filter: 'grayscale(1)', opacity: 0.5 }} />
+                  <div class="grow stack-sm">
+                    <p class="t-title">{s.title}</p>
+                    {mastered ? (
+                      <p class="row-xs t-label" style={{ color: 'var(--lime)' }}>
+                        <Icon name="tickCircle" size={16} color="var(--lime)" /> Mastered
+                      </p>
+                    ) : !unlocked ? (
+                      <p class="row-xs t-body faint">
+                        <Icon name="lock" size={16} color="var(--faint)" /> Locked
+                      </p>
+                    ) : (
+                      <>
+                        <p class="t-body muted">{done} / {plural(total, 'lesson')}</p>
+                        <ProgressBar value={total ? done / total : 0} height={6} label={`${s.title}, ${done} of ${total} lessons`} />
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
-        <p class="t-body-s muted">Only your display name and game stats are public. Personal details stay private.</p>
+        <p class="t-body muted">Only your display name and game stats are public. Personal details stay private.</p>
         </div>
       </div>
     </GroundScaffold>

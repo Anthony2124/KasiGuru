@@ -162,16 +162,14 @@ export function GroundScaffold({
             <button class="icon-btn" onClick={() => (onBack ? onBack() : back())} aria-label={backLabel}>
               <Icon name="arrowLeft" size={24} />
             </button>
-          ) : (
-            <span style={{ width: 12 }} />
-          )}
+          ) : null}
           <h1 class="title t-title-l" style={{ opacity: largeTitle && !scrolled ? 0 : 1, transition: 'opacity 150ms' }} aria-hidden={largeTitle && !scrolled}>
             {title}
           </h1>
           {actions}
         </div>
       </header>
-      <main class={`page${nav ? '' : ' no-nav'}${isWide ? ' wide' : ''}`} style={{ paddingTop: 'var(--s-xs)' }}>
+      <main id="main-content" tabIndex={-1} class={`page${nav ? '' : ' no-nav'}${isWide ? ' wide' : ''}`} style={{ paddingTop: 'var(--s-xs)' }}>
         {largeTitle && (
           <div style={{ marginBottom: 'var(--s-md)' }}>
             <h2 class="t-headline">{title}</h2>

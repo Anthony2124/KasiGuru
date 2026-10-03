@@ -1,5 +1,5 @@
 /**
- * The navigation shell: KasiGuruNavGraph for the browser. Five tabs behind a floating bar, pushed
+ * The navigation shell: KasiGuruNavGraph for the browser. Five tabs in adaptive navigation, pushed
  * screens on top, the app-wide celebrations (level up, streak), and the suspension gate.
  */
 import { useEffect } from 'preact/hooks';
@@ -81,14 +81,15 @@ function tabFor(path: string): string {
   return '/me';
 }
 
-/** The computer layout's navigation: wordmark, the five tabs, and you (wide screens only, see CSS). */
+/** A compact rail on tablets, then the wordmark, five tabs and profile on desktops (see CSS). */
 function SideNav({ path }: { path: string }) {
   const p = useProgress();
   const current = tabFor(path);
   return (
     <nav class="side-nav" aria-label="Main">
       <button class="side-brand" onClick={() => switchTab('/')} aria-label="KasiGuru home">
-        <Wordmark width={136} />
+        <img class="side-logo" src="/icons/icon-192.png" width={40} height={40} alt="" />
+        <span class="side-wordmark"><Wordmark width={136} /></span>
       </button>
       <div class="side-tabs">
         {TABS.map((t) => (
@@ -100,7 +101,7 @@ function SideNav({ path }: { path: string }) {
       </div>
       <button class="side-me" onClick={() => switchTab('/me')} aria-label={`Your profile, level ${p.level}, ${p.totalXp} XP, ${p.currentStreak} day streak`}>
         <Avatar id={p.profileIconId} size={44} level={p.level} />
-        <span class="grow">
+        <span class="grow side-summary">
           <span class="t-title-s side-name">{p.fullName || p.userName}</span>
           <span class="row-xs t-label-s muted">
             <Icon name="flash" size={14} color="var(--coral)" /> {p.currentStreak}
@@ -249,7 +250,8 @@ export function App() {
   const withSide = onboarded && !isFocusRoute(path);
 
   return (
-    <div class={withSide ? 'app with-side' : 'app'}>
+    <div class={`app${withSide ? ' with-side' : ''}${isTab ? ' with-bottom' : ''}`}>
+      {withSide && <a class="skip-link" href="#main-content">Skip to content</a>}
       {withSide && <SideNav path={path} />}
       {!online && <div class="offline-pill">Offline — progress is saved on this device</div>}
       {screen}

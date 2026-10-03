@@ -99,7 +99,7 @@ function PathNode({ node, index, showGuide, previous }: { node: TreeNodeState; i
   return (
     <div style={{ display: 'grid', justifyItems: 'center' }} data-current={node.isCurrent && node.isUnlocked ? 'true' : undefined}>
       {previous && (
-        <svg width={320} height={26} aria-hidden="true" style={{ display: "block", overflow: "visible" }} viewBox="-160 0 320 26">
+        <svg class="path-connector" width={320} height={26} aria-hidden="true" viewBox="-160 0 320 26">
           <line
             x1={WIND[(index - 1) % WIND.length] * AMPLITUDE}
             y1={0}
@@ -150,7 +150,7 @@ function PathNode({ node, index, showGuide, previous }: { node: TreeNodeState; i
         )}
       </div>
       {caption && (
-        <p class="t-label" aria-hidden="true" style={{ marginTop: 4, transform: `translateX(${offset}px)`, color: look === 'locked' ? 'var(--faint)' : 'var(--ink)', textAlign: 'center', maxWidth: 220 }}>
+        <p class="t-label" aria-hidden="true" style={{ marginTop: 4, transform: `translateX(${offset}px)`, color: look === 'locked' ? 'var(--faint)' : 'var(--ink)', textAlign: 'center', maxWidth: 'min(220px, calc(100% - 112px))' }}>
           {caption}
         </p>
       )}
