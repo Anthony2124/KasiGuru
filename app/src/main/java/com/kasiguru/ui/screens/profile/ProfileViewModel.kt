@@ -35,6 +35,8 @@ data class ProfileUiState(
      * record of retention.
      */
     val masteredCount: Int = 0,
+    /** Words met anywhere in the app, from the Library's My words list. */
+    val wordsMet: Int = 0,
     /**
      * Lessons finished at least once, counted from the lesson progress rows.
      *
@@ -85,7 +87,8 @@ class ProfileViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val vocabularyRepository: VocabularyRepository,
     private val authRepository: AuthRepository,
-    private val lessonRepository: LessonRepository
+    private val lessonRepository: LessonRepository,
+    private val wordEncounterRepository: com.kasiguru.data.repository.WordEncounterRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -116,6 +119,11 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             vocabularyRepository.getLearnedCount().collect { count ->
                 _uiState.value = _uiState.value.copy(masteredCount = count)
+            }
+        }
+        viewModelScope.launch {
+            wordEncounterRepository.observeCount().collect { count ->
+                _uiState.value = _uiState.value.copy(wordsMet = count)
             }
         }
     }

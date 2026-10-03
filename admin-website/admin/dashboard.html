@@ -237,6 +237,7 @@
             <div><h2>Story library</h2></div>
             <button class="text-link" onclick="window.switchTab('tab-stories')">Manage</button>
           </div>
+          <p class="card-note">Hidden in the app as "Coming soon" until the stories are narrated.</p>
           <div class="itemlist" id="story-list"></div>
         </div>
 
@@ -443,6 +444,13 @@
             <iconsax-icon name="add-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Add story
           </button>
         </div>
+      </div>
+
+      <div class="soon-banner" role="note">
+        <iconsax-icon name="info-circle" type="bulk" size="20" color="currentColor"></iconsax-icon>
+        <span><b>Stories are hidden in the app for now.</b> Until a narrator records them, learners see
+          "Coming soon" wherever stories were. Stories you add or edit here are still saved, ready for
+          when they are switched back on.</span>
       </div>
 
       <div class="story-grid stagger" id="story-grid"></div>

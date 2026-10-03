@@ -4,6 +4,7 @@
  * browser cannot deliver those reminders reliably, so the web app uses that slot to show how to add
  * KasiGuru to the home screen, which is what makes it behave like an app on an iPhone.
  */
+import { STORIES_ENABLED } from '../../domain/constants';
 import { useState } from 'preact/hooks';
 import { ONBOARDING_DEFAULT_NAME } from '../../domain/types';
 import { act } from '../../lib/store';
@@ -55,7 +56,10 @@ const MAX_NAME_LENGTH = 30;
 const BADGES: { name: string; condition: string; tier: number; icon: IconName }[] = [
   { name: 'Word Explorer', condition: 'Verify 50 words in review', tier: 3, icon: 'book' },
   { name: 'Consistent Learner', condition: 'Keep a 7-day streak', tier: 3, icon: 'flash' },
-  { name: 'Story Reader', condition: 'Finish 3 stories', tier: 3, icon: 'document' },
+  // Story Reader while stories are switched on; until then a badge a new learner can earn now.
+  STORIES_ENABLED
+    ? { name: 'Story Reader', condition: 'Finish 3 stories', tier: 3, icon: 'document' }
+    : { name: 'Category Scholar', condition: 'Finish 3 categories', tier: 3, icon: 'element4' },
   { name: 'Journey Rank', condition: 'Reach Level 10', tier: 4, icon: 'medalStar' },
 ];
 const TIER_LABEL = ['', 'Beginner', 'Learner', 'Achiever', 'Expert', 'Master', 'Legend'];
@@ -292,8 +296,17 @@ export function OnboardingScreen() {
         {step.id === 'Games' && (
           <div class="stack">
             <Cropped pose="playing_a_game" align="center" />
-            <Title text="Play games, read stories" words={['games']} align="center" />
-            <Body text="Word games, and 10 stories with Tagalog and English alongside." words={['Word games', '10 stories']} align="center" />
+            {STORIES_ENABLED ? (
+              <>
+                <Title text="Play games, read stories" words={['games']} align="center" />
+                <Body text="Word games, and 10 stories with Tagalog and English alongside." words={['Word games', '10 stories']} align="center" />
+              </>
+            ) : (
+              <>
+                <Title text="Play games with the words" words={['games']} align="center" />
+                <Body text="Word games to practise what you learn. Folk stories are coming soon." words={['Word games']} align="center" />
+              </>
+            )}
           </div>
         )}
 

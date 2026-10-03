@@ -2,6 +2,7 @@ package com.kasiguru.ui.screens.learn
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.util.Constants
 import com.kasiguru.BuildConfig
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
@@ -367,8 +368,9 @@ class LearnViewModel @Inject constructor(
             isDone = false
         )
 
-        // 4. A story, when one is unlocked.
-        val stories = storyRepository.getUnlockedStories().first()
+        // 4. A story, when one is unlocked - and only while stories are switched on: they are not
+        //    narrated yet, so today's path does not send the learner to one.
+        val stories = if (Constants.STORIES_ENABLED) storyRepository.getUnlockedStories().first() else emptyList()
         if (stories.isNotEmpty()) {
             val unread = stories.firstOrNull { !it.isCompleted }
             activities += PathActivity(

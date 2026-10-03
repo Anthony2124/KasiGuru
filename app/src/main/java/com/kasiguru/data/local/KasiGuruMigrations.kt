@@ -55,8 +55,20 @@ object KasiGuruMigrations {
         MIGRATION_29_30,
         MIGRATION_30_31,
         MIGRATION_31_32,
-        MIGRATION_32_33
+        MIGRATION_32_33,
+        MIGRATION_33_34
         )
+    }
+
+    /**
+     * The Library's My words list: one row per word the learner has met. Created empty; words met
+     * before this version are added by WordEncounterRepository.fillFromHistory, which also runs after
+     * a sign-in restores progress, so it lives in code rather than in this one-off migration.
+     */
+    private val MIGRATION_33_34 = object : Migration(33, 34) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS word_encounters (wordId INTEGER NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL, timesSeen INTEGER NOT NULL, lastSource TEXT NOT NULL, PRIMARY KEY(wordId))")
+        }
     }
 
     private val MIGRATION_32_33 = object : Migration(32, 33) {

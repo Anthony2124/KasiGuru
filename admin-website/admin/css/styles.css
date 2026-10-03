@@ -453,6 +453,9 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .bars { display: flex; flex-direction: column; gap: 11px; }
 .bar-row { display: grid; grid-template-columns: 15ch 1fr 4ch; align-items: center; gap: 12px; }
 .bar-name { font-size: var(--t-xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The app's illustrated category icons, beside a category's name in the chart and on entries. */
+.cat-icon { display: inline-block; vertical-align: -4px; margin-right: 6px; flex: none; }
+.badge .cat-icon { vertical-align: -3px; margin-right: 5px; }
 .bar-track { display: block; height: 22px; background: var(--sunken); border-radius: 7px; overflow: hidden; }
 .bar-fill { display: block; height: 100%; background: var(--violet-soft); border-radius: 7px; min-width: 3px; }
 .bar-row.is-top .bar-fill { background: var(--violet); }
@@ -788,6 +791,15 @@ body.auth { display: flex; align-items: center; justify-content: center; padding
 }
 .error-banner { background: var(--status-rejected-tint); color: var(--status-rejected); }
 .notice-banner { background: var(--status-approved-tint); color: var(--status-approved); }
+/* A standing note on a tab: what learners see differs from what is managed here. */
+.soon-banner {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 18px; padding: 12px 15px;
+  border-radius: var(--r-ctl); background: var(--status-info-tint); color: var(--status-info);
+  font-size: var(--t-sm); line-height: 1.5;
+}
+.soon-banner b { font-weight: 700; }
+.soon-banner iconsax-icon { flex: none; margin-top: 1px; }
+.card-note { margin: -4px 0 10px; font-size: var(--t-xs); color: var(--muted); }
 #google-login-btn {
   width: 100%; padding: 13px; font-size: var(--t-sm); font-weight: 700;
   background: var(--surface); color: var(--ink); border: 1px solid var(--hair-strong);

@@ -37,7 +37,7 @@ class MigrationTest {
          * forgets to extend this suite fails loudly against the missing schema export
          * rather than quietly continuing to test an old ceiling.
          */
-        const val CURRENT_VERSION = 33
+        const val CURRENT_VERSION = 34
     }
 
     /**
@@ -124,6 +124,25 @@ class MigrationTest {
         }
         db.query("SELECT uid,payload FROM public_profile_cache").use { check(it.count == 0) }
         db.query("SELECT firebaseUid,weeklyXp,weekId,level,boardId,rank FROM leaderboard").use { check(it.count == 0) }
+        db.close()
+    }
+
+    @Test
+    fun migrateV33AddsAnEmptyWordEncounterTableAndKeepsTheDictionary() {
+        val name = "migration-word-encounters-test"
+        helper.createDatabase(name, 33).apply {
+            execSQL(
+                "INSERT INTO vocabulary (id,kasiguranin,tagalog,english,rootForm,category,isLearned,timesReviewed," +
+                    "easinessFactor,intervalDays,nextReviewDate) VALUES (7,'aldew','araw','day','aldew','Nature',1,4,2.5,6,'2026-10-09')"
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(name, CURRENT_VERSION, true, *KasiGuruMigrations.ALL)
+        db.query("SELECT kasiguranin,isLearned,timesReviewed FROM vocabulary WHERE id=7").use {
+            check(it.moveToFirst() && it.getString(0) == "aldew" && it.getInt(1) == 1 && it.getInt(2) == 4)
+        }
+        // Created empty: words met earlier are added at runtime by WordEncounterRepository.
+        db.query("SELECT wordId FROM word_encounters").use { check(it.count == 0) }
         db.close()
     }
 

@@ -18,20 +18,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.clay.GroundPattern
 import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.SegmentedToggle
+import com.kasiguru.ui.screens.stories.StoriesComingSoonContent
 import com.kasiguru.ui.screens.stories.StoryListContent
 import com.kasiguru.ui.screens.vocabulary.DictionaryContent
 import com.kasiguru.ui.screens.vocabulary.DictionaryRefreshAction
 import com.kasiguru.ui.screens.vocabulary.VocabularyViewModel
 import com.kasiguru.ui.theme.Space
+import com.kasiguru.util.Constants
 
-/** The Library's two sides, as the index [LibraryScreen]'s toggle and a navigation request use. */
+/** The Library's three sides, as the index [LibraryScreen]'s toggle and a navigation request use. */
 object LibrarySegment {
     const val WORDS = 0
-    const val STORIES = 1
+    const val MY_WORDS = 1
+    const val STORIES = 2
 }
 
 /**
- * The Library tab: the dictionary and the stories behind one segmented toggle.
+ * The Library tab: the dictionary, the words the learner has met (My words), and the stories, behind
+ * one segmented toggle. While stories are switched off (Constants.STORIES_ENABLED), their side says
+ * they are coming soon.
  *
  * They were a tab and a screen reachable from nowhere in particular; both are things you look
  * something up in, so they share a place. Each side is the very content its old screen showed
@@ -52,6 +57,7 @@ fun LibraryScreen(
     onNavigateToAddWord: () -> Unit,
     onNavigateToStory: (Int) -> Unit,
     onNavigateToShareStory: () -> Unit,
+    onOpenReview: () -> Unit,
     segmentRequest: Int? = null,
     onSegmentRequestConsumed: () -> Unit = {},
     vocabularyViewModel: VocabularyViewModel = hiltViewModel()
@@ -70,7 +76,7 @@ fun LibraryScreen(
     val header: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth()) {
             SegmentedToggle(
-                options = listOf("Words", "Stories"),
+                options = listOf("Words", "My words", "Stories"),
                 selectedIndex = segment,
                 onSelect = { segment = it },
                 modifier = Modifier.fillMaxWidth()
@@ -94,20 +100,31 @@ fun LibraryScreen(
         actions = refreshAction,
         content = {
             sides.SaveableStateProvider(key = segment) {
-                if (segment == LibrarySegment.WORDS) {
-                    DictionaryContent(
+                when (segment) {
+                    LibrarySegment.WORDS -> DictionaryContent(
                         onNavigateToCategory = onNavigateToCategory,
                         onNavigateToWord = onNavigateToWord,
                         onNavigateToSubmitWord = onNavigateToAddWord,
                         header = header,
                         viewModel = vocabularyViewModel
                     )
-                } else {
-                    StoryListContent(
-                        onNavigateToStory = onNavigateToStory,
-                        onNavigateToSubmitLiterature = onNavigateToShareStory,
+                    LibrarySegment.MY_WORDS -> MyWordsContent(
+                        onNavigateToWord = onNavigateToWord,
+                        onOpenReview = onOpenReview,
                         header = header
                     )
+                    else -> if (Constants.STORIES_ENABLED) {
+                        StoryListContent(
+                            onNavigateToStory = onNavigateToStory,
+                            onNavigateToSubmitLiterature = onNavigateToShareStory,
+                            header = header
+                        )
+                    } else {
+                        StoriesComingSoonContent(
+                            onOpenMyWords = { segment = LibrarySegment.MY_WORDS },
+                            header = header
+                        )
+                    }
                 }
             }
         }

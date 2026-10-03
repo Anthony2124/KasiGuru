@@ -42,6 +42,8 @@ class WordMatchViewModel @Inject constructor(
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
+    /** Every word this round has asked, for the Library's My words list. */
+    private val metWordIds = linkedSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private val reviewItems = mutableListOf<GameReviewItem>()
 
@@ -96,6 +98,7 @@ class WordMatchViewModel @Inject constructor(
             val allOptions = (wrongOptions + targetWord.tagalog).distinct().shuffled()
             questionStartTimeMs = System.currentTimeMillis()
 
+            metWordIds += targetWord.id
             _uiState.value = state.copy(
                 isLoading = false,
                 currentWord = targetWord,
@@ -170,7 +173,7 @@ class WordMatchViewModel @Inject constructor(
                 successRate >= 0.4f -> 1
                 else -> 0
             }
-            val xpEarned = userProgressRepository.awardGame("word_match","word_match",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
+            val xpEarned = userProgressRepository.awardGame("word_match","word_match",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,metWordIds.toList())
             val scoreEntity = GameScoreEntity(
                 gameType = "word_match",
                 score = state.score,

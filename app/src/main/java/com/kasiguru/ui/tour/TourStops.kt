@@ -2,6 +2,7 @@ package com.kasiguru.ui.tour
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.navigation.Screen
 import com.kasiguru.ui.theme.Radius
 
@@ -94,8 +95,10 @@ val coreChapter: TourChapter = TourChapter(
             target = TourTarget.Fixed(Screen.Library.route),
             anchor = TourAnchor.NavLibrary,
             title = "Library",
-            body = "The whole dictionary with pronunciation where a recording is available, and the folk tales beside it. All " +
-                "of it works offline, and you can add a word or share a story from here.",
+            body = if (Constants.STORIES_ENABLED) "The whole dictionary with pronunciation where a recording is available, and the folk tales beside it. All " +
+                "of it works offline, and you can add a word or share a story from here."
+            else "The whole dictionary with pronunciation where a recording is available, and My words: every " +
+                "word you have met, ready to review. All of it works offline. Folk stories are coming soon.",
             corner = Radius.pill
         ),
         TourStop(

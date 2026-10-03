@@ -2,7 +2,7 @@
  * Library: Words and Stories behind one toggle (ui/screens/library, vocabulary, stories).
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { CATEGORIES } from '../../domain/constants';
+import { CATEGORIES, STORIES_ENABLED } from '../../domain/constants';
 import { plural } from '../../domain/plural';
 import { navigate } from '../../lib/router';
 import { useApp, useCorpus, useLearner } from '../../lib/store';
@@ -186,6 +186,28 @@ export function StoriesList() {
   );
 }
 
+/** What the stories side and routes show while STORIES_ENABLED is off. */
+export function StoriesComingSoon() {
+  return (
+    <EmptyState
+      pose="reading"
+      title="Stories are coming soon"
+      message="Folk tales from Casiguran are on their way. We are finding a narrator so you can hear every story read aloud in Kasiguranin. Until then, keep learning the words."
+      actionLabel="Browse the words"
+      onAction={() => navigate('/library')}
+    />
+  );
+}
+
+/** The same notice as a screen of its own, for the /stories and /story routes. */
+export function StoriesComingSoonScreen() {
+  return (
+    <GroundScaffold title="Stories">
+      <StoriesComingSoon />
+    </GroundScaffold>
+  );
+}
+
 export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
   const setTab = (t: 'words' | 'stories') => history.replaceState(history.state, '', t === 'stories' ? '/library?tab=stories' : '/library');
   const [current, setCurrent] = useState(tab);
@@ -196,7 +218,7 @@ export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
       onBack={false}
       nav
       largeTitle
-      subtitle={current === 'words' ? 'Every word, with its meaning and how it sounds' : 'Stories with Tagalog and English alongside'}
+      subtitle={current === 'words' ? 'Every word, with its meaning and how it sounds' : STORIES_ENABLED ? 'Stories with Tagalog and English alongside' : 'Folk tales from Casiguran, coming soon'}
     >
       <div class="stack">
         <div class="segmented" role="tablist" aria-label="Library">
@@ -214,7 +236,7 @@ export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
             </button>
           ))}
         </div>
-        {current === 'words' ? <WordsTab /> : <StoriesList />}
+        {current === 'words' ? <WordsTab /> : STORIES_ENABLED ? <StoriesList /> : <StoriesComingSoon />}
       </div>
     </GroundScaffold>
   );

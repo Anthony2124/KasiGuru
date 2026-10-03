@@ -2,6 +2,7 @@ package com.kasiguru.ui.screens.achievements
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kasiguru.util.Constants
 import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.entity.*
 import com.kasiguru.data.repository.GamificationRepository
@@ -17,6 +18,8 @@ data class FamilyProgress(val family: BadgeFamily, val rows: List<AchievementEnt
     val next get() = rows.firstOrNull { !it.isUnlocked }
     val value get() = rows.maxOfOrNull { it.currentValue } ?: 0
     val tier get() = current?.id?.let(BadgeCatalog::tierFor) ?: BadgeTier.BEGINNER
+    /** Story Reader while stories are switched off: shown, but nothing can count towards it yet. */
+    val isComingSoon get() = family.id == "story_reader" && !Constants.STORIES_ENABLED
 }
 
 data class AchievementsUiState(

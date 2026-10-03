@@ -2,6 +2,7 @@
  * Badges (ui/screens/achievements): eleven families with six permanent tiers each, the earned
  * originals under Legacy, and the one-time note explaining the XP recalculation.
  */
+import { STORIES_ENABLED } from '../../domain/constants';
 import { useState } from 'preact/hooks';
 import { BADGE_FAMILIES, BADGE_ROWS, badgeAmount, badgeProgress, legacyDefinition, type BadgeFamily, type BadgeRow } from '../../domain/badges';
 import { legacyAchievements, pinnedFamilies, type LearnerData } from '../../domain/learner';
@@ -128,7 +129,9 @@ export function AchievementsScreen() {
                   <div class="grow">
                     <p class="t-title-s">{f.family.name}</p>
                     <p class="t-body-s muted">{f.current ? f.current.tier.label : 'Not earned yet'}</p>
-                    {f.next ? (
+                    {f.family.id === 'story_reader' && !STORIES_ENABLED ? (
+                      <p class="t-label-s muted" style={{ marginTop: 4 }}>Coming soon</p>
+                    ) : f.next ? (
                       <>
                         <p class="t-label-s" style={{ marginTop: 4 }}>
                           {badgeProgress(f.family, Math.min(f.value, f.next.requiredValue), f.next.requiredValue)} · Next: {f.next.tier.label}

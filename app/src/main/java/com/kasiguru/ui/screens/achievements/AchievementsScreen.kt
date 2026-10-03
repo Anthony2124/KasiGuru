@@ -244,7 +244,9 @@ private fun BadgeTile(family: FamilyProgress, pinned: Boolean, onClick: () -> Un
                 Spacer(Modifier.height(Space.xs))
                 TierPips(earned = earnedCount)
                 Spacer(Modifier.height(Space.xs))
-                family.next?.let { next ->
+                if (family.isComingSoon) {
+                    Text("Coming soon", style = MaterialTheme.typography.labelMedium, color = Muted)
+                } else family.next?.let { next ->
                     KasiGuruProgressBar(
                         progress = (family.value.toFloat() / next.requiredValue).coerceIn(0f, 1f),
                         modifier = Modifier.fillMaxWidth(),
@@ -363,7 +365,18 @@ private fun BadgeDetail(
         }
         item {
             Spacer(Modifier.height(Space.sm))
-            ClayButton(label = family.family.action, onClick = onAction, modifier = Modifier.fillMaxWidth())
+            if (family.isComingSoon) {
+                // Stories are not narrated yet, so there is nothing to do towards this one today.
+                Text(
+                    "Stories are coming soon. This badge opens up when they arrive.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                ClayButton(label = family.family.action, onClick = onAction, modifier = Modifier.fillMaxWidth())
+            }
             if (earned) {
                 Spacer(Modifier.height(Space.xs))
                 ClayButton(

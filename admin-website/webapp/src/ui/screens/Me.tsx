@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'preact/hooks';
 import { BADGE_ROWS, familyFor, tierFor } from '../../domain/badges';
-import { levelProgress, levelTitle, xpToNextLevel } from '../../domain/constants';
+import { levelProgress, levelTitle, xpToNextLevel, STORIES_ENABLED } from '../../domain/constants';
 import { pinnedFamilies } from '../../domain/learner';
 import { weeklyRank } from '../../lib/remote';
 import { navigate } from '../../lib/router';
@@ -188,7 +188,7 @@ export function MeScreen() {
               <Stat icon="medal" label="Longest streak" value={`${p.longestStreak} ${p.longestStreak === 1 ? 'day' : 'days'}`} />
               <Stat icon="teacher" label="Lessons completed" value={`${lessons}`} />
               <Stat icon="game" label="Games played" value={`${p.gamesPlayed}`} />
-              <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />
+              {STORIES_ENABLED && <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />}
               <Stat
                 icon="tickCircle"
                 label="Accuracy"

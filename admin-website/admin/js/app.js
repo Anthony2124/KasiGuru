@@ -720,7 +720,7 @@ function renderVocabularyTable() {
         </span>
         <span class="entry-side">
           ${aspects ? `<span class="badge badge-aspect">${aspects} aspect${aspects === 1 ? '' : 's'}</span>` : ''}
-          <span class="badge badge-category">${escapeHtml(item.category || 'General')}</span>
+          <span class="badge badge-category">${categoryIcon(item.category, 16)}${escapeHtml(item.category || 'General')}</span>
         </span>
       </button>`;
   }).join('');
@@ -763,7 +763,7 @@ window.openEntryModal = function(id) {
       ${row('English', item.english)}
       ${row('Meaning (English)', item.meaningEnglish)}
       ${row('Meaning (Tagalog)', item.meaningTagalog)}
-      <dt>Category</dt><dd><span class="badge badge-category">${escapeHtml(item.category || 'General')}</span></dd>
+      <dt>Category</dt><dd><span class="badge badge-category">${categoryIcon(item.category, 16)}${escapeHtml(item.category || 'General')}</span></dd>
     </dl>
     ${aspects.length ? `
       <div style="margin-top:var(--s-5);">
@@ -1930,6 +1930,18 @@ function updateDashboardMetrics() {
 
 // One bar per category, longest first. Each bar states its own count, so the figure reads without
 // relying on bar length or on colour — which is also what makes it legible to a screen reader.
+// The app's illustrated category icons (CategoryMetaData.kt), keyed by the part before " & ".
+const CATEGORY_ICONS = {
+  'greetings': 'greetings', 'food': 'food', 'animals': 'animals', 'body parts': 'health',
+  'numbers': 'numbers', 'weather': 'weather', 'emotions': 'emotions', 'house': 'house',
+  'nature': 'nature', 'family': 'family', 'colors': 'colors', 'occupations': 'occupations',
+};
+function categoryIcon(name, size = 20) {
+  const key = String(name || '').split(' &')[0].trim().toLowerCase();
+  const slug = CATEGORY_ICONS[key] || 'general';
+  return `<img class="cat-icon" src="img/category-${slug}.webp" width="${size}" height="${size}" alt="" loading="lazy">`;
+}
+
 function renderCategoryChart() {
   const host = document.getElementById('category-bars');
   const caption = document.getElementById('chart-caption');
@@ -1959,7 +1971,7 @@ function renderCategoryChart() {
 
   host.innerHTML = shown.map(([name, count], i) => `
     <div class="bar-row${i === 0 ? ' is-top' : ''}">
-      <span class="bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+      <span class="bar-name" title="${escapeHtml(name)}">${categoryIcon(name, 18)}${escapeHtml(name)}</span>
       <span class="bar-track"><span class="bar-fill" style="width:${Math.max(2, (count / max) * 100).toFixed(1)}%"></span></span>
       <span class="bar-value">${count}</span>
     </div>`).join('');

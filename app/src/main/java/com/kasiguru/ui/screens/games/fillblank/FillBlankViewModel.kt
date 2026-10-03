@@ -41,6 +41,8 @@ class FillBlankViewModel @Inject constructor(
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
+    /** Every word this round has asked, for the Library's My words list. */
+    private val metWordIds = linkedSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private val reviewItems = mutableListOf<GameReviewItem>()
 
@@ -138,6 +140,7 @@ class FillBlankViewModel @Inject constructor(
             val options = (aspects + distractors).distinct().take(4).shuffled()
             questionStartTimeMs = System.currentTimeMillis()
 
+            metWordIds += targetVerb.id
             _uiState.value = state.copy(
                 isLoading = false,
                 currentVerb = targetVerb,
@@ -213,7 +216,7 @@ class FillBlankViewModel @Inject constructor(
                 successRate >= 0.4f -> 1
                 else -> 0
             }
-            val xpEarned = userProgressRepository.awardGame("fill_blank","fill_blank",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
+            val xpEarned = userProgressRepository.awardGame("fill_blank","fill_blank",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,metWordIds.toList())
             val scoreEntity = GameScoreEntity(
                 gameType = "fill_blank",
                 score = state.score,

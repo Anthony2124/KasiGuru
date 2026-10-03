@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.onboarding
 
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.components.KasiGuruTextField
 import com.kasiguru.ui.components.StandardBadgeMedal
 import androidx.annotation.DrawableRes
@@ -482,9 +483,12 @@ internal fun GamesStep(ctx: StepContext) {
     Spacer(Modifier.height(Space.sm))
     // Eight mini-games on the Practice tab and ten seeded stories, each page in Tagalog and English.
     StepBody(
-        text = highlighted(
+        text = if (Constants.STORIES_ENABLED) highlighted(
             "8 mini-games, and 10 folk stories with Tagalog and English alongside.",
             "8 mini-games", "10 folk stories"
+        ) else highlighted(
+            "8 mini-games, and every word you meet saved in My words. Folk stories are coming soon.",
+            "8 mini-games", "My words"
         ),
         textAlign = TextAlign.Center,
         modifier = Modifier.readable()
@@ -961,7 +965,9 @@ private data class BadgePreview(val familyId: String, val tier: BadgeTier, val c
 private val badgePreviews = listOf(
     BadgePreview("word_explorer", BadgeTier.BEGINNER) { n -> if (n == 1) "Master your first word" else "Master $n words" },
     BadgePreview("consistent_learner", BadgeTier.LEARNER) { n -> "Keep a $n-day streak" },
-    BadgePreview("story_reader", BadgeTier.ACHIEVER) { n -> "Read $n stories" },
+    // Story Reader while stories are switched on; until then a badge a new learner can earn now.
+    if (Constants.STORIES_ENABLED) BadgePreview("story_reader", BadgeTier.ACHIEVER) { n -> "Read $n stories" }
+    else BadgePreview("category_scholar", BadgeTier.ACHIEVER) { n -> "Finish $n categories" },
     BadgePreview("lesson_pathfinder", BadgeTier.EXPERT) { n -> "Finish $n lessons" },
     BadgePreview("precision_player", BadgeTier.MASTER) { n -> "Play $n perfect levels" },
     BadgePreview("journey_rank", BadgeTier.LEGEND) { n -> "Reach level $n" }
@@ -975,7 +981,10 @@ internal fun BadgesStep() {
     )
     Spacer(Modifier.height(Space.xs))
     StepBody(
-        text = highlighted("Every badge climbs six tiers, from Beginner to Legend. Learn, read and play to rise."),
+        text = highlighted(
+            if (Constants.STORIES_ENABLED) "Every badge climbs six tiers, from Beginner to Legend. Learn, read and play to rise."
+            else "Every badge climbs six tiers, from Beginner to Legend. Learn, review and play to rise."
+        ),
         modifier = Modifier.readable()
     )
     Spacer(Modifier.height(Space.lg))

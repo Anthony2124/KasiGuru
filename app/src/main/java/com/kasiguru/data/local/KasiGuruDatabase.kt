@@ -23,9 +23,10 @@ import com.kasiguru.data.local.entity.*
         RewardReceiptEntity::class,
         ProgressNormalizationEntity::class,
         RewardCelebrationEntity::class,
-        PublicProfileCacheEntity::class
+        PublicProfileCacheEntity::class,
+        WordEncounterEntity::class
     ],
-    version = 33,
+    version = 34,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -44,4 +45,5 @@ abstract class KasiGuruDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun publicProfileCacheDao(): PublicProfileCacheDao
     abstract fun rewardDao(): RewardDao
+    abstract fun wordEncounterDao(): WordEncounterDao
 }

@@ -4,6 +4,13 @@ import { LEVEL_THRESHOLDS, levelFor, MAX_LEVEL } from './xp';
 // Values from Constants.kt under XP policy 2. Rewards themselves are granted by the reward ledger
 // (./xp.ts); these remain for the few places that describe them.
 export const XP_PER_WORD_LEARNED = 5;
+
+/**
+ * Constants.STORIES_ENABLED in the Android app. The stories are written but not yet narrated - there
+ * is no voice actor - so while this is false every way into stories says they are coming soon. The
+ * stories, their rewards and any progress are untouched; switching back is this one line.
+ */
+export const STORIES_ENABLED = false;
 export const XP_PER_STORY_COMPLETE = 20;
 export const XP_PER_GAME_CORRECT = 2;
 export const XP_BONUS_PERFECT_GAME = 5;

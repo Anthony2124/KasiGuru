@@ -99,6 +99,11 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideWordEncounterDao(database: KasiGuruDatabase): WordEncounterDao =
+        database.wordEncounterDao()
+
+    @Provides
+    @Singleton
     fun provideVocabularyDao(database: KasiGuruDatabase): VocabularyDao =
         database.vocabularyDao()
 

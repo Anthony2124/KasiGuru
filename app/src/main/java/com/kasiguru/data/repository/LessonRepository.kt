@@ -301,9 +301,10 @@ class LessonRepository @Inject constructor(
      * awarded so the completion screen can count it up.
      *
      * Best accuracy is kept rather than last, so replaying a lesson can only improve the record.
+     * [wordIds] are the words the lesson used, recorded as met for the Library's My words list.
      */
-    suspend fun completeLesson(ref: LessonRef, accuracy: Float): Int {
-        val xp = userProgressRepository.awardLesson(ref.unitId,ref.lessonIndex,accuracy)
+    suspend fun completeLesson(ref: LessonRef, accuracy: Float, wordIds: List<Int> = emptyList()): Int {
+        val xp = userProgressRepository.awardLesson(ref.unitId,ref.lessonIndex,accuracy,wordIds)
         userProgressRepository.recordLearningActivity()
         return xp
     }

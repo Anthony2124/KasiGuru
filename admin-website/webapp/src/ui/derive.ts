@@ -11,6 +11,7 @@ import { meaningFor } from '../domain/recall';
 import type { LearnerData } from '../domain/learner';
 import type { Story, UserProgress } from '../domain/types';
 import type { Pose } from './kit';
+import { STORIES_ENABLED } from '../domain/constants';
 
 export const wordsToReview = (n: number) => plural(n, 'word');
 
@@ -80,7 +81,8 @@ export function activities(corpus: Corpus, learner: LearnerData, stories: Story[
   if (due === 0) out.push(review);
   else out.unshift(review);
   out.push({ kind: 'game', title: 'Practice game', subtitle: 'Earn stars and XP', isDone: false });
-  const unlocked = stories.filter((s) => storyUnlocked(learner, s));
+  // No story on today's path while they are switched off (not narrated yet).
+  const unlocked = STORIES_ENABLED ? stories.filter((s) => storyUnlocked(learner, s)) : [];
   if (unlocked.length) {
     const unread = unlocked.find((s) => !learner.stories[String(s.id)]?.isCompleted);
     out.push({ kind: 'story', title: unread?.title ?? 'Folk tales', subtitle: unread ? 'Read and listen' : 'All stories read', isDone: !unread });

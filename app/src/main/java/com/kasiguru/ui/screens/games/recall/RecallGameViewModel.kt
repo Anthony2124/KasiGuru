@@ -58,6 +58,8 @@ class RecallGameViewModel @Inject constructor(
 
     private var totalInitialQuestions = 5
     private val questionQueue = mutableListOf<VocabularyEntity>()
+    /** Every word this round has asked, for the Library's My words list. */
+    private val metWordIds = linkedSetOf<Int>()
     private var questionStartTimeMs: Long = 0L
     private val reviewItems = mutableListOf<GameReviewItem>()
 
@@ -114,6 +116,7 @@ class RecallGameViewModel @Inject constructor(
         val targetWord = questionQueue[state.currentQuestionIndex]
         questionStartTimeMs = System.currentTimeMillis()
 
+        metWordIds += targetWord.id
         _uiState.value = state.copy(
             isLoading = false,
             currentWord = targetWord,
@@ -191,7 +194,7 @@ class RecallGameViewModel @Inject constructor(
                 successRate >= 0.4f -> 1
                 else -> 0
             }
-            val xpEarned = userProgressRepository.awardGame("audio_quiz","audio_quiz",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
+            val xpEarned = userProgressRepository.awardGame("audio_quiz","audio_quiz",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,metWordIds.toList())
             val scoreEntity = GameScoreEntity(
                 gameType = Constants.Games.RECALL,
                 score = state.score,

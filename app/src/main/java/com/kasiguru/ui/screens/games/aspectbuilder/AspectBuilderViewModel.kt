@@ -209,7 +209,8 @@ class AspectBuilderViewModel @Inject constructor(
                     successRate >= 0.4f -> 1
                     else -> 0
                 }
-                val finalXp = userProgressRepository.awardGame("aspect_builder","aspect_builder",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect)
+                val finalXp = userProgressRepository.awardGame("aspect_builder","aspect_builder",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,
+                    state.questions.map { it.targetVocab.id })
                 gameLevelRepository.saveLevelResult("aspect_builder", levelNumber, starsEarned)
 
                 gameRepository.saveGameScore(

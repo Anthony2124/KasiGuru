@@ -1,5 +1,6 @@
 package com.kasiguru.ui.tour
 
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.navigation.Screen
 import com.kasiguru.ui.theme.Radius
 
@@ -247,6 +248,7 @@ val inboxChapter: TourChapter = TourChapter(
             body = "Nothing here yet means nothing has happened yet, not that anything is broken. The " +
                 "first thing you will see is usually a reminder not to lose your streak."
         ),
+    ) + if (Constants.STORIES_ENABLED) listOf(
         TourStop(
             target = TourTarget.Fixed(Screen.StoryList.route),
             anchor = TourAnchor.StoryShelf,
@@ -262,6 +264,15 @@ val inboxChapter: TourChapter = TourChapter(
             title = "Know one we do not have?",
             body = "The Share a story or poem button sends one in for review, the same way a missing " +
                 "word does. A moderator reads it before it joins the shelf."
+        )
+    ) else listOf(
+        // Stories are not narrated yet: the stories route shows Coming soon, so one stop says so.
+        TourStop(
+            target = TourTarget.Fixed(Screen.StoryList.route),
+            anchor = null,
+            title = "Stories are coming soon",
+            body = "Folk tales from Casiguran are on their way, read aloud in Kasiguranin. Until then, " +
+                "every word you meet collects under My words in the Library tab."
         )
     )
 )

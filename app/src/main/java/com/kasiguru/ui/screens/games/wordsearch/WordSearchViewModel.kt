@@ -145,7 +145,8 @@ class WordSearchViewModel @Inject constructor(
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
-            val xp = userProgressRepository.awardGame("word_search",levelKey,levelNumber,wordCount,wordCount,stars,state.misses == 0)
+            val xp = userProgressRepository.awardGame("word_search",levelKey,levelNumber,wordCount,wordCount,stars,state.misses == 0,
+                state.puzzle?.words?.map { it.id }.orEmpty())
             gameRepository.saveScore(
                 GameScoreEntity(
                     gameType = Constants.Games.WORD_SEARCH,

@@ -70,6 +70,7 @@ class UserDataResetManager @Inject constructor(
             // 5. Clear completed lesson progress and game score history
             lessonDao.clearAll()
             gameScoreDao.clearAll()
+            database.wordEncounterDao().clearAll()
             profileDao.clearAll()
             leaderboardDao.clearAll()
 

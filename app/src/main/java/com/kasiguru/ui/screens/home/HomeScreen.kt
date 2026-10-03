@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.home
 
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.theme.GreenText
 import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.LocalIndication
@@ -123,6 +124,8 @@ fun HomeScreen(
     onOpenReview: () -> Unit,
     onOpenGames: () -> Unit,
     onOpenStories: () -> Unit,
+    /** Opens the Library's My words side, which takes the Story tile's place while stories are off. */
+    onOpenMyWords: () -> Unit,
     /** Opens one story straight from the shelf, without the detour through the list. */
     onOpenStory: (storyId: Int) -> Unit,
     onOpenProgress: () -> Unit,
@@ -204,12 +207,23 @@ fun HomeScreen(
                 onClick = { if (game == null) onOpenGames() else onOpenGame(game) },
                 modifier = Modifier.weight(1f)
             )
-            QuickPracticeTile(
-                label = "Story",
-                iconRes = IconSax.Bold.Book1,
-                onClick = { uiState.stories.firstOrNull { it.isUnlocked }?.let { onOpenStory(it.id) } ?: onOpenStories() },
-                modifier = Modifier.weight(1f)
-            )
+            // Stories are not narrated yet (Constants.STORIES_ENABLED), so the third tile is the
+            // words already met, which is the other thing a learner comes back to read.
+            if (Constants.STORIES_ENABLED) {
+                QuickPracticeTile(
+                    label = "Story",
+                    iconRes = IconSax.Bold.Book1,
+                    onClick = { uiState.stories.firstOrNull { it.isUnlocked }?.let { onOpenStory(it.id) } ?: onOpenStories() },
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                QuickPracticeTile(
+                    label = "My words",
+                    iconRes = IconSax.Bold.Book1,
+                    onClick = onOpenMyWords,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
         uiState.wordOfDay?.let { word ->
             Spacer(Modifier.height(Space.lg))

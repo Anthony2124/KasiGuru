@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.profile
 
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.theme.RedText
 import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.Image
@@ -242,7 +243,9 @@ fun ProfileScreen(
                         Triple(Iconsax.Medal, "${progress.longestStreak}", if (progress.longestStreak == 1) "day longest streak" else "days longest streak"),
                         Triple(Iconsax.Teacher, "${uiState.lessonsCompleted}", "lessons completed"),
                         Triple(Iconsax.Game, "${progress.gamesPlayed}", "games played"),
-                        Triple(Iconsax.Book, "${progress.storiesCompleted}", "stories read"),
+                        // Stories are not narrated yet; until they are, this slot counts the words met.
+                        if (Constants.STORIES_ENABLED) Triple(Iconsax.Book, "${progress.storiesCompleted}", "stories read")
+                        else Triple(Iconsax.Book, "${uiState.wordsMet}", if (uiState.wordsMet == 1) "word met" else "words met"),
                         Triple(
                             Iconsax.TickCircle,
                             if (progress.totalQuestionsAnswered == 0) "-" else "${(uiState.accuracy * 100).toInt()}%",

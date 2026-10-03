@@ -26,7 +26,9 @@ import com.kasiguru.ui.components.GameReviewItem
 data class SentenceQuestion(
     val englishSentence: String,
     val correctKasiguraninWords: List<String>,
-    val shuffledWords: List<String>
+    val shuffledWords: List<String>,
+    /** The dictionary word whose example this is, for My words; null for an authored bank sentence. */
+    val wordId: Int? = null
 )
 
 data class SentenceOrderUiState(
@@ -109,7 +111,8 @@ class SentenceOrderViewModel @Inject constructor(
                 SentenceQuestion(
                     englishSentence = gloss,
                     correctKasiguraninWords = parts,
-                    shuffledWords = parts.shuffled()
+                    shuffledWords = parts.shuffled(),
+                    wordId = word.id
                 )
             }
             // Distinct, because one sentence can be recorded on more than one of the words it uses.
@@ -267,7 +270,8 @@ class SentenceOrderViewModel @Inject constructor(
                     successRate >= 0.4f -> 1
                     else -> 0
                 }
-                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs)
+                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs,
+                    currentState.questions.mapNotNull { it.wordId })
                 gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
 
                 gameRepository.saveGameScore(

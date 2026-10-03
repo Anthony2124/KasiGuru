@@ -1,5 +1,6 @@
 package com.kasiguru.ui.tour
 
+import com.kasiguru.util.Constants
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -87,7 +88,10 @@ class TourAnchorAttachmentTest {
         // The other direction. An anchor nothing points at is dead weight: it still measures itself
         // on every layout pass while a tour is running, for a hole no chapter will ever cut.
         val used = tourChapters.flatMap { it.stops }.mapNotNull { it.anchor?.name }.toSet()
-        val unused = TourAnchor.entries.map { it.name }.filter { it !in used }
+        // The story shelf's stop is out of the tour only while stories are switched off (not narrated
+        // yet); it comes back with them, so its anchor stays attached rather than being deleted.
+        val resting = if (Constants.STORIES_ENABLED) emptySet() else setOf(TourAnchor.StoryShelf.name)
+        val unused = TourAnchor.entries.map { it.name }.filter { it !in used && it !in resting }
 
         assertTrue(
             "These anchors are declared and attached but no stop points at them: $unused",

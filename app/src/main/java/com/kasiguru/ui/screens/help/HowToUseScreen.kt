@@ -1,5 +1,6 @@
 package com.kasiguru.ui.screens.help
 
+import com.kasiguru.util.Constants
 import com.kasiguru.ui.theme.LimeText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -250,7 +251,7 @@ private val tabGuide = listOf(
         Iconsax.HomeBold,
         "Home",
         "Where every day starts. One button always names whatever comes next, with your daily " +
-            "goal, the words due for review and a shelf of stories underneath."
+            "goal, the words due for review and quick practice underneath."
     ),
     TabGuideEntry(
         Iconsax.Teacher,
@@ -267,8 +268,10 @@ private val tabGuide = listOf(
     TabGuideEntry(
         Iconsax.BookBold,
         "Library",
-        "The whole dictionary, with audio on every entry, and the folk tales beside it. Add a word " +
+        if (Constants.STORIES_ENABLED) "The whole dictionary, with audio on every entry, and the folk tales beside it. Add a word " +
             "or share a story from here."
+        else "The whole dictionary, with audio on every entry, and My words: every word you have met, " +
+            "ready to review. Folk stories are coming soon."
     ),
     TabGuideEntry(
         Iconsax.ProfileBold,

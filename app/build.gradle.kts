@@ -19,8 +19,8 @@ android {
         applicationId = "com.kasiguru"
         minSdk = 26
         targetSdk = 35
-        versionCode = 22
-        versionName = "1.21.0"
+        versionCode = 23
+        versionName = "1.22.0"
 
         testInstrumentationRunner = "com.kasiguru.data.local.LocalDatabaseTestRunner"
 

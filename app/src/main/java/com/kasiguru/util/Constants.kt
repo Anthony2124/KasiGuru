@@ -5,6 +5,14 @@ package com.kasiguru.util
  */
 object Constants {
 
+    /**
+     * Stories are written but not yet narrated: there is no voice actor for their audio. While this
+     * is false, every way into stories shows "Coming soon" instead - the Library's Stories side, the
+     * stories and reader routes, Home, the Story Reader badge and the tour. The stories themselves,
+     * their rewards and any progress are left untouched, so switching back on is this one line.
+     */
+    const val STORIES_ENABLED = false
+
     // Gamification
     const val XP_PER_WORD_LEARNED = 5
     const val XP_PER_STORY_PAGE = 0

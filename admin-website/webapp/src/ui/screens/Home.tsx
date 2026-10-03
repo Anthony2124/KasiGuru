@@ -1,6 +1,7 @@
 /**
  * Home: the one thing to do next, and how today is going (ui/screens/home/HomeScreen.kt).
  */
+import { STORIES_ENABLED } from '../../domain/constants';
 import { useEffect, useMemo } from 'preact/hooks';
 import { gameTitle } from '../../domain/gamification';
 import { navigate, enc } from '../../lib/router';
@@ -200,7 +201,10 @@ export function HomeScreen() {
               {[
                 { label: 'Flashcards', icon: 'repeat' as const, go: () => navigate('/review') },
                 { label: quickGame ? gameTitle(quickGame) : 'Games', icon: 'game' as const, go: () => (quickGame ? openGame(quickGame) : navigate('/practice')) },
-                { label: 'Story', icon: 'book' as const, go: () => (firstStory ? navigate(`/story/${firstStory.id}`) : navigate('/library?tab=stories')) },
+                // Stories are not narrated yet (STORIES_ENABLED); until they are, the third tile is the dictionary.
+                STORIES_ENABLED
+                  ? { label: 'Story', icon: 'book' as const, go: () => (firstStory ? navigate(`/story/${firstStory.id}`) : navigate('/library?tab=stories')) }
+                  : { label: 'Words', icon: 'book' as const, go: () => navigate('/library') },
               ].map((q) => (
                 <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 6, padding: 'var(--s-sm) var(--s-xs)' }}>
                   <Icon name={q.icon} size={24} color="var(--lime)" />

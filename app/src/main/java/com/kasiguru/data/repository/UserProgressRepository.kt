@@ -21,7 +21,8 @@ class UserProgressRepository @Inject constructor(
     private val userProgressDao: UserProgressDao,
     private val achievementDao: AchievementDao,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val gamification: GamificationRepository
+    private val gamification: GamificationRepository,
+    private val encounters: WordEncounterRepository
 ) {
     // A level-up is a screen-agnostic celebratory moment (LevelUpDialog): XP is earned from lessons,
     // flashcards and all eight mini-games, so the event lives here at the one place that already
@@ -117,14 +118,23 @@ class UserProgressRepository @Inject constructor(
         return result.activityXp
     }
 
-    suspend fun awardLesson(unit: String, index: Int, accuracy: Float): Int =
-        award { gamification.lesson(unit,index,accuracy) }
-    suspend fun awardGame(mode: String, key: String, number: Int, correct: Int, total: Int, stars: Int, perfect: Boolean): Int =
-        award { gamification.game(mode,key,number,correct,total,stars,perfect) }
+    /** @param wordIds the words the lesson showed, for the Library's My words list. */
+    suspend fun awardLesson(unit: String, index: Int, accuracy: Float, wordIds: List<Int> = emptyList()): Int {
+        encounters.record(wordIds, "lesson")
+        return award { gamification.lesson(unit,index,accuracy) }
+    }
+    /** @param wordIds the words the round showed, recorded as met in [mode] for My words. */
+    suspend fun awardGame(mode: String, key: String, number: Int, correct: Int, total: Int, stars: Int, perfect: Boolean,
+        wordIds: List<Int> = emptyList()): Int {
+        encounters.record(wordIds, mode)
+        return award { gamification.game(mode,key,number,correct,total,stars,perfect) }
+    }
     suspend fun awardStory(id: Int): Int = award { gamification.story(id) }
     suspend fun recordWordReview(id: Int, rating: String, due: Boolean, mastered: Boolean,
-        updatedWord: com.kasiguru.data.local.entity.VocabularyEntity? = null): Int =
-        award { gamification.review(id,rating,due,mastered,updatedWord) }
+        updatedWord: com.kasiguru.data.local.entity.VocabularyEntity? = null): Int {
+        encounters.record(listOf(id), "review")
+        return award { gamification.review(id,rating,due,mastered,updatedWord) }
+    }
     suspend fun recordApprovals(contributions: List<ApprovedContribution>): Int =
         award { gamification.approved(contributions.map { it.id },contributions.associate { it.id to it.approvedDay }) }
 

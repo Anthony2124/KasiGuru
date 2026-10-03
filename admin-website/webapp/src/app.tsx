@@ -12,7 +12,8 @@ import { HomeScreen } from './ui/screens/Home';
 import { LearnScreen } from './ui/screens/Learn';
 import { LessonScreen } from './ui/screens/Lesson';
 import { PracticeScreen } from './ui/screens/Practice';
-import { LibraryScreen } from './ui/screens/Library';
+import { LibraryScreen, StoriesComingSoonScreen } from './ui/screens/Library';
+import { STORIES_ENABLED } from './domain/constants';
 import { MeScreen } from './ui/screens/Me';
 import { OnboardingScreen } from './ui/screens/Onboarding';
 import { ReviewScreen } from './ui/screens/Review';
@@ -132,8 +133,9 @@ const ROUTES: Route[] = [
   { pattern: '/streak', render: () => <StreakScreen /> },
   { pattern: '/word/:id', render: (p) => <WordDetailScreen id={p.id} /> },
   { pattern: '/category/:name', render: (p) => <CategoryScreen category={p.name} /> },
-  { pattern: '/stories', render: () => <StoryListScreen /> },
-  { pattern: '/story/:id', render: (p) => <StoryReaderScreen id={Number(p.id)} /> },
+  // While stories are switched off, both routes say they are coming soon (domain/constants.ts).
+  { pattern: '/stories', render: () => (STORIES_ENABLED ? <StoryListScreen /> : <StoriesComingSoonScreen />) },
+  { pattern: '/story/:id', render: (p) => (STORIES_ENABLED ? <StoryReaderScreen id={Number(p.id)} /> : <StoriesComingSoonScreen />) },
   { pattern: '/achievements', render: () => <AchievementsScreen /> },
   { pattern: '/settings', render: () => <SettingsScreen /> },
   { pattern: '/account', render: () => <AccountScreen /> },

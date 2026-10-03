@@ -113,6 +113,9 @@ class LessonPlayerViewModel @Inject constructor(
      */
     private val ratedWordIds = mutableSetOf<Int>()
 
+    /** Every word the lesson's exercises use, recorded as met for the Library's My words list. */
+    private var lessonWordIds: List<Int> = emptyList()
+
     /**
      * When the current prompt appeared, for [ReviewRatingMapper], which grades partly on latency:
      * a fast answer is recalled, a slow one is reconstructed, and they deserve different intervals.
@@ -132,6 +135,7 @@ class LessonPlayerViewModel @Inject constructor(
             val words = lessonRepository.practiceWordsFor(lessonRef)
             identities.clear()
             exercises.forEachIndexed { index, exercise -> identities[exercise] = index }
+            lessonWordIds = exercises.map { it.word.id }.distinct()
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -285,7 +289,7 @@ class LessonPlayerViewModel @Inject constructor(
         val accuracy = ((total - missedFirstAttempt.size).toFloat() / total).coerceIn(0f, 1f)
 
         viewModelScope.launch {
-            val xp = lessonRepository.completeLesson(lessonRef, accuracy)
+            val xp = lessonRepository.completeLesson(lessonRef, accuracy, lessonWordIds)
             val showStreak = preferences.markFirstLessonOfDay()
             val levelledUp = (progressRepository.getUserProgressOnce()?.level ?: startingLevel) > startingLevel
             // Recorded after the award, so a lesson that failed to save is not counted as finished.

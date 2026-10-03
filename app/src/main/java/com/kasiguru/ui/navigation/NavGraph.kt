@@ -74,6 +74,7 @@ import com.kasiguru.ui.screens.profile.EditProfileScreen
 import com.kasiguru.ui.screens.profile.ProfileScreen
 import com.kasiguru.ui.screens.report.ReportIssueScreen
 import com.kasiguru.ui.screens.settings.SettingsScreen
+import com.kasiguru.ui.screens.stories.StoriesComingSoonScreen
 import com.kasiguru.ui.screens.stories.StoryListScreen
 import com.kasiguru.ui.screens.stories.StoryReaderScreen
 import com.kasiguru.ui.screens.vocabulary.CategoryDetailScreen
@@ -229,6 +230,10 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         librarySegmentRequest = LibrarySegment.STORIES
         switchTab(Screen.Library.route)
     }
+    val openLibraryMyWords: () -> Unit = {
+        librarySegmentRequest = LibrarySegment.MY_WORDS
+        switchTab(Screen.Library.route)
+    }
 
     CompositionLocalProvider(LocalTourAnchors provides tourAnchors) {
     Box(
@@ -328,6 +333,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     // with the bar showing, and Back would unwind it like a detail screen.
                     onOpenGames = { switchTab(Screen.GameHub.route) },
                     onOpenStories = openLibraryStories,
+                    onOpenMyWords = openLibraryMyWords,
                     onOpenStory = { storyId ->
                         navController.navigate(Screen.StoryReader.createRoute(storyId))
                     },
@@ -373,6 +379,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                         navController.navigate(Screen.StoryReader.createRoute(storyId))
                     },
                     onNavigateToShareStory = { navController.navigate(Screen.SubmitLiterature.route) },
+                    onOpenReview = { navController.navigate(Screen.FlashcardDeck.route) },
                     segmentRequest = librarySegmentRequest,
                     onSegmentRequestConsumed = { librarySegmentRequest = null }
                 )
@@ -476,22 +483,38 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             }
 
             // The stories list on its own, pushed. The Library tab shows the same content.
+            // While stories are switched off, both routes - reached from notifications, help and the
+            // Story Reader badge - say they are coming soon instead of opening an unnarrated story.
             composable(Screen.StoryList.route) {
-                StoryListScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToStory = { storyId ->
-                        navController.navigate(Screen.StoryReader.createRoute(storyId))
-                    },
-                    onNavigateToSubmitLiterature = { navController.navigate(Screen.SubmitLiterature.route) }
-                )
+                if (Constants.STORIES_ENABLED) {
+                    StoryListScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToStory = { storyId ->
+                            navController.navigate(Screen.StoryReader.createRoute(storyId))
+                        },
+                        onNavigateToSubmitLiterature = { navController.navigate(Screen.SubmitLiterature.route) }
+                    )
+                } else {
+                    StoriesComingSoonScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenMyWords = openLibraryMyWords
+                    )
+                }
             }
             composable(
                 route = Screen.StoryReader.route,
                 arguments = listOf(navArgument("storyId") { type = NavType.IntType })
             ) {
-                StoryReaderScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                if (Constants.STORIES_ENABLED) {
+                    StoryReaderScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    StoriesComingSoonScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenMyWords = openLibraryMyWords
+                    )
+                }
             }
 
             composable(Screen.GameHub.route) {

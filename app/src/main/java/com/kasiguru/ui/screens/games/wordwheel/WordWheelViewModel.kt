@@ -238,7 +238,8 @@ class WordWheelViewModel @Inject constructor(
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
-            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0)
+            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0,
+                puzzle.slots.map { it.word.id } + state.bonusFound.map { it.id })
             gameRepository.saveScore(
                 GameScoreEntity(
                     gameType = Constants.Games.WORD_WHEEL,
