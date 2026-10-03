@@ -47,3 +47,6 @@ wd_tmp.xml
 # the source tree at all -- the real copies live outside the repo, in C:\KasiGuru\private.
 auth_users.json
 *firebase-adminsdk*.json
+
+# Local backups of Vercel project links (one per account); never commit them.
+.vercel.*/
