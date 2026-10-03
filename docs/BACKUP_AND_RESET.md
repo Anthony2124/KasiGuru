@@ -112,7 +112,9 @@ From the dashboard, drop a `.json` content backup onto *Restore from backup*. Sa
 not replace. One exception the browser cannot get around: the rules only let a queue item
 (`word_submissions`, `literature_submissions`, `issue_reports`) be *created* as the app submits it,
 status `pending` with no review fields. A reviewed item that still exists is restored; one that is
-gone is skipped, counted in the result, and needs `restore_firestore.js`.
+gone is skipped, counted in the result, and needs `restore_firestore.js`. Restored `vocabulary` and
+`stories` documents get a fresh `updatedAt`, so the app's incremental sync delivers them on the next
+pull instead of waiting for its daily full reconcile.
 
 Neither restore path can tell an integer from a whole-number double: JavaScript has one number type,
 so a field stored as `3.0` comes back as `3`. Nothing in this schema depends on the difference.
