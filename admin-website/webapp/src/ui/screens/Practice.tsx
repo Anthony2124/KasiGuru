@@ -131,9 +131,9 @@ export function PracticeScreen() {
       <div class="stack-lg">
         <div class="card">
           <div class="stats3">
-            <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label-s muted">XP</p></div>
-            <div><p class="t-headline-s">{stars}</p><p class="t-label-s muted">Stars</p></div>
-            <div><p class="t-headline-s">{accuracy}</p><p class="t-label-s muted">Accuracy</p></div>
+            <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label muted">XP</p></div>
+            <div><p class="t-headline-s">{stars}</p><p class="t-label muted">Stars</p></div>
+            <div><p class="t-headline-s">{accuracy}</p><p class="t-label muted">Accuracy</p></div>
           </div>
         </div>
 
@@ -185,11 +185,11 @@ export function PracticeScreen() {
                   <div style={{ width: 44, height: 44, borderRadius: 14, display: 'grid', placeItems: 'center', background: unlocked ? tone.fill : 'var(--sunken)' }}>
                     <Icon name={unlocked || g.comingSoon ? g.icon : 'lock'} size={22} color={unlocked ? tone.ink : 'var(--faint)'} />
                   </div>
-                  <p class="t-title" style={{ marginTop: 'var(--s-sm)', color: unlocked ? 'var(--ink)' : 'var(--faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</p>
+                  <p class="t-title" style={{ marginTop: 'var(--s-sm)', color: unlocked ? 'var(--ink)' : 'var(--faint)' }}>{g.title}</p>
                   {g.comingSoon ? (
                     <span class="tag neutral" style={{ marginTop: 4 }}>Coming soon</span>
                   ) : (
-                    <p class="t-label-s muted" style={{ marginTop: 2 }}>{unlocked ? `Best: ${highScores.get(g.type) ?? 0}` : `${g.unlockStars} stars to unlock`}</p>
+                    <p class="t-label muted" style={{ marginTop: 2 }}>{unlocked ? `Best: ${highScores.get(g.type) ?? 0}` : `${g.unlockStars} stars to unlock`}</p>
                   )}
                 </button>
               );

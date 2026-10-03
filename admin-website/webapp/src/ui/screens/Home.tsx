@@ -66,7 +66,7 @@ export function HomeScreen() {
   })();
 
   return (
-    <main class="page wide">
+    <main id="main-content" tabIndex={-1} class="page wide">
       <div class="home-grid">
         <div class="stack">
           {/* Hero: who you are, how today stands, and Jepjep's one line. */}
@@ -83,7 +83,7 @@ export function HomeScreen() {
                 )}
               </button>
             </div>
-            <div class="row-xs" style={{ marginTop: 'var(--s-sm)' }}>
+            <div class="row-xs wrap" style={{ marginTop: 'var(--s-sm)' }}>
               <button class="chip" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
                 <Icon name="flash" size={16} color="var(--coral)" />
                 {p.currentStreak === 1 ? '1 day streak' : `${p.currentStreak} day streak`}
@@ -197,7 +197,7 @@ export function HomeScreen() {
         <div class="stack">
           <section>
             <SectionHeading text="Quick practice" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-xs)' }}>
+            <div class="quick-grid">
               {[
                 { label: 'Flashcards', icon: 'repeat' as const, go: () => navigate('/review') },
                 { label: quickGame ? gameTitle(quickGame) : 'Games', icon: 'game' as const, go: () => (quickGame ? openGame(quickGame) : navigate('/practice')) },

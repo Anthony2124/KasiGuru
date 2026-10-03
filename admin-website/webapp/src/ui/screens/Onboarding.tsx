@@ -229,7 +229,7 @@ export function OnboardingScreen() {
 
   return (
     <div class="glow" style={{ '--gx': '50%', '--gy': '35%', minHeight: '100dvh', display: 'flex', flexDirection: 'column' } as never}>
-      <div class="row" style={{ padding: 'calc(var(--safe-top) + 8px) var(--s-xs) 0 var(--gutter)', maxWidth: 560, width: '100%', margin: '0 auto' }}>
+      <div class="row" style={{ padding: 'calc(var(--safe-top) + 8px) max(var(--s-xs), var(--safe-right)) 0 var(--inset-left)', maxWidth: 560, width: '100%', margin: '0 auto' }}>
         <div class="segments grow" role="progressbar" aria-valuemin={1} aria-valuemax={FRAMED_COUNT} aria-valuenow={filled} aria-label={`Step ${filled} of ${FRAMED_COUNT}`}>
           {Array.from({ length: FRAMED_COUNT }, (_, i) => (
             <i key={i} class={i < filled ? 'on' : ''} />

@@ -129,10 +129,10 @@ export function MeScreen() {
             <div class="stats3" style={{ marginTop: 'var(--s-sm)' }}>
               <button onClick={() => navigate('/streak')} aria-label={`${p.currentStreak} day streak. Open your streak`} style={{ background: 'none', border: 0, color: 'inherit' }}>
                 <p class="t-headline-s">{p.currentStreak}</p>
-                <p class="t-label-s muted">day streak</p>
+                <p class="t-label muted">day streak</p>
               </button>
-              <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label-s muted">total XP</p></div>
-              <div><p class="t-headline-s">{practised}</p><p class="t-label-s muted">words practised</p></div>
+              <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label muted">total XP</p></div>
+              <div><p class="t-headline-s">{practised}</p><p class="t-label muted">words practised</p></div>
             </div>
             <button class="text-btn lime" onClick={() => navigate('/leaderboard')}>
               {rank ? `Your rank: #${rank} this week` : 'View leaderboard'}
@@ -163,12 +163,12 @@ export function MeScreen() {
           <button class="card" onClick={() => navigate('/achievements')}>
             <p class="t-body muted">{earned.length} of 66 tiers earned</p>
             {shown.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--s-sm)', marginTop: 'var(--s-sm)' }}>
+              <div class="showcase" style={{ padding: 0, marginTop: 'var(--s-md)', rowGap: 'var(--s-md)' }}>
                 {shown.map((r) => (
-                  <div key={r.id} class="center" style={{ display: 'grid', justifyItems: 'center', gap: 2 }}>
-                    <BadgeMedal tier={tierFor(r.id)} earned size={48} />
-                    <p class="t-label-s">{familyFor(r.id)?.name}</p>
-                    <p class="t-label-s faint">{r.tier.label}{pins.includes(r.family.id) ? ' · pinned' : ''}</p>
+                  <div key={r.id}>
+                    <BadgeMedal tier={tierFor(r.id)} earned size={64} />
+                    <p class="t-title-s">{familyFor(r.id)?.name}</p>
+                    <p class="t-body muted">{r.tier.label}{pins.includes(r.family.id) ? ' · pinned' : ''}</p>
                   </div>
                 ))}
               </div>

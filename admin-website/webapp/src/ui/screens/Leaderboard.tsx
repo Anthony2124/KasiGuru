@@ -20,21 +20,25 @@ export function LeaderRow({ entry, mode }: { entry: LeaderboardEntry; mode: Lead
   const medal = entry.rank === 1 ? 'var(--tier-gold)' : entry.rank === 2 ? 'var(--tier-silver)' : entry.rank === 3 ? 'var(--tier-bronze)' : null;
   return (
     <button
-      class="list-row"
+      class="list-row leader-row"
       onClick={() => openPlayer(entry)}
       style={entry.isCurrentUser ? { background: 'var(--lime-tint)' } : undefined}
       aria-label={`Rank ${entry.rank}, ${entry.name}${entry.isCurrentUser ? ', you' : ''}, ${figure(entry, mode)}`}
     >
-      <span style={{ minWidth: 28, height: 28, borderRadius: 14, padding: '0 4px', display: 'grid', placeItems: 'center', background: medal ?? 'transparent', color: medal ? 'var(--reward-ink)' : 'var(--muted)', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, flex: 'none' }}>
+      <span class="rank-pill" style={medal ? { background: medal, color: 'var(--reward-ink)' } : undefined}>
         {entry.rank}
       </span>
-      <Avatar id={entry.avatarIconId} size={40} />
-      <div class="grow" style={{ minWidth: 0 }}>
-        <p class="t-title-s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.isCurrentUser ? `${entry.name} (you)` : entry.name}</p>
-        <p class="t-body-s faint" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Level {entry.level}</p>
+      <Avatar id={entry.avatarIconId} size={48} />
+      <div class="grow">
+        <p class="t-title">{entry.isCurrentUser ? `${entry.name} (you)` : entry.name}</p>
+        <p class="t-body muted">
+          Level {entry.level}
+          {/* On a narrow page the score joins this line, so the name keeps the width. */}
+          <span class="leader-inline"> · {figure(entry, mode)}</span>
+        </p>
       </div>
-      <span class="row-xs t-label">
-        <Icon name={byStreak ? 'flash' : 'star'} size={16} color={byStreak ? 'var(--coral)' : 'var(--gold)'} />
+      <span class="row-xs t-title-s leader-figure">
+        <Icon name={byStreak ? 'flash' : 'star'} size={18} color={byStreak ? 'var(--coral)' : 'var(--gold)'} />
         {figure(entry, mode)}
       </span>
     </button>
@@ -44,22 +48,21 @@ export function LeaderRow({ entry, mode }: { entry: LeaderboardEntry; mode: Lead
 function Podium({ rows, mode }: { rows: LeaderboardEntry[]; mode: LeaderboardOrder }) {
   const top = rows.filter((r) => r.rank >= 1 && r.rank <= 3).slice(0, 3);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'var(--s-xs)', alignItems: 'end' }}>
+    <div class="podium">
       {[1, 0, 2].map((i) => {
         const p = top[i];
         if (!p) return <span key={i} />;
         return (
           <button
             key={p.uid}
-            class="card center"
+            class={`card center${i === 0 ? ' first' : ''}`}
             onClick={() => openPlayer(p)}
-            style={{ padding: `${i === 0 ? 22 : 8}px 6px 10px`, background: i === 0 ? 'rgba(255,200,61,.16)' : undefined, display: 'grid', justifyItems: 'center', gap: 4, minWidth: 0 }}
             aria-label={`Rank ${p.rank}, ${p.name}, ${figure(p, mode)}`}
           >
-            <Avatar id={p.avatarIconId} size={52} level={p.level} />
-            <p class="t-title-s" style={{ maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
+            <Avatar id={p.avatarIconId} size={i === 0 ? 76 : 64} level={p.level} />
             <p class="t-headline-s" style={{ color: 'var(--lime)' }}>#{p.rank}</p>
-            <p class="t-label-s muted">{figure(p, mode)}</p>
+            <p class="t-title-s podium-name">{p.name}</p>
+            <p class="t-label muted">{figure(p, mode)}</p>
           </button>
         );
       })}
@@ -116,19 +119,19 @@ export function LeaderboardContent() {
           <div class="stack sticky-col">
             {me ? (
               <button class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)', textAlign: 'left' }} onClick={() => openPlayer(me)}>
-                <Avatar id={me.avatarIconId} size={48} />
+                <Avatar id={me.avatarIconId} size={56} />
                 <div class="grow">
                   <p class="t-title">You · #{me.rank}</p>
-                  <p class="t-body-s muted">{figure(me, mode)}</p>
+                  <p class="t-body muted">{figure(me, mode)}</p>
                 </div>
                 <Icon name="arrowRight" size={18} color="var(--faint)" />
               </button>
             ) : (
               <div class="card panel row" style={{ borderColor: 'var(--lime)', background: 'var(--lime-tint)' }}>
-                <Avatar id={avatar} size={48} />
+                <Avatar id={avatar} size={56} />
                 <div class="grow">
                   <p class="t-title">Your rank</p>
-                  <p class="t-body-s muted">{account.isAnonymous ? 'Only signed-in learners appear here.' : 'Practise to join the rankings'}</p>
+                  <p class="t-body muted">{account.isAnonymous ? 'Only signed-in learners appear here.' : 'Practise to join the rankings'}</p>
                 </div>
                 {account.isAnonymous && (
                   <button class="text-btn lime" onClick={() => navigate('/account')}>
