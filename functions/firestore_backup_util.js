@@ -198,10 +198,32 @@ function approxBytes(value) {
   return total;
 }
 
+function isTooBig(err) {
+  return Boolean(err) && (err.code === 3 || err.code === 'invalid-argument') &&
+    /too big|too large|exceeds/i.test(err.message || '');
+}
+
+// Firestore also refuses a batch whose index entries are too many ("Transaction too big"), which no
+// byte count predicts: every key in a progress document's `entries` map is indexed. On production,
+// 400 learner documents per batch were refused while the emulator, which does not enforce the
+// limit, accepted them. A batch is all-or-nothing, so a refused one is split in half and retried,
+// down to single documents.
+async function commitSplitting(db, writes) {
+  const batch = db.batch();
+  for (const w of writes) batch.set(w.ref, w.data);
+  try {
+    await batch.commit();
+  } catch (err) {
+    if (!isTooBig(err) || writes.length === 1) throw err;
+    const mid = Math.ceil(writes.length / 2);
+    await commitSplitting(db, writes.slice(0, mid));
+    await commitSplitting(db, writes.slice(mid));
+  }
+}
+
 /** Writes entries addressed by full `path`, falling back to `id` for backups made before paths. */
 async function writeAllDocsByPath(db, collectionName, entries) {
-  let batch = db.batch();
-  let inBatch = 0;
+  let pending = [];
   let batchBytes = 0;
   let count = 0;
   for (const entry of entries) {
@@ -209,18 +231,16 @@ async function writeAllDocsByPath(db, collectionName, entries) {
     if (entry.missing || entry.data === null) continue;
     const ref = entry.path ? db.doc(entry.path) : db.collection(collectionName).doc(entry.id);
     const size = approxBytes(entry.data);
-    if (inBatch > 0 && (inBatch >= BATCH_MAX_DOCS || batchBytes + size > BATCH_MAX_BYTES)) {
-      await batch.commit();
-      batch = db.batch();
-      inBatch = 0;
+    if (pending.length > 0 && (pending.length >= BATCH_MAX_DOCS || batchBytes + size > BATCH_MAX_BYTES)) {
+      await commitSplitting(db, pending);
+      pending = [];
       batchBytes = 0;
     }
-    batch.set(ref, entry.data);
-    inBatch++;
+    pending.push({ ref, data: entry.data });
     batchBytes += size;
     count++;
   }
-  if (inBatch > 0) await batch.commit();
+  if (pending.length > 0) await commitSplitting(db, pending);
   return count;
 }
 

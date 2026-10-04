@@ -314,6 +314,14 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 
 ## History worth knowing
 
+**The first live restore, on 2026-10-04, stopped part-way with "Transaction too big".** Firestore
+counts a batch's index entries against its limit, and every key in a progress document's `entries`
+map is indexed. Production refused 400 learner documents in one batch; the emulator does not enforce
+the limit, so the drill had passed. A refused batch is now split in half and retried, and the same
+restore, run again, finished the remaining 459 documents. That was a deliberate learner reset and
+restore of production. The final manifest matched the pre-reset backup in every collection, except
+for the two audit entries recording the reset and the restore.
+
 **Until 2026-10-04 a restore after a wipe would have locked active learners out of syncing.** It
 wrote every backup document over whatever was in Firestore. Phones that had already re-uploaded
 their progress into the empty database got the older copy back, and the rules' per-write caps then
