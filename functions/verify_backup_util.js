@@ -316,6 +316,39 @@ async function check(name, fn) {
     }
   });
 
+  await check('splits a batch Firestore refuses as too big, until every document is written', async () => {
+    const committed = [];
+    const pickyDb = {
+      doc: (p) => ({ path: p }),
+      collection: (name) => ({ doc: (id) => ({ path: `${name}/${id}` }) }),
+      batch: () => {
+        const docs = [];
+        return {
+          set: (ref) => docs.push(ref.path),
+          commit: async () => {
+            // Production refused 400 learner documents at once; refuse anything over 60 here.
+            if (docs.length > 60) throw Object.assign(new Error('3 INVALID_ARGUMENT: Transaction too big. Decrease transaction size.'), { code: 3 });
+            committed.push(docs);
+          }
+        };
+      }
+    };
+    const n = await writeAllDocsByPath(pickyDb, 'users',
+      Array.from({ length: 400 }, (_, i) => ({ path: `users/u${i}/progress/main`, data: { totalXp: i } })));
+    assert.strictEqual(n, 400);
+    assert.strictEqual(new Set(committed.flat()).size, 400);
+    assert.ok(committed.every((docs) => docs.length <= 60));
+  });
+
+  await check('does not retry a batch that failed for any other reason', async () => {
+    const failingDb = {
+      doc: (p) => ({ path: p }),
+      collection: (name) => ({ doc: (id) => ({ path: `${name}/${id}` }) }),
+      batch: () => ({ set: () => {}, commit: async () => { throw Object.assign(new Error('7 PERMISSION_DENIED'), { code: 7 }); } })
+    };
+    await assert.rejects(writeAllDocsByPath(failingDb, 'users', [{ path: 'users/u1', data: {} }, { path: 'users/u2', data: {} }]), /PERMISSION_DENIED/);
+  });
+
   console.log('\nRotation');
 
   const daily = (count, total, startDay = 0) => Array.from({ length: count }, (_, i) => ({
