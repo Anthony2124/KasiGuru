@@ -29,40 +29,37 @@
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-const { serialize, readAllDocsDeep } = require('./firestore_backup_util');
+const { initAdmin, serialize, readAllDocsDeep, listBackups } = require('./firestore_backup_util');
 
 const keyFile = process.argv[2];
 const outDir =
   process.argv[3] || path.join(__dirname, '..', '..', 'KasiGuruBackups');
 
-if (!keyFile || !fs.existsSync(keyFile)) {
+if (!keyFile) {
   console.error('Usage: node backup_firestore.js <path-to-service-account.json> [output-dir]');
+  console.error('       node backup_firestore.js emulator:demo-<name> [output-dir]   (Firestore emulator)');
   process.exit(1);
 }
 
 // With KASIGURU_BACKUP_DAILY=1, skip if a backup already exists for today
-// (used by the logon-triggered startup task so it is effectively daily).
+// (used by the scheduled task, which fires more than once a day). Only a finished backup counts:
+// a run that died part-way left a folder without manifest.json, and counting that one skipped the
+// retry and left the day with no backup at all.
 if (process.env.KASIGURU_BACKUP_DAILY === '1') {
   const todayPrefix = new Date().toISOString().slice(0, 10);
-  if (fs.existsSync(outDir)) {
-    const existing = fs
-      .readdirSync(outDir)
-      .filter((n) => n.startsWith(todayPrefix));
-    if (existing.length > 0) {
-      console.log(`Backup already exists for ${todayPrefix} — skipping.`);
-      process.exit(0);
-    }
+  if (listBackups(outDir).some((b) => b.name.startsWith(todayPrefix))) {
+    console.log(`Backup already exists for ${todayPrefix} — skipping.`);
+    process.exit(0);
   }
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(path.resolve(keyFile))
-});
-
-// Resolved against the working directory, as fs.existsSync above was. A bare require(keyFile)
-// resolves against this file's folder, or as a package name, so `node backup_firestore.js key.json`
-// passed the existence check and then crashed with "Cannot find module".
-const projectId = require(path.resolve(keyFile)).project_id;
+let projectId;
+try {
+  ({ projectId } = initAdmin(keyFile));
+} catch (err) {
+  console.error('Error:', err.message);
+  process.exit(1);
+}
 
 (async () => {
   const db = admin.firestore();

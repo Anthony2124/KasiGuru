@@ -1,12 +1,46 @@
 /**
- * Shared helpers for backup_firestore.js / restore_firestore.js:
- * type-safe JSON serialization (Timestamps, refs, GeoPoints, bytes) and
- * paginated reads / batched writes.
+ * Shared helpers for backup_firestore.js / restore_firestore.js / reset_firestore.js /
+ * backup_daily.js: Admin SDK start-up, type-safe JSON serialization (Timestamps, refs, GeoPoints,
+ * bytes), paginated reads / batched writes, and the restore and rotation decisions.
  */
 
 const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
 
 const PAGE_SIZE = 300;
+
+/**
+ * Starts the Admin SDK and reports where it points, so every script can say "LIVE project" before
+ * it does anything.
+ *
+ * `emulator:<project>` in place of a key file runs against the local Firestore emulator with no
+ * credential at all. The id must start with `demo-`, which Firebase treats as emulator-only: a drill
+ * run with FIRESTORE_EMULATOR_HOST forgotten then fails instead of reaching production.
+ */
+function initAdmin(keyArg) {
+  const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
+  if (typeof keyArg === 'string' && keyArg.startsWith('emulator:')) {
+    const projectId = keyArg.slice('emulator:'.length);
+    if (!emulatorHost) {
+      throw new Error('emulator:<project> needs FIRESTORE_EMULATOR_HOST set, e.g. 127.0.0.1:8080');
+    }
+    if (!projectId.startsWith('demo-')) {
+      throw new Error('an emulator project id must start with "demo-" so it can never reach a real project');
+    }
+    admin.initializeApp({ projectId });
+    return { projectId, target: `emulator at ${emulatorHost}` };
+  }
+  if (!keyArg || !fs.existsSync(keyArg)) throw new Error(`service-account key not found: ${keyArg}`);
+  // Resolved against the working directory, as fs.existsSync above was. A bare require(keyArg)
+  // resolves against this file's folder, or as a package name.
+  const keyPath = path.resolve(keyArg);
+  admin.initializeApp({ credential: admin.credential.cert(keyPath) });
+  return {
+    projectId: require(keyPath).project_id,
+    target: emulatorHost ? `emulator at ${emulatorHost}` : 'LIVE project'
+  };
+}
 
 function serialize(value) {
   if (value === null || value === undefined) return null;
@@ -139,23 +173,180 @@ async function readAllDocsDeep(colRef) {
   return out;
 }
 
+// A batched write is one request, and Firestore caps a request at 10 MiB. Pronunciation clips are
+// stored as bytes of up to 400 KB and average ~29 KB, so 400 of them come to ~12 MB: a batch closed
+// on document count alone would sink the word_audio restore at its first commit. A batch closes at
+// whichever limit it reaches first.
+const BATCH_MAX_DOCS = 400;
+const BATCH_MAX_BYTES = 8 * 1024 * 1024;
+
+/** A document's size, near enough to keep a batch under the request limit. */
+function approxBytes(value) {
+  if (value === null || value === undefined) return 1;
+  if (Buffer.isBuffer(value)) return value.length;
+  if (typeof value === 'string') return Buffer.byteLength(value) + 1;
+  if (typeof value !== 'object') return 8;
+  if (value instanceof admin.firestore.Timestamp) return 8;
+  if (value instanceof admin.firestore.GeoPoint) return 16;
+  if (value instanceof admin.firestore.DocumentReference) return Buffer.byteLength(value.path) + 1;
+  let total = 0;
+  if (Array.isArray(value)) {
+    for (const item of value) total += approxBytes(item);
+    return total;
+  }
+  for (const [key, item] of Object.entries(value)) total += Buffer.byteLength(key) + 1 + approxBytes(item);
+  return total;
+}
+
 /** Writes entries addressed by full `path`, falling back to `id` for backups made before paths. */
 async function writeAllDocsByPath(db, collectionName, entries) {
   let batch = db.batch();
+  let inBatch = 0;
+  let batchBytes = 0;
   let count = 0;
   for (const entry of entries) {
     // A missing parent was never a real document; recreating it would invent data that never existed.
     if (entry.missing || entry.data === null) continue;
     const ref = entry.path ? db.doc(entry.path) : db.collection(collectionName).doc(entry.id);
-    batch.set(ref, entry.data);
-    count++;
-    if (count % 400 === 0) {
+    const size = approxBytes(entry.data);
+    if (inBatch > 0 && (inBatch >= BATCH_MAX_DOCS || batchBytes + size > BATCH_MAX_BYTES)) {
       await batch.commit();
       batch = db.batch();
+      inBatch = 0;
+      batchBytes = 0;
+    }
+    batch.set(ref, entry.data);
+    inBatch++;
+    batchBytes += size;
+    count++;
+  }
+  if (inBatch > 0) await batch.commit();
+  return count;
+}
+
+// Documents whose Firestore rules cap how far one client write may move them: totalXp +2,000,
+// streak +1, words +50, level +5 over what the cloud already holds (firestore.rules,
+// isValidMainProgress and isValidLeaderboardEntry). After a wipe, phones re-upload their full
+// progress into the empty database. Writing the older backup copy over that would leave the phone
+// further ahead than the caps allow, and every write it makes afterwards is rejected - silently,
+// and for good, because the gap never closes. The cloud copy is kept when it is at least as far
+// along as the backup.
+const DELTA_CAPPED = [/^users\/[^/]+\/progress\/main$/, /^leaderboard_public\/[^/]+$/];
+
+// The app saves its current FCM token at every start (KasiGuruApp.registerFcmToken), so a token
+// already in the cloud is newer than the backup's, which FCM may have retired since.
+const KEEP_IF_PRESENT = [/^device_tokens\/[^/]+$/];
+
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+  }
+  return value;
+}
+
+/**
+ * Decides, document by document, what a restore writes. `entries` are a backup file's documents as
+ * stored (serialized); `current` maps each document path now in Firestore to its serialized data.
+ *
+ * Every other learner document is overwritten when it differs. That is safe without the rule above:
+ * achievements, game levels, lesson progress and word states carry no caps, a reward receipt only
+ * refuses a value lower than the cloud's (a backup copy is never ahead of the phone's), and the app
+ * merges them additively at its next sync (LearningStateMerge), so a phone that was ahead puts its
+ * own newer entries straight back.
+ *
+ * `ignoreFields` are top-level fields left out of the comparison: the restore stamps a fresh
+ * updatedAt on what it writes, which would otherwise make every re-run rewrite the same documents.
+ */
+function planRestore(collection, entries, current, ignoreFields = []) {
+  const comparable = (data) => {
+    const copy = { ...data };
+    for (const field of ignoreFields) delete copy[field];
+    return JSON.stringify(canonical(copy));
+  };
+  const decisions = [];
+  for (const entry of entries) {
+    if (entry.missing || entry.data === null) {
+      decisions.push({ entry, action: 'parent' });
+      continue;
+    }
+    const docPath = entry.path || (entry.id ? `${collection}/${entry.id}` : null);
+    const live = docPath ? current.get(docPath) : undefined;
+    let action;
+    if (live === undefined) action = 'restore';
+    else if (comparable(live) === comparable(entry.data)) action = 'same';
+    else if (KEEP_IF_PRESENT.some((re) => re.test(docPath))) action = 'kept';
+    else if (DELTA_CAPPED.some((re) => re.test(docPath)) && Number(live.totalXp) >= Number(entry.data.totalXp)) action = 'kept';
+    else action = 'overwrite';
+    decisions.push({ entry, path: docPath, action });
+  }
+  const count = (action) => decisions.filter((d) => d.action === action).length;
+  return {
+    writes: decisions.filter((d) => d.action === 'restore' || d.action === 'overwrite').map((d) => d.entry),
+    restore: count('restore'),
+    overwrite: count('overwrite'),
+    same: count('same'),
+    kept: count('kept'),
+    parents: count('parent')
+  };
+}
+
+const BACKUP_FOLDER = /^\d{4}-\d{2}-\d{2}T[\d-]+Z$/;
+
+/**
+ * The finished backups in a folder, oldest first. A run writes manifest.json last, so a folder
+ * without one is a run that died part-way and is not a backup anyone should restore from.
+ */
+function listBackups(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && BACKUP_FOLDER.test(e.name))
+    .filter((e) => fs.existsSync(path.join(dir, e.name, 'manifest.json')))
+    .map((e) => {
+      const manifest = JSON.parse(fs.readFileSync(path.join(dir, e.name, 'manifest.json'), 'utf8'));
+      const total = Object.values(manifest.collections || {}).reduce((sum, n) => sum + n, 0);
+      return { name: e.name, total, manifest };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Which backups a rotation removes: everything but the newest `keep` and the oldest of each
+ * calendar month, except a backup holding more than twice the documents of the newest one.
+ *
+ * That exception is what a wipe looks like from here. Without it, the empty backups taken every
+ * day after an attack would rotate the last good ones out within `keep` days. A larger backup is
+ * held until the newest is comparable again - after a restore - or until someone removes it by hand.
+ */
+function planRotation(backups, keep) {
+  const sorted = [...backups].sort((a, b) => a.name.localeCompare(b.name));
+  if (sorted.length === 0) return { remove: [], held: [] };
+  const newest = sorted[sorted.length - 1];
+  const kept = new Set(sorted.slice(-keep).map((b) => b.name));
+  const months = new Set();
+  for (const b of sorted) {
+    const month = b.name.slice(0, 7);
+    if (!months.has(month)) {
+      months.add(month);
+      kept.add(b.name);
     }
   }
-  if (count % 400 !== 0) await batch.commit();
-  return count;
+  const remove = [];
+  const held = [];
+  for (const b of sorted) {
+    if (kept.has(b.name)) continue;
+    (b.total > newest.total * 2 ? held : remove).push(b.name);
+  }
+  return { remove, held };
+}
+
+/** Collections that lost more than half their documents between two manifests. */
+function shrunkCollections(previous, next) {
+  const before = previous.collections || {};
+  const after = next.collections || {};
+  return Object.keys(before)
+    .filter((name) => before[name] >= 10 && (after[name] || 0) < before[name] / 2)
+    .map((name) => `${name} ${before[name]} -> ${after[name] || 0}`);
 }
 
 /**
@@ -203,13 +394,20 @@ async function countCollectionDeep(db, colRef) {
 }
 
 module.exports = {
+  initAdmin,
   serialize,
   deserialize,
   readAllDocs,
   readAllDocsDeep,
   writeAllDocs,
   writeAllDocsByPath,
+  approxBytes,
   deleteCollectionDeep,
   countCollectionDeep,
+  planRestore,
+  listBackups,
+  planRotation,
+  shrunkCollections,
+  BATCH_MAX_BYTES,
   DEEP_COLLECTIONS
 };
