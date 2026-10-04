@@ -281,7 +281,9 @@ another machine for off-site redundancy.
 node restore_firestore.js C:\KasiGuru\firebase-service-account.json C:\KasiGuru\KasiGuruBackups\<timestamp>
 ```
 
-Documents with the same ID are overwritten.
+That is a dry run: it lists what it would restore, overwrite, skip as identical, or keep because a
+learner's phone has already synced past the backup. Add `--confirm=<projectId>` to write. See
+"If the database is attacked" in `docs/BACKUP_AND_RESET.md`.
 
 ---
 

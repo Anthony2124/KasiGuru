@@ -92,15 +92,16 @@ firebase deploy --only firestore:rules
 cd functions
 node set_admin_claim.js admin@example.com C:\path\to\service-account.json
 
-# Daily backup (runs at logon via Startup folder, once per day)
+# One backup, now
 node backup_firestore.js C:\path\to\service-account.json
 
-# Off-site mirror: KasiGuruBackups -> OneDrive\KasiGuruBackups
-# (wired into the same startup task; keeps a cloud copy of every backup)
-.\scripts\mirror_backup.cmd
+# Daily backup with rotation, wipe warning and a copy to OneDrive\KasiGuruBackups
+# (from the repository root; registers a Task Scheduler task)
+.\scripts\register_backup_task.ps1 -KeyFile C:\path\to\service-account.json
 
-# Restore from a backup (emergency; test on a scratch project first)
-node restore_firestore.js C:\path\to\service-account.json C:\KasiGuru\KasiGuruBackups\<date>
+# Restore from a backup (emergency; dry run until --confirm, see docs/BACKUP_AND_RESET.md)
+node restore_firestore.js C:\path\to\service-account.json <backup-folder>
+node restore_firestore.js C:\path\to\service-account.json <backup-folder> --confirm=kasiguru-86042
 
 # Send a push notification to all registered devices
 node send_push.js C:\path\to\service-account.json "Title" "Body" "story/1" "General"

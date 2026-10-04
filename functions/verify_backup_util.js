@@ -20,7 +20,12 @@ const {
   readAllDocsDeep,
   writeAllDocsByPath,
   countCollectionDeep,
-  deleteCollectionDeep
+  deleteCollectionDeep,
+  planRestore,
+  approxBytes,
+  planRotation,
+  shrunkCollections,
+  BATCH_MAX_BYTES
 } = require('./firestore_backup_util');
 
 // ── Minimal Firestore stand-ins ───────────────────────────────────────────────
@@ -228,6 +233,119 @@ async function check(name, fn) {
   await check('still reads a timestamp from a backup that stored only milliseconds', () => {
     const legacy = deserialize(null, { __t: 'timestamp', v: '2025-09-27T19:06:41.123Z' });
     assert.strictEqual(legacy.toMillis(), Date.parse('2025-09-27T19:06:41.123Z'));
+  });
+
+  console.log('\nRestore plan (after a wipe)');
+
+  const progressPlan = planRestore('users', [
+    { id: 'uidAAA', path: 'users/uidAAA', data: null, missing: true },
+    { id: 'main', path: 'users/uidAAA/progress/main', data: { totalXp: 1200, currentStreak: 7 } },
+    { id: 'main', path: 'users/uidBBB/progress/main', data: { totalXp: 900, currentStreak: 3 } },
+    { id: 'main', path: 'users/uidCCC/progress/main', data: { totalXp: 500, currentStreak: 2 } },
+    { id: 'wordStates', path: 'users/uidAAA/progress/wordStates', data: { entries: { a: 1 }, updatedAt: 1 } }
+  ], new Map([
+    // This phone re-uploaded into the empty database and is further along than the backup.
+    ['users/uidAAA/progress/main', { totalXp: 3900, currentStreak: 10 }],
+    // This phone was reinstalled during the outage and started over.
+    ['users/uidBBB/progress/main', { totalXp: 40, currentStreak: 1 }],
+    ['users/uidAAA/progress/wordStates', { updatedAt: 1, entries: { a: 1 } }]
+  ]));
+  const writtenPaths = progressPlan.writes.map((e) => e.path).sort();
+
+  await check('keeps progress a phone re-uploaded past the backup, so its next sync is not rejected', () => {
+    assert.ok(!writtenPaths.includes('users/uidAAA/progress/main'));
+    assert.strictEqual(progressPlan.kept, 1);
+  });
+
+  await check('restores progress over a cloud copy that is behind the backup', () => {
+    assert.ok(writtenPaths.includes('users/uidBBB/progress/main'));
+    assert.strictEqual(progressPlan.overwrite, 1);
+  });
+
+  await check('restores progress missing from the cloud, and never a missing parent', () => {
+    assert.deepStrictEqual(writtenPaths, ['users/uidBBB/progress/main', 'users/uidCCC/progress/main']);
+    assert.strictEqual(progressPlan.restore, 1);
+    assert.strictEqual(progressPlan.parents, 1);
+  });
+
+  await check('does not rewrite a document that already matches, whatever its key order', () => {
+    assert.strictEqual(progressPlan.same, 1);
+  });
+
+  await check('keeps a leaderboard row at the backup XP and a device token already present', () => {
+    const rows = planRestore('leaderboard_public', [{ id: 'u1', path: 'leaderboard_public/u1', data: { totalXp: 100 } }],
+      new Map([['leaderboard_public/u1', { totalXp: 100, weeklyXp: 5 }]]));
+    const tokens = planRestore('device_tokens', [{ id: 'u1', path: 'device_tokens/u1', data: { token: 'old' } }],
+      new Map([['device_tokens/u1', { token: 'new' }]]));
+    assert.strictEqual(rows.kept + tokens.kept, 2);
+    assert.strictEqual(rows.writes.length + tokens.writes.length, 0);
+  });
+
+  await check('overwrites a vandalised word, and ignores the updatedAt a previous restore stamped', () => {
+    const words = planRestore('vocabulary', [
+      { id: 'w1', data: { kasiguranin: 'apak', updatedAt: 1 } },
+      { id: 'w2', data: { kasiguranin: 'lima', updatedAt: 1 } }
+    ], new Map([
+      ['vocabulary/w1', { kasiguranin: 'vandalised', updatedAt: 9 }],
+      ['vocabulary/w2', { kasiguranin: 'lima', updatedAt: 9 }]
+    ]), ['updatedAt']);
+    assert.deepStrictEqual(words.writes.map((e) => e.id), ['w1']);
+    assert.strictEqual(words.same, 1);
+  });
+
+  console.log('\nBatching');
+
+  await check('closes a batch before the 10 MiB request limit (400 pronunciation clips)', async () => {
+    const commits = [];
+    const sizedDb = {
+      doc: (p) => ({ path: p }),
+      collection: (name) => ({ doc: (id) => ({ path: `${name}/${id}` }) }),
+      batch: () => {
+        const docs = [];
+        return { set: (ref, data) => docs.push(data), commit: async () => { commits.push(docs); } };
+      }
+    };
+    const clip = Buffer.alloc(29 * 1024);
+    const n = await writeAllDocsByPath(sizedDb, 'word_audio',
+      Array.from({ length: 400 }, (_, i) => ({ id: `w${i}`, data: { audio: clip } })));
+    assert.strictEqual(n, 400);
+    assert.strictEqual(commits.flat().length, 400);
+    assert.ok(commits.length >= 2, `${commits.length} batch for ~11.6 MB`);
+    for (const docs of commits) {
+      assert.ok(docs.reduce((sum, d) => sum + approxBytes(d), 0) <= BATCH_MAX_BYTES);
+    }
+  });
+
+  console.log('\nRotation');
+
+  const daily = (count, total, startDay = 0) => Array.from({ length: count }, (_, i) => ({
+    name: new Date(Date.UTC(2026, 7, 2 + startDay + i)).toISOString().replace(/[:.]/g, '-'),
+    total
+  }));
+
+  await check('keeps the newest backups and the first of each month, removes the rest', () => {
+    const backups = daily(40, 4800); // 2026-08-02 .. 2026-09-10
+    const { remove, held } = planRotation(backups, 14);
+    assert.strictEqual(remove.length, 40 - 14 - 1);
+    assert.strictEqual(held.length, 0);
+    assert.ok(!remove.includes(backups[0].name), 'the first August backup was removed');
+    assert.ok(backups.slice(-14).every((b) => !remove.includes(b.name)));
+  });
+
+  await check('after a wipe, empty daily backups never rotate the good ones out', () => {
+    const good = daily(20, 4800);
+    const wiped = daily(15, 0, 20);
+    const { remove, held } = planRotation([...good, ...wiped], 14);
+    assert.ok(good.every((b) => !remove.includes(b.name)), 'a good backup was removed');
+    assert.ok(held.length > 0);
+  });
+
+  await check('flags a collection that lost more than half its documents', () => {
+    const shrunk = shrunkCollections(
+      { collections: { users: 820, vocabulary: 1151, stories: 3 } },
+      { collections: { users: 0, vocabulary: 1151 } }
+    );
+    assert.deepStrictEqual(shrunk, ['users 820 -> 0']);
   });
 
   console.log('');

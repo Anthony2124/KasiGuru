@@ -135,8 +135,9 @@ node backup_firestore.js C:\KasiGuru\firebase-service-account.json
    - Run whether user is logged on or not (store the account password).
 3. Keep the backup folder **private** (it contains user submissions) and sync it
    to Google Drive / OneDrive / another machine for off-site redundancy.
-4. Restore (emergency): `node restore_firestore.js <key.json> <backup-dir>` —
-   test once on a scratch project before relying on it.
+4. Restore (emergency): `node restore_firestore.js <key.json> <backup-dir>` previews,
+   and `--confirm=<projectId>` writes. Follow "If the database is attacked" in
+   `docs/BACKUP_AND_RESET.md`, and rehearse it on the emulator before relying on it.
 
 ---
 

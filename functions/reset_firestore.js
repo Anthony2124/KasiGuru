@@ -15,7 +15,7 @@
  *
  * Modes:
  *   learner   Clears learner-generated data: synced progress, submissions, issue reports,
- *             leaderboard rows, device tokens, security questions. The curated corpus - the
+ *             leaderboard rows, public profiles, device tokens, security questions. The curated corpus - the
  *             dictionary, stories and releases - is untouched.
  *   factory   Everything `learner` clears, plus the content collections are deleted and rewritten
  *             from the backup given by --from, so the database ends at exactly that snapshot.
@@ -34,6 +34,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 const {
+  initAdmin,
   deserialize,
   writeAllDocsByPath,
   deleteCollectionDeep,
@@ -47,6 +48,7 @@ const {
 const LEARNER_COLLECTIONS = [
   'users',                    // walked deep: users/{uid}/progress/{doc}
   'leaderboard_public',
+  'public_profiles',          // the badges and stats a learner's profile shows to other players
   'device_tokens',
   'security_questions',
   'word_submissions',
@@ -92,19 +94,24 @@ function usage(message) {
   console.error('Usage:');
   console.error('  node reset_firestore.js <service-account.json> --mode=learner [--confirm=<projectId>]');
   console.error('  node reset_firestore.js <service-account.json> --mode=factory --from=<backup-dir> [--confirm=<projectId>]');
+  console.error('  node reset_firestore.js emulator:demo-<name> --mode=...   (drill on the Firestore emulator)');
   console.error('\nRuns as a dry run until --confirm matches the project id in the key.');
   process.exit(1);
 }
 
-if (!keyFile || !fs.existsSync(keyFile)) usage('service-account key not found');
+if (!keyFile) usage('service-account key not given');
 if (mode !== 'learner' && mode !== 'factory') usage('--mode must be "learner" or "factory"');
 if (mode === 'factory' && !args.from) usage('--mode=factory requires --from=<backup-dir>');
 if (mode === 'factory' && !fs.existsSync(args.from)) usage(`backup directory not found: ${args.from}`);
 
-const projectId = require(path.resolve(keyFile)).project_id;
+let projectId;
+let target;
+try {
+  ({ projectId, target } = initAdmin(keyFile));
+} catch (err) {
+  usage(err.message);
+}
 const armed = args.confirm === projectId;
-
-admin.initializeApp({ credential: admin.credential.cert(path.resolve(keyFile)) });
 
 /** Reads the content half of a backup folder, so factory mode knows what it is restoring. */
 function readContentFromBackup(db, backupDir) {
@@ -131,6 +138,7 @@ function readContentFromBackup(db, backupDir) {
     ? [...LEARNER_COLLECTIONS, ...CONTENT_COLLECTIONS]
     : [...LEARNER_COLLECTIONS];
 
+  console.log(`Target:    ${target}`);
   console.log(`Project:   ${projectId}`);
   console.log(`Mode:      ${mode}`);
   console.log(`Preserved: ${PRESERVED_COLLECTIONS.join(', ')}`);

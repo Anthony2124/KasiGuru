@@ -5039,7 +5039,7 @@ window.exportBackup = async function() {
  * Clears the moderation queues: pending word and literature submissions, and issue reports.
  *
  * Scoped to exactly the collections `firestore.rules` lets an admin delete. Learner progress,
- * leaderboard rows, device tokens and security questions are owner-writable only by design, so a
+ * leaderboard rows, public profiles, device tokens and security questions are owner-writable only by design, so a
  * full database reset is deliberately not a button here - it runs from functions/reset_firestore.js
  * with the service-account key. Weakening the rules to make this button do more would give every
  * admin session the power to rewrite any learner's data.
