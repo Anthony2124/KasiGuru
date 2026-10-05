@@ -39,12 +39,18 @@ needs a Mac and the paid Apple account either way.
   The other five show *Coming soon*, exactly as the Android app ships them.
 - **Library** — dictionary with search, categories, word of the day, recordings from `word_audio`;
   stories with page pictures from `story_page_images`.
-- **Me** — profile with scenery (seven places, unlocked by level or streak), badges with up to three
-  pinned, your weekly rank, settings, account (Google or email, sign-out, delete account),
+- **Me** — profile with scenery (seven places, unlocked by level or streak), all eleven badges on
+  one grid (pinned ones first, each at its highest tier with a six-dot track) under the badge closest
+  to its next tier, your weekly rank, settings, account (Google or email, sign-out, delete account),
   contribute a word, share a story (PDF), report an issue (with a photo).
-- **Badges, streak, rankings** — eleven badge families with six permanent tiers each (and the
-  original badges under Legacy), the streak page, and the weekly / all-time / streak leaderboards,
-  where a row opens that learner's public profile.
+- **Badges, streak, XP, rankings** — eleven badge families with six permanent tiers each (and the
+  original badges under Legacy), the streak page, the XP page (Android 1.24: total and level, today
+  against the daily goal, the last seven days, XP by source, game stars, Journey Rank milestones;
+  opened from the XP chip on Home or the total on Me), and the weekly / all-time / streak
+  leaderboards, where a row opens that learner's public profile.
+- **Tap sounds** — the soft click on buttons, tabs and links (Android's `TapSounds.kt`), with its own
+  switch in Settings. A press with a finger or mouse clicks; a keyboard or screen-reader activation
+  stays silent, and a control whose tap already plays an answer sound carries `data-no-tap-sound`.
 
 ## How it stays compatible with Android
 
@@ -56,8 +62,8 @@ unit tests ported alongside them (`tests/domain.test.ts`, `tests/xp.test.ts`):
 | `sm2.ts` | `util/srs/Sm2Algorithm.kt`, `ReviewRatingMapper.kt` |
 | `merge.ts` | `LearningStateMerge.kt`, `mergeProgress` / `toMap` / `toEntity` in `ProgressSyncManager.kt` |
 | `lesson.ts` | `domain/lesson/*`, `LessonRepository.kt` |
-| `xp.ts` | `domain/gamification/XpPolicy.kt` (`XpPolicy`, `RewardLedger`), `data/remote/RewardReceiptCodec.kt` |
-| `badges.ts` | `BadgeCatalog`, `LegacyBadgeCatalog`, `BadgeShowcase`, `ProfileBackgroundCatalog` |
+| `xp.ts` | `domain/gamification/XpPolicy.kt` (`XpPolicy`, `RewardLedger`), `XpSummary.kt`, `data/remote/RewardReceiptCodec.kt` |
+| `badges.ts` | `BadgeCatalog`, `LegacyBadgeCatalog`, `BadgeShowcase`, `BadgeSummary`, `ProfileBackgroundCatalog` |
 | `learner.ts` | `GamificationRepository`, `UserProgressRepository`, `VocabularyRepository.processWordReview` |
 | `publicProfile.ts` | `data/remote/model/PublicProfileDto.kt` |
 | `wordSearch.ts`, `wordWheel.ts` | `domain/wordsearch`, `domain/wordwheel` |
@@ -111,8 +117,14 @@ XP values, the lesson slicing and the badge list above all. A field added to
   and the Word Match rules no longer promise a combo multiplier the game does not have. The
   streak dialog does not claim a "+25 XP streak bonus", which neither app awards.
 - **No guided tour, notifications, or profile switching.** The Help page covers the tabs instead.
+- **Next up skips Story Reader while stories are switched off** (`STORIES_ENABLED`): no activity can
+  move it, so Me never suggests it as the badge to work on. Android's `BadgeSummary.nextUp` can still
+  pick it for a learner who read stories before they were switched off. Worth porting back.
 - **Not yet ported from 1.18:** the Light and System themes and the text-size setting (the web app
   stays dark, and browsers have their own text size), and the tutorial chapters.
+- **Not yet ported from 1.23:** the newer sound effects (found word, completion, streak, badge, card
+  flip), background music and the volume sliders. The web keeps its answer and level-up sounds and,
+  since 1.24, the tap click.
 - **Vibrations** follow the Android setting where the browser supports them (Android Chrome);
   iPhone browsers cannot vibrate, so the setting is hidden there.
 
@@ -206,3 +218,7 @@ $env:VITE_FIREBASE_EMULATORS = '1'; npx vite
 Iconsax library in the Gradle cache). The home-screen icons are cut from Adrian's Jepjep launcher art
 (`mipmap-xxxhdpi/ic_launcher_foreground.png`) and need sharp, which the app does not depend on:
 run `npm i --no-save sharp` first. `npm run content` refreshes the content snapshot.
+
+`public/sounds/tap.wav` is Android's `res/raw/ui_tap.ogg` (Freesound 570754, CC0) decoded to 16-bit
+mono WAV, because not every iPhone Safari decodes Ogg Vorbis. `npm run icons` does not produce it:
+re-convert it by hand if the Android tap sound changes.

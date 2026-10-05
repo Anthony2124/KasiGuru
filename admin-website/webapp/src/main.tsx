@@ -1,11 +1,12 @@
 import { render } from 'preact';
 import './styles.css';
 import { App } from './app';
+import { installTapSounds } from './lib/audio';
 import { initAuth } from './lib/auth';
 import { loadContent, refreshContent } from './lib/content';
 import { requestPersistence } from './lib/persist';
 import { fetchAnnouncements } from './lib/remote';
-import { act, loadLocal } from './lib/store';
+import { act, getState, loadLocal } from './lib/store';
 import { initSync } from './lib/sync';
 
 async function boot() {
@@ -27,6 +28,7 @@ async function boot() {
 }
 
 render(<App />, document.getElementById('app')!);
+installTapSounds(() => getState().prefs.tapSoundsEnabled);
 boot().catch((e) => {
   console.error('boot failed', e);
   document.getElementById('app')!.innerHTML =

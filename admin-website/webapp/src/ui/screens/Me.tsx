@@ -1,9 +1,9 @@
 /**
  * Me (ui/screens/profile/ProfileScreen): your scenery and avatar, level, streak and weekly rank,
- * your badges with the pinned ones first, and the way into settings and your account.
+ * every badge with the pinned ones first, and the way into settings and your account.
  */
-import { useEffect, useState } from 'preact/hooks';
-import { BADGE_ROWS, familyFor, tierFor } from '../../domain/badges';
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import { BADGE_ROWS, BADGE_TIERS, badgeProgress, badgeSummaries, nextUpBadge, type BadgeFamilySummary } from '../../domain/badges';
 import { levelProgress, levelTitle, xpToNextLevel, STORIES_ENABLED } from '../../domain/constants';
 import { pinnedFamilies } from '../../domain/learner';
 import { weeklyRank } from '../../lib/remote';
@@ -38,6 +38,27 @@ function Stat({ icon, label, value }: { icon: IconName; label: string; value: st
   );
 }
 
+/** One badge family on the grid: its medal at the highest tier, the name, and six dots for its tiers. */
+function BadgeCell({ summary }: { summary: BadgeFamilySummary }) {
+  const tierText = summary.highest?.label ?? 'Locked';
+  return (
+    <button
+      class="badge-cell"
+      onClick={() => navigate('/achievements')}
+      aria-label={`${summary.family.name}, ${tierText}, ${summary.earnedTiers} of ${BADGE_TIERS.length} tiers`}
+    >
+      <BadgeMedal tier={summary.highest} earned={!!summary.highest} size={52} />
+      <span class={`t-label-s name${summary.highest ? '' : ' muted'}`}>{summary.family.name}</span>
+      <span class="tier-dots" aria-hidden="true">
+        {BADGE_TIERS.map((t) => (
+          <i key={t.index} class={t.index < summary.earnedTiers ? 'on' : undefined} />
+        ))}
+      </span>
+      <span class="t-label-s" style={{ color: summary.highest ? 'var(--lime)' : 'var(--faint)' }}>{tierText}</span>
+    </button>
+  );
+}
+
 export function MeScreen() {
   const learner = useLearner();
   const corpus = useCorpus();
@@ -53,22 +74,10 @@ export function MeScreen() {
   const lessons = Object.entries(learner.lessons).filter(([k, s]) => s.isComplete && !k.startsWith('mastery:')).length;
   const isGuest = account.isAnonymous;
 
-  // ProfileViewModel.recentBadges: the highest earned tier of each family, pinned ones first.
-  const pins = pinnedFamilies(p);
-  const earned = BADGE_ROWS.filter((r) => learner.achievements[r.id]?.isUnlocked);
-  const best = new Map<string, (typeof earned)[number]>();
-  for (const r of earned) {
-    const cur = best.get(r.family.id);
-    if (!cur || r.tier.index > cur.tier.index) best.set(r.family.id, r);
-  }
-  const shown = [...best.values()]
-    .sort((a, b) => {
-      const ia = pins.indexOf(a.family.id);
-      const ib = pins.indexOf(b.family.id);
-      if ((ia < 0 ? Infinity : ia) !== (ib < 0 ? Infinity : ib)) return (ia < 0 ? Infinity : ia) - (ib < 0 ? Infinity : ib);
-      return (learner.achievements[b.id]?.unlockedDate ?? '').localeCompare(learner.achievements[a.id]?.unlockedDate ?? '');
-    })
-    .slice(0, 6);
+  const unlocked = BADGE_ROWS.filter((r) => learner.achievements[r.id]?.isUnlocked).length;
+  const families = useMemo(() => badgeSummaries(learner.achievements, pinnedFamilies(p)), [learner.achievements, p.pinnedBadgeIds]);
+  // Story Reader cannot move while stories are switched off, so it is never the badge to work on next.
+  const nextUp = nextUpBadge(STORIES_ENABLED ? families : families.filter((s) => s.family.id !== 'story_reader'));
 
   useEffect(() => {
     if (!account.uid || isGuest) return;
@@ -131,7 +140,10 @@ export function MeScreen() {
                 <p class="t-headline-s">{p.currentStreak}</p>
                 <p class="t-label muted">day streak</p>
               </button>
-              <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label muted">total XP</p></div>
+              <button onClick={() => navigate('/xp')} aria-label={`${p.totalXp} XP in total. Open your XP`} style={{ background: 'none', border: 0, color: 'inherit' }}>
+                <p class="t-headline-s">{p.totalXp}</p>
+                <p class="t-label muted">total XP</p>
+              </button>
               <div><p class="t-headline-s">{practised}</p><p class="t-label muted">words practised</p></div>
             </div>
             <button class="text-btn lime" onClick={() => navigate('/leaderboard')}>
@@ -160,22 +172,26 @@ export function MeScreen() {
               </button>
             }
           />
-          <button class="card" onClick={() => navigate('/achievements')}>
-            <p class="t-body muted">{earned.length} of 66 tiers earned</p>
-            {shown.length > 0 ? (
-              <div class="showcase" style={{ padding: 0, marginTop: 'var(--s-md)', rowGap: 'var(--s-md)' }}>
-                {shown.map((r) => (
-                  <div key={r.id}>
-                    <BadgeMedal tier={tierFor(r.id)} earned size={64} />
-                    <p class="t-title-s">{familyFor(r.id)?.name}</p>
-                    <p class="t-body muted">{r.tier.label}{pins.includes(r.family.id) ? ' · pinned' : ''}</p>
-                  </div>
-                ))}
+          <p class="t-body-s faint">{unlocked === 0 ? 'No badges yet. Finish a lesson to earn your first.' : `${unlocked} of ${BADGE_ROWS.length} tiers earned`}</p>
+          {nextUp?.next && (
+            <button class="card" onClick={() => navigate('/achievements')}>
+              <p class="t-label-s" style={{ color: 'var(--lime)' }}>NEXT UP</p>
+              <p class="t-title-s" style={{ marginTop: 'var(--s-xxs)' }}>
+                {nextUp.family.name} · {nextUp.next.row.tier.label}
+              </p>
+              <div style={{ marginTop: 'var(--s-xs)' }}>
+                <ProgressBar value={nextUp.progress} height={6} label={`Progress to ${nextUp.family.name} ${nextUp.next.row.tier.label}`} />
               </div>
-            ) : (
-              <p class="t-body" style={{ marginTop: 8 }}>No badges yet. Finish a lesson to earn your first.</p>
-            )}
-          </button>
+              <p class="t-label-s faint" style={{ marginTop: 'var(--s-xxs)' }}>
+                {badgeProgress(nextUp.family, Math.min(nextUp.next.currentValue, nextUp.next.row.requiredValue), nextUp.next.row.requiredValue)}
+              </p>
+            </button>
+          )}
+          <div class="badge-grid" style={{ paddingTop: 'var(--s-xs)' }}>
+            {families.map((s) => (
+              <BadgeCell key={s.family.id} summary={s} />
+            ))}
+          </div>
         </section>
 
         <section class="stack-sm">

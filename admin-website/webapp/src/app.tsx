@@ -36,6 +36,7 @@ import { NotificationsScreen } from './ui/screens/Notifications';
 import { SuspendedScreen } from './ui/screens/Suspended';
 import { StoryListScreen } from './ui/screens/StoryList';
 import { StreakScreen } from './ui/screens/Streak';
+import { XpScreen } from './ui/screens/Xp';
 import { PublicProfileScreen } from './ui/screens/PublicProfile';
 
 const TABS: { path: string; label: string; icon: IconName }[] = [
@@ -77,7 +78,7 @@ function tabFor(path: string): string {
   if (TABS.some((t) => t.path === path)) return path;
   if (/^\/(games|leaderboard)/.test(path)) return '/practice';
   if (/^\/(word|category|stories)/.test(path)) return '/library';
-  if (path === '/streak') return '/';
+  if (path === '/streak' || path === '/xp') return '/';
   return '/me';
 }
 
@@ -132,6 +133,7 @@ const ROUTES: Route[] = [
   { pattern: '/leaderboard', render: () => <LeaderboardScreen /> },
   { pattern: '/player/:uid', render: (p) => <PublicProfileScreen uid={p.uid} /> },
   { pattern: '/streak', render: () => <StreakScreen /> },
+  { pattern: '/xp', render: () => <XpScreen /> },
   { pattern: '/word/:id', render: (p) => <WordDetailScreen id={p.id} /> },
   { pattern: '/category/:name', render: (p) => <CategoryScreen category={p.name} /> },
   // While stories are switched off, both routes say they are coming soon (domain/constants.ts).
