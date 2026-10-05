@@ -24,6 +24,11 @@
  * Restored vocabulary and stories get a fresh updatedAt, as the dashboard's restore does, so phones
  * pull them on their next incremental sync instead of at the daily full reconcile.
  *
+ * --write-only skips reading Firestore and writes every document of the --only collections. It
+ * is for the day reads are refused - the free plan's 50,000 reads a day can run out, writes have
+ * their own 20,000 - and is safe only while those collections are empty or older than the backup,
+ * as right after a wipe: there is nothing to compare against, so nothing is kept.
+ *
  * Backups written before format 2 carry no paths; those restore by id at the root.
  */
 
@@ -57,6 +62,7 @@ function usage(message) {
   console.error('Usage:');
   console.error('  node restore_firestore.js <service-account.json> <backup-dir> [--only=a,b] [--confirm=<projectId>]');
   console.error('  node restore_firestore.js emulator:demo-<name> <backup-dir> [--only=a,b] [--confirm=demo-<name>]');
+  console.error('  node restore_firestore.js <service-account.json> <backup-dir> --only=a,b --write-only [--confirm=<projectId>]');
   console.error('\nRuns as a dry run until --confirm matches the project id.');
   process.exit(1);
 }
@@ -82,6 +88,10 @@ const armed = args.confirm === projectId;
 const only = typeof args.only === 'string'
   ? new Set(args.only.split(',').map((s) => s.trim()).filter(Boolean))
   : null;
+const writeOnly = args['write-only'] === true;
+// Without a comparison every listed document is written, so it must not reach content that may
+// have been edited since the backup.
+if (writeOnly && !only) usage('--write-only needs --only=<collections>: it overwrites without comparing');
 
 const pad = (value, width) => String(value).padStart(width);
 
@@ -106,13 +116,17 @@ const pad = (value, width) => String(value).padStart(width);
   if (!manifest.format || manifest.format < 2) {
     console.log('         NOTE: format below 2 - this backup holds no learner progress.');
   }
-  console.log(`Mode:    ${armed ? 'ARMED - writing' : 'DRY RUN - reading only'}\n`);
+  console.log(`Mode:    ${armed ? 'ARMED - writing' : 'DRY RUN - nothing is written'}`);
+  if (writeOnly) {
+    console.log('         WRITE-ONLY: Firestore is not read; every listed document is written, nothing is kept.');
+  }
+  console.log('');
 
   console.log(`  ${'collection'.padEnd(24)}${pad('restore', 9)}${pad('overwrite', 11)}${pad('same', 7)}${pad('kept', 7)}`);
   const plans = [];
   for (const file of files) {
     const parsed = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
-    const live = await readAllDocsDeep(db.collection(parsed.collection));
+    const live = writeOnly ? [] : await readAllDocsDeep(db.collection(parsed.collection));
     const current = new Map(live.filter((d) => !d.missing).map((d) => [d.path, serialize(d.data)]));
     const plan = planRestore(parsed.collection, parsed.documents, current,
       APP_SYNCED_CONTENT.has(parsed.collection) ? ['updatedAt'] : []);
@@ -158,6 +172,7 @@ const pad = (value, width) => String(value).padStart(width);
     projectId,
     restoredFrom: path.basename(path.resolve(backupDir)),
     only: only ? [...only] : null,
+    writeOnly,
     written: writes,
     kept: sum('kept'),
     at: admin.firestore.FieldValue.serverTimestamp()
