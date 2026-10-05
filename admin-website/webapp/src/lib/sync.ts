@@ -58,6 +58,8 @@ type LearningDoc = Exclude<(typeof PROGRESS_DOCS)[number], 'main'>;
 const DEBOUNCE_MS = 5_000;
 const PAGE = 400;
 
+const SIGN_OUT_SAVE_TIMEOUT_MS = 20_000;
+
 let activeUid: string | null = null;
 let session = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -120,15 +122,29 @@ async function syncNow(uid: string, mine: number) {
   await uploadAll(uid, mine);
 }
 
+/** Set by an account switch: the next pull takes the account's progress as-is. */
+let adoptCloud = false;
+
+/**
+ * Called after a sign-in to an existing account has wiped the guest. The blank local row's
+ * defaults (the placeholder name, avatar 0) must not be weighed against the account's real values.
+ */
+export function adoptCloudOnNextSync() {
+  adoptCloud = true;
+}
+
 /** Merges main progress. Returns whether the cloud copy predates XP policy 2. */
 async function pullMain(uid: string, mine: number): Promise<boolean> {
   const snap = await getDoc(progressRef(uid, 'main'));
-  if (!stillActive(uid, mine) || !snap.exists()) return false;
+  if (!stillActive(uid, mine)) return false;
+  const adopt = adoptCloud;
+  adoptCloud = false;
+  if (!snap.exists()) return false;
   const remote = fromMainDoc(snap.data());
   act(
     (d) => {
       d.ensureNormalized();
-      d.d.progress = mergeProgress(d.d.progress, remote);
+      d.d.progress = adopt ? { ...remote } : mergeProgress(d.d.progress, remote);
       withAccountIdentity(d.d);
       if (remote.xpPolicyVersion < XP_POLICY_VERSION) d.archiveLegacy(remote);
     },
@@ -452,8 +468,11 @@ export async function onAccountLinked() {
  */
 export async function wipeLocal(uploadFirst: boolean, requireSaved = false) {
   if (uploadFirst) {
-    const saved = await flush();
-    if (requireSaved && !saved) throw new Error('Connect to the internet before signing out so your progress can be saved.');
+    // Bounded: a Firestore write with no network can wait indefinitely, which left sign-out
+    // spinning with no way out.
+    const timedOut = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), SIGN_OUT_SAVE_TIMEOUT_MS));
+    const saved = await Promise.race([flush(), timedOut]);
+    if (requireSaved && !saved) throw new Error('Your progress could not be saved. Check your connection and try again.');
   }
   endSession();
   replaceLearner(initialLearner());

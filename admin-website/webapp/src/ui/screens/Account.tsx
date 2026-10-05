@@ -1,7 +1,7 @@
 /**
  * Account & Sign In (ui/screens/auth/AccountScreen): the one-time "About you" step, then Google or
  * email. A guest who creates an account keeps their progress (the uid is linked, not replaced); one
- * who signs in to an existing account has this device's progress merged into it.
+ * who signs in to an existing account gets that account exactly as saved, replacing the guest here.
  */
 import { useState } from 'preact/hooks';
 import type { AuthCredential } from 'firebase/auth';
@@ -94,6 +94,23 @@ export function AccountScreen() {
   const [confirmOut, setConfirmOut] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const [saveFailed, setSaveFailed] = useState<string | null>(null);
+
+  const runSignOut = async (force: boolean) => {
+    setBusy(true);
+    try {
+      await signOutToGuest(force);
+    } catch (e) {
+      setBusy(false);
+      // Not a dead end: the dialog lets the learner retry later or sign out anyway.
+      setSaveFailed(e instanceof Error ? e.message : 'Your progress could not be saved.');
+      return;
+    }
+    setBusy(false);
+    toast('Signed out. Sign back in any time to restore your progress.');
+    navigate('/', { replace: true });
+  };
+
   const hasDetails = !!progress.fullName.trim() && progress.age != null && !!progress.address.trim();
   const recoverable = !!account.uid && !account.isAnonymous;
 
@@ -109,7 +126,8 @@ export function AccountScreen() {
         break;
       case 'signedIn':
         toast('Signed in. Restoring your progress…');
-        if (!progress.isOnboardingCompleted) navigate('/', { replace: true });
+        // This browser's screens were showing the guest; start over from Home as the account.
+        navigate('/', { replace: true });
         break;
       case 'alreadyRegistered':
         setPending(outcome.credential);
@@ -143,17 +161,20 @@ export function AccountScreen() {
             onCancel={() => setConfirmOut(false)}
             onConfirm={async () => {
               setConfirmOut(false);
-              setBusy(true);
-              try {
-                await signOutToGuest();
-              } catch (e) {
-                setBusy(false);
-                toast(e instanceof Error ? e.message : 'Your progress could not be saved. Please try again.');
-                return;
-              }
-              setBusy(false);
-              toast('Signed out. Sign back in any time to restore your progress.');
-              navigate('/', { replace: true });
+              await runSignOut(false);
+            }}
+          />
+        )}
+        {saveFailed && (
+          <ConfirmDialog
+            title="Progress not saved"
+            message={`${saveFailed} If you sign out anyway, anything you did in this browser since it last synced will be lost. Everything already saved stays on your account.`}
+            confirmLabel="Sign out anyway"
+            danger
+            onCancel={() => setSaveFailed(null)}
+            onConfirm={async () => {
+              setSaveFailed(null);
+              await runSignOut(true);
             }}
           />
         )}
@@ -221,7 +242,7 @@ export function AccountScreen() {
           <div class="stack">
             <h2 class="t-headline-s">Account already exists</h2>
             <p class="t-body-l muted">
-              An account already uses those details. Signing in loads that account's saved progress and combines it with what is on this device — for each stat the higher value is kept, so nothing is lost.
+              An account already uses those details. Signing in opens that account exactly as it is saved — its name, details and progress stay the same. The guest progress in this browser is replaced by the account's.
             </p>
             <ClayButton
               label="Sign in to that account"

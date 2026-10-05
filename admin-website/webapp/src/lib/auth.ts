@@ -25,7 +25,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore/lite';
 import { auth, db } from './firebase';
 import { getState, setState, type Account, type BanInfo } from './store';
-import { deleteCloudData, onAccountLinked, startSession, wipeLocal } from './sync';
+import { adoptCloudOnNextSync, deleteCloudData, endSession, onAccountLinked, startSession, wipeLocal } from './sync';
 
 export type AuthOutcome =
   | { kind: 'linked' }
@@ -93,8 +93,12 @@ const isCollision = (e: unknown) => {
   return code === 'auth/credential-already-in-use' || code === 'auth/email-already-in-use';
 };
 
+/** True while [switchAccount] runs: the uid change it causes is handled there, not by the listener. */
+let switching = false;
+
 export function initAuth() {
   onAuthStateChanged(auth, async (user) => {
+    if (switching) return;
     if (!user) {
       // No session at all: start a guest one, as the Android app does at launch.
       try {
@@ -127,13 +131,43 @@ export async function linkEmailPassword(email: string, password: string): Promis
   }
 }
 
-export async function signInEmailPassword(email: string, password: string): Promise<AuthOutcome> {
+/**
+ * Signs in to an existing account so that this browser *becomes* that account.
+ *
+ * The account is never overwritten. Sync is held while the credential is used; once the sign-in
+ * has succeeded the guest's local data is discarded without uploading, and only then is the
+ * account's own copy pulled down, taken as it is. Merging the guest instead let the "About you"
+ * details typed a minute earlier, stamped newer, replace the name, age, address and avatar the
+ * account already had from the Android app. A failed sign-in leaves the guest exactly as it was.
+ */
+async function switchAccount(signIn: () => Promise<unknown>): Promise<AuthOutcome> {
+  switching = true;
+  endSession();
   try {
-    await signInWithEmailAndPassword(auth, email.trim(), password);
-    return { kind: 'signedIn' };
+    await signIn();
   } catch (e) {
+    switching = false;
+    const guest = auth.currentUser;
+    if (guest) void startSession(guest.uid);
     return { kind: 'failed', message: friendly(e) };
   }
+  try {
+    await wipeLocal(false);
+    adoptCloudOnNextSync();
+  } finally {
+    switching = false;
+  }
+  const user = auth.currentUser;
+  setState({ account: toAccount(user), authReady: true });
+  if (user) {
+    void startSession(user.uid);
+    void checkBan(user.uid);
+  }
+  return { kind: 'signedIn' };
+}
+
+export async function signInEmailPassword(email: string, password: string): Promise<AuthOutcome> {
+  return switchAccount(() => signInWithEmailAndPassword(auth, email.trim(), password));
 }
 
 export async function linkGoogle(): Promise<AuthOutcome> {
@@ -148,8 +182,7 @@ export async function linkGoogle(): Promise<AuthOutcome> {
       await onAccountLinked();
       return { kind: 'linked' };
     }
-    await signInWithPopup(auth, provider);
-    return { kind: 'signedIn' };
+    return await switchAccount(() => signInWithPopup(auth, provider));
   } catch (e) {
     if (isCollision(e)) {
       const credential = GoogleAuthProvider.credentialFromError(e as never);
@@ -159,14 +192,9 @@ export async function linkGoogle(): Promise<AuthOutcome> {
   }
 }
 
-/** The learner chose to switch to the existing account; this device's guest progress merges into it. */
+/** The learner chose to switch to the existing account; it opens as saved and replaces the guest here. */
 export async function confirmSignIn(credential: AuthCredential): Promise<AuthOutcome> {
-  try {
-    await signInWithCredential(auth, credential);
-    return { kind: 'signedIn' };
-  } catch (e) {
-    return { kind: 'failed', message: friendly(e) };
-  }
+  return switchAccount(() => signInWithCredential(auth, credential));
 }
 
 export async function sendPasswordReset(email: string) {
@@ -176,9 +204,12 @@ export async function sendPasswordReset(email: string) {
 /**
  * Uploads, wipes this device, and returns to a fresh guest session. Refuses (throws) while the
  * rewards cannot be saved, as flushToCloud does on Android, rather than losing them.
+ *
+ * @param force skip the upload. Offered only after it has failed, behind a warning, so a learner
+ *   who is offline (or on a day the read quota is spent) can still sign out.
  */
-export async function signOutToGuest() {
-  await wipeLocal(true, true);
+export async function signOutToGuest(force = false) {
+  await wipeLocal(!force, !force);
   await fbSignOut(auth);
   // onAuthStateChanged(null) starts the new anonymous session.
 }
