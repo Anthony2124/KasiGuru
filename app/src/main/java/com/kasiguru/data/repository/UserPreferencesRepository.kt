@@ -54,6 +54,8 @@ class UserPreferencesRepository @Inject constructor(
         val TOUR_BASELINE_VERSION = intPreferencesKey("tour_baseline_version")
         val LAST_CONTENT_SYNC_AT = longPreferencesKey("last_content_sync_at")
         val LAST_FULL_RECONCILE_AT = longPreferencesKey("last_full_reconcile_at")
+        val LAST_FULL_VOCABULARY_READ_AT = longPreferencesKey("last_full_vocabulary_read_at")
+        val VOCABULARY_FINGERPRINT = stringPreferencesKey("vocabulary_fingerprint")
         val DAILY_REVIEW_COMPLETED_DATE = stringPreferencesKey("daily_review_completed_date")
         val DAILY_GAMES_DATE = stringPreferencesKey("daily_games_date")
         val DAILY_GAMES_COUNT = intPreferencesKey("daily_games_count")
@@ -102,12 +104,13 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     /**
-     * When the last *full* collection read completed, as epoch millis. 0 means never.
+     * When the last daily reconcile completed, as epoch millis. 0 means never.
      *
      * Tracked separately from [lastContentSyncAt] because the two run on different
-     * cadences: the ordinary sync is incremental and cheap, while this one re-reads
-     * everything to catch documents the incremental query cannot see (see
-     * FirestoreSyncManager.FULL_RECONCILE_INTERVAL_MS).
+     * cadences: the ordinary sync is incremental and cheap, while the reconcile checks for
+     * changes the incremental query cannot see (see FirestoreSyncManager.FULL_RECONCILE_INTERVAL_MS).
+     * The reconcile re-reads every word only when that check says so; [lastFullVocabularyReadAt]
+     * records when it last did.
      */
     val lastFullReconcileAt: Flow<Long> = dataStore.data.map { prefs ->
         prefs[PreferencesKeys.LAST_FULL_RECONCILE_AT] ?: 0L
@@ -118,6 +121,26 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setLastFullReconcileAt(epochMillis: Long) {
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.LAST_FULL_RECONCILE_AT] = epochMillis
+        }
+    }
+
+    /** When every vocabulary document was last read, as epoch millis. 0 means never. */
+    suspend fun lastFullVocabularyReadAtOnce(): Long =
+        dataStore.data.first()[PreferencesKeys.LAST_FULL_VOCABULARY_READ_AT] ?: 0L
+
+    /**
+     * The vocabulary fingerprint taken at that read (FirestoreSyncManager.vocabularyFingerprint),
+     * or null if there is none. The daily reconcile compares the current one against it.
+     */
+    suspend fun vocabularyFingerprintOnce(): String? =
+        dataStore.data.first()[PreferencesKeys.VOCABULARY_FINGERPRINT]
+
+    /** Records a completed read of every vocabulary document, with the fingerprint taken before it. */
+    suspend fun setFullVocabularyRead(epochMillis: Long, fingerprint: String?) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.LAST_FULL_VOCABULARY_READ_AT] = epochMillis
+            if (fingerprint != null) prefs[PreferencesKeys.VOCABULARY_FINGERPRINT] = fingerprint
+            else prefs.remove(PreferencesKeys.VOCABULARY_FINGERPRINT)
         }
     }
 

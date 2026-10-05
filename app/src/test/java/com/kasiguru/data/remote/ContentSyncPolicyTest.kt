@@ -100,4 +100,61 @@ class ContentSyncPolicyTest {
         assertTrue(isDueForSync(true, lastRunAt = aDayAgo, now = now, intervalMs = sixHours))
         assertFalse(isDueForSync(true, lastRunAt = aDayAgo, now = now, intervalMs = oneWeek))
     }
+
+    // ── The daily reconcile's fingerprint check ───────────────────────────────────────────
+    // Reading every word on every phone every day cost ~1,150 reads each, and with a few dozen
+    // phones that alone came close to the 50,000. The reconcile now reads everything only when
+    // the collection's count-and-checksum moved, so these cases decide most of the daily bill.
+
+    private val thirtyDays = TimeUnit.DAYS.toMillis(30)
+    private val yesterday = now - TimeUnit.DAYS.toMillis(1)
+
+    private fun needsFullRead(
+        stored: String? = "1151:1987000000000000",
+        current: String? = "1151:1987000000000000",
+        lastFullReadAt: Long = yesterday,
+        force: Boolean = false,
+        hasLocalContent: Boolean = true
+    ) = needsFullVocabularyRead(force, hasLocalContent, stored, current, lastFullReadAt, now, thirtyDays)
+
+    @Test
+    fun anUnchangedDictionarySkipsTheFullRead() {
+        assertFalse(needsFullRead())
+    }
+
+    @Test
+    fun anyAddDeleteOrEditMovesTheFingerprintAndReadsEverything() {
+        // A deleted word lowers the count; an edited one changes the checksum. Either way the
+        // incremental pull cannot be trusted to have seen it.
+        assertTrue(needsFullRead(current = "1150:1985000000000000"))
+        assertTrue(needsFullRead(current = "1151:1987000000000123"))
+    }
+
+    @Test
+    fun aPhoneWithoutAStoredFingerprintReadsEverythingOnce() {
+        // First run, or the first reconcile after updating from a version that never took one.
+        assertTrue(needsFullRead(stored = null))
+        assertTrue(needsFullRead(stored = ""))
+    }
+
+    @Test
+    fun aFailedFingerprintFallsBackToTheFullRead() {
+        // The aggregation failed: behave exactly as before this check existed.
+        assertTrue(needsFullRead(current = null))
+    }
+
+    @Test
+    fun aForcedRefreshOrAnEmptyDeviceAlwaysReadsEverything() {
+        assertTrue(needsFullRead(force = true))
+        assertTrue(needsFullRead(hasLocalContent = false))
+    }
+
+    @Test
+    fun theSafetyIntervalStillForcesAFullReadEveryThirtyDays() {
+        assertFalse(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(29)))
+        assertTrue(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(31)))
+        // Never read in full, or a clock that has since moved backwards.
+        assertTrue(needsFullRead(lastFullReadAt = 0L))
+        assertTrue(needsFullRead(lastFullReadAt = now + TimeUnit.DAYS.toMillis(2)))
+    }
 }
