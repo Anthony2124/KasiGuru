@@ -31,9 +31,9 @@ import javax.inject.Singleton
  *    served forever. Bytes go to `filesDir/word_audio/`, never into Room, so no schema change beyond
  *    the version column was needed.
  *
- * Every failure path returns null. A word with no clip, a missing document, or an offline device with
- * nothing cached is a normal state, not an error: [com.kasiguru.util.audio.AudioPlayerManager] falls
- * back to text-to-speech, exactly as it does today.
+ * A word with no clip or a missing document returns null: a normal state, not an error. A fetch that
+ * fails (offline with nothing cached, or Firestore refusing reads) throws, so
+ * [com.kasiguru.util.audio.AudioPlayerManager] can tell the learner why nothing played.
  */
 @Singleton
 class WordAudioRepository @Inject constructor(
@@ -53,8 +53,8 @@ class WordAudioRepository @Inject constructor(
      *   word has no custom recording.
      * @param version [VocabularyEntity.audioUpdatedAt] — bumped by the admin on every re-record, so a
      *   changed clip lands under a new filename.
-     * @return the cached file, or null when the word has no clip, the document is missing, or the
-     *   device is offline with nothing cached.
+     * @return the cached file, or null when the word has no clip or the document is missing.
+     * @throws Exception when the clip exists upstream but could not be fetched.
      */
     suspend fun audioFor(key: String, version: Long): File? {
         if (key.isBlank()) return null
@@ -75,6 +75,9 @@ class WordAudioRepository @Inject constructor(
                 // Temp file first: a download cut off halfway would otherwise leave a truncated file
                 // that every later read treats as a valid cache hit.
                 val temp = File(cacheDir, "${key}_$version.part")
+                // The folder is created once per process; if storage cleanup removed it since, the
+                // write failed with ENOENT and every clip stayed silent until the app restarted.
+                cacheDir.mkdirs()
                 temp.writeBytes(bytes)
                 if (!temp.renameTo(cached)) {
                     temp.delete()
@@ -84,8 +87,11 @@ class WordAudioRepository @Inject constructor(
                 pruneOldVersions(key, keep = cached.name)
                 cached
             } catch (e: Exception) {
+                // Rethrown, not swallowed: "this word has no clip" and "the clip could not be
+                // fetched" (offline, or the project's daily read quota spent) need different words
+                // to the learner, and a silent button reads as a broken speaker either way.
                 Log.w("WordAudioRepository", "Could not load audio for $key", e)
-                null
+                throw e
             }
         }
     }

@@ -145,6 +145,8 @@ fun GameOptionRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            // Picking an option answers it, and the answer has its own sound.
+            .noTapSound()
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = backgroundColor,
@@ -326,7 +328,7 @@ fun rememberGameExitGuard(active: Boolean, onExit: () -> Unit): () -> Unit {
     BackHandler(enabled = active) { showConfirm = true }
 
     if (showConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showConfirm = false },
             title = { Text("Quit this game?") },
             text = { Text("Your progress in this round won't be saved.") },

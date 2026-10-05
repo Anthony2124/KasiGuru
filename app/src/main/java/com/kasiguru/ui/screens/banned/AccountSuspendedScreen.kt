@@ -22,13 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.kasiguru.ui.components.ErrorDialog
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.text.SimpleDateFormat
 import java.util.*
+import com.kasiguru.ui.components.TapSoundDialog
 
 /**
  * Full-screen "Account Suspended" wall shown when the admin has placed a ban on the
@@ -105,6 +105,9 @@ fun AccountSuspendedScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Edge to edge: without this the appeal and sign-out buttons at the foot sat under
+                // three-button navigation.
+                .safeDrawingPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Space.gutter)
                 .padding(vertical = Space.xl),
@@ -502,7 +505,7 @@ fun AccountSuspendedScreen(
         var appealInput by remember { mutableStateOf(effectiveAppealText ?: "") }
         var hasAttemptedSubmit by remember { mutableStateOf(false) }
 
-        Dialog(onDismissRequest = { if (!isSubmittingAppeal) showAppealDialog = false }) {
+        TapSoundDialog(onDismissRequest = { if (!isSubmittingAppeal) showAppealDialog = false }) {
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = Ground,

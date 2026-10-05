@@ -21,7 +21,7 @@ fun RewardCelebrationDialog(reward: RewardCelebrationEntity,onDismiss: () -> Uni
         }
     val sounds = LocalSoundEffects.current
     LaunchedEffect(reward) { sounds?.play(if (reward.levelChanged) Sfx.LevelUp else Sfx.Badge) }
-    AlertDialog(onDismissRequest = onDismiss,
+    AlertDialog(modifier = Modifier.tapSounds(), onDismissRequest = onDismiss,
         title = { Text(if(reward.levelChanged) "Level ${reward.level} reached!" else "Badge upgraded!") },
         text = {
             Column {

@@ -89,6 +89,7 @@ sealed class Screen(val route: String) {
     data object Leaderboard : Screen("leaderboard")
     data object Notifications : Screen("notifications")
     data object Streak : Screen("streak")
+    data object Xp : Screen("xp")
     data object Appearance : Screen("appearance")
     data object Settings : Screen("settings")
     data object Account : Screen("account")

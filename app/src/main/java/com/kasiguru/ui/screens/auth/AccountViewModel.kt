@@ -13,11 +13,13 @@ import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 data class AccountUiState(
@@ -32,8 +34,20 @@ data class AccountUiState(
      */
     val pendingSignIn: AuthCredential? = null,
     val didSucceed: Boolean = false,
+    /**
+     * True when that success was a sign-in to an existing account (not a link). This device's
+     * screens were showing the guest, so the UI starts over from Home rather than going back.
+     */
+    val didSwitchAccount: Boolean = false,
     /** True once account deletion has actually completed — the UI navigates away on this. */
     val didDeleteAccount: Boolean = false,
+    /** True once sign-out has finished — the UI leaves for a fresh start on this. */
+    val didSignOut: Boolean = false,
+    /**
+     * Set when this device's progress could not be saved before signing out. The learner can
+     * retry, or sign out anyway and lose what was not saved — the choice is theirs, not a trap.
+     */
+    val signOutSaveFailed: String? = null,
     /**
      * Whether name, age and address are on file. Null until the progress row has been read, so
      * the screen does not flash the details form at someone who already filled it in.
@@ -106,16 +120,46 @@ class AccountViewModel @Inject constructor(
 
     fun signIn(email: String, password: String) {
         if (!validate(email, password)) return
-        run { authRepository.signInEmailPassword(email, password) }
+        run { switchAccount { authRepository.signInEmailPassword(email, password) } }
     }
 
-    fun linkGoogle(idToken: String) = run { authRepository.linkGoogle(idToken) }
+    fun linkGoogle(idToken: String) = run {
+        // A guest links (same uid, progress kept); anyone else is signing in to an account.
+        if (authRepository.currentAccount().isAnonymous) authRepository.linkGoogle(idToken)
+        else switchAccount { authRepository.signInGoogle(idToken) }
+    }
 
     /** Proceeds with the sign-in the user confirmed after a collision. */
     fun confirmSignIn() {
         val credential = _uiState.value.pendingSignIn ?: return
         _uiState.value = _uiState.value.copy(pendingSignIn = null)
-        run { authRepository.signIn(credential) }
+        run { switchAccount { authRepository.signIn(credential) } }
+    }
+
+    /**
+     * Signs in to an existing account so that this device *becomes* that account.
+     *
+     * The account is never overwritten: sync is held while the credential is used, the guest's
+     * local data is discarded without uploading once the sign-in has succeeded, and only then is
+     * the account's own copy pulled down. Merging the guest instead let a learner's onboarding
+     * defaults and freshly typed "About you" details, stamped newer, replace the name, avatar and
+     * details the account already had. A failed sign-in leaves the guest exactly as it was.
+     */
+    private suspend fun switchAccount(signIn: suspend () -> AuthOutcome): AuthOutcome {
+        progressSyncManager.beginAccountSwitch()
+        val outcome = try {
+            signIn()
+        } catch (e: Exception) {
+            progressSyncManager.finishAccountSwitch(signedIn = false)
+            throw e
+        }
+        if (outcome is AuthOutcome.SignedIn) {
+            userDataResetManager.resetAllLocalUserData(uploadPendingChanges = false)
+            progressSyncManager.finishAccountSwitch(signedIn = true)
+        } else {
+            progressSyncManager.finishAccountSwitch(signedIn = false)
+        }
+        return outcome
     }
 
     fun cancelSignIn() {
@@ -138,24 +182,46 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    fun signOut() {
+    /**
+     * Saves this device's progress to the account, wipes it locally and starts a fresh guest.
+     *
+     * @param force skip the save. Only offered after a save has failed, behind a warning: without
+     *   it a learner with no connection, or on a day the project's read quota is spent, could not
+     *   sign out at all.
+     */
+    fun signOut(force: Boolean = false) {
+        if (_uiState.value.isBusy) return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isBusy = true, error = null)
-            // Flushes the local state to the account first: the promise in the message below
-            // is only true if today's quota and review work actually reached the cloud before
-            // this wipes them.
-            val reset = runCatching { userDataResetManager.resetAllLocalUserData() }
-            if(reset.isFailure) {
-                _uiState.value = _uiState.value.copy(isBusy = false,
-                    error = reset.exceptionOrNull()?.message ?: "Your progress could not be saved. Please try again.")
-                return@launch
+            _uiState.value = _uiState.value.copy(isBusy = true, error = null, signOutSaveFailed = null)
+            if (!force) {
+                // Flushes the local state to the account first: the promise in the message below is
+                // only true if today's quota and review work actually reached the cloud before this
+                // wipes them. Bounded, because a Firestore call with no network can wait forever.
+                val saved = runCatching {
+                    withTimeout(SIGN_OUT_SAVE_TIMEOUT_MS) { progressSyncManager.flushToCloud() }
+                }
+                if (saved.isFailure) {
+                    val cause = saved.exceptionOrNull()
+                    _uiState.value = _uiState.value.copy(
+                        isBusy = false,
+                        signOutSaveFailed = cause?.message?.takeIf { cause !is TimeoutCancellationException && it.isNotBlank() }
+                            ?: "Saving your progress is taking too long. Check your connection and try again."
+                    )
+                    return@launch
+                }
             }
+            userDataResetManager.resetAllLocalUserData(uploadPendingChanges = false)
             authRepository.signOutToAnonymous()
             _uiState.value = _uiState.value.copy(
                 isBusy = false,
+                didSignOut = true,
                 message = "Signed out. Sign back in any time to restore your progress."
             )
         }
+    }
+
+    fun dismissSignOutFailure() {
+        _uiState.value = _uiState.value.copy(signOutSaveFailed = null)
     }
 
     fun dismissBackupPrompt() {
@@ -199,7 +265,9 @@ class AccountViewModel @Inject constructor(
             error = null,
             message = null,
             didSucceed = false,
-            didDeleteAccount = false
+            didSwitchAccount = false,
+            didDeleteAccount = false,
+            didSignOut = false
         )
     }
 
@@ -229,6 +297,7 @@ class AccountViewModel @Inject constructor(
                 is AuthOutcome.SignedIn -> _uiState.value = _uiState.value.copy(
                     isBusy = false,
                     didSucceed = true,
+                    didSwitchAccount = true,
                     message = "Signed in. Restoring your progress…"
                 )
                 is AuthOutcome.AlreadyRegistered -> _uiState.value = _uiState.value.copy(
@@ -250,5 +319,6 @@ class AccountViewModel @Inject constructor(
         const val MAX_ADDRESS_LENGTH = 200
         const val MIN_AGE = 3
         const val MAX_AGE = 120
+        const val SIGN_OUT_SAVE_TIMEOUT_MS = 20_000L
     }
 }

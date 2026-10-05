@@ -49,8 +49,6 @@ import com.kasiguru.ui.theme.LimeTint
 import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Olive
 import com.kasiguru.ui.theme.BorderHairline
-import com.kasiguru.util.audio.LocalSoundEffects
-import com.kasiguru.util.audio.Sfx
 
 /**
  * Primary button. Built from clay because a button is something you press — the face compresses onto
@@ -79,14 +77,12 @@ fun ClayButton(
         ClayButtonTone.Reward  -> { face = Gold;    lip = GoldDeep;       labelColor = RewardInk }
         ClayButtonTone.Quiet   -> { face = SurfaceSunken; lip = BorderHairline; labelColor = Ink }
     }
-    val sounds = LocalSoundEffects.current
-
     ClaySurface(
         face = face,
         lipColor = lip,
         modifier = modifier.defaultMinSize(minHeight = Touch.minTarget),
         shape = Shapes.pill,
-        onClick = { sounds?.play(Sfx.Tap); onClick() },
+        onClick = onClick,
         enabled = enabled,
         contentPadding = PaddingValues(horizontal = Space.lg, vertical = 14.dp)
     ) {

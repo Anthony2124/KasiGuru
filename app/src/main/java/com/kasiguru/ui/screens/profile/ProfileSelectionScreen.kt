@@ -47,6 +47,7 @@ import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Red
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * "Who is using this device" - shown after Splash whenever more than one profile exists, and
@@ -151,7 +152,7 @@ private fun AddProfileDialog(
     var name by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(JepjepAvatar.Default) }
 
-    AlertDialog(
+    AlertDialog(modifier = Modifier.tapSounds(), 
         onDismissRequest = onDismiss,
         title = { Text("New profile") },
         text = {

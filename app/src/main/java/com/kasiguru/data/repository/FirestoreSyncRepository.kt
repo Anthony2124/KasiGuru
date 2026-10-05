@@ -3,14 +3,17 @@ package com.kasiguru.data.repository
 import android.util.Log
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.kasiguru.data.local.dao.ConjugationDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.ConjugationEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
+import com.kasiguru.data.remote.FirestoreSyncManager
 import com.kasiguru.data.remote.VocabularyContentMerge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,10 +21,13 @@ import javax.inject.Singleton
 class FirestoreSyncRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val vocabularyDao: VocabularyDao,
-    private val conjugationDao: ConjugationDao
+    private val conjugationDao: ConjugationDao,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) {
     private val vocabCollection = firestore.collection("vocabulary")
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val started = AtomicBoolean(false)
+    @Volatile private var registration: ListenerRegistration? = null
 
     companion object {
         private const val TAG = "FirestoreSyncRepository"
@@ -34,9 +40,28 @@ class FirestoreSyncRepository @Inject constructor(
      * Uses [DocumentChange] instead of the full snapshot so that:
      *  - Only actually changed documents are upserted (no re-inserting the whole collection).
      *  - Deleted documents (`REMOVED`) are removed from the local database immediately.
+     *
+     * Scoped to documents changed since the last content pull. The listener used to watch the whole
+     * collection, and Firestore bills a listener re-attached after 30 minutes as a brand-new query:
+     * every app open cost ~1,200 reads, which is how a few dozen launches a day exhausted the Spark
+     * plan's project-wide 50,000 and took pronunciation clips, progress sync and the leaderboard down
+     * with it. Anything older than the cursor is [FirestoreSyncManager]'s job (an incremental pull
+     * every six hours, a full reconcile daily), so the listener only has to carry edits made while
+     * the app is open. Registered once per process: onCreate runs again on every rotation, and each
+     * extra listener was another full read.
      */
     fun startRealtimeSync() {
-        vocabCollection.addSnapshotListener { snapshot, error ->
+        if (!started.compareAndSet(false, true)) return
+        scope.launch {
+            val lastPull = runCatching { userPreferencesRepository.lastContentSyncAtOnce() }.getOrDefault(0L)
+            // A device that has never pulled gets its first copy from FirestoreSyncManager.
+            val since = if (lastPull > 0L) lastPull else System.currentTimeMillis()
+            registration = listen(since)
+        }
+    }
+
+    private fun listen(since: Long): ListenerRegistration =
+        vocabCollection.whereGreaterThan(FirestoreSyncManager.UPDATED_AT, since).addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e(TAG, "Realtime sync error", error)
                 return@addSnapshotListener
@@ -68,7 +93,7 @@ class FirestoreSyncRepository @Inject constructor(
                                 val rootForm = (data["rootForm"] ?: data["root_word"] ?: word).toString().trim()
                                 val category = (data["category"] ?: "General").toString().trim()
                                 val ipaNotation = (data["ipaNotation"] ?: data["ipa"] ?: "").toString().trim()
-                                val exampleSentence = (data["sampleSentence"] ?: data["sample_sentence"] ?: "").toString().trim()
+                                val exampleSentence = (data["exampleSentence"] ?: data["sampleSentence"] ?: data["sample_sentence"] ?: "").toString().trim()
                                 val partOfSpeech = (data["partOfSpeech"] ?: data["part_of_speech"] ?: "").toString().trim()
                                 val meaningEnglish = (data["meaningEnglish"] ?: "").toString().trim()
                                 val meaningTagalog = (data["meaningTagalog"] ?: "").toString().trim()
@@ -86,7 +111,11 @@ class FirestoreSyncRepository @Inject constructor(
                                     partOfSpeech = if (partOfSpeech == "nan") "" else partOfSpeech,
                                     meaningEnglish = if (meaningEnglish == "nan") "" else meaningEnglish,
                                     meaningTagalog = if (meaningTagalog == "nan") "" else meaningTagalog,
-                                    theme = if (theme == "nan") "" else theme
+                                    theme = if (theme == "nan") "" else theme,
+                                    // A clip uploaded while the app is open plays straight away
+                                    // instead of waiting for the next six-hourly content pull.
+                                    audioFileName = (data["audioResName"] ?: "").toString().trim(),
+                                    audioUpdatedAt = (data["audioUpdatedAt"] as? Number)?.toLong() ?: 0L
                                 )
                                 val vocabEntity = VocabularyContentMerge.mergeNonBlank(existing, fromDoc)
 
@@ -128,6 +157,5 @@ class FirestoreSyncRepository @Inject constructor(
                 }
             }
         }
-    }
 }
 

@@ -75,6 +75,7 @@ import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.util.audio.AudioPlayerManager
 import com.kasiguru.util.pluralize
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * One category's word list. A pushed subscreen — no bottom bar, so the canopy carries its own back
@@ -111,7 +112,7 @@ fun CategoryDetailScreen(
     val learnedCount = categoryWords.count { it.isLearned }
 
     unlearningWord?.let { word ->
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { unlearningWord = null },
             title = { Text("Reset learned word?") },
             text = { Text("Reset \"${word.kasiguranin}\" back to unlearned so you can review it again?") },

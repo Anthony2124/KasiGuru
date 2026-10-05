@@ -40,6 +40,7 @@ import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * Turns a guest (anonymous) session into a permanent account, or signs an
@@ -50,6 +51,13 @@ import com.kasiguru.ui.theme.*
 fun AccountScreen(
     onNavigateBack: () -> Unit,
     onAuthSuccess: (() -> Unit)? = null,
+    /**
+     * After signing in to an existing account, or signing out / deleting the account. Every screen
+     * behind this one was showing the previous person, so the caller starts over with a cleared
+     * back stack instead of returning to them. Falls back to [onAuthSuccess] / staying put.
+     */
+    onAccountSwitched: (() -> Unit)? = null,
+    onSignedOut: (() -> Unit)? = null,
     initialSignInMode: Boolean = true,
     /**
      * Reached from onboarding's "I already have an account": someone who already has an account and
@@ -88,7 +96,7 @@ fun AccountScreen(
     BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
 
     if (showDiscardConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text("Discard this?", fontWeight = FontWeight.Bold) },
             text = { Text("What you've typed hasn't been submitted yet.") },
@@ -119,15 +127,51 @@ fun AccountScreen(
 
     LaunchedEffect(uiState.didSucceed) {
         if (uiState.didSucceed) {
-            onAuthSuccess?.invoke()
+            val switched = uiState.didSwitchAccount
+            if (switched && onAccountSwitched != null) onAccountSwitched() else onAuthSuccess?.invoke()
+        }
+    }
+
+    LaunchedEffect(uiState.didSignOut) {
+        if (uiState.didSignOut && onSignedOut != null) {
+            viewModel.consumeMessages()
+            onSignedOut()
         }
     }
 
     LaunchedEffect(uiState.didDeleteAccount) {
         if (uiState.didDeleteAccount) {
-            snackbarHostState.showSnackbar("Account deleted. You're starting fresh as a guest.")
-            viewModel.consumeMessages()
+            if (onSignedOut != null) {
+                viewModel.consumeMessages()
+                onSignedOut()
+            } else {
+                snackbarHostState.showSnackbar("Account deleted. You're starting fresh as a guest.")
+                viewModel.consumeMessages()
+            }
         }
+    }
+
+    uiState.signOutSaveFailed?.let { reason ->
+        AlertDialog(modifier = Modifier.tapSounds(),
+            onDismissRequest = { viewModel.dismissSignOutFailure() },
+            title = { Text("Progress not saved", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "$reason\n\nIf you sign out anyway, anything you did on this device since it " +
+                        "last synced will be lost. Everything already saved stays on your account."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.signOut() }) {
+                    Text("Try again", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.signOut(force = true) }) {
+                    Text("Sign out anyway", color = RedText)
+                }
+            }
+        )
     }
 
     // A returning learner asked to sign in; the "this account already exists" question is the
@@ -137,14 +181,14 @@ fun AccountScreen(
     }
 
     if (!returningLearner) uiState.pendingSignIn?.let {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { viewModel.cancelSignIn() },
             title = { Text("Account already exists", fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "An account already uses those details. Signing in loads that account's " +
-                        "saved progress and combines it with what is on this device — for each " +
-                        "stat the higher value is kept, so nothing is lost."
+                    "An account already uses those details. Signing in opens that account " +
+                        "exactly as it is saved — its name, details and progress stay the same. " +
+                        "The guest progress on this device is replaced by the account's."
                 )
             },
             confirmButton = {
@@ -725,7 +769,7 @@ private fun SignedInActions(isBusy: Boolean, onSignOut: () -> Unit) {
     var confirming by remember { mutableStateOf(false) }
 
     if (confirming) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { confirming = false },
             title = { Text("Sign out?", fontWeight = FontWeight.Bold) },
             text = {
@@ -789,7 +833,7 @@ private fun DeleteAccountSection(isBusy: Boolean, onDelete: () -> Unit) {
     var confirming by remember { mutableStateOf(false) }
 
     if (confirming) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { confirming = false },
             title = { Text("Delete your account?", fontWeight = FontWeight.Bold) },
             text = {

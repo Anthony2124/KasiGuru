@@ -44,7 +44,9 @@ object VocabularyContentMerge {
             partOfSpeech = cloud.partOfSpeech.ifBlank { local.partOfSpeech },
             meaningEnglish = cloud.meaningEnglish.ifBlank { local.meaningEnglish },
             meaningTagalog = cloud.meaningTagalog.ifBlank { local.meaningTagalog },
-            audioFileName = cloud.audioFileName.ifBlank { local.audioFileName },
+            // Same rule as [merge]: only a document the portal has stamped can set or clear a clip.
+            audioFileName = if (cloud.audioUpdatedAt > 0L) cloud.audioFileName else local.audioFileName,
+            audioUpdatedAt = if (cloud.audioUpdatedAt > 0L) cloud.audioUpdatedAt else local.audioUpdatedAt,
             exampleSentence = cloud.exampleSentence.ifBlank { local.exampleSentence },
             exampleTranslation = cloud.exampleTranslation.ifBlank { local.exampleTranslation },
             exampleSentence2 = cloud.exampleSentence2.ifBlank { local.exampleSentence2 },

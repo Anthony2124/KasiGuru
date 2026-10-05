@@ -34,7 +34,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
 import com.kasiguru.ui.components.clay.GlassChip
@@ -51,6 +50,7 @@ import com.kasiguru.ui.theme.RewardInk
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Lime
+import com.kasiguru.ui.components.TapSoundDialog
 
 /** The olive gradient used for the games that are not gold or coral. White text 7.1 and up. */
 private val FixedForest = com.kasiguru.ui.theme.Olive
@@ -195,7 +195,7 @@ fun GameRulesDialog(
     val onGradient = if (ruleInfo.onGradientIsInk) RewardInk else Color.White
     var dontShowAgain by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    TapSoundDialog(onDismissRequest = onDismiss) {
         SoftCard(shape = Shapes.panel, contentPadding = PaddingValues(0.dp)) {
             Column {
                 Box(

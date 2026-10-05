@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.widthIn
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * Settings: the same grouped-card idiom every OS settings screen uses (Account / Notifications /
@@ -78,7 +79,7 @@ fun SettingsScreen(
     var syncMessage by remember { mutableStateOf("") }
 
     if (showTimePicker) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showTimePicker = false },
             title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold, color = Ink) },
             text = {

@@ -23,6 +23,10 @@ import com.kasiguru.util.worker.StreakReminderWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import com.kasiguru.ui.components.tapSounds
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -48,6 +52,10 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
 
+        // The volume keys adjust the media stream that music and sound effects play on, even when
+        // nothing is playing at that moment.
+        volumeControlStream = android.media.AudioManager.STREAM_MUSIC
+
         // Deep link target from a notification tap (Phase 5).
         val deepLinkRoute = intent?.getStringExtra("deep_link_route")
 
@@ -70,7 +78,9 @@ class MainActivity : ComponentActivity() {
             val textSize by preferences.textSizePercent.collectAsState(initial = 100)
             KasiGuruTheme(mode = mode, textSizePercent = textSize) {
                 CompositionLocalProvider(LocalSoundEffects provides soundEffects) {
-                    KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
+                    Box(Modifier.fillMaxSize().tapSounds()) {
+                        KasiGuruNavGraph(initialDeepLink = deepLinkRoute)
+                    }
                 }
             }
         }

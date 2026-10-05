@@ -96,15 +96,43 @@ class ProgressSyncManager @Inject constructor(
     private val uploadedRewards = java.util.concurrent.ConcurrentHashMap<String,RewardReceiptEntity>()
     private var rewardCursor: com.google.firebase.Timestamp? = null
 
+    /** True between [beginAccountSwitch] and [finishAccountSwitch]: uid changes are not synced. */
+    @Volatile private var switchingAccount = false
+    /** The next main-progress pull takes the cloud row as-is instead of merging this device into it. */
+    @Volatile private var adoptCloudProgress = false
+
     // Declared before init: addAuthStateListener can fire synchronously.
     init {
         auth.addAuthStateListener { firebaseAuth ->
+            if (switchingAccount) return@addAuthStateListener
             val uid = firebaseAuth.currentUser?.uid
             if(uid == null) onUserSignedOut() else if(uid != activeUid) startSync(uid)
         }
     }
 
     fun restartSync() { auth.currentUser?.uid?.let(::startSync) }
+
+    /**
+     * Signing in to an *existing* account from a guest session. The account is the one that
+     * survives: nothing from this device's guest may be merged into it or uploaded over it. Sync
+     * stops here, before the credential is used, because the auth listener would otherwise start
+     * merging the guest's rows into the account the instant the uid changes.
+     */
+    fun beginAccountSwitch() {
+        switchingAccount = true
+        onUserSignedOut()
+    }
+
+    /**
+     * @param signedIn true once the sign-in succeeded and the caller has wiped the guest's local
+     *   data: the account's own cloud copy is then pulled down untouched. False puts the guest
+     *   session that is still signed in back to syncing as before.
+     */
+    fun finishAccountSwitch(signedIn: Boolean) {
+        adoptCloudProgress = signedIn
+        switchingAccount = false
+        restartSync()
+    }
 
     private fun startSync(uid: String) {
         // The account changed (sign-in, link, sign-out): stop uploading to the
@@ -118,9 +146,13 @@ class ProgressSyncManager @Inject constructor(
         uploadedRewards.clear()
         rewardCursor = null
         sessionJob = scope.launch {
+            // Backs off rather than retrying every 5 s forever: when the project's daily read quota
+            // is spent, every attempt fails until the reset, and a tight loop only burns battery.
+            var wait = 5_000L
             while(activeUid == uid) {
                 if(syncFromCloud(uid) && syncRewardsFromCloud(uid) && syncLearningStateFromCloud(uid)) break
-                delay(5_000)
+                delay(wait)
+                wait = (wait * 2).coerceAtMost(5 * 60_000L)
             }
             if(activeUid != uid) return@launch
             if(legacyCloud) gamification.importLegacyLearningState()
@@ -214,12 +246,20 @@ class ProgressSyncManager @Inject constructor(
         if(activeUid != uid || auth.currentUser?.uid != uid) return false
         val remote = snapshot.data?.let(::toEntity)
         legacyCloud = remote != null && remote.xpPolicyVersion < XpPolicy.VERSION
+        val adopt = adoptCloudProgress
         db.withTransaction {
             val local = userProgressDao.getUserProgressOnce() ?: UserProgressEntity()
-            val merged = if(remote != null) mergeProgress(local,remote) else local
+            // After an account switch the local row is a blank reseed, and its defaults (the
+            // placeholder name, avatar 0) must not be weighed against the account's real values.
+            val merged = when {
+                remote == null -> local
+                adopt -> remote.copy(id = 1)
+                else -> mergeProgress(local, remote)
+            }
             val updated = withAccountIdentity(merged)
             if(updated != local) userProgressDao.insertOrUpdate(updated)
         }
+        if (adopt) adoptCloudProgress = false
         gamification.ensureNormalized()
         if(legacyCloud && remote != null) gamification.archiveLegacy(remote)
         return true

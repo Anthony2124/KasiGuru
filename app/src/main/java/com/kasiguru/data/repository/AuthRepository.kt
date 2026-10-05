@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
@@ -166,7 +167,19 @@ class AuthRepository @Inject constructor(
      */
     suspend fun signOutToAnonymous(): Result<Unit> = runCatching {
         auth.signOut()
-        auth.signInAnonymously().await()
+        // Retried: a single failed attempt (no signal at that moment) used to leave the app with no
+        // user at all until the next cold start, so nothing synced and the account screen showed a
+        // blank status. KasiGuruApp tries again at launch if all of these fail.
+        var attempt = 0
+        while (true) {
+            try {
+                auth.signInAnonymously().await()
+                break
+            } catch (e: Exception) {
+                if (++attempt >= 3) throw e
+                delay(2_000L * attempt)
+            }
+        }
         Unit
     }
 

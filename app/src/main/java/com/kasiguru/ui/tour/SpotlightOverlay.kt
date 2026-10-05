@@ -1,7 +1,8 @@
 package com.kasiguru.ui.tour
 
 import com.kasiguru.ui.theme.LimeText
-import androidx.compose.animation.core.spring
+import android.os.SystemClock
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -78,6 +80,7 @@ import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Touch
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.motionTween
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -87,18 +90,33 @@ private const val ScrimAlpha = 0.72f
 /** The dim while a new screen arrives: light enough to see where the tour has gone. */
 private const val ArrivingScrimAlpha = 0.4f
 
-/** A stop on the screen already showing: a short beat so the hole lands before the words do. */
-private const val SameScreenBeatMs = 200L
+/*
+ * One rhythm for every stop, so the tour moves at the same pace whether the next thing is on the
+ * screen already showing or behind a tab switch:
+ *
+ *   caption fades out -> hole travels -> caption fades in, StepBeatMs after Next was tapped.
+ *
+ * Before, a stop on the same screen showed its words 200ms after the tap and one on another screen
+ * 700ms after the destination arrived; the hole flew on a spring, so a long jump finished faster
+ * than a short one; and the old caption vanished in a single frame while the new one rushed in over
+ * 180ms. Each stop felt quick, and no two stops felt alike.
+ */
+
+/** The old caption leaving. Short: it is only clearing the stage. */
+private const val CaptionOutMs = 200
+
+/** The hole's travel, fixed so every move takes the same time however far it goes. */
+private const val HoleMoveMs = 450
+
+/** The new caption arriving. */
+private const val CaptionInMs = 300
 
 /**
- * A stop on another screen waits for that screen to finish arriving before its caption appears.
- *
- * The tab crossfade is navigation-compose's default, 700ms. The caption used to arrive 200ms into
- * it, so the five tab switches in the middle of the core chapter each showed words about a screen
- * that was still fading in, and a quick double tap on Next skipped a stop. Together they made the
- * middle of the tour feel rushed when its first and last stops, which stay on Home, did not.
+ * From Next to the new caption. Covers the caption leaving plus the hole's travel, and also
+ * navigation-compose's default 700ms crossfade, so a stop behind a tab switch lands on the same
+ * beat as one on the screen already showing.
  */
-private const val NewScreenBeatMs = 700L
+private const val StepBeatMs = 750L
 
 /** Longest wait for a destination or its anchor. A missing anchor must never strand the caption. */
 private const val ArrivalTimeoutMs = 1_500L
@@ -146,22 +164,26 @@ fun SpotlightOverlay(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val isLast = stepIndex == stepCount - 1
+    // What is drawn lags what was asked for by one caption-fade, so the old words leave in place
+    // instead of being swapped for the new ones mid-fade (and the counter does not jump early).
+    var shownStop by remember { mutableStateOf(stop) }
+    var shownIndex by remember { mutableIntStateOf(stepIndex) }
+    val isLast = shownIndex == stepCount - 1
 
     // Back is handled here rather than left to fall through. At stop 1 the back stack holds only
     // Home - onboarding was popped inclusively on the way in - so falling through would pop it and
     // drop the learner at the launcher with this overlay still drawn over the app.
     BackHandler(enabled = true) { onBack() }
 
-    val padPx = with(density) { stop.pad.toPx() }
-    val cornerPx = with(density) { stop.corner.toPx() }
+    val padPx = with(density) { shownStop.pad.toPx() }
+    val cornerPx = with(density) { shownStop.corner.toPx() }
     val gapPx = with(density) { Space.md.toPx() }
     val safeTopPx = WindowInsets.statusBars.getTop(density) + gapPx
     val bottomBlockedPx = with(density) { bottomBlocked.toPx() }
     val navBarPx = WindowInsets.navigationBars.getBottom(density)
 
     // A stop with no anchor explains a screen rather than a control: dim, no hole, caption centred.
-    val hole = stop.anchor
+    val hole = shownStop.anchor
         ?.takeIf { anchorVisible }
         ?.let { anchors.boundsOf(it) }
         ?.inflate(padPx)
@@ -172,13 +194,15 @@ fun SpotlightOverlay(
     var lastHole by remember { mutableStateOf<Rect?>(null) }
     LaunchedEffect(hole) { if (hole != null) lastHole = hole }
 
-    val animatedHole by animateValueAsState(
+    val animatedHoleState = animateValueAsState(
         targetValue = hole ?: lastHole ?: Rect.Zero,
         typeConverter = Rect.VectorConverter,
-        animationSpec = if (LocalReducedMotion.current) snap() else spring(dampingRatio = .9f, stiffness = 300f),
+        animationSpec = if (LocalReducedMotion.current) snap() else tween(HoleMoveMs, easing = FastOutSlowInEasing),
         label = "tourHole"
     )
+    val animatedHole by animatedHoleState
     val drawnHole = if (hole != null) animatedHole else null
+    val holeTarget by rememberUpdatedState(hole)
 
     val reduced = LocalReducedMotion.current
     // Starts hidden: the first stop waits for its anchor like every other, rather than drawing one
@@ -191,11 +215,17 @@ fun SpotlightOverlay(
     var shownTarget by remember { mutableStateOf<TourTarget?>(null) }
     val destinationShowing by rememberUpdatedState(anchorVisible)
     LaunchedEffect(stop) {
+        val startedAt = SystemClock.uptimeMillis()
         val newScreen = opensNewScreen(shownTarget, stop.target, alreadyThere = destinationShowing)
         shownTarget = stop.target
         captionReady = false
-        captionArrival.snapTo(0f)
         if (newScreen && !reduced) launch { scrimLift.animateTo(1f, tween(Motion.Standard, easing = Motion.EaseOut)) }
+
+        // The old caption leaves where it stands, then the hole is pointed at the new target.
+        if (reduced || captionArrival.value == 0f) captionArrival.snapTo(0f)
+        else captionArrival.animateTo(0f, tween(CaptionOutMs, easing = Motion.EaseIn))
+        shownStop = stop
+        shownIndex = stepIndex
 
         // The caption describes what is behind it, so that has to be there first: the destination,
         // and the anchor measured - which also keeps the card from appearing centred and then
@@ -204,7 +234,14 @@ fun SpotlightOverlay(
             snapshotFlow { destinationShowing && (stop.anchor == null || anchors.boundsOf(stop.anchor) != null) }
                 .first { it }
         }
-        if (!reduced) delay(if (newScreen) NewScreenBeatMs else SameScreenBeatMs)
+        if (!reduced) {
+            // ...and the hole has finished travelling, including after a reveal scroll moved it.
+            withTimeoutOrNull(HoleMoveMs + 300L) {
+                snapshotFlow { holeTarget.let { it == null || it.isNear(animatedHoleState.value) } }.first { it }
+            }
+            val elapsed = SystemClock.uptimeMillis() - startedAt
+            if (elapsed < StepBeatMs) delay(StepBeatMs - elapsed)
+        }
 
         captionReady = true
         if (reduced) {
@@ -212,8 +249,8 @@ fun SpotlightOverlay(
             captionArrival.snapTo(1f)
         } else {
             coroutineScope {
-                launch { scrimLift.animateTo(0f, tween(Motion.Standard, easing = Motion.EaseOut)) }
-                captionArrival.animateTo(1f, tween(180))
+                launch { scrimLift.animateTo(0f, tween(CaptionInMs, easing = Motion.EaseOut)) }
+                captionArrival.animateTo(1f, tween(CaptionInMs, easing = Motion.EaseOut))
             }
         }
     }
@@ -262,9 +299,9 @@ fun SpotlightOverlay(
         }
 
         CaptionCard(
-            stop = stop,
+            stop = shownStop,
             chapterTitle = chapterTitle,
-            stepIndex = stepIndex,
+            stepIndex = shownIndex,
             stepCount = stepCount,
             isLast = isLast,
             onBack = { if (captionReady) onBack() },
@@ -316,6 +353,11 @@ fun SpotlightOverlay(
         )
     }
 }
+
+/** Within a pixel on every edge: the hole has landed. */
+private fun Rect.isNear(other: Rect): Boolean =
+    abs(left - other.left) < 1f && abs(top - other.top) < 1f &&
+        abs(right - other.right) < 1f && abs(bottom - other.bottom) < 1f
 
 @Composable
 private fun CaptionCard(

@@ -70,6 +70,8 @@ fun FlashCard(
                 .clip(shape)
                 .background(Cream)
                 .border(3.dp, Lime, shape)
+                // The flip has its own sound.
+                .noTapSound()
                 .clickable(onClickLabel = tapLabel, role = Role.Button, onClick = onFlip)
         ) {
             val showingAnswer = turn > 90f

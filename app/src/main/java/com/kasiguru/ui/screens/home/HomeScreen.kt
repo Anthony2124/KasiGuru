@@ -133,6 +133,7 @@ fun HomeScreen(
     onOpenProfile: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenStreak: () -> Unit,
+    onOpenXp: () -> Unit,
     onOpenWord: (Int) -> Unit,
     onOpenGame: (String) -> Unit,
     viewModel: LearnViewModel = hiltViewModel()
@@ -174,7 +175,8 @@ fun HomeScreen(
             line = jepjepLine(uiState),
             onOpenProfile = onOpenProfile,
             onOpenNotifications = onOpenNotifications,
-            onOpenStreak = onOpenStreak
+            onOpenStreak = onOpenStreak,
+            onOpenXp = onOpenXp
         )
         Spacer(Modifier.height(Space.md))
         PrimaryAction(
@@ -340,7 +342,8 @@ private fun HomeHero(
     line: JepjepLine,
     onOpenProfile: () -> Unit,
     onOpenNotifications: () -> Unit,
-    onOpenStreak: () -> Unit
+    onOpenStreak: () -> Unit,
+    onOpenXp: () -> Unit
 ) {
     val displayName = progress.fullName.ifBlank { progress.userName }
 
@@ -385,7 +388,8 @@ private fun HomeHero(
                 iconRes = Iconsax.StarBold,
                 tint = Gold,
                 text = "${progress.totalXp}",
-                spoken = "${progress.totalXp} XP in total"
+                spoken = "${progress.totalXp} XP in total. Shows your level and where your XP comes from.",
+                onClick = onOpenXp
             )
             Spacer(Modifier.width(Space.xxs))
             Box(

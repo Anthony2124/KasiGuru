@@ -28,6 +28,7 @@ import com.kasiguru.ui.components.clay.*
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.ui.components.tapSounds
 
 // Kept for archived badges and callers grouping the original achievement catalogue.
 internal fun familyOf(badge: AchievementEntity): String = when (badge.metricType) {
@@ -144,7 +145,7 @@ fun AchievementsScreen(onNavigateBack: () -> Unit, onNavigateToActivity: (String
         }
     }
     state.families.firstOrNull { it.family.id == selectedId }?.let { family ->
-        ModalBottomSheet(
+        ModalBottomSheet(modifier = Modifier.tapSounds(), 
             onDismissRequest = { selectedId = null },
             containerColor = Surface
         ) {

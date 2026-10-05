@@ -51,6 +51,12 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.kasiguru.util.update.UpdateDownload
 
 /** Release-note bullets shown before "Show all": enough to say what changed, short enough to scan. */
 private const val NOTES_PREVIEW = 3
@@ -69,19 +75,55 @@ private const val NOTES_PREVIEW = 3
 @Composable
 fun AppUpdateBanner(
     release: AppReleaseDto,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    updates: AppUpdateViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val download: () -> Unit = {
-        val targetUrl = release.apkUrl.ifBlank { "https://kasiguru.web.app/download.html" }
-        val uri = Uri.parse(targetUrl)
-        // Only allow http/https update links (defense against
-        // javascript:/intent:/etc. URLs in release metadata).
-        if (uri.scheme == "https" || uri.scheme == "http") {
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+    val targetUrl = release.apkUrl.ifBlank { "https://kasiguru.web.app/download.html" }
+    // Only allow http/https update links (defense against
+    // javascript:/intent:/etc. URLs in release metadata).
+    val safeUrl = Uri.parse(targetUrl).scheme.let { it == "https" || it == "http" }
+    val openInBrowser: () -> Unit = {
+        if (safeUrl) context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)))
+        else Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: $targetUrl")
+    }
+
+    // Downloaded in the app rather than in a browser tab: Chrome kept every update link as a tab and
+    // offered the old APKs again on the next update. See UpdateDownloader.
+    val download by updates.state.collectAsState()
+    LaunchedEffect(release.versionCode) { updates.watch(release) }
+    var installWhenReady by remember { mutableStateOf(false) }
+    var waitingForPermission by remember { mutableStateOf(false) }
+    val install: () -> Unit = {
+        if (!updates.canInstall()) {
+            // Android asks once whether KasiGuru may install updates; carry on when the learner is back.
+            waitingForPermission = true
+            context.startActivity(updates.installPermissionIntent())
         } else {
-            Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: ${uri.scheme}")
+            updates.installIntent(release)?.let(context::startActivity) ?: openInBrowser()
         }
+    }
+    val startDownload: () -> Unit = {
+        if (!safeUrl) {
+            Log.w("AppUpdateBanner", "Blocked update URL with unsafe scheme: $targetUrl")
+        } else if (updates.start(release)) {
+            installWhenReady = true
+        } else {
+            openInBrowser()
+        }
+    }
+    LaunchedEffect(download) {
+        if (download is UpdateDownload.Ready && installWhenReady) {
+            installWhenReady = false
+            install()
+        }
+    }
+    LifecycleResumeEffect(waitingForPermission) {
+        if (waitingForPermission && updates.canInstall()) {
+            waitingForPermission = false
+            install()
+        }
+        onPauseOrDispose { }
     }
     // Asked of the installed package, not BuildConfig: a BuildConfig string is inlined into this file
     // when it compiles, so an incremental build can show the version it had then.
@@ -166,9 +208,33 @@ fun AppUpdateBanner(
         }
 
         Spacer(Modifier.height(Space.md))
+        val progress = download as? UpdateDownload.Downloading
+        if (progress != null) {
+            if (progress.percent != null) {
+                LinearProgressIndicator(
+                    progress = { progress.percent / 100f },
+                    modifier = Modifier.fillMaxWidth().clip(Shapes.pill),
+                    color = Lime,
+                    trackColor = BorderHairline
+                )
+            } else {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().clip(Shapes.pill),
+                    color = Lime,
+                    trackColor = BorderHairline
+                )
+            }
+            Spacer(Modifier.height(Space.sm))
+        }
         ClayButton(
-            label = "Download update",
-            onClick = download,
+            label = when (download) {
+                is UpdateDownload.Downloading -> progress?.percent?.let { "Downloading… $it%" } ?: "Downloading…"
+                UpdateDownload.Ready -> "Install update"
+                UpdateDownload.Failed -> "Download failed · Try again"
+                UpdateDownload.Idle -> "Download update"
+            },
+            onClick = if (download == UpdateDownload.Ready) install else startDownload,
+            enabled = progress == null,
             modifier = Modifier.fillMaxWidth(),
             tone = if (forced) ClayButtonTone.Primary else ClayButtonTone.Quiet,
             leading = {
@@ -180,6 +246,11 @@ fun AppUpdateBanner(
                 )
             }
         )
+        if (download == UpdateDownload.Failed) {
+            TextButton(onClick = openInBrowser, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("Download in the browser instead", color = LimeText, style = MaterialTheme.typography.labelLarge)
+            }
+        }
         if (!forced) {
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text("Later", color = Muted, style = MaterialTheme.typography.labelLarge)

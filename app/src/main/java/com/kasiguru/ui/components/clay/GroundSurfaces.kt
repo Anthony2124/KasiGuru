@@ -16,6 +16,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,6 +65,7 @@ import com.kasiguru.ui.theme.Gold
 import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
+import com.kasiguru.ui.theme.LocalFloatingNavBarVisible
 import com.kasiguru.ui.theme.Motion
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.Shapes
@@ -203,7 +210,13 @@ fun GroundScaffold(
             }
             .nestedScroll(scrollWatcher)
     ) {
-        Column(Modifier.fillMaxSize()) {
+        // Landscape puts three-button navigation (and a camera cutout) on a side edge, where it
+        // covered the controls nearest that edge; keep everything inside the safe area sideways.
+        Column(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+        ) {
             if (!hasBar) Spacer(Modifier.statusBarsPadding().height(Space.sm))
             if (hasBar) Row(
                 modifier = Modifier
@@ -257,7 +270,21 @@ fun GroundScaffold(
                 Box(Modifier.fillMaxWidth().height(1.dp).background(BorderHairline))
             }
 
-            Box(Modifier.fillMaxSize(), content = content)
+            // The app draws edge to edge. On a tab root the floating bar's measured height (which
+            // includes the system bar) is what content clears; everywhere else nothing did, so on
+            // three-button devices - a 48dp bar, against gesture navigation's ~16dp handle - the
+            // bottom row of a game, form or detail screen sat under Back/Home/Recents and could
+            // not be tapped. Consuming the inset here also stops a screen that pads for it itself
+            // from doing so twice.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (LocalFloatingNavBarVisible.current) Modifier
+                        else Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    ),
+                content = content
+            )
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.kasiguru.ui.tour
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -26,6 +28,9 @@ import androidx.compose.ui.unit.dp
 
 /** How much of the screen to leave above a revealed anchor, so the caption has somewhere to sit. */
 private const val REVEAL_HEADROOM_FRACTION = 0.28f
+
+/** Matches the spotlight's hole travel, so a reveal and the move that follows it share a pace. */
+private const val RevealScrollMs = 450
 
 /**
  * For a screen whose content is a `Modifier.verticalScroll` column.
@@ -55,7 +60,11 @@ fun TourRevealInScroll(state: ScrollState) {
 
         val delta = (rect.top - headroom).toInt()
         val destination = (state.value + delta).coerceIn(0, state.maxValue)
-        if (destination != state.value) state.animateScrollTo(destination)
+        // Fixed duration, like the hole's travel, so a long scroll is not a lurch and a short one
+        // is not a twitch. The spotlight waits for the scroll to settle before its caption shows.
+        if (destination != state.value) {
+            state.animateScrollTo(destination, tween(RevealScrollMs, easing = FastOutSlowInEasing))
+        }
     }
 }
 

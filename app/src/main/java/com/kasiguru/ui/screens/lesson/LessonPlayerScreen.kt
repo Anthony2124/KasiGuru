@@ -95,6 +95,7 @@ import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.LimeLip
 import com.kasiguru.ui.theme.LimeTint
 import com.kasiguru.util.audio.AudioPlayerManager
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * One lesson, one exercise at a time.
@@ -156,7 +157,7 @@ fun LessonPlayerScreen(
     BackHandler { showExitConfirm = true }
 
     if (showExitConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showExitConfirm = false },
             title = { Text("Leave this lesson?") },
             text = { Text("Your progress in this lesson won't be saved.") },

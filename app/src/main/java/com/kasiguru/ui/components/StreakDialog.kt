@@ -16,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.kasiguru.data.repository.DailyStreakQuota
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.ClayButtonTone
@@ -36,7 +35,7 @@ fun StreakDialog(
     val todayDayOfWeek = LocalDate.now().dayOfWeek.value // 1 = Mon, 7 = Sun
     val days = listOf("M", "T", "W", "T", "F", "S", "S")
 
-    Dialog(onDismissRequest = onDismiss) {
+    TapSoundDialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,

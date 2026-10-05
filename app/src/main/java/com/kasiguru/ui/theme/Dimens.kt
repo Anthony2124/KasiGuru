@@ -14,6 +14,14 @@ import androidx.compose.ui.unit.dp
 val LocalBottomBarInset = compositionLocalOf { 0.dp }
 
 /**
+ * Whether the floating navigation bar is drawn over the current screen. Where it is not, the
+ * screen itself must keep its content above the system navigation bar - see GroundScaffold.
+ * A flag rather than `LocalBottomBarInset > 0` because that height is 0 for the first frame,
+ * before the bar has been measured.
+ */
+val LocalFloatingNavBarVisible = compositionLocalOf { false }
+
+/**
  * The single spacing / radius / elevation scale for KasiGuru.
  *
  * Before this existed the codebase mixed 14, 18, 20, 22, 24, 26 and 28 dp corner radii on adjacent

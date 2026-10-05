@@ -33,6 +33,7 @@ import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.ui.components.tapSounds
 
 @Composable
 fun NotificationInboxScreen(
@@ -53,7 +54,7 @@ fun NotificationInboxScreen(
     )
 
     if (showClearConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showClearConfirm = false },
             title = { Text("Clear all notifications?") },
             text = { Text("This removes every notification from your inbox. This can't be undone.") },
@@ -85,7 +86,7 @@ fun NotificationInboxScreen(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenu(modifier = Modifier.tapSounds(), expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
                             text = { Text("Clear all", color = RedText) },
                             onClick = { showMenu = false; showClearConfirm = true }

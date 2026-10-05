@@ -97,6 +97,26 @@ class VocabularyContentMergeTest {
         assertEquals(14, merged.timesReviewed)
     }
 
+    @Test
+    fun theRealtimeListenerCarriesAClipUploadedWhileTheAppIsOpen() {
+        val withClip = local.copy(audioFileName = "singet__ant", audioUpdatedAt = 1_725_000_000_000L)
+
+        val uploaded = VocabularyContentMerge.mergeNonBlank(
+            local,
+            VocabularyEntity(kasiguranin = "singët", english = "ant", audioFileName = "singet__ant", audioUpdatedAt = 1_725_000_000_000L)
+        )
+        val untouched = VocabularyContentMerge.mergeNonBlank(withClip, VocabularyEntity(kasiguranin = "singët", english = "ant"))
+        val removed = VocabularyContentMerge.mergeNonBlank(
+            withClip,
+            VocabularyEntity(kasiguranin = "singët", english = "ant", audioUpdatedAt = 1_725_100_000_000L)
+        )
+
+        assertEquals("singet__ant", uploaded.audioFileName)
+        assertEquals(1_725_000_000_000L, uploaded.audioUpdatedAt)
+        assertEquals("an unstamped document leaves the clip alone", "singet__ant", untouched.audioFileName)
+        assertEquals("a stamped removal clears it", "", removed.audioFileName)
+    }
+
     /**
      * The admin word form has no input for the root form or the two phonetic flags, so a document it
      * writes simply omits those keys and the parser turns them into "" and false. Copying that over

@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -54,8 +53,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kasiguru.data.local.entity.AchievementEntity
-import com.kasiguru.domain.gamification.BadgeCatalog
+import com.kasiguru.domain.gamification.BadgeFamilySummary
+import com.kasiguru.domain.gamification.BadgeSummary
+import com.kasiguru.domain.gamification.BadgeTier
 import com.kasiguru.ui.components.KasiGuruProgressBar
 import com.kasiguru.ui.components.StandardBadgeMedal
 import com.kasiguru.ui.components.brand.Jepjep
@@ -222,11 +222,15 @@ fun ProfileScreen(
 
                 // ── Badges ──
                 item(key = "badges") {
+                    val pins = uiState.userProgress?.pinnedBadgeIds.orEmpty().split(',')
+                    val families = remember(uiState.achievements, pins) {
+                        BadgeSummary.families(uiState.achievements, pins)
+                    }
                     BadgesSection(
                         unlocked = uiState.unlockedCount,
                         total = uiState.achievements.size,
-                        recent = uiState.recentlyUnlocked,
-                        closestLocked = uiState.closestLocked,
+                        families = families,
+                        nextUp = remember(families) { BadgeSummary.nextUp(families) },
                         onSeeAll = onNavigateToAchievements
                     )
                 }
@@ -510,13 +514,20 @@ private fun OverviewTile(iconRes: Int, value: String, label: String, modifier: M
     }
 }
 
-/** The latest badges, with the way into all of them. A learner with none is told which is closest. */
+/** Badges on the grid, four to a row: enough width for a two-line name at the largest text size. */
+private const val BadgeColumns = 4
+
+/**
+ * Every badge at once: one medal per family at its highest tier, a six-step track under it, and the
+ * tier being worked on called out above. The old strip showed only the latest few earned tiers in a
+ * side scroller, so what was still to earn - most of the set - never appeared on Profile at all.
+ */
 @Composable
 private fun BadgesSection(
     unlocked: Int,
     total: Int,
-    recent: List<AchievementEntity>,
-    closestLocked: AchievementEntity?,
+    families: List<BadgeFamilySummary>,
+    nextUp: BadgeFamilySummary?,
     onSeeAll: () -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
@@ -532,44 +543,15 @@ private fun BadgesSection(
             }
         )
         Text(
-            text = "$unlocked of $total tiers earned",
+            text = if (unlocked == 0) "No badges yet. Finish a lesson to earn your first."
+            else "$unlocked of $total tiers earned",
             style = MaterialTheme.typography.bodySmall,
             color = Faint
         )
         Spacer(Modifier.height(Space.sm))
 
-        if (recent.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.md)) {
-                items(recent, key = { it.id }) { badge ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .width(76.dp)
-                            .clickable(onClick = onSeeAll)
-                    ) {
-                        StandardBadgeMedal(
-                            tier = BadgeCatalog.tierFor(badge.id),
-                            earned = true,
-                            size = 56.dp,
-                            familyId = BadgeCatalog.familyFor(badge.id)?.id
-                        )
-                        Spacer(Modifier.height(Space.xs))
-                        Text(
-                            text = badge.name,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Muted,
-                            maxLines = 2,
-                            textAlign = TextAlign.Center
-                        )
-                        BadgeCatalog.tierFor(badge.id)?.let {
-                            Text(it.label,style = MaterialTheme.typography.labelSmall,color = Faint)
-                        }
-                    }
-                }
-            }
-        } else {
-            // A designed empty state: name the nearest badge and how close it is, rather than a blank
-            // row that reads as a loading failure.
+        nextUp?.let { summary ->
+            val next = summary.next ?: return@let
             SoftCard(
                 modifier = Modifier.fillMaxWidth(),
                 border = BorderHairline,
@@ -577,28 +559,102 @@ private fun BadgesSection(
                 onClick = onSeeAll
             ) {
                 Text(
-                    text = "No badges yet. Finish a lesson to earn your first.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "NEXT UP",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LimeText
+                )
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    text = listOfNotNull(summary.family.name, summary.nextTier?.label).joinToString(" · "),
+                    style = MaterialTheme.typography.titleSmall,
                     color = Ink
                 )
-                closestLocked?.let { next ->
-                    Spacer(Modifier.height(Space.sm))
-                    Text(text = "Closest: ${next.name}", style = MaterialTheme.typography.labelLarge, color = Muted)
-                    Spacer(Modifier.height(Space.xxs))
-                    KasiGuruProgressBar(
-                        progress = if (next.requiredValue == 0) 0f
-                        else next.currentValue.toFloat() / next.requiredValue,
-                        modifier = Modifier.fillMaxWidth(),
-                        height = 6.dp
-                    )
-                    Spacer(Modifier.height(Space.xxs))
-                    Text(
-                        text = "${next.currentValue} of ${next.requiredValue}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Faint
-                    )
+                Spacer(Modifier.height(Space.xs))
+                KasiGuruProgressBar(
+                    progress = summary.progress,
+                    modifier = Modifier.fillMaxWidth(),
+                    height = 6.dp
+                )
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    text = summary.family.progress(next.currentValue, next.requiredValue),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Faint
+                )
+            }
+            Spacer(Modifier.height(Space.md))
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
+            families.chunked(BadgeColumns).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Space.xs)
+                ) {
+                    row.forEach { summary ->
+                        BadgeGridCell(summary, onClick = onSeeAll, modifier = Modifier.weight(1f))
+                    }
+                    // Keep a short last row on the same column grid.
+                    repeat(BadgeColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BadgeGridCell(summary: BadgeFamilySummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val earned = summary.highest != null
+    val tierText = summary.highest?.label ?: "Locked"
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clip(Shapes.tile)
+            .clickable(onClick = onClick)
+            .padding(vertical = Space.xxs)
+            .clearAndSetSemantics {
+                contentDescription = "${summary.family.name}, $tierText, ${summary.earnedTiers} of 6 tiers"
+            }
+    ) {
+        StandardBadgeMedal(
+            tier = summary.highest,
+            earned = earned,
+            size = 52.dp,
+            familyId = summary.family.id
+        )
+        Spacer(Modifier.height(Space.xs))
+        Text(
+            text = summary.family.name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (earned) Ink else Muted,
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(Space.xxs))
+        TierTrack(earnedTiers = summary.earnedTiers)
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            text = tierText,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (earned) LimeText else Faint,
+            maxLines = 1
+        )
+    }
+}
+
+/** Six dots, one per tier: how far through the family this badge is. */
+@Composable
+private fun TierTrack(earnedTiers: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        repeat(BadgeTier.entries.size) { i ->
+            Box(
+                Modifier
+                    .size(6.dp)
+                    .clip(Shapes.pill)
+                    .background(if (i < earnedTiers) Lime else BorderHairline)
+            )
         }
     }
 }

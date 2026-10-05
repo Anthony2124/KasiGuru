@@ -26,7 +26,7 @@ fun WordDetailBottomSheet(
     onPlayAudio: (String) -> Unit = {},
     onReportWord: ((String) -> Unit)? = null
 ) {
-    ModalBottomSheet(
+    ModalBottomSheet(modifier = Modifier.tapSounds(), 
         onDismissRequest = onDismissRequest,
         containerColor = MaterialTheme.colorScheme.surface,
         scrimColor = Color.Black.copy(alpha = 0.45f)

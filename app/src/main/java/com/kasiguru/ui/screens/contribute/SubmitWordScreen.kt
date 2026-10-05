@@ -32,6 +32,7 @@ import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.tour.TourAnchor
 import com.kasiguru.ui.tour.tourAnchor
+import com.kasiguru.ui.components.tapSounds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ fun SubmitWordScreen(
     BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
 
     if (showDiscardConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text("Discard this word?") },
             text = { Text("What you've entered hasn't been submitted yet.") },
@@ -71,7 +72,7 @@ fun SubmitWordScreen(
     if (uiState.showDuplicateConfirm) {
         val alreadyRecorded = uiState.duplicateMatches
             .any { it.level == DuplicateLevel.SameSense }
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { viewModel.dismissDuplicateConfirm() },
             title = { Text(if (alreadyRecorded) "This entry already exists" else "This word already exists") },
             text = {

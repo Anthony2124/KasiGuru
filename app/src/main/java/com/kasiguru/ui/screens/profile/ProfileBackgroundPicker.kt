@@ -13,11 +13,12 @@ import androidx.compose.ui.unit.dp
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.domain.gamification.ProfileBackgroundCatalog
 import com.kasiguru.ui.theme.*
+import com.kasiguru.ui.components.tapSounds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileBackgroundPicker(progress: UserProgressEntity, onSelect: (String) -> Unit, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Surface) {
+    ModalBottomSheet(modifier = Modifier.tapSounds(), onDismissRequest = onDismiss, containerColor = Surface) {
         Text("Choose your background", style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.padding(horizontal = Space.gutter))
         Text("Unlock more places as you learn.", color = Muted, modifier = Modifier.padding(horizontal = Space.gutter))
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 520.dp), contentPadding = PaddingValues(Space.gutter), verticalArrangement = Arrangement.spacedBy(Space.sm)) {

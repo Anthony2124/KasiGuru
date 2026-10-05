@@ -6,10 +6,12 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
+import android.widget.Toast
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.remote.WordAudioRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,28 +71,38 @@ class AudioPlayerManager @Inject constructor(
         resolveJob = scope.launch {
             val file = try {
                 wordAudioRepository.audioFor(key, word.audioUpdatedAt)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w("AudioPlayerManager", "Audio lookup failed for ${word.kasiguranin}", e)
-                null
+                tell("Couldn't load the recording. Check your connection and try again.")
+                return@launch
             }
             if (file != null) {
                 playFile(file)
-            } else {
-                playAudio(word.kasiguranin, word.audioFileName)
+            } else if (!playAudio(word.kasiguranin, word.audioFileName)) {
+                tell("No recording for this word yet.")
             }
         }
+    }
+
+    // A silent speaker button reads as a broken phone; say what happened instead.
+    private fun tell(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
     /**
      * Plays a clip bundled in `res/raw` (by [audioFileName], or a slug of [textToSpeak]), or nothing.
      * Kept for story-page narration and other non-vocabulary callers. No synthetic-voice fallback.
+     *
+     * @return whether a bundled clip was found and started.
      */
-    fun playAudio(textToSpeak: String, audioFileName: String = "") {
+    fun playAudio(textToSpeak: String, audioFileName: String = ""): Boolean {
         stopAudio()
         val resName = audioFileName.ifEmpty { textToSpeak.lowercase().replace(Regex("[^a-z0-9_]"), "") }
         val resId = context.resources.getIdentifier(resName, "raw", context.packageName)
-        if (resId == 0) return
-        try {
+        if (resId == 0) return false
+        return try {
             mediaPlayer = MediaPlayer.create(context, resId, speech, audioManager.generateAudioSessionId())?.apply {
                 setOnCompletionListener {
                     it.release()
@@ -100,8 +112,10 @@ class AudioPlayerManager @Inject constructor(
                 audioManager.requestAudioFocus(focusRequest)
                 start()
             }
+            mediaPlayer != null
         } catch (e: Exception) {
             Log.e("AudioPlayerManager", "Error playing raw resource $resName", e)
+            false
         }
     }
 
@@ -119,10 +133,12 @@ class AudioPlayerManager @Inject constructor(
                     mediaPlayer = null
                     audioManager.abandonAudioFocusRequest(focusRequest)
                 }
-                setOnErrorListener { mp, _, _ ->
+                setOnErrorListener { mp, what, extra ->
+                    Log.w("AudioPlayerManager", "Clip ${file.name} failed to play ($what/$extra)")
                     mp.release()
                     mediaPlayer = null
                     audioManager.abandonAudioFocusRequest(focusRequest)
+                    tell("This recording couldn't be played.")
                     true
                 }
                 prepareAsync()

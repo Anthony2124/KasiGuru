@@ -39,6 +39,7 @@ import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
+import com.kasiguru.ui.components.tapSounds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +95,7 @@ fun ReportIssueScreen(
     BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
 
     if (showDiscardConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text("Discard report?") },
             text = { Text("What you've entered hasn't been submitted yet.") },

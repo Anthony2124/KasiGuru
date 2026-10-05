@@ -6,9 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.unit.dp
 import com.kasiguru.ui.theme.Ground
 import com.kasiguru.ui.theme.LocalBottomBarInset
+import com.kasiguru.ui.theme.LocalFloatingNavBarVisible
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -252,12 +260,20 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         var navClusterHeight by remember { mutableStateOf(0.dp) }
         val density = LocalDensity.current
 
-        CompositionLocalProvider(LocalBottomBarInset provides if (showBottomBar) navClusterHeight else 0.dp) {
+        CompositionLocalProvider(
+            LocalBottomBarInset provides if (showBottomBar) navClusterHeight else 0.dp,
+            LocalFloatingNavBarVisible provides showBottomBar
+        ) {
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
             modifier = Modifier
                 .fillMaxSize()
+                // In landscape, three-button navigation and the camera cutout sit on a side edge.
+                // Every screen stays clear of them sideways; the ground behind still runs edge to edge.
+                .windowInsetsPadding(
+                    WindowInsets.navigationBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal)
+                )
                 // While the tour is up, everything behind the dim is out of reach for a pointer, so
                 // it must be out of reach for TalkBack too - otherwise swipe traversal wanders
                 // through controls the learner cannot actually activate.
@@ -346,6 +362,7 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onOpenProfile = { switchTab(Screen.Profile.route) },
                     onOpenAccount = { navController.navigate(Screen.Account.route) },
                     onOpenStreak = { navController.navigate(Screen.Streak.route) },
+                    onOpenXp = { navController.navigate(Screen.Xp.route) },
                     onOpenWord = { navController.navigate(Screen.VocabularyDetail.createRoute(it)) },
                     onOpenGame = { game ->
                         navController.navigate(if (game == Constants.Games.WORD_SEARCH) Screen.WordSearchCategories.route else Screen.LevelSelection.createRoute(game))
@@ -357,6 +374,13 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                 com.kasiguru.ui.screens.streak.StreakScreen(
                     onBack = { navController.popBackStack() },
                     onContinue = { navController.popBackStack(); switchTab(Screen.Home.route) }
+                )
+            }
+            composable(Screen.Xp.route) {
+                com.kasiguru.ui.screens.xp.XpScreen(
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.popBackStack(); switchTab(Screen.Home.route) },
+                    onOpenGames = { navController.popBackStack(); switchTab(Screen.GameHub.route) }
                 )
             }
 
@@ -732,6 +756,21 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                             }
                         } else {
                             navController.popBackStack()
+                        }
+                    },
+                    // The previous person's screens must not survive under the next one's, so both
+                    // start over with the whole back stack cleared.
+                    onAccountSwitched = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    // Sign-out reseeds the progress row, so the next learner gets the first-run wizard.
+                    onSignedOut = {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
                         }
                     }
                 )

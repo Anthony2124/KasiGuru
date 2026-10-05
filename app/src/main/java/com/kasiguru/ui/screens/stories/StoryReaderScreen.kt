@@ -42,6 +42,7 @@ import com.kasiguru.util.audio.AudioPlayerManager
 import androidx.compose.runtime.LaunchedEffect
 import com.kasiguru.util.audio.LocalSoundEffects
 import com.kasiguru.util.audio.Sfx
+import com.kasiguru.ui.components.tapSounds
 
 /** The languages a page can be read in, in the order the switch offers them. */
 private enum class PageLanguage(val label: String) { Kasiguranin("Kasiguranin"), Tagalog("Tagalog"), English("English") }
@@ -302,7 +303,7 @@ fun StoryReaderScreen(
         }
 
         if (wordNotFound) {
-            AlertDialog(
+            AlertDialog(modifier = Modifier.tapSounds(), 
                 onDismissRequest = { wordNotFound = false },
                 title = { Text("Not in the dictionary yet") },
                 text = { Text("This word isn't in the vocabulary list yet, so there's no definition to show.") },

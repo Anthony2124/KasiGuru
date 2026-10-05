@@ -34,6 +34,7 @@ import com.kasiguru.ui.components.clay.SoftCard
 import com.kasiguru.ui.theme.*
 import com.kasiguru.ui.theme.Iconsax
 import java.util.Locale
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * Submitting a full story or poem, not just a single word - the extension of
@@ -72,7 +73,7 @@ fun SubmitLiteratureScreen(
     BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
 
     if (showDiscardConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text("Discard this piece?") },
             text = { Text("What you've written hasn't been submitted yet.") },

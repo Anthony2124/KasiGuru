@@ -6,11 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Which stops wait for a new screen before their caption appears.
+ * Which stops arrive on a new screen.
  *
- * The middle of the core chapter switches tab at every stop, and showing each caption over a screen
- * still fading in is what made that stretch feel rushed. These pin that the tab switches, and only
- * they, get the longer beat.
+ * Every stop now shares one beat (see SpotlightOverlay's StepBeatMs); a stop on a new screen also
+ * lifts the dim while that screen fades in, so the learner sees where the tour has gone. These pin
+ * that the tab switches, and only they, are treated as arrivals.
  */
 class TourPacingTest {
 

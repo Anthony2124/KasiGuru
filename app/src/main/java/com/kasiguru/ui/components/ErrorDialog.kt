@@ -14,7 +14,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.kasiguru.ui.theme.RedDeep
 import com.kasiguru.ui.theme.Iconsax
 import com.kasiguru.ui.theme.Ink
@@ -43,7 +42,7 @@ fun ErrorDialog(
     onDismiss: () -> Unit,
     title: String = "Something went wrong"
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    TapSoundDialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surface,

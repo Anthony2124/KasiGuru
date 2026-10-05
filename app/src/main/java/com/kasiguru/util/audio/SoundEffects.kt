@@ -42,8 +42,11 @@ class SoundEffects @Inject constructor(
     @ApplicationContext context: Context,
     preferences: UserPreferencesRepository
 ) {
+    // USAGE_GAME, like the music, so effects follow the media volume. Sonification usage goes to
+    // the system stream, which silent and vibrate mode mute on many phones (measured on a Xiaomi:
+    // every effect played at -inf dB while the music played normally).
     private val pool = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
-        AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build()
     private val ready = ConcurrentHashMap.newKeySet<Int>()
     private val handler = Handler(HandlerThread("KasiGuruSfx").apply { start() }.looper)

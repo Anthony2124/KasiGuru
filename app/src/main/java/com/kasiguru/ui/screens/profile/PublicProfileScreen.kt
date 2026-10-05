@@ -26,6 +26,7 @@ import com.kasiguru.ui.theme.*
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.kasiguru.ui.components.tapSounds
 
 @Composable
 fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: PublicProfileViewModel = hiltViewModel()) {
@@ -36,7 +37,7 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
             IconButton(onClick = { menu = true }) {
                 Icon(androidx.compose.material.icons.Icons.Default.MoreHoriz, contentDescription = "More", tint = Ink)
             }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenu(modifier = Modifier.tapSounds(), expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("Report player") }, onClick = { menu = false; onReport() })
             }
         } }) {

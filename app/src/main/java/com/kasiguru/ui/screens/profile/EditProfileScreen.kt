@@ -46,6 +46,7 @@ import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Lime
 import kotlinx.coroutines.launch
+import com.kasiguru.ui.components.tapSounds
 
 /**
  * Edit profile: a short canopy with a back button, over a single form card. A pushed subscreen from
@@ -82,7 +83,7 @@ fun EditProfileScreen(
     BackHandler(enabled = hasUnsavedChanges) { showDiscardConfirm = true }
 
     if (showDiscardConfirm) {
-        AlertDialog(
+        AlertDialog(modifier = Modifier.tapSounds(), 
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text("Discard changes?") },
             text = { Text("Your edits haven't been saved yet.") },
