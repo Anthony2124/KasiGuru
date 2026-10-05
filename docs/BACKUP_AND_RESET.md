@@ -31,6 +31,12 @@ to wipe.
    `--only=users,leaderboard_public`.
 4. **Restore:** the same command with `--confirm=kasiguru-86042`. If it stops part-way, run it
    again: documents already back count as *same* and are skipped.
+   If it fails with **Quota exceeded**, the free plan's 50,000 reads for the day are used up. They
+   reset at midnight Pacific time (3 PM in the Philippines). Writes have their own limit and still
+   work, so the learner data can come back now without reading:
+   ```
+   node functions/restore_firestore.js <key> <backup-folder> --only=users,leaderboard_public,public_profiles,device_tokens,word_submissions,issue_reports --write-only --confirm=kasiguru-86042
+   ```
 5. **Check:** take a fresh backup and compare its `manifest.json` with the one you restored from.
 
 Learners need do nothing. Phones keep working offline through the outage, and an empty cloud never
@@ -190,6 +196,12 @@ Restored `vocabulary` and `stories` get a fresh `updatedAt`, so phones pull them
 Running the same restore twice writes nothing the second time. A folder without `manifest.json` is
 refused: that backup never finished.
 
+`--write-only` skips reading Firestore and writes every document of the `--only` collections, which
+it requires. Use it when reads are refused (`Quota exceeded`) right after a wipe. With nothing to
+compare against, it keeps nothing, so a phone that had already synced past the backup is
+overwritten. That is harmless minutes after the backup and risky days later. Run the normal
+comparison once reads are back, and it should plan zero writes.
+
 From the dashboard, drop a `.json` content backup onto *Restore from backup*. Same semantics: merge,
 not replace. One exception the browser cannot get around: the rules only let a queue item
 (`word_submissions`, `literature_submissions`, `issue_reports`) be *created* as the app submits it,
@@ -313,6 +325,14 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 ---
 
 ## History worth knowing
+
+**The full reset test on 2026-10-05 used up the day's free reads before the restore.** The factory
+reset itself went as planned. Then every read was refused with `Quota exceeded`: the free plan
+allows 50,000 reads a day, and normal app traffic, the daily backup and the test's own backup and
+checks had used them. Each phone's daily full reconcile reads the whole dictionary, about 1,150
+reads, so ordinary use alone comes close to the limit. Writes have a separate limit, so the learner
+data was restored with the new `--write-only` option: 1,051 documents, about fifteen minutes after
+the reset. Plan a reset early in the Pacific day, or check Firebase console → Firestore → Usage first.
 
 **The first live restore, on 2026-10-04, stopped part-way with "Transaction too big".** Firestore
 counts a batch's index entries against its limit, and every key in a progress document's `entries`
