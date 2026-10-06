@@ -22,6 +22,7 @@ import { parsePublicProfile, type PublicProfile } from '../domain/publicProfile'
 import type { AnnouncementDto } from '../domain/types';
 import { auth, db } from './firebase';
 import { getState, setState } from './store';
+import { APP_VERSION } from './version';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -279,7 +280,7 @@ export interface IssueReport {
   reporterEmail: string;
 }
 
-export const APP_VERSION = 'web 1.18.0';
+export { APP_VERSION };
 
 export async function submitReport(r: IssueReport) {
   const ref = doc(collection(db, 'issue_reports'));
