@@ -51,26 +51,30 @@ export function StoryCover({
 
 export interface Quota {
   reviewCompleted: boolean;
+  /** Any word scheduled for review today; with none, the review step is already satisfied. */
+  reviewDue: boolean;
+  reviewSatisfied: boolean;
   gamesPlayed: number;
   requiredGames: number;
   isMet: boolean;
 }
 
-/** The day's streak quota: the review deck plus three mini-game levels. */
+/** The day's streak quota: the review deck (when words are due) plus three mini-game levels. */
 export function QuotaList({ quota }: { quota: Quota }) {
   const games = Math.min(quota.gamesPlayed, quota.requiredGames);
+  const reviewDetail = quota.reviewCompleted ? 'Daily review completed' : !quota.reviewDue ? 'Nothing due today' : 'Finish the review deck';
   return (
     <div class="list">
       <div class="list-row">
         <span class="ico">
-          <Icon name={quota.reviewCompleted ? 'tickCircle' : 'repeat'} size={20} color={quota.reviewCompleted ? 'var(--lime)' : 'var(--info)'} />
+          <Icon name={quota.reviewSatisfied ? 'tickCircle' : 'repeat'} size={20} color={quota.reviewSatisfied ? 'var(--lime)' : 'var(--info)'} />
         </span>
         <div class="grow">
           <p class="t-title-s">Complete review words</p>
-          <p class="t-body-s muted">{quota.reviewCompleted ? 'Daily review completed' : 'Finish the review deck'}</p>
+          <p class="t-body-s muted">{reviewDetail}</p>
         </div>
-        <span class="tag" style={quota.reviewCompleted ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
-          {quota.reviewCompleted ? 'Done' : 'Pending'}
+        <span class="tag" style={quota.reviewSatisfied ? undefined : { background: 'var(--sunken)', color: 'var(--muted)' }}>
+          {quota.reviewSatisfied ? 'Done' : 'Pending'}
         </span>
       </div>
       <div class="list-row">

@@ -450,11 +450,26 @@ export class Draft {
 
   // ── Streak ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Whether any word is scheduled for review today (countScheduledDueWords). With nothing due there
+   * is no review to finish, and requiring one made the streak impossible for new and caught-up
+   * learners (Android 1.25, DailyStreakQuota.reviewDue).
+   */
+  private get reviewDue(): boolean {
+    const inCorpus = this.content.words.length ? new Set(this.content.words.map((w) => wordKey(w.kasiguranin))) : null;
+    return Object.entries(this.d.wordStates).some(
+      ([key, s]) => (!inCorpus || inCorpus.has(key)) && s.nextReviewDate !== '' && s.nextReviewDate <= this.today
+    );
+  }
+
   get quota() {
     const p = this.d.progress;
     const reviewCompleted = p.dailyReviewCompletedDate === this.today;
+    const reviewDue = this.reviewDue;
+    // The review step is done, or there was nothing to review today.
+    const reviewSatisfied = reviewCompleted || !reviewDue;
     const gamesPlayed = p.dailyGamesDate === this.today ? p.dailyGamesPlayedCount : 0;
-    return { reviewCompleted, gamesPlayed, requiredGames: 3, isMet: reviewCompleted && gamesPlayed >= 3 };
+    return { reviewCompleted, reviewDue, reviewSatisfied, gamesPlayed, requiredGames: 3, isMet: reviewSatisfied && gamesPlayed >= 3 };
   }
 
   validateStreak() {
@@ -476,10 +491,14 @@ export class Draft {
   private updateStreak() {
     const p = this.d.progress;
     if (p.lastActiveDate === this.today) return;
+    // StreakRules.advancedStreak: yesterday counted, one more; older, or never, a fresh run of 1. A
+    // date after today (the clock moved back, or a device ahead synced first) counts as already
+    // counted, rather than adding a day.
     let streak = 1;
     if (p.lastActiveDate) {
       const gap = daysBetween(p.lastActiveDate, this.today);
-      streak = gap != null && gap <= 1 ? p.currentStreak + 1 : 1;
+      if (gap != null && gap <= 0) streak = Math.max(p.currentStreak, 1);
+      else if (gap === 1) streak = p.currentStreak + 1;
     }
     p.currentStreak = streak;
     p.longestStreak = Math.max(p.longestStreak, streak);

@@ -211,6 +211,11 @@ describe('learner actions', () => {
     const d = new Draft(initialLearner(), TODAY);
     d.d.progress.currentStreak = 2;
     d.d.progress.lastActiveDate = '2026-09-29';
+    d.d.wordStates['bale'] = { ...DEFAULT_WORD_STATE, nextReviewDate: '2026-09-28' };
+    for (let i = 0; i < 3; i++) d.incrementGamesPlayed();
+    expect(d.quota.reviewSatisfied).toBe(false);
+    expect(d.d.progress.currentStreak).toBe(2);
+    d.d.progress.dailyGamesPlayedCount = 0;
     d.recordDailyReviewCompleted();
     d.incrementGamesPlayed();
     d.incrementGamesPlayed();
@@ -220,6 +225,38 @@ describe('learner actions', () => {
     expect(d.events).toContainEqual({ type: 'streak', days: 3 });
     expect(d.d.achievements['badge:consistent_learner:2'].isUnlocked).toBe(true);
     expect(d.d.achievements['badge:consistent_learner:3']?.isUnlocked ?? false).toBe(false);
+  });
+  it('with no words due, three games keep the streak (DailyStreakQuotaTest)', () => {
+    const d = new Draft(initialLearner(), TODAY);
+    d.d.progress.currentStreak = 4;
+    d.d.progress.lastActiveDate = '2026-09-29';
+    // A future review date is not due today.
+    d.d.wordStates['bale'] = { ...DEFAULT_WORD_STATE, nextReviewDate: '2026-10-02' };
+    expect(d.quota).toMatchObject({ reviewDue: false, reviewSatisfied: true, isMet: false });
+    for (let i = 0; i < 3; i++) d.incrementGamesPlayed();
+    expect(d.d.progress.currentStreak).toBe(5);
+  });
+  it('a due word that is no longer in the dictionary does not ask for a review', () => {
+    const learner = initialLearner();
+    learner.wordStates['removed'] = { ...DEFAULT_WORD_STATE, nextReviewDate: '2026-09-28' };
+    const words = [{ kasiguranin: 'bale', category: 'pamilya' }];
+    expect(new Draft(learner, TODAY, { words, stories: [] }).quota.reviewDue).toBe(false);
+    expect(new Draft(learner, TODAY).quota.reviewDue).toBe(true);
+  });
+  it('a last-active date after today keeps the run instead of adding a day (StreakRulesTest)', () => {
+    const d = new Draft(initialLearner(), TODAY);
+    d.d.progress.currentStreak = 6;
+    d.d.progress.lastActiveDate = '2026-10-01';
+    for (let i = 0; i < 3; i++) d.incrementGamesPlayed();
+    expect(d.d.progress.currentStreak).toBe(6);
+    expect(d.d.progress.lastActiveDate).toBe(TODAY);
+  });
+  it('a gap of two days starts a fresh run of 1', () => {
+    const d = new Draft(initialLearner(), TODAY);
+    d.d.progress.currentStreak = 6;
+    d.d.progress.lastActiveDate = '2026-09-28';
+    for (let i = 0; i < 3; i++) d.incrementGamesPlayed();
+    expect(d.d.progress.currentStreak).toBe(1);
   });
   it('a game level earning a star opens the next one', () => {
     const d = new Draft(initialLearner(), TODAY);

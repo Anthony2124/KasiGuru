@@ -5,7 +5,7 @@
 import { BADGE_FAMILIES, BADGE_TIERS } from '../../domain/badges';
 import { Draft } from '../../domain/learner';
 import { switchTab } from '../../lib/router';
-import { useLearner } from '../../lib/store';
+import { useApp, useLearner } from '../../lib/store';
 import { BadgeMedal } from '../badges';
 import { buildWeek } from '../derive';
 import { ClayButton, GroundScaffold, Icon, Jepjep } from '../kit';
@@ -14,7 +14,9 @@ import { QuotaList, WeekStrip } from '../parts';
 export function StreakScreen() {
   const learner = useLearner();
   const p = learner.progress;
-  const quota = new Draft(learner).quota;
+  // The words, so a removed word's old review date does not ask for a review (as the action's Draft does).
+  const words = useApp((s) => s.words);
+  const quota = new Draft(learner, undefined, { words, stories: [] }).quota;
   const family = BADGE_FAMILIES.find((f) => f.id === 'consistent_learner')!;
   const next = family.thresholds.find((t) => t > p.longestStreak);
   const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;

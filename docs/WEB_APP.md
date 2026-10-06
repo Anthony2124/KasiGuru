@@ -125,6 +125,11 @@ XP values, the lesson slicing and the badge list above all. A field added to
 - **Not yet ported from 1.23:** the newer sound effects (found word, completion, streak, badge, card
   flip), background music and the volume sliders. The web keeps its answer and level-up sounds and,
   since 1.24, the tap click.
+- **From 1.25:** the streak quota waives the review when no word is due (`DailyStreakQuota.reviewDue`,
+  "Nothing due today" on the Streak page), and a last-active date after today keeps the run rather
+  than adding a day (`StreakRules.advancedStreak`). The 1.25 update pop-up, the scheduled reminders
+  and the Word of the Day notification are Android-only: the web updates on every deploy and has no
+  notifications.
 - **Vibrations** follow the Android setting where the browser supports them (Android Chrome);
   iPhone browsers cannot vibrate, so the setting is hidden there.
 
