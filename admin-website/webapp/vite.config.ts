@@ -17,7 +17,7 @@ function serviceWorker(): Plugin {
     generateBundle(_, bundle) {
       const built = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
       const publicDir = path.resolve(__dirname, 'public');
-      const statics = ['manifest.webmanifest', 'content/vocabulary.json', 'content/stories.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/wordmark.svg']
+      const statics = ['manifest.webmanifest', 'theme-boot.js', 'content/corpus.json', 'content/vocabulary.json', 'content/stories.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/wordmark.svg']
         .concat(fs.readdirSync(path.join(publicDir, 'fonts')).map((f) => `fonts/${f}`))
         .concat(fs.readdirSync(path.join(publicDir, 'sounds')).map((f) => `sounds/${f}`))
         .filter((f) => fs.existsSync(path.join(publicDir, f)));

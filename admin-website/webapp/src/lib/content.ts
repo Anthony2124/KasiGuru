@@ -7,6 +7,7 @@
  * same reason: the Spark plan's 50,000 reads a day are shared by every learner on both apps.
  */
 import { collection, getDocs, query, where } from 'firebase/firestore/lite';
+import { buildDictionary, layOver, type CorpusWord } from '../domain/contentMerge';
 import type { Story, WordContent } from '../domain/types';
 import { db } from './firebase';
 import { load, save } from './persist';
@@ -83,28 +84,20 @@ function storyFromDoc(d: Record<string, unknown>): Story | null {
   };
 }
 
-/** Lays changed documents over the snapshot. A changed word replaces its sense, or is added. */
+/**
+ * Lays changed documents over the dictionary the way a phone's sync does (contentMerge.layOver): a
+ * changed word is merged into the row with its id or sense, keeping that row's place, or is added.
+ */
 function overlay(words: WordContent[], stories: Story[], delta: Delta | undefined) {
   if (!delta) return { words, stories };
-  const byId = new Map(words.map((w) => [w.id, w]));
-  const senseKey = (w: WordContent) => `${w.kasiguranin.toLowerCase()} ${w.english.toLowerCase()}`;
-  for (const w of delta.words) {
-    if (byId.has(w.id)) {
-      byId.set(w.id, w);
-      continue;
-    }
-    // A new document for a sense the snapshot already has (a portal re-create) replaces that row.
-    const dup = [...byId.values()].find((x) => senseKey(x) === senseKey(w));
-    if (dup) byId.delete(dup.id);
-    byId.set(w.id, w);
-  }
   const storiesById = new Map(stories.map((s) => [s.id, s]));
   for (const s of delta.stories) storiesById.set(s.id, s);
-  return { words: [...byId.values()], stories: [...storiesById.values()].sort((a, b) => a.id - b.id) };
+  return { words: layOver(words, delta.words), stories: [...storiesById.values()].sort((a, b) => a.id - b.id) };
 }
 
 export async function loadContent() {
-  const [vocab, stories, delta] = await Promise.all([
+  const [corpus, vocab, stories, delta] = await Promise.all([
+    fetch('/content/corpus.json').then((r) => r.json() as Promise<{ words?: CorpusWord[] }>),
     fetch('/content/vocabulary.json').then((r) => r.json() as Promise<Snapshot<WordContent>>),
     fetch('/content/stories.json').then((r) => r.json() as Promise<Snapshot<Story>>),
     load<Delta>(DELTA_KEY),
@@ -113,7 +106,9 @@ export async function loadContent() {
   // A delta older than a newer snapshot has already been folded into it.
   const usable =
     delta && delta.vocabSince >= vocab.meta.vocabularyUpdatedAt ? delta : undefined;
-  const merged = overlay(vocab.words ?? [], stories.stories ?? [], usable);
+  // The APK's shipping corpus with the cloud's snapshot over it, as a phone holds the dictionary.
+  const dictionary = buildDictionary(corpus.words ?? [], vocab.words ?? []);
+  const merged = overlay(dictionary, stories.stories ?? [], usable);
   setState((s) => ({ words: merged.words, stories: merged.stories, contentReady: true, contentVersion: s.contentVersion + 1 }));
 }
 

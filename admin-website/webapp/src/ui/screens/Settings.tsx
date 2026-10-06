@@ -45,6 +45,19 @@ export function SettingsScreen() {
           </button>
         </section>
 
+        {/* AppearanceScreen's theme choice. System follows the device, as it does on Android. */}
+        <section class="stack-sm">
+          <h2 class="t-title-l">Appearance</h2>
+          <div class="segmented" role="tablist" aria-label="Theme">
+            {(['light', 'dark', 'system'] as const).map((t) => (
+              <button key={t} role="tab" aria-selected={prefs.theme === t} onClick={() => setPrefs({ theme: t })}>
+                {t === 'light' ? 'Light' : t === 'dark' ? 'Dark' : 'System'}
+              </button>
+            ))}
+          </div>
+          <p class="t-body-s muted">System follows your device's light or dark setting.</p>
+        </section>
+
         <section class="stack-sm">
           <h2 class="t-title-l">App preferences</h2>
           <div class="list">

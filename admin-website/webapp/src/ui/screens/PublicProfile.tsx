@@ -151,7 +151,7 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
             <div class="card showcase">
               {showcase.map((b) => (
                 <div key={b.id}>
-                  <BadgeMedal tier={b.tier} earned size={64} />
+                  <BadgeMedal tier={b.tier} earned size={64} family={b.family.id} />
                   <p class="t-title-s">{b.family.name}</p>
                   <p class="t-body muted">{b.tier.label}</p>
                 </div>
@@ -191,7 +191,7 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
               const top = BADGE_TIERS[tiers.lastIndexOf(true)];
               return (
                 <div key={f.id} class="list-row badge-family" role="group" aria-label={`${f.name}: ${top ? top.label : 'not earned yet'}, ${count} of 6 tiers`}>
-                  <BadgeMedal tier={top} earned={!!top} size={52} />
+                  <BadgeMedal tier={top} earned={!!top} size={52} family={f.id} />
                   <div class="grow stack-sm">
                     <div class="row wrap" style={{ gap: '0 var(--s-sm)' }}>
                       <p class="t-title-s" style={{ flex: '1 1 auto' }}>{f.name}</p>

@@ -59,7 +59,7 @@ export function StreakScreen() {
               return (
                 <div key={t} class="center stack-sm" style={{ justifyItems: 'center' }}>
                   <div style={{ display: 'grid', placeItems: 'center', borderRadius: '50%', outline: t === next ? '2px solid var(--coral)' : undefined, outlineOffset: 3 }}>
-                    <BadgeMedal tier={BADGE_TIERS[i]} earned={earned} size={56} />
+                    <BadgeMedal tier={BADGE_TIERS[i]} earned={earned} size={56} family="consistent_learner" />
                   </div>
                   <p class="t-label">{days(t)}</p>
                   <p class="t-label-s muted">{BADGE_TIERS[i].label}</p>

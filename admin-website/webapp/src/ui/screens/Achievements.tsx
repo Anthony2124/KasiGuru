@@ -125,7 +125,7 @@ export function AchievementsScreen() {
               .filter((f) => filter === 'All' || f.family.section === filter)
               .map((f) => (
                 <button key={f.family.id} class="list-row" onClick={() => setSelected(f.family.id)} style={{ alignItems: 'center' }}>
-                  <BadgeMedal tier={f.current?.tier} earned={!!f.current} size={56} />
+                  <BadgeMedal tier={f.current?.tier} earned={!!f.current} size={56} family={f.family.id} />
                   <div class="grow">
                     <p class="t-title-s">{f.family.name}</p>
                     <p class="t-body-s muted">{f.current ? f.current.tier.label : 'Not earned yet'}</p>
@@ -163,7 +163,7 @@ export function AchievementsScreen() {
             <div class="list" style={{ maxHeight: '45vh', overflowY: 'auto' }}>
               {open.rows.map((row) => (
                 <div key={row.id} class="list-row">
-                  <BadgeMedal tier={row.tier} earned={row.isUnlocked} size={44} />
+                  <BadgeMedal tier={row.tier} earned={row.isUnlocked} size={44} family={open.family.id} />
                   <div class="grow">
                     <p class="t-title-s">{row.tier.label}</p>
                     <p class="t-body-s">{badgeAmount(open.family, row.requiredValue)}</p>

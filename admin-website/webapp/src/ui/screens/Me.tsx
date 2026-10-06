@@ -47,7 +47,7 @@ function BadgeCell({ summary }: { summary: BadgeFamilySummary }) {
       onClick={() => navigate('/achievements')}
       aria-label={`${summary.family.name}, ${tierText}, ${summary.earnedTiers} of ${BADGE_TIERS.length} tiers`}
     >
-      <BadgeMedal tier={summary.highest} earned={!!summary.highest} size={52} />
+      <BadgeMedal tier={summary.highest} earned={!!summary.highest} size={52} family={summary.family.id} />
       <span class={`t-label-s name${summary.highest ? '' : ' muted'}`}>{summary.family.name}</span>
       <span class="tier-dots" aria-hidden="true">
         {BADGE_TIERS.map((t) => (

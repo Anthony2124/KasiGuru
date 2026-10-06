@@ -26,6 +26,12 @@ const res = path.join(repo, 'app', 'src', 'main', 'res');
 
 /** Web name -> Android drawable (without .xml). Mirrors ui/theme/Iconsax.kt. */
 const ICONS = {
+  // KasiGuruBottomBar's solid glyphs (Bulk draws half of each icon at 40%, a smudge at nav size).
+  navHome: 'bold_home',
+  navLearn: 'bold_teacher',
+  navPractice: 'bold_game',
+  navLibrary: 'bold_book',
+  navMe: 'bold_profile_circle',
   home: 'bulk_home',
   book: 'bulk_book',
   repeat: 'bulk_repeat',
@@ -237,8 +243,12 @@ async function main() {
 
   // Lesson sounds (UiFeedbackSounds), the same files the APK ships.
   fs.mkdirSync(path.join(webapp, 'public', 'sounds'), { recursive: true });
+  // Android 1.23 replaced most of these with Ogg files, which older iPhones cannot play; the web keeps
+  // its own copies until they are converted, so a source that has moved on is skipped, not fatal.
   for (const [from, to] of [['ui_correct.wav', 'correct.wav'], ['ui_wrong.wav', 'wrong.wav'], ['ui_level_up.wav', 'level-up.wav']]) {
-    fs.copyFileSync(path.join(res, 'raw', from), path.join(webapp, 'public', 'sounds', to));
+    const src = path.join(res, 'raw', from);
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(webapp, 'public', 'sounds', to));
+    else console.warn(`skipped sound ${from}: no longer in res/raw`);
   }
 
   // Bundled fonts, the same files the APK ships.

@@ -39,22 +39,32 @@ import { StreakScreen } from './ui/screens/Streak';
 import { XpScreen } from './ui/screens/Xp';
 import { PublicProfileScreen } from './ui/screens/PublicProfile';
 
-const TABS: { path: string; label: string; icon: IconName }[] = [
-  { path: '/', label: 'Home', icon: 'home' },
-  { path: '/learn', label: 'Learn', icon: 'teacher' },
-  { path: '/practice', label: 'Practice', icon: 'game' },
-  { path: '/library', label: 'Library', icon: 'book' },
-  { path: '/me', label: 'Me', icon: 'profile' },
+const TABS: { path: string; label: string; icon: IconName; navIcon: IconName }[] = [
+  { path: '/', label: 'Home', icon: 'home', navIcon: 'navHome' },
+  { path: '/learn', label: 'Learn', icon: 'teacher', navIcon: 'navLearn' },
+  { path: '/practice', label: 'Practice', icon: 'game', navIcon: 'navPractice' },
+  { path: '/library', label: 'Library', icon: 'book', navIcon: 'navLibrary' },
+  { path: '/me', label: 'Me', icon: 'profile', navIcon: 'navMe' },
 ];
 
+/**
+ * KasiGuruBottomBar: a floating pill of solid icons; the open tab grows into a lime pill carrying its
+ * name, and the rest share what is left. Each tab is named for screen readers either way.
+ */
 function BottomNav({ path }: { path: string }) {
   return (
     <nav class="bottom-nav" aria-label="Main">
       <div class="bar">
         {TABS.map((t) => (
-          <button key={t.path} class="tab" aria-current={path === t.path ? 'page' : undefined} onClick={() => switchTab(t.path)}>
-            <Icon name={t.icon} size={22} />
-            <span>{t.label}</span>
+          <button
+            key={t.path}
+            class="tab"
+            aria-label={t.label}
+            aria-current={path === t.path ? 'page' : undefined}
+            onClick={() => switchTab(t.path)}
+          >
+            <Icon name={t.navIcon} size={24} />
+            <span aria-hidden="true">{t.label}</span>
           </button>
         ))}
       </div>

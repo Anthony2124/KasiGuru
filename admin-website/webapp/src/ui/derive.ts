@@ -17,7 +17,10 @@ export const wordsToReview = (n: number) => plural(n, 'word');
 
 /** Word of the day: seeded by the day, so it is the same for everyone and rotates tomorrow. */
 export function wordOfTheDay(corpus: Corpus) {
-  const eligible = corpus.all.filter((w) => w.kasiguranin && w.tagalog).sort((a, b) => (a.id < b.id ? -1 : 1));
+  // WordOfDay.eligible sorts by Room id, which `order` mirrors, so a phone and the web pick one word.
+  const eligible = corpus.all
+    .filter((w) => w.kasiguranin && w.tagalog)
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || (a.id < b.id ? -1 : 1));
   if (!eligible.length) return null;
   return eligible[(epochDay(todayIso()) ?? 0) % eligible.length];
 }

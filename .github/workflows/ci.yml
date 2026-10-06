@@ -48,6 +48,10 @@ jobs:
           cache: npm
           cache-dependency-path: admin-website/webapp/package-lock.json
       - run: npm ci
+      # The corpus and the art are copied from the Android sources, and every APK version needs a
+      # row in docs/WEB_PARITY.md. Fails when the web app has fallen behind; `npm run sync:web` fixes it.
+      - name: Web app in step with the APK
+        run: node ../../scripts/web/sync-from-app.js --check
       - run: npx tsc --noEmit
       - run: npm test
       - run: npx vite build

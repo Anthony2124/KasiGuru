@@ -231,7 +231,7 @@ function MilestoneRow({ rank, tier, totalXp, level, isNext }: { rank: number; ti
   return (
     <li class={`milestone${earned ? ' earned' : ''}`}>
       <span class="rail">
-        <BadgeMedal tier={tier} earned={earned} size={40} />
+        <BadgeMedal tier={tier} earned={earned} size={40} family="journey_rank" />
       </span>
       <div class="body">
         <div class="row">

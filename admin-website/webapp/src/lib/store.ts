@@ -12,6 +12,7 @@ import { today as todayIso } from '../domain/dates';
 import { Draft, initialLearner, type LearnerData, type LearnerEvent } from '../domain/learner';
 import type { AnnouncementDto, Story, WordContent } from '../domain/types';
 import { load, save } from './persist';
+import { applyTheme, type ThemeChoice } from './theme';
 
 export interface Account {
   uid: string | null;
@@ -24,6 +25,8 @@ export interface Account {
 }
 
 export interface Prefs {
+  /** Light, Dark or System (the default), as Android's Appearance screen. See lib/theme.ts. */
+  theme: ThemeChoice;
   soundEnabled: boolean;
   /** The soft click on buttons and tabs; separate from the answer sounds, as on Android. */
   tapSoundsEnabled: boolean;
@@ -68,6 +71,7 @@ export interface AppState {
 }
 
 const defaultPrefs: Prefs = {
+  theme: 'system',
   soundEnabled: true,
   tapSoundsEnabled: true,
   hapticsEnabled: true,
@@ -188,6 +192,7 @@ export function dismissCelebration() {
 export function setPrefs(patch: Partial<Prefs>) {
   setState((s) => ({ prefs: { ...s.prefs, ...patch } }));
   save(PREFS_KEY, state.prefs);
+  if (patch.theme) applyTheme(patch.theme);
 }
 
 export async function loadLocal() {
@@ -205,6 +210,7 @@ export async function loadLocal() {
     prefs: { ...defaultPrefs, ...(prefs ?? {}) },
     learnerLoaded: true,
   });
+  applyTheme(state.prefs.theme);
 }
 
 // ── Derived data ──────────────────────────────────────────────────────────────

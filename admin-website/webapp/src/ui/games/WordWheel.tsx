@@ -262,7 +262,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
                   })
                   .join(' ')}
                 fill="none"
-                stroke="var(--lime)"
+                stroke="var(--lime-fill)"
                 stroke-width="3"
                 stroke-linecap="round"
                 stroke-linejoin="round"

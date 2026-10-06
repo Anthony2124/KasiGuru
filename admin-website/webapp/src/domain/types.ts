@@ -33,6 +33,11 @@ export interface WordContent {
   phoneticVowelLength: boolean;
   ipaNotation: string;
   updatedAt: number;
+  /**
+   * The word's place in a phone's dictionary, which is its Room id: the corpus in seeding order,
+   * then cloud-only words as they arrive. The word of the day counts along it. See contentMerge.ts.
+   */
+  order?: number;
 }
 
 /** A learner's SM-2 state for one headword. Mirrors ProgressSyncManager's WordState. */
