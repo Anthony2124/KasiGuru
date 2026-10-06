@@ -1,13 +1,15 @@
 /**
  * XP policy version 2: what each activity is worth, the 30 account levels, and the reward ledger
  * that turns receipts into totals. Port of domain/gamification/XpPolicy.kt (XpPolicy, RewardRecord,
- * RewardLedger) and data/remote/RewardReceiptCodec.kt. See docs/design/XP_AND_TIERED_BADGES_PLAN.md.
+ * RewardLedger), XpSummary.kt and data/remote/RewardReceiptCodec.kt. See
+ * docs/design/XP_AND_TIERED_BADGES_PLAN.md.
  *
  * XP is no longer a counter that each screen adds to. Every reward is a receipt with a stable id,
  * receipts sync one document each, and totals are recomputed from the union, so two devices can
  * never pay the same lesson twice and a review cap applies after combining them.
  */
 import { BADGE_PREFIX, familyFor, tierFor } from './badges';
+import { plusDays } from './dates';
 
 export const XP_POLICY_VERSION = 2;
 
@@ -144,6 +146,63 @@ export function totals(records: RewardRecord[]): XpTotals {
     }
   }
   return { activity, bonus, byDay: days, total: activity + bonus };
+}
+
+// ── The XP page (XpSummary.kt) ────────────────────────────────────────────────
+
+/** Where XP comes from, as the XP page groups it, in XpSource order. */
+export const XP_SOURCES = ['Lessons', 'Games', 'Reviews', 'Stories', 'Community', 'Badges'] as const;
+export type XpSource = (typeof XP_SOURCES)[number];
+
+export const XP_SOURCE_LABELS: Record<XpSource, string> = {
+  Lessons: 'Lessons',
+  Games: 'Games',
+  Reviews: 'Word reviews',
+  Stories: 'Stories',
+  Community: 'Approved contributions',
+  Badges: 'Badge bonuses',
+};
+
+/**
+ * XP per source, worked out with the same settlement `totals` uses for the learner's total, so the
+ * parts always add up to the whole rather than re-counting a replayed level or a capped review day.
+ * The receipts are split into groups the ledger already settles independently - content by source,
+ * reviews by day, everything else row by row - and each group is settled on its own, so no group's
+ * cap or improvement rule reaches into another. Sources with no XP are left out.
+ */
+export function xpBySource(records: RewardRecord[]): Partial<Record<XpSource, number>> {
+  const groups = new Map<XpSource, RewardRecord[]>();
+  const add = (source: XpSource, rows: RewardRecord[]) => groups.set(source, [...(groups.get(source) ?? []), ...rows]);
+
+  // A replay receipt carries no hint of what it replayed; the other receipts for the same source
+  // do, so a source with a lesson receipt is a lesson and the rest are games.
+  for (const rows of groupBy(records.filter((r) => CONTENT.has(r.kind)), (r) => r.source).values()) {
+    add(rows.some((r) => r.kind === 'lesson') ? 'Lessons' : 'Games', rows);
+  }
+  for (const r of records) {
+    switch (r.kind) {
+      case 'review':
+      case 'mastery': add('Reviews', [r]); break;
+      case 'story': add('Stories', [r]); break;
+      case 'approved': add('Community', [r]); break;
+      case 'badge': add('Badges', [r]); break;
+    }
+  }
+  const out: Partial<Record<XpSource, number>> = {};
+  for (const [source, rows] of groups) {
+    const xp = totals(rows).total;
+    if (xp > 0) out[source] = xp;
+  }
+  return out;
+}
+
+/** XP earned on each of the seven days ending `today`, oldest first. Badge bonuses are not dated. */
+export function lastSevenDays(records: RewardRecord[], today: string): { day: string; xp: number }[] {
+  const byDay = totals(records).byDay;
+  return [6, 5, 4, 3, 2, 1, 0].map((back) => {
+    const day = plusDays(today, -back);
+    return { day, xp: byDay[day] ?? 0 };
+  });
 }
 
 // ── Firestore codec (users/{uid}/rewardReceipts/{sha256(id)}) ─────────────────

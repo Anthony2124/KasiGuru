@@ -1,11 +1,12 @@
 /**
  * The 11 badge families with six permanent tiers each, the archive of the original achievements,
- * and profile scenery. Port of BadgeCatalog.kt, LegacyBadgeCatalog.kt, BadgeShowcase.kt and
- * ProfileBackgroundCatalog.kt. Ids are shared with Android through sync and public profiles:
- * never rename one.
+ * and profile scenery. Port of BadgeCatalog.kt, LegacyBadgeCatalog.kt, BadgeShowcase.kt,
+ * BadgeSummary.kt and ProfileBackgroundCatalog.kt. Ids are shared with Android through sync and
+ * public profiles: never rename one.
  */
 
 import { plural } from './plural';
+import type { AchievementState } from './types';
 
 export const BADGE_PREFIX = 'badge:';
 
@@ -167,6 +168,58 @@ export function chooseShowcase(ids: string[], earnedByPlayers: Record<string, nu
         (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
     )
     .slice(0, 3);
+}
+
+// ── Profile summary (BadgeSummary.kt) ───────────────────────────────────────
+
+/**
+ * One badge family as Me shows it: the highest tier earned and the tier being worked on. Summarising
+ * per family lets all eleven badges fit on the profile at once, including the ones still to earn.
+ */
+export interface BadgeFamilySummary {
+  family: BadgeFamily;
+  /** Undefined until the first tier is earned. */
+  highest: BadgeTier | undefined;
+  earnedTiers: number;
+  /** The first tier not yet earned and the count toward it; undefined once all six are. */
+  next: { row: BadgeRow; currentValue: number } | undefined;
+  /** Progress toward `next`, 0 to 1; 1 when every tier is earned. */
+  progress: number;
+}
+
+type TierStates = Record<string, Pick<AchievementState, 'isUnlocked' | 'currentValue'> | undefined>;
+
+/**
+ * Every family in the catalog, pinned families first in pin order, the rest in catalog order - a
+ * fixed order, so a badge is always in the same place on the grid.
+ */
+export function badgeSummaries(achievements: TierStates, pinnedFamilyIds: string[] = []): BadgeFamilySummary[] {
+  const summaries = BADGE_FAMILIES.map((family): BadgeFamilySummary => {
+    const rows = BADGE_ROWS.filter((r) => r.family.id === family.id);
+    const earned = rows.filter((r) => achievements[r.id]?.isUnlocked === true);
+    const nextRow = rows.find((r) => achievements[r.id]?.isUnlocked !== true);
+    const currentValue = nextRow ? achievements[nextRow.id]?.currentValue ?? 0 : 0;
+    return {
+      family,
+      highest: earned.reduce<BadgeTier | undefined>((best, r) => (!best || r.tier.index > best.index ? r.tier : best), undefined),
+      earnedTiers: earned.length,
+      next: nextRow && { row: nextRow, currentValue },
+      progress: !nextRow ? 1 : nextRow.requiredValue <= 0 ? 0 : Math.min(1, Math.max(0, currentValue / nextRow.requiredValue)),
+    };
+  });
+  const pins = pinnedFamilyIds.filter((id) => id.trim());
+  const rank = (id: string) => (pins.includes(id) ? pins.indexOf(id) : Number.MAX_SAFE_INTEGER);
+  return summaries.sort((a, b) => rank(a.family.id) - rank(b.family.id));
+}
+
+/** The unfinished tier closest to done, across every family; undefined when nothing is in progress. */
+export function nextUpBadge(summaries: BadgeFamilySummary[]): BadgeFamilySummary | undefined {
+  let best: BadgeFamilySummary | undefined;
+  for (const s of summaries) {
+    if (!s.next || s.next.row.requiredValue <= 0) continue;
+    if (!best || s.progress > best.progress) best = s;
+  }
+  return best;
 }
 
 // ── Profile scenery ─────────────────────────────────────────────────────────

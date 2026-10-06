@@ -25,6 +25,8 @@ export interface Account {
 
 export interface Prefs {
   soundEnabled: boolean;
+  /** The soft click on buttons and tabs; separate from the answer sounds, as on Android. */
+  tapSoundsEnabled: boolean;
   /** Answer vibrations in lessons, where the browser supports them (not iOS). */
   hapticsEnabled: boolean;
   /** The day of the last finished lesson, so the streak page shows after the day's first one. */
@@ -67,6 +69,7 @@ export interface AppState {
 
 const defaultPrefs: Prefs = {
   soundEnabled: true,
+  tapSoundsEnabled: true,
   hapticsEnabled: true,
   lastLessonDate: '',
   backupPromptDismissed: false,

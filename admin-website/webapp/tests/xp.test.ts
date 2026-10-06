@@ -1,7 +1,8 @@
 /**
  * XP policy 2: ports of RewardLedgerTest, RewardReceiptCodecTest, NormalizedProgressSyncTest,
- * ProfilePresentationTest, PublicProfileDtoTest and LevelConsistencyTest, plus the web learner's
- * normalization and grants. Receipts sync with Android, so these must agree with the Kotlin exactly.
+ * ProfilePresentationTest, PublicProfileDtoTest, LevelConsistencyTest, XpSummaryTest and
+ * BadgeSummaryTest, plus the web learner's normalization and grants. Receipts sync with Android, so
+ * these must agree with the Kotlin exactly.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
@@ -10,24 +11,31 @@ import {
   decodeReceipt,
   encodeReceipt,
   gameXp,
+  lastSevenDays,
   lessonXp,
   LEVEL_THRESHOLDS,
   levelFor,
   mergeRecord,
   receiptDocumentId,
   totals,
+  xpBySource,
   type RewardRecord,
 } from '../src/domain/xp';
 import {
   BADGE_FAMILIES,
   BADGE_ROWS,
+  BADGE_TIERS,
   backgroundUnlocked,
+  badgeSummaries,
   chooseShowcase,
   familyFor,
   findBackground,
+  nextUpBadge,
   PROFILE_BACKGROUNDS,
   showcaseCandidates,
 } from '../src/domain/badges';
+import { GAME_LEVEL_COUNT } from '../src/domain/gamification';
+import type { AchievementState } from '../src/domain/types';
 import { fromMainDoc, MAIN_PROGRESS_KEYS, mergeLegacyAchievements, mergeProgress, toMainDoc } from '../src/domain/merge';
 import { Draft, initialLearner, storyUnlocked, weeklyXp } from '../src/domain/learner';
 import { initialProgress, type UserProgress } from '../src/domain/types';
@@ -385,5 +393,89 @@ describe('the learner under policy 2', () => {
     expect(d.d.normalization).toMatchObject({ originalXp: 5000, originalLevel: 10, acknowledged: false });
     expect(d.d.progress.totalXp).toBe(0);
     expect(storyUnlocked(d.d, { id: 3, requiredXp: 900 })).toBe(true);
+  });
+});
+
+describe('XpSummaryTest', () => {
+  const today = '2026-10-05';
+  const day = (back: number) => `2026-10-0${5 - back}`;
+  const records = [
+    r(`lesson:a:${day(1)}`, 'lesson', { source: 'lesson:a', day: day(1), xp: 25 }),
+    r(`replay:lesson:a:${day(0)}`, 'replay', { source: 'lesson:a', day: day(0), xp: 5 }),
+    r(`game:word_match:1:${day(0)}`, 'game', { source: 'game:word_match:1', day: day(0), xp: 20 }),
+    r(`replay:game:word_match:1:${day(0)}`, 'replay', { source: 'game:word_match:1', day: day(0), xp: 5 }),
+    // Reviews cap at 60 XP a day.
+    r(`review:x:${day(0)}`, 'review', { source: 'x', day: day(0), xp: 40 }),
+    r(`review:y:${day(0)}`, 'review', { source: 'y', day: day(0), xp: 40 }),
+    r('badge:word_explorer:1', 'badge', { source: 'badge:word_explorer:1', day: day(0), xp: 20 }),
+    r('perfect:game:word_match:1', 'perfect', { source: 'game:word_match:1', day: '', xp: 0 }),
+  ];
+
+  it('the parts add up to the ledger total', () => {
+    expect(Object.values(xpBySource(records)).reduce((s, xp) => s + xp, 0)).toBe(totals(records).total);
+  });
+  it('each source is settled the way the ledger settles it', () => {
+    const parts = xpBySource(records);
+    expect(parts.Lessons).toBe(30); // 25 for the lesson, then a 5 XP replay the next day
+    expect(parts.Games).toBe(20); // a same-day replay settles to max(improvement, replay)
+    expect(parts.Reviews).toBe(60); // reviews cap at 60 a day
+    expect(parts.Badges).toBe(20);
+  });
+  it('sources with no XP are left out', () => {
+    expect(Object.keys(xpBySource(records)).sort()).toEqual(['Badges', 'Games', 'Lessons', 'Reviews']);
+  });
+  it('the week runs oldest first and ends today, without badge bonuses', () => {
+    const week = lastSevenDays(records, today);
+    expect(week).toHaveLength(7);
+    expect(week[6].day).toBe(today);
+    expect(week[0].day).toBe('2026-09-29');
+    expect(week[5].xp).toBe(25);
+    expect(week[6].xp).toBe(5 + 20 + 60);
+  });
+  it('game stars are out of every level Android seeds', () => {
+    // Seven games and twelve Word Search categories, 30 levels each (DatabaseSeeder).
+    expect(GAME_LEVEL_COUNT).toBe(570);
+  });
+});
+
+describe('BadgeSummaryTest', () => {
+  /** The catalog with the first `tiers` of `familyId` earned and `current` counted toward the next. */
+  const rows = (familyId: string, tiers: number, current = 0): Record<string, AchievementState> =>
+    Object.fromEntries(
+      BADGE_ROWS.filter((row) => row.family.id === familyId).map((row) => [
+        row.id,
+        { isUnlocked: row.tier.index + 1 <= tiers, currentValue: current, unlockedDate: null },
+      ])
+    );
+
+  it('every family appears once, earned or not', () => {
+    const summaries = badgeSummaries({});
+    expect(summaries.map((s) => s.family.id)).toEqual(BADGE_FAMILIES.map((f) => f.id));
+    summaries.forEach((s) => expect(s.highest).toBeUndefined());
+  });
+  it('a family shows its highest earned tier and the next one', () => {
+    const wordExplorer = badgeSummaries(rows('word_explorer', 3, 38)).find((s) => s.family.id === 'word_explorer')!;
+    expect(wordExplorer.highest).toBe(BADGE_TIERS[2]);
+    expect(wordExplorer.earnedTiers).toBe(3);
+    expect(wordExplorer.next?.row.tier).toBe(BADGE_TIERS[3]);
+    expect(wordExplorer.progress).toBeCloseTo(38 / 150, 4);
+  });
+  it('a finished family has nothing next', () => {
+    const done = badgeSummaries(rows('story_reader', 6)).find((s) => s.family.id === 'story_reader')!;
+    expect(done.highest).toBe(BADGE_TIERS[5]);
+    expect(done.next).toBeUndefined();
+    expect(done.progress).toBe(1);
+  });
+  it('pinned families lead, the rest keep catalog order', () => {
+    const ids = badgeSummaries({}, ['story_reader', '', 'mode_explorer']).map((s) => s.family.id);
+    expect(ids.slice(0, 2)).toEqual(['story_reader', 'mode_explorer']);
+    expect(ids.slice(2)).toEqual(BADGE_FAMILIES.map((f) => f.id).filter((id) => id !== 'story_reader' && id !== 'mode_explorer'));
+  });
+  it('next up is the unfinished tier closest to done', () => {
+    const achievements: Record<string, AchievementState> = {
+      'badge:review_keeper:1': { isUnlocked: false, currentValue: 9, unlockedDate: null }, // 9 of 10
+      'badge:word_explorer:1': { isUnlocked: false, currentValue: 0, unlockedDate: null },
+    };
+    expect(nextUpBadge(badgeSummaries(achievements))?.family.id).toBe('review_keeper');
   });
 });

@@ -2,7 +2,7 @@
  * The mini-game shelf and per-level game rules (GameHubScreen, the games' view models). Badges and
  * levels moved to ./badges.ts and ./xp.ts with XP policy 2.
  */
-import { GAMES } from './constants';
+import { CATEGORIES, GAMES, LEVELS_PER_GAME } from './constants';
 
 /** The mini-game shelf. Only the first three are playable; the rest show "Coming soon" on Android too. */
 export interface GameEntry {
@@ -25,6 +25,16 @@ export const GAME_ENTRIES: GameEntry[] = [
   { type: GAMES.RECALL, title: 'Word Recall', icon: 'keyboard', tone: 'lime', unlockStars: 90, comingSoon: true, blurb: '' },
   { type: GAMES.ASPECT_BUILDER, title: 'Aspect Builder', icon: 'teacher', tone: 'lime', unlockStars: 135, comingSoon: true, blurb: '' },
 ];
+
+/**
+ * Every game level there is, as rows in Android's game_levels table (DatabaseSeeder): 30 levels for
+ * each of seven games, plus a 30-level Word Search track per category. The XP page counts game
+ * stars out of three per level.
+ */
+export const GAME_LEVEL_COUNT =
+  ([GAMES.WORD_MATCH, GAMES.REVERSE_MATCH, GAMES.FILL_BLANK, GAMES.RECALL, GAMES.ASPECT_BUILDER, GAMES.SENTENCE_ORDER, GAMES.WORD_WHEEL].length +
+    CATEGORIES.length) *
+  LEVELS_PER_GAME;
 
 export const gameTitle = (type: string) =>
   GAME_ENTRIES.find((g) => g.type === type)?.title ?? (type.startsWith(GAMES.WORD_SEARCH) ? 'Word Search' : type);

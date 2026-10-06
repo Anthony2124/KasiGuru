@@ -639,6 +639,36 @@ button.avatar { cursor: pointer; }
 .badge-family { padding-top: var(--s-sm); padding-bottom: var(--s-sm); min-height: 76px; }
 .tier-track { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
 .tier-track i { height: 8px; border-radius: 99px; background: var(--track); }
+
+/* Me's badge grid: one medal per family at its highest tier, four to a row, six dots per family. */
+.badge-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-md) var(--s-xs); }
+.badge-cell { display: grid; justify-items: center; align-content: start; gap: 4px; min-width: 0; padding: 4px 2px; border-radius: var(--r-tile); text-align: center; transition: background var(--quick); }
+.badge-cell:hover, .badge-cell:active { background: var(--sunken); }
+.badge-cell .name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.54em; margin-top: 4px; max-width: 100%; overflow-wrap: anywhere; }
+.tier-dots { display: flex; gap: 3px; }
+.tier-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--hair); }
+.tier-dots i.on { background: var(--lime); }
+
+/* The XP page. */
+.xp-medallion { width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle, rgba(255, 200, 61, 0.35), rgba(255, 200, 61, 0.08)); }
+.xp-ico { width: 36px; height: 36px; border-radius: var(--r-chip); display: grid; place-items: center; flex: none; background: var(--sunken); }
+.xp-ico.large { width: 40px; height: 40px; }
+.xp-ico.met { background: var(--lime); }
+.xp-ico.gold { background: rgba(255, 200, 61, 0.18); }
+.tag.amber { background: var(--amber-tint); color: var(--amber); }
+.xp-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; height: 132px; margin-top: var(--s-md); }
+.xp-day { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; }
+.xp-bar { width: min(22px, 100%); border-radius: var(--r-pill); background: var(--sunken); }
+.xp-bar.earned { background: var(--gold); }
+.xp-bar.today { background: var(--lime); }
+.milestones { list-style: none; margin: var(--s-md) 0 0; padding: 0; }
+.milestone { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: var(--s-sm); }
+.milestone .rail { display: flex; flex-direction: column; align-items: center; }
+.milestone .rail::after { content: ''; flex: 1; width: 2px; background: var(--hair); }
+.milestone.earned .rail::after { background: rgba(255, 200, 61, 0.5); }
+.milestone:last-child .rail::after { display: none; }
+.milestone .body { padding-bottom: var(--s-md); }
+.milestone:last-child .body { padding-bottom: 0; }
 .section-thumb { width: 64px; height: 64px; border-radius: var(--r-tile); object-fit: cover; flex: none; }
 
 .leader-row { min-height: 76px; }
@@ -724,7 +754,7 @@ button.avatar { cursor: pointer; }
   .cols.board { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); }
   /* Learn has one column until there is room for its progress panel. */
   .cols.aside { grid-template-columns: minmax(0, 1fr); }
-  .streak-panel { padding: var(--s-lg); }
+  .streak-panel, .xp-panel { padding: var(--s-lg); }
 
   .list.cols-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .list.cols-2 > .list-row { border-top: 1px solid var(--hair); }

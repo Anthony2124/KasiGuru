@@ -150,7 +150,7 @@ export function WordMatchGame({ level }: { level: number }) {
         {q.options.map((o) => {
           const cls = answered ? (o === answerOf(q.word) ? 'correct' : o === selected ? 'wrong' : 'dim') : '';
           return (
-            <button key={o} class={`option ${cls}`} style={{ background: cls ? undefined : 'var(--surface)' }} disabled={answered} onClick={() => choose(o)} role="radio" aria-checked={o === selected}>
+            <button key={o} class={`option ${cls}`} style={{ background: cls ? undefined : 'var(--surface)' }} disabled={answered} onClick={() => choose(o)} role="radio" aria-checked={o === selected} data-no-tap-sound>
               <span class="label" style={{ fontWeight: 700 }}>{o}</span>
               {answered && o === answerOf(q.word) && <Icon name="tickCircle" size={22} class="mark" label="Correct" />}
               {answered && o === selected && o !== answerOf(q.word) && <Icon name="closeCircle" size={22} class="mark" label="Your answer, incorrect" />}

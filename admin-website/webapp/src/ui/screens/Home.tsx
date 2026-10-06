@@ -88,10 +88,10 @@ export function HomeScreen() {
                 <Icon name="flash" size={16} color="var(--coral)" />
                 {p.currentStreak === 1 ? '1 day streak' : `${p.currentStreak} day streak`}
               </button>
-              <span class="chip" aria-label={`${p.totalXp} XP in total`}>
+              <button class="chip" onClick={() => navigate('/xp')} aria-label={`${p.totalXp} XP in total. Shows your level and where your XP comes from.`}>
                 <Icon name="star" size={16} color="var(--gold)" />
                 {p.totalXp} XP
-              </span>
+              </button>
             </div>
             <div class="row" style={{ marginTop: 'var(--s-md)', alignItems: 'center' }}>
               <Jepjep pose={line.pose} height={104} breathe />

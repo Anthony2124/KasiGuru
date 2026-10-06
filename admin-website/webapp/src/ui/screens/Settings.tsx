@@ -59,6 +59,17 @@ export function SettingsScreen() {
                 <i />
               </span>
             </label>
+            <label class="list-row" style={{ cursor: 'pointer' }}>
+              <Icon name="volumeUp" size={22} color="var(--lime)" />
+              <div class="grow">
+                <p class="t-title-s">Tap sounds</p>
+                <p class="t-body-s muted">A soft click on buttons and tabs</p>
+              </div>
+              <span class="switch">
+                <input type="checkbox" checked={prefs.tapSoundsEnabled} onChange={(e) => setPrefs({ tapSoundsEnabled: (e.target as HTMLInputElement).checked })} />
+                <i />
+              </span>
+            </label>
             {canVibrate() && (
               <label class="list-row" style={{ cursor: 'pointer' }}>
                 <Icon name="flash" size={22} color="var(--lime)" />

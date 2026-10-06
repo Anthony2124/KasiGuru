@@ -141,14 +141,16 @@ export async function playWord(word: WordContent): Promise<boolean> {
 /** Short UI sounds for right and wrong answers, synthesised so there is nothing to download. */
 // ── Lesson sounds (UiFeedbackSounds) ─────────────────────────────────────────
 
-type UiSound = 'correct' | 'wrong' | 'level-up';
+type UiSound = 'correct' | 'wrong' | 'level-up' | 'tap';
 const uiSounds = new Map<UiSound, AudioBuffer>();
 let uiLoading: Promise<void> | null = null;
+/** Each sound's level, as Sfx sets it at the Android default volume. */
+const UI_GAIN: Record<UiSound, number> = { correct: 0.35, wrong: 0.35, 'level-up': 0.35, tap: 0.15 };
 
-/** Adrian's three answer and level-up sounds, decoded once. Until they arrive, a synthesised tone stands in. */
+/** Adrian's answer, level-up and tap sounds, decoded once. Until they arrive, a synthesised tone stands in for answers. */
 function loadUiSounds(c: AudioContext) {
   uiLoading ??= Promise.all(
-    (['correct', 'wrong', 'level-up'] as UiSound[]).map(async (name) => {
+    (Object.keys(UI_GAIN) as UiSound[]).map(async (name) => {
       try {
         const res = await fetch(`/sounds/${name}.wav`);
         if (res.ok) uiSounds.set(name, await c.decodeAudioData(await res.arrayBuffer()));
@@ -167,7 +169,7 @@ function playUiSound(name: UiSound): boolean {
   if (!buffer) return false;
   const src = c.createBufferSource();
   const gain = c.createGain();
-  gain.gain.value = 0.35;
+  gain.gain.value = UI_GAIN[name];
   src.buffer = buffer;
   src.connect(gain).connect(c.destination);
   src.start();
@@ -176,6 +178,41 @@ function playUiSound(name: UiSound): boolean {
 
 export function levelUpSound() {
   playUiSound('level-up');
+}
+
+// ── Tap sounds (TapSounds.kt) ────────────────────────────────────────────────
+
+/** What counts as tapping something. Text fields are left out: a tap there only moves the cursor. */
+const TAPPABLE = 'button, a[href], summary, select, input[type="checkbox"], input[type="radio"], [role="button"], [role="tab"], [role="switch"], [role="radio"], [role="checkbox"], [role="menuitem"]';
+/** A press held longer than this is not a tap (Compose's long-press timeout). */
+const LONG_PRESS_MS = 500;
+
+/**
+ * Plays the soft click for every tappable thing in the app, without each button having to ask for
+ * it. Only a press with a finger or mouse clicks: activating a control from the keyboard or a screen
+ * reader stays silent, as TalkBack's activations do on Android. A control whose tap already makes
+ * its own sound (an answer) carries `data-no-tap-sound`. The opt-out belongs to the control it marks,
+ * not to separate buttons nested inside it.
+ */
+export function installTapSounds(enabled: () => boolean) {
+  let pressedAt = -Infinity;
+  document.addEventListener('pointerdown', () => (pressedAt = performance.now()), { capture: true, passive: true });
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!enabled() || performance.now() - pressedAt > LONG_PRESS_MS) return;
+      const target = e.target instanceof Element ? e.target.closest(TAPPABLE) : null;
+      if (!target || target.hasAttribute('data-no-tap-sound')) return;
+      // One click per press: a label forwards its click to its checkbox, which would otherwise click twice.
+      pressedAt = -Infinity;
+      const c = context();
+      if (!c) return;
+      // iOS starts the context suspended; a tap is the moment it may be resumed.
+      if (c.state === 'suspended') void c.resume().then(() => playUiSound('tap'));
+      else playUiSound('tap');
+    },
+    true
+  );
 }
 
 export function feedbackTone(correct: boolean) {
