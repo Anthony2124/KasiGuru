@@ -150,6 +150,17 @@ class ContentSyncPolicyTest {
     }
 
     @Test
+    fun aNewParserVersionReadsEverythingOnceThenSettles() {
+        // 1.24 and 1.25 stored the bare "count:sum" and never parsed `theme`. The versioned
+        // fingerprint cannot match it, so each phone reads the collection once more and gets the
+        // section tags; after that read it stores the versioned value and settles back down.
+        val legacy = "1151:1987000000000000"
+        val current = versionedFingerprint(legacy)
+        assertTrue(needsFullRead(stored = legacy, current = current))
+        assertFalse(needsFullRead(stored = current, current = current))
+    }
+
+    @Test
     fun theSafetyIntervalStillForcesAFullReadEveryThirtyDays() {
         assertFalse(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(29)))
         assertTrue(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(31)))

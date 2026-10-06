@@ -149,7 +149,7 @@ class FirestoreSyncManager @Inject constructor(
             .aggregate(AggregateField.count(), sum)
             .get(AggregateSource.SERVER)
             .await()
-        "${snapshot.count}:${snapshot.get(sum)}"
+        versionedFingerprint("${snapshot.count}:${snapshot.get(sum)}")
     }.onFailure {
         Log.w(TAG, "vocabulary fingerprint failed; reading every word instead", it)
     }.getOrNull()
@@ -204,6 +204,11 @@ class FirestoreSyncManager @Inject constructor(
                 perfectiveForm = doc.getString("perfectiveForm").orEmpty(),
                 contemplativeForm = doc.getString("contemplativeForm").orEmpty(),
                 category = doc.getString("category").orEmpty().ifBlank { "General" },
+                // The learning tree's section tag. Only the whole-collection realtime listener read it,
+                // so once 1.24 scoped that listener to recent edits a new install never got a theme and
+                // its course collapsed into one "Pang-araw-araw" section. "nan" is a pandas export
+                // artefact meaning untagged.
+                theme = doc.getString("theme").orEmpty().trim().let { if (it == "nan") "" else it },
                 partOfSpeech = doc.getString("partOfSpeech").orEmpty(),
                 // Editorial definitions. Blank until backfill_meanings.js has run against this
                 // project; every consumer treats blank as "no definition yet" and hides itself.
@@ -367,6 +372,16 @@ internal fun storiesToPrune(
     keep.addAll(seededIds)
     return localIds.filter { it !in keep }
 }
+
+/**
+ * What the word parser reads. Bump it whenever the parser starts reading a field it used to skip:
+ * every phone's stored fingerprint then stops matching and it reads the whole collection once, so
+ * the new field reaches words that will never be edited again. 2 added `theme` (1.25.1).
+ */
+internal const val VOCABULARY_PARSER_VERSION = 2
+
+/** The collection's "count:sum" fingerprint, tagged with [VOCABULARY_PARSER_VERSION]. */
+internal fun versionedFingerprint(raw: String): String = "v$VOCABULARY_PARSER_VERSION/$raw"
 
 /**
  * Whether the daily reconcile must read every vocabulary document, or can trust the incremental
