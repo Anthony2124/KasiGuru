@@ -29,11 +29,14 @@ export function Icon({ name, size = 22, color, class: cls, label }: { name: Icon
   );
 }
 
+/** "Kasi" takes the theme's ink, as kasiguru_wordmark_light does on Android; "Guru" keeps the brand lime. */
+const WORDMARK_BODY = BRAND.wordmark.body.replace(/#FFFFFF/gi, 'currentColor');
+
 export function Wordmark({ width = 162 }: { width?: number }) {
   const w = BRAND.wordmark;
   const [, , vw, vh] = w.viewBox.split(' ').map(Number);
   return (
-    <svg width={width} height={(width * vh) / vw} viewBox={w.viewBox} role="img" aria-label="KasiGuru" dangerouslySetInnerHTML={{ __html: w.body }} />
+    <svg width={width} height={(width * vh) / vw} viewBox={w.viewBox} role="img" aria-label="KasiGuru" style={{ color: 'var(--ink)' }} dangerouslySetInnerHTML={{ __html: WORDMARK_BODY }} />
   );
 }
 
@@ -350,7 +353,7 @@ export function Confetti({ pieces = 70 }: { pieces?: number }) {
       left: Math.random() * 100,
       delay: Math.random() * 0.8,
       duration: 2.2 + Math.random() * 1.8,
-      color: ['var(--lime)', 'var(--gold)', 'var(--coral)', 'var(--cream)', 'var(--info)'][Math.floor(Math.random() * 5)],
+      color: ['var(--lime-fill)', 'var(--gold-fill)', 'var(--coral-fill)', 'var(--cream)', 'var(--info-fill)'][Math.floor(Math.random() * 5)],
       rotate: Math.random() * 360,
     }))
   );

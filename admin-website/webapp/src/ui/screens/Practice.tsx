@@ -16,8 +16,8 @@ import { wordsToReview } from '../derive';
 
 const TONE: Record<GameEntry['tone'], { fill: string; ink: string }> = {
   lime: { fill: 'rgba(113,189,29,0.16)', ink: 'var(--lime)' },
-  coral: { fill: 'var(--coral)', ink: 'var(--reward-ink)' },
-  gold: { fill: 'var(--gold)', ink: 'var(--reward-ink)' },
+  coral: { fill: 'var(--coral-fill)', ink: 'var(--reward-ink)' },
+  gold: { fill: 'var(--gold-fill)', ink: 'var(--reward-ink)' },
 };
 
 export const GAME_RULES: Record<string, { title: string; description: string; rules: string[] }> = {
@@ -82,7 +82,7 @@ function GameRulesDialog({ type, onClose }: { type: string; onClose: () => void 
           </ul>
         </div>
         <label class="row" style={{ cursor: 'pointer' }}>
-          <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow((e.target as HTMLInputElement).checked)} style={{ width: 20, height: 20, accentColor: 'var(--lime)' }} />
+          <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow((e.target as HTMLInputElement).checked)} style={{ width: 20, height: 20, accentColor: 'var(--lime-fill)' }} />
           <span class="t-body">Don't show these rules again</span>
         </label>
         <ClayButton
@@ -121,7 +121,7 @@ export function PracticeScreen() {
   return (
     <GroundScaffold title="Practice" onBack={false} nav largeTitle subtitle={levelTitle(p.level)}>
       {rules && <GameRulesDialog type={rules} onClose={() => setRules(null)} />}
-      <div class="segmented" role="tablist" style={{ marginBottom: 'var(--s-md)' }}>
+      <div class="segmented" role="tablist" data-tour="PracticeLeaderboard" style={{ marginBottom: 'var(--s-md)' }}>
         <button role="tab" aria-selected={segment === 'games'} onClick={() => setSegment('games')}>Games</button>
         <button role="tab" aria-selected={segment === 'leaderboard'} onClick={() => setSegment('leaderboard')}>Leaderboard</button>
       </div>
@@ -129,7 +129,7 @@ export function PracticeScreen() {
         <LeaderboardContent />
       ) : (
       <div class="stack-lg">
-        <div class="card">
+        <div class="card" data-tour="PracticeStats">
           <div class="stats3">
             <div><p class="t-headline-s">{p.totalXp}</p><p class="t-label muted">XP</p></div>
             <div><p class="t-headline-s">{stars}</p><p class="t-label muted">Stars</p></div>
@@ -157,7 +157,7 @@ export function PracticeScreen() {
         {recommended && (
           <section class="stack-sm">
             <SectionHeading text="Continue practicing" />
-            <button class="card panel" onClick={() => tap(recommended.type)}>
+            <button class="card panel" data-tour="PracticeFeatured" onClick={() => tap(recommended.type)}>
               <div class="row">
                 <div style={{ width: 56, height: 56, borderRadius: 18, background: TONE[recommended.tone].fill, display: 'grid', placeItems: 'center', flex: 'none' }}>
                   <Icon name={recommended.icon} size={26} color={TONE[recommended.tone].ink} />

@@ -25,7 +25,6 @@ interface Question {
 
 export function WordMatchGame({ level }: { level: number }) {
   const ready = useApp((s) => s.contentReady);
-  const soundOn = useApp((s) => s.prefs.soundEnabled);
   const [round, setRound] = useState(0);
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -91,7 +90,7 @@ export function WordMatchGame({ level }: { level: number }) {
     if (isCorrect) setScore((s) => s + 1);
     review.current.push({ prompt: q.word.kasiguranin, subPrompt: q.word.english || undefined, userAnswer: option, correctAnswer: answerOf(q.word), isCorrect });
     setSelected(option);
-    if (soundOn) feedbackTone(isCorrect);
+    feedbackTone(isCorrect);
     const word = getCorpus().byId(q.word.id) ?? q.word;
     act((d) => d.reviewWord(word, rating));
   };

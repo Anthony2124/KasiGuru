@@ -20,7 +20,7 @@ import { matchRecall } from '../../domain/recall';
 import { ratingForAnswer, ReviewRating } from '../../domain/sm2';
 import { shuffled } from '../../domain/random';
 import type { Word } from '../../domain/types';
-import { answerHaptic, feedbackTone, playWord, prefetch, stopAudio, unlockAudio } from '../../lib/audio';
+import { answerHaptic, feedbackTone, playSfx, playWord, prefetch, stopAudio, unlockAudio } from '../../lib/audio';
 import { today } from '../../domain/dates';
 import { back, navigate } from '../../lib/router';
 import { act, getCorpus, getState, setPrefs, useApp } from '../../lib/store';
@@ -48,7 +48,6 @@ export function LessonScreen({ unitId, lessonIndex }: { unitId: string; lessonIn
   const solvedIds = useRef(new Set<number>());
   const rated = useRef(new Set<string>());
   const shownAt = useRef(Date.now());
-  const soundOn = useApp((s) => s.prefs.soundEnabled);
   const hapticsOn = useApp((s) => s.prefs.hapticsEnabled);
 
   useEffect(() => {
@@ -89,7 +88,7 @@ export function LessonScreen({ unitId, lessonIndex }: { unitId: string; lessonIn
     if (!correct) missedFirst.current.add(item.id);
     setIsCorrect(correct);
     setCombo((c) => (correct ? c + 1 : 0));
-    if (soundOn) feedbackTone(correct);
+    feedbackTone(correct);
     if (hapticsOn) answerHaptic(correct);
     if (!correct) {
       const corpus = getCorpus();
@@ -161,7 +160,7 @@ export function LessonScreen({ unitId, lessonIndex }: { unitId: string; lessonIn
         <div class="row" style={{ position: 'relative', height: '100%', padding: '0 var(--gutter)' }}>
           {!answered && <Jepjep pose="pointing_a_lesson" height={60} decorative />}
           <p class="t-body-s grow" style={{ color: 'var(--ink)' }}>Take your time. You're learning.</p>
-          {combo >= 3 && <span class="tag" style={{ background: 'var(--olive)', color: 'var(--ink)' }}>{combo} in a row</span>}
+          {combo >= 3 && <span class="tag" style={{ background: 'var(--selected)', color: 'var(--ink)' }}>{combo} in a row</span>}
         </div>
       </div>
 
@@ -411,6 +410,9 @@ function Feedback({ correct, ex, remediation, typed, onContinue }: { correct: bo
 
 function LessonComplete({ xp, accuracy, words, showStreak }: { xp: number; accuracy: number; words: Word[]; showStreak: boolean }) {
   const perfect = accuracy >= 1;
+  useEffect(() => {
+    playSfx('complete');
+  }, []);
   return (
     <main class="page no-nav glow" style={{ '--gx': '50%', '--gy': '20%', minHeight: '100dvh', paddingTop: 'calc(var(--safe-top) + var(--s-xl))' } as never}>
       <div class="readable stack center">

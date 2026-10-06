@@ -14,7 +14,7 @@ import {
   wordSearchTier,
   type Cell,
 } from '../../domain/wordSearch';
-import { feedbackTone, playWord } from '../../lib/audio';
+import { feedbackTone, playSfx, playWord } from '../../lib/audio';
 import { navigate, enc } from '../../lib/router';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { Icon, Loading, sceneForCategory } from '../kit';
@@ -25,7 +25,6 @@ const same = (a: Cell | null, b: Cell | null) => !!a && !!b && a[0] === b[0] && 
 
 export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string; level: number }) {
   const ready = useApp((s) => s.contentReady);
-  const soundOn = useApp((s) => s.prefs.soundEnabled);
   const level = Math.min(Math.max(rawLevel, 1), WORD_SEARCH_MAX_LEVEL);
   const category = categoryForWordSearchKey(levelKey);
   const tier = wordSearchTier(level);
@@ -86,11 +85,11 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
     if (!hit) {
       setMissed(true);
       setMisses((m) => m + 1);
-      if (soundOn) feedbackTone(false);
+      feedbackTone(false);
       return;
     }
     setMissed(false);
-    if (soundOn) feedbackTone(true);
+    playSfx('found');
     const next = [...found, hit.id];
     setFound(next);
     if (next.length === board.placements.length) finish(misses);

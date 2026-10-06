@@ -14,6 +14,11 @@ import { LessonScreen } from './ui/screens/Lesson';
 import { PracticeScreen } from './ui/screens/Practice';
 import { LibraryScreen, StoriesComingSoonScreen } from './ui/screens/Library';
 import { STORIES_ENABLED } from './domain/constants';
+import { musicMoodFor } from './domain/music';
+import { playSfx } from './lib/audio';
+import { setMusicMood } from './lib/music';
+import { ensureTourBaseline, resumePendingTour } from './lib/tour';
+import { TourOverlay } from './ui/tour';
 import { MeScreen } from './ui/screens/Me';
 import { OnboardingScreen } from './ui/screens/Onboarding';
 import { ReviewScreen } from './ui/screens/Review';
@@ -59,6 +64,7 @@ function BottomNav({ path }: { path: string }) {
           <button
             key={t.path}
             class="tab"
+            data-tour={`Nav${t.label}`}
             aria-label={t.label}
             aria-current={path === t.path ? 'page' : undefined}
             onClick={() => switchTab(t.path)}
@@ -104,7 +110,7 @@ function SideNav({ path }: { path: string }) {
       </button>
       <div class="side-tabs">
         {TABS.map((t) => (
-          <button key={t.path} class="side-tab" aria-current={current === t.path ? 'page' : undefined} onClick={() => switchTab(t.path)}>
+          <button key={t.path} class="side-tab" data-tour={`Nav${t.label}`} aria-current={current === t.path ? 'page' : undefined} onClick={() => switchTab(t.path)}>
             <Icon name={t.icon} size={24} />
             <span>{t.label}</span>
           </button>
@@ -168,6 +174,9 @@ const ROUTES: Route[] = [
  */
 function Celebrations() {
   const next = useApp((s) => s.celebrations[0]);
+  useEffect(() => {
+    if (next?.type === 'streak') playSfx('streak');
+  }, [next]);
   if (!next) return null;
   if (next.type === 'reward') return <RewardDialog event={next} onClose={dismissCelebration} />;
 
@@ -178,7 +187,7 @@ function Celebrations() {
       <Dialog glow label="Streak activated" onClose={dismissCelebration}>
         <div class="stack center">
           <div style={{ display: 'grid', placeItems: 'center' }}>
-            <div class="pop" style={{ width: 96, height: 96, borderRadius: '50%', background: 'var(--coral)', display: 'grid', placeItems: 'center' }}>
+            <div class="pop" style={{ width: 96, height: 96, borderRadius: '50%', background: 'var(--coral-fill)', display: 'grid', placeItems: 'center' }}>
               <Icon name="flash" size={52} color="var(--reward-ink)" />
             </div>
           </div>
@@ -228,6 +237,21 @@ export function App() {
     if (onboarded && path === '/onboarding') navigate('/', { replace: true });
   }, [ready, onboarded, path]);
 
+  // Silent until the learner is through onboarding, and while an account is suspended.
+  useEffect(() => {
+    setMusicMood(ready && onboarded && !ban?.isBanned ? musicMoodFor(path) : 'none');
+  }, [ready, onboarded, ban, path]);
+
+  // The core tour chapter a learner is owed starts on a tab once nothing else is being celebrated,
+  // so its spotlight never sits under a reward dialog.
+  const tutorialPending = useApp((s) => s.prefs.tutorialPending);
+  const celebrating = useApp((s) => s.celebrations.length > 0);
+  useEffect(() => {
+    if (!ready) return;
+    ensureTourBaseline(onboarded);
+    if (onboarded && tutorialPending && !celebrating && !ban?.isBanned && TABS.some((t) => t.path === path)) resumePendingTour();
+  }, [ready, onboarded, tutorialPending, celebrating, ban, path]);
+
   if (!ready) {
     return (
       <div class="app" style={{ display: 'grid', placeItems: 'center' }}>
@@ -269,6 +293,7 @@ export function App() {
       {screen}
       {isTab && <BottomNav path={path} />}
       <Celebrations />
+      <TourOverlay />
       <ToastHost />
     </div>
   );

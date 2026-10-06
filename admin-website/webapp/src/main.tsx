@@ -1,12 +1,13 @@
 import { render } from 'preact';
 import './styles.css';
 import { App } from './app';
-import { installTapSounds } from './lib/audio';
+import { configureSounds, installTapSounds } from './lib/audio';
+import { installMusic, setMusicSettings } from './lib/music';
 import { initAuth } from './lib/auth';
 import { loadContent, refreshContent } from './lib/content';
 import { requestPersistence } from './lib/persist';
 import { fetchAnnouncements } from './lib/remote';
-import { act, getState, loadLocal } from './lib/store';
+import { act, getState, loadLocal, subscribe } from './lib/store';
 import { initSync } from './lib/sync';
 
 async function boot() {
@@ -28,7 +29,16 @@ async function boot() {
 }
 
 render(<App />, document.getElementById('app')!);
-installTapSounds(() => getState().prefs.tapSoundsEnabled);
+configureSounds(() => {
+  const p = getState().prefs;
+  return { effects: p.soundEnabled, taps: p.tapSoundsEnabled, effectsVolume: p.sfxVolumePercent };
+});
+installTapSounds();
+installMusic();
+subscribe(() => {
+  const p = getState().prefs;
+  setMusicSettings(p.musicEnabled, p.musicVolumePercent);
+});
 boot().catch((e) => {
   console.error('boot failed', e);
   document.getElementById('app')!.innerHTML =

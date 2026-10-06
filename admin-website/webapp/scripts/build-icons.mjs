@@ -94,6 +94,9 @@ const ICONS = {
   gallery: 'bulk_gallery',
   messageText: 'bulk_message_text',
   shuffle: 'bulk_shuffle',
+  music: 'bulk_music',
+  volumeLow: 'bulk_volume_low',
+  fingerTap: 'bulk_finger_cricle',
 };
 
 /** Brand vectors kept in their own colours. */
@@ -241,15 +244,7 @@ async function main() {
     copied++;
   }
 
-  // Lesson sounds (UiFeedbackSounds), the same files the APK ships.
-  fs.mkdirSync(path.join(webapp, 'public', 'sounds'), { recursive: true });
-  // Android 1.23 replaced most of these with Ogg files, which older iPhones cannot play; the web keeps
-  // its own copies until they are converted, so a source that has moved on is skipped, not fatal.
-  for (const [from, to] of [['ui_correct.wav', 'correct.wav'], ['ui_wrong.wav', 'wrong.wav'], ['ui_level_up.wav', 'level-up.wav']]) {
-    const src = path.join(res, 'raw', from);
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(webapp, 'public', 'sounds', to));
-    else console.warn(`skipped sound ${from}: no longer in res/raw`);
-  }
+  // Sounds and music are converted from the APK's Ogg files by `npm run sounds` (needs ffmpeg).
 
   // Bundled fonts, the same files the APK ships.
   for (const f of ['fredoka_semibold.ttf', 'fredoka_bold.ttf', 'dm_sans_regular.ttf', 'dm_sans_medium.ttf', 'dm_sans_bold.ttf']) {

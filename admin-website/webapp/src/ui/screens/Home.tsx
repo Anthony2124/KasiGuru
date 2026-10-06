@@ -73,7 +73,7 @@ export function HomeScreen() {
               <p class="t-body muted">Magandang aldew,</p>
               <h1 class="t-title-l hl ellipsis">{displayName}</h1>
             </div>
-            <button class="hero-chip" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
+            <button class="hero-chip" data-tour="StreakBadge" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
               <Icon name="flash" size={16} color="var(--coral-fill)" />
               {p.currentStreak}
             </button>
@@ -81,7 +81,7 @@ export function HomeScreen() {
               <Icon name="star" size={16} color="var(--gold-fill)" />
               {p.totalXp}
             </button>
-            <button class="icon-btn" aria-label="Notifications" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
+            <button class="icon-btn" data-tour="NotificationBell" aria-label="Notifications" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
               <Icon name="notification" size={22} />
               {announcements.some((a) => !prefs.readAnnouncements.includes(a.id)) && (
                 <span style={{ position: 'absolute', top: 10, right: 11, width: 9, height: 9, borderRadius: '50%', background: 'var(--coral-fill)', border: '2px solid var(--ground)' }} />
@@ -91,7 +91,7 @@ export function HomeScreen() {
 
           {/* ContinueCard: the section, "Lesson N of M", the first word, the section's progress. */}
           {card ? (
-            <section class="card panel glow continue-card" style={{ '--gx': '85%', '--gy': '35%' } as never}>
+            <section class="card panel glow continue-card" data-tour="ContinueAction" style={{ '--gx': '85%', '--gy': '35%' } as never}>
               <div class="grow" style={{ minWidth: 0 }}>
                 <p class="t-label-l muted ellipsis">Continue · {card.sectionTitle}</p>
                 <h2 class="t-headline-s ellipsis" style={{ marginTop: 'var(--s-xxs)' }}>
@@ -114,7 +114,9 @@ export function HomeScreen() {
               <Jepjep pose="with_backpack" height={120} breathe />
             </section>
           ) : (
-            <ClayButton label={fallback.label} icon={fallback.icon} onClick={fallback.go} />
+            <div data-tour="ContinueAction" style={{ borderRadius: 'var(--r-pill)' }}>
+              <ClayButton label={fallback.label} icon={fallback.icon} onClick={fallback.go} />
+            </div>
           )}
 
           {announcements.map((a) => (
@@ -165,7 +167,7 @@ export function HomeScreen() {
 
           {/* Today: the day goal and the review deck. */}
           <div class="grid-2">
-            <button class="card center" onClick={() => navigate('/me')} style={{ display: 'grid', justifyItems: 'center', gap: 4 }}>
+            <button class="card center" data-tour="DailyGoalRing" onClick={() => navigate('/me')} style={{ display: 'grid', justifyItems: 'center', gap: 4 }}>
               <ProgressRing
                 value={goal.fraction}
                 color={goal.met ? 'var(--green)' : 'var(--gold)'}

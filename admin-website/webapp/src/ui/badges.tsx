@@ -5,8 +5,7 @@
 import { BADGE_TIERS, backgroundRequirement, backgroundUnlocked, familyFor, PROFILE_BACKGROUNDS, tierFor, type BadgeTier } from '../domain/badges';
 import { useEffect } from 'preact/hooks';
 import type { UserProgress } from '../domain/types';
-import { levelUpSound } from '../lib/audio';
-import { getState } from '../lib/store';
+import { playSfx } from '../lib/audio';
 import { ClayButton, Confetti, Dialog, Icon, Jepjep, sceneUrl, type SceneId } from './kit';
 
 /** The app's medal glyph on a tier-coloured face; a lock on a sunken one when not yet earned. */
@@ -77,7 +76,7 @@ export function RewardDialog({
   const badges = [...best.values()];
   const title = event.levelChanged ? `Level ${event.level} reached!` : 'Badge upgraded!';
   useEffect(() => {
-    if (event.levelChanged && getState().prefs.soundEnabled) levelUpSound();
+    playSfx(event.levelChanged ? 'level-up' : 'badge');
   }, []);
   return (
     <>
@@ -136,7 +135,7 @@ export function BackgroundPicker({ progress, onSelect, onClose }: { progress: Us
                 onClick={() => onSelect(b.id)}
                 style={{ padding: 0, overflow: 'hidden', textAlign: 'left', border: `${selected ? 2 : 1}px solid ${selected ? 'var(--lime)' : 'var(--hair)'}` }}
               >
-                <div style={{ position: 'relative', height: 96 }}>
+                <div style={{ position: 'relative', height: 96, background: 'var(--canopy-bottom)' }}>
                   <img src={sceneUrl(b.id as SceneId)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: unlocked ? 1 : 0.35 }} />
                   {!unlocked && (
                     <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>

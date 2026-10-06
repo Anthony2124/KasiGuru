@@ -64,7 +64,7 @@ export function AchievementsScreen() {
   return (
     <GroundScaffold title="Badges" largeTitle subtitle="Your collection" wide>
       <div class="stack-lg">
-        <div class="card panel stack-sm">
+        <div class="card panel stack-sm" data-tour="ProgressBadgePanel">
           <p class="t-headline-s">
             {families.filter((f) => f.current).length} of 11 badges · {tiersEarned} of 66 tiers
           </p>
@@ -89,9 +89,9 @@ export function AchievementsScreen() {
           </section>
         )}
 
-        <div class="row-xs" role="tablist" style={{ overflowX: 'auto', paddingBottom: 4 }}>
+        <div class="row-xs" role="tablist" data-tour="ProgressFilter" style={{ overflowX: 'auto', paddingBottom: 4 }}>
           {FILTERS.map((f) => (
-            <button key={f} role="tab" aria-selected={filter === f} class="chip" onClick={() => setFilter(f)} style={filter === f ? { background: 'var(--olive)', color: 'var(--ink)' } : undefined}>
+            <button key={f} role="tab" aria-selected={filter === f} class="chip" onClick={() => setFilter(f)} style={filter === f ? { background: 'var(--selected)', color: 'var(--ink)' } : undefined}>
               {f}
             </button>
           ))}

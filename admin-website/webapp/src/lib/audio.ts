@@ -21,7 +21,8 @@ let current: AudioBufferSourceNode | null = null;
 const decoded = new Map<string, AudioBuffer>();
 const inflight = new Map<string, Promise<ArrayBuffer | null>>();
 
-function context(): AudioContext | null {
+/** The one AudioContext for word clips, effects and music. */
+export function context(): AudioContext | null {
   if (ctx) return ctx;
   const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
@@ -99,6 +100,13 @@ export function prefetch(word: WordContent) {
   void clip(audioKey(word), word.audioUpdatedAt);
 }
 
+let onWordClip: ((seconds: number) => void) | null = null;
+
+/** The music lowers itself under a recording, as it answers a ducking audio-focus request on Android. */
+export function setWordClipListener(fn: (seconds: number) => void) {
+  onWordClip = fn;
+}
+
 export function stopAudio() {
   try {
     current?.stop();
@@ -131,6 +139,7 @@ export async function playWord(word: WordContent): Promise<boolean> {
     src.connect(c.destination);
     src.start();
     current = src;
+    onWordClip?.(buffer.duration);
     return true;
   } catch (e) {
     console.warn('could not play', key, e);
@@ -138,22 +147,54 @@ export async function playWord(word: WordContent): Promise<boolean> {
   }
 }
 
-/** Short UI sounds for right and wrong answers, synthesised so there is nothing to download. */
-// ── Lesson sounds (UiFeedbackSounds) ─────────────────────────────────────────
+// ── Sound effects (SoundEffects.kt) ──────────────────────────────────────────
 
-type UiSound = 'correct' | 'wrong' | 'level-up' | 'tap';
-const uiSounds = new Map<UiSound, AudioBuffer>();
-let uiLoading: Promise<void> | null = null;
-/** Each sound's level, as Sfx sets it at the Android default volume. */
-const UI_GAIN: Record<UiSound, number> = { correct: 0.35, wrong: 0.35, 'level-up': 0.35, tap: 0.15 };
+/**
+ * The app's short sounds and each one's level at the default 50% volume (`Sfx` in SoundEffects.kt).
+ * The files are converted from the APK's by `npm run sounds`; see data/audio/ for their sources.
+ */
+const SFX = {
+  correct: { file: 'correct.mp3', gain: 0.35 },
+  wrong: { file: 'wrong.mp3', gain: 0.35 },
+  found: { file: 'found.mp3', gain: 0.4 },
+  complete: { file: 'complete.mp3', gain: 0.35 },
+  'level-up': { file: 'level-up.wav', gain: 0.35 },
+  streak: { file: 'streak.mp3', gain: 0.35 },
+  badge: { file: 'badge.mp3', gain: 0.35 },
+  flip: { file: 'flip.mp3', gain: 0.3 },
+  tap: { file: 'tap.wav', gain: 0.15 },
+} as const;
+export type Sfx = keyof typeof SFX;
 
-/** Adrian's answer, level-up and tap sounds, decoded once. Until they arrive, a synthesised tone stands in for answers. */
-function loadUiSounds(c: AudioContext) {
-  uiLoading ??= Promise.all(
-    (Object.keys(UI_GAIN) as UiSound[]).map(async (name) => {
+/** Where the sound and music volume sliders start: the level the sounds were tuned at. */
+export const DEFAULT_VOLUME_PERCENT = 50;
+
+export interface SoundSettings {
+  effects: boolean;
+  taps: boolean;
+  effectsVolume: number;
+}
+
+let soundSettings: () => SoundSettings = () => ({ effects: true, taps: true, effectsVolume: DEFAULT_VOLUME_PERCENT });
+
+/** The learner's settings decide what is heard; callers just play. Wired up once in main.tsx. */
+export function configureSounds(read: () => SoundSettings) {
+  soundSettings = read;
+}
+
+/** A sound's level at [percent]: its own level is the 50% one, so the slider doubles it at 100%. */
+export const sfxVolume = (sfx: Sfx, percent: number) => Math.min(1, Math.max(0, (SFX[sfx].gain * percent) / DEFAULT_VOLUME_PERCENT));
+
+const sfxBuffers = new Map<Sfx, AudioBuffer>();
+let sfxLoading: Promise<void> | null = null;
+
+/** Every effect, decoded once. Until they arrive, a synthesised tone stands in for answers. */
+function loadSfx(c: AudioContext) {
+  sfxLoading ??= Promise.all(
+    (Object.keys(SFX) as Sfx[]).map(async (name) => {
       try {
-        const res = await fetch(`/sounds/${name}.wav`);
-        if (res.ok) uiSounds.set(name, await c.decodeAudioData(await res.arrayBuffer()));
+        const res = await fetch(`/sounds/${SFX[name].file}`);
+        if (res.ok) sfxBuffers.set(name, await c.decodeAudioData(await res.arrayBuffer()));
       } catch {
         // The synthesised fallback keeps working.
       }
@@ -161,23 +202,34 @@ function loadUiSounds(c: AudioContext) {
   ).then(() => undefined);
 }
 
-function playUiSound(name: UiSound): boolean {
+function playAt(name: Sfx, percent: number): boolean {
   const c = context();
   if (!c || c.state !== 'running') return false;
-  loadUiSounds(c);
-  const buffer = uiSounds.get(name);
+  loadSfx(c);
+  const buffer = sfxBuffers.get(name);
+  const volume = sfxVolume(name, percent);
   if (!buffer) return false;
+  if (volume <= 0) return true;
   const src = c.createBufferSource();
   const gain = c.createGain();
-  gain.gain.value = UI_GAIN[name];
+  gain.gain.value = volume;
   src.buffer = buffer;
   src.connect(gain).connect(c.destination);
   src.start();
   return true;
 }
 
-export function levelUpSound() {
-  playUiSound('level-up');
+/** Plays an effect if the learner has that kind of sound on. Tap clicks have their own switch. */
+export function playSfx(name: Sfx): boolean {
+  const s = soundSettings();
+  if (!(name === 'tap' ? s.taps : s.effects)) return true;
+  return playAt(name, s.effectsVolume);
+}
+
+/** Plays a sample at [percent] for the Settings slider, before the new level is saved. */
+export function previewSfx(percent: number) {
+  unlockAudio();
+  playAt('correct', percent);
 }
 
 // ── Tap sounds (TapSounds.kt) ────────────────────────────────────────────────
@@ -194,13 +246,13 @@ const LONG_PRESS_MS = 500;
  * its own sound (an answer) carries `data-no-tap-sound`. The opt-out belongs to the control it marks,
  * not to separate buttons nested inside it.
  */
-export function installTapSounds(enabled: () => boolean) {
+export function installTapSounds() {
   let pressedAt = -Infinity;
   document.addEventListener('pointerdown', () => (pressedAt = performance.now()), { capture: true, passive: true });
   document.addEventListener(
     'click',
     (e) => {
-      if (!enabled() || performance.now() - pressedAt > LONG_PRESS_MS) return;
+      if (!soundSettings().taps || performance.now() - pressedAt > LONG_PRESS_MS) return;
       const target = e.target instanceof Element ? e.target.closest(TAPPABLE) : null;
       if (!target || target.hasAttribute('data-no-tap-sound')) return;
       // One click per press: a label forwards its click to its checkbox, which would otherwise click twice.
@@ -208,17 +260,21 @@ export function installTapSounds(enabled: () => boolean) {
       const c = context();
       if (!c) return;
       // iOS starts the context suspended; a tap is the moment it may be resumed.
-      if (c.state === 'suspended') void c.resume().then(() => playUiSound('tap'));
-      else playUiSound('tap');
+      if (c.state === 'suspended') void c.resume().then(() => playSfx('tap'));
+      else playSfx('tap');
     },
     true
   );
 }
 
+/** The right- or wrong-answer sound, with a synthesised tone until the files have loaded. */
 export function feedbackTone(correct: boolean) {
-  if (playUiSound(correct ? 'correct' : 'wrong')) return;
+  const s = soundSettings();
+  if (!s.effects) return;
+  if (playSfx(correct ? 'correct' : 'wrong')) return;
   const c = context();
-  if (!c || c.state !== 'running') return;
+  const peak = (0.12 * s.effectsVolume) / DEFAULT_VOLUME_PERCENT;
+  if (!c || c.state !== 'running' || peak <= 0.0001) return;
   const now = c.currentTime;
   const osc = c.createOscillator();
   const gain = c.createGain();
@@ -227,7 +283,7 @@ export function feedbackTone(correct: boolean) {
   osc.frequency.setValueAtTime(notes[0], now);
   osc.frequency.setValueAtTime(notes[1], now + 0.09);
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(peak, now + 0.02);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
   osc.connect(gain).connect(c.destination);
   osc.start(now);

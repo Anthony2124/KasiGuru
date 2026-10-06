@@ -3,7 +3,8 @@
  * score, a quit guard, and the results screen (GameShellComponents / GameOverView on Android).
  */
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
+import { playSfx } from '../../lib/audio';
 import { back, navigate } from '../../lib/router';
 import { ClayButton, ConfirmDialog, Confetti, CountUp, Icon, Jepjep, ProgressBar, sceneUrl, type SceneId } from '../kit';
 
@@ -35,7 +36,7 @@ export function GameFrame({
         </button>
         <h1 class="t-title-l pill-over">{title}</h1>
         <span class="spacer" />
-        {score != null && <span class="chip" style={{ background: 'var(--lime)', color: 'var(--on-lime)', border: 0 }}>{score}</span>}
+        {score != null && <span class="chip" style={{ background: 'var(--lime-fill)', color: 'var(--on-lime)', border: 0 }}>{score}</span>}
       </header>
       {progress != null && (
         <div class="game-progress">
@@ -61,6 +62,9 @@ export function GameOver({
   score, total, xp, stars, nextLevel, onNext, onReplay, review, headline,
 }: { score: number; total: number; xp: number; stars: number; nextLevel: number | null; onNext: () => void; onReplay: () => void; review?: ReviewItem[]; headline?: string }) {
   const [showReview, setShowReview] = useState(false);
+  useEffect(() => {
+    playSfx('complete');
+  }, []);
   return (
     <main class="page no-nav glow" style={{ '--gx': '50%', '--gy': '20%', minHeight: '100dvh', paddingTop: 'calc(var(--safe-top) + var(--s-lg))' } as never}>
       {stars === 3 && <Confetti />}
@@ -77,7 +81,7 @@ export function GameOver({
         </div>
         <h1 class="t-display">{headline ?? (stars > 0 ? 'Challenge complete!' : 'Keep practising')}</h1>
         <p class="t-title-l muted">Score: {score} / {total}</p>
-        <span class="chip" style={{ alignSelf: 'center', margin: '0 auto', background: 'var(--gold)', color: 'var(--reward-ink)', border: 0 }}>
+        <span class="chip" style={{ alignSelf: 'center', margin: '0 auto', background: 'var(--gold-fill)', color: 'var(--reward-ink)', border: 0 }}>
           <Icon name="star" size={16} /> +<CountUp to={xp} /> XP earned
         </span>
         {review && review.length > 0 && (
