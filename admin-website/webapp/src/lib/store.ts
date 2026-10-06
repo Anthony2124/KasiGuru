@@ -13,6 +13,7 @@ import { Draft, initialLearner, type LearnerData, type LearnerEvent } from '../d
 import type { AnnouncementDto, Story, WordContent } from '../domain/types';
 import { load, save } from './persist';
 import { applyTheme, type ThemeChoice } from './theme';
+import type { ActiveTour } from './tour';
 
 export interface Account {
   uid: string | null;
@@ -27,9 +28,25 @@ export interface Account {
 export interface Prefs {
   /** Light, Dark or System (the default), as Android's Appearance screen. See lib/theme.ts. */
   theme: ThemeChoice;
+  /** Answer, win and celebration sounds (SoundEffects). */
   soundEnabled: boolean;
   /** The soft click on buttons and tabs; separate from the answer sounds, as on Android. */
   tapSoundsEnabled: boolean;
+  /** Background music in menus and games (MusicPlayer). */
+  musicEnabled: boolean;
+  /** 0–100 in steps of 5; 50 is the level the sounds were tuned at (DEFAULT_VOLUME_PERCENT). */
+  sfxVolumePercent: number;
+  musicVolumePercent: number;
+  /** Owed the core tour chapter: set when onboarding finishes, cleared when it is finished or skipped. */
+  tutorialPending: boolean;
+  /** Chapters finished, as "Id:version" stamps (TourProgress.kt). */
+  tourCompleted: string[];
+  /** Chapter ids left early. */
+  tourSkipped: string[];
+  /** Where a chapter was left, so the help page can offer to continue it. */
+  tourResume: { chapter: string; step: number } | null;
+  /** The chapter version this install started from; null until it is stamped once. */
+  tourBaseline: number | null;
   /** Answer vibrations in lessons, where the browser supports them (not iOS). */
   hapticsEnabled: boolean;
   /** The day of the last finished lesson, so the streak page shows after the day's first one. */
@@ -68,12 +85,22 @@ export interface AppState {
   announcements: AnnouncementDto[];
   ban: BanInfo | null;
   online: boolean;
+  /** The tour chapter on screen, if any (lib/tour.ts). */
+  tour: ActiveTour | null;
 }
 
 const defaultPrefs: Prefs = {
   theme: 'system',
   soundEnabled: true,
   tapSoundsEnabled: true,
+  musicEnabled: true,
+  sfxVolumePercent: 50,
+  musicVolumePercent: 50,
+  tutorialPending: false,
+  tourCompleted: [],
+  tourSkipped: [],
+  tourResume: null,
+  tourBaseline: null,
   hapticsEnabled: true,
   lastLessonDate: '',
   backupPromptDismissed: false,
@@ -100,6 +127,7 @@ let state: AppState = {
   announcements: [],
   ban: null,
   online: typeof navigator === 'undefined' ? true : navigator.onLine,
+  tour: null,
 };
 
 const listeners = new Set<() => void>();

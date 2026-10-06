@@ -74,6 +74,10 @@
   --clay-off-lip: #202421;
   --info-tint: rgba(79, 179, 232, 0.14);
   --shadow: rgba(0, 0, 0, 0.5);
+  /* A chosen option, tab or chip, read with --ink: olive at night, a pale green by day. */
+  --selected: #446025;
+  --selected-edge: #2c4418;
+  --focus: #f2ecca;
 
   --r-chip: 14px;
   --r-tile: 20px;
@@ -145,6 +149,9 @@
   --clay-off-lip: #b9c4ae;
   --info-tint: rgba(19, 103, 147, 0.1);
   --shadow: rgba(40, 60, 30, 0.18);
+  --selected: #d5e7bf;
+  --selected-edge: #a9c78a;
+  --focus: #142012;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -162,13 +169,24 @@ body {
   min-height: 100dvh;
   overscroll-behavior-y: none;
 }
+/* Words and controls drawn over a scene's dark veil keep the night ink in both themes. */
+.on-scenery, .scene > .over, .lesson-scene {
+  color-scheme: dark; color: #ffffff;
+  --ink: #ffffff; --muted: #c9d1c5; --faint: #8c948a; --sunken: #1c211d; --hair: #3a3f3b; --selected: #446025;
+}
+/* An installed iPhone app draws under a status bar whose glyphs are always white (black-translucent),
+   so on the light ground a canopy strip sits behind them. Elsewhere the inset, and the strip, is zero. */
+:root[data-theme='light'] body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--safe-top); background: var(--canopy-top); pointer-events: none;
+}
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 button:disabled { cursor: default; }
 input, textarea, select { font: inherit; color: inherit; min-width: 0; max-width: 100%; }
 img { display: block; max-width: 100%; }
 svg { flex-shrink: 0; }
 a { color: var(--lime); }
-:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 h1, h2, h3, h4 { margin: 0; font-family: var(--display); font-weight: 700; }
 p { margin: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -383,7 +401,7 @@ button.card:active:not(:disabled) { transform: scale(0.985); background: var(--s
   font-family: var(--display); font-weight: 600; font-size: 16px; color: var(--muted);
   transition: background var(--quick), color var(--quick);
 }
-.segmented button[aria-selected='true'] { background: var(--olive); color: var(--ink); }
+.segmented button[aria-selected='true'] { background: var(--selected); color: var(--ink); }
 
 /* ── Answer options ── */
 .option {
@@ -399,7 +417,7 @@ button.card:active:not(:disabled) { transform: scale(0.985); background: var(--s
 }
 .option:active:not(:disabled) { transform: scale(0.99); }
 .option .label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.option.selected, .option.correct { background: var(--olive); border: 2px solid var(--lime-fill); }
+.option.selected, .option.correct { background: var(--selected); border: 2px solid var(--lime-fill); }
 .option.wrong { background: var(--red-tint); border: 2px solid var(--red-fill); }
 .option.dim { opacity: 0.55; }
 .option .mark { flex: none; }
@@ -453,6 +471,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   text-align: left;
 }
 .list-row + .list-row { border-top: 1px solid var(--hair); }
+/* A volume slider belongs to the switch above it: no rule between them, indented under its text. */
+.list-row.volume-row { border-top: 0; min-height: 44px; padding-top: 0; padding-left: calc(var(--s-md) + 22px + var(--s-sm)); gap: var(--s-xs); }
+.volume-row input[type='range'] { flex: 1; min-width: 0; accent-color: var(--lime-fill); }
+.volume-row input[type='range']:disabled { opacity: 0.45; }
 button.list-row:active, a.list-row:active { background: var(--sunken); }
 .list-row .ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--sunken); flex: none; }
 a.list-row { color: inherit; text-decoration: none; }
@@ -541,6 +563,21 @@ button.avatar { cursor: pointer; }
   max-width: calc(100% - var(--inset-left) - var(--inset-right)); width: max-content; text-align: center;
 }
 
+/* ── Guided tour (SpotlightOverlay) ── */
+.tour { position: fixed; inset: 0; z-index: 150; }
+.tour-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.72); animation: fade-in var(--standard) var(--ease-out); }
+.tour-hole {
+  position: fixed; pointer-events: none;
+  box-shadow: 0 0 0 3px var(--lime-fill), 0 0 0 9999px rgba(0, 0, 0, 0.72);
+  transition: top var(--standard) var(--ease-out), left var(--standard) var(--ease-out), width var(--standard) var(--ease-out), height var(--standard) var(--ease-out), border-radius var(--standard) var(--ease-out);
+}
+.tour-card {
+  position: fixed; width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+  padding: var(--s-sm) var(--s-lg) var(--s-lg); background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-panel);
+  box-shadow: 0 12px 32px var(--shadow); animation: fade-in var(--standard) var(--ease-out);
+}
+.tour-card .row .text-btn:first-child { margin-left: calc(-1 * var(--s-sm)); }
+
 /* Confetti */
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 110; overflow: hidden; }
 .confetti i { position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
@@ -589,7 +626,7 @@ button.avatar { cursor: pointer; }
 .feedback.ok { background: var(--green-tint); border: 1px solid rgba(113, 189, 29, 0.4); }
 .feedback.bad { background: var(--red-tint); border: 1px solid rgba(255, 107, 91, 0.4); }
 .word-chip { min-height: 44px; padding: 8px 16px; border-radius: var(--r-pill); background: var(--surface); border: 1.5px solid var(--hair); font-weight: 700; font-size: 16px; }
-.word-chip.placed { background: var(--olive); border-color: var(--olive); }
+.word-chip.placed { background: var(--selected); border-color: var(--selected-edge); }
 .match-tile { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 72px; padding: var(--s-sm); border-radius: var(--r-tile); background: var(--surface); border: 1.5px solid var(--hair); text-align: left; font-weight: 500; font-size: 0.9375rem; line-height: 1.27; }
 .match-tile span { min-width: 0; overflow-wrap: anywhere; }
 .match-tile.picked { background: var(--lime-fill); border-color: var(--lime-fill); color: var(--on-lime); font-weight: 700; }
@@ -610,7 +647,7 @@ button.avatar { cursor: pointer; }
   transition: transform var(--quick);
 }
 .level-cell:active:not(:disabled) { transform: scale(0.95); }
-.level-cell.cleared { background: var(--olive); border-color: var(--olive-deep); }
+.level-cell.cleared { background: var(--selected); border-color: var(--selected-edge); }
 .level-cell.locked { background: var(--sunken); color: var(--faint); }
 
 /* ── Game frame ── */

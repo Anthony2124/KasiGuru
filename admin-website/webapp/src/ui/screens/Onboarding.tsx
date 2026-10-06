@@ -7,7 +7,7 @@
 import { STORIES_ENABLED } from '../../domain/constants';
 import { useState } from 'preact/hooks';
 import { ONBOARDING_DEFAULT_NAME } from '../../domain/types';
-import { act } from '../../lib/store';
+import { act, setPrefs } from '../../lib/store';
 import { navigate } from '../../lib/router';
 import { useInstall, isIOSSafari } from '../../lib/install';
 import { AVATARS, Avatar, ClayButton, Confetti, Highlighted, Icon, Jepjep, Wordmark, sceneUrl } from '../kit';
@@ -177,6 +177,8 @@ export function OnboardingScreen() {
   };
   const finish = () => {
     act((d) => d.completeOnboarding(name.trim() || ONBOARDING_DEFAULT_NAME, avatar, chosenGoal.xp, 'Kasiguranin Apprentice'));
+    // Owed the core tour chapter, which the shell starts on Home (OnboardingViewModel's tutorial flag).
+    setPrefs({ tutorialPending: true, tourResume: null });
     navigate('/', { replace: true });
   };
   const advance = () => (index + 1 < STEPS.length ? goTo(index + 1) : finish());
@@ -187,7 +189,7 @@ export function OnboardingScreen() {
 
   if (step.id === 'Welcome') {
     return (
-      <div style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div class="on-scenery" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <img src={sceneUrl('forest')} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(10,14,13,.35) 0%, transparent 12%, rgba(10,14,13,.35) 45%, rgba(10,14,13,.8) 72%, rgba(10,14,13,.92) 100%)' }} />
         <div style={{ position: 'relative', flex: 1, display: 'grid', placeItems: 'center', paddingTop: 'var(--safe-top)' }}>
@@ -341,7 +343,7 @@ export function OnboardingScreen() {
                     aria-checked={on}
                     onClick={() => setGoal(i)}
                     class="card"
-                    style={{ textAlign: 'center', padding: 'var(--s-lg) var(--s-sm)', background: on ? 'var(--olive)' : undefined, border: on ? '2px solid var(--lime)' : undefined }}
+                    style={{ textAlign: 'center', padding: 'var(--s-lg) var(--s-sm)', background: on ? 'var(--selected)' : undefined, border: on ? '2px solid var(--lime)' : undefined }}
                   >
                     <p class="t-headline">{g.minutes} min</p>
                     <p class="t-title-s">{g.label}</p>
@@ -392,7 +394,7 @@ export function OnboardingScreen() {
             <WordCard subtitle={FIRST_WORD.meaning} />
             {/* Onboarding grants no XP or streak under XP policy 2; the first lesson does. */}
             <div class="row" style={{ justifyContent: 'center' }}>
-              <span class="chip" style={{ background: 'var(--gold)', color: 'var(--reward-ink)', border: 0 }}>
+              <span class="chip" style={{ background: 'var(--gold-fill)', color: 'var(--reward-ink)', border: 0 }}>
                 <Icon name="star" size={16} /> First word
               </span>
             </div>

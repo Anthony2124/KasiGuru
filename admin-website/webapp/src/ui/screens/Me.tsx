@@ -105,7 +105,7 @@ export function MeScreen() {
           <button class="icon-btn" aria-label="Edit profile" onClick={() => navigate('/edit-profile')}>
             <Icon name="edit" size={22} />
           </button>
-          <button class="icon-btn" aria-label="Settings" onClick={() => navigate('/settings')}>
+          <button class="icon-btn" data-tour="ProfileSettingsIcon" aria-label="Settings" onClick={() => navigate('/settings')}>
             <Icon name="setting" size={22} />
           </button>
         </>
@@ -118,7 +118,7 @@ export function MeScreen() {
           <div style={{ position: 'relative', height: 176 }}>
             <img src={sceneUrl((p.profileBackgroundId || 'forest') as SceneId)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.25)' }} />
-            <button class="text-btn" style={{ position: 'absolute', top: 8, right: 8, color: '#fff' }} onClick={() => setPicking(true)}>
+            <button class="text-btn" data-tour="ProfileBackground" style={{ position: 'absolute', top: 8, right: 8, color: '#fff' }} onClick={() => setPicking(true)}>
               Change background
             </button>
           </div>
@@ -230,7 +230,7 @@ export function MeScreen() {
           </div>
         </section>
 
-        <section class="stack-sm">
+        <section class="stack-sm" data-tour="ProfileExplore">
           <SectionHeading text="Explore" />
           <div class="list">
             <LinkRow icon="teacher" tint="var(--info)" title="How to use KasiGuru" subtitle="A short guide to every tab" onClick={() => navigate('/help')} />

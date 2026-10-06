@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { doc, getDoc } from 'firebase/firestore/lite';
 import { normaliseToken } from '../../domain/lesson';
 import type { StoryPage, Word } from '../../domain/types';
+import { playSfx } from '../../lib/audio';
 import { parsePages } from '../../lib/content';
 import { db } from '../../lib/firebase';
 import { back, navigate } from '../../lib/router';
@@ -78,6 +79,10 @@ export function StoryReaderScreen({ id }: { id: number }) {
       alive = false;
     };
   }, [id, index, page?.imageId]);
+
+  useEffect(() => {
+    if (finished) playSfx('complete');
+  }, [finished]);
 
   if (!story) {
     return (

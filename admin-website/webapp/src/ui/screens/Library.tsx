@@ -86,7 +86,7 @@ function WordsTab() {
         <>
           <p class="t-body muted">{corpus.learnedCount()} of {corpus.size} words learned</p>
           {featured && (
-            <button class="card panel glow" style={{ '--gx': '85%', '--gy': '30%' } as never} onClick={() => navigate(`/word/${encodeURIComponent(featured.id)}`)}>
+            <button class="card panel glow" data-tour="DictWordOfDay" style={{ '--gx': '85%', '--gy': '30%' } as never} onClick={() => navigate(`/word/${encodeURIComponent(featured.id)}`)}>
               <div class="row">
                 <div class="grow">
                   <p class="t-label muted">Word of the day</p>
@@ -120,7 +120,7 @@ function WordsTab() {
               );
             })}
           </div>
-          <button class="card row" onClick={() => navigate('/submit-word')}>
+          <button class="card row" data-tour="DictSubmitBanner" onClick={() => navigate('/submit-word')}>
             <span class="ico" style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--lime-tint)', display: 'grid', placeItems: 'center' }}>
               <Icon name="addCircle" size={22} color="var(--lime)" />
             </span>

@@ -8,6 +8,7 @@
     "dev": "vite",
     "content": "node scripts/export-content.mjs",
     "icons": "node scripts/build-icons.mjs",
+    "sounds": "node scripts/build-sounds.mjs",
     "build": "node scripts/export-content.mjs --if-online && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",

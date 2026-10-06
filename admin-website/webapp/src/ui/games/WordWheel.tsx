@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { GAMES } from '../../domain/constants';
 import { shuffled } from '../../domain/random';
 import { cellKey, generateWordWheel, MAX_HINTS, MIN_WORD_LENGTH, slotCells, WORD_WHEEL_MAX_LEVEL, wordWheelTier } from '../../domain/wordWheel';
-import { feedbackTone } from '../../lib/audio';
+import { feedbackTone, playSfx } from '../../lib/audio';
 import { navigate } from '../../lib/router';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { ClayButton, Icon, Loading, sceneForIndex } from '../kit';
@@ -22,7 +22,6 @@ type Feedback =
 
 export function WordWheelGame({ level: rawLevel }: { level: number }) {
   const ready = useApp((s) => s.contentReady);
-  const soundOn = useApp((s) => s.prefs.soundEnabled);
   const level = Math.min(Math.max(rawLevel, 1), WORD_WHEEL_MAX_LEVEL);
   const tier = wordWheelTier(level);
   const [round, setRound] = useState(0);
@@ -111,16 +110,16 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
       const fs = completeFilled([...foundSlots, slot], revealed);
       setFoundSlots(fs);
       setFeedback({ kind: 'found', word: w.word, gloss: glossFor(w.id) });
-      if (soundOn) feedbackTone(true);
+      playSfx('found');
       maybeFinish(fs, hintsUsed);
     } else if (b && bonus.includes(b.key)) setFeedback({ kind: 'already', word: b.word });
     else if (b) {
       setBonus([...bonus, b.key]);
       setFeedback({ kind: 'bonus', word: b.word, gloss: glossFor(b.id) });
-      if (soundOn) feedbackTone(true);
+      playSfx('found');
     } else {
       setFeedback({ kind: 'notWord', attempt: key });
-      if (soundOn) feedbackTone(false);
+      feedbackTone(false);
     }
   };
 
@@ -293,7 +292,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
 
         <button class="icon-btn boxed" aria-label={MAX_HINTS - hintsUsed > 0 ? `Hint: uncover a letter, ${MAX_HINTS - hintsUsed} left` : 'No hints left'} disabled={hintsUsed >= MAX_HINTS} onClick={hint} style={{ position: 'relative', opacity: hintsUsed >= MAX_HINTS ? 0.5 : 1 }}>
           <Icon name="lampOn" size={22} color="var(--gold)" />
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: 'var(--gold)', color: 'var(--reward-ink)', fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{MAX_HINTS - hintsUsed}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: 'var(--gold-fill)', color: 'var(--reward-ink)', fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{MAX_HINTS - hintsUsed}</span>
         </button>
       </div>
 

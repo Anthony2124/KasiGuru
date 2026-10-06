@@ -138,7 +138,7 @@ export function SubmitWordScreen() {
       <form class="readable stack-lg" style={{ maxWidth: 640 }} onSubmit={(e) => { e.preventDefault(); void submit(); }}>
         <section class="stack">
           <h2 class="t-title-l">1. Core translations</h2>
-          {field('Kasiguranin word *', 'kasiguranin', 'e.g. apak, singët, lukag')}
+          <div data-tour="SubmitWordField">{field('Kasiguranin word *', 'kasiguranin', 'e.g. apak, singët, lukag')}</div>
           {matches.length > 0 && (
             <div class={`banner ${needsConfirm ? 'warn' : ''}`}>
               <Icon name="danger" size={20} color="var(--amber)" />
@@ -191,7 +191,9 @@ export function SubmitWordScreen() {
           {field('Your name / credit', 'contributorName', 'Enter your name')}
         </section>
         {error && <p class="t-body" style={{ color: 'var(--red)' }} role="alert">{error}</p>}
-        <ClayButton label={busy ? 'Submitting…' : 'Submit entry for verification'} type="submit" disabled={busy} />
+        <div data-tour="SubmitButton" style={{ borderRadius: 'var(--r-pill)' }}>
+          <ClayButton label={busy ? 'Submitting…' : 'Submit entry for verification'} type="submit" disabled={busy} />
+        </div>
       </form>
     </GroundScaffold>
   );

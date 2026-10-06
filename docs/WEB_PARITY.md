@@ -11,9 +11,9 @@ learners who cannot install it. **Every APK release updates it too.** Three thin
 3. **Each APK version has a row below.** `check:web-sync` fails when the current `versionName`
    has none. The row says what the web app got and what stays Android-only, and why.
 
-When you release: bump the version in both apps, run `npm run sync:web`, port the release's
-behaviour changes to `webapp/src/domain/` (with the Android tests restated in `webapp/tests/`), and
-add the row.
+When you release: bump the version in both apps, run `npm run sync:web` (and `npm run sounds` in the
+web app if a sound changed), port the release's behaviour changes to `webapp/src/domain/` (with the
+Android tests restated in `webapp/tests/`), and add the row.
 
 ## Ledger
 
@@ -24,6 +24,7 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 |---|---|---|
 | 1.18.0 | Forest look with Light, Dark and System themes | Ported (2026-10-06): the light palette from `Color.kt`, Settings → Appearance, System by default |
 | 1.18.0 | Adjustable text size | Android-only: browsers have their own text size and zoom, which the web app follows |
+| 1.18.0 | Guided tour in chapters: the core tour after onboarding, eight more on the help page | Ported (2026-10-06): `domain/tour.ts`, the spotlight overlay, Settings → Replay tutorial / Tutorial chapters; copy follows the web where it differs (see WEB_APP.md) |
 | 1.18.0 | Profile scenery, streak page, weekly / all-time / streak rankings, 11 badge families | Ported |
 | 1.19.0 | Bottom bar: the open tab grows into a labelled pill, solid icons | Ported (2026-10-06): `KasiGuruBottomBar` sizes and Bold icons |
 | 1.19.0 | Continue card with section, lesson number and progress | Ported (2026-10-06): `ContinueCard` layout, "Lesson N of M", segmented bar |
@@ -41,8 +42,8 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 | 1.22.0 | My words page with lesson / review / game filters | Not yet |
 | 1.22.0 | Home quick practice opens My words; Me counts words met | Not yet |
 | 1.22.0 | Folk stories coming soon; Story Reader badge shows Coming soon | Ported |
-| 1.23.0 | Sound effects for found words, completions, streaks, badges, card flips | Not yet: the APK's Ogg files need converting for iPhones |
-| 1.23.0 | Background music and volume sliders | Not yet |
+| 1.23.0 | Sound effects for found words, completions, streaks, badges, card flips | Ported (2026-10-06): `npm run sounds` converts the APK's Ogg files to MP3, played where Android plays them |
+| 1.23.0 | Background music and volume sliders | Ported (2026-10-06): menu and game loops by route (`musicMoodFor`), Ogg plus AAC for Safari, both sliders in Settings |
 | 1.24.0 | XP page, badge summary on Me, tap sounds | Ported |
 | 1.24.0 | Downloads and installs updates inside the app | Android-only: see 1.19.0 |
 | 1.24.0 | Loads the dictionary only when it changed | Ported: the web app pulls only documents changed since its snapshot |

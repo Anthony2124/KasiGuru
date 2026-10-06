@@ -21,6 +21,7 @@ export function LeaderRow({ entry, mode }: { entry: LeaderboardEntry; mode: Lead
   return (
     <button
       class="list-row leader-row"
+      data-tour="LeaderboardPlayer"
       onClick={() => openPlayer(entry)}
       style={entry.isCurrentUser ? { background: 'var(--lime-tint)' } : undefined}
       aria-label={`Rank ${entry.rank}, ${entry.name}${entry.isCurrentUser ? ', you' : ''}, ${figure(entry, mode)}`}
@@ -56,6 +57,7 @@ function Podium({ rows, mode }: { rows: LeaderboardEntry[]; mode: LeaderboardOrd
           <button
             key={p.uid}
             class={`card center${i === 0 ? ' first' : ''}`}
+            data-tour="LeaderboardPlayer"
             onClick={() => openPlayer(p)}
             aria-label={`Rank ${p.rank}, ${p.name}, ${figure(p, mode)}`}
           >

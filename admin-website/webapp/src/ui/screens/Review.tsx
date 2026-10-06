@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { ReviewRating } from '../../domain/sm2';
 import type { Word } from '../../domain/types';
-import { playWord, unlockAudio } from '../../lib/audio';
+import { playSfx, playWord, unlockAudio } from '../../lib/audio';
 import { back } from '../../lib/router';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { ClayButton, Confetti, GroundScaffold, Icon, Jepjep, Loading, ProgressBar } from '../kit';
@@ -79,8 +79,10 @@ export function ReviewScreen() {
       d.reviewWord(fresh, rating, !extra);
       if (index + 1 >= cards.length) d.recordDailyReviewCompleted();
     });
-    if (index + 1 >= cards.length) setComplete(true);
-    else {
+    if (index + 1 >= cards.length) {
+      setComplete(true);
+      playSfx('complete');
+    } else {
       setIndex(index + 1);
       setFlipped(false);
     }
@@ -98,8 +100,11 @@ export function ReviewScreen() {
 
         <button
           class={`flashcard${flipped ? ' flipped' : ''}`}
+          data-tour="FlashcardCard"
+          data-no-tap-sound
           onClick={() => {
             unlockAudio();
+            playSfx('flip');
             setFlipped(!flipped);
           }}
           aria-label={flipped ? `${card.kasiguranin}: ${card.tagalog}. Tap to see the word again` : `${card.kasiguranin}. Tap card to flip`}
@@ -133,10 +138,10 @@ export function ReviewScreen() {
           <div class="stack-sm">
             <p class="t-label muted center">How well did you remember it?</p>
             <div class="rating">
-              <button style={{ background: 'var(--red)' }} onClick={() => rate(ReviewRating.AGAIN)}>Again</button>
-              <button style={{ background: 'var(--coral)' }} onClick={() => rate(ReviewRating.HARD)}>Hard</button>
-              <button style={{ background: 'var(--lime)' }} onClick={() => rate(ReviewRating.GOOD)}>Good</button>
-              <button style={{ background: 'var(--info)' }} onClick={() => rate(ReviewRating.EASY)}>Easy</button>
+              <button style={{ background: 'var(--red-fill)' }} onClick={() => rate(ReviewRating.AGAIN)}>Again</button>
+              <button style={{ background: 'var(--coral-fill)' }} onClick={() => rate(ReviewRating.HARD)}>Hard</button>
+              <button style={{ background: 'var(--lime-fill)' }} onClick={() => rate(ReviewRating.GOOD)}>Good</button>
+              <button style={{ background: 'var(--info-fill)' }} onClick={() => rate(ReviewRating.EASY)}>Easy</button>
             </div>
           </div>
         ) : (

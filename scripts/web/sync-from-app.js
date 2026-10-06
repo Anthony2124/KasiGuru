@@ -14,7 +14,8 @@
  *     app does the same with this file (see webapp/src/domain/contentMerge.ts).
  *   - the illustrations in res/drawable-nodpi: category icons, badge art, Jepjep, avatars, scenes.
  *
- * Sounds are not copied: the APK's are Ogg, which older iPhones cannot play. See docs/WEB_APP.md.
+ * Sounds are not copied: the APK's are Ogg, which older iPhones cannot play. The web app's `npm run sounds`
+ * converts them (it needs ffmpeg). See docs/WEB_APP.md.
  */
 
 const fs = require('node:fs');

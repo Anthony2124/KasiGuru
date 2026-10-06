@@ -96,7 +96,7 @@ export function QuotaList({ quota }: { quota: Quota }) {
 /** Seven days, today last: a flame on each practised day. */
 export function WeekStrip({ week }: { week: DayMark[] }) {
   return (
-    <div class="week" role="list">
+    <div class="week" role="list" data-tour="StreakWeek">
       {week.map((d, i) => {
         const state = d.isToday ? (d.practised ? 'today-done' : 'today') : d.practised ? 'done' : 'missed';
         return (

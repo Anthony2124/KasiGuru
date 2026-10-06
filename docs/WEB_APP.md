@@ -51,6 +51,20 @@ needs a Mac and the paid Apple account either way.
 - **Tap sounds** — the soft click on buttons, tabs and links (Android's `TapSounds.kt`), with its own
   switch in Settings. A press with a finger or mouse clicks; a keyboard or screen-reader activation
   stays silent, and a control whose tap already plays an answer sound carries `data-no-tap-sound`.
+- **Sound effects and music (Android 1.23)** — the nine effects of `SoundEffects.kt` (correct, wrong,
+  found, complete, level up, streak, badge, card flip, tap) played where Android plays them, and the
+  menu and game loops of `MusicPlayer.kt`, chosen by route as `musicMoodFor` does (`src/domain/music.ts`:
+  silent in lessons, stories, the review deck and onboarding). Settings has Sound effects, Tap sounds and
+  Background music switches with the two 0–100% volume sliders; 50% is the level the sounds were tuned
+  at. Music starts on the first tap (browsers allow nothing sooner), stops while the page is hidden,
+  and drops to a fifth under a word recording, as audio focus ducks it on Android (`src/lib/music.ts`).
+- **Appearance (Android 1.18)** — System (the default), Light and Dark in Settings. See *Light theme*
+  below. Text size is the browser's own, as [WEB_PARITY.md](WEB_PARITY.md) records.
+- **Guided tour (Android 1.18)** — the core chapter runs once after onboarding; the other eight
+  chapters are offered on the help page and under Settings → Tutorial chapters, with the same New,
+  Updated, Done and Continue states (`src/domain/tour.ts`, `src/lib/tour.ts`, `src/ui/tour.tsx`).
+  Stops find their element by `data-tour="<Anchor>"`; a test checks every anchor a stop names is
+  attached somewhere.
 
 ## How it stays compatible with Android
 
@@ -116,15 +130,18 @@ XP values, the lesson slicing and the badge list above all. A field added to
 - **Copy that was no longer true** was adjusted: "Over 1,100 words" (the live corpus is 1,172),
   and the Word Match rules no longer promise a combo multiplier the game does not have. The
   streak dialog does not claim a "+25 XP streak bonus", which neither app awards.
-- **No guided tour, notifications, or profile switching.** The Help page covers the tabs instead.
+- **No notifications or profile switching.** The inbox shows the team's announcements only.
+- **Tour copy follows the web app.** The stops are Android's, worded for what the web has: the
+  inbox chapter has no filter stop and talks about announcements, the bell stop says "News from the
+  team", the flashcard stops describe tapping the card and the four rating buttons (no swipe), the
+  daily-goal stop does not offer to change the goal (the web sets it only during onboarding), and
+  "phone" reads "browser". The chapter versions are Android's, so the badges agree.
 - **Next up skips Story Reader while stories are switched off** (`STORIES_ENABLED`): no activity can
   move it, so Me never suggests it as the badge to work on. Android's `BadgeSummary.nextUp` can still
   pick it for a learner who read stories before they were switched off. Worth porting back.
-- **Not yet ported from 1.18:** the Light and System themes and the text-size setting (the web app
-  stays dark, and browsers have their own text size), and the tutorial chapters.
-- **Not yet ported from 1.23:** the newer sound effects (found word, completion, streak, badge, card
-  flip), background music and the volume sliders. The web keeps its answer and level-up sounds and,
-  since 1.24, the tap click.
+- **Offline music** is not guaranteed: the loops are not precached (they are most of the audio
+  weight), so music plays offline only if the browser still holds it in its HTTP cache. Effects are
+  precached and always play.
 - **From 1.25:** the streak quota waives the review when no word is due (`DailyStreakQuota.reviewDue`,
   "Nothing due today" on the Streak page), and a last-active date after today keeps the run rather
   than adding a day (`StreakRules.advancedStreak`). The 1.25 update pop-up, the scheduled reminders
@@ -132,6 +149,24 @@ XP values, the lesson slicing and the badge list above all. A field added to
   notifications.
 - **Vibrations** follow the Android setting where the browser supports them (Android Chrome);
   iPhone browsers cannot vibrate, so the setting is hidden there.
+
+### Light theme
+
+`src/styles.css` carries both palettes from `ui/theme/Color.kt`: the night one on `:root`, the light
+one on `:root[data-theme='light']`, which `src/lib/theme.ts` sets from the Settings choice (System
+follows `prefers-color-scheme`, and `public/theme-boot.js` applies it before the first paint). As on
+Android, the plain accent tokens (`--lime`, `--gold`, `--coral`, `--red`, `--amber`, `--green`) are the
+*text* colours, which darken on the light ground (`LimeText`, `GoldText`…), and the `-fill` tokens
+(`--lime-fill`, `--gold-fill`…) are the bright fills that never change. **A background, a button face
+or a confetti piece takes a `-fill` token; anything read on a surface takes the plain one.**
+
+- `--selected` is the chosen option, tab or chip, read with `--ink`: olive at night, a pale green by
+  day. Olive itself stays the fill for found Word Search cells and walked lessons, under cream.
+- Words and controls over a scene's dark veil (`.on-scenery`, scene cards, the lesson's scenery
+  strip) keep the night ink in both themes.
+- The wordmark's "Kasi" follows `--ink`, as `kasiguru_wordmark_light` does on Android.
+- An installed iPhone app uses the `black-translucent` status bar, whose glyphs are always white; on
+  the light ground a canopy-green strip sits behind them (zero height everywhere else).
 
 ## Content and the free-plan read budget
 
@@ -219,11 +254,15 @@ npx firebase emulators:start --only auth,firestore --project kasiguru-86042
 $env:VITE_FIREBASE_EMULATORS = '1'; npx vite
 ```
 
-`npm run icons` regenerates the icons, art, sounds and fonts from the Android sources (it finds the
+`npm run icons` regenerates the icons, art and fonts from the Android sources (it finds the
 Iconsax library in the Gradle cache). The home-screen icons are cut from Adrian's Jepjep launcher art
 (`mipmap-xxxhdpi/ic_launcher_foreground.png`) and need sharp, which the app does not depend on:
 run `npm i --no-save sharp` first. `npm run content` refreshes the content snapshot.
 
-`public/sounds/tap.wav` is Android's `res/raw/ui_tap.ogg` (Freesound 570754, CC0) decoded to 16-bit
-mono WAV, because not every iPhone Safari decodes Ogg Vorbis. `npm run icons` does not produce it:
-re-convert it by hand if the Android tap sound changes.
+`npm run sounds` converts the APK's sounds (`res/raw`, CC0 from Freesound, listed in
+`data/audio/freesound-sounds.json`), because not every iPhone Safari decodes Ogg Vorbis: effects
+become MP3 in `public/sounds` (precached; the tap stays 16-bit WAV so it clicks without decoder delay,
+and the level-up WAV is copied as is), and each music loop keeps its Ogg, which Chrome and Firefox
+loop without a gap, plus an AAC `.m4a` that Safari picks, in `public/music` (not precached). It needs
+ffmpeg, which the app does not depend on: on `PATH`, in `$FFMPEG`, or `npm i --no-save ffmpeg-static`.
+Re-run it whenever an Android sound changes.

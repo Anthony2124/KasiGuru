@@ -6,7 +6,9 @@ import { useInstall, isIOSSafari } from '../../lib/install';
 import { navigate } from '../../lib/router';
 import { useApp } from '../../lib/store';
 import { APP_VERSION } from '../../lib/remote';
+import { replayCoreTour } from '../../lib/tour';
 import { ClayButton, GroundScaffold, Icon, Jepjep, Wordmark } from '../kit';
+import { TourChapterList } from '../tour';
 import type { IconName } from '../icons.generated';
 
 function Faq({ q, a }: { q: string; a: string }) {
@@ -80,6 +82,12 @@ export function HelpScreen() {
   return (
     <GroundScaffold title="How to use KasiGuru" largeTitle subtitle="A short guide to every tab">
       <div class="readable stack-lg">
+        <ClayButton label="Take the tour again" icon="teacher" onClick={replayCoreTour} />
+        <section class="stack-sm">
+          <h2 class="t-title-l">Walk through a screen</h2>
+          <p class="t-body muted">Short guided tours of one screen at a time. Take them in any order, or not at all.</p>
+          <TourChapterList />
+        </section>
         <div class="list">
           {TABS_HELP.map(([icon, t, d]) => (
             <div key={t} class="list-row" style={{ alignItems: 'flex-start' }}>

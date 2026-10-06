@@ -1,17 +1,76 @@
 /**
  * Settings (ui/screens/settings). Android's notification switches have no reliable browser
- * equivalent, so they are replaced by the things a web learner can actually control here: sound,
- * syncing now, recovery questions, and installing the app.
+ * equivalent, so they are replaced by the things a web learner can actually control here: appearance,
+ * sound and music, the tutorial, syncing now, recovery questions, and installing the app.
  */
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { getSecurityAnswers, saveSecurityQuestions, SECURITY_QUESTIONS } from '../../lib/auth';
 import { refreshContent } from '../../lib/content';
 import { navigate } from '../../lib/router';
-import { canVibrate } from '../../lib/audio';
+import { canVibrate, previewSfx } from '../../lib/audio';
+import { previewMusicVolume } from '../../lib/music';
 import { setPrefs, useApp } from '../../lib/store';
 import { flush } from '../../lib/sync';
 import { APP_VERSION } from '../../lib/remote';
+import { replayCoreTour } from '../../lib/tour';
+import type { IconName } from '../icons.generated';
 import { ClayButton, GroundScaffold, Icon, toast } from '../kit';
+import { TourChapterList } from '../tour';
+
+function SwitchRow({ icon, title, subtitle, checked, onChange }: { icon: IconName; title: string; subtitle: string; checked: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <label class="list-row" style={{ cursor: 'pointer' }}>
+      <Icon name={icon} size={22} color="var(--lime)" />
+      <div class="grow">
+        <p class="t-title-s">{title}</p>
+        <p class="t-body-s muted">{subtitle}</p>
+      </div>
+      <span class="switch">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange((e.target as HTMLInputElement).checked)} />
+        <i />
+      </span>
+    </label>
+  );
+}
+
+/**
+ * How loud a sound setting plays (VolumeSliderRow). The switch above it is the mute; this sits under
+ * that row's text so the two read as one setting. Only the released value is saved.
+ */
+function VolumeSlider({ label, value, enabled, onSave, onPreview }: { label: string; value: number; enabled: boolean; onSave: (percent: number) => void; onPreview?: (percent: number) => void }) {
+  const [current, setCurrent] = useState(value);
+  const dragging = useRef(false);
+  useEffect(() => {
+    if (!dragging.current) setCurrent(value);
+  }, [value]);
+  return (
+    <div class="list-row volume-row">
+      <Icon name="volumeLow" size={18} color="var(--muted)" />
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={current}
+        disabled={!enabled}
+        aria-label={label}
+        aria-valuetext={`${current}%`}
+        onInput={(e) => {
+          dragging.current = true;
+          const percent = Number((e.target as HTMLInputElement).value);
+          setCurrent(percent);
+          onPreview?.(percent);
+        }}
+        onChange={(e) => {
+          dragging.current = false;
+          onSave(Number((e.target as HTMLInputElement).value));
+        }}
+      />
+      <Icon name="volumeHigh" size={18} color="var(--muted)" />
+      <span class="t-label" style={{ minWidth: 40, textAlign: 'right', color: enabled ? 'var(--ink)' : 'var(--muted)' }}>{current}%</span>
+    </div>
+  );
+}
 
 export function SettingsScreen() {
   const account = useApp((s) => s.account);
@@ -21,6 +80,7 @@ export function SettingsScreen() {
   const wordCount = useApp((s) => s.words.length);
   const [answers, setAnswers] = useState<string[] | null>(null);
   const [savingAnswers, setSavingAnswers] = useState(false);
+  const [showChapters, setShowChapters] = useState(false);
   const recoverable = !!account.uid && !account.isAnonymous;
 
   useEffect(() => {
@@ -31,9 +91,9 @@ export function SettingsScreen() {
   }, [recoverable]);
 
   return (
-    <GroundScaffold title="Settings" largeTitle subtitle="Sync, sound and app preferences">
+    <GroundScaffold title="Settings" largeTitle subtitle="Appearance, sound, sync and your account">
       <div class="stack-lg">
-        <section class="stack-sm">
+        <section class="stack-sm" data-tour="SettingsAccount">
           <h2 class="t-title-l">Account & sign in</h2>
           <button class="card row" onClick={() => navigate('/account')}>
             <Icon name={recoverable ? 'shieldTick' : 'danger'} size={26} color={recoverable ? 'var(--lime)' : 'var(--amber)'} />
@@ -46,7 +106,7 @@ export function SettingsScreen() {
         </section>
 
         {/* AppearanceScreen's theme choice. System follows the device, as it does on Android. */}
-        <section class="stack-sm">
+        <section class="stack-sm" data-tour="SettingsAppearance">
           <h2 class="t-title-l">Appearance</h2>
           <div class="segmented" role="tablist" aria-label="Theme">
             {(['light', 'dark', 'system'] as const).map((t) => (
@@ -60,42 +120,52 @@ export function SettingsScreen() {
 
         <section class="stack-sm">
           <h2 class="t-title-l">App preferences</h2>
-          <div class="list">
-            <label class="list-row" style={{ cursor: 'pointer' }}>
-              <Icon name="volumeHigh" size={22} color="var(--info)" />
-              <div class="grow">
-                <p class="t-title-s">Lesson sounds</p>
-                <p class="t-body-s muted">Small sounds for answers and level ups</p>
-              </div>
-              <span class="switch">
-                <input type="checkbox" checked={prefs.soundEnabled} onChange={(e) => setPrefs({ soundEnabled: (e.target as HTMLInputElement).checked })} />
-                <i />
-              </span>
-            </label>
-            <label class="list-row" style={{ cursor: 'pointer' }}>
-              <Icon name="volumeUp" size={22} color="var(--lime)" />
-              <div class="grow">
-                <p class="t-title-s">Tap sounds</p>
-                <p class="t-body-s muted">A soft click on buttons and tabs</p>
-              </div>
-              <span class="switch">
-                <input type="checkbox" checked={prefs.tapSoundsEnabled} onChange={(e) => setPrefs({ tapSoundsEnabled: (e.target as HTMLInputElement).checked })} />
-                <i />
-              </span>
-            </label>
+          <div class="list" data-tour="SettingsPreferences">
+            <SwitchRow icon="volumeHigh" title="Sound effects" subtitle="Answers, wins and celebrations" checked={prefs.soundEnabled} onChange={(on) => setPrefs({ soundEnabled: on })} />
+            <VolumeSlider
+              label="Sound effects volume"
+              value={prefs.sfxVolumePercent}
+              enabled={prefs.soundEnabled}
+              onSave={(percent) => {
+                previewSfx(percent);
+                setPrefs({ sfxVolumePercent: percent });
+              }}
+            />
+            <SwitchRow icon="fingerTap" title="Tap sounds" subtitle="A soft click on buttons and tabs" checked={prefs.tapSoundsEnabled} onChange={(on) => setPrefs({ tapSoundsEnabled: on })} />
+            <SwitchRow icon="music" title="Background music" subtitle="Music in menus and games" checked={prefs.musicEnabled} onChange={(on) => setPrefs({ musicEnabled: on })} />
+            <VolumeSlider
+              label="Music volume"
+              value={prefs.musicVolumePercent}
+              enabled={prefs.musicEnabled}
+              onPreview={previewMusicVolume}
+              onSave={(percent) => {
+                setPrefs({ musicVolumePercent: percent });
+                previewMusicVolume(null);
+              }}
+            />
             {canVibrate() && (
-              <label class="list-row" style={{ cursor: 'pointer' }}>
-                <Icon name="flash" size={22} color="var(--lime)" />
-                <div class="grow">
-                  <p class="t-title-s">Lesson vibrations</p>
-                  <p class="t-body-s muted">Feel answer feedback</p>
-                </div>
-                <span class="switch">
-                  <input type="checkbox" checked={prefs.hapticsEnabled} onChange={(e) => setPrefs({ hapticsEnabled: (e.target as HTMLInputElement).checked })} />
-                  <i />
-                </span>
-              </label>
+              <SwitchRow icon="flash" title="Lesson vibrations" subtitle="Feel answer feedback" checked={prefs.hapticsEnabled} onChange={(on) => setPrefs({ hapticsEnabled: on })} />
             )}
+          </div>
+          <div class="list">
+            <button class="list-row" data-tour="SettingsReplayTutorial" onClick={replayCoreTour}>
+              <Icon name="teacher" size={22} color="var(--lime)" />
+              <div class="grow">
+                <p class="t-title-s">Replay tutorial</p>
+                <p class="t-body-s muted">Walk through the app again</p>
+              </div>
+            </button>
+            <button class="list-row" aria-expanded={showChapters} onClick={() => setShowChapters(!showChapters)}>
+              <Icon name="book" size={22} color="var(--lime)" />
+              <div class="grow">
+                <p class="t-title-s">Tutorial chapters</p>
+                <p class="t-body-s muted">Replay a guide to any feature</p>
+              </div>
+              <Icon name={showChapters ? 'arrowUp' : 'arrowDown'} size={18} color="var(--faint)" />
+            </button>
+          </div>
+          {showChapters && <TourChapterList />}
+          <div class="list">
             <button class="list-row" onClick={() => navigate('/install')}>
               <Icon name="mobile" size={22} color="var(--lime)" />
               <div class="grow">
