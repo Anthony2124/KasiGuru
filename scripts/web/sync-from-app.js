@@ -122,7 +122,10 @@ function main() {
   const drift = [];
   let written = 0;
   for (const [file, bytes] of plan()) {
-    const same = fs.existsSync(file) && fs.readFileSync(file).equals(bytes);
+    // Text is compared without line endings: a Windows checkout may turn the corpus's LF into CRLF.
+    const text = file.endsWith('.json');
+    const norm = (b) => (text ? Buffer.from(b.toString('utf8').replace(/\r\n/g, '\n'), 'utf8') : b);
+    const same = fs.existsSync(file) && norm(fs.readFileSync(file)).equals(norm(bytes));
     if (same) continue;
     const rel = path.relative(PROJECT_ROOT, file).split(path.sep).join('/');
     if (check) { drift.push(rel); continue; }
