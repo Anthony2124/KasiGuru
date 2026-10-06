@@ -6,13 +6,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Which stops arrive on a new screen.
+ * Which stops arrive on a new screen, and how long they hold their caption back.
  *
- * Every stop now shares one beat (see SpotlightOverlay's StepBeatMs); a stop on a new screen also
- * lifts the dim while that screen fades in, so the learner sees where the tour has gone. These pin
- * that the tab switches, and only they, are treated as arrivals.
+ * Stops on the same screen share one beat (SpotlightOverlay's StepBeatMs). A stop on a new screen
+ * lifts the dim while that screen fades in and takes the longer ArrivalBeatMs, so the learner sees
+ * where the tour has gone. These pin that the tab switches, and only they, are treated as arrivals.
  */
 class TourPacingTest {
+
+    @Test
+    fun `a tab switch leaves the new screen in view before its caption`() {
+        // navigation-compose crossfades for 700ms. The caption used to land as that ended, which
+        // made the Learn, Practice, Library and Me stops feel rushed.
+        val crossfadeMs = 700L
+        assertTrue(stepBeatMs(newScreen = true) - crossfadeMs >= 400L)
+        assertEquals(StepBeatMs, stepBeatMs(newScreen = false))
+    }
 
     private val home = TourTarget.Fixed("home")
     private val learn = TourTarget.Fixed("learn")

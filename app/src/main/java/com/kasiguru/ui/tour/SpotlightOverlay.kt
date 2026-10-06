@@ -91,8 +91,7 @@ private const val ScrimAlpha = 0.72f
 private const val ArrivingScrimAlpha = 0.4f
 
 /*
- * One rhythm for every stop, so the tour moves at the same pace whether the next thing is on the
- * screen already showing or behind a tab switch:
+ * One rhythm for every stop on the screen already showing:
  *
  *   caption fades out -> hole travels -> caption fades in, StepBeatMs after Next was tapped.
  *
@@ -100,6 +99,10 @@ private const val ArrivingScrimAlpha = 0.4f
  * 700ms after the destination arrived; the hole flew on a spring, so a long jump finished faster
  * than a short one; and the old caption vanished in a single frame while the new one rushed in over
  * 180ms. Each stop felt quick, and no two stops felt alike.
+ *
+ * A stop behind a tab switch takes ArrivalBeatMs instead. On StepBeatMs its caption landed the
+ * moment the 700ms crossfade ended, so the core chapter's four tab stops (Learn, Practice, Library,
+ * Me) covered each new screen before the learner had seen it, and read as rushed.
  */
 
 /** The old caption leaving. Short: it is only clearing the stage. */
@@ -111,12 +114,18 @@ private const val HoleMoveMs = 450
 /** The new caption arriving. */
 private const val CaptionInMs = 300
 
+/** From Next to the new caption, for a stop on the same screen: the caption leaving plus the hole's travel. */
+internal const val StepBeatMs = 750L
+
 /**
- * From Next to the new caption. Covers the caption leaving plus the hole's travel, and also
- * navigation-compose's default 700ms crossfade, so a stop behind a tab switch lands on the same
- * beat as one on the screen already showing.
+ * From Next to the new caption, for a stop on another screen: navigation-compose's default 700ms
+ * crossfade, then about half a second with the dim lifted, so the learner sees where the tour has
+ * gone before the words cover it.
  */
-private const val StepBeatMs = 750L
+internal const val ArrivalBeatMs = 1_250L
+
+/** How long a stop holds its caption back after Next. */
+internal fun stepBeatMs(newScreen: Boolean): Long = if (newScreen) ArrivalBeatMs else StepBeatMs
 
 /** Longest wait for a destination or its anchor. A missing anchor must never strand the caption. */
 private const val ArrivalTimeoutMs = 1_500L
@@ -240,7 +249,8 @@ fun SpotlightOverlay(
                 snapshotFlow { holeTarget.let { it == null || it.isNear(animatedHoleState.value) } }.first { it }
             }
             val elapsed = SystemClock.uptimeMillis() - startedAt
-            if (elapsed < StepBeatMs) delay(StepBeatMs - elapsed)
+            val beat = stepBeatMs(newScreen)
+            if (elapsed < beat) delay(beat - elapsed)
         }
 
         captionReady = true

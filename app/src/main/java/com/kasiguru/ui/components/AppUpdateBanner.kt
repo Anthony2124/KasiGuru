@@ -61,6 +61,9 @@ import com.kasiguru.util.update.UpdateDownload
 /** Release-note bullets shown before "Show all": enough to say what changed, short enough to scan. */
 private const val NOTES_PREVIEW = 3
 
+/** Where the official app is installed from; the release workflow deploys it with every release. */
+private const val DOWNLOAD_PAGE = "https://kasiguru-download.vercel.app"
+
 /**
  * A new version of the app is out: what it is against what the learner has, when it shipped, what
  * changed, and the download.
@@ -91,9 +94,13 @@ fun AppUpdateBanner(
     // Downloaded in the app rather than in a browser tab: Chrome kept every update link as a tab and
     // offered the old APKs again on the next update. See UpdateDownloader.
     val download by updates.state.collectAsState()
+    val signedByAnotherKey by updates.signedByAnotherKey.collectAsState()
     LaunchedEffect(release.versionCode) { updates.watch(release) }
     var installWhenReady by remember { mutableStateOf(false) }
     var waitingForPermission by remember { mutableStateOf(false) }
+    val openDownloadPage: () -> Unit = {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(DOWNLOAD_PAGE)))
+    }
     val install: () -> Unit = {
         if (!updates.canInstall()) {
             // Android asks once whether KasiGuru may install updates; carry on when the learner is back.
@@ -115,7 +122,9 @@ fun AppUpdateBanner(
     LaunchedEffect(download) {
         if (download is UpdateDownload.Ready && installWhenReady) {
             installWhenReady = false
-            install()
+            // Signed by another key, Android would refuse it with "package conflicts with an
+            // existing package"; the card explains instead (see below).
+            if (!signedByAnotherKey) install()
         }
     }
     LifecycleResumeEffect(waitingForPermission) {
@@ -226,14 +235,31 @@ fun AppUpdateBanner(
             }
             Spacer(Modifier.height(Space.sm))
         }
+        val blocked = download == UpdateDownload.Ready && signedByAnotherKey
+        if (blocked) {
+            Text(
+                text = "Android can't install this update over your copy of KasiGuru: it is a test build, " +
+                    "signed differently from the official app. Make sure you are signed in so your progress " +
+                    "is saved, uninstall KasiGuru, then install it from the download page. Updates after " +
+                    "that install here as usual.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink
+            )
+            Spacer(Modifier.height(Space.sm))
+        }
         ClayButton(
-            label = when (download) {
-                is UpdateDownload.Downloading -> progress?.percent?.let { "Downloading… $it%" } ?: "Downloading…"
-                UpdateDownload.Ready -> "Install update"
-                UpdateDownload.Failed -> "Download failed · Try again"
-                UpdateDownload.Idle -> "Download update"
+            label = when {
+                blocked -> "Open the download page"
+                download is UpdateDownload.Downloading -> progress?.percent?.let { "Downloading… $it%" } ?: "Downloading…"
+                download == UpdateDownload.Ready -> "Install update"
+                download == UpdateDownload.Failed -> "Download failed · Try again"
+                else -> "Download update"
             },
-            onClick = if (download == UpdateDownload.Ready) install else startDownload,
+            onClick = when {
+                blocked -> openDownloadPage
+                download == UpdateDownload.Ready -> install
+                else -> startDownload
+            },
             enabled = progress == null,
             modifier = Modifier.fillMaxWidth(),
             tone = if (forced) ClayButtonTone.Primary else ClayButtonTone.Quiet,

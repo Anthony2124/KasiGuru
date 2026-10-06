@@ -10,6 +10,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AppUpdateViewModel @Inject constructor(private val downloader: UpdateDownloader) : ViewModel() {
     val state = downloader.state
+    val signedByAnotherKey = downloader.signedByAnotherKey
     fun watch(release: AppReleaseDto) = downloader.watch(release)
     fun start(release: AppReleaseDto) = downloader.start(release)
     fun canInstall() = downloader.canInstall()
