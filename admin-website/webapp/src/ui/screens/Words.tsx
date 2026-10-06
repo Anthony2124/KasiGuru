@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'preact/hooks';
 import { navigate } from '../../lib/router';
 import { act, useCorpus } from '../../lib/store';
-import { EmptyState, GroundScaffold, Icon, ProgressBar, Scene, sceneForCategory, toast } from '../kit';
+import { EmptyState, GroundScaffold, Icon, ProgressBar, categoryArt, toast } from '../kit';
 import { AudioButton, WordRow } from '../parts';
 import { categoryBlurb } from './Library';
 
@@ -134,12 +134,12 @@ export function CategoryScreen({ category }: { category: string }) {
   return (
     <GroundScaffold title={category} wide>
       <div class="stack">
-        <Scene id={sceneForCategory(category)} height={150}>
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'var(--s-md)' }}>
-            <h1 class="t-headline-s">{category}</h1>
-            <p class="t-body muted">{categoryBlurb(category)}</p>
-          </div>
-        </Scene>
+        {/* CategoryDetailScreen: the category's illustration, the same one its Library tile carries. */}
+        <div class="stack-sm">
+          <img src={categoryArt(category)} alt="" width={88} height={88} decoding="async" />
+          <h1 class="t-headline-s">{category}</h1>
+          <p class="t-body muted">{categoryBlurb(category)}</p>
+        </div>
         <div class="row">
           <div class="grow">
             <ProgressBar value={words.length ? learned / words.length : 0} label="Words learned" />

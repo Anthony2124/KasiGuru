@@ -607,6 +607,18 @@ button.avatar { cursor: pointer; }
 .rating button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
 
 /* ── Library ── */
+/* The Library's category tiles (Android's CategoryTile): three to a row on a phone, four on a
+   tablet, six wide, the illustration on a square tile with no card around the cell. */
+.cat-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-md) var(--s-sm); }
+@media (min-width: 600px) { .cat-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .cat-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cat-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 0 0 4px; border-radius: var(--r-tile); text-align: center; }
+.cat-tile-art { display: grid; place-items: center; width: 100%; aspect-ratio: 1; margin-bottom: var(--s-xs); background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-tile); transition: transform .12s ease; }
+.cat-tile:active .cat-tile-art { transform: scale(.96); }
+.cat-tile-art img { width: 72%; height: 72%; object-fit: contain; }
+.cat-tile-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-tile-bar { width: 60%; height: 3px; margin-top: 4px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.cat-tile-bar > span { display: block; height: 100%; background: var(--lime); border-radius: inherit; }
 .cat-grid, .story-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: var(--s-md); }
 .story-art { position: relative; border-radius: var(--r-panel); overflow: hidden; border: 1px solid var(--hair); aspect-ratio: 3 / 2; background: var(--sunken); }
 .story-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }

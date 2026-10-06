@@ -6,7 +6,7 @@ import { CATEGORIES, STORIES_ENABLED } from '../../domain/constants';
 import { plural } from '../../domain/plural';
 import { navigate } from '../../lib/router';
 import { useApp, useCorpus, useLearner } from '../../lib/store';
-import { EmptyState, GroundScaffold, Icon, Scene, SectionHeading, sceneForCategory } from '../kit';
+import { EmptyState, GroundScaffold, Icon, LIBRARY_CATEGORY_ORDER, SectionHeading, categoryArt } from '../kit';
 import { AudioButton, StoryCover, WordRow } from '../parts';
 import { isStoryUnlocked, wordOfTheDay } from '../derive';
 
@@ -98,19 +98,24 @@ function WordsTab() {
             </button>
           )}
           <SectionHeading text="Categories" />
-          <div class="cat-grid">
-            {[...CATEGORIES, ...extra].map((c) => {
+          {/* Android's CategoryTile: the illustration on a tile, the short name ("Body Parts & Health"
+              reads "Body Parts") so three fit to a row, the size, and a thin progress bar. */}
+          <div class="cat-tiles">
+            {[...LIBRARY_CATEGORY_ORDER, ...extra].map((c) => {
               const words = corpus.all.filter((w) => w.category === c);
               if (!words.length) return null;
               const learned = words.filter((w) => w.isLearned).length;
               return (
-                <button key={c} class="card flat" onClick={() => navigate(`/category/${encodeURIComponent(c)}`)}>
-                  <Scene id={sceneForCategory(c)} height={112} radius="0" style={{ border: 0 }}>
-                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'var(--s-sm)', textAlign: 'left' }}>
-                      <p class="t-title">{c}</p>
-                      <p class="t-body-s muted">{plural(words.length, 'word')} · {learned} learned</p>
-                    </div>
-                  </Scene>
+                <button
+                  key={c}
+                  class="cat-tile"
+                  aria-label={`${c}, ${plural(words.length, 'word')}, ${learned} learned`}
+                  onClick={() => navigate(`/category/${encodeURIComponent(c)}`)}
+                >
+                  <span class="cat-tile-art"><img src={categoryArt(c)} alt="" loading="lazy" decoding="async" /></span>
+                  <span class="t-title-s cat-tile-name">{c.split(' &')[0]}</span>
+                  <span class="t-body-s muted">{learned > 0 ? `${learned} of ${words.length}` : plural(words.length, 'word')}</span>
+                  <span class="cat-tile-bar"><span style={{ width: `${Math.round((learned / words.length) * 100)}%` }} /></span>
                 </button>
               );
             })}

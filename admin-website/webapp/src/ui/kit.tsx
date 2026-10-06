@@ -420,6 +420,24 @@ const SCENE_BY_CATEGORY: Record<string, SceneId> = {
 };
 export const sceneForSection = (id: string): SceneId => SCENE_BY_SECTION[id] ?? 'forest';
 export const sceneForCategory = (c: string): SceneId => SCENE_BY_CATEGORY[c] ?? 'forest';
+
+/** CategoryRegistry's order, which is the order the Library lists its tiles in on Android. */
+export const LIBRARY_CATEGORY_ORDER = [
+  'Greetings & Essentials', 'Food & Dining', 'Animals & Wildlife', 'Body Parts & Health', 'Numbers & Time',
+  'Weather & Climate', 'Emotions & Feelings', 'House & Daily Life', 'Nature & Environment', 'Family & People',
+  'Colors & Shapes', 'Occupations & Tools',
+];
+const ART_BY_SHORT_NAME: Record<string, string> = {
+  greetings: 'greetings', food: 'food', animals: 'animals', 'body parts': 'health', numbers: 'numbers',
+  weather: 'weather', emotions: 'emotions', house: 'house', nature: 'nature', family: 'family',
+  colors: 'colors', occupations: 'occupations',
+};
+/**
+ * The category's illustrated icon (Android's CategoryRegistry.getMeta): matched on the part before
+ * " &", so "Food & Drinks" added in the admin portal still gets the Food art; anything else, General's.
+ */
+export const categoryArt = (c: string) =>
+  `/img/categories/${ART_BY_SHORT_NAME[c.split(' &')[0].trim().toLowerCase()] ?? 'general'}.webp`;
 export const sceneForIndex = (i: number): SceneId => SCENE_ORDER[(((i - 1) % SCENE_ORDER.length) + SCENE_ORDER.length) % SCENE_ORDER.length];
 export const sceneUrl = (id: SceneId) => `/img/scenes/${id}.webp`;
 
