@@ -11,7 +11,7 @@ import {
   masteryUnitId,
   nodeKey,
   openSectionKeys,
-  sectionGateFraction,
+  sectionOpensNext,
   sectionIsComplete,
   type TreeNodeState,
   type TreeSection,
@@ -23,9 +23,12 @@ import { EmptyState, GroundScaffold, Icon, Jepjep, Scene, sceneForSection } from
 import { ProgressAside } from '../aside';
 
 const WIND = [0, 0.55, 0.85, 0.55, 0, -0.55, -0.85, -0.55];
-const AMPLITUDE = 64;
-const NODE = 60;
+const AMPLITUDE = 76;
+const NODE = 72;
 const CURRENT = 72;
+/** LearningPath.kt: ConnectorHeight and TrailWidth. */
+const CONNECTOR = 40;
+const TRAIL = 18;
 const RING_INSET = 10;
 
 type Look = 'locked' | 'current' | 'done' | 'open' | 'test' | 'testPassed';
@@ -41,11 +44,11 @@ function lookOf(n: TreeNodeState): Look {
 }
 
 const FACE: Record<Look, [string, string, string]> = {
-  current: ['var(--lime)', 'var(--lime-lip)', 'var(--on-lime)'],
+  current: ['var(--lime-fill)', 'var(--lime-lip)', 'var(--on-lime)'],
   done: ['var(--olive)', 'var(--olive-deep)', 'var(--cream)'],
   open: ['var(--sunken)', 'var(--hair)', 'var(--ink)'],
-  test: ['var(--gold)', 'var(--gold-deep)', 'var(--reward-ink)'],
-  testPassed: ['var(--gold)', 'var(--gold-deep)', 'var(--reward-ink)'],
+  test: ['var(--gold-fill)', 'var(--gold-deep)', 'var(--reward-ink)'],
+  testPassed: ['var(--gold-fill)', 'var(--gold-deep)', 'var(--reward-ink)'],
   locked: ['var(--surface)', 'var(--surface)', 'var(--faint)'],
 };
 
@@ -93,23 +96,19 @@ function PathNode({ node, index, showGuide, previous }: { node: TreeNodeState; i
     if (node.node.kind === 'lesson') navigate(`/lesson/${enc(node.node.ref.unitId)}/${node.node.ref.lessonIndex}`);
     else navigate(`/lesson/${enc(masteryUnitId(node.node.sectionId))}/0`);
   };
-  const caption =
-    look === 'current' ? 'Start' : look === 'test' && node.isCurrent ? 'Take the test' : look === 'locked' && node.node.kind === 'mastery' ? 'Finish the lessons above to unlock' : null;
+  const action = look === 'current' ? 'Start' : look === 'test' && node.isCurrent ? 'Take the test' : null;
+  const caption = node.node.kind === 'lesson' ? `Lesson ${node.node.positionInSection}` : node.title;
 
   return (
     <div style={{ display: 'grid', justifyItems: 'center' }} data-current={node.isCurrent && node.isUnlocked ? 'true' : undefined}>
       {previous && (
-        <svg class="path-connector" width={320} height={26} aria-hidden="true" viewBox="-160 0 320 26">
-          <line
-            x1={WIND[(index - 1) % WIND.length] * AMPLITUDE}
-            y1={0}
-            x2={lean * AMPLITUDE}
-            y2={26}
-            stroke={previous.mastery >= Mastery.FAMILIAR ? 'var(--brand-lime)' : 'var(--faint)'}
-            stroke-opacity={previous.mastery >= Mastery.FAMILIAR ? 0.7 : 0.45}
-            stroke-width={3}
+        <svg class="path-connector" width={360} height={CONNECTOR} aria-hidden="true" viewBox={`-180 0 360 ${CONNECTOR}`} style={{ overflow: 'visible', marginBottom: -TRAIL / 2 }}>
+          <path
+            d={`M ${WIND[(index - 1) % WIND.length] * AMPLITUDE} ${-TRAIL / 2} C ${WIND[(index - 1) % WIND.length] * AMPLITUDE} ${CONNECTOR / 2}, ${lean * AMPLITUDE} ${CONNECTOR / 2}, ${lean * AMPLITUDE} ${CONNECTOR + TRAIL / 2}`}
+            fill="none"
+            stroke={previous.mastery >= Mastery.FAMILIAR ? 'var(--olive)' : 'var(--track)'}
+            stroke-width={TRAIL}
             stroke-linecap="round"
-            stroke-dasharray={previous.mastery >= Mastery.FAMILIAR ? undefined : '4 6'}
           />
         </svg>
       )}
@@ -149,16 +148,15 @@ function PathNode({ node, index, showGuide, previous }: { node: TreeNodeState; i
           </div>
         )}
       </div>
-      {caption && (
-        <p class="t-label" aria-hidden="true" style={{ marginTop: 4, transform: `translateX(${offset}px)`, color: look === 'locked' ? 'var(--faint)' : 'var(--ink)', textAlign: 'center', maxWidth: 'min(220px, calc(100% - 112px))' }}>
-          {caption}
-        </p>
-      )}
+      <div aria-hidden="true" style={{ marginTop: 4, transform: `translateX(${offset}px)`, textAlign: 'center', width: 160, position: 'relative' }}>
+        <p class="t-title-s" style={{ color: look === 'locked' ? 'var(--muted)' : 'var(--ink)', background: 'var(--ground)', display: 'inline-block', padding: '0 6px', borderRadius: 8 }}>{caption}</p>
+        {action && <p class="t-label" style={{ color: 'var(--lime)' }}>{action}</p>}
+      </div>
     </div>
   );
 }
 
-function SectionBlock({ section, previous, guideKey, first }: { section: TreeSection; previous?: TreeSection; guideKey: string | null; first: boolean }) {
+function SectionBlock({ section, previous, guideKey, first, number }: { section: TreeSection; previous?: TreeSection; guideKey: string | null; first: boolean; number: number }) {
   const locked = !section.isUnlocked;
   const complete = sectionIsComplete(section);
   const remaining = Math.max(0, section.requiredXp - section.earnedXp);
@@ -173,19 +171,27 @@ function SectionBlock({ section, previous, guideKey, first }: { section: TreeSec
               {locked ? 'Locked' : 'Complete'}
             </span>
           )}
-          <h2 class="t-headline-s" style={{ color: locked ? 'var(--muted)' : 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{section.definition.title}</h2>
-          <p class="t-body muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{section.definition.gloss}</p>
+          <p class="t-label" style={{ color: 'var(--cream)' }}>
+            Section {number} · {section.nodes.filter((n) => n.node.kind === 'lesson' && n.mastery >= Mastery.FAMILIAR).length} of {section.nodes.filter((n) => n.node.kind === 'lesson').length} done
+          </p>
+          <h2 class="t-headline-s" style={{ color: 'var(--cream)', opacity: locked ? 0.75 : 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{section.definition.title}</h2>
+          <p class="t-body-s" style={{ color: 'var(--cream)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{section.definition.gloss}</p>
+          {section.isUnlocked && (
+            <div class="segments on-scene" aria-hidden="true" style={{ marginTop: 'var(--s-xs)' }}>
+              {section.nodes.filter((n) => n.node.kind === 'lesson').slice(0, 24).map((n, i) => (
+                <i key={i} class={n.mastery >= Mastery.FAMILIAR ? 'on' : ''} />
+              ))}
+            </div>
+          )}
         </div>
       </Scene>
       <div style={{ marginTop: 'var(--s-sm)' }}>
-        <p class="t-body muted">{section.definition.journeyLine}</p>
+        <p class="t-title-s">{section.definition.journeyLine}</p>
         {section.isUnlocked ? (
-          <div class="row" style={{ marginTop: 'var(--s-xs)' }}>
-            <div class="bar-track grow" style={{ height: 6 }}>
-              <div class="bar-fill" style={{ width: `${sectionGateFraction(section) * 100}%` }} />
-            </div>
-            <span class="t-label muted">{section.earnedXp} / {section.requiredXp} XP</span>
-          </div>
+          <p class="row-xs t-label muted" style={{ marginTop: 'var(--s-xxs)' }}>
+            <Icon name={sectionOpensNext(section) ? 'tickCircle' : 'star'} size={16} color={sectionOpensNext(section) ? 'var(--lime)' : 'var(--gold-fill)'} />
+            {sectionOpensNext(section) ? 'Next section open' : `${section.earnedXp} / ${section.requiredXp} XP opens the next section`}
+          </p>
         ) : (
           <p class="row-xs t-body muted" style={{ marginTop: 'var(--s-xs)' }}>
             <Icon name="lock" size={16} />
@@ -232,12 +238,6 @@ export function LearnScreen() {
 
   const guide = tree.flatMap((s) => s.nodes).find((n) => n.isCurrent && n.isUnlocked);
   const guideKey = guide ? nodeKey(guide) : null;
-  const currentSection = tree.find((s) => s.isUnlocked && s.nodes.some((n) => n.isCurrent));
-  const subtitle = currentSection
-    ? `You are in ${currentSection.definition.title}`
-    : tree.length && tree.every(sectionIsComplete)
-      ? 'Every section walked. Keep them sharp with review.'
-      : 'Section by section, from greetings to everyday talk';
 
   useEffect(() => {
     if (arrived.current || !tree.length) return;
@@ -258,9 +258,8 @@ export function LearnScreen() {
       ) : (
         <div class="cols aside">
           <div style={{ maxWidth: 520, width: '100%', margin: '0 auto' }}>
-            <p class="t-body muted" style={{ marginBottom: 'var(--s-xs)' }}>{subtitle}</p>
             {tree.map((s, i) => (
-              <SectionBlock key={s.definition.id} section={s} previous={tree[i - 1]} guideKey={guideKey} first={i === 0} />
+              <SectionBlock key={s.definition.id} section={s} previous={tree[i - 1]} guideKey={guideKey} first={i === 0} number={i + 1} />
             ))}
           </div>
           <ProgressAside />

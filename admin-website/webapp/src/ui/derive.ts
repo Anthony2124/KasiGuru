@@ -5,7 +5,7 @@
 import type { Corpus } from '../domain/corpus';
 import { daysBetween, epochDay, isoDate, now, today as todayIso } from '../domain/dates';
 import { dailyXpEarned, storyUnlocked } from '../domain/learner';
-import { nextLesson, sectionForUnit, wordsFor, type LessonRef } from '../domain/lesson';
+import { buildTree, Mastery, nextLesson, sectionForUnit, wordsFor, type LessonRef } from '../domain/lesson';
 import { plural } from '../domain/plural';
 import { meaningFor } from '../domain/recall';
 import type { LearnerData } from '../domain/learner';
@@ -32,6 +32,10 @@ export interface ContinueCardData {
   journeyLine: string;
   lessonLabel: string;
   ref: LessonRef;
+  /** ContinueCard's "Lesson N of M" and its segmented bar: the lesson's place, the section's lessons, those done. */
+  position?: number;
+  total: number;
+  done: number;
 }
 
 export function continueCard(corpus: Corpus, learner: LearnerData): ContinueCardData | null {
@@ -41,7 +45,15 @@ export function continueCard(corpus: Corpus, learner: LearnerData): ContinueCard
   const hero = words[0];
   if (!hero) return null;
   const section = sectionForUnit(ref.unitId);
+  const treeSection = buildTree(corpus, learner.lessons).find((s) =>
+    s.nodes.some((n) => n.node.kind === 'lesson' && n.node.ref.unitId === ref.unitId && n.node.ref.lessonIndex === ref.lessonIndex)
+  );
+  const lessonNodes = treeSection?.nodes.filter((n) => n.node.kind === 'lesson') ?? [];
+  const here = lessonNodes.find((n) => n.node.kind === 'lesson' && n.node.ref.unitId === ref.unitId && n.node.ref.lessonIndex === ref.lessonIndex);
   return {
+    position: here?.node.kind === 'lesson' ? here.node.positionInSection : undefined,
+    total: lessonNodes.length,
+    done: lessonNodes.filter((n) => n.mastery >= Mastery.FAMILIAR).length,
     heroWord: hero.kasiguranin,
     heroMeaning: meaningFor(hero.kasiguranin, hero.tagalog, hero.english) ?? hero.english,
     sectionTitle: section?.title ?? ref.unitId,

@@ -26,12 +26,13 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 | 1.18.0 | Adjustable text size | Android-only: browsers have their own text size and zoom, which the web app follows |
 | 1.18.0 | Profile scenery, streak page, weekly / all-time / streak rankings, 11 badge families | Ported |
 | 1.19.0 | Bottom bar: the open tab grows into a labelled pill, solid icons | Ported (2026-10-06): `KasiGuruBottomBar` sizes and Bold icons |
-| 1.19.0 | Continue card with section, lesson number and progress | Not yet |
-| 1.19.0 | Redrawn learning path with a smooth trail | Not yet |
+| 1.19.0 | Continue card with section, lesson number and progress | Ported (2026-10-06): `ContinueCard` layout, "Lesson N of M", segmented bar |
+| 1.19.0 | Redrawn learning path with a smooth trail | Ported (2026-10-06): `LearningPath.kt` geometry, trail, captions and section banner |
 | 1.19.0 | Compact update card | Android-only: the web app updates itself on every deploy |
 | 1.20.0 | Streak page: today's checklist, week, next streak badge | Ported |
 | 1.20.0 | Recovery questions in Settings | Ported |
 | 1.20.0 | Me page: XP ring, badge wall, full dictionary entries | Ported |
+| 1.20.0 | Home: one-row header with streak and XP chips; the week moved to the streak page | Ported (2026-10-06): `HomeHero` |
 | 1.20.0 | Splash on plain green | Android-only: no splash screen on the web |
 | 1.21.0 | Illustrated badges, six tier frames, locked art in grey | Ported (2026-10-06): the 60 images via `sync:web`, `BadgeMedal family=` |
 | 1.21.0 | Category icons in a three-across Library grid | Ported (2026-10-06) |

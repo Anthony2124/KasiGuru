@@ -669,6 +669,20 @@ button.avatar { cursor: pointer; }
 .rating button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
 
 /* ── Library ── */
+/* HomeHero: avatar, greeting and name, the streak and XP chips, the bell, all on one row. */
+.home-hero { display: flex; align-items: center; gap: var(--s-xs); }
+.home-hero .t-body { line-height: 1.2; }
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  min-height: 36px; padding: 0 10px; border-radius: var(--r-pill);
+  background: var(--surface); border: 1px solid var(--hair);
+  font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--ink);
+}
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ContinueCard: words on the left, Jepjep with his backpack on the right. */
+.continue-card { display: flex; align-items: center; gap: var(--s-sm); padding: var(--s-lg); }
+.continue-card .segments { max-width: 280px; }
+
 /* Illustrated badges (StandardBadgeMedal + BadgeArt): a locked tier in grey, with a lock chip. */
 .badge-art { position: relative; display: inline-grid; place-items: center; flex: none; }
 .badge-art img { width: 100%; height: 100%; object-fit: contain; }
@@ -872,3 +886,8 @@ button.avatar { cursor: pointer; }
   .ww-wheel { grid-column: 1 / -1; grid-row: 1; width: min(100%, 260px); }
   .dialog { padding: var(--s-md); }
 }
+
+/* SectionBanner's lesson dots, over scenery: cream on a dark scrim in both themes. */
+.segments.on-scene { max-width: 100%; }
+.segments.on-scene i { height: 5px; background: rgba(242, 236, 202, 0.35); }
+.segments.on-scene i.on { background: var(--cream); }

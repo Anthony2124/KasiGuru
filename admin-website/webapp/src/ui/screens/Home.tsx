@@ -10,9 +10,8 @@ import { useInstall } from '../../lib/install';
 import { approvedContributions } from '../../lib/remote';
 import { act } from '../../lib/store';
 import { Avatar, ClayButton, Icon, Jepjep, ProgressRing, SectionHeading } from '../kit';
-import { WeekStrip } from '../parts';
 import { openGame } from './Practice';
-import { activities, buildWeek, continueCard, dayGoal, isStoryUnlocked, jepjepLine, wordOfTheDay, wordsToReview } from '../derive';
+import { activities, continueCard, dayGoal, isStoryUnlocked, wordOfTheDay, wordsToReview } from '../derive';
 
 const BACKUP_PROMPT_MIN_XP = 150;
 
@@ -39,10 +38,8 @@ export function HomeScreen() {
 
   const wordsDue = Math.min(corpus.countScheduledDue(), 20);
   const goal = dayGoal(learner, wordsDue);
-  const line = jepjepLine(p, wordsDue, goal.met);
   const card = useMemo(() => continueCard(corpus, learner), [corpus, learner.lessons]);
   const acts = useMemo(() => activities(corpus, learner, stories), [corpus, learner, stories]);
-  const week = buildWeek(p);
   const featured = useMemo(() => wordOfTheDay(corpus), [corpus]);
   const lastGame = learner.gameScores[learner.gameScores.length - 1]?.gameType;
   const quickGame = lastGame && ['word_match', 'word_search', 'word_wheel'].includes(lastGame) ? lastGame : null;
@@ -69,48 +66,52 @@ export function HomeScreen() {
     <main id="main-content" tabIndex={-1} class="page wide">
       <div class="home-grid">
         <div class="stack">
-          {/* Hero: who you are, how today stands, and Jepjep's one line. */}
-          <section class="card panel glow" style={{ '--gx': '20%', '--gy': '80%', padding: 'var(--s-md)' } as never}>
-            <div class="row">
-              <Avatar id={p.profileIconId} size={56} level={p.level} onClick={() => navigate('/me')} label={`Your profile, level ${p.level}`} />
-              <h1 class="t-headline-s grow" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                Magandang aldew, <span class="hl">{displayName}</span>
-              </h1>
-              <button class="icon-btn boxed" aria-label="Notifications" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
-                <Icon name="notification" size={22} />
-                {announcements.some((a) => !prefs.readAnnouncements.includes(a.id)) && (
-                  <span style={{ position: 'absolute', top: 10, right: 11, width: 9, height: 9, borderRadius: '50%', background: 'var(--coral)', border: '2px solid var(--surface)' }} />
-                )}
-              </button>
+          {/* HomeHero: one row, who you are and how today stands (Android 1.20). */}
+          <section class="home-hero">
+            <Avatar id={p.profileIconId} size={48} level={p.level} onClick={() => navigate('/me')} label={`Your profile, level ${p.level}`} />
+            <div class="grow" style={{ minWidth: 0 }}>
+              <p class="t-body muted">Magandang aldew,</p>
+              <h1 class="t-title-l hl ellipsis">{displayName}</h1>
             </div>
-            <div class="row-xs wrap" style={{ marginTop: 'var(--s-sm)' }}>
-              <button class="chip" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
-                <Icon name="flash" size={16} color="var(--coral)" />
-                {p.currentStreak === 1 ? '1 day streak' : `${p.currentStreak} day streak`}
-              </button>
-              <button class="chip" onClick={() => navigate('/xp')} aria-label={`${p.totalXp} XP in total. Shows your level and where your XP comes from.`}>
-                <Icon name="star" size={16} color="var(--gold)" />
-                {p.totalXp} XP
-              </button>
-            </div>
-            <div class="row" style={{ marginTop: 'var(--s-md)', alignItems: 'center' }}>
-              <Jepjep pose={line.pose} height={104} breathe />
-              <p class="t-title grow" style={{ background: 'var(--sunken)', border: '1px solid var(--hair)', borderRadius: 'var(--r-tile)', padding: 'var(--s-sm) var(--s-md)' }}>
-                {line.text}
-              </p>
-            </div>
+            <button class="hero-chip" onClick={() => navigate('/streak')} aria-label={`Streak, ${p.currentStreak} ${p.currentStreak === 1 ? 'day' : 'days'}. Shows what keeps it going.`}>
+              <Icon name="flash" size={16} color="var(--coral-fill)" />
+              {p.currentStreak}
+            </button>
+            <button class="hero-chip" onClick={() => navigate('/xp')} aria-label={`${p.totalXp} XP in total. Shows your level and where your XP comes from.`}>
+              <Icon name="star" size={16} color="var(--gold-fill)" />
+              {p.totalXp}
+            </button>
+            <button class="icon-btn" aria-label="Notifications" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
+              <Icon name="notification" size={22} />
+              {announcements.some((a) => !prefs.readAnnouncements.includes(a.id)) && (
+                <span style={{ position: 'absolute', top: 10, right: 11, width: 9, height: 9, borderRadius: '50%', background: 'var(--coral-fill)', border: '2px solid var(--ground)' }} />
+              )}
+            </button>
           </section>
 
-          {/* The one action. */}
+          {/* ContinueCard: the section, "Lesson N of M", the first word, the section's progress. */}
           {card ? (
-            <section class="card panel" style={{ padding: 'var(--s-lg)' }}>
-              <h2 class="t-label-l muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.sectionTitle}</h2>
-              <p class="headword" style={{ marginTop: 'var(--s-sm)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.heroWord}</p>
-              <p class="t-body-l muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.heroMeaning}</p>
-              <p class="t-body-s faint" style={{ marginTop: 'var(--s-xs)' }}>{card.lessonLabel}</p>
-              <div style={{ marginTop: 'var(--s-md)' }}>
-                <ClayButton label="Continue" icon="play" onClick={() => navigate(`/lesson/${enc(card.ref.unitId)}/${card.ref.lessonIndex}`)} />
+            <section class="card panel glow continue-card" style={{ '--gx': '85%', '--gy': '35%' } as never}>
+              <div class="grow" style={{ minWidth: 0 }}>
+                <p class="t-label-l muted ellipsis">Continue · {card.sectionTitle}</p>
+                <h2 class="t-headline-s ellipsis" style={{ marginTop: 'var(--s-xxs)' }}>
+                  {card.position && card.total ? `Lesson ${card.position} of ${card.total}` : card.lessonLabel}
+                </h2>
+                <p class="t-body muted ellipsis" style={{ marginTop: 'var(--s-xxs)' }}>
+                  Starts with <b style={{ color: 'var(--ink)' }}>{card.heroWord}</b> · {card.heroMeaning}
+                </p>
+                {card.total > 0 && (
+                  <div class="segments" role="progressbar" aria-valuemin={0} aria-valuemax={card.total} aria-valuenow={card.done} aria-label={`${card.done} of ${card.total} lessons done`} style={{ marginTop: 'var(--s-sm)' }}>
+                    {Array.from({ length: Math.min(card.total, 24) }, (_, i) => (
+                      <i key={i} class={(i + 1) / Math.min(card.total, 24) <= card.done / card.total ? 'on' : ''} />
+                    ))}
+                  </div>
+                )}
+                <div style={{ marginTop: 'var(--s-md)' }}>
+                  <ClayButton label="Continue" icon="play" onClick={() => navigate(`/lesson/${enc(card.ref.unitId)}/${card.ref.lessonIndex}`)} />
+                </div>
               </div>
+              <Jepjep pose="with_backpack" height={120} breathe />
             </section>
           ) : (
             <ClayButton label={fallback.label} icon={fallback.icon} onClick={fallback.go} />
@@ -206,9 +207,12 @@ export function HomeScreen() {
                   ? { label: 'Story', icon: 'book' as const, go: () => (firstStory ? navigate(`/story/${firstStory.id}`) : navigate('/library?tab=stories')) }
                   : { label: 'Words', icon: 'book' as const, go: () => navigate('/library') },
               ].map((q) => (
-                <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 6, padding: 'var(--s-sm) var(--s-xs)' }}>
-                  <Icon name={q.icon} size={24} color="var(--lime)" />
-                  <span class="t-label">{q.label}</span>
+                // QuickPracticeTile: the icon on a lime disc, the name under it.
+                <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 'var(--s-md) var(--s-xs)' }}>
+                  <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--lime-tint)', display: 'grid', placeItems: 'center' }}>
+                    <Icon name={q.icon} size={24} color="var(--lime)" />
+                  </span>
+                  <span class="t-title-s">{q.label}</span>
                 </button>
               ))}
             </div>
@@ -227,10 +231,6 @@ export function HomeScreen() {
             </section>
           )}
 
-          <section>
-            <SectionHeading text="This week" />
-            <WeekStrip week={week} />
-          </section>
         </div>
       </div>
     </main>
