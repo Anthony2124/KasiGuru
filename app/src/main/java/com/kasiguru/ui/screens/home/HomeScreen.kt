@@ -120,6 +120,10 @@ import io.eyram.iconsax.IconSax
  */
 @Composable
 fun HomeScreen(
+    /** An optional update the learner put off with "Later": a slim reminder at the top. */
+    updateRelease: com.kasiguru.data.remote.model.AppReleaseDto?,
+    onOpenUpdate: () -> Unit,
+    onDismissUpdate: () -> Unit,
     onStartLesson: (unitId: String, lessonIndex: Int) -> Unit,
     onOpenReview: () -> Unit,
     onOpenGames: () -> Unit,
@@ -270,11 +274,11 @@ fun HomeScreen(
             .padding(horizontal = Space.gutter)
             .padding(top = Space.sm, bottom = Space.navBarClearance)
     ) {
-        // An update leads Home until it is installed or put off with "Later": at the bottom, under
-        // News, learners scrolled past it and stayed on old builds. An optional one keeps its
-        // Download button quiet, so Continue below is still the lime thing to do; a forced one is lime.
-        uiState.updateRelease?.let { release ->
-            AppUpdateBanner(release = release, onDismiss = viewModel::dismissUpdate)
+        // An update the learner put off stays at the top of Home as one slim row until installed or
+        // dismissed: at the bottom, under News, learners scrolled past it and stayed on old builds.
+        // The pop-up itself (AppUpdateDialog) is shown app-wide by the navigation shell.
+        updateRelease?.let { release ->
+            AppUpdateBanner(release = release, onOpen = onOpenUpdate, onDismiss = onDismissUpdate)
             Spacer(Modifier.height(Space.md))
         }
 

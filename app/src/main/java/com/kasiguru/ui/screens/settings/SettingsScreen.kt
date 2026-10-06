@@ -71,48 +71,69 @@ fun SettingsScreen(
     val musicVolume by viewModel.musicVolume.collectAsState()
     val streakReminders by viewModel.streakReminders.collectAsState()
     val wordOfDayReminders by viewModel.wordOfDayReminders.collectAsState()
-    val leaderboardAlerts by viewModel.leaderboardAlerts.collectAsState()
+    val reminderMinute by viewModel.reminderMinuteOfDay.collectAsState()
+    val reminderTime = formatReminderTime(reminderMinute)
 
-    var reminderTime by remember { mutableStateOf("08:00 AM") }
     var showTimePicker by remember { mutableStateOf(false) }
+
+    // Turning a reminder on is the moment to ask Android for permission (13+). Without it the
+    // switch showed on while nothing could ever be posted.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val notificationPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { }
+    fun askForNotificationsIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     var isSyncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf("") }
 
     if (showTimePicker) {
-        AlertDialog(modifier = Modifier.tapSounds(), 
+        // Any minute of the day, not six fixed slots; the choice is saved and the reminder moves to it.
+        val pickerState = rememberTimePickerState(
+            initialHour = reminderMinute / 60,
+            initialMinute = reminderMinute % 60,
+            is24Hour = false
+        )
+        AlertDialog(modifier = Modifier.tapSounds(),
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set Daily Learning Reminder", fontWeight = FontWeight.Bold, color = Ink) },
+            title = { Text("Streak reminder time", fontWeight = FontWeight.Bold, color = Ink) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {
-                    Text("Select your preferred daily notification time:", color = Muted)
-                    listOf("07:00 AM", "08:00 AM", "12:00 PM", "06:00 PM", "08:00 PM", "09:00 PM").forEach { time ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    reminderTime = time
-                                    showTimePicker = false
-                                }
-                                .padding(vertical = 10.dp, horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = time, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Ink)
-                            RadioButton(
-                                selected = (reminderTime == time),
-                                onClick = {
-                                    reminderTime = time
-                                    showTimePicker = false
-                                },
-                                colors = RadioButtonDefaults.colors(selectedColor = Lime)
-                            )
-                        }
-                    }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "If today's streak isn't safe yet, KasiGuru reminds you at this time.",
+                        color = Muted,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(Space.md))
+                    TimePicker(
+                        state = pickerState,
+                        colors = TimePickerDefaults.colors(
+                            selectorColor = Lime,
+                            timeSelectorSelectedContainerColor = Lime.copy(alpha = 0.2f),
+                            timeSelectorSelectedContentColor = Ink,
+                            periodSelectorSelectedContainerColor = Lime.copy(alpha = 0.2f),
+                            periodSelectorSelectedContentColor = Ink
+                        )
+                    )
                 }
             },
             confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setReminderMinuteOfDay(pickerState.hour * 60 + pickerState.minute)
+                    showTimePicker = false
+                }) {
+                    Text("Save", fontWeight = FontWeight.Bold, color = LimeText)
+                }
+            },
+            dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Close", fontWeight = FontWeight.Bold, color = LimeText)
+                    Text("Cancel", color = Muted)
                 }
             }
         )
@@ -266,31 +287,28 @@ fun SettingsScreen(
 
                     SettingSwitchRow(
                         title = "Streak Protection Reminders",
-                        subtitle = "Notify me before losing my streak",
+                        subtitle = "A reminder when today's streak isn't safe yet",
                         checked = streakReminders,
                         iconRes = Iconsax.Flash,
-                        onCheckedChange = { viewModel.toggleStreakReminders(it) }
+                        onCheckedChange = {
+                            if (it) askForNotificationsIfNeeded()
+                            viewModel.toggleStreakReminders(it)
+                        }
                     )
 
                     Spacer(Modifier.height(Space.sm))
 
                     SettingSwitchRow(
                         title = "Word of the Day",
-                        subtitle = "Daily Kasiguranin phrase highlight",
+                        subtitle = "One Kasiguranin word each morning at 8:00 AM",
                         checked = wordOfDayReminders,
                         iconRes = Iconsax.Book,
-                        onCheckedChange = { viewModel.toggleWordOfDayReminders(it) }
+                        onCheckedChange = {
+                            if (it) askForNotificationsIfNeeded()
+                            viewModel.toggleWordOfDayReminders(it)
+                        }
                     )
 
-                    Spacer(Modifier.height(Space.sm))
-
-                    SettingSwitchRow(
-                        title = "Leaderboard Rank Alerts",
-                        subtitle = "Alert me when my rank changes",
-                        checked = leaderboardAlerts,
-                        iconRes = Iconsax.MedalStar,
-                        onCheckedChange = { viewModel.toggleLeaderboardAlerts(it) }
-                    )
 
                     Spacer(Modifier.height(Space.sm))
                     HorizontalDivider(color = Faint.copy(alpha = 0.3f))
@@ -299,19 +317,20 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showTimePicker = true },
+                            .clickable(enabled = streakReminders) { showTimePicker = true },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(
-                                text = "Daily Reminder Time",
+                                text = "Streak reminder time",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Ink
+                                color = if (streakReminders) Ink else Muted
                             )
                             Text(
-                                text = "Scheduled at $reminderTime every day",
+                                text = if (streakReminders) "Only sent if today's streak isn't safe yet"
+                                    else "Turn on streak reminders to choose a time",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Muted
                             )
@@ -716,3 +735,8 @@ fun SettingSwitchRow(
         )
     }
 }
+
+/** "7:00 PM" from minutes after midnight. */
+internal fun formatReminderTime(minuteOfDay: Int): String =
+    java.time.LocalTime.of(minuteOfDay / 60 % 24, minuteOfDay % 60)
+        .format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.ENGLISH))

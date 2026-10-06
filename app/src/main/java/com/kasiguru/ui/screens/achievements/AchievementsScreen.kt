@@ -212,7 +212,10 @@ private fun CollectionSummary(
     }
 }
 
-/** One family in the grid: its medal in the current tier's colour, six pips, and the way to the next tier. */
+/**
+ * One family in the grid: its medal in the current tier's colour, six pips, and the way to the next
+ * tier. The medal is the tile's subject, so it is drawn large enough to read its artwork.
+ */
 @Composable
 private fun BadgeTile(family: FamilyProgress, pinned: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val earned = family.current != null
@@ -227,7 +230,7 @@ private fun BadgeTile(family: FamilyProgress, pinned: Boolean, onClick: () -> Un
         Box(Modifier.fillMaxWidth()) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(Space.xxs))
-                StandardBadgeMedal(tier = family.tier, earned = earned, size = 64.dp, familyId = family.family.id)
+                StandardBadgeMedal(tier = family.tier, earned = earned, size = 96.dp, familyId = family.family.id)
                 Spacer(Modifier.height(Space.xs))
                 Text(
                     family.family.name,
@@ -305,7 +308,7 @@ private fun BadgeDetail(
     ) {
         item {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                StandardBadgeMedal(tier = family.tier, earned = earned, size = 88.dp, familyId = family.family.id)
+                StandardBadgeMedal(tier = family.tier, earned = earned, size = 120.dp, familyId = family.family.id)
                 Spacer(Modifier.height(Space.sm))
                 Text(family.family.name, style = MaterialTheme.typography.headlineSmall, color = Ink, textAlign = TextAlign.Center)
                 Text(
@@ -334,7 +337,7 @@ private fun BadgeDetail(
                     .padding(Space.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StandardBadgeMedal(tier = tier, earned = row.isUnlocked, size = 40.dp, familyId = family.family.id)
+                StandardBadgeMedal(tier = tier, earned = row.isUnlocked, size = 48.dp, familyId = family.family.id)
                 Spacer(Modifier.width(Space.sm))
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

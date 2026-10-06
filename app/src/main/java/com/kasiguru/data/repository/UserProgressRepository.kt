@@ -2,17 +2,24 @@ package com.kasiguru.data.repository
 
 import com.kasiguru.data.local.dao.AchievementDao
 import com.kasiguru.data.local.dao.UserProgressDao
+import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.AchievementEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
+import com.kasiguru.domain.gamification.StreakRules
 import com.kasiguru.util.LearningAnalytics
 import com.kasiguru.util.toIsoString
+import com.kasiguru.util.todayFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,8 +29,16 @@ class UserProgressRepository @Inject constructor(
     private val achievementDao: AchievementDao,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val gamification: GamificationRepository,
-    private val encounters: WordEncounterRepository
+    private val encounters: WordEncounterRepository,
+    // The DAO rather than VocabularyRepository, which already depends on this class.
+    private val vocabularyDao: VocabularyDao
 ) {
+    /**
+     * A game and a review can finish at the same moment. Both would read `lastActiveDate` before
+     * either wrote it, and the learner saw the streak celebration twice.
+     */
+    private val streakLock = Mutex()
+
     // A level-up is a screen-agnostic celebratory moment (LevelUpDialog): XP is earned from lessons,
     // flashcards and all eight mini-games, so the event lives here at the one place that already
     // detects a level change, rather than being duplicated at every XP-awarding call site.
@@ -43,24 +58,30 @@ class UserProgressRepository @Inject constructor(
         return userProgressDao.getUserProgressOnce()
     }
 
-    fun getDailyStreakQuota(today: String): Flow<DailyStreakQuota> =
-        userProgressDao.getUserProgress().map { progress ->
-            if (progress == null) DailyStreakQuota()
-            else DailyStreakQuota(
-                reviewCompleted = progress.dailyReviewCompletedDate == today,
-                gamesPlayed = if (progress.dailyGamesDate == today) progress.dailyGamesPlayedCount else 0,
-                requiredGames = 3
-            )
+    /** Today's quota, kept current — including across midnight, when it starts again empty. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getDailyStreakQuota(): Flow<DailyStreakQuota> =
+        todayFlow().flatMapLatest { date ->
+            val today = date.toIsoString()
+            combine(
+                userProgressDao.getUserProgress(),
+                vocabularyDao.observeScheduledDueCount(today)
+            ) { progress, due -> quotaFor(progress, today, due) }
         }
 
-    suspend fun getDailyStreakQuotaOnce(today: String): DailyStreakQuota {
-        val progress = userProgressDao.getUserProgressOnce() ?: return DailyStreakQuota()
-        return DailyStreakQuota(
-            reviewCompleted = progress.dailyReviewCompletedDate == today,
-            gamesPlayed = if (progress.dailyGamesDate == today) progress.dailyGamesPlayedCount else 0,
-            requiredGames = 3
+    suspend fun getDailyStreakQuotaOnce(today: String): DailyStreakQuota =
+        quotaFor(userProgressDao.getUserProgressOnce(), today, vocabularyDao.countScheduledDueWords(today))
+
+    /** Words scheduled for review on or before [today], for the reminder to name. */
+    suspend fun dueReviewCount(today: String): Int = vocabularyDao.countScheduledDueWords(today)
+
+    private fun quotaFor(progress: UserProgressEntity?, today: String, dueCount: Int): DailyStreakQuota =
+        DailyStreakQuota(
+            reviewCompleted = progress?.dailyReviewCompletedDate == today,
+            gamesPlayed = if (progress != null && progress.dailyGamesDate == today) progress.dailyGamesPlayedCount else 0,
+            requiredGames = REQUIRED_GAMES,
+            reviewDue = dueCount > 0
         )
-    }
 
     suspend fun initializeProgress(progress: UserProgressEntity) =
         userProgressDao.insertOrUpdate(progress)
@@ -163,14 +184,13 @@ class UserProgressRepository @Inject constructor(
     }
 
     /**
-     * Checks if today's daily streak quota (complete review words + play 3 mini game levels) is met,
-     * advancing the streak only when all requirements are satisfied.
+     * Checks if today's daily streak quota (finish the due review, or have none due, and play 3 mini
+     * game levels) is met, advancing the streak only when all requirements are satisfied.
      */
     suspend fun checkStreakQuotaAndAdvance() {
-        val today = LocalDate.now().toIsoString()
-        val quota = getDailyStreakQuotaOnce(today)
-        if (quota.isQuotaMet) {
-            updateStreak()
+        streakLock.withLock {
+            val today = LocalDate.now().toIsoString()
+            if (getDailyStreakQuotaOnce(today).isQuotaMet) updateStreak()
         }
     }
 
@@ -180,14 +200,8 @@ class UserProgressRepository @Inject constructor(
      */
     suspend fun validateAndResetExpiredStreak() {
         val progress = userProgressDao.getUserProgressOnce() ?: return
-        if (progress.currentStreak > 0 && progress.lastActiveDate.isNotEmpty()) {
-            val lastDate = runCatching { LocalDate.parse(progress.lastActiveDate) }.getOrNull()
-            if (lastDate != null) {
-                val daysBetween = ChronoUnit.DAYS.between(lastDate, LocalDate.now())
-                if (daysBetween > 1) {
-                    userProgressDao.resetStreak()
-                }
-            }
+        if (StreakRules.isExpired(progress.currentStreak, progress.lastActiveDate, LocalDate.now())) {
+            userProgressDao.resetStreak()
         }
     }
 
@@ -204,13 +218,7 @@ class UserProgressRepository @Inject constructor(
 
         if (progress.lastActiveDate == today) return // Already updated today
 
-        val newStreak = if (progress.lastActiveDate.isNotEmpty()) {
-            val lastDate = LocalDate.parse(progress.lastActiveDate)
-            val daysBetween = ChronoUnit.DAYS.between(lastDate, LocalDate.now())
-            if (daysBetween <= 1) progress.currentStreak + 1 else 1
-        } else {
-            1
-        }
+        val newStreak = StreakRules.advancedStreak(progress.currentStreak, progress.lastActiveDate, LocalDate.now())
 
         userProgressDao.updateStreak(newStreak, today)
         gamification.updateMetrics()
@@ -237,4 +245,9 @@ class UserProgressRepository @Inject constructor(
 
     fun getUnlockedAchievementCount(): Flow<Int> =
         getUnlockedAchievements().map { it.size }
+
+    companion object {
+        /** Mini-game levels a day needs, beside the review, to count toward the streak. */
+        const val REQUIRED_GAMES = 3
+    }
 }

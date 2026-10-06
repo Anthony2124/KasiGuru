@@ -161,7 +161,10 @@ private fun StreakHero(current: Int, longest: Int) {
     }
 }
 
-/** What today still needs, as ticks: one review and three games. The lime button is the way to do it. */
+/**
+ * What today still needs, as ticks: one review and three games. With no words due the review is
+ * already ticked, since there is nothing to finish. The lime button is the way to do it.
+ */
 @Composable
 private fun TodayCard(quota: DailyStreakQuota, onContinue: () -> Unit) {
     SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.tile, border = BorderHairline) {
@@ -175,9 +178,13 @@ private fun TodayCard(quota: DailyStreakQuota, onContinue: () -> Unit) {
         }
         Spacer(Modifier.height(Space.sm))
         QuotaRow(
-            done = quota.reviewCompleted,
+            done = quota.reviewSatisfied,
             title = "Finish a review",
-            detail = if (quota.reviewCompleted) "Done" else "Go through the words due today",
+            detail = when {
+                quota.reviewCompleted -> "Done"
+                !quota.reviewDue -> "Nothing due today, so this counts as done"
+                else -> "Go through the words due today"
+            },
             iconRes = Iconsax.Repeat
         )
         Spacer(Modifier.height(Space.sm))

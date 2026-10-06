@@ -44,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.components.RewardCelebrationDialog
 import com.kasiguru.ui.components.StreakCelebrationDialog
+import com.kasiguru.ui.components.AppUpdateDialog
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.help.HowToUseScreen
 import com.kasiguru.ui.tour.LocalTourAnchors
@@ -115,6 +116,17 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
     val pendingStreakActivation by streakCelebrationViewModel.pendingStreakActivation.collectAsState()
     pendingStreakActivation?.let { streakDays ->
         if(pendingReward == null) StreakCelebrationDialog(streakDays = streakDays, onDismiss = streakCelebrationViewModel::dismiss)
+    }
+
+    // A new version. A required one covers every screen; an optional one waits for a tab and for
+    // any celebration to finish, so it never lands on onboarding or on top of a reward.
+    val appUpdateViewModel: AppUpdatePromptViewModel = hiltViewModel()
+    val appUpdate by appUpdateViewModel.state.collectAsState()
+    appUpdate.release?.let { release ->
+        val calm = pendingReward == null && pendingStreakActivation == null && currentRoute in Screen.tabRoots
+        if (appUpdate.showDialog && (release.forceUpdate || calm)) {
+            AppUpdateDialog(release = release, onLater = appUpdateViewModel::later)
+        }
     }
 
     // ── Ban gate ─────────────────────────────────────────────────────────────────
@@ -345,6 +357,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
             // Home: today's one next action, the day goal, reviews, stories and the week.
             composable(Screen.Home.route) {
                 HomeScreen(
+                    updateRelease = appUpdate.release?.takeIf { appUpdate.showBanner },
+                    onOpenUpdate = appUpdateViewModel::openDialog,
+                    onDismissUpdate = appUpdateViewModel::dismissBanner,
                     onStartLesson = { unitId, lessonIndex ->
                         navController.navigate(Screen.LessonPlayer.createRoute(unitId, lessonIndex))
                     },

@@ -10,7 +10,8 @@ data class AppReleaseDto(
     val apkUrl: String = "",
     val releaseNotes: String = "",
     val forceUpdate: Boolean = false,
-    val releasedAt: Long = System.currentTimeMillis(),
+    /** 0 when the document has no date, so the app hides it rather than calling it "today". */
+    val releasedAt: Long = 0L,
     /**
      * Set by an admin in the release manager to pull a bad build. A yanked release is skipped when
      * the app and the download page pick "the latest one", so installs move to the previous good

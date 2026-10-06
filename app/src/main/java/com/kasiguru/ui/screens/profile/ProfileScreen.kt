@@ -514,8 +514,11 @@ private fun OverviewTile(iconRes: Int, value: String, label: String, modifier: M
     }
 }
 
-/** Badges on the grid, four to a row: enough width for a two-line name at the largest text size. */
-private const val BadgeColumns = 4
+/**
+ * Badges on the grid, three to a row: the eleven families make a 3 × 4 grid with medals large
+ * enough to show their artwork, and a two-line name still fits at the largest text size.
+ */
+private const val BadgeColumns = 3
 
 /**
  * Every badge at once: one medal per family at its highest tier, a six-step track under it, and the
@@ -589,7 +592,7 @@ private fun BadgesSection(
             families.chunked(BadgeColumns).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Space.xs)
+                    horizontalArrangement = Arrangement.spacedBy(Space.sm)
                 ) {
                     row.forEach { summary ->
                         BadgeGridCell(summary, onClick = onSeeAll, modifier = Modifier.weight(1f))
@@ -619,13 +622,13 @@ private fun BadgeGridCell(summary: BadgeFamilySummary, onClick: () -> Unit, modi
         StandardBadgeMedal(
             tier = summary.highest,
             earned = earned,
-            size = 52.dp,
+            size = 84.dp,
             familyId = summary.family.id
         )
         Spacer(Modifier.height(Space.xs))
         Text(
             text = summary.family.name,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = if (earned) Ink else Muted,
             maxLines = 2,
             minLines = 2,

@@ -2,17 +2,28 @@ package com.kasiguru.util.worker
 
 import android.content.Context
 import android.util.Log
-import androidx.work.*
-import com.kasiguru.data.local.dao.UserProgressDao
-import com.kasiguru.data.local.dao.VocabularyDao
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import com.kasiguru.data.repository.NotificationRepository
+import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.domain.gamification.StreakRules
 import com.kasiguru.util.notification.KasiGuruNotificationManager
+import com.kasiguru.util.notification.StreakReminderCopy
+import com.kasiguru.util.toIsoString
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
-import java.util.concurrent.TimeUnit
 
+/**
+ * The evening streak reminder, at the time chosen in Settings (see [ReminderScheduler]).
+ *
+ * It stays quiet when the switch is off or today's streak is already safe, and otherwise says
+ * exactly what is left of today's quota.
+ */
 class StreakReminderWorker(
     context: Context,
     params: WorkerParameters
@@ -27,65 +38,58 @@ class StreakReminderWorker(
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface StreakReminderEntryPoint {
-        fun userProgressDao(): UserProgressDao
-
-        /** For naming what is waiting: a reminder that says how much is due is one worth reading. */
-        fun vocabularyDao(): VocabularyDao
+        fun userProgressRepository(): UserProgressRepository
+        fun userPreferencesRepository(): UserPreferencesRepository
+        fun notificationRepository(): NotificationRepository
     }
 
     override suspend fun doWork(): Result {
         return try {
-            // Previously this called Room.databaseBuilder(...) directly, which returns a
-            // *new* database instance rather than the one DatabaseModule already provides.
-            // Two instances open two connection pools on the same kasiguru_database file,
-            // each able to run the migration chain independently — so a worker firing while
-            // the app cold-starts after an upgrade had both racing the same migrations. The
-            // worker's copy also lacked DatabaseModule's onCreate seeding callback, so it
-            // could create an unseeded database if it happened to get there first.
+            // Reached through the app's singletons rather than a database of the worker's own: a
+            // second Room instance raced the app's migrations when both started together.
             val entryPoint = EntryPointAccessors
                 .fromApplication(applicationContext, StreakReminderEntryPoint::class.java)
-            val dao = entryPoint.userProgressDao()
 
-            val progress = dao.getUserProgressDirect()
-            val today = LocalDate.now().toString()
+            // The switch in Settings was never read here, so turning reminders off did nothing.
+            if (!entryPoint.userPreferencesRepository().streakReminders.first()) return Result.success()
 
-            // If the learner has not practised today, post a streak reminder naming what is due.
-            if (progress != null && progress.lastActiveDate != today) {
-                val dueCount = entryPoint.vocabularyDao().countScheduledDueWords(today)
-                KasiGuruNotificationManager.sendStreakReminderNotification(
-                    applicationContext,
-                    progress.currentStreak,
-                    dueCount
-                )
-            }
+            val progressRepository = entryPoint.userProgressRepository()
+            val progress = progressRepository.getUserProgressOnce() ?: return Result.success()
+            val today = LocalDate.now()
+            val todayIso = today.toIsoString()
+            if (progress.lastActiveDate == todayIso) return Result.success() // already safe today
+
+            val quota = progressRepository.getDailyStreakQuotaOnce(todayIso)
+            if (quota.isQuotaMet) return Result.success()
+
+            // A run already broken yesterday is not one this reminder can save.
+            val streak = if (StreakRules.isExpired(progress.currentStreak, progress.lastActiveDate, today)) 0
+                else progress.currentStreak
+            val title = StreakReminderCopy.title(streak)
+            val body = StreakReminderCopy.body(
+                currentStreak = streak,
+                dueCount = if (quota.reviewDue) progressRepository.dueReviewCount(todayIso) else 0,
+                reviewDone = quota.reviewCompleted,
+                gamesLeft = quota.gamesRemaining,
+                requiredGames = quota.requiredGames
+            )
+
+            KasiGuruNotificationManager.sendStreakReminderNotification(applicationContext, title, body)
+            entryPoint.notificationRepository().addNotification(
+                title = title,
+                message = body,
+                category = "Streak",
+                deepLinkRoute = "streak"
+            )
             Result.success()
         } catch (e: Exception) {
-            // Was swallowed entirely: a worker failing every night looked identical to one
-            // that never ran, with nothing in logcat either way.
+            // A worker failing every night must not look identical to one that never ran.
             Log.w(TAG, "Streak reminder failed", e)
             Result.failure()
         }
     }
 
-    companion object {
-        private const val TAG = "StreakReminderWorker"
-        const val WORK_NAME = "kasiguru_daily_streak_reminder"
-
-        fun scheduleDailyReminder(context: Context) {
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                .build()
-
-            val dailyWorkRequest = PeriodicWorkRequestBuilder<StreakReminderWorker>(24, TimeUnit.HOURS)
-                .setConstraints(constraints)
-                .setInitialDelay(12, TimeUnit.HOURS)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
-                dailyWorkRequest
-            )
-        }
+    private companion object {
+        const val TAG = "StreakReminderWorker"
     }
 }

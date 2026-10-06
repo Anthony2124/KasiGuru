@@ -141,13 +141,13 @@ fun StreakDialog(
                                     modifier = Modifier
                                         .size(28.dp)
                                         .clip(CircleShape)
-                                        .background(if (streakQuota.reviewCompleted) Green.copy(alpha = 0.15f) else Muted.copy(alpha = 0.12f)),
+                                        .background(if (streakQuota.reviewSatisfied) Green.copy(alpha = 0.15f) else Muted.copy(alpha = 0.12f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = if (streakQuota.reviewCompleted) Iconsax.TickCircleBold else Iconsax.Refresh),
+                                        painter = painterResource(id = if (streakQuota.reviewSatisfied) Iconsax.TickCircleBold else Iconsax.Refresh),
                                         contentDescription = null,
-                                        tint = if (streakQuota.reviewCompleted) GreenText else Muted,
+                                        tint = if (streakQuota.reviewSatisfied) GreenText else Muted,
                                         modifier = Modifier.size(15.dp)
                                     )
                                 }
@@ -159,17 +159,21 @@ fun StreakDialog(
                                         color = Ink
                                     )
                                     Text(
-                                        text = if (streakQuota.reviewCompleted) "Daily review completed" else "Finish flashcard review deck",
+                                        text = when {
+                                            streakQuota.reviewCompleted -> "Daily review completed"
+                                            !streakQuota.reviewDue -> "Nothing due today"
+                                            else -> "Finish flashcard review deck"
+                                        },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Muted
                                     )
                                 }
                             }
                             Text(
-                                text = if (streakQuota.reviewCompleted) "Done" else "Pending",
+                                text = if (streakQuota.reviewSatisfied) "Done" else "Pending",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (streakQuota.reviewCompleted) GreenText else Muted
+                                color = if (streakQuota.reviewSatisfied) GreenText else Muted
                             )
                         }
 

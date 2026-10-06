@@ -1,12 +1,13 @@
 package com.kasiguru.util.notification
 
+import com.kasiguru.util.pluralize
+
 /**
- * What the nightly reminder says.
+ * What the evening reminder says.
  *
- * The old body was the same sentence every night — "Practice for just 2 minutes tonight to master
- * vocabulary & verb aspects" — which named nothing the learner could act on and was not even true of
- * a night when nothing was scheduled. A reminder that says how many words are about to be forgotten
- * is both honest and specific, and the number is exactly the thing the schedule exists to surface.
+ * It names what is actually left of today's streak quota: the due review, if any, and the games
+ * still to play. The old body said "A short lesson keeps the streak going", which was not true;
+ * a lesson does not count toward the streak, and following the advice did not save it.
  *
  * Pure text, kept out of the notification builder so the wording can be tested without Android.
  */
@@ -16,14 +17,19 @@ object StreakReminderCopy {
         if (currentStreak > 0) "Keep your $currentStreak-day streak alive 🔥" else "Learn Kasiguranin today 📚"
 
     /**
-     * Names the work waiting, or asks for a short lesson when there is none.
-     *
-     * The zero case matters: on a fresh install, and for a learner who is up to date, inventing a
-     * review backlog would be a lie the app can be caught in one tap later.
+     * @param dueCount words scheduled for review today; with none there is no review to ask for.
+     * @param reviewDone whether today's review is already finished.
+     * @param gamesLeft mini-game levels still to play today.
      */
-    fun body(dueCount: Int): String = when {
-        dueCount <= 0 -> "A short lesson keeps the streak going."
-        dueCount == 1 -> "1 word is due for review tonight."
-        else -> "$dueCount words are due for review tonight."
+    fun body(currentStreak: Int, dueCount: Int, reviewDone: Boolean, gamesLeft: Int, requiredGames: Int = 3): String {
+        val review = if (dueCount > 0 && !reviewDone) "review ${pluralize(dueCount, "word")}" else null
+        val games = when {
+            gamesLeft <= 0 -> null
+            gamesLeft >= requiredGames -> "play ${pluralize(gamesLeft, "game")}"
+            else -> "play $gamesLeft more ${if (gamesLeft == 1) "game" else "games"}"
+        }
+        val goal = if (currentStreak > 0) "to keep your streak" else "to start a streak"
+        val todo = listOfNotNull(review, games).joinToString(" and ")
+        return if (todo.isEmpty()) "Today's streak is safe." else "${todo.replaceFirstChar { it.uppercase() }} $goal."
     }
 }

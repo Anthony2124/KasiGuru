@@ -3,15 +3,12 @@ package com.kasiguru.ui.screens.learn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.util.Constants
-import com.kasiguru.BuildConfig
 import com.kasiguru.data.local.entity.StoryEntity
 import com.kasiguru.data.local.entity.UserProgressEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.remote.model.AnnouncementDto
-import com.kasiguru.data.remote.model.AppReleaseDto
 import com.kasiguru.data.local.entity.MetricType
 import com.kasiguru.data.repository.AnnouncementRepository
-import com.kasiguru.data.repository.AppUpdateRepository
 import com.kasiguru.data.repository.AuthRepository
 import com.kasiguru.data.repository.SubmissionRepository
 import com.kasiguru.data.repository.GameLevelRepository
@@ -101,7 +98,6 @@ data class LearnUiState(
     val continueCard: ContinueCard? = null,
     /** Every story, locked ones included - the lock is the motivation, so the shelf shows them. */
     val stories: List<StoryEntity> = emptyList(),
-    val updateRelease: AppReleaseDto? = null,
     val showBackupPrompt: Boolean = false,
     val announcements: List<AnnouncementDto> = emptyList(),
     /** Words still due for review right now. Part of the day goal, not just a number on a card. */
@@ -172,7 +168,6 @@ class LearnViewModel @Inject constructor(
     private val storyRepository: StoryRepository,
     private val gameLevelRepository: GameLevelRepository,
     private val gameRepository: com.kasiguru.data.repository.GameRepository,
-    private val appUpdateRepository: AppUpdateRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val authRepository: AuthRepository,
     private val announcementRepository: AnnouncementRepository,
@@ -187,7 +182,6 @@ class LearnViewModel @Inject constructor(
         observeProgress()
         observeStreakQuota()
         refreshPlan()
-        checkForUpdate()
         observeAccountState()
         observeAnnouncements()
         checkSubmissionAchievements()
@@ -204,8 +198,7 @@ class LearnViewModel @Inject constructor(
 
     private fun observeStreakQuota() {
         viewModelScope.launch {
-            val today = LocalDate.now().toIsoString()
-            userProgressRepository.getDailyStreakQuota(today).collect { quota ->
+            userProgressRepository.getDailyStreakQuota().collect { quota ->
                 _uiState.update { it.copy(streakQuota = quota) }
             }
         }
@@ -238,8 +231,7 @@ class LearnViewModel @Inject constructor(
             userProgressRepository.validateAndResetExpiredStreak()
             val progress = userProgressRepository.getUserProgressOnce() ?: UserProgressEntity()
             val due = vocabularyRepository.getDueReviewWordsStrict(limit = 20)
-            val words = vocabularyRepository.getAllVocabularyOnce().filter { it.kasiguranin.isNotBlank() }.sortedBy { it.id }
-            val featured = if (words.isEmpty()) null else words[(LocalDate.now().toEpochDay() % words.size).toInt()]
+            val featured = com.kasiguru.domain.lesson.WordOfDay.pick(vocabularyRepository.getAllVocabularyOnce())
             val lastGame = gameRepository.getRecentScores(1).first().firstOrNull()?.gameType
             _uiState.update {
                 it.copy(
@@ -386,26 +378,6 @@ class LearnViewModel @Inject constructor(
 
     private fun percent(part: Int, whole: Int): Int =
         if (whole <= 0) 0 else ((part.toFloat() / whole) * 100).toInt().coerceIn(0, 100)
-
-    private fun checkForUpdate() {
-        viewModelScope.launch {
-            val latest = appUpdateRepository.getLatestRelease().getOrNull() ?: return@launch
-            if (latest.versionCode <= BuildConfig.VERSION_CODE) return@launch
-            val dismissed = userPreferencesRepository.dismissedUpdateVersion.first()
-            if (!latest.forceUpdate && latest.versionCode <= dismissed) return@launch
-            _uiState.update { it.copy(updateRelease = latest) }
-        }
-    }
-
-    fun dismissUpdate() {
-        val dismissedVersion = _uiState.value.updateRelease?.versionCode
-        _uiState.update { it.copy(updateRelease = null) }
-        if (dismissedVersion != null) {
-            viewModelScope.launch {
-                userPreferencesRepository.setDismissedUpdateVersion(dismissedVersion)
-            }
-        }
-    }
 
     fun dismissBackupPrompt() {
         _uiState.update { it.copy(showBackupPrompt = false) }

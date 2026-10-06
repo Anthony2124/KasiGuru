@@ -79,7 +79,6 @@ class UserDataResetManager @Inject constructor(
             achievementDao.insertAll(DatabaseSeeder.getInitialAchievements())
             storyDao.insertAll(DatabaseSeeder.getInitialStories())
             notificationDao.deleteAll()
-            notificationDao.insertAll(DatabaseSeeder.getInitialNotifications())
 
             // 7. Ensure vocabulary dictionary has entries if it was somehow empty
             if (vocabularyDao.getTotalCountDirect() == 0) {

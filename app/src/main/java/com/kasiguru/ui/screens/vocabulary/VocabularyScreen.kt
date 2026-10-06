@@ -211,16 +211,9 @@ fun DictionaryContent(
     val searchSettled = search.query == trimmed
     val wordResults = if (searchSettled) search.results else emptyList()
 
-    // Word of the Day: seeded by the epoch day, so it is stable for everyone on a given day and
-    // rotates the next, over a stable id-sorted list.
+    // Word of the Day: the same pick as Home and the morning notification.
     val featuredWord = remember(uiState.allVocabulary) {
-        val eligible = uiState.allVocabulary
-            .filter { it.kasiguranin.isNotBlank() && it.tagalog.isNotBlank() }
-            .sortedBy { it.id }
-        if (eligible.isEmpty()) null else {
-            val today = java.time.LocalDate.now().toEpochDay()
-            eligible[(today % eligible.size).toInt()]
-        }
+        com.kasiguru.domain.lesson.WordOfDay.pick(uiState.allVocabulary)
     }
 
     val corpusProgress = if (uiState.allVocabulary.isNotEmpty()) {

@@ -925,14 +925,9 @@ internal fun mergeProgress(
     // Apply the same expiry rule used in validateAndResetExpiredStreak: if the
     // winning lastActiveDate is more than 1 calendar day in the past, the user
     // missed a day and the streak must be 0.
-    val mergedStreak = if (rawStreak > 0 && mergedLastActiveDate.isNotEmpty()) {
-        val lastDate = runCatching {
-            java.time.LocalDate.parse(mergedLastActiveDate)
-        }.getOrNull()
-        if (lastDate != null && java.time.temporal.ChronoUnit.DAYS.between(
-                lastDate, today) > 1
-        ) 0 else rawStreak
-    } else rawStreak
+    val mergedStreak =
+        if (com.kasiguru.domain.gamification.StreakRules.isExpired(rawStreak, mergedLastActiveDate, today)) 0
+        else rawStreak
     // ────────────────────────────────────────────────────────────────────────
 
     return UserProgressEntity(

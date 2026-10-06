@@ -149,7 +149,11 @@ object CategoryRegistry {
     )
 
     fun getMeta(categoryName: String): CategoryMetaData {
+        // Exact name first; then the part before " &", so "Food" or "Food & Drinks" added from the
+        // admin portal still gets the Food & Dining artwork rather than the general fallback.
+        val short = categoryName.substringBefore(" &").trim()
         return categories.firstOrNull { it.name.equals(categoryName, ignoreCase = true) }
+            ?: categories.firstOrNull { short.isNotEmpty() && it.name.substringBefore(" &").equals(short, ignoreCase = true) }
             ?: CategoryMetaData(
                 name = categoryName,
                 iconRes = Iconsax.BookBold,

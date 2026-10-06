@@ -11907,43 +11907,4 @@ fun getInitialStories(): List<StoryEntity> {
             isCurrentUser = false
         )
     )
-
-    fun getInitialNotifications(): List<com.kasiguru.data.local.entity.NotificationEntity> = listOf(
-        com.kasiguru.data.local.entity.NotificationEntity(
-            id = 1,
-            title = "🔥 Keep Your 5-Day Streak Alive!",
-            message = "You are only 3 words away from reaching your daily learning goal today.",
-            timestamp = "10 mins ago",
-            category = "Streak",
-            isRead = false,
-            deepLinkRoute = "vocabulary"
-        ),
-        com.kasiguru.data.local.entity.NotificationEntity(
-            id = 2,
-            title = "🌟 Word of the Day: Magandang Aldew",
-            message = "Kasiguranin greeting for 'Good Day / Good Morning'. Learn its audio & usage!",
-            timestamp = "2 hours ago",
-            category = "WordOfDay",
-            isRead = false,
-            deepLinkRoute = "vocabulary"
-        ),
-        com.kasiguru.data.local.entity.NotificationEntity(
-            id = 3,
-            title = "🏆 Leaderboard Rank #2 Reclaimed!",
-            message = "You climbed to Rank #2 on the Global Leaderboard with 850 total XP!",
-            timestamp = "Yesterday",
-            category = "Leaderboard",
-            isRead = true,
-            deepLinkRoute = "leaderboard"
-        ),
-        com.kasiguru.data.local.entity.NotificationEntity(
-            id = 4,
-            title = "🎓 Badge Unlocked: Linguistic Scholar!",
-            message = "Congratulations! You reached Level 3 & unlocked the Linguistic Scholar badge.",
-            timestamp = "2 days ago",
-            category = "Achievement",
-            isRead = true,
-            deepLinkRoute = "achievements"
-        )
-    )
 }

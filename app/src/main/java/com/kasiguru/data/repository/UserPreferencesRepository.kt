@@ -17,10 +17,21 @@ import javax.inject.Singleton
 data class DailyStreakQuota(
     val reviewCompleted: Boolean = false,
     val gamesPlayed: Int = 0,
-    val requiredGames: Int = 3
+    val requiredGames: Int = 3,
+    /**
+     * Whether any word is scheduled for review today. With nothing due there is no review to
+     * finish, and requiring one made the streak impossible for new and caught-up learners.
+     */
+    val reviewDue: Boolean = true
 ) {
-    val isQuotaMet: Boolean get() = reviewCompleted && gamesPlayed >= requiredGames
+    /** The review step is done, or there was nothing to review today. */
+    val reviewSatisfied: Boolean get() = reviewCompleted || !reviewDue
+    val gamesRemaining: Int get() = (requiredGames - gamesPlayed).coerceAtLeast(0)
+    val isQuotaMet: Boolean get() = reviewSatisfied && gamesPlayed >= requiredGames
 }
+
+/** The streak reminder's default time: 7:00 PM, as minutes after midnight. */
+const val DEFAULT_REMINDER_MINUTE = 19 * 60
 
 /** Where the sound and music volume sliders start: the level the sounds were tuned at. */
 const val DEFAULT_VOLUME_PERCENT = 50
@@ -44,6 +55,9 @@ class UserPreferencesRepository @Inject constructor(
         val WORD_OF_DAY_REMINDERS = booleanPreferencesKey("word_of_day_reminders")
         val LEADERBOARD_ALERTS = booleanPreferencesKey("leaderboard_alerts")
         val DISMISSED_UPDATE_VERSION = intPreferencesKey("dismissed_update_version")
+        val PROMPTED_UPDATE_VERSION = intPreferencesKey("prompted_update_version")
+        val REMINDER_MINUTE_OF_DAY = intPreferencesKey("reminder_minute_of_day")
+        val SAMPLE_INBOX_CLEARED = booleanPreferencesKey("sample_inbox_cleared")
         val BACKUP_PROMPT_DISMISSED = booleanPreferencesKey("backup_prompt_dismissed")
         val GAME_RULES_SEEN = stringSetPreferencesKey("game_rules_seen")
         val TUTORIAL_PENDING = booleanPreferencesKey("tutorial_pending")
@@ -284,6 +298,20 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    /** The newest optional update already shown as a pop-up, so each version pops up only once. */
+    val promptedUpdateVersion: Flow<Int> = dataStore.data.map { it[PreferencesKeys.PROMPTED_UPDATE_VERSION] ?: 0 }
+
+    suspend fun setPromptedUpdateVersion(versionCode: Int) {
+        dataStore.edit { it[PreferencesKeys.PROMPTED_UPDATE_VERSION] = versionCode }
+    }
+
+    /** One-time removal of the sample messages older installs were given; see NotificationRepository. */
+    val sampleInboxCleared: Flow<Boolean> = dataStore.data.map { it[PreferencesKeys.SAMPLE_INBOX_CLEARED] ?: false }
+
+    suspend fun setSampleInboxCleared() {
+        dataStore.edit { it[PreferencesKeys.SAMPLE_INBOX_CLEARED] = true }
+    }
+
     /** Whether the "secure your progress" prompt for guest accounts was dismissed. */
     val backupPromptDismissed: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[PreferencesKeys.BACKUP_PROMPT_DISMISSED] ?: false
@@ -337,6 +365,15 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { prefs ->
             prefs[PreferencesKeys.STREAK_REMINDERS] = enabled
         }
+    }
+
+    /** When the streak reminder fires, as minutes after midnight. 7:00 PM leaves the evening to act. */
+    val reminderMinuteOfDay: Flow<Int> = dataStore.data.map {
+        (it[PreferencesKeys.REMINDER_MINUTE_OF_DAY] ?: DEFAULT_REMINDER_MINUTE).coerceIn(0, 24 * 60 - 1)
+    }
+
+    suspend fun setReminderMinuteOfDay(minute: Int) {
+        dataStore.edit { it[PreferencesKeys.REMINDER_MINUTE_OF_DAY] = minute.coerceIn(0, 24 * 60 - 1) }
     }
 
     val wordOfDayReminders: Flow<Boolean> = dataStore.data.map { prefs ->

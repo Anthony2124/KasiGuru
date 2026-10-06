@@ -130,10 +130,14 @@ private fun Cover(word: VocabularyEntity, number: Int, total: Int, shape: Rounde
                 modifier = Modifier.align(Alignment.Start)
             )
             Spacer(Modifier.weight(1f))
-            Icon(
-                painterResource(categoryDoodle(word.category)), null,
-                tint = Cream, modifier = Modifier.size(84.dp)
-            )
+            // The category's own illustration, the one the Library shows, on a cream disc so it
+            // reads against the olive cover.
+            Box(
+                Modifier.size(128.dp).clip(CircleShape).background(Cream),
+                contentAlignment = Alignment.Center
+            ) {
+                CategoryArt(word.category, size = 92.dp, fallbackTint = RewardInk)
+            }
             Spacer(Modifier.height(20.dp))
             Text(
                 word.category,
@@ -170,10 +174,7 @@ private fun PaperFace(
                     .padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painterResource(categoryDoodle(word.category)), null,
-                    tint = ink, modifier = Modifier.size(16.dp)
-                )
+                CategoryArt(word.category, size = 20.dp, fallbackTint = ink)
                 Spacer(Modifier.width(6.dp))
                 Text(
                     word.category,
@@ -302,5 +303,19 @@ private fun TapPill(text: String, fill: Color, ink: Color, modifier: Modifier = 
         }
         Spacer(Modifier.width(8.dp))
         Text(text, style = MaterialTheme.typography.labelLarge, color = ink)
+    }
+}
+
+/**
+ * A category's illustrated icon (food bowl, cottage, paw…), the same artwork the Library's category
+ * tiles use. Falls back to the flat doodle, tinted, for a category that has no illustration.
+ */
+@Composable
+private fun CategoryArt(category: String, size: androidx.compose.ui.unit.Dp, fallbackTint: Color) {
+    val art = CategoryRegistry.getMeta(category).customDrawableRes
+    if (art != null) {
+        Image(painterResource(art), contentDescription = null, modifier = Modifier.size(size))
+    } else {
+        Icon(painterResource(categoryDoodle(category)), contentDescription = null, tint = fallbackTint, modifier = Modifier.size(size))
     }
 }

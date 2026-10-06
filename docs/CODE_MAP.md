@@ -51,9 +51,10 @@ are relative to that directory.
 | Firebase content sync | `data/remote/FirestoreSyncManager.kt` | `data/repository/FirestoreSyncRepository.kt` |
 | Cross-device progress | `data/repository/ProgressSyncManager.kt` | `LearningStateMerge.kt`, `UserProgressRepository.kt` |
 | XP accounting and badge tiers | `domain/gamification/XpPolicy.kt`, `BadgeCatalog.kt` | `GamificationRepository.kt`, `data/remote/RewardReceiptCodec.kt`, `RewardDao.kt`; policy in `docs/design/XP_AND_TIERED_BADGES_PLAN.md` |
-| Push notifications and reminders | `util/notification/`, `util/worker/` | `ui/screens/notifications/`, `NotificationRepository.kt` |
+| Push notifications and reminders | `util/notification/`, `util/worker/ReminderScheduler.kt` | `StreakReminderWorker.kt`, `WordOfDayWorker.kt`, `ui/screens/notifications/`, `NotificationRepository.kt` |
 | Profile scenery and public player pages | `ui/screens/profile/`, `domain/gamification/ProfileBackgroundCatalog.kt` | `PublicProfileRepository.kt`, `data/remote/model/PublicProfileDto.kt`, Room 33 and `firestore.rules` |
-| Streak page | `ui/screens/streak/` | `learn/LearnViewModel.kt`, `BadgeCatalog.kt` |
+| Streak rules and page | `domain/gamification/StreakRules.kt`, `ui/screens/streak/` | `UserProgressRepository.kt` (daily quota), `learn/LearnViewModel.kt`, `BadgeCatalog.kt` |
+| App update prompt | `ui/navigation/AppUpdatePromptViewModel.kt`, `ui/components/AppUpdateDialog.kt` | `AppUpdateBanner.kt`, `util/update/UpdateDownloader.kt`, `AppUpdateRepository.kt` |
 | Appearance and text size | `ui/screens/settings/AppearanceScreen.kt`, `domain/preferences/` | `UserPreferencesRepository.kt`, `ui/theme/Theme.kt`; screen guide in `docs/design/UI_CLEANUP.md` |
 | Shared appearance | `ui/theme/`, `ui/components/` | `ui/components/brand/`, `clay/`, `states/` |
 | Guided onboarding tour | `ui/tour/`, `ui/screens/onboarding/` | Tour tests in `app/src/test/` |

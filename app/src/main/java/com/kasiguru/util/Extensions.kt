@@ -1,5 +1,10 @@
 package com.kasiguru.util
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -59,3 +64,21 @@ fun calculateLevelProgress(totalXp: Int): Float {
 fun getLevelTitle(level: Int): String {
     return "Level ${level.coerceIn(1, 30)}"
 }
+
+/**
+ * Today's date now, and again at each midnight while collected.
+ *
+ * A screen that captured `LocalDate.now()` once kept showing yesterday's streak ticks after midnight
+ * until it was rebuilt. Anything keyed to "today" should follow this instead.
+ */
+fun todayFlow(): Flow<LocalDate> = flow {
+    while (true) {
+        val today = LocalDate.now()
+        emit(today)
+        val untilMidnight = Duration.between(
+            LocalDateTime.now(), today.plusDays(1).atStartOfDay()
+        ).toMillis()
+        // A second past midnight, so the next read is surely the new day.
+        delay(untilMidnight.coerceAtLeast(0) + 1_000)
+    }
+}.distinctUntilChanged()

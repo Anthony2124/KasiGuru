@@ -132,6 +132,10 @@ interface VocabularyDao {
     @Query("SELECT COUNT(*) FROM vocabulary WHERE nextReviewDate != '' AND nextReviewDate <= :todayDate")
     suspend fun countScheduledDueWords(todayDate: String): Int
 
+    /** [countScheduledDueWords], kept current: the streak's review step is waived while it is 0. */
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE nextReviewDate != '' AND nextReviewDate <= :todayDate")
+    fun observeScheduledDueCount(todayDate: String): Flow<Int>
+
     @Query("SELECT * FROM vocabulary ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<VocabularyEntity>
 

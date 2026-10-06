@@ -13,26 +13,42 @@ import org.junit.Test
 class StreakReminderCopyTest {
 
     @Test
-    fun theBodyNamesHowMuchIsDue() {
-        assertEquals("12 words are due for review tonight.", StreakReminderCopy.body(12))
+    fun theBodyNamesTheReviewAndTheGamesLeft() {
+        assertEquals(
+            "Review 12 words and play 3 games to keep your streak.",
+            StreakReminderCopy.body(currentStreak = 4, dueCount = 12, reviewDone = false, gamesLeft = 3)
+        )
     }
 
     @Test
     fun oneWordIsNotOneWords() {
-        assertEquals("1 word is due for review tonight.", StreakReminderCopy.body(1))
+        assertEquals(
+            "Review 1 word to keep your streak.",
+            StreakReminderCopy.body(currentStreak = 4, dueCount = 1, reviewDone = false, gamesLeft = 0)
+        )
     }
 
     @Test
     fun nothingDueNeverInventsABacklog() {
-        // The fresh-install case: every word has an empty review date, and none of them are due.
-        val body = StreakReminderCopy.body(0)
-        assertFalse(body.contains("due"))
-        assertEquals("A short lesson keeps the streak going.", body)
+        // The fresh-install case: no word has a review date, so only the games are left to ask for.
+        val body = StreakReminderCopy.body(currentStreak = 0, dueCount = 0, reviewDone = false, gamesLeft = 3)
+        assertFalse(body.contains("review", ignoreCase = true))
+        assertEquals("Play 3 games to start a streak.", body)
     }
 
     @Test
-    fun aNegativeCountIsTreatedAsNothingDue() {
-        assertEquals(StreakReminderCopy.body(0), StreakReminderCopy.body(-3))
+    fun aFinishedReviewIsNotAskedForAgain() {
+        assertEquals(
+            "Play 1 more game to keep your streak.",
+            StreakReminderCopy.body(currentStreak = 2, dueCount = 5, reviewDone = true, gamesLeft = 1)
+        )
+    }
+
+    @Test
+    fun neverRecommendsALessonForTheStreak() {
+        // A lesson does not count toward the streak; the old copy sent learners to one anyway.
+        val body = StreakReminderCopy.body(currentStreak = 3, dueCount = 0, reviewDone = false, gamesLeft = 2)
+        assertFalse(body.contains("lesson"))
     }
 
     @Test

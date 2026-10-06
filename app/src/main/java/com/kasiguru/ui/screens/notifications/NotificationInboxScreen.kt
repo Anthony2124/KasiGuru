@@ -48,9 +48,8 @@ fun NotificationInboxScreen(
     val filterOptions = listOf(
         "All" to "All",
         "Streak" to "Streaks",
-        "WordOfDay" to "Word of Day",
-        "Leaderboard" to "Leaderboard",
-        "Achievement" to "Badges"
+        "WordOfDay" to "Word of the day",
+        NEWS_FILTER to "News"
     )
 
     if (showClearConfirm) {
@@ -188,7 +187,7 @@ fun NotificationInboxScreen(
                                 color = Ink
                             )
                             Text(
-                                text = "You're all caught up! Check back later for streak reminders and daily words.",
+                                text = "You're all caught up. Streak reminders, the word of the day and news from the team will show up here.",
                                 fontSize = 13.sp,
                                 color = Muted,
                                 lineHeight = 18.sp
@@ -290,7 +289,7 @@ fun NotificationCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = notification.timestamp,
+                    text = inboxTimestamp(notification.timestamp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = Faint

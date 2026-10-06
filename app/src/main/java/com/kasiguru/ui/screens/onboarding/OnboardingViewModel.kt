@@ -19,7 +19,8 @@ import javax.inject.Inject
 class OnboardingViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val profileRepository: ProfileRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context
 ) : ViewModel() {
 
     /**
@@ -41,6 +42,7 @@ class OnboardingViewModel @Inject constructor(
             withContext(NonCancellable) {
                 userPreferencesRepository.setStreakReminders(streak)
                 userPreferencesRepository.setWordOfDayReminders(wordOfDay)
+                com.kasiguru.util.worker.ReminderScheduler.syncWithPreferences(appContext, userPreferencesRepository)
             }
         }
     }

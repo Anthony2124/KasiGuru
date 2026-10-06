@@ -107,7 +107,7 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
                 SectionHeading("Showcase")
                 Row(Modifier.fillMaxWidth().padding(top = Space.sm), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
                     state.showcase.forEach { badge -> Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), true, familyId = BadgeCatalog.familyFor(badge.id)?.id)
+                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), true, size = 96.dp, familyId = BadgeCatalog.familyFor(badge.id)?.id)
                         Text(badge.name, color = Ink, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
                         Text(BadgeCatalog.tierFor(badge.id)?.label.orEmpty(), color = Muted, style = MaterialTheme.typography.labelSmall)
                     } }
@@ -130,13 +130,34 @@ fun PublicProfileScreen(onBack: () -> Unit, onReport: () -> Unit, viewModel: Pub
                 }
             }
             item { SectionHeading("Badges · ${profile.badgeIds.size} of 66 tiers") }
-            items(BadgeCatalog.rows().chunked(3)) { row ->
+            // One medal per family at its highest earned tier, three to a row: the same 3 × 4 grid as
+            // the learner's own Profile. Listing all 66 tiers made eleven near-identical rows of six.
+            items(BadgeCatalog.families.chunked(3), key = { row -> row.joinToString { it.id } }) { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
-                    row.forEach { badge -> Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        StandardBadgeMedal(BadgeCatalog.tierFor(badge.id), badge.id in profile.badgeIds, familyId = BadgeCatalog.familyFor(badge.id)?.id)
-                        Text(badge.name, color = Ink, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                        Text(BadgeCatalog.tierFor(badge.id)?.label.orEmpty(), color = Muted, style = MaterialTheme.typography.labelSmall)
-                    } }
+                    row.forEach { family ->
+                        val earnedTiers = BadgeTier.entries.filterIndexed { i, _ ->
+                            "${BadgeCatalog.PREFIX}${family.id}:${i + 1}" in profile.badgeIds
+                        }
+                        val highest = earnedTiers.lastOrNull()
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                            StandardBadgeMedal(highest, highest != null, size = 84.dp, familyId = family.id)
+                            Spacer(Modifier.height(Space.xs))
+                            Text(
+                                family.name,
+                                color = if (highest != null) Ink else Muted,
+                                style = MaterialTheme.typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                minLines = 2
+                            )
+                            Text(
+                                highest?.let { "${it.label} · ${earnedTiers.size} of 6" } ?: "Locked",
+                                color = if (highest != null) LimeText else Faint,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
             item { SectionHeading("Path progress") }

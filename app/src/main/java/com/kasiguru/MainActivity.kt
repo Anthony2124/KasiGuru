@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.data.repository.UserProgressRepository
+import com.kasiguru.data.repository.NotificationRepository
 import com.kasiguru.domain.preferences.AppearanceMode
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,8 +21,9 @@ import com.kasiguru.ui.theme.KasiGuruTheme
 import com.kasiguru.util.audio.LocalSoundEffects
 import com.kasiguru.util.audio.MusicPlayer
 import com.kasiguru.util.audio.SoundEffects
-import com.kasiguru.util.worker.StreakReminderWorker
+import com.kasiguru.util.worker.ReminderScheduler
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.compose.foundation.layout.Box
@@ -43,6 +46,10 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var musicPlayer: MusicPlayer
 
+    @Inject lateinit var userProgressRepository: UserProgressRepository
+
+    @Inject lateinit var notificationRepository: NotificationRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -62,8 +69,16 @@ class MainActivity : ComponentActivity() {
         // Notification permission is not asked for here: onboarding's reminders step asks when the
         // learner says yes to reminders, and Settings asks when one is turned on.
 
-        // Schedule daily background streak reminder notification
-        StreakReminderWorker.scheduleDailyReminder(applicationContext)
+        // Daily reminders at the learner's chosen times, re-anchored on each start so they cannot drift.
+        lifecycleScope.launch { ReminderScheduler.syncWithPreferences(applicationContext, preferences) }
+
+        // Once per install: clear the sample messages older versions seeded into the inbox.
+        lifecycleScope.launch {
+            if (!preferences.sampleInboxCleared.first()) {
+                notificationRepository.removeSampleMessages()
+                preferences.setSampleInboxCleared()
+            }
+        }
 
         // 1. Initial one-shot sync with Firestore
         lifecycleScope.launch {
@@ -91,6 +106,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         musicPlayer.onForeground()
+        // An app left open overnight, or resumed days later, would otherwise show a streak that
+        // has already been broken until the Learn screen happened to be rebuilt.
+        lifecycleScope.launch { userProgressRepository.validateAndResetExpiredStreak() }
     }
 
     override fun onPause() {

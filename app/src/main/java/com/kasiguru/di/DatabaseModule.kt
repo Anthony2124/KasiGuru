@@ -57,9 +57,7 @@ object DatabaseModule {
                         if (achievementDaoProvider.get().getAchievementCount() == 0) {
                             achievementDaoProvider.get().insertMissing(DatabaseSeeder.getInitialAchievements())
                         }
-                        if (notificationDaoProvider.get().getNotificationCount() == 0) {
-                            notificationDaoProvider.get().insertAll(DatabaseSeeder.getInitialNotifications())
-                        }
+                        // The inbox starts empty: it holds only what was actually sent.
                         if (gameLevelDaoProvider.get().getLevelCount() == 0) {
                             gameLevelDaoProvider.get().insertMissing(DatabaseSeeder.getInitialGameLevels())
                         }

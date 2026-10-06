@@ -1,15 +1,19 @@
 package com.kasiguru.ui.screens.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.repository.AccountState
 import com.kasiguru.data.repository.AuthRepository
+import com.kasiguru.data.repository.DEFAULT_REMINDER_MINUTE
 import com.kasiguru.data.repository.DEFAULT_VOLUME_PERCENT
 import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.util.audio.MusicPlayer
 import com.kasiguru.util.audio.SoundEffects
+import com.kasiguru.util.worker.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +28,8 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val progressSyncManager: ProgressSyncManager,
     private val musicPlayer: MusicPlayer,
-    private val soundEffects: SoundEffects
+    private val soundEffects: SoundEffects,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     val account: StateFlow<AccountState> = authRepository.accountState
@@ -59,8 +64,20 @@ class SettingsViewModel @Inject constructor(
     val wordOfDayReminders: StateFlow<Boolean> = userPreferencesRepository.wordOfDayReminders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    val leaderboardAlerts: StateFlow<Boolean> = userPreferencesRepository.leaderboardAlerts
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    /** The streak reminder's time, as minutes after midnight. */
+    val reminderMinuteOfDay: StateFlow<Int> = userPreferencesRepository.reminderMinuteOfDay
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DEFAULT_REMINDER_MINUTE)
+
+    /** Every reminder change reschedules, so the switches and the time are what actually fires. */
+    private suspend fun rescheduleReminders() =
+        ReminderScheduler.syncWithPreferences(appContext, userPreferencesRepository)
+
+    fun setReminderMinuteOfDay(minute: Int) {
+        viewModelScope.launch {
+            userPreferencesRepository.setReminderMinuteOfDay(minute)
+            rescheduleReminders()
+        }
+    }
 
     fun toggleSoundEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -71,18 +88,14 @@ class SettingsViewModel @Inject constructor(
     fun toggleStreakReminders(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setStreakReminders(enabled)
+            rescheduleReminders()
         }
     }
 
     fun toggleWordOfDayReminders(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setWordOfDayReminders(enabled)
-        }
-    }
-
-    fun toggleLeaderboardAlerts(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferencesRepository.setLeaderboardAlerts(enabled)
+            rescheduleReminders()
         }
     }
 
