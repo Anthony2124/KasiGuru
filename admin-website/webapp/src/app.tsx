@@ -136,7 +136,7 @@ const ROUTES: Route[] = [
   { pattern: '/', render: () => <HomeScreen /> },
   { pattern: '/learn', render: () => <LearnScreen /> },
   { pattern: '/practice', render: () => <PracticeScreen /> },
-  { pattern: '/library', render: (_, q) => <LibraryScreen tab={q.get('tab') === 'stories' ? 'stories' : 'words'} /> },
+  { pattern: '/library', render: (_, q) => <LibraryScreen tab={q.get('tab') === 'stories' ? 'stories' : q.get('tab') === 'mywords' ? 'mywords' : 'words'} /> },
   { pattern: '/me', render: () => <MeScreen /> },
   { pattern: '/onboarding', render: () => <OnboardingScreen /> },
   { pattern: '/lesson/:unitId/:index', render: (p) => <LessonScreen unitId={p.unitId} lessonIndex={Number(p.index) || 0} /> },

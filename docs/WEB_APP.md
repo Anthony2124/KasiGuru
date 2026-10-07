@@ -38,7 +38,9 @@ needs a Mac and the paid Apple account either way.
 - **Games** — Word Match, Word Search (per category, drag or tap) and Word Wheel (swipe or tap).
   The other five show *Coming soon*, exactly as the Android app ships them.
 - **Library** — dictionary with search, categories, word of the day, recordings from `word_audio`;
-  stories with page pictures from `story_page_images`.
+  My words (Android 1.22: every word met in a lesson, review or game, with filters; kept on the
+  device like `WordEncounterRepository`, and refilled from history after a sign-in); stories with
+  page pictures from `story_page_images`.
 - **Me** — profile with scenery (seven places, unlocked by level or streak), all eleven badges on
   one grid (pinned ones first, each at its highest tier with a six-dot track) under the badge closest
   to its next tier, your weekly rank, settings, account (Google or email, sign-out, delete account),
@@ -120,9 +122,9 @@ XP values, the lesson slicing and the badge list above all. A field added to
   Tagalog only repeats the headword). On Android a word like *mainit* offers "mainit" as its own
   answer. Worth porting back to `WordMatchViewModel`.
 - **Onboarding says only what it grants.** Android 1.18 still shows "+50 XP" and "Day 1 streak"
-  after the first word and previews four retired badges, though onboarding now grants neither
-  XP nor a streak. The web shows "First word" and previews four of the eleven current families.
-  Worth porting back to `OnboardingSteps.kt`.
+  after the first word, though onboarding now grants neither XP nor a streak. The web shows
+  "First word". Worth porting back to `OnboardingSteps.kt`. The badge wall after it is the
+  APK's: six families, one at each tier, with their artwork.
 - **A badge tier earned on another device stays earned** here as soon as its receipt arrives;
   Android re-derives it from the same evidence, so the two agree.
 - **A listening exercise whose clip cannot load** shows the word's meaning instead, so it stays

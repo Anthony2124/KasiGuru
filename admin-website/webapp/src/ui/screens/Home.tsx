@@ -207,7 +207,7 @@ export function HomeScreen() {
                 // Stories are not narrated yet (STORIES_ENABLED); until they are, the third tile is the dictionary.
                 STORIES_ENABLED
                   ? { label: 'Story', icon: 'book' as const, go: () => (firstStory ? navigate(`/story/${firstStory.id}`) : navigate('/library?tab=stories')) }
-                  : { label: 'Words', icon: 'book' as const, go: () => navigate('/library') },
+                  : { label: 'My words', icon: 'book' as const, go: () => navigate('/library?tab=mywords') },
               ].map((q) => (
                 // QuickPracticeTile: the icon on a lime disc, the name under it.
                 <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 'var(--s-md) var(--s-xs)' }}>

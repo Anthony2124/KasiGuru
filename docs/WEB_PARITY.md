@@ -39,8 +39,9 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 | 1.21.0 | Category icons in a three-across Library grid | Ported (2026-10-06) |
 | 1.21.0 | Floating navigation bar | Ported (2026-10-06) |
 | 1.21.0 | Update card on Home | Android-only: see 1.19.0 |
-| 1.22.0 | My words page with lesson / review / game filters | Not yet |
-| 1.22.0 | Home quick practice opens My words; Me counts words met | Not yet |
+| 1.21.0 | Badge art everywhere a badge appears: onboarding wall, Badges page tiles and sheet, Me, public profiles | Ported (2026-10-07): onboarding's six-tier wall, the Badges page summary ring, tier ladder, two-across tiles with pips and the 120 dp sheet; medal sizes as on Android |
+| 1.22.0 | My words page with lesson / review / game filters | Ported (2026-10-07): Library → My words, encounters kept on the device and filled from history, as `WordEncounterRepository` |
+| 1.22.0 | Home quick practice opens My words; Me counts words met | Ported (2026-10-07) |
 | 1.22.0 | Folk stories coming soon; Story Reader badge shows Coming soon | Ported |
 | 1.23.0 | Sound effects for found words, completions, streaks, badges, card flips | Ported (2026-10-06): `npm run sounds` converts the APK's Ogg files to MP3, played where Android plays them |
 | 1.23.0 | Background music and volume sliders | Ported (2026-10-06): menu and game loops by route (`musicMoodFor`), Ogg plus AAC for Safari, both sliders in Settings |

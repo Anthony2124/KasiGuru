@@ -5,13 +5,14 @@
  * KasiGuru to the home screen, which is what makes it behave like an app on an iPhone.
  */
 import { STORIES_ENABLED } from '../../domain/constants';
+import { BADGE_FAMILIES, BADGE_TIERS } from '../../domain/badges';
+import { BadgeMedal } from '../badges';
 import { useState } from 'preact/hooks';
 import { ONBOARDING_DEFAULT_NAME } from '../../domain/types';
 import { act, setPrefs } from '../../lib/store';
 import { navigate } from '../../lib/router';
 import { useInstall, isIOSSafari } from '../../lib/install';
 import { AVATARS, Avatar, ClayButton, Confetti, Highlighted, Icon, Jepjep, Wordmark, sceneUrl } from '../kit';
-import type { IconName } from '../icons.generated';
 
 type Step =
   | 'Welcome' | 'Asleep' | 'Awake' | 'Name' | 'Greeting' | 'Words' | 'Minutes' | 'Games' | 'Level'
@@ -52,17 +53,21 @@ const LEVELS = [
 const FIRST_WORD = { word: 'aldew', ipa: '[ˈɁal.dɛw]', meaning: 'Day, sun', options: ['Water', 'Day, sun'], correct: 1 };
 const MAX_NAME_LENGTH = 30;
 
-/** One milestone from four of the eleven badge families (XP policy 2), each six tiers deep. */
-const BADGES: { name: string; condition: string; tier: number; icon: IconName }[] = [
-  { name: 'Word Explorer', condition: 'Verify 50 words in review', tier: 3, icon: 'book' },
-  { name: 'Consistent Learner', condition: 'Keep a 7-day streak', tier: 3, icon: 'flash' },
+/**
+ * OnboardingSteps.badgePreviews: six of the eleven families, one at each tier from Beginner to
+ * Legend, so the wall shows the whole ladder a badge climbs. Thresholds come from BADGE_FAMILIES.
+ */
+const BADGES: { family: string; tier: number; condition: (n: number) => string }[] = [
+  { family: 'word_explorer', tier: 0, condition: (n) => (n === 1 ? 'Master your first word' : `Master ${n} words`) },
+  { family: 'consistent_learner', tier: 1, condition: (n) => `Keep a ${n}-day streak` },
   // Story Reader while stories are switched on; until then a badge a new learner can earn now.
   STORIES_ENABLED
-    ? { name: 'Story Reader', condition: 'Finish 3 stories', tier: 3, icon: 'document' }
-    : { name: 'Category Scholar', condition: 'Finish 3 categories', tier: 3, icon: 'element4' },
-  { name: 'Journey Rank', condition: 'Reach Level 10', tier: 4, icon: 'medalStar' },
+    ? { family: 'story_reader', tier: 2, condition: (n) => `Read ${n} stories` }
+    : { family: 'category_scholar', tier: 2, condition: (n) => `Finish ${n} categories` },
+  { family: 'lesson_pathfinder', tier: 3, condition: (n) => `Finish ${n} lessons` },
+  { family: 'precision_player', tier: 4, condition: (n) => `Play ${n} perfect levels` },
+  { family: 'journey_rank', tier: 5, condition: (n) => `Reach level ${n}` },
 ];
-const TIER_LABEL = ['', 'Beginner', 'Learner', 'Achiever', 'Expert', 'Master', 'Legend'];
 
 function Option({ label, state, onClick, disabled, center }: { label: string; state: 'idle' | 'selected' | 'correct' | 'wrong'; onClick: () => void; disabled?: boolean; center?: boolean }) {
   const cls = state === 'idle' ? '' : state;
@@ -421,20 +426,21 @@ export function OnboardingScreen() {
         {step.id === 'Badges' && (
           <div class="stack">
             <Title text="Earn badges as you learn" words={['badges']} />
-            <Body text="Eleven badges, six tiers each. Every tier you earn stays earned." />
-            <div class="grid-2">
-              {BADGES.map((b) => (
-                <div key={b.name} class="card center stack-sm" style={{ padding: 'var(--s-md) var(--s-sm)' }}>
-                  <div style={{ display: 'grid', placeItems: 'center' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: `var(--tier-${b.tier})`, display: 'grid', placeItems: 'center' }}>
-                      <Icon name={b.icon} size={28} color="var(--reward-ink)" />
-                    </div>
+            <Body text={STORIES_ENABLED ? 'Every badge climbs six tiers, from Beginner to Legend. Learn, read and play to rise.' : 'Every badge climbs six tiers, from Beginner to Legend. Learn, review and play to rise.'} />
+            {/* BadgeTile: the tier's artwork, the family, what it takes, and the tier named in text. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'var(--s-xs)' }}>
+              {BADGES.map((b) => {
+                const family = BADGE_FAMILIES.find((f) => f.id === b.family)!;
+                const tier = BADGE_TIERS[b.tier];
+                return (
+                  <div key={b.family} class="card center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: 'var(--s-sm) var(--s-xs)', borderRadius: 'var(--r-tile)' }}>
+                    <BadgeMedal tier={tier} earned size={72} family={family.id} />
+                    <p class="t-title-s" style={{ marginTop: 4 }}>{family.name}</p>
+                    <p class="t-body-s muted">{b.condition(family.thresholds[b.tier])}</p>
+                    <p class="t-label" style={{ marginTop: 'auto', paddingTop: 4, color: 'var(--lime)' }}>{tier.label}</p>
                   </div>
-                  <p class="t-title-s">{b.name}</p>
-                  <p class="t-body-s muted">{b.condition}</p>
-                  <p class="t-label-s" style={{ color: `var(--tier-${b.tier})` }}>{TIER_LABEL[b.tier]}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

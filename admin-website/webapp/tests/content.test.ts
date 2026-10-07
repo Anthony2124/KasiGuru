@@ -62,3 +62,23 @@ describe('the shipped content files', () => {
     expect(new Corpus(dictionary, {}).all.length).toBe(dictionary.length);
   });
 });
+
+describe('My words (WordEncounterRepository)', () => {
+  it('records each word once per showing, keeping the first time and the latest source', async () => {
+    const { Draft, initialLearner } = await import('../src/domain/learner');
+    const d = new Draft(initialLearner());
+    d.met(['w1', 'w2', 'w1'], 'lesson', 100);
+    d.met(['w1'], 'word_match', 200);
+    expect(d.d.encounters?.w1).toEqual({ firstSeenAt: 100, lastSeenAt: 200, timesSeen: 2, lastSource: 'word_match' });
+    expect(d.d.encounters?.w2?.timesSeen).toBe(1);
+  });
+  it('fills from history without touching words already met', async () => {
+    const { Draft, initialLearner, UNKNOWN_TIME } = await import('../src/domain/learner');
+    const d = new Draft(initialLearner());
+    d.met(['w1'], 'review', 50);
+    d.fillMet(['w1', 'w9'], [{ at: 300, ids: ['w2'] }, { at: 400, ids: ['w2'] }]);
+    expect(d.d.encounters?.w1?.lastSeenAt).toBe(50);
+    expect(d.d.encounters?.w9).toMatchObject({ lastSeenAt: UNKNOWN_TIME, lastSource: 'review' });
+    expect(d.d.encounters?.w2).toMatchObject({ firstSeenAt: 300, lastSeenAt: 400, timesSeen: 2, lastSource: 'lesson' });
+  });
+});

@@ -99,7 +99,7 @@ export function LessonScreen({ unitId, lessonIndex }: { unitId: string; lessonIn
       rated.current.add(ex.word.id);
       const rating = match === 'Close' ? ReviewRating.HARD : ratingForAnswer(correct, Date.now() - shownAt.current);
       const word = getCorpus().byId(ex.word.id) ?? ex.word;
-      act((d) => d.reviewWord(word, rating));
+      act((d) => { d.reviewWord(word, rating); d.met([word.id], 'lesson'); });
     }
   };
 

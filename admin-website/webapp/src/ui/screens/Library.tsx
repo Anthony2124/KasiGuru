@@ -9,6 +9,7 @@ import { useApp, useCorpus, useLearner } from '../../lib/store';
 import { EmptyState, GroundScaffold, Icon, LIBRARY_CATEGORY_ORDER, SectionHeading, categoryArt } from '../kit';
 import { AudioButton, StoryCover, WordRow } from '../parts';
 import { isStoryUnlocked, wordOfTheDay } from '../derive';
+import { MyWordsTab } from './MyWords';
 
 const CATEGORY_BLURB: Record<string, string> = {
   'Greetings & Essentials': 'Hellos, politeness, questions & basic phrases',
@@ -213,8 +214,8 @@ export function StoriesComingSoonScreen() {
   );
 }
 
-export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
-  const setTab = (t: 'words' | 'stories') => history.replaceState(history.state, '', t === 'stories' ? '/library?tab=stories' : '/library');
+export function LibraryScreen({ tab }: { tab: 'words' | 'mywords' | 'stories' }) {
+  const setTab = (t: 'words' | 'mywords' | 'stories') => history.replaceState(history.state, '', t === 'words' ? '/library' : `/library?tab=${t}`);
   const [current, setCurrent] = useState(tab);
   useEffect(() => setCurrent(tab), [tab]);
   return (
@@ -223,11 +224,11 @@ export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
       onBack={false}
       nav
       largeTitle
-      subtitle={current === 'words' ? 'Every word, with its meaning and how it sounds' : STORIES_ENABLED ? 'Stories with Tagalog and English alongside' : 'Folk tales from Casiguran, coming soon'}
+      subtitle={current === 'words' ? 'Every word, with its meaning and how it sounds' : current === 'mywords' ? 'Every word you have met, ready to review' : STORIES_ENABLED ? 'Stories with Tagalog and English alongside' : 'Folk tales from Casiguran, coming soon'}
     >
       <div class="stack">
         <div class="segmented" role="tablist" aria-label="Library">
-          {(['words', 'stories'] as const).map((t) => (
+          {(['words', 'mywords', 'stories'] as const).map((t) => (
             <button
               key={t}
               role="tab"
@@ -237,11 +238,11 @@ export function LibraryScreen({ tab }: { tab: 'words' | 'stories' }) {
                 setTab(t);
               }}
             >
-              {t === 'words' ? 'Words' : 'Stories'}
+              {t === 'words' ? 'Words' : t === 'mywords' ? 'My words' : 'Stories'}
             </button>
           ))}
         </div>
-        {current === 'words' ? <WordsTab /> : STORIES_ENABLED ? <StoriesList /> : <StoriesComingSoon />}
+        {current === 'words' ? <WordsTab /> : current === 'mywords' ? <MyWordsTab /> : STORIES_ENABLED ? <StoriesList /> : <StoriesComingSoon />}
       </div>
     </GroundScaffold>
   );

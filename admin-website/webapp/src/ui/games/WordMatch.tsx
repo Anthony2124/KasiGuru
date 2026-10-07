@@ -92,7 +92,7 @@ export function WordMatchGame({ level }: { level: number }) {
     setSelected(option);
     feedbackTone(isCorrect);
     const word = getCorpus().byId(q.word.id) ?? q.word;
-    act((d) => d.reviewWord(word, rating));
+    act((d) => { d.reviewWord(word, rating); d.met([word.id], GAMES.WORD_MATCH); });
   };
 
   const next = () => {

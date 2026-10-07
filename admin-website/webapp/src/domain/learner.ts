@@ -58,6 +58,8 @@ export interface Normalization {
 
 export interface LearnerData {
   progress: UserProgress;
+  /** Words met, by word id (local only). Absent in data saved before Android 1.22's My words. */
+  encounters?: Record<string, Encounter>;
   wordStates: Record<string, WordState>;
   lessons: Record<string, LessonState>;
   gameLevels: Record<string, GameLevelState>;
@@ -89,9 +91,25 @@ export interface LearnerContent {
 
 const NO_CONTENT: LearnerContent = { words: [], stories: [] };
 
+/**
+ * WordEncounterEntity: a word met in a lesson, a review or a game, for the Library's My words list.
+ * Kept on this device only, as on Android; after a sign-in, fillMet() rebuilds it from history.
+ */
+export interface Encounter {
+  firstSeenAt: number;
+  lastSeenAt: number;
+  timesSeen: number;
+  /** "lesson", "review", or a game mode such as "word_match". */
+  lastSource: string;
+}
+
+/** WordEncounterRepository.UNKNOWN_TIME: met before encounters were recorded; shown as "earlier". */
+export const UNKNOWN_TIME = 0;
+
 export function initialLearner(): LearnerData {
   return {
     progress: initialProgress(),
+    encounters: {},
     wordStates: {},
     lessons: {},
     gameLevels: {},
@@ -506,6 +524,41 @@ export class Draft {
     this.touch();
     this.updateMetrics();
     this.events.push({ type: 'streak', days: streak });
+  }
+
+  // ── My words (WordEncounterRepository) ──────────────────────────────────────
+
+  /** record(): marks these words as met just now in [source]. */
+  met(wordIds: string[], source: string, at: number = Date.now()) {
+    const all = (this.d.encounters ??= {});
+    for (const id of new Set(wordIds.filter(Boolean))) {
+      const seen = all[id];
+      all[id] = seen
+        ? { ...seen, lastSeenAt: at, timesSeen: seen.timesSeen + 1, lastSource: source }
+        : { firstSeenAt: at, lastSeenAt: at, timesSeen: 1, lastSource: source };
+    }
+  }
+
+  /**
+   * fillFromHistory(): words met before encounters were recorded - reviewed or learned words (dated
+   * UNKNOWN_TIME) and the words of finished lessons - added without touching rows already there.
+   */
+  fillMet(reviewed: string[], finishedLessons: { at: number; ids: string[] }[]): boolean {
+    const all = (this.d.encounters ??= {});
+    let added = false;
+    for (const id of reviewed) {
+      if (all[id]) continue;
+      all[id] = { firstSeenAt: UNKNOWN_TIME, lastSeenAt: UNKNOWN_TIME, timesSeen: 1, lastSource: 'review' };
+      added = true;
+    }
+    const lessonTimes = new Map<string, number[]>();
+    for (const { at, ids } of finishedLessons) for (const id of ids) lessonTimes.set(id, [...(lessonTimes.get(id) ?? []), at]);
+    for (const [id, times] of lessonTimes) {
+      if (all[id]) continue;
+      all[id] = { firstSeenAt: Math.min(...times), lastSeenAt: Math.max(...times), timesSeen: times.length, lastSource: 'lesson' };
+      added = true;
+    }
+    return added;
   }
 
   recordDailyReviewCompleted() {

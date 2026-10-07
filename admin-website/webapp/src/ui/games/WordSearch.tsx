@@ -99,7 +99,7 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
     const count = board.placements.length;
     const stars = missCount === 0 ? 3 : missCount <= 2 ? 2 : 1;
     const xp = act((d) =>
-      d.finishGame({ mode: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, correct: count, total: count, statsTotal: count + missCount, stars, perfect: missCount === 0 })
+      (d.met(board.placements.map((p) => p.id), GAMES.WORD_SEARCH), d).finishGame({ mode: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, correct: count, total: count, statsTotal: count + missCount, stars, perfect: missCount === 0 })
     );
     setResult({ xp, stars });
   };

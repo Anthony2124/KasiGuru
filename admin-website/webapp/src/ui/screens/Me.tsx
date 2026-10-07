@@ -47,7 +47,7 @@ function BadgeCell({ summary }: { summary: BadgeFamilySummary }) {
       onClick={() => navigate('/achievements')}
       aria-label={`${summary.family.name}, ${tierText}, ${summary.earnedTiers} of ${BADGE_TIERS.length} tiers`}
     >
-      <BadgeMedal tier={summary.highest} earned={!!summary.highest} size={52} family={summary.family.id} />
+      <BadgeMedal tier={summary.highest} earned={!!summary.highest} size={84} family={summary.family.id} />
       <span class={`t-label-s name${summary.highest ? '' : ' muted'}`}>{summary.family.name}</span>
       <span class="tier-dots" aria-hidden="true">
         {BADGE_TIERS.map((t) => (
@@ -204,7 +204,11 @@ export function MeScreen() {
               <Stat icon="medal" label="Longest streak" value={`${p.longestStreak} ${p.longestStreak === 1 ? 'day' : 'days'}`} />
               <Stat icon="teacher" label="Lessons completed" value={`${lessons}`} />
               <Stat icon="game" label="Games played" value={`${p.gamesPlayed}`} />
-              {STORIES_ENABLED && <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />}
+              {STORIES_ENABLED ? (
+                <Stat icon="document" label="Stories read" value={`${p.storiesCompleted}`} />
+              ) : (
+                <Stat icon="book" label={Object.keys(learner.encounters ?? {}).length === 1 ? 'Word met' : 'Words met'} value={`${Object.keys(learner.encounters ?? {}).length}`} />
+              )}
               <Stat
                 icon="tickCircle"
                 label="Accuracy"

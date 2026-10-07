@@ -378,6 +378,7 @@ button.card:active:not(:disabled) { transform: scale(0.985); background: var(--s
   min-height: 40px; padding: 0 var(--s-sm);
   background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-pill);
   font-weight: 700; font-size: 13px; letter-spacing: 0.3px;
+  flex: none; white-space: nowrap;
 }
 .tag {
   display: inline-block;
@@ -767,9 +768,24 @@ button.avatar { cursor: pointer; }
 .showcase { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-sm); padding: var(--s-md) var(--s-xs); text-align: center; }
 .showcase > div { display: grid; justify-items: center; align-content: start; gap: 4px; min-width: 0; }
 .showcase > div > :first-child { margin-bottom: 6px; }
-.badge-family { padding-top: var(--s-sm); padding-bottom: var(--s-sm); min-height: 76px; }
-.tier-track { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
-.tier-track i { height: 8px; border-radius: 99px; background: var(--track); }
+
+/* The Badges page (AchievementsScreen): the ladder under the summary, two-across tiles, the detail rows. */
+.tier-ladder { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.tier-ladder > div { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.tier-ladder i { width: 100%; height: 8px; border-radius: var(--r-pill); }
+.tier-ladder .t-label-s { font-size: 11px; letter-spacing: 0; }
+.tier-ladder span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-sm); }
+@media (min-width: 900px) { .badge-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+button.card.badge-tile, .badge-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: var(--s-sm); text-align: center; }
+.badge-tile > .badge-art, .badge-tile > [role='img'] { margin-top: 4px; }
+.badge-tile .name { margin-top: var(--s-xs); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.badge-tile .foot { width: 100%; margin-top: auto; padding-top: var(--s-xs); }
+.badge-pin { position: absolute; top: var(--s-sm); right: var(--s-sm); line-height: 0; }
+.tier-pips { display: flex; gap: 4px; margin-top: var(--s-xs); }
+.tier-pips i { width: 9px; height: 9px; border-radius: 50%; background: var(--track); }
+.tier-row { display: flex; align-items: center; gap: var(--s-sm); padding: var(--s-sm); border-radius: var(--r-tile); background: var(--sunken); }
+.tier-row.next { background: var(--lime-tint); border: 1px solid var(--lime); }
 
 /* Me's badge grid: one medal per family at its highest tier, four to a row, six dots per family. */
 /* ProfileScreen's badge wall: three across on a phone (Android 1.21), more where there is room. */
@@ -811,7 +827,7 @@ button.avatar { cursor: pointer; }
 .podium > .card.first { padding-top: var(--s-xl); background: rgba(255, 200, 61, 0.16); border-color: rgba(255, 200, 61, 0.4); }
 .podium-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; }
 /* Names and captions here wrap between words; a word is split only when it cannot fit a line. */
-.profile-id, .stat-tile, .showcase, .badge-family, .leader-row, .podium { overflow-wrap: break-word; }
+.profile-id, .stat-tile, .showcase, .leader-row, .podium { overflow-wrap: break-word; }
 
 .leader-figure { flex: none; }
 .leader-inline { display: none; }
@@ -928,3 +944,6 @@ button.avatar { cursor: pointer; }
 .segments.on-scene { max-width: 100%; }
 .segments.on-scene i { height: 5px; background: rgba(242, 236, 202, 0.35); }
 .segments.on-scene i.on { background: var(--cream); }
+
+/* Filter pills (My words): the chosen one is a lime fill, as Android's selected FilterChip. */
+.chip.on, .chip[aria-pressed='true'] { background: var(--lime-fill); border-color: transparent; color: var(--on-lime); }

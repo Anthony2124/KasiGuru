@@ -89,7 +89,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     const board = puzzle.slots.length;
     const stars = hints === 0 ? 3 : hints <= 2 ? 2 : 1;
     // Bonus words earn nothing extra: XP comes from completing the board (XP policy 2).
-    const xp = act((d) => d.finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 }));
+    const xp = act((d) => (d.met(puzzle.slots.map((s) => s.word.id), GAMES.WORD_WHEEL), d).finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 }));
     setTimeout(() => setResult({ xp, stars }), 700);
   };
 

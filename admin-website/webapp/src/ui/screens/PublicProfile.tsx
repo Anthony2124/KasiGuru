@@ -14,7 +14,7 @@ import type { PublicProfile } from '../../domain/publicProfile';
 import { badgeRarity, cachedPublicProfile, fetchPublicProfile, weeklyRank } from '../../lib/remote';
 import { navigate } from '../../lib/router';
 import { useLearner } from '../../lib/store';
-import { BadgeMedal, TIER_LADDER } from '../badges';
+import { BadgeMedal } from '../badges';
 import type { IconName } from '../icons.generated';
 import { Avatar, EmptyState, GroundScaffold, Icon, Loading, ProgressBar, SectionHeading, sceneForSection, sceneUrl, type SceneId } from '../kit';
 
@@ -151,7 +151,7 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
             <div class="card showcase">
               {showcase.map((b) => (
                 <div key={b.id}>
-                  <BadgeMedal tier={b.tier} earned size={64} family={b.family.id} />
+                  <BadgeMedal tier={b.tier} earned size={96} family={b.family.id} />
                   <p class="t-title-s">{b.family.name}</p>
                   <p class="t-body muted">{b.tier.label}</p>
                 </div>
@@ -183,29 +183,17 @@ export function PublicProfileScreen({ uid }: { uid: string }) {
         <div class="stack-lg">
         <section class="stack-sm">
           <SectionHeading text={`Badges · ${profile.badgeIds.length} of 66 tiers`} />
-          <p class="t-body muted">{TIER_LADDER}</p>
-          <div class="list">
+          {/* One medal per family at its highest earned tier, three to a row, as PublicProfileScreen. */}
+          <div class="badge-grid" style={{ paddingTop: 'var(--s-xs)' }}>
             {BADGE_FAMILIES.map((f) => {
               const tiers = BADGE_TIERS.map((t) => profile.badgeIds.includes(badgeId(f.id, t.index)));
               const count = tiers.filter(Boolean).length;
               const top = BADGE_TIERS[tiers.lastIndexOf(true)];
               return (
-                <div key={f.id} class="list-row badge-family" role="group" aria-label={`${f.name}: ${top ? top.label : 'not earned yet'}, ${count} of 6 tiers`}>
-                  <BadgeMedal tier={top} earned={!!top} size={52} family={f.id} />
-                  <div class="grow stack-sm">
-                    <div class="row wrap" style={{ gap: '0 var(--s-sm)' }}>
-                      <p class="t-title-s" style={{ flex: '1 1 auto' }}>{f.name}</p>
-                      <span class="t-label" style={{ color: top ? 'var(--ink)' : 'var(--faint)' }}>{top ? top.label : 'Not earned yet'}</span>
-                    </div>
-                    <div class="row">
-                      <div class="tier-track grow" aria-hidden="true">
-                        {tiers.map((on, i) => (
-                          <i key={i} style={on ? { background: `var(--tier-${i + 1})` } : undefined} />
-                        ))}
-                      </div>
-                      <span class="t-label muted">{count} / 6</span>
-                    </div>
-                  </div>
+                <div key={f.id} class="badge-cell" role="group" aria-label={`${f.name}: ${top ? top.label : 'locked'}, ${count} of 6 tiers`}>
+                  <BadgeMedal tier={top} earned={!!top} size={84} family={f.id} />
+                  <span class={`t-label-s name${top ? '' : ' muted'}`}>{f.name}</span>
+                  <span class="t-label-s" style={{ color: top ? 'var(--lime)' : 'var(--faint)' }}>{top ? `${top.label} · ${count} of 6` : 'Locked'}</span>
                 </div>
               );
             })}

@@ -4,12 +4,12 @@
  */
 import { STORIES_ENABLED } from '../../domain/constants';
 import { useState } from 'preact/hooks';
-import { BADGE_FAMILIES, BADGE_ROWS, badgeAmount, badgeProgress, legacyDefinition, type BadgeFamily, type BadgeRow } from '../../domain/badges';
+import { BADGE_FAMILIES, BADGE_ROWS, BADGE_TIERS, badgeAmount, badgeProgress, legacyDefinition, type BadgeFamily, type BadgeRow } from '../../domain/badges';
 import { legacyAchievements, pinnedFamilies, type LearnerData } from '../../domain/learner';
 import { navigate } from '../../lib/router';
 import { act, useLearner } from '../../lib/store';
-import { BadgeMedal, TIER_LADDER } from '../badges';
-import { ClayButton, Dialog, GroundScaffold, ProgressBar } from '../kit';
+import { BadgeMedal } from '../badges';
+import { ClayButton, Dialog, GroundScaffold, Icon, ProgressBar, ProgressRing } from '../kit';
 
 const FILTERS = ['All', 'Learning', 'Practice', 'Games', 'Community', 'Legacy'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -50,28 +50,57 @@ const ACTIVITY: Record<string, string> = {
   consistent_learner: '/',
 };
 
+/** Stories are not narrated yet, so there is nothing to do towards Story Reader today. */
+const comingSoon = (f: FamilyProgress) => f.family.id === 'story_reader' && !STORIES_ENABLED;
+const earnedCount = (f: FamilyProgress) => f.rows.filter((r) => r.isUnlocked).length;
+const reach = (f: FamilyProgress) => (f.next ? Math.min(1, Math.max(0, f.value / f.next.requiredValue)) : 1);
+
 export function AchievementsScreen() {
   const learner = useLearner();
   const [filter, setFilter] = useState<Filter>('All');
   const [selected, setSelected] = useState<string | null>(null);
   const families = BADGE_FAMILIES.map((f) => familyProgress(learner, f));
-  const tiersEarned = families.reduce((s, f) => s + f.rows.filter((r) => r.isUnlocked).length, 0);
+  const tiersEarned = families.reduce((s, f) => s + earnedCount(f), 0);
+  const tiersTotal = BADGE_ROWS.length;
   const pins = pinnedFamilies(learner.progress);
   const report = learner.normalization;
   const legacy = legacyAchievements(learner);
   const open = families.find((f) => f.family.id === selected);
+  // Earned badges first, highest tier first; then the locked ones nearest to their first tier.
+  const shown = families
+    .filter((f) => filter === 'All' || f.family.section === filter)
+    .sort((x, y) => earnedCount(y) - earnedCount(x) || reach(y) - reach(x));
 
   return (
     <GroundScaffold title="Badges" largeTitle subtitle="Your collection" wide>
       <div class="stack-lg">
-        <div class="card panel stack-sm" data-tour="ProgressBadgePanel">
-          <p class="t-headline-s">
-            {families.filter((f) => f.current).length} of 11 badges · {tiersEarned} of 66 tiers
-          </p>
-          <p class="t-body-s muted">{TIER_LADDER}</p>
-          <p class="t-label" style={{ color: 'var(--lime)' }}>
-            {learner.progress.activityXp} activity XP · {learner.progress.badgeBonusXp} badge XP
-          </p>
+        {/* CollectionSummary: a ring of tiers earned, then the ladder in its colours with a count on each rung. */}
+        <div class="card panel stack" data-tour="ProgressBadgePanel">
+          <div class="row" style={{ gap: 'var(--s-md)' }}>
+            <ProgressRing value={tiersEarned / tiersTotal} size={76} stroke={7} color="var(--lime-fill)" label={`${tiersEarned} of ${tiersTotal} tiers earned`}>
+              <span class="t-headline-s">{tiersEarned}</span>
+            </ProgressRing>
+            <div class="grow">
+              <p class="t-title-l">
+                {families.filter((f) => f.current).length} of {families.length} badges
+              </p>
+              <p class="t-body muted">
+                {tiersEarned} of {tiersTotal} tiers earned
+              </p>
+              <p class="t-label" style={{ color: 'var(--lime)', marginTop: 4 }}>
+                +{learner.progress.badgeBonusXp} badge XP · {learner.progress.activityXp} activity XP
+              </p>
+            </div>
+          </div>
+          <div class="tier-ladder" aria-hidden="true">
+            {BADGE_TIERS.map((t) => (
+              <div key={t.index}>
+                <i style={{ background: `var(--tier-${t.index + 1})` }} />
+                <span class="t-label-s muted">{t.label}</span>
+                <span class="t-label">{families.filter((f) => f.current?.tier.index === t.index).length}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {report && !report.acknowledged && (
@@ -91,7 +120,7 @@ export function AchievementsScreen() {
 
         <div class="row-xs" role="tablist" data-tour="ProgressFilter" style={{ overflowX: 'auto', paddingBottom: 4 }}>
           {FILTERS.map((f) => (
-            <button key={f} role="tab" aria-selected={filter === f} class="chip" onClick={() => setFilter(f)} style={filter === f ? { background: 'var(--selected)', color: 'var(--ink)' } : undefined}>
+            <button key={f} role="tab" aria-selected={filter === f} class={`chip${filter === f ? ' on' : ''}`} onClick={() => setFilter(f)}>
               {f}
             </button>
           ))}
@@ -107,11 +136,14 @@ export function AchievementsScreen() {
                 {legacy.map(([id, s]) => {
                   const def = legacyDefinition(id);
                   return (
-                    <div key={id} class="list-row" style={{ alignItems: 'flex-start' }}>
+                    <div key={id} class="list-row">
+                      <BadgeMedal tier={undefined} earned size={48} />
                       <div class="grow">
                         <p class="t-title-s">{def.name}</p>
                         <p class="t-body-s muted">{def.description}</p>
-                        <p class="t-label-s faint" style={{ marginTop: 4 }}>Earned {s.unlockedDate ?? 'previously'}</p>
+                        <p class="t-label-s faint" style={{ marginTop: 4 }}>
+                          Earned {s.unlockedDate ?? 'previously'}
+                        </p>
                       </div>
                     </div>
                   );
@@ -120,35 +152,53 @@ export function AchievementsScreen() {
             )}
           </section>
         ) : (
-          <div class="list cols-2">
-            {families
-              .filter((f) => filter === 'All' || f.family.section === filter)
-              .map((f) => (
-                <button key={f.family.id} class="list-row" onClick={() => setSelected(f.family.id)} style={{ alignItems: 'center' }}>
-                  <BadgeMedal tier={f.current?.tier} earned={!!f.current} size={56} family={f.family.id} />
-                  <div class="grow">
-                    <p class="t-title-s">{f.family.name}</p>
-                    <p class="t-body-s muted">{f.current ? f.current.tier.label : 'Not earned yet'}</p>
-                    {f.family.id === 'story_reader' && !STORIES_ENABLED ? (
-                      <p class="t-label-s muted" style={{ marginTop: 4 }}>Coming soon</p>
+          <div class="badge-tiles">
+            {shown.map((f) => {
+              const earned = !!f.current;
+              const count = earnedCount(f);
+              return (
+                // BadgeTile: the medal is the tile's subject, drawn large enough to read its artwork.
+                <button
+                  key={f.family.id}
+                  class="card badge-tile"
+                  onClick={() => setSelected(f.family.id)}
+                  aria-label={`${f.family.name}, ${earned ? f.current!.tier.label : 'not earned yet'}, ${count} of 6 tiers${pins.includes(f.family.id) ? ', pinned to profile' : ''}`}
+                  style={earned ? { borderColor: `color-mix(in srgb, var(--tier-${f.current!.tier.index + 1}) 55%, transparent)` } : undefined}
+                >
+                  {pins.includes(f.family.id) && (
+                    <span class="badge-pin" aria-hidden="true">
+                      <Icon name="star" size={18} color="var(--gold)" />
+                    </span>
+                  )}
+                  <BadgeMedal tier={f.current?.tier} earned={earned} size={96} family={f.family.id} />
+                  <p class="t-title-s name">{f.family.name}</p>
+                  <p class="t-label" style={{ color: earned ? 'var(--lime)' : 'var(--faint)' }}>
+                    {earned ? f.current!.tier.label : 'Not earned yet'}
+                  </p>
+                  <span class="tier-pips" aria-hidden="true">
+                    {BADGE_TIERS.map((t) => (
+                      <i key={t.index} style={t.index < count ? { background: `var(--tier-${t.index + 1})` } : undefined} />
+                    ))}
+                  </span>
+                  <div class="foot">
+                    {comingSoon(f) ? (
+                      <p class="t-label muted">Coming soon</p>
                     ) : f.next ? (
                       <>
-                        <p class="t-label-s" style={{ marginTop: 4 }}>
-                          {badgeProgress(f.family, Math.min(f.value, f.next.requiredValue), f.next.requiredValue)} · Next: {f.next.tier.label}
+                        <ProgressBar value={f.value / f.next.requiredValue} height={6} />
+                        <p class="t-label-s muted" style={{ marginTop: 4 }}>
+                          {badgeProgress(f.family, Math.min(f.value, f.next.requiredValue), f.next.requiredValue)}
                         </p>
-                        <div style={{ marginTop: 6 }}>
-                          <ProgressBar value={f.value / f.next.requiredValue} color="var(--gold)" height={6} />
-                        </div>
                       </>
                     ) : (
-                      <p class="t-label-s" style={{ color: 'var(--lime)', marginTop: 4 }}>Legend achieved</p>
-                    )}
-                    {pins.includes(f.family.id) && (
-                      <p class="t-label-s" style={{ color: 'var(--lime)', marginTop: 4 }}>Pinned to profile</p>
+                      <p class="t-label" style={{ color: 'var(--lime)' }}>
+                        Legend achieved
+                      </p>
                     )}
                   </div>
                 </button>
-              ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -156,43 +206,72 @@ export function AchievementsScreen() {
       {open && (
         <Dialog label={open.family.name} onClose={() => setSelected(null)}>
           <div class="stack">
-            <div>
-              <h2 class="t-headline-s">{open.family.name}</h2>
-              <p class="t-body-s muted">One badge, six tiers. Each tier stays earned.</p>
+            {/* BadgeDetail: the medal, then the whole ladder with each rung's requirement and status. */}
+            <div class="center" style={{ display: 'grid', justifyItems: 'center', gap: 4 }}>
+              <BadgeMedal tier={open.current?.tier} earned={!!open.current} size={120} family={open.family.id} />
+              <h2 class="t-headline-s" style={{ marginTop: 'var(--s-xs)' }}>
+                {open.family.name}
+              </h2>
+              <p class="t-body muted">
+                {open.current ? open.current.tier.label : 'Not earned yet'} · {badgeAmount(open.family, open.value)}
+              </p>
+              <p class="t-body-s faint">One badge, six tiers. Each tier stays earned.</p>
             </div>
-            <div class="list" style={{ maxHeight: '45vh', overflowY: 'auto' }}>
+            <div class="stack-sm" style={{ maxHeight: '42vh', overflowY: 'auto' }}>
               {open.rows.map((row) => (
-                <div key={row.id} class="list-row">
-                  <BadgeMedal tier={row.tier} earned={row.isUnlocked} size={44} family={open.family.id} />
+                <div key={row.id} class={`tier-row${row.id === open.next?.id ? ' next' : ''}`}>
+                  <BadgeMedal tier={row.tier} earned={row.isUnlocked} size={48} family={open.family.id} />
                   <div class="grow">
-                    <p class="t-title-s">{row.tier.label}</p>
-                    <p class="t-body-s">{badgeAmount(open.family, row.requiredValue)}</p>
-                    <p class="t-label-s muted">
-                      {row.isUnlocked ? `Earned · ${row.unlockedDate ?? ''}` : `${Math.min(open.value, row.requiredValue)} / ${row.requiredValue}`}
-                    </p>
+                    <div class="row">
+                      <p class="t-title-s grow">{row.tier.label}</p>
+                      {row.xpReward > 0 && (
+                        <span class="t-label" style={{ color: 'var(--gold)' }}>
+                          +{row.xpReward} XP
+                        </span>
+                      )}
+                    </div>
+                    <p class="t-body-s muted">{badgeAmount(open.family, row.requiredValue)}</p>
+                    {row.isUnlocked ? (
+                      <p class="t-label-s" style={{ color: 'var(--lime)' }}>
+                        Earned{row.unlockedDate ? ` · ${row.unlockedDate}` : ''}
+                      </p>
+                    ) : (
+                      <>
+                        <div style={{ marginTop: 4 }}>
+                          <ProgressBar value={open.value / row.requiredValue} height={5} />
+                        </div>
+                        <p class="t-label-s faint">
+                          {Math.min(open.value, row.requiredValue)} / {row.requiredValue}
+                        </p>
+                      </>
+                    )}
                   </div>
-                  {row.xpReward > 0 && <span class="tag gold">+{row.xpReward} badge XP</span>}
                 </div>
               ))}
             </div>
-            {open.current && (
-              <button
-                class="text-btn lime"
-                disabled={!pins.includes(open.family.id) && pins.length >= 3}
-                onClick={() => act((d) => d.pin(open.family.id), { celebrate: false })}
-              >
-                {pins.includes(open.family.id) ? 'Unpin from profile' : pins.length >= 3 ? 'Three badges already pinned' : 'Pin to profile'}
-              </button>
-            )}
             <div class="stack-sm">
-              <ClayButton
-                label={open.family.action}
-                onClick={() => {
-                  setSelected(null);
-                  navigate(ACTIVITY[open.family.id] ?? '/learn');
-                }}
-              />
-              <ClayButton label="Close" tone="quiet" onClick={() => setSelected(null)} />
+              {comingSoon(open) ? (
+                <p class="t-body muted center">Stories are coming soon. This badge opens up when they arrive.</p>
+              ) : (
+                <ClayButton
+                  label={open.family.action}
+                  onClick={() => {
+                    setSelected(null);
+                    navigate(ACTIVITY[open.family.id] ?? '/learn');
+                  }}
+                />
+              )}
+              {open.current && (
+                <ClayButton
+                  tone="quiet"
+                  label={pins.includes(open.family.id) ? 'Unpin from profile' : pins.length >= 3 ? 'Three badges already pinned' : 'Pin to profile'}
+                  disabled={!pins.includes(open.family.id) && pins.length >= 3}
+                  onClick={() => act((d) => d.pin(open.family.id), { celebrate: false })}
+                />
+              )}
+              <button class="text-btn muted" style={{ alignSelf: 'center' }} onClick={() => setSelected(null)}>
+                Close
+              </button>
             </div>
           </div>
         </Dialog>

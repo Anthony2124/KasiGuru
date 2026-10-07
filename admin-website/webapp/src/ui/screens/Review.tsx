@@ -77,6 +77,7 @@ export function ReviewScreen() {
       const fresh = getCorpus().byId(card.id) ?? card;
       // A due card is a scheduled review (1-3 XP, capped at 60 a day); practising ahead earns none.
       d.reviewWord(fresh, rating, !extra);
+      d.met([fresh.id], 'review');
       if (index + 1 >= cards.length) d.recordDailyReviewCompleted();
     });
     if (index + 1 >= cards.length) {
