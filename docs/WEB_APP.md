@@ -228,7 +228,14 @@ where Safari's storage partitioning breaks a sign-in handler on another domain:
 
 The app's Content-Security-Policy deliberately skips `/__/` (`"source": "/((?!__/).*)"`). Those are
 Firebase's pages: the auth iframe has to be framed by the app, which `frame-ancestors 'none'` forbids,
-and the handler runs an inline script.
+and the handler runs an inline script. The service worker skips `/__/` too: it used to cache the
+handler page as the offline shell, which showed Firebase's "missing initial state" error.
+
+On iPhones and in installed (home-screen) apps, Google sign-in is a full-page redirect
+(`linkWithRedirect` / `signInWithRedirect`), not a pop-up: there the pop-up's return lands in another
+tab or storage context and Firebase stops with "missing initial state". `src/lib/auth.ts` marks the
+trip in sessionStorage and finishes it in `initAuth`; the Account screen shows the outcome (linked,
+signed in, account already exists, or an error). Desktop and Android browser tabs keep the pop-up.
 
 Preview deployments do not get `VITE_AUTH_DOMAIN`, and their domains are not authorized, so test
 Google sign-in on production or against the emulators. If the app moves to a custom domain, repeat

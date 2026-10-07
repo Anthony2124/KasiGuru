@@ -9,8 +9,10 @@
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
+  getRedirectResult,
   linkWithCredential,
   linkWithPopup,
+  linkWithRedirect,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
@@ -18,12 +20,14 @@ import {
   signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut as fbSignOut,
   type AuthCredential,
   type User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore/lite';
 import { auth, db } from './firebase';
+import { isIOS, isStandalone } from './install';
 import { getState, setState, type Account, type BanInfo } from './store';
 import { adoptCloudOnNextSync, deleteCloudData, endSession, onAccountLinked, startSession, wipeLocal } from './sync';
 
@@ -31,7 +35,55 @@ export type AuthOutcome =
   | { kind: 'linked' }
   | { kind: 'signedIn' }
   | { kind: 'alreadyRegistered'; credential: AuthCredential }
-  | { kind: 'failed'; message: string };
+  | { kind: 'failed'; message: string }
+  /** The page is leaving for Google; the result arrives on return, through [takeRedirectOutcome]. */
+  | { kind: 'redirecting' };
+
+/**
+ * Google sign-in as a full-page redirect rather than a pop-up, on iPhones and in installed apps.
+ * There the pop-up comes back in a different tab, window or storage context from the one that
+ * opened it (an iPhone home-screen app keeps its own storage; an installed Android app can capture
+ * the return), and Firebase's handler stops with "missing initial state". A redirect stays in one
+ * tab, through this site's own /__/auth handler, which is the path Firebase recommends for Safari.
+ */
+const prefersRedirect = () => isIOS() || isStandalone();
+
+/** Survives the trip to Google in this tab's sessionStorage: what the return should finish. */
+const REDIRECT_KEY = 'kasiguru.googleRedirect';
+type RedirectMode = 'link' | 'signIn';
+
+function takeRedirectMode(): RedirectMode | null {
+  try {
+    const mode = sessionStorage.getItem(REDIRECT_KEY);
+    sessionStorage.removeItem(REDIRECT_KEY);
+    return mode === 'link' || mode === 'signIn' ? mode : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRedirect(mode: RedirectMode): boolean {
+  try {
+    sessionStorage.setItem(REDIRECT_KEY, mode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The app can render before initAuth runs (boot loads local data first), so a screen that asks
+// early waits for initAuth's answer instead of reading "nothing pending".
+let settleRedirect: (outcome: Promise<AuthOutcome | null>) => void = () => undefined;
+let redirectOutcome = new Promise<AuthOutcome | null>((resolve) => {
+  settleRedirect = resolve;
+});
+
+/** The result of a Google redirect that finished as this page loaded, once; null otherwise. */
+export function takeRedirectOutcome(): Promise<AuthOutcome | null> {
+  const outcome = redirectOutcome;
+  redirectOutcome = Promise.resolve(null);
+  return outcome;
+}
 
 function accountEmail(u: User | null): string | null {
   if (!u) return null;
@@ -97,22 +149,57 @@ const isCollision = (e: unknown) => {
 let switching = false;
 
 export function initAuth() {
-  onAuthStateChanged(auth, async (user) => {
+  const mode = takeRedirectMode();
+  if (mode) {
+    // Coming back from Google. Hold the listener, as switchAccount does, until the redirect is
+    // settled: a switch to an existing account must not start syncing the guest's data into it.
+    switching = true;
+    settleRedirect(completeRedirect(mode));
+  } else {
+    settleRedirect(Promise.resolve(null));
+  }
+  onAuthStateChanged(auth, (user) => {
     if (switching) return;
-    if (!user) {
-      // No session at all: start a guest one, as the Android app does at launch.
-      try {
-        await signInAnonymously(auth);
-      } catch (e) {
-        console.warn('anonymous sign-in failed', e);
-        setState({ authReady: true, account: toAccount(null) });
-      }
-      return;
-    }
-    setState({ account: toAccount(user), authReady: true });
-    void startSession(user.uid);
-    void checkBan(user.uid);
+    void resume(user);
   });
+}
+
+async function resume(user: User | null) {
+  if (!user) {
+    // No session at all: start a guest one, as the Android app does at launch.
+    try {
+      await signInAnonymously(auth);
+    } catch (e) {
+      console.warn('anonymous sign-in failed', e);
+      setState({ authReady: true, account: toAccount(null) });
+    }
+    return;
+  }
+  setState({ account: toAccount(user), authReady: true });
+  void startSession(user.uid);
+  void checkBan(user.uid);
+}
+
+/** Finishes what linkGoogle started before the redirect, with the outcome it would have returned. */
+async function completeRedirect(mode: RedirectMode): Promise<AuthOutcome | null> {
+  let outcome: AuthOutcome | null = null;
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && mode === 'signIn') return await finishSwitch();
+    if (result) {
+      // Same uid, now with Google on it: give the learner its identity before the session uploads.
+      await result.user.reload();
+      refreshAccount();
+      await onAccountLinked();
+      outcome = { kind: 'linked' };
+    }
+  } catch (e) {
+    const credential = isCollision(e) ? GoogleAuthProvider.credentialFromError(e as never) : null;
+    outcome = credential ? { kind: 'alreadyRegistered', credential } : { kind: 'failed', message: friendly(e) };
+  }
+  switching = false;
+  await resume(auth.currentUser);
+  return outcome;
 }
 
 export async function linkEmailPassword(email: string, password: string): Promise<AuthOutcome> {
@@ -151,6 +238,11 @@ async function switchAccount(signIn: () => Promise<unknown>): Promise<AuthOutcom
     if (guest) void startSession(guest.uid);
     return { kind: 'failed', message: friendly(e) };
   }
+  return finishSwitch();
+}
+
+/** After a successful switch: the guest's local data goes, and the account's is taken as saved. */
+async function finishSwitch(): Promise<AuthOutcome> {
   try {
     await wipeLocal(false);
     adoptCloudOnNextSync();
@@ -174,6 +266,19 @@ export async function linkGoogle(): Promise<AuthOutcome> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   const user = auth.currentUser;
+  const linking = !!user && user.isAnonymous;
+  // Without the marker the return could not be finished properly, so the pop-up stays the fallback.
+  if (prefersRedirect() && rememberRedirect(linking ? 'link' : 'signIn')) {
+    try {
+      // Both navigate away and settle only if the redirect could not start.
+      if (user && linking) await linkWithRedirect(user, provider);
+      else await signInWithRedirect(auth, provider);
+      return { kind: 'redirecting' };
+    } catch (e) {
+      sessionStorage.removeItem(REDIRECT_KEY);
+      return { kind: 'failed', message: friendly(e) };
+    }
+  }
   try {
     if (user && user.isAnonymous) {
       await linkWithPopup(user, provider);

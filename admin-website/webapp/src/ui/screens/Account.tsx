@@ -3,7 +3,7 @@
  * email. A guest who creates an account keeps their progress (the uid is linked, not replaced); one
  * who signs in to an existing account gets that account exactly as saved, replacing the guest here.
  */
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import type { AuthCredential } from 'firebase/auth';
 import {
   confirmSignIn,
@@ -13,6 +13,7 @@ import {
   sendPasswordReset,
   signInEmailPassword,
   signOutToGuest,
+  takeRedirectOutcome,
   type AuthOutcome,
 } from '../../lib/auth';
 import { navigate } from '../../lib/router';
@@ -119,7 +120,13 @@ export function AccountScreen() {
     setError(null);
     setMessage(null);
     const outcome = await run();
+    // Leaving for Google: stay busy until the page goes, so the button cannot start a second one.
+    if (outcome.kind === 'redirecting') return;
     setBusy(false);
+    show(outcome);
+  };
+
+  const show = (outcome: AuthOutcome) => {
     switch (outcome.kind) {
       case 'linked':
         toast('Account secured. Your progress is now saved to it.');
@@ -136,6 +143,11 @@ export function AccountScreen() {
         setError(outcome.message);
     }
   };
+
+  // Back from a Google redirect (iPhone, installed app): show what it came to, as handle would have.
+  useEffect(() => {
+    void takeRedirectOutcome().then((outcome) => outcome && show(outcome));
+  }, []);
 
   const validate = () => {
     const problem = !email.trim()
