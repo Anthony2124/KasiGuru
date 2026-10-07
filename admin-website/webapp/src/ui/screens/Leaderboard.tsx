@@ -95,12 +95,14 @@ export function LeaderboardContent() {
   const avatar = useApp((s) => s.learner.progress.profileIconId);
 
   useEffect(() => {
+    let active = true;
     if (!account.uid) return;
     setRows(null);
     setError(false);
     fetchLeaderboard(mode)
-      .then(setRows)
-      .catch(() => setError(true));
+      .then((result) => { if (active) setRows(result); })
+      .catch(() => { if (active) setError(true); });
+    return () => { active = false; };
   }, [mode, account.uid]);
 
   const me = rows?.find((r) => r.isCurrentUser) ?? null;

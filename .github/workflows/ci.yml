@@ -126,6 +126,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Dictionary cache and quota report tests
+        run: node --test scripts/tests/vocabulary-cache.test.cjs scripts/tests/firestore-usage.test.cjs
       - name: Project folders and local imports agree
         run: node scripts/check-project-structure.js
       # This check used to grep only admin-website/index.html for the admin script, so it

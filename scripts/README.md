@@ -10,6 +10,9 @@ the root `package.json`; Firebase admin tools have their own `functions/package.
 ```powershell
 npm run check:structure
 npm run check:web
+npm run test:launch
+npm run firebase:usage
+npm run firebase:usage -- --hours
 npm run dictionary:repair:preview
 npm run dictionary:meanings:preview
 
@@ -89,6 +92,10 @@ SQL references in `data/sql/` are historical inputs, not the active Room databas
 - `archive-apks-to-releases.sh`: archive surviving APKs to GitHub Release assets.
 - `check-web-tokens.js`: verify shared brand tokens across the two web stylesheets.
 - `diagnostics/check_pos.js`: read vocabulary part-of-speech coverage from Firebase.
+- `diagnostics/firestore-usage.js`: reads Cloud Monitoring's daily/hourly Firestore operation totals;
+  never reads documents. Run `npm run firebase:usage` (or add `-- --hours` / `-- --days 14`).
+  Uses `gcloud auth login` or an existing `npx --yes firebase-tools login` session. Firebase CLI
+  refreshes an expired login using project metadata. Quota days use Pacific time; 70% flags a warning.
 - `../functions/`: administration, backup/restore, release and Firestore maintenance
   scripts. Their existing paths remain the operational entry points.
 

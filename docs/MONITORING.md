@@ -10,32 +10,38 @@ before costs ever become a concern.
 | Signal | Where | Frequency |
 |---|---|---|
 | Crashes | Firebase console → **Crashlytics** | Weekly |
-| Firestore reads/writes | Firebase console → **Usage** (per day) | Weekly |
+| Firestore reads/writes | `npm run firebase:usage` or Firebase console → **Usage** | Daily during launch week |
 | Firestore storage size | Firebase console → **Usage** | Monthly |
 | Dictionary/submission health | Admin portal dashboards | Monthly |
 | Backup freshness | `C:\KasiGuru\KasiGuruBackups\` — a folder per day | Daily (scripted) |
-| Registered devices | `device_tokens` collection (see below) | Monthly |
+| Registered devices | `device_tokens` collection | Monthly |
 
-Check registered devices and latest backup:
+Check usage without reading Firestore documents:
 
 ```powershell
-cd C:\KasiGuru\KasiGuru-main\functions
-node -e "const a=require('firebase-admin');a.initializeApp({credential:a.credential.cert('C:\\Users\\U S E R - P C\\Downloads\\kasiguru-86042-firebase-adminsdk-fbsvc-4677ab3407.json')});a.firestore().collection('device_tokens').get().then(s=>{console.log('devices:',s.size);process.exit(0)})"
-Get-ChildItem C:\KasiGuru\KasiGuruBackups -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 3
+npm run firebase:usage
+npm run firebase:usage -- --hours
 ```
 
 ## 2. Cost levers (in order of impact)
 
-1. **Full-collection syncs** — every app launch downloads the whole `vocabulary`
-   collection (429 docs today, ~1 read per doc per user per launch). This is the
-   dominant cost at scale. The fix (delta sync via a versioned content manifest,
-   or moving to a server-side content pipeline) is future work; do not build new
-   features that pull the whole dictionary per launch.
-2. **Realtime listeners** — the admin panel and the app keep live listeners on
-   `vocabulary`/`word_submissions`/`app_releases`. They count reads constantly.
-   Fine at current scale; revisit before going to a large audience.
-3. **Backups** — the local JSON backup reads every collection each run (one
-   run/day). Trivial now.
+1. **Development reads** — production web builds snapshot the ~1,200-word dictionary
+   and stories; bulk maintenance and backups also read collections. During launch week,
+   freeze bulk dictionary work and avoid repeated production deployments. CI and preview
+   builds use the committed content snapshot.
+2. **Admin dictionary** — the portal saves a copy per admin and listens to stamped edits.
+   It performs cheap count checks while visible and a daily full reconciliation, instead
+   of attaching a whole-dictionary listener on every opening.
+3. **Leaderboards** — both clients reuse each top-50 board for three minutes per account/week.
+   A refresh also fetches the signed-in learner's row and counted rank when outside the top 50.
+4. **Learner dictionary sync** — Android uses `updatedAt` deltas and a daily fingerprint
+   aggregation, reading the full collection only when needed or after 30 days. The web
+   uses a bundled snapshot plus deltas at most every six hours.
+
+The report uses the existing gcloud or Firebase CLI sign-in, groups by Pacific quota day,
+and flags any operation at 70% of its daily free limit. It reads only Cloud Monitoring.
+The 2026-10-07 launch check found 47,354 reads (95%) for the still-open 2026-10-06 Pacific day;
+three of the preceding days exceeded 50,000 reads. Spark remains the owner's chosen plan.
 
 ## 3. Budget alerts (when billing is enabled)
 
@@ -44,9 +50,10 @@ you about spending. If you ever upgrade to Blaze:
 
 1. Google Cloud console → **Billing → Budgets & alerts**.
 2. Create a budget: amount **$5/month**, alerts at **50% / 90% / 100%**.
+   A budget alert is a notification, not a spending cap.
 3. Optional: Pub/Sub notification to email.
 
-Until then, the Usage page is your tripwire — check it monthly.
+Until then, the usage report or Usage page is your tripwire — check it daily during launch week.
 
 ## 4. Failure runbook (short version)
 
@@ -80,5 +87,5 @@ Resolved (see `docs/ACCOUNTS_AND_SYNC.md`):
 
 Still outstanding:
 
-- **Content delta pipeline**: needs a versioned manifest + timestamped docs.
+- **Connected content**: additional authored sentences, recordings and narrated stories need speakers.
 - **True anti-cheat**: would require scoring quizzes server-side.

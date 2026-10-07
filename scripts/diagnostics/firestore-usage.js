@@ -3,7 +3,7 @@
  * Firestore reads, writes and deletes per quota day, against the Spark plan's free limits.
  *
  * Read-only: asks Cloud Monitoring for the project's `document/*_ops_count` metrics with the
- * `gcloud` account already signed in on this machine. Writes nothing and reads no documents.
+ * gcloud or Firebase CLI account already signed in on this machine. Writes nothing and reads no documents.
  *
  * Spark quotas reset at midnight Pacific time (3 or 4 PM in the Philippines), so the days below
  * are Pacific days; today is the day in progress. When a limit is reached, every client's reads
@@ -14,7 +14,7 @@
  *   node scripts/diagnostics/firestore-usage.js --days 14
  *   node scripts/diagnostics/firestore-usage.js --hours    today, hour by hour (Philippine time)
  */
-const { execSync } = require('child_process');
+const { googleAccessToken } = require('../lib/google-access-token');
 
 const PROJECT = 'kasiguru-86042';
 const QUOTA_TZ = 'America/Los_Angeles';
@@ -31,20 +31,16 @@ const args = process.argv.slice(2);
 const hourly = args.includes('--hours');
 const days = Math.max(1, Math.min(42, Number(args[args.indexOf('--days') + 1]) || 7));
 
-function token() {
-  try {
-    return execSync('gcloud auth print-access-token', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    console.error('Could not get a token from gcloud. Sign in with: gcloud auth login');
-    process.exit(1);
-  }
-}
-
 const dayIn = (tz, date) => new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(date);
 const hourIn = (tz, date) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false }).format(date);
 
+function quotaDayLabels(date, count) {
+  const today = Date.parse(`${dayIn(QUOTA_TZ, date)}T00:00:00Z`);
+  return Array.from({ length: count }, (_, i) => new Date(today - (count - 1 - i) * 86400000).toISOString().slice(0, 10));
+}
+
 /** Hourly sums of one metric, as [startTime, value] pairs. */
-async function hourlySeries(auth, type, start, end) {
+async function hourlySeries(auth, type, start, end, fetcher = fetch) {
   const params = new URLSearchParams({
     filter: `metric.type="${type}"`,
     'interval.startTime': start.toISOString(),
@@ -53,19 +49,26 @@ async function hourlySeries(auth, type, start, end) {
     'aggregation.perSeriesAligner': 'ALIGN_SUM',
     'aggregation.crossSeriesReducer': 'REDUCE_SUM',
   });
-  const res = await fetch(`https://monitoring.googleapis.com/v3/projects/${PROJECT}/timeSeries?${params}`, {
-    headers: { Authorization: `Bearer ${auth}` },
-  });
-  if (!res.ok) throw new Error(`Cloud Monitoring answered ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const body = await res.json();
-  return (body.timeSeries ?? []).flatMap((s) => s.points.map((p) => [new Date(p.interval.startTime), Number(p.value.int64Value ?? 0)]));
+  const points = [];
+  do {
+    const res = await fetcher(`https://monitoring.googleapis.com/v3/projects/${PROJECT}/timeSeries?${params}`, {
+      headers: { Authorization: `Bearer ${auth}` }, signal: AbortSignal.timeout(30000),
+    });
+    if (!res.ok) throw new Error(`Cloud Monitoring answered ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const body = await res.json();
+    points.push(...(body.timeSeries ?? []).flatMap((s) => (s.points ?? []).map((p) =>
+      [new Date(p.interval.startTime), Number(p.value.int64Value ?? 0)])));
+    if (!body.nextPageToken) break;
+    params.set('pageToken', body.nextPageToken);
+  } while (true);
+  return points;
 }
 
 const pct = (n, limit) => `${Math.round((n / limit) * 100)}%`.padStart(5);
 const num = (n) => n.toLocaleString('en-US').padStart(8);
 
 async function main() {
-  const auth = token();
+  const auth = googleAccessToken();
   // Whole hours, so each point is one clock hour.
   const end = new Date(Math.ceil(Date.now() / 3600000) * 3600000);
   const start = new Date(end.getTime() - (hourly ? 30 : (days + 1) * 24) * 3600000);
@@ -97,12 +100,12 @@ async function main() {
       totals.set(d, row);
     }
   const today = dayIn(QUOTA_TZ, new Date());
-  const shown = [...totals.keys()].sort().slice(-days);
+  const shown = quotaDayLabels(new Date(), days);
   console.log(`Firestore usage for ${PROJECT}, per quota day (resets midnight Pacific)\n`);
   console.log('day (Pacific)      reads           writes          deletes');
   let worst = 0;
   for (const d of shown) {
-    const r = totals.get(d);
+    const r = totals.get(d) ?? { reads: 0, writes: 0, deletes: 0 };
     const share = Math.max(...METRICS.map((m) => r[m.key] / m.limit));
     if (d !== today) worst = Math.max(worst, share);
     const flag = share >= 1 ? '  OVER LIMIT' : share >= WARN_AT ? '  near limit' : '';
@@ -117,7 +120,9 @@ async function main() {
     console.log('A recent day passed 70% of a free limit. See docs/WEB_APP.md, "Content and the free-plan read budget".');
 }
 
-main().catch((e) => {
+if (require.main === module) main().catch((e) => {
   console.error(e.message);
   process.exit(1);
 });
+
+module.exports = { hourlySeries, dayIn, quotaDayLabels };

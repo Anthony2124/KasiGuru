@@ -17,6 +17,7 @@ import {
   where,
   type DocumentData,
 } from 'firebase/firestore/lite';
+import type { User } from 'firebase/auth';
 import { isoWeekId } from '../domain/dates';
 import { parsePublicProfile, type PublicProfile } from '../domain/publicProfile';
 import type { AnnouncementDto } from '../domain/types';
@@ -43,12 +44,13 @@ export type LeaderboardOrder = 'totalXp' | 'weeklyXp' | 'currentStreak';
 const TOP_N = 50;
 
 /** One read per row, so boards are cached per order for a few minutes rather than refetched on every visit. */
-const boardCache = new Map<LeaderboardOrder, { at: number; rows: LeaderboardEntry[] }>();
+const boardCache = new Map<LeaderboardOrder, { at: number; context: string; rows: LeaderboardEntry[] }>();
+const pendingBoards = new Map<string, Promise<LeaderboardEntry[]>>();
 
 const scoreOf = (e: LeaderboardEntry, order: LeaderboardOrder) =>
   order === 'weeklyXp' ? e.weeklyXp : order === 'currentStreak' ? e.currentStreak : e.totalXp;
 
-function entry(id: string, x: DocumentData, rank: number): LeaderboardEntry | null {
+function entry(id: string, x: DocumentData, rank: number, viewer: string | null, week: string): LeaderboardEntry | null {
   if (x.isAnonymous === true) return null;
   const name = typeof x.displayName === 'string' ? x.displayName.trim() : '';
   if (!name) return null;
@@ -57,12 +59,12 @@ function entry(id: string, x: DocumentData, rank: number): LeaderboardEntry | nu
     name,
     totalXp: Number(x.totalXp) || 0,
     // A row last written in an earlier week has no XP this week.
-    weeklyXp: x.weekStartDate === isoWeekId() ? Number(x.weeklyXp) || 0 : 0,
+    weeklyXp: x.weekStartDate === week ? Number(x.weeklyXp) || 0 : 0,
     currentStreak: Number(x.currentStreak) || 0,
     avatarIconId: Number(x.profileIconId) || 1,
     level: Number(x.level) || 1,
     levelTitle: typeof x.titleBadge === 'string' && x.titleBadge ? x.titleBadge : 'Learner',
-    isCurrentUser: id === getState().account.uid,
+    isCurrentUser: id === viewer,
     rank,
   };
 }
@@ -72,11 +74,27 @@ function entry(id: string, x: DocumentData, rank: number): LeaderboardEntry | nu
  * top 50. A signed-in learner outside the top 50 gets their own row appended with a counted rank.
  */
 export async function fetchLeaderboard(order: LeaderboardOrder, force = false): Promise<LeaderboardEntry[]> {
+  const week = isoWeekId();
+  const user = auth.currentUser;
+  const context = `${week}:${user?.uid ?? ''}:${user?.isAnonymous ?? true}`;
   const cached = boardCache.get(order);
-  if (!force && cached && Date.now() - cached.at < 3 * 60 * 1000) return cached.rows;
+  if (!force && cached?.context === context && Date.now() - cached.at < 3 * 60 * 1000) return cached.rows;
+  const key = `${order}:${context}`;
+  const pending = pendingBoards.get(key);
+  if (pending) return pending;
+  const request = readLeaderboard(order, user, week).then((rows) => {
+    boardCache.set(order, { at: Date.now(), context, rows });
+    return rows;
+  }).finally(() => pendingBoards.delete(key));
+  pendingBoards.set(key, request);
+  return request;
+}
+
+async function readLeaderboard(order: LeaderboardOrder, user: User | null, week: string): Promise<LeaderboardEntry[]> {
+  const viewer = user && !user.isAnonymous ? user.uid : null;
   const base =
     order === 'weeklyXp'
-      ? query(collection(db, 'leaderboard_public'), where('weekStartDate', '==', isoWeekId()))
+      ? query(collection(db, 'leaderboard_public'), where('weekStartDate', '==', week))
       : query(collection(db, 'leaderboard_public'));
   const snap = await getDocs(query(base, orderBy(order, 'desc'), limit(TOP_N)));
   const rows: LeaderboardEntry[] = [];
@@ -89,15 +107,14 @@ export async function fetchLeaderboard(order: LeaderboardOrder, force = false): 
       const rank = value === previous ? previousRank : i + 1;
       previous = value;
       previousRank = rank;
-      const e = entry(d.id, d.data(), rank);
+      const e = entry(d.id, d.data(), rank, viewer, week);
       if (e) rows.push(e);
     });
-  const user = auth.currentUser;
   if (user && !user.isAnonymous && !rows.some((r) => r.uid === user.uid)) {
     try {
       const mine = await getDoc(doc(db, 'leaderboard_public', user.uid));
-      const e = mine.exists() ? entry(mine.id, mine.data(), 0) : null;
-      if (e && (order !== 'weeklyXp' || mine.data()!.weekStartDate === isoWeekId())) {
+      const e = mine.exists() ? entry(mine.id, mine.data(), 0, viewer, week) : null;
+      if (e && (order !== 'weeklyXp' || mine.data()!.weekStartDate === week)) {
         const ahead = await getCount(query(base, where(order, '>', scoreOf(e, order))));
         rows.push({ ...e, rank: ahead.data().count + 1 });
       }
@@ -105,7 +122,6 @@ export async function fetchLeaderboard(order: LeaderboardOrder, force = false): 
       // The board is still useful without the learner's own row.
     }
   }
-  boardCache.set(order, { at: Date.now(), rows });
   return rows;
 }
 
@@ -125,13 +141,13 @@ export async function fetchPublicProfile(uid: string): Promise<PublicProfile | n
 
 export const cachedPublicProfile = (uid: string) => profileCache.get(uid) ?? null;
 
-const rankCache = new Map<string, { at: number; rank: number | null }>();
+const rankCache = new Map<string, { at: number; week: string; rank: number | null }>();
 
 /** This week's rank on the weekly board, or null if they have no row this week. Cached briefly. */
 export async function weeklyRank(uid: string): Promise<number | null> {
   const cached = rankCache.get(uid);
-  if (cached && Date.now() - cached.at < 3 * 60 * 1000) return cached.rank;
   const week = isoWeekId();
+  if (cached?.week === week && Date.now() - cached.at < 3 * 60 * 1000) return cached.rank;
   const row = await getDoc(doc(db, 'leaderboard_public', uid));
   let rank: number | null = null;
   if (row.exists() && row.data().weekStartDate === week && typeof row.data().weeklyXp === 'number') {
@@ -140,7 +156,7 @@ export async function weeklyRank(uid: string): Promise<number | null> {
     );
     rank = ahead.data().count + 1;
   }
-  rankCache.set(uid, { at: Date.now(), rank });
+  rankCache.set(uid, { at: Date.now(), week, rank });
   return rank;
 }
 
@@ -170,9 +186,7 @@ export async function badgeRarity(ids: string[]): Promise<Record<string, number>
 
 export async function fetchAnnouncements() {
   try {
-    // Filter only, sorted here: active + orderBy(createdAt) needs a composite index the project does
-    // not have (the Android app's identical query fails for that reason), and there are only ever a
-    // handful of announcements.
+    // The web keeps its bounded client sort; Android uses the composite index in firestore.indexes.json.
     const snap = await getDocs(query(collection(db, 'announcements'), where('active', '==', true), limit(20)));
     const list: AnnouncementDto[] = snap.docs.map((d) => {
       const x = d.data();

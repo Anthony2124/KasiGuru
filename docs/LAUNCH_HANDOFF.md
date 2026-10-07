@@ -1,8 +1,32 @@
 # Public launch handoff (2026-10-07)
 
 For Anthony, picking up the last checks before KasiGuru goes public. The web app is live and
-matches APK 1.25.0; three things are left, in the order below. None of them is code-heavy, but
-two of them touch the live Firebase project, so they were left for a person to run.
+matches APK 1.25.0. The checklist below records the launch checks and their remaining phone tests.
+
+## Execution update (2026-10-07, Anthony's PC)
+
+- **Announcements index deployed:** compared the live indexes first, retained both leaderboard
+  indexes, deployed only `firestore:indexes` without `--force`, and verified all three `READY`.
+  The exact Android `active == true`, `createdAt DESC`, limit-5 query succeeded. There are no active
+  announcements, so an on-phone Home → News check remains pending; no test announcement was published.
+- **Spark retained:** Anthony explicitly chose to keep Spark, and the billing API still reports
+  `billingEnabled: false`.
+- **Usage report verified:** both daily and hourly modes work through the Firebase CLI sign-in.
+  The still-open **2026-10-06 Pacific quota day had 47,354 reads (95%)** at the check on the Philippine
+  morning of 2026-10-07. Earlier quota days reached 53,836 (Oct 1), 62,008 (Oct 4), and 55,475 (Oct 5).
+  `npm run firebase:usage` is now the daily entry point; `-- --hours` shows the current day by PH hour.
+- **Read reductions recorded in this commit:** the admin dictionary uses a saved per-admin copy and an
+  `updatedAt` delta listener, with deletion checks and daily reconciliation. Android boards refresh
+  at most once per three minutes per account/week; the existing web cache now handles account/week
+  changes and concurrent requests. Publishing these code changes remains pending; Android's
+  cache change also needs a future APK release. The live index fix applies to APK 1.25.0 already.
+- **Validation passed:** 140 web tests, 14 launch cache/report tests, web type checking and production
+  build (without a Firestore content export), structure/brand/parity checks, and Android
+  `testDebugUnitTest assembleDebug lintDebug`. Production `/`, `/__/auth/handler`, and `/__/auth/iframe`
+  returned HTTP 200, with no app CSP on the two Firebase routes.
+- **Real-phone smoke test pending:** ADB reported no connected phone or emulator. HTTP endpoint and
+  automated checks do not verify Google sign-in in installed iPhone Safari or web/APK progress sync.
+  Use task 3 below and record actual results before treating launch verification as complete.
 
 ## Where things stand
 
@@ -15,12 +39,12 @@ two of them touch the live Firebase project, so they were left for a person to r
 - **Checks passing at that commit:** `tsc`, the 133 webapp tests, `npm run check:web`,
   `npm run check:web-sync`, production build. Screens checked at 390 px and 1280 px, dark and light.
 
-**Uncommitted in the working tree** (on the PC this was written on):
+**Original launch files** (all committed in `f1402d96`, then pulled onto Anthony's PC):
 
 | File | What it is | State |
 |---|---|---|
-| `firestore.indexes.json` | Adds the `announcements` composite index | Ready; needs deploying (task 1) |
-| `scripts/diagnostics/firestore-usage.js` | Read-only usage report per quota day | Written, **not yet run once** (task 2) |
+| `firestore.indexes.json` | Adds the `announcements` composite index | Deployed and `READY` (task 1) |
+| `scripts/diagnostics/firestore-usage.js` | Read-only usage report per quota day | Daily and hourly modes verified (task 2) |
 | `docs/LAUNCH_HANDOFF.md` | This file | |
 
 The other untracked files in the repo (manuscript `.docx`, `docs/paper/`, badge/category source
@@ -48,7 +72,7 @@ filters and sorts in the browser, `webapp/src/lib/remote.ts`).
 The two `leaderboard_public` indexes already in the file match the live project exactly (checked
 with `firebase firestore:indexes`), so deploying the file adds one index and removes nothing.
 
-**To do.**
+**Deployment completed; phone display check remains.** The commands below are the repeatable runbook.
 
 1. Confirm the live indexes still match the file (nothing extra live that the deploy would offer
    to delete):
@@ -64,8 +88,8 @@ with `firebase firestore:indexes`), so deploying the file adds one index and rem
    minutes; the collection is tiny).
 4. Test: create an active announcement in the admin portal, open the APK's Home → it should appear
    under **News**. No APK release is needed; the query is already in 1.25.0.
-5. Commit `firestore.indexes.json`, and replace the "Announcements need no index here" section in
-   `WEB_APP.md` (it says the index does not exist).
+5. `firestore.indexes.json` is already committed. `WEB_APP.md` now records the deployed index and
+   successful query; include that documentation with the launch-read changes.
 
 ---
 
@@ -100,8 +124,7 @@ one hour) and are near zero overnight, so today's load is **development, not lea
 So on launch day the budget left for learners is whatever development does not use, roughly a
 couple of hundred active learners on a quiet dev day and close to none on a busy one.
 
-[MONITORING.md](MONITORING.md) is the general guide but is out of date here (it still describes a
-full `vocabulary` download per launch and a 429-word dictionary).
+[MONITORING.md](MONITORING.md) now records the current delta sync, caching and daily launch monitoring.
 
 **To do, in order.**
 
@@ -110,9 +133,9 @@ full `vocabulary` download per launch and a 429-word dictionary).
    node scripts/diagnostics/firestore-usage.js            # last 7 quota days, % of each limit
    node scripts/diagnostics/firestore-usage.js --hours    # today, hour by hour, PH time
    ```
-   It needs only `gcloud auth login` on the machine; it reads Cloud Monitoring, never documents.
-   If it works, add `"firebase:usage": "node scripts/diagnostics/firestore-usage.js"` to the root
-   `package.json` and a line under `diagnostics/` in `scripts/README.md`. The raw query it makes,
+   **Verified in both modes.** It uses `gcloud auth login` or an existing Firebase CLI sign-in;
+   it reads Cloud Monitoring, never documents. `firebase:usage` is added to the root `package.json`
+   and documented under `diagnostics/` in `scripts/README.md`. The raw query it makes,
    if you need to check by hand:
    ```bash
    curl -s -G "https://monitoring.googleapis.com/v3/projects/kasiguru-86042/timeSeries" \
@@ -124,7 +147,7 @@ full `vocabulary` download per launch and a 429-word dictionary).
      --data-urlencode "aggregation.perSeriesAligner=ALIGN_SUM" \
      --data-urlencode "aggregation.crossSeriesReducer=REDUCE_SUM"
    ```
-2. **Decide with the owner: stay on Spark or move to Blaze.** This is their call (it needs a
+2. **Owner decision: stay on Spark (confirmed 2026-10-07).** A later move to Blaze is their call (it needs a
    card). Blaze keeps the same free 50k reads a day and bills only beyond it, at cents per 100k
    reads; with a budget alert ([MONITORING.md §3](MONITORING.md), $5/month, alerts at 50/90/100%)
    a launch spike costs little instead of cutting everyone off. Note that some project notes assume
@@ -132,11 +155,13 @@ full `vocabulary` download per launch and a 429-word dictionary).
 3. **Whatever the plan, cut the development reads**, cheapest first:
    - **Launch week: freeze bulk dictionary work and avoid needless web deploys.** Pushes that touch
      only Android already skip the web build (`vercel.json` `ignoreCommand`).
-   - **Admin portal:** replace the whole-collection `onSnapshot` on `vocabulary` with a cached copy
-     plus an `updatedAt > lastSeen` delta, as the web app and Android already do. That is the
-     largest single saving and only affects admins.
-   - **Leaderboards:** cache each tab's top 50 for a few minutes on both clients instead of
-     re-reading on every view.
+   - **Admin portal:** implemented locally in `admin/js/vocabulary-cache.mjs` and connected in
+     `app.js`. Cached rows survive reloads; the delta preserves unchanged words. Count checks on
+     opening and every five visible minutes catch withdrawals, and daily reconciliation catches
+     unstamped edits. Local deletions update all dictionary views and the cache immediately.
+   - **Leaderboards:** Android uses a three-minute refresh gate over Room. The web's existing
+     three-minute cache now separates accounts/weeks and coalesces concurrent requests. Tests cover
+     expiry, account/week switches, tied ranks, and failure/reconnect paths.
 4. **Watch it daily for the first week** with the report (or Firebase console → Firestore →
    Usage). A day over 70% of a limit is flagged "near limit".
 

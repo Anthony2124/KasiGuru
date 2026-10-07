@@ -182,6 +182,14 @@ plan's 50,000 reads for the whole project, Android included. Instead:
 - In the browser, the app asks Firestore only for documents with `updatedAt` after the snapshot,
   at most every six hours — usually a single read that returns nothing.
 - Recordings and story pictures are fetched one at a time when needed and cached.
+- Leaderboard tabs reuse their top 50 for three minutes, coalesce concurrent requests, and refresh
+  when the account or ISO week changes. Android uses the same refresh window over its Room cache.
+
+The admin portal keeps its dictionary in IndexedDB per admin, then listens only for
+`updatedAt > checkpoint` changes with a two-minute overlap. A count check on opening and every five
+minutes while visible catches withdrawals; a full read once a day catches unstamped edits and
+equal-count replacements. Deleting a word in that portal updates its saved copy immediately.
+Use `npm run firebase:usage` from the repository root to track the shared Spark budget.
 
 Admin edits and additions reach web learners within six hours. **A word deleted in the admin portal
 disappears from the web app at the next deploy**, since deletions are not in the delta; redeploy
@@ -229,13 +237,14 @@ all three steps for it.
 No Firebase rules or plan changes are needed: the web app uses exactly the access the Android app
 already has.
 
-### Announcements need no index here
+### Announcements index
 
-The web app filters `announcements` by `active` and sorts by `createdAt` in the browser. The
-Android app's query (`whereEqualTo("active", true).orderBy("createdAt", DESC)`) needs a composite
-index the project does not have, so it fails with FAILED_PRECONDITION and the Android banner never
-shows anything. Either create the index (Firestore → Indexes: `announcements`, `active` ↑,
-`createdAt` ↓) or drop the `orderBy` in `AnnouncementRepository` and sort on the device.
+The web app filters `announcements` by `active` and sorts by `createdAt` in the browser. Android
+uses `whereEqualTo("active", true).orderBy("createdAt", DESC).limit(5)`, backed by the composite
+index in `firestore.indexes.json` (`active` ↑, `createdAt` ↓). It was deployed to `kasiguru-86042`
+on 2026-10-07, verified `READY`, and the exact Android query succeeded. No APK update is needed
+for this index fix. There were no active announcements at verification; a Home → News check with
+an active announcement is still a phone test.
 
 ## Developing and testing
 

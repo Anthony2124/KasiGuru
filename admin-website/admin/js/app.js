@@ -3,13 +3,14 @@
 
 import { 
   db, auth,
-  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+  collection, doc, getDoc, getDocs, getDocsFromServer, getCountFromServer, setDoc, addDoc, updateDoc, deleteDoc,
   query, orderBy, where, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { normaliseWord, findExistingWord } from './word-normalize.js';
+import { vocabularyStore, watchVocabulary } from './vocabulary-cache.mjs';
 
 /**
  * Stamps a content payload with the millisecond timestamp the app syncs against.
@@ -37,6 +38,7 @@ let reports = [];
 let reportsLoaded = false;
 let announcements = [];
 let vocabulary = [];
+let vocabularyWatch;
 let releases = [];
 let stories = [];
 let searchDebounceTimer = null;
@@ -389,24 +391,40 @@ function initRealtimeListeners() {
     console.error("Firestore announcements query error:", e);
   }
 
-  // 2. Vocabulary Listener
+  // 2. Saved dictionary + live stamped edits, rather than ~1,200 reads on every dashboard open.
   try {
-    const vocabQuery = query(collection(db, "vocabulary"));
-    const unsubVocab = onSnapshot(vocabQuery, (snapshot) => {
-      vocabulary = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      vocabularyLoaded = true;
-      renderVocabularyTable();
-      renderStageReview();
-      updateDashboardMetrics();
-    }, (error) => {
-      console.warn("Vocabulary listener error:", error);
-      let msg = "Unable to connect to live Firestore master dictionary.";
-      if (error.code === 'permission-denied') {
-        msg = "Permission denied. Ensure Firestore Rules allow read access.";
-      }
-      renderVocabularyError(msg);
+    const vocabCollection = collection(db, "vocabulary");
+    const toRow = (document) => ({ ...document.data(), id: document.id });
+    vocabularyWatch?.stop();
+    vocabularyWatch = watchVocabulary({
+      store: vocabularyStore(auth.currentUser.uid),
+      isVisible: () => !document.hidden,
+      readAll: async () => (await getDocsFromServer(vocabCollection)).docs.map(toRow),
+      count: async () => (await getCountFromServer(vocabCollection)).data().count,
+      listen: (since, next, error) => onSnapshot(query(vocabCollection, where('updatedAt', '>', since)),
+        { includeMetadataChanges: true }, (snapshot) => next({
+          fromCache: snapshot.metadata.fromCache,
+          pending: snapshot.metadata.hasPendingWrites,
+          changes: snapshot.docChanges().map((change) => ({
+            type: change.type, id: change.doc.id, row: toRow(change.doc),
+          })),
+        }), error),
+      onRows: (rows) => {
+        vocabulary = rows;
+        vocabularyLoaded = true;
+        renderVocabularyTable();
+        renderStageReview();
+        updateDashboardMetrics();
+      },
+      onError: (error) => {
+        console.warn("Vocabulary sync error:", error);
+        if (vocabularyLoaded) notify('Using the saved dictionary. Live updates will retry.', 'error');
+        else renderVocabularyError(error.code === 'permission-denied'
+          ? 'Permission denied. Ensure Firestore Rules allow read access.'
+          : 'Unable to connect to live Firestore master dictionary.');
+      },
     });
-    unsubscribeFns.push(unsubVocab);
+    unsubscribeFns.push(() => vocabularyWatch?.stop());
   } catch (e) {
     console.error("Firestore vocab query error:", e);
   }
@@ -804,6 +822,7 @@ window.openEntryModal = function(id) {
 
       try {
         await deleteDoc(doc(db, "vocabulary", id));
+        vocabularyWatch?.remove(id);
         await logAudit("vocabulary.delete", { id, kasiguranin: item.kasiguranin });
         window.closeModal('entry-modal');
         notify(`Deleted ${item.kasiguranin}`, 'success');
@@ -2905,6 +2924,7 @@ window.deleteVocabWord = async function(id) {
   }))) return;
   try {
     await deleteDoc(doc(db, "vocabulary", id));
+    vocabularyWatch?.remove(id);
     await logAudit("vocabulary.delete", { id });
   } catch (e) {
     notify("Error deleting word: " + e.message, 'error');

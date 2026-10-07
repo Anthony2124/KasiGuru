@@ -4,10 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import com.kasiguru.data.local.dao.LeaderboardDao
 import com.kasiguru.data.local.entity.LeaderboardEntity
-import kotlinx.coroutines.channels.awaitClose
+import com.kasiguru.domain.gamification.LeaderboardRefreshGate
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +15,7 @@ import javax.inject.Singleton
 class LeaderboardRepository @Inject constructor(
     private val leaderboardDao: LeaderboardDao, private val firestore: FirebaseFirestore, private val auth: FirebaseAuth
 ) {
+    private val refreshGate = LeaderboardRefreshGate()
     fun getLeaderboardByXp() = leaderboard("totalXp", "alltime")
     fun getLeaderboardByStreak() = leaderboard("currentStreak", "streaks")
     fun getWeeklyLeaderboard() = leaderboard("weeklyXp", "weekly")
@@ -23,9 +23,9 @@ class LeaderboardRepository @Inject constructor(
         val today = java.time.LocalDate.now(); val fields = java.time.temporal.WeekFields.ISO
         return "${today.get(fields.weekBasedYear())}-W${today.get(fields.weekOfWeekBasedYear()).toString().padStart(2, '0')}"
     }
-    private fun query(field: String, board: String): Query {
+    private fun query(board: String, week: String): Query {
         val collection = firestore.collection("leaderboard_public")
-        return if (board == "weekly") collection.whereEqualTo("weekStartDate", weekId()) else collection
+        return if (board == "weekly") collection.whereEqualTo("weekStartDate", week) else collection
     }
     private fun entry(doc: DocumentSnapshot, id: Int, board: String, rank: Int): LeaderboardEntity? {
         if (!doc.exists() || doc.getBoolean("isAnonymous") == true) return null
@@ -38,45 +38,40 @@ class LeaderboardRepository @Inject constructor(
     }
     private fun normalizeCache(rows: List<LeaderboardEntity>, board: String) = rows
         .filter { board != "weekly" || it.weekId == weekId() }
-        .map { it.copy(isCurrentUser = it.firebaseUid.isNotBlank() && it.firebaseUid == auth.currentUser?.uid) }
+        .map { it.copy(isCurrentUser = it.firebaseUid.isNotBlank() && it.firebaseUid == auth.currentUser?.uid,
+            weeklyXp = if (it.weekId == weekId()) it.weeklyXp else 0) }
 
     private fun leaderboard(field: String, board: String): Flow<List<LeaderboardEntity>> = flow {
         val offset = when (board) { "weekly" -> 100; "streaks" -> 200; else -> 0 }
         emit(normalizeCache(leaderboardDao.board(board).first(), board))
-        emitAll(callbackFlow<List<LeaderboardEntity>> {
-            val base = query(field, board)
-            var generation = 0
-            val registration = base.orderBy(field, Query.Direction.DESCENDING).limit(50).addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
-                if (snapshot == null) return@addSnapshotListener
-                val currentGeneration = ++generation
-                launch {
-                    var previousScore: Long? = null
-                    var previousRank = 0
-                    val rows = snapshot.documents.filter { it.getBoolean("isAnonymous") != true }.mapIndexedNotNull { i, doc ->
-                        val score = doc.getLong(field) ?: 0L
-                        val rank = if (score == previousScore) previousRank else i + 1
-                        previousScore = score; previousRank = rank
-                        entry(doc, offset + i + 1, board, rank)
-                    }.toMutableList()
-                    val user = auth.currentUser
-                    if (user != null && !user.isAnonymous && rows.none { it.firebaseUid == user.uid }) {
-                        try {
-                            val doc = firestore.collection("leaderboard_public").document(user.uid).get().await()
-                            val mine = entry(doc, offset + 99, board, 0)
-                            if (mine != null && (board != "weekly" || mine.weekId == weekId())) {
-                                val score = if (board == "weekly") mine.weeklyXp else if (board == "streaks") mine.currentStreak else mine.totalXp
-                                val ahead = base.whereGreaterThan(field, score).count().get(AggregateSource.SERVER).await().count
-                                rows += mine.copy(rank = (ahead + 1).toInt())
-                            }
-                        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
-                        catch (_: Exception) { /* A cached board remains usable if your own row cannot be fetched. */ }
+        val week = weekId()
+        val user = auth.currentUser
+        refreshGate.refresh(board, "${user?.uid}:${user?.isAnonymous}:$week") {
+            val base = query(board, week)
+            val snapshot = base.orderBy(field, Query.Direction.DESCENDING).limit(50).get(Source.SERVER).await()
+            var previousScore: Long? = null
+            var previousRank = 0
+            val rows = snapshot.documents.filter { it.getBoolean("isAnonymous") != true }.mapIndexedNotNull { i, doc ->
+                val score = doc.getLong(field) ?: 0L
+                val rank = if (score == previousScore) previousRank else i + 1
+                previousScore = score; previousRank = rank
+                entry(doc, offset + i + 1, board, rank)
+            }.toMutableList()
+            if (user != null && !user.isAnonymous && rows.none { it.firebaseUid == user.uid }) {
+                try {
+                    val doc = firestore.collection("leaderboard_public").document(user.uid).get(Source.SERVER).await()
+                    val mine = entry(doc, offset + 99, board, 0)
+                    if (mine != null && (board != "weekly" || mine.weekId == week)) {
+                        val score = if (board == "weekly") mine.weeklyXp else if (board == "streaks") mine.currentStreak else mine.totalXp
+                        val ahead = base.whereGreaterThan(field, score).count().get(AggregateSource.SERVER).await().count
+                        rows += mine.copy(rank = (ahead + 1).toInt())
                     }
-                    if (currentGeneration == generation) trySend(rows)
-                }
+                } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                catch (_: Exception) { /* The board remains usable if your own row cannot be fetched. */ }
             }
-            awaitClose { registration.remove() }
-        }.map { rows -> leaderboardDao.replaceBoard(board, rows); rows })
+            leaderboardDao.replaceBoard(board, rows)
+        }
+        emitAll(leaderboardDao.board(board).map { normalizeCache(it, board) })
     }.catch { e ->
         if (e is kotlinx.coroutines.CancellationException) throw e
         emitAll(leaderboardDao.board(board).map { normalizeCache(it, board) })
