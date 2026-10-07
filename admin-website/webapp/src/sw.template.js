@@ -28,6 +28,10 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k.startsWith('kasiguru-shell-') && k !== SHELL).map((k) => caches.delete(k))))
+      // Earlier workers cached Firebase's auth handler here as the shell; drop that copy so the
+      // precached shell is the offline fallback again.
+      .then(() => caches.open(RUNTIME))
+      .then((cache) => cache.delete('/index.html'))
       .then(() => self.clients.claim())
   );
 });
@@ -64,6 +68,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/__word-audio/')) return;
+  // Firebase's sign-in pages, proxied to this origin (vercel.json). Left alone, the navigation
+  // branch below would store the auth handler as the offline shell.
+  if (url.pathname.startsWith('/__/')) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, '/index.html'));
