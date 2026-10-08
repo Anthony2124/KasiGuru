@@ -171,9 +171,13 @@ async function signInWithGoogle(provider = googleProvider) {
     // Closing the Google window is a choice, not an error.
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
     console.error('Google sign in error:', err);
+    // An unlisted host is a setup fault, not the person's: say so instead of "try again", which
+    // could never succeed. (admin-wheat-nu-52-phi.vercel.app was missing until 2026-10-08.)
     showError(err.code === 'auth/network-request-failed'
       ? "You're offline. Check your connection and try again."
-      : 'Google sign-in did not work. Try again.');
+      : err.code === 'auth/unauthorized-domain'
+        ? `Google sign-in isn't enabled for ${location.hostname} yet. Use email and password, or ask the project owner to add this address in Firebase.`
+        : `Google sign-in did not work${err.code ? ` (${err.code.replace('auth/', '')})` : ''}. Try again.`);
   }
 }
 

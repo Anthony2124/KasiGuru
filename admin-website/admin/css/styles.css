@@ -1330,6 +1330,7 @@ body.auth { display: grid; place-items: center; min-height: 100dvh; padding: var
 .signin-lede { color: var(--muted); font-size: var(--t-sm); margin: var(--s-1) 0 var(--s-5); }
 .error-banner .grow { flex: 1; min-width: 0; }
 .error-banner .text-link { display: block; margin-top: var(--s-1); color: var(--ink); }
+.error-banner .text-link[hidden] { display: none; }
 .error-banner:focus { outline: none; box-shadow: 0 0 0 2px var(--status-rejected); }
 
 .signin-checking { display: flex; align-items: center; gap: var(--s-3); min-height: 52px; color: var(--muted); font-size: var(--t-sm); }
