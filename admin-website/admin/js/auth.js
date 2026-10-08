@@ -96,29 +96,43 @@ async function admit(user, { fresh = false, viaPassword = false } = {}) {
 }
 
 // ── First load ──────────────────────────────────────────────────────────────
-// Wait for both the session check and any Google redirect before showing buttons, so someone who is
-// already signed in never sees the form flash before being sent on.
+// Wait briefly for the session check, so someone already signed in is sent on without the form
+// flashing first. Every wait has a ceiling: a check that never answers must not strand the page on
+// "Checking your session…".
+//
+// getRedirectResult() is awaited only when this tab actually started a Google redirect. On browsers
+// that block the hidden firebaseapp.com frame it uses (third-party storage), it can wait forever,
+// which is how the sign-in page got stuck on 2026-10-08.
+const REDIRECT_FLAG = 'kg-admin-google-redirect';
+const withTimeout = (promise, ms, fallback) =>
+  Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+
 const firstAuthState = new Promise((resolve) => {
   const stop = onAuthStateChanged(auth, (user) => { stop(); resolve(user); });
 });
 
 (async () => {
   showChecking('Checking your session…');
-  let redirected = null;
-  try {
-    redirected = await getRedirectResult(auth);
-    if (redirected?.user) showChecking('Finishing Google sign-in…');
-  } catch (err) {
-    console.error('Redirect result error:', err);
-    showActions();
-    showError('Google sign-in did not finish. Try again.');
-    return;
+  let redirectedUser = null;
+  let redirectStarted = false;
+  try { redirectStarted = sessionStorage.getItem(REDIRECT_FLAG) === '1'; } catch { /* storage blocked */ }
+  if (redirectStarted) {
+    try { sessionStorage.removeItem(REDIRECT_FLAG); } catch { /* storage blocked */ }
+    showChecking('Finishing Google sign-in…');
+    try {
+      redirectedUser = (await withTimeout(getRedirectResult(auth), 10000, null))?.user || null;
+    } catch (err) {
+      console.error('Redirect result error:', err);
+      showActions();
+      showError('Google sign-in did not finish. Try again.');
+      return;
+    }
   }
-  const user = redirected?.user || await firstAuthState;
+  const user = redirectedUser || await withTimeout(firstAuthState, 6000, null);
   if (user) {
     try {
-      await admit(user, { fresh: !!redirected?.user });
-      return;
+      const outcome = await withTimeout(admit(user, { fresh: !!redirectedUser }).then(() => 'done'), 10000, 'slow');
+      if (outcome === 'done') return;
     } catch (e) {
       console.warn('Session check failed:', e);
     }
@@ -144,6 +158,7 @@ async function signInWithGoogle() {
     // Some browsers block pop-ups; the full-page redirect finishes in the first-load block above.
     if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
       try {
+        try { sessionStorage.setItem(REDIRECT_FLAG, '1'); } catch { /* storage blocked */ }
         await signInWithRedirect(auth, googleProvider);
         return;
       } catch (redirectErr) {
