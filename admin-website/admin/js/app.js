@@ -4209,7 +4209,8 @@ function renderTeam(error) {
       chip: seen ? 'Active' : 'Invited',
       chipClass: seen ? 'is-active' : 'is-invited',
       detail: `${seen ? `Last signed in ${escapeHtml(relativeTime(seen))}` : "Hasn't signed in yet"} · ${added}`,
-      action: `<button type="button" class="btn btn-outline btn-sm team-remove" data-remove-verifier="${escapeHtml(email)}">Remove</button>`
+      // Someone who has not signed in yet may never have received the invite: offer it again.
+      action: `<div class="team-row-actions">${seen ? '' : `<a class="btn btn-outline btn-sm" href="${escapeHtml(inviteMailto(email))}">Email invite</a>`}<button type="button" class="btn btn-outline btn-sm team-remove" data-remove-verifier="${escapeHtml(email)}">Remove</button></div>`
     });
   });
   host.innerHTML = you + (rows.length
@@ -4228,14 +4229,29 @@ function setTeamError(message) {
   if (message) input?.focus();
 }
 
-/** What to send a new verifier: where to go and which account to use. */
+/** The invite a verifier needs: where to go and which account to use. */
+function inviteMessage(email) {
+  const url = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+  return `You've been added as a verifier on the KasiGuru moderation console. Open ${url} and choose "Continue with Google", signing in with ${email}.`;
+}
+
+/**
+ * A mailto: link with the invite filled in. The console cannot send email itself (no server on the
+ * Spark plan), so it opens the admin's own mail app; the message then comes from a person the
+ * verifier knows rather than a noreply address that lands in spam.
+ */
+function inviteMailto(email) {
+  const subject = 'You can now verify words on KasiGuru';
+  const body = `Hi,\n\n${inviteMessage(email)}\n\nThank you for helping keep the Kasiguranin dictionary right.\n`;
+  return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function showTeamInvite(email) {
   const box = document.getElementById('team-invite');
   if (!box) return;
-  const url = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
   document.getElementById('team-invite-email').textContent = email;
-  document.getElementById('team-invite-text').textContent =
-    `You've been added as a verifier on the KasiGuru moderation console. Open ${url} and choose "Continue with Google", signing in with ${email}.`;
+  document.getElementById('team-invite-text').textContent = inviteMessage(email);
+  document.getElementById('team-invite-mail').href = inviteMailto(email);
   box.hidden = false;
 }
 

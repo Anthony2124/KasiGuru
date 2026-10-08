@@ -1434,6 +1434,8 @@ body.auth { display: grid; place-items: center; min-height: 100dvh; padding: var
   .team-add .btn { width: 100%; }
   .team-row { flex-wrap: wrap; }
   .team-row-body { flex-basis: calc(100% - 34px - var(--s-3)); }
-  .team-remove { margin-left: calc(34px + var(--s-3)); }
+  .team-row-actions { margin-left: calc(34px + var(--s-3)); }
   .team-roles { grid-template-columns: 1fr; gap: var(--s-4); }
 }
+.team-invite-note { color: var(--muted); font-size: var(--t-xs); }
+.team-invite-actions, .team-row-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; flex: none; }
