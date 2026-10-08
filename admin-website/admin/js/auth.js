@@ -1,5 +1,11 @@
-// auth.js — Firebase Auth (Google OAuth & Email/Password) for KasiGuru Admin Panel
-import { app, auth } from './firebase-config.js';
+// auth.js — the sign-in page (index.html): Google first, email and password behind a disclosure.
+//
+// The page has four states: checking (Firebase is still deciding whether someone is signed in, or a
+// Google redirect is finishing), ready (the buttons), busy (a sign-in is in flight) and refused (a
+// signed-in account that is neither an admin nor a verifier). Access itself is decided by roles.js
+// and enforced by firestore.rules.
+import { auth } from './firebase-config.js';
+import { resolveRole } from './roles.js';
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -12,226 +18,232 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const googleProvider = new GoogleAuthProvider();
+// Always offer the account chooser, so "Use a different Google account" really can pick another one
+// rather than silently reusing the account that was just refused.
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Helper to show/hide error message cleanly
-function showLoginError(message) {
-  const errEl = document.getElementById('login-error');
-  const errText = document.getElementById('login-error-text');
-  const btn = document.getElementById('login-btn');
-  const googleBtn = document.getElementById('google-login-btn');
+const $ = (id) => document.getElementById(id);
 
-  if (errText) {
-    errText.textContent = message;
-  } else if (errEl) {
-    errEl.textContent = message;
+// ── States ──────────────────────────────────────────────────────────────────
+
+function showChecking(text) {
+  $('auth-checking-text').textContent = text;
+  $('auth-checking').hidden = false;
+  $('login-actions').hidden = true;
+}
+
+function showActions() {
+  $('auth-checking').hidden = true;
+  $('login-actions').hidden = false;
+}
+
+/** Disables everything while a sign-in is in flight; [button] shows a spinner and [label]. */
+function setBusy(button, label) {
+  const busy = !!button;
+  for (const el of [$('google-login-btn'), $('login-btn'), $('admin-email'), $('admin-password'), $('forgot-password-link')]) {
+    if (el) el.disabled = busy;
   }
-
-  if (errEl) errEl.style.display = 'flex';
-  if (btn) {
-    btn.disabled = false;
-    btn.innerHTML = `<iconsax-icon name="login" type="bulk" size="18" color="currentColor"></iconsax-icon> Sign In with Email`;
-  }
-  if (googleBtn) {
-    googleBtn.disabled = false;
-    googleBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg> Continue with Google`;
+  for (const [btn, idle] of [[$('google-login-btn'), 'Continue with Google'], [$('login-btn'), 'Sign in']]) {
+    const text = btn?.querySelector('.btn-label');
+    if (!text) continue;
+    const mine = btn === button;
+    text.textContent = mine ? label : idle;
+    btn.classList.toggle('is-busy', mine);
+    btn.setAttribute('aria-busy', String(mine));
   }
 }
 
-function clearLoginError() {
-  const errEl = document.getElementById('login-error');
-  if (errEl) errEl.style.display = 'none';
+function showError(message, { offerOtherAccount = false } = {}) {
+  clearNotice();
+  $('login-error-text').textContent = message;
+  $('use-other-account').hidden = !offerOtherAccount;
+  const el = $('login-error');
+  el.style.display = 'flex';
+  el.focus({ preventScroll: false });
 }
 
-function showLoginNotice(message) {
-  const el = document.getElementById('login-notice');
-  const text = document.getElementById('login-notice-text');
-  if (text) text.textContent = message;
-  if (el) el.style.display = 'flex';
+function clearError() {
+  $('login-error').style.display = 'none';
+  $('use-other-account').hidden = true;
 }
 
-function clearLoginNotice() {
-  const el = document.getElementById('login-notice');
-  if (el) el.style.display = 'none';
+function showNotice(message) {
+  clearError();
+  $('login-notice-text').textContent = message;
+  $('login-notice').style.display = 'flex';
 }
 
-// Password reset. Firebase mails the link; nothing about the password passes through this page or
-// through anyone administering it.
-//
-// The reply is deliberately the same whether or not the address has an account. Saying "no such
-// user" here would turn the sign-in page into a way to test whether a given email is an admin,
-// which is worth more to an attacker than the convenience is worth to us. auth/user-not-found is
-// therefore reported exactly like success. Firebase rate-limits the endpoint, and that one case
-// -- too-many-requests -- is surfaced, since it is about the sender rather than the account.
-window.resetAdminPassword = async function () {
-  const emailInput = document.getElementById('admin-email');
-  const email = emailInput?.value.trim() || '';
-  const link = document.getElementById('forgot-password-link');
+function clearNotice() {
+  $('login-notice').style.display = 'none';
+}
 
-  if (!email) {
-    clearLoginNotice();
-    showLoginError('Enter your admin email address above, then choose "Forgot password".');
-    emailInput?.focus();
+/** Sends a signed-in account on, or explains why it cannot come in and signs it out. */
+async function admit(user, { fresh = false, viaPassword = false } = {}) {
+  if (await resolveRole(user, { forceRefresh: fresh })) {
+    showChecking('Opening the console…');
+    window.location.href = 'dashboard.html';
     return;
   }
-
-  clearLoginError();
-  clearLoginNotice();
-  if (link) {
-    link.disabled = true;
-    link.textContent = 'Sending...';
+  const email = user.email || 'This account';
+  await signOut(auth).catch(() => {});
+  setBusy(null);
+  showActions();
+  if (viaPassword && !user.emailVerified) {
+    showError(`${email} isn't verified. Verifiers sign in with "Continue with Google".`);
+  } else {
+    showError(`${email} isn't an admin or verifier. Ask an admin to add it on the Team page.`, { offerOtherAccount: true });
   }
+}
 
-  const sent = 'If an admin account exists for that address, a reset link is on its way. Check your inbox, and your spam folder.';
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    showLoginNotice(sent);
-  } catch (err) {
-    console.error('Password reset error:', err);
-    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-      showLoginNotice(sent);
-    } else if (err.code === 'auth/invalid-email') {
-      showLoginError('That does not look like a valid email address.');
-    } else if (err.code === 'auth/too-many-requests') {
-      showLoginError('Too many reset requests. Please wait a few minutes and try again.');
-    } else if (err.code === 'auth/network-request-failed') {
-      showLoginError('Network connection failed. Please check your internet connection.');
-    } else {
-      showLoginError('Could not send the reset email. Please try again shortly.');
-    }
-  } finally {
-    if (link) {
-      link.disabled = false;
-      link.textContent = 'Forgot password?';
-    }
-  }
-};
-
-// On the LOGIN page (index.html): if user is already logged in as admin, go straight to dashboard
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    try {
-      const tokenResult = await user.getIdTokenResult();
-      if (tokenResult.claims && tokenResult.claims.admin === true) {
-        window.location.href = 'dashboard.html';
-      }
-    } catch (e) {
-      console.warn('Silent auth check error:', e);
-    }
-  }
+// ── First load ──────────────────────────────────────────────────────────────
+// Wait for both the session check and any Google redirect before showing buttons, so someone who is
+// already signed in never sees the form flash before being sent on.
+const firstAuthState = new Promise((resolve) => {
+  const stop = onAuthStateChanged(auth, (user) => { stop(); resolve(user); });
 });
 
-// Complete the redirect flow if we came back from Google.
-getRedirectResult(auth)
-  .then(async (result) => {
-    if (!result || !result.user) return;
-    const tokenResult = await result.user.getIdTokenResult(true);
-    if (tokenResult.claims && tokenResult.claims.admin === true) {
-      window.location.href = 'dashboard.html';
-    } else {
-      showLoginError(`Access Denied: Account "${result.user.email}" is not authorized as an administrator.`);
-      await signOut(auth);
-    }
-  })
-  .catch((err) => {
-    console.error('Redirect result error:', err);
-    showLoginError('Google Sign-In failed. Allow pop-ups for this site, then try again.');
-  });
-
-// Google Sign-In
-window.signInWithGoogle = async function () {
-  const googleBtn = document.getElementById('google-login-btn');
-  if (googleBtn) {
-    googleBtn.disabled = true;
-    googleBtn.textContent = 'Connecting to Google...';
-  }
-  clearLoginError();
-
+(async () => {
+  showChecking('Checking your session…');
+  let redirected = null;
   try {
-    const userCredential = await signInWithPopup(auth, googleProvider);
-    const tokenResult = await userCredential.user.getIdTokenResult(true);
-
-    if (tokenResult.claims && tokenResult.claims.admin === true) {
-      window.location.href = 'dashboard.html';
-    } else {
-      showLoginError(`Access Denied: Account "${userCredential.user.email}" is not authorized as an administrator.`);
-      await signOut(auth);
-    }
+    redirected = await getRedirectResult(auth);
+    if (redirected?.user) showChecking('Finishing Google sign-in…');
   } catch (err) {
-    console.error('Google sign in error:', err);
-    // Chrome blocks popups on some hosts; fall back to the full-page redirect flow.
+    console.error('Redirect result error:', err);
+    showActions();
+    showError('Google sign-in did not finish. Try again.');
+    return;
+  }
+  const user = redirected?.user || await firstAuthState;
+  if (user) {
+    try {
+      await admit(user, { fresh: !!redirected?.user });
+      return;
+    } catch (e) {
+      console.warn('Session check failed:', e);
+    }
+  }
+  showActions();
+  // A browser that filled in saved credentials gets the password form open.
+  setTimeout(() => {
+    if ($('admin-email')?.value || $('admin-password')?.value) $('password-disclosure').open = true;
+  }, 400);
+})();
+
+// ── Google ──────────────────────────────────────────────────────────────────
+
+async function signInWithGoogle() {
+  clearError();
+  clearNotice();
+  setBusy($('google-login-btn'), 'Opening Google…');
+  try {
+    const credential = await signInWithPopup(auth, googleProvider);
+    setBusy($('google-login-btn'), 'Signing in…');
+    await admit(credential.user, { fresh: true });
+  } catch (err) {
+    // Some browsers block pop-ups; the full-page redirect finishes in the first-load block above.
     if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
       try {
         await signInWithRedirect(auth, googleProvider);
         return;
       } catch (redirectErr) {
         console.error('Redirect sign in error:', redirectErr);
-        showLoginError('Google Sign-In could not start. Allow pop-ups for this site, then try again.');
-        return;
       }
     }
-
-    let msg = 'Google Sign-In failed. Please try again.';
-    if (err.code === 'auth/popup-closed-by-user') {
-      msg = 'Sign-in cancelled.';
-    } else if (err.code === 'auth/cancelled-popup-request') {
-      msg = 'Only one sign-in window at a time.';
-    } else if (err.code === 'auth/network-request-failed') {
-      msg = 'Network connection failed. Please check your internet connection.';
-    }
-    showLoginError(msg);
+    setBusy(null);
+    // Closing the Google window is a choice, not an error.
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    console.error('Google sign in error:', err);
+    showError(err.code === 'auth/network-request-failed'
+      ? "You're offline. Check your connection and try again."
+      : 'Google sign-in did not work. Try again.');
   }
-};
+}
 
-// Email / Password Sign-In
-window.signInAdmin = async function () {
-  const emailInput = document.getElementById('admin-email');
-  const passwordInput = document.getElementById('admin-password');
-  const email = emailInput?.value.trim() || '';
-  const password = passwordInput?.value || '';
-  const btn = document.getElementById('login-btn');
+// ── Email and password ──────────────────────────────────────────────────────
 
+async function signInWithPassword(e) {
+  e.preventDefault();
+  const email = $('admin-email').value.trim();
+  const password = $('admin-password').value;
   if (!email || !password) {
-    showLoginError('Please enter both your admin email and password.');
+    showError('Enter your email and password.');
+    (email ? $('admin-password') : $('admin-email')).focus();
     return;
   }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Signing in...';
-  }
-  clearLoginError();
-
+  clearError();
+  clearNotice();
+  setBusy($('login-btn'), 'Signing in…');
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const tokenResult = await userCredential.user.getIdTokenResult(true);
-
-    if (tokenResult.claims && tokenResult.claims.admin === true) {
-      window.location.href = 'dashboard.html';
-    } else {
-      showLoginError(`Access Denied: Account "${email}" does not have administrator privileges.`);
-      await signOut(auth);
-    }
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    await admit(credential.user, { fresh: true, viaPassword: true });
   } catch (err) {
     console.error('Sign in error:', err);
-    let msg = 'Invalid email or password. Please try again.';
-    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-      msg = 'Invalid credentials. Please verify your email and password.';
+    setBusy(null);
+    $('password-disclosure').open = true;
+    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-email') {
+      showError('That email and password do not match. Check them, or use "Forgot password?".');
     } else if (err.code === 'auth/too-many-requests') {
-      msg = 'Too many failed attempts. Please wait a moment and try again.';
+      showError('Too many attempts. Wait a few minutes, then try again.');
     } else if (err.code === 'auth/network-request-failed') {
-      msg = 'Network connection failed. Please check your internet connection.';
+      showError("You're offline. Check your connection and try again.");
+    } else {
+      showError('Signing in did not work. Try again.');
     }
-    showLoginError(msg);
   }
-};
+}
 
-// Allow Enter key to submit
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('admin-password')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') window.signInAdmin();
-  });
-  document.getElementById('admin-email')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') window.signInAdmin();
-  });
+// Password reset. Firebase mails the link; nothing about the password passes through this page.
+//
+// The reply is deliberately the same whether or not the address has an account. Saying "no such
+// user" here would turn the sign-in page into a way to test whether a given email has portal
+// access, which is worth more to an attacker than the convenience is worth to us. Firebase
+// rate-limits the endpoint, and that one case -- too-many-requests -- is surfaced, since it is
+// about the sender rather than the account.
+async function resetPassword() {
+  const emailInput = $('admin-email');
+  const email = emailInput.value.trim();
+  if (!email) {
+    showError('Enter your email above, then choose "Forgot password?".');
+    emailInput.focus();
+    return;
+  }
+  const link = $('forgot-password-link');
+  link.disabled = true;
+  link.textContent = 'Sending…';
+  const sent = 'If that address has an account, a reset link is on its way. Check your inbox and spam folder.';
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showNotice(sent);
+  } catch (err) {
+    console.error('Password reset error:', err);
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') showNotice(sent);
+    else if (err.code === 'auth/invalid-email') showError("That doesn't look like an email address.");
+    else if (err.code === 'auth/too-many-requests') showError('Too many reset requests. Wait a few minutes, then try again.');
+    else if (err.code === 'auth/network-request-failed') showError("You're offline. Check your connection and try again.");
+    else showError("Couldn't send the reset email. Try again shortly.");
+  } finally {
+    link.disabled = false;
+    link.textContent = 'Forgot password?';
+  }
+}
+
+function togglePassword() {
+  const input = $('admin-password');
+  const btn = $('toggle-password');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.setAttribute('aria-pressed', String(show));
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  btn.querySelector('iconsax-icon')?.setAttribute('name', show ? 'eye-slash' : 'eye');
+  input.focus();
+}
+
+$('google-login-btn').addEventListener('click', signInWithGoogle);
+$('use-other-account').addEventListener('click', signInWithGoogle);
+$('password-form').addEventListener('submit', signInWithPassword);
+$('forgot-password-link').addEventListener('click', resetPassword);
+$('toggle-password').addEventListener('click', togglePassword);
+$('password-disclosure').addEventListener('toggle', (e) => {
+  if (e.target.open) $('admin-email').focus();
 });

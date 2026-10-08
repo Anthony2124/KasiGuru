@@ -18,19 +18,19 @@
   <div id="auth-loading-screen">
     <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
     <div class="spinner"></div>
-    <p style="color:var(--muted);">Verifying admin session&hellip;</p>
+    <p style="color:var(--muted);">Checking your access&hellip;</p>
   </div>
 
-  <!-- Access denied: signed in, but without the admin claim -->
+  <!-- Access denied: signed in, but neither an admin nor a listed verifier -->
   <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--ground); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;">
     <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
-    <h2 style="margin:0;">Access denied</h2>
-    <p style="color:var(--muted); max-width:420px; margin:0;">
-      Your account is signed in but does not have administrator access.
-      Please contact the project owner to be granted the admin role.
-    </p>
+    <h2 style="margin:0;">This account can't open the console</h2>
     <p id="access-denied-email-display" style="color:var(--status-pending); font-weight:700; margin:0;"></p>
-    <button class="btn btn-danger" onclick="window.adminSignOut()">Sign out</button>
+    <p style="color:var(--muted); max-width:420px; margin:0;">
+      It isn't an admin or a verifier. Ask an admin to add this email on the Team page, or sign in
+      with the email they added.
+    </p>
+    <button class="btn btn-primary" onclick="window.adminSignOut()">Use a different account</button>
   </div>
 
   <div class="app">
@@ -38,7 +38,7 @@
     <!-- Sidebar. A moderator alternates between the queue and the dictionary constantly, so both
          stay visible and one click apart. Each destination has its own glyph: Dictionary and
          Stories previously shared book-1, which made them indistinguishable at a glance. -->
-    <aside>
+    <aside id="sidebar">
       <div class="logo-container">
         <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
         <div class="logo-title">Moderation console</div>
@@ -53,6 +53,10 @@
           <button data-tab="tab-submissions" onclick="window.switchTab('tab-submissions')">
             <iconsax-icon name="clock" type="bulk" size="18" color="currentColor"></iconsax-icon> Verification queue
             <span class="nav-count" id="nav-queue-count" hidden>0</span>
+          </button>
+          <button data-tab="tab-sentences" onclick="window.switchTab('tab-sentences')">
+            <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Example sentences
+            <span class="nav-count" id="nav-sentences-count" hidden>0</span>
           </button>
           <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
             <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
@@ -71,7 +75,7 @@
         </nav>
       </div>
 
-      <div class="navgroup">
+      <div class="navgroup" data-admin-only>
         <div class="navlabel">Publish</div>
         <nav>
           <button data-tab="tab-releases" onclick="window.switchTab('tab-releases')">
@@ -87,8 +91,11 @@
             <iconsax-icon name="profile-2user" type="bulk" size="18" color="currentColor"></iconsax-icon> Users
             <span class="nav-count" id="nav-users-count" hidden>0</span>
           </button>
+          <button data-tab="tab-team" data-admin-only onclick="window.switchTab('tab-team')">
+            <iconsax-icon name="people" type="bulk" size="18" color="currentColor"></iconsax-icon> Team
+          </button>
           <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
-            <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Admin logs
+            <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Activity log
           </button>
           <button data-tab="tab-backup" onclick="window.switchTab('tab-backup')">
             <iconsax-icon name="cloud-change" type="bulk" size="18" color="currentColor"></iconsax-icon> Backup &amp; Restore
@@ -102,18 +109,23 @@
         <div id="admin-user-chip">
           <iconsax-icon name="user" type="bulk" size="14" color="currentColor"></iconsax-icon>
           <span id="admin-email-display">Admin</span>
+          <span class="role-chip" data-role-label>&hellip;</span>
         </div>
         <button id="logout-btn" onclick="window.adminSignOut()">
           <iconsax-icon name="logout" type="bulk" size="14" color="currentColor"></iconsax-icon> Sign out
         </button>
       </div>
     </aside>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true"></div>
 
   <main>
 
     <!-- Topbar. Search reaches the dictionary from anywhere, which is the lookup a moderator does
          most; the bell mirrors the queue count already in the sidebar. -->
     <div class="topbar">
+      <button type="button" class="icon-btn nav-toggle" id="nav-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="Menu">
+        <iconsax-icon name="menu-1" type="linear" size="20" color="currentColor"></iconsax-icon>
+      </button>
       <div class="topsearch">
         <iconsax-icon name="search-normal-1" type="linear" size="18" color="currentColor"></iconsax-icon>
         <label class="sr-only" for="global-search">Search the dictionary</label>
@@ -128,7 +140,7 @@
       <div class="topuser">
         <div class="avatar" id="topbar-avatar" aria-hidden="true">&hellip;</div>
         <div class="topuser-meta">
-          <span class="topuser-name">Administrator</span>
+          <span class="topuser-name" data-role-label>&hellip;</span>
           <span class="topuser-mail" id="topbar-email">&hellip;</span>
         </div>
       </div>
@@ -140,7 +152,7 @@
       <div class="pagehead">
         <div>
           <h1>Overview</h1>
-          <p>Verify community submissions, maintain the master dictionary, and publish app releases.</p>
+          <p>Verify community submissions, keep the master dictionary right, and keep learners informed.</p>
         </div>
         <div class="pagehead-actions">
           <button class="btn btn-primary" onclick="openModal('add-vocab-modal')">
@@ -153,6 +165,29 @@
             <iconsax-icon name="notification" type="bulk" size="18" color="currentColor"></iconsax-icon> Post announcement
           </button>
         </div>
+      </div>
+
+      <!-- To do: what is waiting on a moderator, mirrored from the sidebar counts (app.js
+           initTodoStrip). Appeals are an admin's call, so verifiers do not see that one. -->
+      <div class="todo-strip" id="todo-strip" aria-label="Waiting for you">
+        <button type="button" class="todo" data-count-from="nav-queue-count" onclick="window.switchTab('tab-submissions')">
+          <span class="todo-n num">&hellip;</span><span class="todo-label">words to verify</span>
+        </button>
+        <button type="button" class="todo" data-count-from="nav-sentences-count" onclick="window.switchTab('tab-sentences')">
+          <span class="todo-n num">&hellip;</span><span class="todo-label">example sentences</span>
+        </button>
+        <button type="button" class="todo" data-count-from="nav-stages-count" onclick="window.switchTab('tab-stages')">
+          <span class="todo-n num">&hellip;</span><span class="todo-label">stage reviews</span>
+        </button>
+        <button type="button" class="todo" data-count-from="nav-reports-count" onclick="window.switchTab('tab-reports')">
+          <span class="todo-n num">&hellip;</span><span class="todo-label">open reports</span>
+        </button>
+        <button type="button" class="todo" data-admin-only data-count-from="nav-users-count" onclick="window.switchTab('tab-users')">
+          <span class="todo-n num">&hellip;</span><span class="todo-label">ban appeals</span>
+        </button>
+        <p class="todo-clear" id="todo-clear" hidden>
+          <iconsax-icon name="tick-circle" type="bulk" size="18" color="var(--violet)"></iconsax-icon> All caught up.
+        </p>
       </div>
 
       <!-- Live system announcements. Read by AnnouncementRepository (a Firestore listener) while
@@ -190,7 +225,7 @@
           <span class="stat-value num skeleton" id="metric-total-stories">0</span>
           <span class="stat-note" id="metric-stories-note">&nbsp;</span>
         </button>
-        <button type="button" class="stat" onclick="window.switchTab('tab-releases')">
+        <button type="button" class="stat" data-admin-only onclick="window.switchTab('tab-releases')">
           <span class="stat-go" aria-hidden="true"><iconsax-icon name="arrow-up-right" type="linear" size="15" color="currentColor"></iconsax-icon></span>
           <span class="stat-label">Published releases</span>
           <span class="stat-value num skeleton" id="metric-total-releases">0</span>
@@ -247,7 +282,7 @@
             <h2>Live app release</h2>
             <div class="release-version num" id="metric-latest-version">&hellip;</div>
             <div class="release-meta" id="release-meta">Loading release history&hellip;</div>
-            <button class="btn btn-on-violet" onclick="window.switchTab('tab-releases')">
+            <button class="btn btn-on-violet" data-admin-only onclick="window.switchTab('tab-releases')">
               <iconsax-icon name="send-1" type="bulk" size="17" color="currentColor"></iconsax-icon> Publish a release
             </button>
           </div>
@@ -458,7 +493,7 @@
 
     <!-- Tab 5: Releases. Publishing is rare; checking what shipped is constant, so the history is
          the page and the form is behind the primary action. -->
-    <section id="tab-releases" class="tab-content" style="display: none;">
+    <section id="tab-releases" class="tab-content" data-admin-only style="display: none;">
 
       <div class="pagehead">
         <div>
@@ -646,6 +681,90 @@
       </div>
     </section>
 
+    <!-- Example sentences learners offered for words with none (sentence_submissions). Approving
+         writes the sentence onto the word, which is how it reaches the dictionary, lessons and the
+         sentence games. Admins and verifiers. -->
+    <section id="tab-sentences" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Example sentences</h1>
+          <p>Sentences learners sent for words that have none. Correct the Kasiguranin or the English if needed, then approve; it is added to the word and used in lessons and the sentence games.</p>
+        </div>
+      </div>
+      <div class="itemlist" id="sentences-list"></div>
+    </section>
+
+    <!-- Team (admins only). Verifiers do everything here except APK releases, blocking users,
+         restoring or resetting data, and managing this list. firestore.rules enforces the same. -->
+    <section id="tab-team" class="tab-content" data-admin-only style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Team</h1>
+          <p>Who can use this console. Add verifiers by email; admins are set by the project owner.</p>
+        </div>
+      </div>
+
+      <div class="team">
+        <!-- Add. One row: the address and the button. Problems show under the field, not in a toast. -->
+        <div class="card">
+          <div class="card-head"><div><h2>Add a verifier</h2><p>They sign in with this email using "Continue with Google".</p></div></div>
+          <form id="team-add-form" class="team-add" novalidate>
+            <label for="team-email" class="sr-only">Verifier's email address</label>
+            <div class="team-add-field">
+              <div class="input-icon-wrap">
+                <iconsax-icon name="sms" type="bulk" size="18" color="var(--muted)"></iconsax-icon>
+                <input type="email" id="team-email" class="form-control" autocomplete="off" placeholder="name@gmail.com" aria-describedby="team-email-error" required>
+              </div>
+              <p class="team-field-error" id="team-email-error" role="alert" hidden></p>
+            </div>
+            <button type="submit" class="btn btn-primary" id="team-add-btn">
+              <iconsax-icon name="user-add" type="bulk" size="18" color="currentColor"></iconsax-icon> <span class="btn-label">Add verifier</span>
+            </button>
+          </form>
+
+          <!-- Shown right after someone is added: what to send them. -->
+          <div class="team-invite" id="team-invite" hidden>
+            <p class="team-invite-title">Send this to <b id="team-invite-email"></b></p>
+            <p class="team-invite-text" id="team-invite-text"></p>
+            <button type="button" class="btn btn-outline btn-sm" id="team-invite-copy">
+              <iconsax-icon name="copy" type="bulk" size="16" color="currentColor"></iconsax-icon> <span class="btn-label">Copy invite</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Everyone with access: you first, then each verifier with whether they have signed in. -->
+        <div class="card">
+          <div class="card-head"><div><h2>People with access</h2><p id="team-count">&nbsp;</p></div></div>
+          <div class="team-list" id="team-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h2>What verifiers can do</h2></div></div>
+          <div class="team-roles">
+            <div>
+              <p class="team-roles-head is-can"><iconsax-icon name="tick-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Can</p>
+              <ul>
+                <li>Review word and example-sentence submissions</li>
+                <li>Edit the dictionary and stories</li>
+                <li>Handle issue and word reports</li>
+                <li>See users and the activity log</li>
+                <li>Download backups</li>
+              </ul>
+            </div>
+            <div>
+              <p class="team-roles-head is-cannot"><iconsax-icon name="close-circle" type="bulk" size="18" color="currentColor"></iconsax-icon> Can't</p>
+              <ul>
+                <li>Publish or yank APK releases</li>
+                <li>Block or unblock users, or decide appeals</li>
+                <li>Restore or reset data</li>
+                <li>Manage the team</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Tab 8: Backup & Restore -->
     <section id="tab-backup" class="tab-content" style="display: none;">
       <div class="pagehead">
@@ -679,8 +798,8 @@
           </div>
         </div>
 
-        <!-- Restore Card -->
-        <div class="card span-6">
+        <!-- Restore Card. Admins only: a restore rewrites releases and bans too. -->
+        <div class="card span-6" data-admin-only>
           <div class="card-head">
             <div>
               <h2>Restore from Backup</h2>
@@ -697,8 +816,8 @@
           </div>
         </div>
 
-        <!-- Reset Card -->
-        <div class="card span-12">
+        <!-- Reset Card. Admins only. -->
+        <div class="card span-12" data-admin-only>
           <div class="card-head">
             <div>
               <h2>Reset &amp; Maintenance</h2>

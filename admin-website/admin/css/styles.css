@@ -269,6 +269,10 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
   font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
   border: 2px solid var(--surface); font-variant-numeric: tabular-nums;
 }
+/* The phone drawer's menu button; shown under 1024px (see Responsive). */
+.nav-toggle { display: none; }
+.nav-backdrop { display: none; }
+@media (max-width: 1024px) { .nav-backdrop { display: block; } }
 .topuser { display: flex; align-items: center; gap: 10px; padding-left: 14px; border-left: 1px solid var(--hair); margin-left: 4px; }
 .avatar {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
@@ -765,26 +769,7 @@ td .btn, td button { white-space: nowrap; }
 .modal-body strong { color: var(--ink); font-weight: 700; }
 
 /* ── Sign-in page ──────────────────────────────────────────────────────────── */
-body.auth { display: flex; align-items: center; justify-content: center; padding: 20px; }
-.login-wrapper { width: 100%; max-width: 430px; }
-.login-card { background: var(--surface); border-radius: var(--r-panel); box-shadow: var(--lift-hi); padding: 36px 32px; }
-.login-logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
-.lock-icon-wrapper {
-  width: 48px; height: 48px; border-radius: var(--r-chip); flex-shrink: 0; display: grid; place-items: center;
-  background: var(--violet-wash); color: var(--violet);
-}
-.login-header h1 { font-size: var(--t-lg); margin-bottom: 6px; }
-.login-header p { color: var(--muted); font-size: var(--t-sm); }
-.login-divider { height: 1px; background: var(--hair); margin: 22px 0; }
 .label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.login-or-divider {
-  display: flex; align-items: center; text-align: center; color: var(--muted);
-  font-size: var(--t-xs); font-weight: 700; margin: 18px 0;
-}
-.login-or-divider::before, .login-or-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--hair); }
-.login-or-divider:not(:empty)::before { margin-right: 12px; }
-.login-or-divider:not(:empty)::after { margin-left: 12px; }
-.login-footer { margin-top: 22px; text-align: center; font-size: var(--t-xs); color: var(--muted); line-height: 1.6; }
 .error-banner, .notice-banner {
   border-radius: var(--r-ctl); padding: 12px 15px; font-size: var(--t-sm); font-weight: 500;
   margin-bottom: 16px; display: none; align-items: center; gap: 10px; line-height: 1.45;
@@ -800,16 +785,6 @@ body.auth { display: flex; align-items: center; justify-content: center; padding
 .soon-banner b { font-weight: 700; }
 .soon-banner iconsax-icon { flex: none; margin-top: 1px; }
 .card-note { margin: -4px 0 10px; font-size: var(--t-xs); color: var(--muted); }
-#google-login-btn {
-  width: 100%; padding: 13px; font-size: var(--t-sm); font-weight: 700;
-  background: var(--surface); color: var(--ink); border: 1px solid var(--hair-strong);
-  border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center;
-  gap: 11px; cursor: pointer; margin-bottom: 16px; min-height: var(--tap-min);
-}
-#google-login-btn:hover { background: var(--sunken); border-color: var(--violet); }
-#google-login-btn { font-family: var(--display); font-weight: 600; }
-#login-btn { width: 100%; margin-top: 8px; }
-#login-btn:disabled { opacity: .7; cursor: not-allowed; }
 #auth-loading-screen {
   position: fixed; inset: 0; background: var(--ground); z-index: 9999;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -873,28 +848,35 @@ label.check-label input[type="checkbox"] { width: 18px; height: 18px; cursor: po
 }
 
 @media (max-width: 1024px) {
-  /* Below the sidebar breakpoint the nav becomes a scrolling strip, which keeps every destination
-     reachable without a menu that hides them. */
+  /* Below the sidebar breakpoint the sidebar becomes a drawer behind the topbar's menu button. The
+     scrolling strip it replaced showed two of ten destinations on a phone and hid the rest. */
   :root { --gutter: 16px; }
   .app { grid-template-columns: 1fr; }
   aside {
-    position: sticky; top: 0; z-index: 70; height: auto; flex-direction: row; align-items: center;
-    gap: 8px; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--hair); padding: 10px 14px;
+    position: fixed; inset: 0 auto 0 0; z-index: 90; width: min(300px, 86vw); height: 100dvh;
+    border-right: 1px solid var(--hair); transform: translateX(-100%); visibility: hidden;
+    transition: transform var(--t-view) var(--ease-out), visibility 0s linear var(--t-view);
   }
-  .navgroup { flex-direction: row; gap: 5px; }
-  .navlabel, .sidebar-spacer { display: none; }
-  .sidebar-foot { border-top: none; padding-top: 0; flex-direction: row; margin-left: auto; }
-  #admin-user-chip { display: none; }
-  .logo-title { display: none; }
-  aside nav button, aside nav a { white-space: nowrap; }
-  .topbar { position: static; }
+  body.nav-open aside { transform: none; visibility: visible; transition: transform var(--t-view) var(--ease-out); }
+  .nav-backdrop {
+    position: fixed; inset: 0; z-index: 85; background: rgba(0, 0, 0, .55);
+    opacity: 0; pointer-events: none; transition: opacity var(--t-view) ease;
+  }
+  body.nav-open .nav-backdrop { opacity: 1; pointer-events: auto; }
+  body.nav-open { overflow: hidden; }
+  .nav-toggle { display: grid; }
+  .topbar { position: sticky; top: 0; border-radius: 0 0 var(--r-tile) var(--r-tile); margin: calc(var(--s-5) * -1) calc(var(--gutter) * -1) 0; }
   .topbar::before { display: none; }
   .statgrid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 760px) {
-  .statgrid { grid-template-columns: 1fr; }
-  .stat { min-height: 0; }
+  /* Two compact tiles a row: one per row made the four figures a full screen of scrolling. */
+  .statgrid { grid-template-columns: repeat(2, 1fr); gap: var(--s-3); }
+  .stat { min-height: 0; padding: var(--s-4); }
+  .stat-value { font-size: var(--t-lg); }
+  .stat-label { font-size: var(--t-xs); }
+  .stat-go { width: 26px; height: 26px; top: 12px; right: 12px; }
   .span-12, .span-6, .span-5, .span-4, .span-3 { grid-column: span 12; }
   .topsearch kbd { display: none; }
   .topsearch input { padding-right: 16px; }
@@ -1240,15 +1222,6 @@ aside { background: var(--ground); }
 .badge-approved { --badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.5 16.2L4.8 11.5l-1.6 1.6l6.3 6.3L21 7.9l-1.6-1.6z'/%3E%3C/svg%3E"); }
 .badge-rejected { --badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18.3 5.7L16.9 4.3L12 9.2L7.1 4.3L5.7 5.7l4.9 4.9l-4.9 4.9l1.4 1.4l4.9-4.9l4.9 4.9l1.4-1.4l-4.9-4.9z'/%3E%3C/svg%3E"); }
 
-/* Sign-in: Jepjep in the app's green glow above the card, as on the app's first screen. */
-.login-hero { position: relative; display: grid; place-items: center; height: 168px; margin-bottom: -14px; }
-.login-hero::before {
-  content: ''; position: absolute; width: 380px; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(closest-side, #0A250B 0%, #0A190C 55%, rgba(10, 14, 13, 0) 100%);
-}
-.login-hero img { position: relative; height: 168px; width: auto; }
-.login-card { position: relative; }
-.login-header h1 em { font-style: normal; color: var(--violet); }
 
 /* Empty states carry a Jepjep pose, the way the app's StateViews do. */
 .empty-jepjep { display: block; width: auto; height: 92px; margin: 0 auto 10px; }
@@ -1271,3 +1244,196 @@ aside { background: var(--ground); }
    gloss match) keep the colour but not the glyph; the aspect count is neutral. */
 .badge-plain::before { display: none; }
 .badge-aspect { background: var(--sunken); color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
+
+/* ══ Roles ═══════════════════════════════════════════════════════════════════
+   Verifiers moderate everything except APK releases, blocking users, restoring or resetting data,
+   and the Team page. Those controls carry [data-admin-only]; app.js and firestore.rules refuse the
+   actions too, so this is presentation, not protection. */
+body[data-role="verifier"] [data-admin-only] { display: none !important; }
+.role-chip {
+  margin-left: auto; flex-shrink: 0; padding: 2px 9px; border-radius: var(--r-pill);
+  background: var(--violet-wash); color: var(--violet); font-weight: 700; font-size: var(--t-xs);
+}
+body[data-role="verifier"] .role-chip { background: var(--status-info-tint); color: var(--status-info); }
+
+/* ══ Overview: to do ═════════════════════════════════════════════════════════
+   What is waiting, one tap from each queue. A count of zero steps back so the ones that need
+   attention lead. */
+.todo-strip { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: stretch; }
+.todo {
+  flex: 1 1 150px; display: flex; align-items: baseline; gap: var(--s-2); text-align: left; cursor: pointer;
+  background: var(--surface); border: none; border-radius: var(--r-tile); box-shadow: var(--lift);
+  padding: var(--s-4) var(--s-5); min-height: var(--tap-min); font-family: var(--sans);
+  transition: box-shadow var(--t-quick) ease, transform var(--t-quick) ease;
+}
+.todo:hover { box-shadow: var(--lift-hi); transform: translateY(-1px); }
+.todo-n { font-weight: 700; font-size: var(--t-lg); line-height: 1; color: var(--status-pending); }
+.todo-label { font-size: var(--t-sm); font-weight: 700; color: var(--ink); }
+.todo.is-clear .todo-n { color: var(--faint); }
+.todo.is-clear .todo-label { color: var(--muted); font-weight: 500; }
+.todo-clear[hidden] { display: none; }
+.todo-clear { flex-basis: 100%; display: flex; align-items: center; gap: var(--s-2); color: var(--muted); font-size: var(--t-sm); }
+
+/* ══ Review window ═══════════════════════════════════════════════════════════
+   Position in the queue with a step either way, and the keys that work it without the mouse. */
+.review-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  margin: 0 0 var(--s-4); padding-bottom: var(--s-3); border-bottom: 1px solid var(--hair);
+}
+.review-nav .btn { min-width: var(--tap-min); justify-content: center; }
+.review-pos { font-size: var(--t-sm); font-weight: 700; color: var(--muted); }
+.shortcut-legend { margin-top: var(--s-5); font-size: var(--t-xs); color: var(--faint); }
+.shortcut-legend kbd {
+  font-family: var(--sans); font-weight: 700; color: var(--muted); background: var(--sunken);
+  border: 1px solid var(--hair-strong); border-radius: 6px; padding: 0 6px;
+}
+/* Keys mean nothing on a touch screen. */
+@media (hover: none), (pointer: coarse) { .shortcut-legend { display: none; } }
+
+/* ══ Phones ══════════════════════════════════════════════════════════════════
+   Dialogs take the whole screen, with their actions in reach of a thumb, and every action is a
+   full tap target. */
+@media (max-width: 760px) {
+  .modal-overlay { align-items: flex-start; padding: 0; overflow-y: auto; }
+  .modal-card { max-width: none !important; width: 100%; min-height: 100dvh; max-height: none; border-radius: 0; padding: var(--s-5); }
+  .modal-actions { position: sticky; bottom: 0; background: var(--surface); padding-top: var(--s-3); flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1 1 auto; }
+  .btn-sm { min-height: var(--tap-min); }
+  .todo { flex-basis: calc(50% - var(--s-3)); padding: var(--s-3) var(--s-4); }
+  .todo-n { font-size: var(--t-md); }
+}
+
+/* ══ Example sentences ═══════════════════════════════════════════════════════
+   One card per waiting sentence, editable before approval, saying where it will land. */
+#sentences-list { gap: var(--s-4); }
+.sentence-card .card-head { margin-bottom: var(--s-3); }
+.sentence-gloss { font-family: var(--sans); font-weight: 500; font-size: var(--t-sm); color: var(--muted); margin-left: var(--s-2); }
+.sentence-card textarea { width: 100%; resize: vertical; }
+.sentence-note { font-size: var(--t-xs); color: var(--muted); margin: var(--s-1) 0 var(--s-3); }
+.sentence-note.is-warn { color: var(--status-pending); }
+.sentence-card .row-actions { justify-content: flex-end; }
+
+/* ══ Sign-in ═════════════════════════════════════════════════════════════════
+   One card that never needs a scroll: on a desktop a canopy panel with Jepjep beside the form, on a
+   phone a compact header. Google leads, because verifiers must use it; email and password wait
+   behind a disclosure for admins who use one. */
+body.auth { display: grid; place-items: center; min-height: 100dvh; padding: var(--s-4); }
+.signin {
+  width: 100%; max-width: 440px; display: grid; background: var(--surface); padding: 0; gap: 0;
+  border-radius: var(--r-panel); box-shadow: var(--lift-hi); overflow: hidden;
+}
+.signin-art { display: none; }
+.signin-panel { padding: var(--s-6) var(--s-5); display: flex; flex-direction: column; }
+.signin-brand { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-5); }
+.signin-jepjep { width: 56px; height: auto; flex: none; }
+.signin-title { font-size: var(--t-lg); color: var(--ink); }
+.signin-lede { color: var(--muted); font-size: var(--t-sm); margin: var(--s-1) 0 var(--s-5); }
+.error-banner .grow { flex: 1; min-width: 0; }
+.error-banner .text-link { display: block; margin-top: var(--s-1); color: var(--ink); }
+.error-banner:focus { outline: none; box-shadow: 0 0 0 2px var(--status-rejected); }
+
+.signin-checking { display: flex; align-items: center; gap: var(--s-3); min-height: 52px; color: var(--muted); font-size: var(--t-sm); }
+.signin-checking[hidden], .signin-actions[hidden] { display: none; }
+.spinner-sm { width: 20px; height: 20px; border-width: 2px; flex: none; }
+
+.signin-google { width: 100%; min-height: 52px; font-size: var(--t-base); }
+/* Google's mark stays on white, as its brand rules ask, whatever the button colour. */
+.g-disc { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; }
+
+.signin-password { margin-top: var(--s-4); }
+.signin-password > summary {
+  list-style: none; cursor: pointer; width: fit-content; margin: 0 auto;
+  display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap-min);
+  color: var(--muted); font-size: var(--t-sm); font-weight: 700; border-radius: var(--r-ctl); padding: 0 var(--s-2);
+}
+.signin-password > summary::-webkit-details-marker { display: none; }
+.signin-password > summary::after {
+  content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px); transition: transform var(--t-quick) ease;
+}
+.signin-password[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.signin-password > summary:hover { color: var(--ink); }
+.signin-password form { margin-top: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--hair); }
+#login-btn { width: 100%; }
+
+/* The show/hide control sits inside the field, at the far end. */
+.input-icon-wrap.has-toggle .form-control { padding-right: 52px; }
+.field-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border: none; border-radius: var(--r-ctl); background: none;
+  color: var(--muted); cursor: pointer; display: grid; place-items: center;
+}
+.field-toggle:hover { color: var(--ink); background: var(--surface); }
+.input-icon-wrap .field-toggle iconsax-icon { position: static; transform: none; }
+
+/* A button with a sign-in in flight: a small spinner before its label. */
+.btn.is-busy::before {
+  content: ''; width: 16px; height: 16px; border-radius: 50%; flex: none;
+  border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite;
+}
+.signin-google.is-busy .g-disc { display: none; }
+
+.signin-foot { margin-top: var(--s-5); text-align: center; font-size: var(--t-xs); color: var(--muted); line-height: 1.6; }
+
+@media (min-width: 900px) {
+  .signin { max-width: 880px; grid-template-columns: 1fr 1fr; }
+  .signin-art {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-4);
+    padding: var(--s-8); text-align: center; color: var(--on-canopy);
+    background: radial-gradient(closest-side, #0A250B 0%, #0A190C 60%, transparent 100%) center 42% / 120% 90% no-repeat,
+                linear-gradient(160deg, var(--canopy-top), var(--canopy-bottom));
+  }
+  .signin-art img { width: 200px; height: auto; }
+  .signin-art p { font-family: var(--display); font-weight: 700; font-size: var(--t-md); max-width: 18ch; }
+  .signin-panel { padding: var(--s-8) var(--s-8) var(--s-6); justify-content: center; }
+  .signin-jepjep { display: none; }
+}
+.signin-brand .logo-title { margin-top: 4px; }
+
+/* ══ Team ════════════════════════════════════════════════════════════════════
+   One readable column: add someone, see who has access and whether they have signed in, and what
+   a verifier may do. No bento spans, which left the list a sliver when the column class was absent. */
+.team { display: flex; flex-direction: column; gap: var(--s-4); max-width: 880px; }
+.team-add { display: flex; gap: var(--s-3); align-items: flex-start; }
+.team-add-field { flex: 1; min-width: 0; }
+.team-add .btn { flex: none; }
+.form-control[aria-invalid="true"] { border-color: var(--status-rejected); }
+.team-field-error { margin-top: var(--s-2); color: var(--status-rejected); font-size: var(--t-sm); }
+.team-field-error[hidden], .team-invite[hidden] { display: none; }
+
+.team-invite {
+  margin-top: var(--s-4); padding: var(--s-4); border-radius: var(--r-ctl);
+  background: var(--status-approved-tint); display: flex; flex-direction: column; gap: var(--s-2); align-items: flex-start;
+}
+.team-invite-title { color: var(--status-approved); font-weight: 700; font-size: var(--t-sm); }
+.team-invite-title b { color: var(--ink); }
+.team-invite-text { color: var(--ink); font-size: var(--t-sm); line-height: 1.55; user-select: all; }
+
+.team-list { display: flex; flex-direction: column; }
+.team-row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid var(--hair); }
+.team-row:first-child { padding-top: 0; }
+.team-row:last-child { border-bottom: none; }
+.team-row-body { flex: 1; min-width: 0; }
+.team-row-top { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.team-row-email { font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.team-row-detail { color: var(--muted); font-size: var(--t-xs); margin-top: 2px; }
+.team-chip { padding: 2px 9px; border-radius: var(--r-pill); font-size: var(--t-xs); font-weight: 700; flex: none; }
+.team-chip.is-admin { background: var(--violet-wash); color: var(--violet); }
+.team-chip.is-active { background: var(--status-approved-tint); color: var(--status-approved); }
+.team-chip.is-invited { background: var(--status-pending-tint); color: var(--status-pending); }
+.team-remove:hover { border-color: var(--status-rejected); color: var(--status-rejected); background: var(--status-rejected-tint); }
+
+.team-roles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-5); }
+.team-roles-head { display: flex; align-items: center; gap: var(--s-2); font-weight: 700; margin-bottom: var(--s-2); }
+.team-roles-head.is-can { color: var(--status-approved); }
+.team-roles-head.is-cannot { color: var(--status-rejected); }
+.team-roles ul { list-style: none; display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: var(--t-sm); }
+
+@media (max-width: 760px) {
+  .team-add { flex-direction: column; align-items: stretch; }
+  .team-add .btn { width: 100%; }
+  .team-row { flex-wrap: wrap; }
+  .team-row-body { flex-basis: calc(100% - 34px - var(--s-3)); }
+  .team-remove { margin-left: calc(34px + var(--s-3)); }
+  .team-roles { grid-template-columns: 1fr; gap: var(--s-4); }
+}

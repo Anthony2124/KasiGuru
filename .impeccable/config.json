@@ -316,13 +316,40 @@
           "admin-website/admin/dashboard.html"
         ],
         "createdAt": "2026-09-03T17:17:32.415Z",
-        "reason": "Claude decided: #evidence-modal-img is a hidden modal placeholder whose src is assigned at runtime by viewReportEvidence() (js/app.js:2117). The tag must exist in markup for getElementById; it has no src by design, and src=\"\" was removed because it makes some browsers re-request the page."
+        "reason": "Claude: #evidence-modal-img is filled by app.js when the report evidence modal opens; existing markup, never shown empty"
       },
       {
         "rule": "radial-halo",
         "value": "#0a250b",
         "createdAt": "2026-09-30T05:51:27.777Z",
         "reason": "Design system: the Jepjep glow is the Android app's committed motif (Color.kt GlowCore #0A250B -> GlowMid), ported because Adrian asked the web to look the same as the app"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "admin-website/admin/dashboard.html"
+        ],
+        "createdAt": "2026-10-08T09:44:02.819Z",
+        "reason": "Claude: rendered dashboard measured in Chrome on 2026-10-08, no element computes to #000 text; the static scan cannot resolve the theme's CSS variables (body color var(--ink) #FFF)"
+      },
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "admin-website/admin/dashboard.html"
+        ],
+        "createdAt": "2026-10-08T09:47:05.618Z",
+        "reason": "Claude: the only radial-gradient is the existing Jepjep glow in css/styles.css (#0A250B, unchanged this session), already sanctioned by the global radial-halo #0a250b entry as the Android app's committed motif"
+      },
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "admin-website/admin/index.html"
+        ],
+        "createdAt": "2026-10-08T11:16:08.476Z",
+        "reason": "Claude: the sign-in panel's glow is the existing Jepjep glow (#0A250B) moved from the old hero into the new canopy panel; sanctioned by the global radial-halo #0a250b entry as the Android app's committed motif"
       }
     ]
   }

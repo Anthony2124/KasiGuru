@@ -15,6 +15,26 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
+    // Verifiers moderate everything an admin does except APK releases and blocking users. An admin
+    // adds them by email in the portal's Team page (admin_staff/{lower-case email}), so no script
+    // or service-account key is needed; the email must be verified (Google sign-in always is).
+    // Costs one document read, and only on requests an admin claim has not already allowed.
+    function staffDoc() {
+      return /databases/$(database)/documents/admin_staff/$(request.auth.token.email.lower());
+    }
+
+    function isVerifier() {
+      return isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true
+        && exists(staffDoc())
+        && get(staffDoc()).data.role == 'verifier';
+    }
+
+    function isStaff() {
+      return isAdmin() || isVerifier();
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -238,19 +258,45 @@ service cloud.firestore {
         && (!('id' in data) || data.id == request.resource.id);
     }
 
+    // An example sentence a learner offers for a word that has none. It identifies the word by its
+    // sense (headword + English gloss), since Room ids are not Firestore ids. Pending until a
+    // verifier approves it, which writes it onto the vocabulary document.
+    function isValidSentenceSubmission() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'id', 'kasiguranin', 'english', 'sentence', 'translation', 'contributorName', 'status', 'submittedAt', 'uid'
+        ])
+        && data.kasiguranin is string && data.kasiguranin.size() >= 1 && data.kasiguranin.size() <= 80
+        && data.english is string && data.english.size() <= 300
+        && data.sentence is string && data.sentence.size() >= 5 && data.sentence.size() <= 300
+        && data.translation is string && data.translation.size() >= 2 && data.translation.size() <= 300
+        && data.contributorName is string && data.contributorName.size() <= 60
+        && data.status == 'pending'
+        && data.submittedAt is int
+        && data.uid is string
+        && (data.uid == '' || (isSignedIn() && data.uid == request.auth.uid))
+        && (!('id' in data) || data.id == request.resource.id);
+    }
+
+    match /sentence_submissions/{docId} {
+      allow create: if isValidSentenceSubmission();
+      allow read: if (request.auth != null && resource.data.uid == request.auth.uid) || isStaff();
+      allow update, delete: if isStaff();
+    }
+
     // ---------------------------------------------------------------------------
     // Master dictionary: public read (app + admin), admin-only writes.
     // Seeding is intentionally admin-only; clients must NOT push seed data.
     // ---------------------------------------------------------------------------
     match /vocabulary/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isStaff();
     }
 
     // Stories: public read, admin-only writes.
     match /stories/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isStaff();
     }
 
     // Story page illustrations, one document per picture, keyed {storyId}_{imageId}.
@@ -265,10 +311,10 @@ service cloud.firestore {
     // Firestore error to explain it.
     match /story_page_images/{docId} {
       allow read: if true;
-      allow create, update: if isAdmin()
+      allow create, update: if isStaff()
                             && request.resource.data.data is bytes
                             && request.resource.data.data.size() < 400 * 1024;
-      allow delete: if isAdmin();
+      allow delete: if isStaff();
     }
 
     // Word pronunciation clips, one document per sense, keyed slug(kasiguranin)__slug(english).
@@ -281,10 +327,10 @@ service cloud.firestore {
     // error; an already-compressed m4a/mp3/ogg clip of a single word is tens of KB.
     match /word_audio/{docId} {
       allow read: if true;
-      allow create, update: if isAdmin()
+      allow create, update: if isStaff()
                             && request.resource.data.data is bytes
                             && request.resource.data.data.size() < 400 * 1024;
-      allow delete: if isAdmin();
+      allow delete: if isStaff();
     }
 
     // System announcements: public read, admin-only writes. Read live by AnnouncementRepository
@@ -293,7 +339,7 @@ service cloud.firestore {
     // (functions/send_push.js) run by hand, same limitation the release pipeline already has.
     match /announcements/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isStaff();
     }
 
     // App releases: public read (download page + in-app update), admin-only writes.
@@ -310,8 +356,8 @@ service cloud.firestore {
       // "Corpus Builder" badges, which count a user's own approved submissions) but never
       // anyone else's; only an admin can read the whole queue. Still owner-only: this does not
       // let a submitter read who else submitted what.
-      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow read: if (request.auth != null && resource.data.uid == request.auth.uid) || isStaff();
+      allow update, delete: if isStaff();
     }
 
     // Community story/poem submissions - full literature, not a single word. Same shape as
@@ -342,8 +388,8 @@ service cloud.firestore {
     match /literature_submissions/{docId} {
       allow create: if isValidLiteratureSubmission();
       // Same owner-read exception as word_submissions, for the same badge-counting reason.
-      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow read: if (request.auth != null && resource.data.uid == request.auth.uid) || isStaff();
+      allow update, delete: if isStaff();
     }
 
     // User-submitted issue & bug reports (system glitches, wrong word corrections, with photo evidence).
@@ -375,20 +421,38 @@ service cloud.firestore {
 
     match /issue_reports/{docId} {
       allow create: if isValidIssueReport();
-      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow read: if (request.auth != null && resource.data.uid == request.auth.uid) || isStaff();
+      allow update, delete: if isStaff();
     }
 
     // Admin audit log: admins append and read; no update/delete (append-only).
     match /admin_audit_log/{docId} {
-      allow create, read: if isAdmin();
+      allow create, read: if isStaff();
       allow update, delete: if false;
+    }
+
+    // The portal's verifiers, one document per lower-case email: { role: 'verifier', email,
+    // addedBy, addedAt }. Admins manage the list; a verifier may read only their own entry, which is
+    // how the portal learns their role at sign-in.
+    match /admin_staff/{email} {
+      allow read: if isAdmin()
+        || (isSignedIn() && request.auth.token.email is string && request.auth.token.email.lower() == email);
+      allow create, update: if isAdmin()
+        && request.resource.data.role == 'verifier'
+        && request.resource.data.email == email;
+      // A verifier stamps when they last signed in, for the Team page, and may change nothing else.
+      allow update: if isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeenAt'])
+        && request.resource.data.lastSeenAt is int;
+      allow delete: if isAdmin();
     }
 
     // Per-user cloud data (cross-device progress sync).
     // Owner-only access; admins can read for dashboard verification.
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isStaff();
       allow write: if isOwner(userId);
     }
 
@@ -403,13 +467,13 @@ service cloud.firestore {
     // cannot store absurd counters (which the leaderboard function reads) or an
     // unbounded blob. Deletes stay allowed so a user can clear their own data.
     match /users/{userId}/progress/{docId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isStaff();
       allow delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidProgressDoc(docId);
     }
 
     match /users/{userId}/rewardReceipts/{receiptId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isStaff();
       allow delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidRewardReceipt();
     }
@@ -527,7 +591,7 @@ service cloud.firestore {
     //   - Other users cannot enumerate who is banned.
     //   - Banned users cannot delete their own ban record (admin-only delete).
     match /user_bans/{userId} {
-      allow read: if isAdmin() || isOwner(userId);
+      allow read: if isOwner(userId) || isStaff();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (isOwner(userId) && isValidBanAppealUpdate());
     }

@@ -90,7 +90,11 @@ unit-test source root. Game completion and level persistence use
 ## Web and backend entry points
 
 - Admin: `admin-website/admin/index.html` (login), `dashboard.html`,
-  `js/auth.js`, `js/app.js`, `js/word-normalize.js`, and `css/styles.css`.
+  `js/auth.js`, `js/app.js`, `js/roles.js` (admin vs verifier), `js/word-normalize.js`,
+  and `css/styles.css`. Verifiers are listed in Firestore `admin_staff/{email}` from the
+  portal's Team page; `firestore.rules` (`isStaff()`) lets them do everything except APK
+  releases, blocking users, and restoring or resetting data. Rules test:
+  `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).
 - Download: `admin-website/download/index.html`, `js/` and `css/styles.css`.
 - Rules: `firestore.rules` and `storage.rules`; deployment configuration is in
   `firebase.json`.

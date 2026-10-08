@@ -4,13 +4,26 @@
 import { 
   db, auth,
   collection, doc, getDoc, getDocs, getDocsFromServer, getCountFromServer, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, where, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
+  query, orderBy, where, limit, startAfter, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { normaliseWord, findExistingWord } from './word-normalize.js';
 import { vocabularyStore, watchVocabulary } from './vocabulary-cache.mjs';
+import { resolveRole, ROLE_LABEL } from './roles.js';
+
+// 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
+// block or unblock users (appeals included), restore or reset data, and manage the team. The
+// [data-admin-only] markup hides those controls; requireAdmin() refuses them in code; and
+// firestore.rules refuses them server-side, which is the part that actually protects anything.
+let currentRole = null;
+const isAdminRole = () => currentRole === 'admin';
+function requireAdmin(what) {
+  if (isAdminRole()) return true;
+  notify(`Only an admin can ${what}.`, 'error');
+  return false;
+}
 
 /**
  * Stamps a content payload with the millisecond timestamp the app syncs against.
@@ -55,6 +68,45 @@ let auditLogsLoaded = false;
 let auditLogs = [];
 let logsCurrentPage = 1;
 const LOGS_PER_PAGE = 50;
+
+// The audit log only grows, and reading all of it on every dashboard open was ~1,500 reads a time:
+// the single largest admin cost against the Spark plan's 50,000 a day. Only the newest page is
+// live; older entries are fetched a page at a time when someone actually pages back to them.
+const OLDER_LOGS_BATCH = 100;
+const auditLogById = new Map();
+let oldestLogSnap = null;
+let hasOlderLogs = true;
+let loadingOlderLogs = false;
+let auditLogTotal = null;
+
+function rememberAuditLogs(docs) {
+  let added = 0;
+  for (const d of docs) {
+    if (!auditLogById.has(d.id)) added++;
+    auditLogById.set(d.id, { id: d.id, ...d.data() });
+    if (!oldestLogSnap || (d.data().timestamp || 0) < (oldestLogSnap.data().timestamp || 0)) oldestLogSnap = d;
+  }
+  auditLogs = [...auditLogById.values()].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  return added;
+}
+
+window.loadOlderAuditLogs = async function() {
+  if (loadingOlderLogs || !hasOlderLogs || !oldestLogSnap) return;
+  loadingOlderLogs = true;
+  renderAuditLogs();
+  try {
+    const snap = await getDocs(query(collection(db, "admin_audit_log"),
+      orderBy("timestamp", "desc"), startAfter(oldestLogSnap), limit(OLDER_LOGS_BATCH)));
+    rememberAuditLogs(snap.docs);
+    if (snap.size < OLDER_LOGS_BATCH) hasOlderLogs = false;
+  } catch (e) {
+    console.warn("Loading older audit logs failed:", e);
+    notify('Could not load older entries. Try again later.', 'error');
+  } finally {
+    loadingOlderLogs = false;
+    renderAuditLogs();
+  }
+};
 
 // -- Dialogs ------------------------------------------------------------------------------------
 // confirm() and alert() block the whole page, cannot be styled, and some browsers suppress them
@@ -150,23 +202,24 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
 
-  // Verify the admin custom claim (enforced server-side by Firestore rules too).
-  user.getIdTokenResult().then((idTokenResult) => {
-    if (idTokenResult.claims && idTokenResult.claims.admin === true) {
-      // Admin — show the dashboard
+  // Admin claim or listed verifier (enforced server-side by Firestore rules too).
+  resolveRole(user).then((role) => {
+    if (role) {
+      currentRole = role;
+      document.body.dataset.role = role;
+      document.querySelectorAll('[data-role-label]').forEach((el) => { el.textContent = ROLE_LABEL[role]; });
       if (loadingScreen) {
         loadingScreen.classList.add('hidden');
         setTimeout(() => loadingScreen.remove(), 500);
       }
 
-      // Display admin email
       const emailDisplay = document.getElementById('admin-email-display');
       if (emailDisplay) emailDisplay.textContent = user.email;
 
-      // Initialize dashboard
       init();
     } else {
-      // Signed in but not an admin — show access denied, then sign out.
+      // Signed in but neither an admin nor a verifier: say so and offer another account. No
+      // automatic sign-out; it used to happen 4 seconds in, before anyone could read why.
       if (loadingScreen) {
         loadingScreen.classList.add('hidden');
         setTimeout(() => loadingScreen.remove(), 500);
@@ -175,10 +228,9 @@ onAuthStateChanged(auth, (user) => {
       if (denied) denied.classList.remove('hidden');
       const deniedEmail = document.getElementById('access-denied-email-display');
       if (deniedEmail) deniedEmail.textContent = user.email;
-      setTimeout(() => window.adminSignOut(), 4000);
     }
   }).catch((err) => {
-    console.error('Failed to read admin claim:', err);
+    console.error('Failed to check portal access:', err);
     if (loadingScreen) {
       loadingScreen.classList.add('hidden');
       setTimeout(() => loadingScreen.remove(), 500);
@@ -207,18 +259,24 @@ window.adminSignOut = async function () {
 const TAB_ROUTES = {
   'tab-dashboard': 'overview',
   'tab-submissions': 'queue',
+  'tab-sentences': 'sentences',
   'tab-reports': 'reports',
   'tab-vocabulary': 'dictionary',
   'tab-stages': 'stages',
   'tab-stories': 'stories',
   'tab-releases': 'releases',
   'tab-users': 'users',
+  'tab-team': 'team',
   'tab-logs': 'logs',
   'tab-backup': 'backup'
 };
+// Sections a verifier cannot open, even from a bookmarked URL; they land on the Overview instead.
+const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team']);
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
 function applyTab(targetTab) {
+  if (ADMIN_ONLY_TABS.has(targetTab) && !isAdminRole()) targetTab = 'tab-dashboard';
+  closeNavDrawer();
   document.querySelectorAll('nav button[data-tab]').forEach(b => {
     b.classList.toggle('active', b.getAttribute('data-tab') === targetTab);
   });
@@ -230,6 +288,7 @@ function applyTab(targetTab) {
 }
 
 window.switchTab = function(targetTab, fromHistory) {
+  if (ADMIN_ONLY_TABS.has(targetTab) && !isAdminRole()) targetTab = 'tab-dashboard';
   applyTab(targetTab);
   const route = TAB_ROUTES[targetTab];
   if (!route || fromHistory) return;
@@ -261,6 +320,11 @@ function init() {
   initUsersListener();
   initBansListener();
   initBackupRestore();
+  initNavDrawer();
+  initSentenceReview();
+  initTodoStrip();
+  initQueueShortcuts();
+  if (isAdminRole()) initTeam();
 
   // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
   const routed = ROUTE_TABS[location.hash.slice(1)];
@@ -415,6 +479,8 @@ function initRealtimeListeners() {
         renderVocabularyTable();
         renderStageReview();
         updateDashboardMetrics();
+        // A sentence card names the word it would be added to, which needs the dictionary.
+        renderSentences();
       },
       onError: (error) => {
         console.warn("Vocabulary sync error:", error);
@@ -461,11 +527,23 @@ function initRealtimeListeners() {
 
   // 4. Admin Audit Logs Listener
   try {
-    const logsQuery = query(collection(db, "admin_audit_log"), orderBy("timestamp", "desc"));
+    const logsCollection = collection(db, "admin_audit_log");
+    const logsQuery = query(logsCollection, orderBy("timestamp", "desc"), limit(LOGS_PER_PAGE));
     const unsubLogs = onSnapshot(logsQuery, (snapshot) => {
-      auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Removals are ignored on purpose: the log is append-only, so a "removed" change only means
+      // an entry slid out of the newest-page window, and it is still part of the history shown.
+      const added = rememberAuditLogs(snapshot.docs);
+      if (snapshot.size < LOGS_PER_PAGE) hasOlderLogs = false;
+      if (auditLogTotal !== null && auditLogsLoaded) auditLogTotal += added;
+      const firstAnswer = !auditLogsLoaded;
       auditLogsLoaded = true;
       renderAuditLogs();
+      // Counted once: one read per 1,000 entries, against one read per entry for loading them.
+      if (firstAnswer) {
+        getCountFromServer(logsCollection)
+          .then((res) => { auditLogTotal = res.data().count; renderAuditLogs(); })
+          .catch(() => {});
+      }
     }, (error) => {
       console.warn("Audit logs listener error:", error);
       let msg = "Unable to connect to live Firestore audit log.";
@@ -956,6 +1034,7 @@ function renderReleasesList() {
 // not downgraded — Android will not install an older APK over a newer one — so a real fix still
 // needs a fresh release.
 window.toggleReleaseYank = async function(id) {
+  if (!requireAdmin('change a release')) return;
   const rel = releases.find(r => r.id === id);
   if (!rel) return;
   const yank = !rel.yanked;
@@ -1081,15 +1160,20 @@ function renderLogsPager(total) {
   const totalPages = Math.ceil(total / LOGS_PER_PAGE) || 1;
   if (logsCurrentPage > totalPages) logsCurrentPage = totalPages;
 
+  // Offered on the last loaded page only: that is where someone has run out of history to read.
+  const loadOlder = hasOlderLogs && logsCurrentPage === totalPages
+    ? `<button class="btn btn-outline btn-sm" ${loadingOlderLogs ? 'disabled' : ''} onclick="window.loadOlderAuditLogs()">${loadingOlderLogs ? 'Loading…' : `Load ${OLDER_LOGS_BATCH} older`}</button>`
+    : '';
+
   if (totalPages <= 1) {
-    pager.innerHTML = '';
+    pager.innerHTML = loadOlder;
     return;
   }
 
   let h = '';
   h += `<button class="btn btn-outline btn-sm" ${logsCurrentPage === 1 ? 'disabled' : ''} onclick="window.setLogsPage(${logsCurrentPage - 1})">Prev</button>`;
   h += `<span class="pager-text">Page ${logsCurrentPage} of ${totalPages}</span>`;
-  h += `<button class="btn btn-outline btn-sm" ${logsCurrentPage === totalPages ? 'disabled' : ''} onclick="window.setLogsPage(${logsCurrentPage + 1})">Next</button>`;
+  h += loadOlder || `<button class="btn btn-outline btn-sm" ${logsCurrentPage === totalPages ? 'disabled' : ''} onclick="window.setLogsPage(${logsCurrentPage + 1})">Next</button>`;
   pager.innerHTML = h;
 }
 
@@ -1113,7 +1197,13 @@ function renderAuditLogs() {
   const fLogs = filteredAuditLogs();
   
   const countSpan = document.getElementById('logs-result-count');
-  if (countSpan) countSpan.textContent = `${fLogs.length.toLocaleString()} log${fLogs.length === 1 ? '' : 's'}`;
+  if (countSpan) {
+    const shown = `${fLogs.length.toLocaleString()} log${fLogs.length === 1 ? '' : 's'}`;
+    // Search and filters only see what is loaded, so say how much that is.
+    countSpan.textContent = hasOlderLogs && auditLogTotal !== null
+      ? `${shown} · ${auditLogs.length.toLocaleString()} of ${auditLogTotal.toLocaleString()} loaded`
+      : shown;
+  }
   
   renderLogsPager(fLogs.length);
 
@@ -1171,18 +1261,30 @@ function renderAuditLogs() {
   }).join('');
 }
 
-window.exportAuditLogs = function() {
+window.exportAuditLogs = async function() {
   const rangeEl = document.getElementById('export-logs-range');
   const rangeVal = rangeEl ? rangeEl.value : '7';
 
-  let targetLogs = auditLogs;
+  // The page holds only the newest entries, so an export reads its range from the server. That
+  // costs one read per exported entry, paid only when someone exports.
+  const logsCollection = collection(db, "admin_audit_log");
+  let logsQuery = query(logsCollection, orderBy("timestamp", "desc"));
   let label = 'all';
 
   if (rangeVal !== 'all') {
     const days = parseInt(rangeVal, 10) || 7;
     const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
-    targetLogs = auditLogs.filter(log => (log.timestamp || 0) >= cutoff);
+    logsQuery = query(logsCollection, where("timestamp", ">=", cutoff), orderBy("timestamp", "desc"));
     label = `past-${days}-days`;
+  }
+
+  let targetLogs;
+  try {
+    targetLogs = (await getDocs(logsQuery)).docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.warn("Audit log export read failed:", e);
+    notify('Could not read the audit log for export. Try again later.', 'error');
+    return;
   }
 
   if (!targetLogs || targetLogs.length === 0) {
@@ -2360,24 +2462,96 @@ window.openSubmissionModal = function(id) {
     };
   }
 
+  // After a decision the next waiting word opens, so a queue is worked through without returning
+  // to the table between words.
+  const decideThenNext = async (decide) => {
+    const next = neighbourPending(id, 1) || neighbourPending(id, -1);
+    window.closeModal('submission-modal');
+    if (!(await decide(id))) return;
+    if (next) window.openSubmissionModal(next);
+    else notify('The queue is clear.', 'success');
+  };
   const rejectBtn = document.getElementById('submission-modal-reject');
-  if (rejectBtn) {
-    rejectBtn.onclick = async () => {
-      window.closeModal('submission-modal');
-      await rejectSubmission(id);
-    };
-  }
-
+  if (rejectBtn) rejectBtn.onclick = () => decideThenNext(rejectSubmission);
   const approveBtn = document.getElementById('submission-modal-approve');
-  if (approveBtn) {
-    approveBtn.onclick = async () => {
-      window.closeModal('submission-modal');
-      await approveSubmission(id);
-    };
+  if (approveBtn) approveBtn.onclick = () => decideThenNext(approveSubmission);
+
+  // Where this word sits among those waiting, with a step either way.
+  const waiting = pendingSubmissionIds();
+  const at = waiting.indexOf(id);
+  if (at >= 0) {
+    const prev = neighbourPending(id, -1);
+    const next = neighbourPending(id, 1);
+    body.insertAdjacentHTML('afterbegin', `
+      <div class="review-nav">
+        <button type="button" class="btn btn-outline btn-sm" ${prev ? `onclick="window.openSubmissionModal('${safeId(prev)}')"` : 'disabled'} aria-label="Previous waiting word">
+          <iconsax-icon name="arrow-left" type="linear" size="16" color="currentColor"></iconsax-icon>
+        </button>
+        <span class="review-pos">Word ${at + 1} of ${waiting.length} waiting</span>
+        <button type="button" class="btn btn-outline btn-sm" ${next ? `onclick="window.openSubmissionModal('${safeId(next)}')"` : 'disabled'} aria-label="Next waiting word">
+          <iconsax-icon name="arrow-right" type="linear" size="16" color="currentColor"></iconsax-icon>
+        </button>
+      </div>`);
+    body.insertAdjacentHTML('beforeend', `<p class="shortcut-legend">Keys: <kbd>A</kbd> approve · <kbd>R</kbd> reject · <kbd>E</kbd> edit · <kbd>J</kbd>/<kbd>K</kbd> next/previous</p>`);
   }
 
+  currentReviewId = id;
+  // Stepping to the next word re-opens this window; close it first so it is stacked only once.
+  if (document.getElementById('submission-modal')?.classList.contains('active')) window.closeModal('submission-modal');
   window.openModal('submission-modal');
 };
+
+// The submission open in the review window, for the keyboard shortcuts.
+let currentReviewId = null;
+
+/** A Firestore document id fit to sit inside a quoted inline handler (auto ids already are). */
+const safeId = (id) => String(id).replace(/[^A-Za-z0-9_-]/g, '');
+
+/** Pending submissions in the order the queue table lists them. */
+function pendingSubmissionIds() {
+  return submissions.filter(s => (s.status || 'pending') === 'pending').map(s => s.id);
+}
+
+/** The waiting submission [step] places from [id], or null at either end. */
+function neighbourPending(id, step) {
+  const ids = pendingSubmissionIds();
+  const at = ids.indexOf(id);
+  if (at < 0) return ids[0] && ids[0] !== id ? ids[0] : null;
+  return ids[at + step] || null;
+}
+
+// Review keys. Only while the review window is the top layer, and never while typing or while a
+// confirm dialog is asking something. On the queue tab, J or Enter opens the first waiting word.
+function initQueueShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.closest('input, textarea, select, [contenteditable="true"]'))) return;
+    if (document.querySelector('.confirm-overlay.active, .modal-overlay.active:not(#submission-modal)')) return;
+    const key = e.key.toLowerCase();
+    const reviewOpen = document.getElementById('submission-modal')?.classList.contains('active');
+
+    if (!reviewOpen) {
+      const onQueue = document.getElementById('tab-submissions')?.classList.contains('active');
+      if (onQueue && (key === 'j' || key === 'enter') && pendingSubmissionIds().length) {
+        e.preventDefault();
+        window.openSubmissionModal(pendingSubmissionIds()[0]);
+      }
+      return;
+    }
+    const click = (sel) => { const b = document.getElementById(sel); if (b) { e.preventDefault(); b.click(); } };
+    if (key === 'a') click('submission-modal-approve');
+    else if (key === 'r') click('submission-modal-reject');
+    else if (key === 'e') click('submission-modal-edit');
+    else if ((key === 'j' || key === 'arrowright') && currentReviewId) {
+      const next = neighbourPending(currentReviewId, 1);
+      if (next) { e.preventDefault(); window.openSubmissionModal(next); }
+    } else if ((key === 'k' || key === 'arrowleft') && currentReviewId) {
+      const prev = neighbourPending(currentReviewId, -1);
+      if (prev) { e.preventDefault(); window.openSubmissionModal(prev); }
+    }
+  });
+}
 
 // ── Edit Submission Modal ───────────────────────────────────────────────────
 window.openEditSubmissionModal = function(id) {
@@ -2494,6 +2668,7 @@ async function approveSubmission(id) {
     notify(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`, 'success');
     renderSubmissionsTable();
     renderOverview();
+    return true;
   } catch (error) {
     console.error("Error approving submission:", error);
     notify("Failed to approve submission: " + error.message, 'error');
@@ -2521,6 +2696,7 @@ async function rejectSubmission(id) {
     notify(`Rejected "${sub.kasiguranin}"`, 'info');
     renderSubmissionsTable();
     renderOverview();
+    return true;
   } catch (error) {
     console.error("Error rejecting submission:", error);
     notify("Error rejecting submission: " + error.message, 'error');
@@ -3644,6 +3820,7 @@ function initFormListeners() {
   if (releaseForm) {
     releaseForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!requireAdmin('publish a release')) return;
       const code = parseInt(document.getElementById('rel-code').value);
       const name = document.getElementById('rel-name').value.trim();
       const url = document.getElementById('rel-url').value.trim();
@@ -3770,6 +3947,382 @@ function initDictionaryControls() {
       renderVocabularyTable();
     });
   }
+}
+
+// ── Phone navigation ────────────────────────────────────────────────────────
+// Under 1024px the sidebar is a drawer behind the topbar's menu button. It used to become a
+// sideways-scrolling strip, which on a phone showed two destinations and hid the other eight.
+function closeNavDrawer() {
+  if (!document.body.classList.contains('nav-open')) return;
+  document.body.classList.remove('nav-open');
+  document.getElementById('nav-toggle')?.setAttribute('aria-expanded', 'false');
+}
+
+function initNavDrawer() {
+  const toggle = document.getElementById('nav-toggle');
+  toggle?.addEventListener('click', () => {
+    const open = !document.body.classList.contains('nav-open');
+    document.body.classList.toggle('nav-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    if (open) document.querySelector('#sidebar nav button.active, #sidebar nav button')?.focus();
+  });
+  document.getElementById('nav-backdrop')?.addEventListener('click', closeNavDrawer);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('nav-open') && !modalStack.length) {
+      closeNavDrawer();
+      toggle?.focus();
+    }
+  });
+}
+
+// ── Overview: to do ─────────────────────────────────────────────────────────
+// What is waiting on a moderator, in one row at the top of the Overview. It mirrors the sidebar's
+// counts rather than computing its own, so the two can never disagree.
+function initTodoStrip() {
+  const strip = document.getElementById('todo-strip');
+  if (!strip) return;
+  const items = [...strip.querySelectorAll('[data-count-from]')]
+    .filter((item) => !(item.hasAttribute('data-admin-only') && !isAdminRole()));
+  const sync = () => {
+    let waiting = 0;
+    items.forEach((item) => {
+      const src = document.getElementById(item.dataset.countFrom);
+      const n = src && !src.hidden ? Number(src.textContent) || 0 : 0;
+      item.querySelector('.todo-n').textContent = n.toLocaleString();
+      item.classList.toggle('is-clear', n === 0);
+      waiting += n;
+    });
+    const clear = document.getElementById('todo-clear');
+    if (clear) clear.hidden = waiting > 0;
+  };
+  items.forEach((item) => {
+    const src = document.getElementById(item.dataset.countFrom);
+    if (src) new MutationObserver(sync).observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  });
+}
+
+// ── Example sentences ───────────────────────────────────────────────────────
+// Sentences learners offer for words that have none. Only the pending ones are read, so the
+// listener costs one read per waiting sentence. Approving writes the (possibly corrected) sentence
+// onto the word's first empty example slot with a fresh updatedAt, which is what carries it to the
+// apps' sync and from there into the dictionary, lessons and sentence games.
+let pendingSentences = [];
+let sentencesLoaded = false;
+
+/** The dictionary entry a submission names: same headword and English gloss, else the only headword match. */
+function wordForSentence(sub) {
+  const k = (sub.kasiguranin || '').trim().toLowerCase();
+  const e = (sub.english || '').trim().toLowerCase();
+  const same = vocabulary.filter(v => (v.kasiguranin || '').trim().toLowerCase() === k);
+  return same.find(v => (v.english || '').trim().toLowerCase() === e) || (same.length === 1 ? same[0] : null);
+}
+
+/** Which example slot an approval fills, or null when the word already has two. */
+function sentenceSlot(word) {
+  if (!word) return null;
+  if (!(word.exampleSentence || '').trim()) return { sentence: 'exampleSentence', translation: 'exampleTranslation', label: 'its example' };
+  if (!(word.exampleSentence2 || '').trim()) return { sentence: 'exampleSentence2', translation: 'exampleTranslation2', label: 'a second example' };
+  return null;
+}
+
+function renderSentences() {
+  const host = document.getElementById('sentences-list');
+  const count = document.getElementById('nav-sentences-count');
+  if (count) {
+    count.textContent = pendingSentences.length;
+    count.hidden = pendingSentences.length === 0;
+  }
+  if (!host) return;
+  if (!sentencesLoaded) {
+    host.innerHTML = '<div class="item"><span class="item-mark skeleton"></span><span class="item-body"><span class="item-title skeleton">&nbsp;</span></span></div>'.repeat(3);
+    return;
+  }
+  if (!pendingSentences.length) {
+    host.innerHTML = `<div class="card"><div class="empty"><b>No sentences waiting</b>Sentences learners send from a word's page appear here.</div></div>`;
+    return;
+  }
+  host.innerHTML = pendingSentences
+    .slice()
+    .sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0))
+    .map((sub) => {
+      const word = wordForSentence(sub);
+      const slot = sentenceSlot(word);
+      const where = !word
+        ? `<p class="sentence-note is-warn">"${escapeHtml(sub.kasiguranin)}" is not in the online dictionary (it may be a built-in word). Add it on the Dictionary tab first.</p>`
+        : !slot
+          ? `<p class="sentence-note is-warn">This word already has two example sentences. Reject this one, or edit the word to replace one.</p>`
+          : `<p class="sentence-note">Approving adds it as ${slot.label} of the word.</p>`;
+      const id = safeId(sub.id);
+      return `
+        <form class="card sentence-card" data-sentence-id="${id}">
+          <div class="card-head">
+            <div>
+              <h2>${escapeHtml(sub.kasiguranin)} <span class="sentence-gloss">${escapeHtml(sub.english || '')}</span></h2>
+              <p>From ${escapeHtml(sub.contributorName || 'Anonymous')} · ${escapeHtml(relativeTime(toMillis(sub.submittedAt)))}</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="sent-k-${id}">Sentence (Kasiguranin)</label>
+            <textarea id="sent-k-${id}" name="sentence" rows="2">${escapeHtml(sub.sentence || '')}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="sent-e-${id}">English translation</label>
+            <textarea id="sent-e-${id}" name="translation" rows="2">${escapeHtml(sub.translation || '')}</textarea>
+          </div>
+          ${where}
+          <div class="row-actions">
+            <button type="button" class="btn btn-danger btn-sm" data-sentence-act="reject">
+              <iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject
+            </button>
+            <button type="button" class="btn btn-success btn-sm" data-sentence-act="approve" ${word && slot ? '' : 'disabled'}>
+              <iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Approve
+            </button>
+          </div>
+        </form>`;
+    }).join('');
+}
+
+async function approveSentence(sub, sentence, translation) {
+  const word = wordForSentence(sub);
+  const slot = sentenceSlot(word);
+  if (!word || !slot) {
+    notify('This sentence cannot be added to its word; see the note on its card.', 'error');
+    return;
+  }
+  if (sentence.split(/\s+/).filter(Boolean).length < 3 || translation.length < 2) {
+    notify('A sentence needs at least 3 words and an English translation.', 'error');
+    return;
+  }
+  try {
+    await updateDoc(doc(db, 'vocabulary', word.id), withUpdatedAt({
+      [slot.sentence]: sentence,
+      [slot.translation]: translation
+    }));
+    await updateDoc(doc(db, 'sentence_submissions', sub.id), {
+      status: 'approved', sentence, translation, wordId: word.id, reviewedAt: Date.now(), approvedAt: Date.now()
+    });
+    await logAudit('sentence.approve', { word: word.kasiguranin, wordId: word.id, slot: slot.sentence });
+    notify(`Added the sentence to "${word.kasiguranin}".`, 'success');
+  } catch (err) {
+    notify('Could not approve the sentence: ' + err.message, 'error');
+  }
+}
+
+async function rejectSentence(sub) {
+  const ok = await confirmDialog({
+    title: 'Reject this sentence?',
+    body: `The sentence for <b>${escapeHtml(sub.kasiguranin)}</b> will not be added.`,
+    confirmLabel: 'Reject', danger: true
+  });
+  if (!ok) return;
+  try {
+    await updateDoc(doc(db, 'sentence_submissions', sub.id), { status: 'rejected', reviewedAt: Date.now() });
+    await logAudit('sentence.reject', { word: sub.kasiguranin });
+    notify('Sentence rejected.', 'info');
+  } catch (err) {
+    notify('Could not reject the sentence: ' + err.message, 'error');
+  }
+}
+
+function initSentenceReview() {
+  renderSentences();
+  const unsub = onSnapshot(
+    query(collection(db, 'sentence_submissions'), where('status', '==', 'pending')),
+    (snap) => {
+      pendingSentences = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      sentencesLoaded = true;
+      renderSentences();
+    },
+    (err) => {
+      console.warn('Sentence submissions listener error:', err);
+      sentencesLoaded = true;
+      pendingSentences = [];
+      const host = document.getElementById('sentences-list');
+      if (host) host.innerHTML = `<div class="card"><div class="empty"><b>Couldn't load the sentences</b>${err.code === 'permission-denied' ? 'The database rules for example sentences have not been published yet.' : 'Check your connection and reload.'}</div></div>`;
+    }
+  );
+  unsubscribeFns.push(unsub);
+
+  document.getElementById('sentences-list')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-sentence-act]');
+    if (!btn) return;
+    const card = btn.closest('[data-sentence-id]');
+    const sub = pendingSentences.find((s) => safeId(s.id) === card?.getAttribute('data-sentence-id'));
+    if (!sub) return;
+    btn.disabled = true;
+    try {
+      if (btn.getAttribute('data-sentence-act') === 'approve') {
+        await approveSentence(sub, card.querySelector('[name="sentence"]').value.trim(), card.querySelector('[name="translation"]').value.trim());
+      } else {
+        await rejectSentence(sub);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
+// ── Team (admins only) ──────────────────────────────────────────────────────
+// Verifiers are listed by lower-case email in admin_staff; firestore.rules reads the same list.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+let teamMembers = [];
+
+/** One person on the Team page: initial, email, role or status chip, a detail line, an action. */
+function teamRow({ email, chip, chipClass, detail, action = '' }) {
+  return `
+    <div class="team-row">
+      <span class="item-mark" aria-hidden="true">${escapeHtml(email.charAt(0).toUpperCase())}</span>
+      <div class="team-row-body">
+        <div class="team-row-top">
+          <span class="team-row-email">${escapeHtml(email)}</span>
+          <span class="team-chip ${chipClass}">${escapeHtml(chip)}</span>
+        </div>
+        <p class="team-row-detail">${detail}</p>
+      </div>
+      ${action}
+    </div>`;
+}
+
+function renderTeam(error) {
+  const host = document.getElementById('team-list');
+  const count = document.getElementById('team-count');
+  if (!host) return;
+  if (error) {
+    host.innerHTML = `<div class="empty"><b>Couldn't load the team</b>${escapeHtml(error)}</div>`;
+    return;
+  }
+  const me = (auth.currentUser?.email || '').toLowerCase();
+  const verifiers = teamMembers.slice().sort((a, b) => (a.email || a.id).localeCompare(b.email || b.id));
+  if (count) count.textContent = `${verifiers.length === 1 ? '1 verifier' : `${verifiers.length} verifiers`} and you`;
+
+  const you = teamRow({
+    email: me || 'You', chip: 'Admin', chipClass: 'is-admin',
+    detail: 'You · admins are set by the project owner'
+  });
+  const rows = verifiers.map((m) => {
+    const email = m.email || m.id;
+    const seen = toMillis(m.lastSeenAt);
+    const added = [m.addedBy ? `Added by ${escapeHtml(m.addedBy)}` : 'Added', m.addedAt ? escapeHtml(relativeTime(toMillis(m.addedAt))) : '']
+      .filter(Boolean).join(' · ');
+    return teamRow({
+      email,
+      chip: seen ? 'Active' : 'Invited',
+      chipClass: seen ? 'is-active' : 'is-invited',
+      detail: `${seen ? `Last signed in ${escapeHtml(relativeTime(seen))}` : "Hasn't signed in yet"} · ${added}`,
+      action: `<button type="button" class="btn btn-outline btn-sm team-remove" data-remove-verifier="${escapeHtml(email)}">Remove</button>`
+    });
+  });
+  host.innerHTML = you + (rows.length
+    ? rows.join('')
+    : `<div class="empty"><b>No verifiers yet</b>Add someone's email above to let them review submissions.</div>`);
+}
+
+/** The add form's problem, under the field where the eye already is. */
+function setTeamError(message) {
+  const el = document.getElementById('team-email-error');
+  const input = document.getElementById('team-email');
+  if (!el) return;
+  el.textContent = message || '';
+  el.hidden = !message;
+  input?.setAttribute('aria-invalid', message ? 'true' : 'false');
+  if (message) input?.focus();
+}
+
+/** What to send a new verifier: where to go and which account to use. */
+function showTeamInvite(email) {
+  const box = document.getElementById('team-invite');
+  if (!box) return;
+  const url = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+  document.getElementById('team-invite-email').textContent = email;
+  document.getElementById('team-invite-text').textContent =
+    `You've been added as a verifier on the KasiGuru moderation console. Open ${url} and choose "Continue with Google", signing in with ${email}.`;
+  box.hidden = false;
+}
+
+function initTeam() {
+  const host = document.getElementById('team-list');
+  if (host) host.innerHTML = '<div class="item"><span class="item-mark skeleton"></span><span class="item-body"><span class="item-title skeleton">&nbsp;</span></span></div>'.repeat(3);
+
+  const unsub = onSnapshot(collection(db, 'admin_staff'), (snap) => {
+    teamMembers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderTeam();
+  }, (err) => {
+    console.warn('Team listener error:', err);
+    renderTeam(err.code === 'permission-denied'
+      ? 'The database rules that allow verifiers have not been published yet.'
+      : 'Check your connection and reload.');
+  });
+  unsubscribeFns.push(unsub);
+
+  host?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-remove-verifier]');
+    if (!btn || !requireAdmin('manage the team')) return;
+    const email = btn.getAttribute('data-remove-verifier');
+    const ok = await confirmDialog({
+      title: 'Remove this verifier?',
+      body: `<b>${escapeHtml(email)}</b> loses access to the portal the next time it checks, at the latest when they reload.`,
+      confirmLabel: 'Remove', danger: true
+    });
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, 'admin_staff', email));
+      await logAudit('staff.remove', { email });
+      notify(`${email} is no longer a verifier.`, 'info');
+    } catch (err) {
+      notify('Could not remove the verifier: ' + err.message, 'error');
+    }
+  });
+
+  const input = document.getElementById('team-email');
+  input?.addEventListener('input', () => setTeamError(''));
+
+  const form = document.getElementById('team-add-form');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!requireAdmin('manage the team')) return;
+    const email = (input?.value || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return setTeamError('Enter a full email address, like name@gmail.com.');
+    if (email === (auth.currentUser?.email || '').toLowerCase()) return setTeamError("That's you; admins already have full access.");
+    if (teamMembers.some((m) => (m.email || m.id) === email)) return setTeamError(`${email} is already on the team.`);
+    setTeamError('');
+    const btn = document.getElementById('team-add-btn');
+    const label = btn?.querySelector('.btn-label');
+    if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }
+    if (label) label.textContent = 'Adding…';
+    try {
+      await setDoc(doc(db, 'admin_staff', email), {
+        role: 'verifier', email, addedBy: auth.currentUser?.email || '', addedAt: Date.now()
+      });
+      await logAudit('staff.add', { email });
+      if (input) input.value = '';
+      showTeamInvite(email);
+    } catch (err) {
+      setTeamError(err.code === 'permission-denied'
+        ? 'The database rules that allow verifiers have not been published yet.'
+        : `Couldn't add them: ${err.message}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.classList.remove('is-busy'); }
+      if (label) label.textContent = 'Add verifier';
+    }
+  });
+
+  document.getElementById('team-invite-copy')?.addEventListener('click', async (e) => {
+    const text = document.getElementById('team-invite-text');
+    const label = e.currentTarget.querySelector('.btn-label');
+    try {
+      await navigator.clipboard.writeText(text.textContent);
+      if (label) label.textContent = 'Copied';
+    } catch {
+      // No clipboard permission: select the text so a long-press or Ctrl+C copies it.
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      if (label) label.textContent = 'Selected, copy it';
+    }
+    setTimeout(() => { if (label) label.textContent = 'Copy invite'; }, 2500);
+  });
 }
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
@@ -4096,6 +4649,7 @@ async function logAudit(action, details = {}) {
     const actor = (auth.currentUser && auth.currentUser.email) || "unknown";
     await addDoc(collection(db, "admin_audit_log"), {
       actor,
+      actorRole: currentRole || 'unknown',
       action,
       details,
       timestamp: Date.now()
@@ -4426,7 +4980,7 @@ function renderUsersTable() {
 
     // Actions cell — only show for real accounts that have a uid
     let actionCell = '—';
-    if (user.id) {
+    if (user.id && isAdminRole()) {
       let buttons = '';
       if (isBanned) {
         buttons += `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`;
@@ -4698,12 +5252,17 @@ window.openUserDetails = async function(uid) {
         <button type="button" class="btn btn-danger" onclick="closeModal('user-details-modal'); window.blockUser('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Block User</button>
       `;
     }
+    // Blocking, unblocking and appeals are an admin's call.
+    if (!isAdminRole()) {
+      actionButtonsHtml = `<p class="result-count">${hasPendingAppeal ? 'This user has an appeal waiting for an admin.' : 'Only an admin can block or unblock users.'}</p>`;
+    }
     actionsBox.innerHTML = actionButtonsHtml;
   }
 };
 
 // ── Block User ────────────────────────────────────────────────────────────────
 window.blockUser = async function(uid, displayName) {
+  if (!requireAdmin('block users')) return;
   if (!uid) {
     notify('Cannot block user: missing UID.', 'danger');
     return;
@@ -4777,6 +5336,7 @@ window.blockUser = async function(uid, displayName) {
 
 // ── Unblock User ──────────────────────────────────────────────────────────────
 window.unblockUser = async function(uid, displayName) {
+  if (!requireAdmin('unblock users')) return;
   if (!uid) {
     notify('Cannot unblock user: missing UID.', 'danger');
     return;
@@ -4863,6 +5423,7 @@ window.openAppealReview = function(uid, displayName) {
 
 // ── Approve Appeal & Unblock ──────────────────────────────────────────────────
 window.approveAppeal = async function(uid, displayName) {
+  if (!requireAdmin('decide appeals')) return;
   const nameToDisplay = displayName || 'User';
   const confirmed = await confirmDialog({
     title: `Approve Appeal & Unblock ${nameToDisplay}?`,
@@ -4884,6 +5445,7 @@ window.approveAppeal = async function(uid, displayName) {
 
 // ── Reject Appeal ─────────────────────────────────────────────────────────────
 window.rejectAppeal = async function(uid, displayName) {
+  if (!requireAdmin('decide appeals')) return;
   const nameToDisplay = displayName || 'User';
 
   let feedbackValue = '';
@@ -5005,6 +5567,7 @@ window.exportBackup = async function() {
       "announcements",
       "app_releases",
       "word_submissions",
+      "sentence_submissions",
       "literature_submissions",
       "issue_reports",
       "admin_audit_log"
@@ -5065,8 +5628,9 @@ window.exportBackup = async function() {
  * admin session the power to rewrite any learner's data.
  */
 window.resetModerationQueues = async function () {
+  if (!requireAdmin('clear the moderation queues')) return;
   const btn = document.getElementById('btn-reset-queues');
-  const QUEUES = ['word_submissions', 'literature_submissions', 'issue_reports'];
+  const QUEUES = ['word_submissions', 'sentence_submissions', 'literature_submissions', 'issue_reports'];
 
   try {
     if (btn) btn.disabled = true;
@@ -5159,6 +5723,7 @@ function initBackupRestore() {
   });
 
   async function handleBackupFile(file) {
+    if (!requireAdmin('restore a backup')) return;
     if (!file.name.endsWith('.json')) {
       notify("Please select a valid .json backup file.", "danger");
       return;
@@ -5211,7 +5776,7 @@ function initBackupRestore() {
       // The rules only accept a queue item created in the shape the app submits it: status
       // 'pending' and none of the fields review adds. A reviewed item that is gone from Firestore
       // therefore cannot be recreated from a browser, and one in a batch sinks the whole batch.
-      const APP_CREATED_QUEUES = new Set(['word_submissions', 'literature_submissions', 'issue_reports']);
+      const APP_CREATED_QUEUES = new Set(['word_submissions', 'sentence_submissions', 'literature_submissions', 'issue_reports']);
 
       // The file carries each document's updatedAt from when it was exported, which is older than
       // most devices' last pull, so the app's incremental sync would skip what was just restored
@@ -5228,7 +5793,8 @@ function initBackupRestore() {
         let writes = docs;
         if (collName === 'admin_audit_log') {
           // Append-only by rule (update denied): insert only entries that are not already there.
-          const existingIds = new Set(auditLogs.map(l => l.id));
+          // Read from the server, since the page only holds the newest entries.
+          const existingIds = new Set((await getDocs(collection(db, collName))).docs.map((d) => d.id));
           writes = docs.filter((d) => !existingIds.has(d.id));
         } else if (APP_CREATED_QUEUES.has(collName)) {
           const existingIds = new Set((await getDocs(collection(db, collName))).docs.map((d) => d.id));
