@@ -17,10 +17,12 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+// "Continue with Google" signs in with the usual account, as it always did. Forcing the account
+// chooser on every click confused admins ("it says use another email"), so only "Use a different
+// Google account", offered after a refusal, asks Google to show the chooser.
 const googleProvider = new GoogleAuthProvider();
-// Always offer the account chooser, so "Use a different Google account" really can pick another one
-// rather than silently reusing the account that was just refused.
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+const chooserProvider = new GoogleAuthProvider();
+chooserProvider.setCustomParameters({ prompt: 'select_account' });
 
 const $ = (id) => document.getElementById(id);
 
@@ -146,12 +148,12 @@ const firstAuthState = new Promise((resolve) => {
 
 // ── Google ──────────────────────────────────────────────────────────────────
 
-async function signInWithGoogle() {
+async function signInWithGoogle(provider = googleProvider) {
   clearError();
   clearNotice();
   setBusy($('google-login-btn'), 'Opening Google…');
   try {
-    const credential = await signInWithPopup(auth, googleProvider);
+    const credential = await signInWithPopup(auth, provider);
     setBusy($('google-login-btn'), 'Signing in…');
     await admit(credential.user, { fresh: true });
   } catch (err) {
@@ -159,7 +161,7 @@ async function signInWithGoogle() {
     if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
       try {
         try { sessionStorage.setItem(REDIRECT_FLAG, '1'); } catch { /* storage blocked */ }
-        await signInWithRedirect(auth, googleProvider);
+        await signInWithRedirect(auth, provider);
         return;
       } catch (redirectErr) {
         console.error('Redirect sign in error:', redirectErr);
@@ -254,8 +256,8 @@ function togglePassword() {
   input.focus();
 }
 
-$('google-login-btn').addEventListener('click', signInWithGoogle);
-$('use-other-account').addEventListener('click', signInWithGoogle);
+$('google-login-btn').addEventListener('click', () => signInWithGoogle(googleProvider));
+$('use-other-account').addEventListener('click', () => signInWithGoogle(chooserProvider));
 $('password-form').addEventListener('submit', signInWithPassword);
 $('forgot-password-link').addEventListener('click', resetPassword);
 $('toggle-password').addEventListener('click', togglePassword);
