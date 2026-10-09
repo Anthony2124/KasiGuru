@@ -14,7 +14,8 @@ import { vocabularyStore, watchVocabulary } from './vocabulary-cache.mjs';
 import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
-// block or unblock users (appeals included), restore or reset data, and manage the team. The
+// block or unblock users (appeals included; they flag a user for an admin instead), back up, restore
+// or reset data, and manage the team. Their activity log shows verifiers' entries only. The
 // [data-admin-only] markup hides those controls; requireAdmin() refuses them in code; and
 // firestore.rules refuses them server-side, which is the part that actually protects anything.
 let currentRole = null;
@@ -166,6 +167,51 @@ function confirmDialog(opts) {
   });
 }
 
+// confirmDialog with a required reason: resolves to the trimmed text, or null when cancelled. The
+// confirm button does nothing until a reason is typed, so a block or a flag always says why.
+function reasonDialog(opts) {
+  const o = opts || {};
+  const host = dialogHost();
+  const okBtn = host.querySelector('[data-act="ok"]');
+  const cancelBtn = host.querySelector('[data-act="cancel"]');
+  host.querySelector('#confirm-dialog-title').textContent = o.title || 'Give a reason';
+  host.querySelector('#confirm-dialog-body').innerHTML = (o.body || '') +
+    `<label for="dialog-reason-input" style="font-weight:600; display:block; margin-bottom:6px;">${escapeHtml(o.label || 'Reason')} <span style="color:var(--status-rejected);">*</span></label>` +
+    `<textarea id="dialog-reason-input" class="form-control" rows="3"${o.maxLength ? ` maxlength="${o.maxLength}"` : ''} placeholder="${escapeHtml(o.placeholder || '')}" style="width:100%; resize:vertical;"></textarea>`;
+  okBtn.textContent = o.confirmLabel || 'Confirm';
+  okBtn.className = 'btn ' + (o.danger ? 'btn-danger' : 'btn-primary');
+  const input = host.querySelector('#dialog-reason-input');
+
+  const opener = document.activeElement;
+  return new Promise((resolve) => {
+    function close(result) {
+      host.classList.remove('active');
+      host.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      if (opener && opener.focus) opener.focus();
+      resolve(result);
+    }
+    function onBackdrop(e) { if (e.target === host) close(null); }
+    function onKey(e) { if (e.key === 'Escape') close(null); }
+    okBtn.onclick = () => {
+      const reason = input.value.trim();
+      if (!reason) {
+        input.classList.add('input-error');
+        input.focus();
+        return;
+      }
+      close(reason);
+    };
+    cancelBtn.onclick = () => close(null);
+    host.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    host.classList.add('active');
+    setTimeout(() => input.focus(), 80);
+  });
+}
+
 // A toast, not a dialog: it reports what already happened, so it must not take focus or block the
 // next action. polite rather than assertive for the same reason.
 function notify(message, kind) {
@@ -274,7 +320,7 @@ const TAB_ROUTES = {
   'tab-backup': 'backup'
 };
 // Sections a verifier cannot open, even from a bookmarked URL; they land on the Overview instead.
-const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team']);
+const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team', 'tab-backup']);
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
 function applyTab(targetTab) {
@@ -322,6 +368,7 @@ function init() {
   initLogsControls();
   initUsersListener();
   initBansListener();
+  initFlagsListener();
   initBackupRestore();
   initNavDrawer();
   initSentenceReview();
@@ -4709,6 +4756,7 @@ async function logAudit(action, details = {}) {
 // ── Users Listener & Helpers ────────────────────────────────────────────────
 let usersList = [];
 let bansMap = new Map(); // uid → ban doc
+let flagsMap = new Map(); // uid → open flag, raised by a verifier for an admin to review
 // uid → users/{uid}/progress/main data. The table and the details modal both
 // read through applyProgress() so they always show the same values.
 const progressCache = new Map();
@@ -4837,6 +4885,16 @@ function initUsersListener() {
         window.unblockUser(uid, name);
         return;
       }
+      const flagBtn = e.target.closest('.btn-flag-user');
+      if (flagBtn) {
+        window.flagUser(flagBtn.getAttribute('data-uid'), flagBtn.getAttribute('data-name'));
+        return;
+      }
+      const dismissBtn = e.target.closest('.btn-dismiss-flag');
+      if (dismissBtn) {
+        window.dismissFlag(dismissBtn.getAttribute('data-uid'), dismissBtn.getAttribute('data-name'));
+        return;
+      }
       const viewBtn = e.target.closest('.btn-view-user');
       if (viewBtn) {
         const uid = viewBtn.getAttribute('data-uid');
@@ -4952,6 +5010,8 @@ function renderUsersTable() {
       const ban = bansMap.get(u.id);
       return ban && ban.appealStatus === 'pending';
     });
+  } else if (statusF === 'flagged') {
+    registeredUsers = registeredUsers.filter(u => openFlagFor(u.id));
   }
 
   // ── Step 4: Sort ─────────────────────────────────────────────────
@@ -5008,6 +5068,10 @@ function renderUsersTable() {
     if (hasPendingAppeal) {
       appealBadge = `<span class="badge" style="background:var(--status-pending-tint); color:var(--status-pending); border:1px solid rgba(245,200,106,.4); font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="User has an appeal waiting for review"><iconsax-icon name="notification" type="bulk" size="12" color="var(--status-pending)"></iconsax-icon> Appeal Pending</span>`;
     }
+    const flag = openFlagFor(user.id);
+    if (flag) {
+      appealBadge += `<span class="badge" style="background:var(--status-rejected-tint); color:var(--status-rejected); font-weight:700; font-size:0.75rem; padding:2px 7px; border-radius:999px; margin-left:6px; display:inline-flex; align-items:center; gap:4px; vertical-align:middle;" title="Flagged by ${escapeHtml(flag.flaggedBy || 'a verifier')}: ${escapeHtml(flag.reason || '')}"><iconsax-icon name="flag" type="bulk" size="12" color="var(--status-rejected)"></iconsax-icon> Flagged</span>`;
+    }
 
     const userLabel = `
       <div style="display:flex; align-items:center; gap:10px;">
@@ -5046,16 +5110,23 @@ function renderUsersTable() {
       statusCell = `<span class="badge badge-approved">Active</span>`;
     }
 
-    // Actions cell — only show for real accounts that have a uid
+    // Actions cell — only show for real accounts that have a uid. An admin blocks, unblocks and
+    // answers flags; a verifier can only flag an active learner for an admin.
     let actionCell = '—';
+    const ids = `data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}"`;
     if (user.id && isAdminRole()) {
       let buttons = '';
       if (isBanned) {
-        buttons += `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Unblock</button>`;
+        buttons += `<button type="button" class="btn btn-sm btn-outline btn-unblock-user" ${ids}>Unblock</button>`;
       } else {
-        buttons += `<button type="button" class="btn btn-sm btn-danger btn-block-user" data-uid="${escapeHtml(user.id)}" data-name="${escapeHtml(displayName)}">Block</button>`;
+        buttons += `<button type="button" class="btn btn-sm btn-danger btn-block-user" ${ids}>Block</button>`;
+        if (flag) buttons += ` <button type="button" class="btn btn-sm btn-outline btn-dismiss-flag" ${ids}>Dismiss flag</button>`;
       }
       actionCell = buttons || '—';
+    } else if (user.id && !isBanned) {
+      actionCell = flag
+        ? `<span class="result-count">Flagged</span>`
+        : `<button type="button" class="btn btn-sm btn-outline btn-flag-user" ${ids}>Flag</button>`;
     }
 
     return `
@@ -5094,6 +5165,28 @@ function initBansListener() {
   }
 }
 
+// ── Flags Listener ───────────────────────────────────────────────────────────
+// Open flags only: an admin's dismissal or block deletes the flag, so the collection stays as small
+// as the number of learners currently waiting for review.
+function initFlagsListener() {
+  try {
+    const unsubFlags = onSnapshot(collection(db, 'user_flags'), (snapshot) => {
+      flagsMap = new Map(snapshot.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+      renderUsersTable();
+    }, (err) => {
+      console.warn('Flags listener error:', err);
+    });
+    unsubscribeFns.push(unsubFlags);
+  } catch (e) {
+    console.error('Flags init error:', e);
+  }
+}
+
+// A flag waiting for an admin: open and the learner not already blocked.
+function openFlagFor(uid) {
+  return bansMap.has(uid) ? null : (flagsMap.get(uid) || null);
+}
+
 // ── Appeals Notification & Filter Helper ────────────────────────────────────
 function updateAppealsBadge() {
   let pendingAppealsCount = 0;
@@ -5102,12 +5195,22 @@ function updateAppealsBadge() {
       pendingAppealsCount++;
     }
   });
+  const flaggedCount = [...flagsMap.keys()].filter(uid => openFlagFor(uid)).length;
 
-  // Sidebar badge next to "Users"
+  // Sidebar badge next to "Users": what is waiting on an admin there, appeals and flags. Both are
+  // an admin's call, so a verifier is not shown a count they cannot act on.
   const navUsersCount = document.getElementById('nav-users-count');
   if (navUsersCount) {
-    navUsersCount.textContent = pendingAppealsCount;
-    navUsersCount.hidden = pendingAppealsCount === 0;
+    const waiting = isAdminRole() ? pendingAppealsCount + flaggedCount : 0;
+    navUsersCount.textContent = waiting;
+    navUsersCount.hidden = waiting === 0;
+  }
+
+  const flagsAlert = document.getElementById('users-flags-alert');
+  if (flagsAlert) {
+    flagsAlert.style.display = isAdminRole() && flaggedCount > 0 ? 'flex' : 'none';
+    const flagsAlertCount = document.getElementById('users-flags-alert-count');
+    if (flagsAlertCount) flagsAlertCount.textContent = `${flaggedCount} flagged user${flaggedCount === 1 ? '' : 's'}`;
   }
 
   // Users tab banner alert
@@ -5129,6 +5232,14 @@ window.filterToAppeals = function() {
   const filterSelect = document.getElementById('filter-users-status');
   if (filterSelect) {
     filterSelect.value = 'appeals';
+    renderUsersTable();
+  }
+};
+
+window.filterToFlagged = function() {
+  const filterSelect = document.getElementById('filter-users-status');
+  if (filterSelect) {
+    filterSelect.value = 'flagged';
     renderUsersTable();
   }
 };
@@ -5253,6 +5364,17 @@ window.openUserDetails = async function(uid) {
     `;
   }
 
+  // A verifier's flag waiting for an admin.
+  const flag = openFlagFor(uid);
+  const flagSectionHtml = flag ? `
+      <div style="background:var(--status-rejected-tint); border-radius:var(--r-ctl); padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+          <span style="font-weight:700; color:var(--status-rejected); font-size:0.875rem; display:inline-flex; align-items:center; gap:6px;"><iconsax-icon name="flag" type="bulk" size="16" color="var(--status-rejected)"></iconsax-icon> Flagged for review</span>
+          <small style="color:var(--muted); font-size:0.75rem;">By ${escapeHtml(flag.flaggedBy || 'a verifier')}${flag.flaggedAt ? ` · ${escapeHtml(relativeTime(flag.flaggedAt))}` : ''}</small>
+        </div>
+        <p style="margin:0; font-size:0.875rem; color:var(--ink); line-height:1.5; white-space:pre-wrap;">${escapeHtml(flag.reason || '')}</p>
+      </div>` : '';
+
   const initial = (displayName[0] || 'U').toUpperCase();
 
   body.innerHTML = `
@@ -5299,6 +5421,7 @@ window.openUserDetails = async function(uid) {
       </div>
     </div>
 
+    ${flagSectionHtml}
     ${suspensionSectionHtml}
     ${appealSectionHtml}
   `;
@@ -5317,12 +5440,19 @@ window.openUserDetails = async function(uid) {
       `;
     } else {
       actionButtonsHtml = `
+        ${flag ? `<button type="button" class="btn btn-outline" onclick="closeModal('user-details-modal'); window.dismissFlag('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Dismiss Flag</button>` : ''}
         <button type="button" class="btn btn-danger" onclick="closeModal('user-details-modal'); window.blockUser('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Block User</button>
       `;
     }
-    // Blocking, unblocking and appeals are an admin's call.
+    // Blocking, unblocking and appeals are an admin's call; a verifier can flag an active user.
     if (!isAdminRole()) {
-      actionButtonsHtml = `<p class="result-count">${hasPendingAppeal ? 'This user has an appeal waiting for an admin.' : 'Only an admin can block or unblock users.'}</p>`;
+      if (isBanned) {
+        actionButtonsHtml = `<p class="result-count">${hasPendingAppeal ? 'This user has an appeal waiting for an admin.' : 'This user is blocked. Only an admin can unblock them.'}</p>`;
+      } else if (flag) {
+        actionButtonsHtml = `<p class="result-count">Flagged for an admin to review.</p>`;
+      } else {
+        actionButtonsHtml = `<button type="button" class="btn btn-outline" onclick="closeModal('user-details-modal'); window.flagUser('${escapeHtml(uid)}', '${escapeHtml(displayName)}');">Flag for an admin</button>`;
+      }
     }
     actionsBox.innerHTML = actionButtonsHtml;
   }
@@ -5336,50 +5466,17 @@ window.blockUser = async function(uid, displayName) {
     return;
   }
   const nameToDisplay = displayName || 'User';
+  const flag = flagsMap.get(uid);
 
-  // Step 1: Ask for a reason via a custom input dialog
-  let reasonValue = '';
-  const host = dialogHost();
-  host.querySelector('#confirm-dialog-title').textContent = `Block ${nameToDisplay}?`;
-  const bodyEl = host.querySelector('#confirm-dialog-body');
-  bodyEl.innerHTML =
-    `<p style="margin-bottom:10px;">This user will see an "Account Suspended" screen and cannot use KasiGuru until unblocked.</p>` +
-    `<label for="ban-reason-input" style="font-weight:600; display:block; margin-bottom:6px;">Reason <span style="color:var(--status-rejected);">*</span></label>` +
-    `<textarea id="ban-reason-input" class="form-control" rows="3" placeholder="e.g. Harassment, cheating, repeated abuse of the community submission system…" style="width:100%; resize:vertical;"></textarea>`;
-
-  const okBtn = host.querySelector('[data-act="ok"]');
-  okBtn.textContent = 'Block user';
-  okBtn.className = 'btn btn-danger';
-
-  const confirmed = await new Promise((resolve) => {
-    function close(result) {
-      reasonValue = (document.getElementById('ban-reason-input')?.value || '').trim();
-      host.classList.remove('active');
-      host.removeEventListener('click', onBackdrop);
-      document.removeEventListener('keydown', onKey);
-      okBtn.onclick = null;
-      host.querySelector('[data-act="cancel"]').onclick = null;
-      resolve(result);
-    }
-    function onBackdrop(e) { if (e.target === host) close(false); }
-    function onKey(e) { if (e.key === 'Escape') close(false); }
-    okBtn.onclick = () => {
-      const reason = (document.getElementById('ban-reason-input')?.value || '').trim();
-      if (!reason) {
-        document.getElementById('ban-reason-input')?.classList.add('input-error');
-        document.getElementById('ban-reason-input')?.focus();
-        return;
-      }
-      close(true);
-    };
-    host.querySelector('[data-act="cancel"]').onclick = () => close(false);
-    host.addEventListener('click', onBackdrop);
-    document.addEventListener('keydown', onKey);
-    host.classList.add('active');
-    setTimeout(() => document.getElementById('ban-reason-input')?.focus(), 80);
+  const reasonValue = await reasonDialog({
+    title: `Block ${nameToDisplay}?`,
+    body: `<p style="margin-bottom:10px;">This user will see an "Account Suspended" screen and cannot use KasiGuru until unblocked.</p>` +
+      (flag ? `<p style="margin-bottom:10px;">Flagged by ${escapeHtml(flag.flaggedBy || 'a verifier')}: “${escapeHtml(flag.reason || '')}”</p>` : ''),
+    placeholder: 'e.g. Harassment, cheating, repeated abuse of the community submission system…',
+    confirmLabel: 'Block user',
+    danger: true
   });
-
-  if (!confirmed || !reasonValue) return;
+  if (!reasonValue) return;
 
   try {
     const actor = (auth.currentUser && auth.currentUser.email) || 'admin';
@@ -5390,7 +5487,10 @@ window.blockUser = async function(uid, displayName) {
       bannedBy: actor
     });
     // Log with both format and details for audit trail
-    await logAudit('user.block', { uid, displayName: nameToDisplay, reason: reasonValue });
+    await logAudit('user.block', { uid, displayName: nameToDisplay, reason: reasonValue, ...(flag ? { flaggedBy: flag.flaggedBy } : {}) });
+    // Blocking answers the flag. Kept apart from the block itself: if clearing it fails, the user is
+    // still blocked and the flag can be dismissed by hand.
+    if (flag) await deleteDoc(doc(db, 'user_flags', uid)).catch((err) => console.warn('Could not clear the flag:', err));
     notify(`${nameToDisplay} has been blocked.`, 'success');
   } catch (e) {
     console.error('Block failed:', e);
@@ -5430,6 +5530,64 @@ window.unblockUser = async function(uid, displayName) {
       errMsg = 'Permission denied. Make sure firestore.rules has been published to Firebase with user_bans permissions.';
     }
     notify('Failed to unblock user: ' + errMsg, 'danger');
+  }
+};
+
+// ── Flag User ─────────────────────────────────────────────────────────────────
+// A verifier cannot block. They flag the learner with a reason instead, and an admin decides: block
+// (which clears the flag) or dismiss it. One open flag per learner; the rules refuse a second.
+window.flagUser = async function(uid, displayName) {
+  if (!uid) return;
+  const nameToDisplay = displayName || 'User';
+  if (bansMap.has(uid)) { notify(`${nameToDisplay} is already blocked.`, 'info'); return; }
+  const existing = flagsMap.get(uid);
+  if (existing) { notify(`${nameToDisplay} is already flagged by ${existing.flaggedBy || 'a verifier'}.`, 'info'); return; }
+
+  const reason = await reasonDialog({
+    title: `Flag ${nameToDisplay} for an admin?`,
+    body: `<p style="margin-bottom:10px;">An admin will review this user and decide whether to block them. The user is not told.</p>`,
+    placeholder: 'What happened? e.g. Spam submissions, offensive words, impersonating someone…',
+    maxLength: 500,
+    confirmLabel: 'Flag user'
+  });
+  if (!reason) return;
+
+  try {
+    await setDoc(doc(db, 'user_flags', uid), {
+      uid,
+      displayName: nameToDisplay.slice(0, 200),
+      reason,
+      flaggedBy: (auth.currentUser && auth.currentUser.email) || '',
+      flaggedAt: Date.now()
+    });
+    await logAudit('user.flag', { uid, displayName: nameToDisplay, reason });
+    notify(`${nameToDisplay} is flagged for an admin to review.`, 'success');
+  } catch (e) {
+    console.error('Flag failed:', e);
+    notify(e.code === 'permission-denied'
+      ? 'Could not flag this user. Someone may have flagged them already; reload to check.'
+      : 'Could not flag this user: ' + (e.message || e), 'danger');
+  }
+};
+
+window.dismissFlag = async function(uid, displayName) {
+  if (!requireAdmin('dismiss a flag')) return;
+  const flag = flagsMap.get(uid);
+  if (!flag) return;
+  const nameToDisplay = displayName || flag.displayName || 'User';
+  if (!(await confirmDialog({
+    title: `Dismiss the flag on ${nameToDisplay}?`,
+    body: `<p>${escapeHtml(flag.flaggedBy || 'A verifier')} flagged this user: “${escapeHtml(flag.reason || '')}”</p><p style="margin-top:8px;">Dismissing keeps the account active and clears the flag.</p>`,
+    confirmLabel: 'Dismiss flag'
+  }))) return;
+
+  try {
+    await deleteDoc(doc(db, 'user_flags', uid));
+    await logAudit('user.flag_dismiss', { uid, displayName: nameToDisplay, reason: flag.reason, flaggedBy: flag.flaggedBy });
+    notify(`Flag on ${nameToDisplay} dismissed.`, 'success');
+  } catch (e) {
+    console.error('Dismiss flag failed:', e);
+    notify('Could not dismiss the flag: ' + (e.message || e), 'danger');
   }
 };
 
@@ -5615,6 +5773,7 @@ function decodeBackupValue(value) {
 }
 
 window.exportBackup = async function() {
+  if (!requireAdmin('export a backup')) return;
   const btn = document.getElementById('btn-export-backup');
   if (btn) btn.disabled = true;
   notify("Preparing database backup...", "info");
@@ -5643,10 +5802,7 @@ window.exportBackup = async function() {
 
     const collections = {};
     for (const name of SCOPE) {
-      // A verifier may read only verifiers' log entries, and an unfiltered read is refused whole.
-      const snap = await getDocs(name === 'admin_audit_log'
-        ? query(collection(db, name), ...auditLogScope())
-        : collection(db, name));
+      const snap = await getDocs(collection(db, name));
       // The id stays beside the fields, not among them: every story has an `id` field of its own.
       collections[name] = snap.docs.map(d => ({ id: d.id, data: encodeBackupValue(d.data()) }));
     }

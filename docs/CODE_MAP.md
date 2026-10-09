@@ -93,7 +93,8 @@ unit-test source root. Game completion and level persistence use
   `js/auth.js`, `js/app.js`, `js/roles.js` (admin vs verifier), `js/word-normalize.js`,
   and `css/styles.css`. Verifiers are listed in Firestore `admin_staff/{email}` from the
   portal's Team page; `firestore.rules` (`isStaff()`) lets them do everything except APK
-  releases, blocking users, and restoring or resetting data. Rules test:
+  releases, blocking users (they flag one for an admin in `user_flags`), reading admins'
+  activity-log entries, and backing up, restoring or resetting data. Rules test:
   `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).
 - Download: `admin-website/download/index.html`, `js/` and `css/styles.css`.
 - Rules: `firestore.rules` and `storage.rules`; deployment configuration is in

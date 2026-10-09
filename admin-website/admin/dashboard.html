@@ -98,7 +98,7 @@
           <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
             <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Activity log
           </button>
-          <button data-tab="tab-backup" onclick="window.switchTab('tab-backup')">
+          <button data-tab="tab-backup" data-admin-only onclick="window.switchTab('tab-backup')">
             <iconsax-icon name="cloud-change" type="bulk" size="18" color="currentColor"></iconsax-icon> Backup &amp; Restore
           </button>
         </nav>
@@ -169,7 +169,7 @@
       </div>
 
       <!-- To do: what is waiting on a moderator, mirrored from the sidebar counts (app.js
-           initTodoStrip). Appeals are an admin's call, so verifiers do not see that one. -->
+           initTodoStrip). Appeals and flagged users are an admin's call, so verifiers do not see that one. -->
       <div class="todo-strip" id="todo-strip" aria-label="Waiting for you">
         <button type="button" class="todo" data-count-from="nav-queue-count" onclick="window.switchTab('tab-submissions')">
           <span class="todo-n num">&hellip;</span><span class="todo-label">words to verify</span>
@@ -184,7 +184,7 @@
           <span class="todo-n num">&hellip;</span><span class="todo-label">open reports</span>
         </button>
         <button type="button" class="todo" data-admin-only data-count-from="nav-users-count" onclick="window.switchTab('tab-users')">
-          <span class="todo-n num">&hellip;</span><span class="todo-label">ban appeals</span>
+          <span class="todo-n num">&hellip;</span><span class="todo-label">users to review</span>
         </button>
         <p class="todo-clear" id="todo-clear" hidden>
           <iconsax-icon name="tick-circle" type="bulk" size="18" color="var(--violet)"></iconsax-icon> All caught up.
@@ -588,6 +588,15 @@
         <button type="button" class="btn btn-sm" style="background:var(--status-pending); color:var(--on-reward); font-weight:700; border:none; cursor:pointer;" onclick="window.filterToAppeals()">View Appeals</button>
       </div>
 
+      <!-- Verifiers' flags waiting for an admin (app.js updateAppealsBadge). Admins only. -->
+      <div id="users-flags-alert" data-admin-only style="display:none; background:var(--status-rejected-tint); border-radius:var(--r-ctl); padding:12px 18px; margin-bottom:16px; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; align-items:center; gap:12px; color:var(--status-rejected); font-size:0.875rem; font-weight:600;">
+          <iconsax-icon name="flag" type="bulk" size="22" color="var(--status-rejected)"></iconsax-icon>
+          <span><strong>Flagged by verifiers:</strong> <span id="users-flags-alert-count">1 flagged user</span> waiting for you to block or dismiss.</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-danger" onclick="window.filterToFlagged()">View Flagged</button>
+      </div>
+
       <div class="panel">
         <div class="toolbar">
           <div class="input-icon-wrap" style="flex:1; min-width:220px;">
@@ -601,6 +610,7 @@
             <option value="active">Active only</option>
             <option value="banned">Blocked only</option>
             <option value="appeals">Appeals pending</option>
+            <option value="flagged">Flagged</option>
           </select>
           <label class="sr-only" for="sort-users">Sort by</label>
           <select id="sort-users" class="form-control" style="width:auto; min-width:170px;">
@@ -670,7 +680,7 @@
           <label class="sr-only" for="filter-logs-action">Filter by action</label>
           <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
             <option value="">All actions</option>
-            <option value="user" data-admin-only>User management</option>
+            <option value="user">User management</option>
             <option value="appeal" data-admin-only>Appeals</option>
             <option value="vocabulary">Vocabulary</option>
             <option value="submission">Submissions</option>
@@ -782,7 +792,7 @@
     </section>
 
     <!-- Tab 8: Backup & Restore -->
-    <section id="tab-backup" class="tab-content" style="display: none;">
+    <section id="tab-backup" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
           <h1>Backup &amp; Reset</h1>

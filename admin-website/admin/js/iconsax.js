@@ -217,6 +217,10 @@
         '<path d="M12 2.5C8.4 2.5 5.5 5.4 5.5 9V12.6L4.2 15.6C3.9 16.3 4.4 17 5.1 17H18.9C19.6 17 20.1 16.3 19.8 15.6L18.5 12.6V9C18.5 5.4 15.6 2.5 12 2.5Z" fill="' + c + '" opacity="0.35"/>' +
         '<path d="M9.5 19.5C9.9 20.6 10.9 21.4 12 21.4C13.1 21.4 14.1 20.6 14.5 19.5" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
       '</svg>',
+      'flag': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M5.5 3.5H17.2C18.1 3.5 18.6 4.5 18.1 5.2L15.9 8.3L18.1 11.4C18.6 12.1 18.1 13.1 17.2 13.1H5.5V3.5Z" fill="' + c + '" opacity="0.35"/>' +
+        '<path d="M5.5 21V3" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
       'arrow-up-right': '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M7 17L17 7" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round"/>' +
         '<path d="M9 7H17V15" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
