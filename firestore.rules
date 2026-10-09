@@ -15,7 +15,8 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
-    // Verifiers moderate everything an admin does except APK releases and blocking users. An admin
+    // Verifiers moderate everything an admin does except APK releases and blocking users (they
+    // flag a user in user_flags instead), and see only verifiers' activity-log entries. An admin
     // adds them by email in the portal's Team page (admin_staff/{lower-case email}), so no script
     // or service-account key is needed; the email must be verified (Google sign-in always is).
     // Costs one document read, and only on requests an admin claim has not already allowed.
@@ -606,6 +607,28 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isStaff();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (isOwner(userId) && isValidBanAppealUpdate());
+    }
+
+    // A verifier's request for an admin to look at a learner, one open flag per user:
+    // { uid, displayName, reason, flaggedBy, flaggedAt }. Blocking stays an admin's decision, so a
+    // verifier can only raise a flag, in their own name, and never change or clear one; an admin
+    // clears it by dismissing it or by blocking the user. The learner never sees it.
+    match /user_flags/{userId} {
+      allow read: if isStaff();
+      allow create: if isAdmin()
+        || (isVerifier()
+          && request.resource.data.keys().hasOnly(['uid', 'displayName', 'reason', 'flaggedBy', 'flaggedAt'])
+          && request.resource.data.uid == userId
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() <= 200
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.flaggedBy is string
+          && request.resource.data.flaggedBy.lower() == request.auth.token.email.lower()
+          && request.resource.data.flaggedAt is int);
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Deny everything else by default (explicit allow rules only).

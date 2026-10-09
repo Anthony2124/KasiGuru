@@ -2,7 +2,8 @@
 //
 // Two roles. An admin carries the `admin` custom claim (functions/set_admin_claim.js). A verifier is
 // anyone whose verified email an admin listed on the Team page (admin_staff/{lower-case email}).
-// Verifiers moderate everything except APK releases and blocking users; firestore.rules enforces the
+// Verifiers moderate everything except APK releases and blocking users (they flag a user for an
+// admin instead) and cannot back up or restore; firestore.rules enforces the
 // same split server-side, so hiding a control here is convenience, not security.
 import { db, doc, getDocFromServer, updateDoc, runTransaction } from './firebase-config.js';
 

@@ -108,6 +108,21 @@ const request = (method, path, data, auth) => fetch(`${base}/${path}`, {
 
   await expect('a verifier approves a sentence', 'PATCH', 'sentence_submissions/s1', { ...sentence, status: 'approved' }, VERIFIER, 200);
 
+  // Flags: a verifier asks an admin to look at a learner; only an admin clears one.
+  const flag = { uid: 'troll', displayName: 'Troll', reason: 'Spam submissions', flaggedBy: 'Ver@Example.com', flaggedAt: 10 };
+  await expect('a verifier flags a learner', 'PATCH', 'user_flags/troll', flag, VERIFIER, 200);
+  await expect('a verifier cannot change an open flag', 'PATCH', 'user_flags/troll', { ...flag, reason: 'Something else' }, VERIFIER, 403);
+  await expect("a verifier cannot flag in someone else's name", 'PATCH', 'user_flags/t2', { ...flag, uid: 't2', flaggedBy: 'boss@example.com' }, VERIFIER, 403);
+  await expect('a flag needs a reason', 'PATCH', 'user_flags/t3', { ...flag, uid: 't3', reason: '' }, VERIFIER, 403);
+  await expect('a flag names the user it is filed under', 'PATCH', 'user_flags/t4', { ...flag, uid: 'someone' }, VERIFIER, 403);
+  await expect('a flag carries nothing else', 'PATCH', 'user_flags/t5', { ...flag, uid: 't5', isBanned: true }, VERIFIER, 403);
+  await expect('a verifier reads flags', 'GET', 'user_flags/troll', null, VERIFIER, 200);
+  await expect('a verifier cannot dismiss a flag', 'DELETE', 'user_flags/troll', null, VERIFIER, 403);
+  await expect('a learner cannot see flags', 'GET', 'user_flags/troll', null, LEARNER, 403);
+  await expect('a learner cannot flag', 'PATCH', 'user_flags/t6', { ...flag, uid: 't6', flaggedBy: 'learner@example.com' }, LEARNER, 403);
+  await expect('an admin reads a flag', 'GET', 'user_flags/troll', null, ADMIN, 200);
+  await expect('an admin dismisses a flag', 'DELETE', 'user_flags/troll', null, ADMIN, 200);
+
   await expect('admin removes the verifier', 'DELETE', 'admin_staff/ver@example.com', null, ADMIN, 200);
   await expect('a removed verifier loses access', 'PATCH', 'vocabulary/w4', word, VERIFIER, 403);
 
