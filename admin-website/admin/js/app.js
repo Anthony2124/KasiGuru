@@ -1101,7 +1101,16 @@ function resetReleaseForm() {
 
 // ── Admin Logs Tab ──────────────────────────────────────────────────────────
 
+// APK releases are admin-only, so a verifier's activity log leaves out their publish, edit and yank
+// entries, and the export does too. The release facts themselves are public (app_releases), so this
+// keeps the log to the work a verifier does rather than protecting anything.
+const isReleaseLog = (log) => String(log.action || '').startsWith('release.');
+
 function initLogsControls() {
+  if (!isAdminRole()) {
+    document.querySelectorAll('#filter-logs-action option[data-admin-only]').forEach(o => o.remove());
+  }
+
   const searchLogs = document.getElementById('search-logs-input');
   if (searchLogs) {
     searchLogs.addEventListener('input', () => {
@@ -1126,6 +1135,7 @@ function filteredAuditLogs() {
   const filterAction = document.getElementById('filter-logs-action')?.value || '';
 
   return auditLogs.filter(log => {
+    if (!isAdminRole() && isReleaseLog(log)) return false;
     if (filterAction) {
       if (filterAction === 'user') {
         if (!log.action.startsWith('user.') && !log.action.startsWith('user_') && !log.action.startsWith('appeal.')) return false;
@@ -1281,6 +1291,7 @@ window.exportAuditLogs = async function() {
   let targetLogs;
   try {
     targetLogs = (await getDocs(logsQuery)).docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!isAdminRole()) targetLogs = targetLogs.filter(log => !isReleaseLog(log));
   } catch (e) {
     console.warn("Audit log export read failed:", e);
     notify('Could not read the audit log for export. Try again later.', 'error');
@@ -4778,8 +4789,10 @@ function initUsersListener() {
   // Search + filter controls
   const searchInput = document.getElementById('search-users-input');
   const filterSelect = document.getElementById('filter-users-status');
+  const sortSelect = document.getElementById('sort-users');
   if (searchInput) searchInput.addEventListener('input', renderUsersTable);
   if (filterSelect) filterSelect.addEventListener('change', renderUsersTable);
+  if (sortSelect) sortSelect.addEventListener('change', renderUsersTable);
 
   const usersTableBody = document.getElementById('users-tbody');
   if (usersTableBody) {
@@ -4833,6 +4846,15 @@ async function enrichUsersWithProgress() {
   }));
   usersList = usersList.map(applyProgress);
   renderUsersTable();
+}
+
+// The date the Date Registered column shows, in ms, or 0 when no record carries one. Older accounts
+// have no registration stamp, so their last active day stands in.
+function userRegisteredMs(user) {
+  const ms = toMillis(user.registeredAt || user.createdAt || user.joinedAt || user.updatedAt);
+  if (ms > 0) return ms;
+  const parsed = user.lastActiveDate ? Date.parse(user.lastActiveDate) : NaN;
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function renderUsersTable() {
@@ -4913,6 +4935,22 @@ function renderUsersTable() {
     });
   }
 
+  // ── Step 4: Sort ─────────────────────────────────────────────────
+  // By date, accounts with no date sort last in either direction. By XP, the progress doc's value
+  // can differ from the leaderboard order the listener delivered, so the order is set here.
+  const sortU = document.getElementById('sort-users')?.value || 'xp';
+  if (sortU === 'newest' || sortU === 'oldest') {
+    const dir = sortU === 'newest' ? -1 : 1;
+    registeredUsers.sort((a, b) => {
+      const am = userRegisteredMs(a);
+      const bm = userRegisteredMs(b);
+      if (!am || !bm) return (am ? 0 : 1) - (bm ? 0 : 1);
+      return (am - bm) * dir;
+    });
+  } else {
+    registeredUsers.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
+  }
+
   if (countEl) {
     countEl.textContent = `${registeredUsers.length} user account${registeredUsers.length === 1 ? '' : 's'}`;
   }
@@ -4968,15 +5006,10 @@ function renderUsersTable() {
     const emailDisplay = resolvedEmail ? escapeHtml(resolvedEmail) : `<span style="color:var(--muted);">—</span>`;
 
     // Format date
-    const dateValue = user.registeredAt || user.createdAt || user.joinedAt || user.updatedAt;
-    const dateMs = toMillis(dateValue);
-    let registeredDate = '—';
-    if (dateMs > 0) {
-      registeredDate = new Date(dateMs).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
-    } else if (user.lastActiveDate) {
-      const parsed = Date.parse(user.lastActiveDate);
-      if (!Number.isNaN(parsed)) registeredDate = new Date(parsed).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
-    }
+    const dateMs = userRegisteredMs(user);
+    const registeredDate = dateMs > 0
+      ? new Date(dateMs).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' })
+      : '—';
 
     const badge = escapeHtml(user.titleBadge || 'Kasiguranin Apprentice');
 

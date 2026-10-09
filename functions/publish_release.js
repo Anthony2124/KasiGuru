@@ -30,7 +30,8 @@ admin.initializeApp({
 });
 
 (async () => {
-  const ref = admin.firestore().collection('app_releases').doc(`v${versionName}`);
+  const db = admin.firestore();
+  const ref = db.collection('app_releases').doc(`v${versionName}`);
 
   // The admin dashboard's publish form writes the same six fields to this same doc id,
   // so whichever runs second must not undo the other's work. {merge: true} alone does
@@ -56,9 +57,30 @@ admin.initializeApp({
   if (typeof existing.forceUpdate !== 'boolean') doc.forceUpdate = false;
   if (typeof existing.releasedAt !== 'number') doc.releasedAt = Date.now();
 
-  await ref.set(doc, { merge: true });
+  // A new release also goes into the admin portal's activity log, in the same batch so the
+  // two cannot disagree. Same entry shape the portal's publish form writes. Only a new one:
+  // a re-run of this job, or a release first published from the portal (which logs its
+  // own entry), is already in the log.
+  const batch = db.batch();
+  batch.set(ref, doc, { merge: true });
+  if (!snap.exists) {
+    batch.create(db.collection('admin_audit_log').doc(), {
+      actor: 'GitHub Actions',
+      actorRole: 'ci',
+      action: 'release.publish',
+      details: {
+        versionCode,
+        versionName,
+        apkUrl,
+        forceUpdate: doc.forceUpdate,
+        ...(process.env.GITHUB_ACTOR ? { triggeredBy: process.env.GITHUB_ACTOR } : {}),
+      },
+      timestamp: doc.releasedAt,
+    });
+  }
+  await batch.commit();
   console.log(
-    `Published app_releases/v${versionName}${snap.exists ? ' (merged into existing doc)' : ''}:`,
+    `Published app_releases/v${versionName}${snap.exists ? ' (merged into existing doc)' : ' and logged it'}:`,
     JSON.stringify(doc)
   );
 })().catch((err) => {
