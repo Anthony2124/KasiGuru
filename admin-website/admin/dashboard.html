@@ -601,6 +601,12 @@
             <option value="banned">Blocked only</option>
             <option value="appeals">Appeals pending</option>
           </select>
+          <label class="sr-only" for="sort-users">Sort by</label>
+          <select id="sort-users" class="form-control" style="width:auto; min-width:170px;">
+            <option value="xp">Highest XP first</option>
+            <option value="newest">Newest registered</option>
+            <option value="oldest">Oldest registered</option>
+          </select>
         </div>
 
         <div class="table-responsive">
@@ -668,7 +674,7 @@
             <option value="submission">Submissions</option>
             <option value="literature">Literature</option>
             <option value="story">Stories</option>
-            <option value="release">Releases</option>
+            <option value="release" data-admin-only>Releases</option>
             <option value="announcement">Announcements</option>
           </select>
         </div>
