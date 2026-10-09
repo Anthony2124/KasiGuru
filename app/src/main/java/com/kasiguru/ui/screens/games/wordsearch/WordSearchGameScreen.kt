@@ -73,7 +73,11 @@ import com.kasiguru.domain.wordsearch.WordSearchPuzzle
 import com.kasiguru.ui.components.AudioPlayButton
 import com.kasiguru.ui.components.CasiguranBackdrop
 import com.kasiguru.ui.components.backdropPill
+import com.kasiguru.domain.games.wordSearchHint
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameHintButton
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.GameUnavailableState
 import com.kasiguru.ui.components.clay.GroundPattern
@@ -198,7 +202,8 @@ fun WordSearchGameScreen(
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         viewModel.onCellTapped(it)
                     },
-                    onPlayWord = { id -> uiState.entries[id]?.let(audioPlayerManager::playWord) }
+                    onPlayWord = { id -> uiState.entries[id]?.let(audioPlayerManager::playWord) },
+                    onRevealHint = viewModel::revealHint
                 )
             }
         }
@@ -212,11 +217,12 @@ private fun PlayingState(
     onCellCrossed: () -> Unit,
     onLineSelected: (GridCell, GridCell) -> Unit,
     onCellTapped: (GridCell) -> Unit,
-    onPlayWord: (Int) -> Unit
+    onPlayWord: (Int) -> Unit,
+    onRevealHint: () -> Unit
 ) {
     val scene = Scenery.forCategory(uiState.category)
     CasiguranBackdrop(scene) {
-        PlayingContent(uiState, puzzle, onCellCrossed, onLineSelected, onCellTapped, onPlayWord)
+        PlayingContent(uiState, puzzle, onCellCrossed, onLineSelected, onCellTapped, onPlayWord, onRevealHint)
     }
 }
 
@@ -227,7 +233,8 @@ private fun PlayingContent(
     onCellCrossed: () -> Unit,
     onLineSelected: (GridCell, GridCell) -> Unit,
     onCellTapped: (GridCell) -> Unit,
-    onPlayWord: (Int) -> Unit
+    onPlayWord: (Int) -> Unit,
+    onRevealHint: () -> Unit
 ) {
     val hues = wordHues()
     // Which found word owns each cell, so the grid and the list share one colour per word.
@@ -288,6 +295,18 @@ private fun PlayingContent(
             style = MaterialTheme.typography.titleMedium,
             color = Ink,
             modifier = Modifier.backdropPill(Surface).padding(horizontal = Space.sm, vertical = Space.xxs)
+        )
+        Spacer(Modifier.height(Space.xs))
+        // The simple meaning of each word still hidden; a word drops out of it once found.
+        GameHintButton(
+            hint = wordSearchHint(
+                puzzle.words
+                    .filter { it.id !in uiState.foundIds }
+                    .map { it.word to uiState.entries[it.id]?.let { e -> hintFor(e, HintLanguages.EnglishOnly) } }
+            ),
+            revealed = uiState.hintRevealed,
+            onReveal = onRevealHint,
+            overScene = true
         )
         Spacer(Modifier.height(Space.xs))
         Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {

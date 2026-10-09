@@ -24,13 +24,14 @@
   <!-- Access denied: signed in, but neither an admin nor a listed verifier -->
   <div id="access-denied-screen" class="hidden" style="position:fixed; inset:0; background:var(--ground); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px;">
     <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
-    <h2 style="margin:0;">This account can't open the console</h2>
+    <h2 id="access-denied-title" style="margin:0;">This account can't open the console</h2>
     <p id="access-denied-email-display" style="color:var(--status-pending); font-weight:700; margin:0;"></p>
-    <p style="color:var(--muted); max-width:420px; margin:0;">
+    <p id="access-denied-message" style="color:var(--muted); max-width:420px; margin:0;">
       It isn't an admin or a verifier. Ask an admin to add this email on the Team page, or sign in
       with the email they added.
     </p>
-    <button class="btn btn-primary" onclick="window.adminSignOut()">Use a different account</button>
+    <button type="button" id="access-retry-btn" class="btn btn-primary" onclick="window.location.reload()" hidden>Try again</button>
+    <button type="button" class="btn btn-primary" onclick="window.adminSignOut()">Use a different account</button>
   </div>
 
   <div class="app">
@@ -713,7 +714,7 @@
       <div class="team">
         <!-- Add. One row: the address and the button. Problems show under the field, not in a toast. -->
         <div class="card">
-          <div class="card-head"><div><h2>Add a verifier</h2><p>They sign in with this email using "Continue with Google". You send them the invite.</p></div></div>
+          <div class="card-head"><div><h2>Add a verifier</h2><p>Use their Google account email. Their account is set up when they first choose "Continue with Google". You send them the invite.</p></div></div>
           <form id="team-add-form" class="team-add" novalidate>
             <label for="team-email" class="sr-only">Verifier's email address</label>
             <div class="team-add-field">

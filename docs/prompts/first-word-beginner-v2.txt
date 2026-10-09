@@ -1,0 +1,9 @@
+Create ONE standalone KasiGuru achievement badge: Word Explorer, milestone First Word, Tier 1 — Beginner. Use the attached six-badge image as the construction and cartoon-style reference, especially its simplest upper-left medallion.
+
+Draw a front-facing circular medallion in soft blue-gray and muted lavender, with a thick outer rim, secondary inner ring and softly scalloped inner seal. Center a large cream-colored rounded speech bubble containing one simple four-point sparkle. This emblem represents speaking and learning a first word. Use smooth layered cartoon shapes, clean contours and subtle upper-left highlights. Keep the emblem bold and readable at 48–64 pixels.
+
+Tier 1 is simple: no ribbon, glow, rays, decorative sparkles outside the speech bubble, crown, gemstone or extra ornament. The sparkle inside the speech bubble is part of the achievement identity and must remain.
+
+Use a square image with one centered badge, generous padding and a pure white background. No text, letters, numbers, labels, characters, scenery, UI, additional badges or tier grid. Avoid realistic metal, detailed textures and excessive 3D.
+
+Establish a clear base design whose exact central symbol, medallion proportions and icon placement can be retained when its frame later evolves through Learner, Achiever, Expert, Master and Legend. Generate ONLY this Beginner badge.

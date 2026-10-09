@@ -140,6 +140,10 @@ fun HomeScreen(
     onOpenXp: () -> Unit,
     onOpenWord: (Int) -> Unit,
     onOpenGame: (String) -> Unit,
+    /** Contribute a word; also in the Library, Me and Help, but learners did not find it there. */
+    onOpenSubmitWord: () -> Unit,
+    /** Report a wrong word or a problem; also in Help and on each word. */
+    onOpenReport: () -> Unit,
     viewModel: LearnViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -244,6 +248,18 @@ fun HomeScreen(
                     Jepjep(JepjepPose.Curious, height = 84.dp)
                 }
             }
+        }
+        Spacer(Modifier.height(Space.lg))
+        SectionHeading(text = "Help the dictionary")
+        Spacer(Modifier.height(Space.sm))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm)
+        ) {
+            QuickPracticeTile("Add a word", IconSax.Bold.AddCircle, onOpenSubmitWord, Modifier.weight(1f))
+            QuickPracticeTile("Report an issue", IconSax.Bold.Danger, onOpenReport, Modifier.weight(1f))
         }
         // Notices last, one line each: they are news, not the day's work.
         if (uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
@@ -554,7 +570,7 @@ private fun PrimaryAction(
     }
 }
 
-/** One of Home's three shortcuts: the icon on a lime disc, the name under it. */
+/** One of Home's shortcut tiles: the icon on a lime disc, the name under it. */
 @Composable
 private fun QuickPracticeTile(label: String, iconRes: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     SoftCard(

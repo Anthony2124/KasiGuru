@@ -263,6 +263,25 @@ export async function submitWord(s: WordSubmission) {
   });
 }
 
+/**
+ * An example sentence for a word with none, for a verifier to approve (`sentence_submissions`; the
+ * same fields as Android's SubmissionRepository.submitSentence and firestore.rules).
+ */
+export async function submitSentence(s: { kasiguranin: string; english: string; sentence: string; translation: string; contributorName: string }) {
+  const ref = doc(collection(db, 'sentence_submissions'));
+  await setDoc(ref, {
+    id: ref.id,
+    kasiguranin: s.kasiguranin.trim().slice(0, 80),
+    english: s.english.trim().slice(0, 300),
+    sentence: s.sentence.trim(),
+    translation: s.translation.trim(),
+    contributorName: s.contributorName.trim().slice(0, 60),
+    status: 'pending',
+    submittedAt: Date.now(),
+    uid: getState().account.uid ?? '',
+  });
+}
+
 export interface LiteratureSubmission {
   title: string;
   titleKasiguranin: string;

@@ -8,6 +8,7 @@ import {
   getDocsFromServer,
   getCountFromServer,
   getDoc, 
+  getDocFromServer,
   setDoc, 
   addDoc, 
   updateDoc, 
@@ -22,6 +23,7 @@ import {
   // every picture by a third for an audience that is explicitly data-sensitive.
   Bytes,
   writeBatch,
+  runTransaction,
   // The backup export has to recognise these to write them into JSON as what they are.
   Timestamp,
   GeoPoint,
@@ -53,6 +55,7 @@ export {
   getDocsFromServer,
   getCountFromServer,
   getDoc, 
+  getDocFromServer,
   setDoc, 
   addDoc, 
   updateDoc, 
@@ -65,6 +68,7 @@ export {
   onSnapshot,
   Bytes,
   writeBatch,
+  runTransaction,
   Timestamp,
   GeoPoint,
   DocumentReference

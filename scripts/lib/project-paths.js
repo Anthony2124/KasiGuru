@@ -13,9 +13,11 @@ const dictionaryData = (filename) => path.join(PROJECT_ROOT, 'data', 'dictionary
 const downloadsFile = (filename) => path.join(os.homedir(), 'Downloads', filename);
 const audioData = (filename) => path.join(PROJECT_ROOT, 'data', 'audio', filename);
 const RAW_RESOURCES = path.join(PROJECT_ROOT, 'app', 'src', 'main', 'res', 'raw');
+// Pronunciation clips shipped inside the APK, copied to the web app by scripts/web/sync-from-app.js.
+const WORD_AUDIO_ASSETS = path.join(PROJECT_ROOT, 'app', 'src', 'main', 'assets', 'word_audio');
 // Credentials live in the workspace's private folder, outside the source tree.
 const privateFile = (filename) => path.join(PROJECT_ROOT, '..', 'private', filename);
 
 module.exports = {
-  PROJECT_ROOT, DATABASE_SEEDER, RAW_RESOURCES, dictionaryData, audioData, downloadsFile, privateFile,
+  PROJECT_ROOT, DATABASE_SEEDER, RAW_RESOURCES, WORD_AUDIO_ASSETS, dictionaryData, audioData, downloadsFile, privateFile,
 };

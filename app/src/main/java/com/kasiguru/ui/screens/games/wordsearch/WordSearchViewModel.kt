@@ -39,6 +39,8 @@ data class WordSearchUiState(
     val selectionStart: GridCell? = null,
     val lastTapMissed: Boolean = false,
     val misses: Int = 0,
+    /** The learner asked to see the meanings of the words still hidden; costs the perfect bonus. */
+    val hintRevealed: Boolean = false,
     val isGameOver: Boolean = false,
     val starsEarned: Int = 0,
     val finalXp: Int = 0,
@@ -119,6 +121,13 @@ class WordSearchViewModel @Inject constructor(
         }
     }
 
+    /** Shows each unfound word's meaning, as the other games' hint does: correctness stays, "perfect" goes. */
+    fun revealHint() {
+        val state = _uiState.value
+        if (state.isGameOver || state.hintRevealed) return
+        _uiState.value = state.copy(hintRevealed = true)
+    }
+
     private fun judgeLine(state: WordSearchUiState, from: GridCell, to: GridCell) {
         val puzzle = state.puzzle ?: return
         val hit = puzzle.match(from, to, state.foundIds.toSet())
@@ -145,7 +154,8 @@ class WordSearchViewModel @Inject constructor(
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
-            val xp = userProgressRepository.awardGame("word_search",levelKey,levelNumber,wordCount,wordCount,stars,state.misses == 0,
+            val perfect = state.misses == 0 && !state.hintRevealed
+            val xp = userProgressRepository.awardGame("word_search",levelKey,levelNumber,wordCount,wordCount,stars,perfect,
                 state.puzzle?.words?.map { it.id }.orEmpty())
             gameRepository.saveScore(
                 GameScoreEntity(

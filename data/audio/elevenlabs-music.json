@@ -1,0 +1,18 @@
+{
+  "_comment": "Background music generated with the ElevenLabs Music API. scripts/audio/elevenlabs-music.js reads `slots` to generate candidates and records the chosen take under `installed`. loudnessLufs matches the loop each slot replaced, so MusicPlayer's tuned volume still applies.",
+  "slots": {
+    "music_menu": {
+      "label": "Menu music (loop)",
+      "lengthMs": 90000,
+      "loudnessLufs": -23.1,
+      "prompt": "Warm, gentle instrumental background music for the menus of a friendly language-learning app. Soft acoustic guitar, mellow marimba and light hand percussion, relaxed tempo around 88 BPM, bright and welcoming with a sunny coastal feel. Calm enough to read over. No vocals. Even, steady texture from start to finish with no intro, no build-ups, no drops and no ending, so it loops smoothly."
+    },
+    "music_game": {
+      "label": "Game music (loop)",
+      "lengthMs": 75000,
+      "loudnessLufs": -14.8,
+      "prompt": "Upbeat, playful instrumental background music for word-puzzle mini-games in a language-learning app. Bouncy marimba, plucked strings, kalimba accents and snappy light percussion, around 116 BPM, cheerful and focused, helps concentration without distracting. No vocals. Consistent energy from start to finish with no intro, no drops and no ending, so it loops smoothly."
+    }
+  },
+  "installed": {}
+}

@@ -121,3 +121,19 @@ node scripts/audio/freesound.js fetch       # downloads the locked previews into
 `fetch` re-checks each license before downloading and replaces any other
 format with the same resource name. If a music loop is over about 2.5 MB, set
 its `"quality"` to `"lq"` in the manifest and fetch again.
+
+## Word recordings
+
+Pronunciation clips are uploaded in the admin portal to Firestore `word_audio`.
+The APK and the web app ship copies so recordings play offline and do not stop
+when the Spark plan's daily reads run out. After a recording session:
+
+```powershell
+npm run audio:export -- --dry-run   # how many clips are new or changed (reads only)
+npm run audio:export                # writes app/src/main/assets/word_audio and its manifest.json
+npm run sync:web                    # copies them to admin-website/webapp/public/audio
+```
+
+The export reads Firestore only (one read per vocabulary document plus one per
+changed clip) and never writes to it. A word re-recorded after a release still
+plays: both apps download the newer clip and fall back to the bundled take.

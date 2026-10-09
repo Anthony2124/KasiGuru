@@ -18,7 +18,8 @@ import { feedbackTone, playSfx, playWord } from '../../lib/audio';
 import { navigate, enc } from '../../lib/router';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { Icon, Loading, sceneForCategory } from '../kit';
-import { GameFrame, GameOver, GameUnavailable } from './shell';
+import { GameFrame, GameOver, GameUnavailable, HintButton } from './shell';
+import { wordSearchHint } from '../../domain/gameHints';
 import { tagalogGloss } from './gloss';
 
 const same = (a: Cell | null, b: Cell | null) => !!a && !!b && a[0] === b[0] && a[1] === b[1];
@@ -38,6 +39,8 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
   const [drag, setDrag] = useState<{ from: Cell; to: Cell } | null>(null);
   const [missed, setMissed] = useState(false);
   const [misses, setMisses] = useState(0);
+  // "Show a hint": the meanings of the words still hidden. Costs "perfect", never the stars.
+  const [hintShown, setHintShown] = useState(false);
   const [result, setResult] = useState<{ xp: number; stars: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const pointerDown = useRef<Cell | null>(null);
@@ -48,6 +51,7 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
     setDrag(null);
     setMissed(false);
     setMisses(0);
+    setHintShown(false);
     setResult(null);
   }, [board]);
 
@@ -99,7 +103,7 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
     const count = board.placements.length;
     const stars = missCount === 0 ? 3 : missCount <= 2 ? 2 : 1;
     const xp = act((d) =>
-      (d.met(board.placements.map((p) => p.id), GAMES.WORD_SEARCH), d).finishGame({ mode: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, correct: count, total: count, statsTotal: count + missCount, stars, perfect: missCount === 0 })
+      (d.met(board.placements.map((p) => p.id), GAMES.WORD_SEARCH), d).finishGame({ mode: GAMES.WORD_SEARCH, levelKeyType: levelKey, level, correct: count, total: count, statsTotal: count + missCount, stars, perfect: missCount === 0 && !hintShown })
     );
     setResult({ xp, stars });
   };
@@ -206,6 +210,13 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
       </div>
       <div class="card">
         <p class="t-title-s" style={{ marginBottom: 8 }}>Find these words</p>
+        <div style={{ marginBottom: 8 }}>
+          <HintButton
+            hint={wordSearchHint(board.placements.filter((p) => !foundSet.has(p.id)).map((p) => [p.word, entries.get(p.id)?.meaningEnglish]))}
+            revealed={hintShown}
+            onReveal={() => setHintShown(true)}
+          />
+        </div>
         <div class="ws-words">
           {board.placements.map((p) => {
             const isFound = foundSet.has(p.id);

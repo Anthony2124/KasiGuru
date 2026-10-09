@@ -30,7 +30,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import com.kasiguru.domain.games.wordWheelHint
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
+import com.kasiguru.ui.components.tapSounds
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -204,6 +210,7 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 modifier = Modifier.fillMaxWidth(),
                 overScene = true
             )
+            MeaningsHint(puzzle = puzzle, uiState = uiState, onShow = viewModel::showMeanings)
             Spacer(Modifier.height(Space.sm))
             Board(puzzle = puzzle, uiState = uiState)
             Spacer(Modifier.height(Space.sm))
@@ -255,6 +262,40 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
             )
         }
     }
+    }
+}
+
+/**
+ * "Show meanings": what the hidden words mean and how long they are, never the words. A dialog rather
+ * than a panel, because this screen does not scroll and a panel would shrink the board.
+ */
+@Composable
+private fun MeaningsHint(puzzle: WordWheelPuzzle, uiState: WordWheelUiState, onShow: () -> Unit) {
+    val hint = wordWheelHint(
+        puzzle.slots.indices
+            .filter { it !in uiState.foundSlots }
+            .map { i ->
+                val word = puzzle.slots[i].word
+                word.letters.size to uiState.entries[word.id]?.let { hintFor(it, HintLanguages.EnglishOnly) }
+            }
+    ) ?: return
+    var open by remember { mutableStateOf(false) }
+    TextButton(
+        onClick = { onShow(); open = true },
+        modifier = Modifier.backdropPill(Surface)
+    ) {
+        Icon(painterResource(Iconsax.InfoCircle), contentDescription = null, tint = Muted, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(Space.xxs))
+        Text("Show meanings", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Muted)
+    }
+    if (open) {
+        AlertDialog(
+            modifier = Modifier.tapSounds(),
+            onDismissRequest = { open = false },
+            title = { Text("Words still hidden") },
+            text = { Text(hint, style = MaterialTheme.typography.bodyLarge, color = Ink) },
+            confirmButton = { TextButton(onClick = { open = false }) { Text("Got it") } }
+        )
     }
 }
 

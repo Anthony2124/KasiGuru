@@ -11,6 +11,7 @@
     "dictionary:audit": "node scripts/dictionary/audit_dictionary.js",
     "dictionary:repair:preview": "node scripts/dictionary/repair_dictionary.js --dry-run",
     "dictionary:meanings:preview": "node scripts/dictionary/apply_meanings.js --dry-run",
+    "audio:export": "node scripts/audio/export-word-audio.js",
     "sync:web": "node scripts/web/sync-from-app.js",
     "check:web-sync": "node scripts/web/sync-from-app.js --check"
   }

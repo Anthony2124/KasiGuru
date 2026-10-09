@@ -13,9 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kasiguru.ui.components.GameAnswerFeedback
 import com.kasiguru.ui.components.GameHeader
+import com.kasiguru.ui.components.GameHintButton
 import com.kasiguru.ui.components.GameOverView
 import com.kasiguru.ui.components.rememberGameExitGuard
 import com.kasiguru.ui.components.clay.ClayButton
@@ -80,7 +83,12 @@ fun SentenceOrderGameScreen(
                 .padding(Space.gutter),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            // Scrolls above the pinned button, so a revealed hint never pushes "Check" off a small phone.
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
             GameHeader(
                 label = "Sentence $qIndex/${uiState.totalQuestions}",
                 progress = qIndex.toFloat() / uiState.totalQuestions.toFloat(),
@@ -116,6 +124,17 @@ fun SentenceOrderGameScreen(
                     )
                 }
             }
+
+            // What the sentence's words mean, on request; hidden when none is in the dictionary.
+            if (!hasChecked) {
+                Spacer(modifier = Modifier.height(Space.xs))
+                GameHintButton(
+                    hint = question.hint,
+                    revealed = uiState.hintRevealed,
+                    onReveal = { viewModel.revealHint() }
+                )
+            }
+            Spacer(modifier = Modifier.height(Space.sm))
 
             // Selected Words Slot Box — the border and fill carry the result, not colour alone: the
             // icon-free but explicit "Correct!"/"Not quite" line right below it backs it up in text.

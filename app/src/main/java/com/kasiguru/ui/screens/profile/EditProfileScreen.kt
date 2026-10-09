@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,12 +40,7 @@ import com.kasiguru.ui.components.clay.GroundScaffold
 import com.kasiguru.ui.components.clay.GroundTitleBlock
 import com.kasiguru.ui.components.clay.ClayButton
 import com.kasiguru.ui.components.clay.SoftCard
-import com.kasiguru.ui.theme.OnCanopy
-import com.kasiguru.ui.theme.Red
-import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
-import com.kasiguru.ui.theme.Surface
-import com.kasiguru.ui.theme.SurfaceSunken
 import com.kasiguru.ui.theme.Lime
 import kotlinx.coroutines.launch
 import com.kasiguru.ui.components.tapSounds
@@ -110,9 +104,9 @@ fun EditProfileScreen(
 
     GroundScaffold(
         title = "Edit profile",
-        onBack = onNavigateBack,
+        // The arrow asks before discarding, as the system back gesture does.
+        onBack = attemptBack,
         pattern = GroundPattern.Orbs,
-        compactTitle = true,
         content = {
             // Scrolls, and clears the keyboard. The avatar grid alone is nine portraits, so the form
             // only fit on the tallest phones: on a shorter screen, a larger text size, or with the
@@ -122,10 +116,10 @@ fun EditProfileScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(Space.gutter),
+                    .padding(horizontal = Space.gutter),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                com.kasiguru.ui.components.clay.GroundTitleBlock(title = "Edit profile")
+                GroundTitleBlock(title = "Edit profile")
                 Spacer(Modifier.height(Space.sm))
                 JepjepAvatarPortrait(
                     avatar = avatar,
@@ -193,11 +187,3 @@ fun EditProfileScreen(
         }
     )
 }
-
-@Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = Surface,
-    unfocusedContainerColor = Surface,
-    focusedBorderColor = Lime,
-    unfocusedBorderColor = SurfaceSunken
-)

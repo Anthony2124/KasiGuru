@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.kasiguru.domain.games.sentenceHint
 import com.kasiguru.domain.lesson.SentenceBank
 import com.kasiguru.ui.components.GameReviewItem
 
@@ -28,7 +29,9 @@ data class SentenceQuestion(
     val correctKasiguraninWords: List<String>,
     val shuffledWords: List<String>,
     /** The dictionary word whose example this is, for My words; null for an authored bank sentence. */
-    val wordId: Int? = null
+    val wordId: Int? = null,
+    /** What each of the sentence's words means ([sentenceHint]); null when none is in the dictionary. */
+    val hint: String? = null
 )
 
 data class SentenceOrderUiState(
@@ -38,6 +41,8 @@ data class SentenceOrderUiState(
     val constructedWords: List<String> = emptyList(),
     val isCorrect: Boolean? = null,
     val score: Int = 0,
+    /** The current sentence's word meanings are showing; costs the round's perfect bonus. */
+    val hintRevealed: Boolean = false,
     val isGameFinished: Boolean = false,
     val finalXp: Int = 0,
     val starsEarned: Int = 0,
@@ -58,6 +63,7 @@ class SentenceOrderViewModel @Inject constructor(
     private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private var finishing = false
+    private var usedHint = false
     private val _uiState = MutableStateFlow(SentenceOrderUiState())
     val uiState: StateFlow<SentenceOrderUiState> = _uiState.asStateFlow()
 
@@ -136,6 +142,7 @@ class SentenceOrderViewModel @Inject constructor(
             }
 
             val sampleSentences = rawSentences.sortedBy { sentenceScore(it) }.take(questionsCount).shuffled()
+                .map { q -> q.copy(hint = sentenceHint(q.correctKasiguraninWords) { vocabMap[it] ?: vocabNeutralMap[it] }) }
 
             questionQueue.clear()
             questionQueue.addAll(sampleSentences)
@@ -179,6 +186,14 @@ class SentenceOrderViewModel @Inject constructor(
                 constructedWords = newConstructed
             )
         }
+    }
+
+    /** Shows what the sentence's words mean. The answer still counts; the perfect bonus does not. */
+    fun revealHint() {
+        val state = _uiState.value
+        if (state.hintRevealed || state.isCorrect != null) return
+        usedHint = true
+        _uiState.update { it.copy(hintRevealed = true) }
     }
 
     fun checkAnswer() {
@@ -255,7 +270,8 @@ class SentenceOrderViewModel @Inject constructor(
                     currentQuestionIndex = nextIndex,
                     availableWords = nextQuestion.shuffledWords,
                     constructedWords = emptyList(),
-                    isCorrect = null
+                    isCorrect = null,
+                    hintRevealed = false
                 )
             }
         } else {
@@ -270,7 +286,7 @@ class SentenceOrderViewModel @Inject constructor(
                     successRate >= 0.4f -> 1
                     else -> 0
                 }
-                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs,
+                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs && !usedHint,
                     currentState.questions.mapNotNull { it.wordId })
                 gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
 
@@ -302,6 +318,7 @@ class SentenceOrderViewModel @Inject constructor(
 
     fun resetGame() {
         finishing = false
+        usedHint = false
         reviewItems.clear()
         _uiState.update {
             SentenceOrderUiState(

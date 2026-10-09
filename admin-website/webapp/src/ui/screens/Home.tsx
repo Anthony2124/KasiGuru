@@ -233,6 +233,23 @@ export function HomeScreen() {
             </section>
           )}
 
+          {/* Also in the Library, Me and Help, where learners did not find them. */}
+          <section>
+            <SectionHeading text="Help the dictionary" />
+            <div class="quick-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              {[
+                { label: 'Add a word', icon: 'addCircle' as const, go: () => navigate('/submit-word') },
+                { label: 'Report an issue', icon: 'danger' as const, go: () => navigate(`/report?screen=${encodeURIComponent('Home')}`) },
+              ].map((q) => (
+                <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 'var(--s-md) var(--s-xs)' }}>
+                  <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--lime-tint)', display: 'grid', placeItems: 'center' }}>
+                    <Icon name={q.icon} size={24} color="var(--lime)" />
+                  </span>
+                  <span class="t-title-s">{q.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     </main>

@@ -381,7 +381,9 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
                     onOpenWord = { navController.navigate(Screen.VocabularyDetail.createRoute(it)) },
                     onOpenGame = { game ->
                         navController.navigate(if (game == Constants.Games.WORD_SEARCH) Screen.WordSearchCategories.route else Screen.LevelSelection.createRoute(game))
-                    }
+                    },
+                    onOpenSubmitWord = { navController.navigate(Screen.SubmitWord.route) },
+                    onOpenReport = { navController.navigate(Screen.ReportIssue.createRoute(screenContext = "Home")) }
                 )
             }
 

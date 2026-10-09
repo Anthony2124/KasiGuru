@@ -3,6 +3,7 @@ package com.kasiguru.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.kasiguru.data.remote.model.LiteratureSubmissionDto
+import com.kasiguru.data.remote.model.SentenceSubmissionDto
 import com.kasiguru.data.remote.model.WordSubmissionDto
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -29,6 +30,25 @@ class SubmissionRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /** Sends an example sentence for review. Written as a plain map so its keys are exactly the rule's. */
+    suspend fun submitSentence(submission: SentenceSubmissionDto): Result<Unit> = runCatching {
+        val docRef = firestore.collection("sentence_submissions").document()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        docRef.set(
+            mapOf(
+                "id" to docRef.id,
+                "kasiguranin" to submission.kasiguranin.trim().take(80),
+                "english" to submission.english.trim().take(300),
+                "sentence" to submission.sentence.trim(),
+                "translation" to submission.translation.trim(),
+                "contributorName" to submission.contributorName.trim().take(60),
+                "status" to "pending",
+                "submittedAt" to System.currentTimeMillis(),
+                "uid" to uid
+            )
+        ).await()
     }
 
     suspend fun submitLiterature(submission: LiteratureSubmissionDto): Result<Unit> {

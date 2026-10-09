@@ -5,12 +5,11 @@
 // signed-in account that is neither an admin nor a verifier). Access itself is decided by roles.js
 // and enforced by firestore.rules.
 import { auth } from './firebase-config.js';
-import { resolveRole } from './roles.js';
+import { resolveRole, accessCheckMessage } from './roles.js';
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -25,6 +24,9 @@ const chooserProvider = new GoogleAuthProvider();
 chooserProvider.setCustomParameters({ prompt: 'select_account' });
 
 const $ = (id) => document.getElementById(id);
+// The first-load check may still be running when a person starts a new sign-in.
+// Only the latest attempt may change the page or sign an account out.
+let attemptId = 0;
 
 // ── States ──────────────────────────────────────────────────────────────────
 
@@ -42,7 +44,7 @@ function showActions() {
 /** Disables everything while a sign-in is in flight; [button] shows a spinner and [label]. */
 function setBusy(button, label) {
   const busy = !!button;
-  for (const el of [$('google-login-btn'), $('login-btn'), $('admin-email'), $('admin-password'), $('forgot-password-link')]) {
+  for (const el of [$('google-login-btn'), $('use-other-account'), $('login-btn'), $('admin-email'), $('admin-password'), $('forgot-password-link')]) {
     if (el) el.disabled = busy;
   }
   for (const [btn, idle] of [[$('google-login-btn'), 'Continue with Google'], [$('login-btn'), 'Sign in']]) {
@@ -80,14 +82,17 @@ function clearNotice() {
 }
 
 /** Sends a signed-in account on, or explains why it cannot come in and signs it out. */
-async function admit(user, { fresh = false, viaPassword = false } = {}) {
-  if (await resolveRole(user, { forceRefresh: fresh })) {
+async function admit(user, { fresh = false, viaPassword = false, attempt = attemptId } = {}) {
+  const role = await resolveRole(user, { forceRefresh: fresh });
+  if (attempt !== attemptId) return;
+  if (role) {
     showChecking('Opening the console…');
     window.location.href = 'dashboard.html';
     return;
   }
   const email = user.email || 'This account';
   await signOut(auth).catch(() => {});
+  if (attempt !== attemptId) return;
   setBusy(null);
   showActions();
   if (viaPassword && !user.emailVerified) {
@@ -106,14 +111,23 @@ async function admit(user, { fresh = false, viaPassword = false } = {}) {
 // that block the hidden firebaseapp.com frame it uses (third-party storage), it can wait forever,
 // which is how the sign-in page got stuck on 2026-10-08.
 const REDIRECT_FLAG = 'kg-admin-google-redirect';
-const withTimeout = (promise, ms, fallback) =>
-  Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+async function withTimeout(promise, ms, fallback) {
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((resolve) => {
+      timer = setTimeout(() => resolve(fallback), ms);
+    })]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const firstAuthState = new Promise((resolve) => {
   const stop = onAuthStateChanged(auth, (user) => { stop(); resolve(user); });
 });
 
 (async () => {
+  const attempt = attemptId;
   showChecking('Checking your session…');
   let redirectedUser = null;
   let redirectStarted = false;
@@ -124,6 +138,7 @@ const firstAuthState = new Promise((resolve) => {
     try {
       redirectedUser = (await withTimeout(getRedirectResult(auth), 10000, null))?.user || null;
     } catch (err) {
+      if (attempt !== attemptId) return;
       console.error('Redirect result error:', err);
       showActions();
       showError('Google sign-in did not finish. Try again.');
@@ -131,14 +146,18 @@ const firstAuthState = new Promise((resolve) => {
     }
   }
   const user = redirectedUser || await withTimeout(firstAuthState, 6000, null);
+  if (attempt !== attemptId) return;
   if (user) {
     try {
-      const outcome = await withTimeout(admit(user, { fresh: !!redirectedUser }).then(() => 'done'), 10000, 'slow');
-      if (outcome === 'done') return;
+      await admit(user, { fresh: !!redirectedUser, attempt });
+      return;
     } catch (e) {
+      if (attempt !== attemptId) return;
       console.warn('Session check failed:', e);
+      showError(accessCheckMessage(e));
     }
   }
+  if (attempt !== attemptId) return;
   showActions();
   // A browser that filled in saved credentials gets the password form open.
   setTimeout(() => {
@@ -149,23 +168,36 @@ const firstAuthState = new Promise((resolve) => {
 // ── Google ──────────────────────────────────────────────────────────────────
 
 async function signInWithGoogle(provider = googleProvider) {
+  if ($('google-login-btn').disabled) return;
+  const attempt = ++attemptId;
   clearError();
   clearNotice();
   setBusy($('google-login-btn'), 'Opening Google…');
   try {
     const credential = await signInWithPopup(auth, provider);
     setBusy($('google-login-btn'), 'Signing in…');
-    await admit(credential.user, { fresh: true });
+    try {
+      await admit(credential.user, { fresh: true, attempt });
+    } catch (err) {
+      setBusy(null);
+      showError(accessCheckMessage(err));
+    }
   } catch (err) {
-    // Some browsers block pop-ups; the full-page redirect finishes in the first-load block above.
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
-      try {
-        try { sessionStorage.setItem(REDIRECT_FLAG, '1'); } catch { /* storage blocked */ }
-        await signInWithRedirect(auth, provider);
-        return;
-      } catch (redirectErr) {
-        console.error('Redirect sign in error:', redirectErr);
-      }
+    // A blocked Google window gets a second click, not a full-page redirect. The redirect's result is
+    // read back through a firebaseapp.com frame, and browsers that partition third-party storage
+    // (Chrome 115+, Safari, Firefox) hide it from that frame, so the trip to Google would end back
+    // here signed out. The second click opens the window at once: the frame has loaded by then.
+    if (err.code === 'auth/popup-blocked') {
+      setBusy(null);
+      showError('Your browser blocked the Google window. Choose "Continue with Google" again, or allow pop-ups for this site.');
+      return;
+    }
+    // This portal uses Firebase's cross-origin auth domain. Redirects cannot reliably return a
+    // session in browsers that block third-party storage, so give an actionable way to sign in.
+    if (err.code === 'auth/operation-not-supported-in-this-environment') {
+      setBusy(null);
+      showError('Open this console in Chrome, Safari or Firefox to continue with Google.');
+      return;
     }
     setBusy(null);
     // Closing the Google window is a choice, not an error.
@@ -175,6 +207,8 @@ async function signInWithGoogle(provider = googleProvider) {
     // could never succeed. (admin-wheat-nu-52-phi.vercel.app was missing until 2026-10-08.)
     showError(err.code === 'auth/network-request-failed'
       ? "You're offline. Check your connection and try again."
+      : err.code === 'auth/account-exists-with-different-credential'
+        ? 'This email already uses another sign-in method. Use email and password for the same address, or reset its password.'
       : err.code === 'auth/unauthorized-domain'
         ? `Google sign-in isn't enabled for ${location.hostname} yet. Use email and password, or ask the project owner to add this address in Firebase.`
         : `Google sign-in did not work${err.code ? ` (${err.code.replace('auth/', '')})` : ''}. Try again.`);
@@ -185,6 +219,8 @@ async function signInWithGoogle(provider = googleProvider) {
 
 async function signInWithPassword(e) {
   e.preventDefault();
+  if ($('login-btn').disabled) return;
+  const attempt = ++attemptId;
   const email = $('admin-email').value.trim();
   const password = $('admin-password').value;
   if (!email || !password) {
@@ -197,7 +233,12 @@ async function signInWithPassword(e) {
   setBusy($('login-btn'), 'Signing in…');
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
-    await admit(credential.user, { fresh: true, viaPassword: true });
+    try {
+      await admit(credential.user, { fresh: true, viaPassword: true, attempt });
+    } catch (err) {
+      setBusy(null);
+      showError(accessCheckMessage(err));
+    }
   } catch (err) {
     console.error('Sign in error:', err);
     setBusy(null);

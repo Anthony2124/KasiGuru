@@ -1,17 +1,23 @@
 /**
  * Pronunciation clips: WordAudioRepository + AudioPlayerManager.
  *
- * Clips live in Firestore at `word_audio/{key}` as raw bytes (Storage needs the Blaze plan). A clip
- * is fetched the first time a learner asks for that word and kept in Cache Storage under a name that
- * carries `audioUpdatedAt`, so a re-recording is a new entry rather than a stale hit. A word with no
- * clip plays nothing: there is deliberately no text-to-speech fallback, because a synthetic voice
- * would mispronounce an endangered language to the people learning it.
+ * The admin portal uploads clips to Firestore at `word_audio/{key}` as raw bytes (Storage needs the
+ * Blaze plan). scripts/audio/export-word-audio.js copies them into the APK and `npm run sync:web`
+ * on to public/audio, listed in content/audio.json. A clip is read from this site, so it costs no
+ * Firestore read and keeps playing when the Spark plan's daily reads run out; only a word
+ * re-recorded since the export is fetched from Firestore, with the earlier take as its fallback.
+ *
+ * A played clip is kept in Cache Storage under a name that carries `audioUpdatedAt`, so a
+ * re-recording is a new entry rather than a stale hit, and Settings can save every clip for offline
+ * use. A word with no clip plays nothing: there is deliberately no text-to-speech fallback, because a
+ * synthetic voice would mispronounce an endangered language to the people learning it.
  *
  * Playback goes through Web Audio. iOS only lets a page start sound from inside a tap, and a clip
  * that has to be downloaded first arrives after the tap has ended; an AudioContext resumed during
  * that first tap stays usable afterwards.
  */
 import { doc, getDoc } from 'firebase/firestore/lite';
+import { clipPlan, type BundledClip } from '../domain/audioClips';
 import type { WordContent } from '../domain/types';
 import { db } from './firebase';
 
@@ -53,32 +59,80 @@ export function audioKey(word: Pick<WordContent, 'audioFileName' | 'kasiguranin'
 
 export const hasAudio = (w: Pick<WordContent, 'audioFileName'>) => !!w.audioFileName;
 
-async function fetchClip(key: string, version: number): Promise<ArrayBuffer | null> {
-  const cacheUrl = `/__word-audio/${encodeURIComponent(key)}_${version}`;
+let bundled: Record<string, BundledClip> = {};
+
+/** content/audio.json's clips, set when the dictionary loads. */
+export function setBundledClips(clips: Record<string, BundledClip> | undefined) {
+  bundled = clips ?? {};
+}
+
+const cacheUrlFor = (key: string, version: number) => `/__word-audio/${encodeURIComponent(key)}_${version}`;
+
+async function openCache(): Promise<Cache | null> {
   try {
-    const cache = await caches.open(CACHE);
-    const hit = await cache.match(cacheUrl);
-    if (hit) return await hit.arrayBuffer();
-    const snap = await getDoc(doc(db, 'word_audio', key));
-    if (!snap.exists()) return null;
-    const data = snap.data();
-    const bytes: Uint8Array | undefined = data.data?.toUint8Array?.();
-    if (!bytes || !bytes.length) return null;
-    const mime = typeof data.mimeType === 'string' ? data.mimeType : 'audio/mp4';
-    const copy = bytes.slice().buffer as ArrayBuffer;
-    await cache.put(cacheUrl, new Response(copy.slice(0), { headers: { 'Content-Type': mime } }));
-    return copy;
-  } catch (e) {
-    // Cache Storage can be unavailable (private mode); fall back to a plain read.
-    try {
-      const snap = await getDoc(doc(db, 'word_audio', key));
-      const bytes: Uint8Array | undefined = snap.exists() ? snap.data().data?.toUint8Array?.() : undefined;
-      return bytes && bytes.length ? (bytes.slice().buffer as ArrayBuffer) : null;
-    } catch {
-      console.warn('audio unavailable for', key, e);
-      return null;
+    return await caches.open(CACHE);
+  } catch {
+    return null; // Cache Storage can be unavailable (private mode): play without keeping.
+  }
+}
+
+async function fromSite(clip: BundledClip): Promise<ArrayBuffer | null> {
+  try {
+    const res = await fetch(`/audio/${encodeURIComponent(clip.file)}`);
+    return res.ok ? await res.arrayBuffer() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fromFirestore(key: string): Promise<ArrayBuffer | null> {
+  const snap = await getDoc(doc(db, 'word_audio', key));
+  const bytes: Uint8Array | undefined = snap.exists() ? snap.data().data?.toUint8Array?.() : undefined;
+  return bytes && bytes.length ? (bytes.slice().buffer as ArrayBuffer) : null;
+}
+
+async function keep(cache: Cache | null, url: string, bytes: ArrayBuffer) {
+  try {
+    await cache?.put(url, new Response(bytes.slice(0), { headers: { 'Content-Type': 'application/octet-stream' } }));
+  } catch {
+    // A full disk only costs the offline copy.
+  }
+}
+
+async function fetchClip(key: string, version: number): Promise<ArrayBuffer | null> {
+  const cache = await openCache();
+  const cacheUrl = cacheUrlFor(key, version);
+  const hit = await cache?.match(cacheUrl).catch(() => undefined);
+  if (hit) return hit.arrayBuffer();
+
+  const { site, fallback } = clipPlan(bundled[key], version);
+  if (site) {
+    const bytes = await fromSite(site);
+    if (bytes) {
+      await keep(cache, cacheUrl, bytes);
+      return bytes;
     }
   }
+  if (navigator.onLine) {
+    try {
+      const bytes = await fromFirestore(key);
+      if (bytes) {
+        await keep(cache, cacheUrl, bytes);
+        return bytes;
+      }
+    } catch (e) {
+      // Offline, or the project's daily reads are spent: the earlier take below, or silence.
+      console.warn('audio unavailable for', key, e);
+    }
+  }
+  if (!fallback) return null;
+  // The earlier take is kept under its own version, so the newer one is tried again next time.
+  const olderUrl = cacheUrlFor(key, fallback.v);
+  const older = await cache?.match(olderUrl).catch(() => undefined);
+  if (older) return older.arrayBuffer();
+  const bytes = await fromSite(fallback);
+  if (bytes) await keep(cache, olderUrl, bytes);
+  return bytes;
 }
 
 function clip(key: string, version: number) {
@@ -100,6 +154,77 @@ export function prefetch(word: WordContent) {
   void clip(audioKey(word), word.audioUpdatedAt);
 }
 
+// ── Recordings offline (Settings) ────────────────────────────────────────────
+
+/** The site's clips the dictionary's words point at, one per key, at the version the site holds. */
+function offlineSet(words: Pick<WordContent, 'audioFileName' | 'kasiguranin' | 'english'>[]) {
+  const out = new Map<string, BundledClip>();
+  for (const w of words) {
+    if (!w.audioFileName) continue;
+    const key = audioKey(w);
+    const clip = bundled[key];
+    if (clip) out.set(key, clip);
+  }
+  return out;
+}
+
+export interface OfflineAudioStatus {
+  saved: number;
+  total: number;
+  /** What saving the rest would download. */
+  remainingBytes: number;
+}
+
+/** How many of the dictionary's recordings this device already holds. */
+export async function offlineAudioStatus(words: WordContent[]): Promise<OfflineAudioStatus> {
+  const set = offlineSet(words);
+  const cache = await openCache();
+  const held = new Set((await cache?.keys().catch(() => []) ?? []).map((r) => new URL(r.url).pathname));
+  let saved = 0;
+  let remainingBytes = 0;
+  for (const [key, clip] of set) {
+    if (held.has(cacheUrlFor(key, clip.v))) saved++;
+    else remainingBytes += clip.bytes;
+  }
+  return { saved, total: set.size, remainingBytes };
+}
+
+/**
+ * Saves every recording on this device so the whole dictionary plays offline. A few at a time, and
+ * only the ones not already held, so stopping halfway and starting again picks up where it left off.
+ * Reads nothing from Firestore. Resolves with how many could not be saved.
+ */
+export async function saveAllClips(
+  words: WordContent[],
+  onProgress: (status: OfflineAudioStatus) => void,
+  signal?: AbortSignal
+): Promise<number> {
+  const cache = await openCache();
+  if (!cache) return offlineSet(words).size;
+  const start = await offlineAudioStatus(words);
+  const held = new Set((await cache.keys()).map((r) => new URL(r.url).pathname));
+  const todo = [...offlineSet(words)].filter(([key, clip]) => !held.has(cacheUrlFor(key, clip.v)));
+  let saved = start.saved;
+  let remainingBytes = start.remainingBytes;
+  let failed = 0;
+  const worker = async () => {
+    for (let next = todo.shift(); next && !signal?.aborted; next = todo.shift()) {
+      const [key, clip] = next;
+      const bytes = await fromSite(clip);
+      if (bytes) {
+        await keep(cache, cacheUrlFor(key, clip.v), bytes);
+        saved++;
+        remainingBytes -= clip.bytes;
+      } else {
+        failed++;
+      }
+      onProgress({ saved, total: start.total, remainingBytes });
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, worker));
+  return failed;
+}
+
 let onWordClip: ((seconds: number) => void) | null = null;
 
 /** The music lowers itself under a recording, as it answers a ducking audio-focus request on Android. */
@@ -118,6 +243,14 @@ export function stopAudio() {
 
 /** Plays a word's clip. Resolves false when the word has no recording or it could not be loaded. */
 export async function playWord(word: WordContent): Promise<boolean> {
+  // An iPhone's silent switch mutes Web Audio unless the page asks for media playback (Safari 16.4+);
+  // a recording the learner tapped to hear should play, as it does on Android.
+  try {
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (session && session.type !== 'playback') session.type = 'playback';
+  } catch {
+    /* not supported */
+  }
   unlockAudio();
   stopAudio();
   const key = audioKey(word);

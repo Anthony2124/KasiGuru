@@ -7,6 +7,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,9 +23,10 @@ import javax.inject.Singleton
  * Two choices, both about an audience PRODUCT.md calls "phone-first, mid-range Android, often on
  * patchy connectivity" and "data- and storage-sensitive":
  *
- *  - **One word at a time.** Nothing here prefetches the dictionary. A clip is downloaded the first
- *    time a learner asks to hear that specific word, so a learner who plays ten words never pays for
- *    twelve hundred.
+ *  - **Shipped in the APK, topped up one word at a time.** Every clip that existed when the APK was
+ *    built is in `assets/word_audio`, so recordings play offline and do not stop when the project's
+ *    daily Firestore reads run out. Only a word re-recorded since is downloaded, the first time a
+ *    learner asks to hear it; nothing here prefetches.
  *  - **Cached to files, keyed on version.** The first play is the only one that costs data; after
  *    that it is a local file. The cache filename carries [VocabularyEntity.audioUpdatedAt], so an
  *    admin re-recording the word produces a new filename and the stale file is pruned rather than
@@ -46,15 +48,44 @@ class WordAudioRepository @Inject constructor(
 
     private fun fileFor(key: String, version: Long) = File(cacheDir, "${key}_$version.dat")
 
+    /** The clips shipped in the APK, read once. An APK built without them behaves as before. */
+    private val bundled: Map<String, BundledClip> by lazy {
+        runCatching {
+            val text = context.assets.open("$BUNDLE_DIR/manifest.json").bufferedReader().use { it.readText() }
+            val clips = JSONObject(text).getJSONObject("clips")
+            clips.keys().asSequence().associateWith { key ->
+                val c = clips.getJSONObject(key)
+                BundledClip(version = c.getLong("v"), file = c.getString("file"))
+            }
+        }.getOrElse {
+            Log.w("WordAudioRepository", "No bundled word audio", it)
+            emptyMap()
+        }
+    }
+
+    /** Copies a bundled clip to the cache path MediaPlayer is handed, as a download would land. */
+    private fun unpack(clip: BundledClip, target: File): File? = runCatching {
+        cacheDir.mkdirs()
+        val temp = File(cacheDir, "${target.name}.part")
+        context.assets.open("$BUNDLE_DIR/${clip.file}").use { input ->
+            temp.outputStream().use { input.copyTo(it) }
+        }
+        if (temp.renameTo(target)) target else null.also { temp.delete() }
+    }.onFailure { Log.w("WordAudioRepository", "Could not unpack ${clip.file}", it) }.getOrNull()
+
     /**
-     * The clip for this word, downloading it once if it is not already on disk.
+     * The clip for this word: from the cache, else from the APK, else downloaded once from Firestore.
+     *
+     * Clips bundled in `assets/word_audio` (scripts/audio/export-word-audio.js) play offline and cost
+     * no Firestore reads. Only a word re-recorded after the APK was built is downloaded, and if that
+     * download fails (offline, or the daily read quota spent) the bundled earlier take plays instead.
      *
      * @param key [VocabularyEntity.audioFileName] — the `word_audio` document id. Blank means the
      *   word has no custom recording.
      * @param version [VocabularyEntity.audioUpdatedAt] — bumped by the admin on every re-record, so a
      *   changed clip lands under a new filename.
      * @return the cached file, or null when the word has no clip or the document is missing.
-     * @throws Exception when the clip exists upstream but could not be fetched.
+     * @throws Exception when the clip exists upstream but could not be fetched and none is bundled.
      */
     suspend fun audioFor(key: String, version: Long): File? {
         if (key.isBlank()) return null
@@ -63,6 +94,14 @@ class WordAudioRepository @Inject constructor(
         if (cached.exists() && cached.length() > 0) return cached
 
         return withContext(Dispatchers.IO) {
+            val plan = planClip(bundled[key], version)
+            if (plan is ClipPlan.Bundled) {
+                unpack(plan.clip, cached)?.let {
+                    pruneOldVersions(key, keep = it.name)
+                    return@withContext it
+                }
+            }
+            val fallback = (plan as? ClipPlan.Download)?.fallback
             try {
                 val snapshot = firestore.collection("word_audio")
                     .document(key)
@@ -87,6 +126,11 @@ class WordAudioRepository @Inject constructor(
                 pruneOldVersions(key, keep = cached.name)
                 cached
             } catch (e: Exception) {
+                // The take the APK shipped is better than silence while the newer one is unreachable.
+                // It is not cached under the new version, so the next play tries the download again.
+                fallback?.let { clip ->
+                    unpack(clip, fileFor(key, clip.version))?.let { return@withContext it }
+                }
                 // Rethrown, not swallowed: "this word has no clip" and "the clip could not be
                 // fetched" (offline, or the project's daily read quota spent) need different words
                 // to the learner, and a silent button reads as a broken speaker either way.
@@ -110,4 +154,26 @@ class WordAudioRepository @Inject constructor(
     fun clearCache() {
         runCatching { cacheDir.listFiles()?.forEach { it.delete() } }
     }
+
+    private companion object {
+        const val BUNDLE_DIR = "word_audio"
+    }
+}
+
+/** One clip in `assets/word_audio/manifest.json`: the [version] it was exported at and its file. */
+internal data class BundledClip(val version: Long, val file: String)
+
+internal sealed interface ClipPlan {
+    /** The APK holds this exact take. */
+    data class Bundled(val clip: BundledClip) : ClipPlan
+
+    /** Download from Firestore; [fallback] is an earlier bundled take to play if that fails. */
+    data class Download(val fallback: BundledClip?) : ClipPlan
+}
+
+/** Where a word's clip at [version] comes from, given what the APK bundled for its key. */
+internal fun planClip(bundled: BundledClip?, version: Long): ClipPlan = when {
+    bundled == null -> ClipPlan.Download(fallback = null)
+    bundled.version == version -> ClipPlan.Bundled(bundled)
+    else -> ClipPlan.Download(fallback = bundled)
 }

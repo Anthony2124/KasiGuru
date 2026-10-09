@@ -7,14 +7,14 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { getSecurityAnswers, saveSecurityQuestions, SECURITY_QUESTIONS } from '../../lib/auth';
 import { refreshContent } from '../../lib/content';
 import { navigate } from '../../lib/router';
-import { canVibrate, previewSfx } from '../../lib/audio';
+import { canVibrate, offlineAudioStatus, previewSfx, saveAllClips, type OfflineAudioStatus } from '../../lib/audio';
 import { previewMusicVolume } from '../../lib/music';
 import { setPrefs, useApp } from '../../lib/store';
 import { flush } from '../../lib/sync';
 import { APP_VERSION } from '../../lib/remote';
 import { replayCoreTour } from '../../lib/tour';
 import type { IconName } from '../icons.generated';
-import { ClayButton, GroundScaffold, Icon, toast } from '../kit';
+import { ClayButton, GroundScaffold, Icon, ProgressBar, toast } from '../kit';
 import { TourChapterList } from '../tour';
 
 function SwitchRow({ icon, title, subtitle, checked, onChange }: { icon: IconName; title: string; subtitle: string; checked: boolean; onChange: (on: boolean) => void }) {
@@ -68,6 +68,65 @@ function VolumeSlider({ label, value, enabled, onSave, onPreview }: { label: str
       />
       <Icon name="volumeHigh" size={18} color="var(--muted)" />
       <span class="t-label" style={{ minWidth: 40, textAlign: 'right', color: enabled ? 'var(--ink)' : 'var(--muted)' }}>{current}%</span>
+    </div>
+  );
+}
+
+const megabytes = (bytes: number) => `${Math.max(0.1, bytes / 1048576).toFixed(1)} MB`;
+
+/**
+ * Saves every word recording on this device. Opt-in, because the audience is often on mobile data:
+ * without it a clip is kept only once it has been played.
+ */
+function OfflineRecordings() {
+  const words = useApp((s) => s.words);
+  const [status, setStatus] = useState<OfflineAudioStatus | null>(null);
+  const [saving, setSaving] = useState(false);
+  const stop = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    offlineAudioStatus(words).then((s) => live && setStatus(s));
+    return () => {
+      live = false;
+      stop.current?.abort();
+    };
+  }, [words]);
+
+  if (!status || status.total === 0) return null;
+  const done = status.saved >= status.total;
+  const save = async () => {
+    if (!navigator.onLine) {
+      toast('Connect to the internet to save the recordings.');
+      return;
+    }
+    stop.current = new AbortController();
+    setSaving(true);
+    const failed = await saveAllClips(words, setStatus, stop.current.signal);
+    setSaving(false);
+    if (stop.current.signal.aborted) return;
+    toast(failed ? `${failed} recordings could not be saved. Try again later.` : 'Every recording now plays offline.');
+  };
+
+  return (
+    <div class="card stack-sm">
+      <div class="row">
+        <Icon name={done ? 'tickCircle' : 'volumeHigh'} size={22} color="var(--lime)" />
+        <div class="grow">
+          <p class="t-title-s">Recordings offline</p>
+          <p class="t-body-s muted">
+            {done
+              ? `All ${status.total} word recordings play without internet`
+              : `${status.saved} of ${status.total} saved on this device · ${megabytes(status.remainingBytes)} to download`}
+          </p>
+        </div>
+        {!done && (
+          <button class="clay small" disabled={saving} onClick={() => void save()}>
+            {saving ? 'Saving…' : status.saved ? 'Save the rest' : 'Save all'}
+          </button>
+        )}
+      </div>
+      {saving && <ProgressBar value={status.saved / status.total} label="Recordings saved" />}
     </div>
   );
 }
@@ -214,6 +273,7 @@ export function SettingsScreen() {
               {lastSyncedAt ? ` · last synced ${new Date(lastSyncedAt).toLocaleString()}` : ''}
             </p>
           </div>
+          <OfflineRecordings />
         </section>
 
         {recoverable && (

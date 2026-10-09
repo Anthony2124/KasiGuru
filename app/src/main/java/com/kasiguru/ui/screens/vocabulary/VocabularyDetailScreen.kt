@@ -32,7 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.kasiguru.ui.components.KasiGuruTextField
+import com.kasiguru.ui.theme.RedText
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -119,7 +124,14 @@ fun VocabularyDetailScreen(
                         onPlayAudio = { audioPlayerManager.playWord(vocab) },
                         onToggleLearned = viewModel::markWordAsLearned,
                         onReportWord = onReportWord,
-                        onOpenWord = onOpenWord
+                        onOpenWord = onOpenWord,
+                        sentenceForm = SentenceFormState(
+                            problem = uiState.sentenceProblem,
+                            sending = uiState.sendingSentence,
+                            sent = uiState.sentenceSent,
+                            onSubmit = viewModel::submitExampleSentence,
+                            onEdit = viewModel::clearSentenceProblem
+                        )
                     )
                 }
             }
@@ -160,7 +172,8 @@ private fun DictionaryEntry(
     onPlayAudio: () -> Unit,
     onToggleLearned: () -> Unit,
     onReportWord: ((String) -> Unit)?,
-    onOpenWord: ((Int) -> Unit)?
+    onOpenWord: ((Int) -> Unit)?,
+    sentenceForm: SentenceFormState
 ) {
     Column(
         modifier = Modifier
@@ -279,6 +292,10 @@ private fun DictionaryEntry(
             Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                 examples.forEach { (sentence, translation) -> ExampleQuote(sentence, translation) }
             }
+        } else {
+            // No example yet: a learner who knows how the word is used can offer one.
+            EntryDivider()
+            AddExampleSentence(word = vocab.kasiguranin, form = sentenceForm)
         }
 
         // ── Verb forms ──
@@ -389,6 +406,86 @@ private fun DictionaryEntry(
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted
                 )
+            }
+        }
+    }
+}
+
+/** The "Add an example sentence" form's state, owned by [VocabularyDetailViewModel]. */
+internal class SentenceFormState(
+    val problem: String?,
+    val sending: Boolean,
+    val sent: Boolean,
+    val onSubmit: (sentence: String, translation: String) -> Unit,
+    val onEdit: () -> Unit
+)
+
+/**
+ * Offers an example sentence for a word with none. It goes to the verifiers' queue, not the
+ * dictionary: Kasiguranin taught in lessons must have been checked by someone who speaks it.
+ */
+@Composable
+private fun AddExampleSentence(word: String, form: SentenceFormState) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    var sentence by rememberSaveable { mutableStateOf("") }
+    var translation by rememberSaveable { mutableStateOf("") }
+    SoftCard(modifier = Modifier.fillMaxWidth(), shape = Shapes.tile, border = BorderHairline) {
+        when {
+            form.sent -> {
+                Text("Thank you!", style = MaterialTheme.typography.titleSmall, color = Ink)
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    "A verifier will check your sentence. Once it's approved it appears here, in lessons and in the sentence games.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+            }
+            !open -> {
+                Text("No example sentence yet", style = MaterialTheme.typography.titleSmall, color = Ink)
+                Spacer(Modifier.height(Space.xxs))
+                Text(
+                    "Know how \"$word\" is used? Add a sentence to help learners and the sentence games.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Muted
+                )
+                Spacer(Modifier.height(Space.sm))
+                ClayButton(
+                    label = "Add an example sentence",
+                    onClick = { open = true },
+                    tone = ClayButtonTone.Quiet,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            else -> {
+                Text("Add an example sentence", style = MaterialTheme.typography.titleSmall, color = Ink)
+                Spacer(Modifier.height(Space.sm))
+                KasiGuruTextField(
+                    value = sentence,
+                    onValueChange = { sentence = it; form.onEdit() },
+                    label = { Text("Sentence in Kasiguranin, using \"$word\"") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(Space.sm))
+                KasiGuruTextField(
+                    value = translation,
+                    onValueChange = { translation = it; form.onEdit() },
+                    label = { Text("What it means in English") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                form.problem?.let {
+                    Spacer(Modifier.height(Space.xs))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = RedText)
+                }
+                Spacer(Modifier.height(Space.sm))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { open = false; form.onEdit() }) { Text("Cancel", color = Muted) }
+                    Spacer(Modifier.weight(1f))
+                    ClayButton(
+                        label = if (form.sending) "Sending…" else "Send for review",
+                        enabled = !form.sending,
+                        onClick = { form.onSubmit(sentence, translation) }
+                    )
+                }
             }
         }
     }

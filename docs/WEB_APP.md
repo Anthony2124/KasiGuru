@@ -37,7 +37,7 @@ needs a Mac and the paid Apple account either way.
 - **Review** — the flashcard deck, SM-2 with lapses and the relearning ladder.
 - **Games** — Word Match, Word Search (per category, drag or tap) and Word Wheel (swipe or tap).
   The other five show *Coming soon*, exactly as the Android app ships them.
-- **Library** — dictionary with search, categories, word of the day, recordings from `word_audio`;
+- **Library** — dictionary with search, categories, word of the day, recordings (see below);
   My words (Android 1.22: every word met in a lesson, review or game, with filters; kept on the
   device like `WordEncounterRepository`, and refilled from history after a sign-in); stories with
   page pictures from `story_page_images`.
@@ -181,7 +181,15 @@ plan's 50,000 reads for the whole project, Android included. Instead:
   `public/content/*.json`. The committed snapshot is used if Firestore cannot be reached.
 - In the browser, the app asks Firestore only for documents with `updatedAt` after the snapshot,
   at most every six hours — usually a single read that returns nothing.
-- Recordings and story pictures are fetched one at a time when needed and cached.
+- Word recordings are served by this site, not Firestore: `npm run audio:export` (repository root)
+  copies every `word_audio` clip into the APK's `assets/word_audio`, and `npm run sync:web` copies
+  them to `public/audio` with the list in `public/content/audio.json`. Playing one costs no
+  Firestore read, so recordings keep working when the day's reads run out (as they did on
+  2026-10-04 to 10-07). A played clip is kept on the device; **Settings → Recordings offline**
+  saves all of them (~23 MB) for offline use. Only a word re-recorded after the last export is
+  fetched from `word_audio`, with the earlier take as its fallback. Re-run both commands after
+  recording sessions in the admin portal, then commit and deploy.
+- Story pictures are fetched one at a time when needed and cached.
 - Leaderboard tabs reuse their top 50 for three minutes, coalesce concurrent requests, and refresh
   when the account or ISO week changes. Android uses the same refresh window over its Room cache.
 

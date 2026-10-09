@@ -53,6 +53,8 @@ data class WordWheelUiState(
     val revealed: Set<BoardCell> = emptySet(),
     val bonusFound: List<WheelWord> = emptyList(),
     val hintsUsed: Int = 0,
+    /** The learner opened the hidden words' meanings; like a letter hint, it costs "perfect" (not stars). */
+    val meaningsShown: Boolean = false,
     val feedback: WheelFeedback? = null,
     val entries: Map<Int, VocabularyEntity> = emptyMap(),
     val isGameOver: Boolean = false,
@@ -187,6 +189,13 @@ class WordWheelViewModel @Inject constructor(
         finishIfSolved()
     }
 
+    /** The meanings of the words still hidden; see [com.kasiguru.domain.games.wordWheelHint]. */
+    fun showMeanings() {
+        val state = _uiState.value
+        if (state.isGameOver || state.meaningsShown) return
+        _uiState.value = state.copy(meaningsShown = true)
+    }
+
     /**
      * Uncovers one letter: the first hidden cell of the first unfinished word. At most [MAX_HINTS] per
      * level, and each one lowers the stars the level can earn, so the choice stays the learner's.
@@ -238,7 +247,7 @@ class WordWheelViewModel @Inject constructor(
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
-            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0,
+            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0 && !state.meaningsShown,
                 puzzle.slots.map { it.word.id } + state.bonusFound.map { it.id })
             gameRepository.saveScore(
                 GameScoreEntity(

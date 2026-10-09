@@ -3,8 +3,11 @@
  */
 import { useMemo, useState } from 'preact/hooks';
 import { navigate } from '../../lib/router';
-import { act, useCorpus } from '../../lib/store';
-import { EmptyState, GroundScaffold, Icon, ProgressBar, categoryArt, toast } from '../kit';
+import { act, useApp, useCorpus } from '../../lib/store';
+import { submitSentence } from '../../lib/remote';
+import { exampleSentenceProblem } from '../../domain/exampleSentence';
+import type { Word } from '../../domain/types';
+import { ClayButton, EmptyState, GroundScaffold, Icon, ProgressBar, categoryArt, toast } from '../kit';
 import { AudioButton, WordRow } from '../parts';
 import { categoryBlurb } from './Library';
 
@@ -15,6 +18,81 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span class="t-body-s muted grow">{label}</span>
       <span class="t-body" style={{ fontWeight: 600, textAlign: 'right' }}>{value}</span>
     </div>
+  );
+}
+
+/**
+ * Offers an example sentence for a word with none (VocabularyDetailScreen's AddExampleSentence). It
+ * goes to the verifiers' queue, not the dictionary: Kasiguranin taught in lessons must have been
+ * checked by someone who speaks it.
+ */
+function AddExampleSentence({ word }: { word: Word }) {
+  const progress = useApp((s) => s.learner.progress);
+  const [open, setOpen] = useState(false);
+  const [sentence, setSentence] = useState('');
+  const [translation, setTranslation] = useState('');
+  const [problem, setProblem] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const send = async (e: Event) => {
+    e.preventDefault();
+    const p = exampleSentenceProblem(word, sentence, translation);
+    if (p) return setProblem(p);
+    if (!navigator.onLine) return setProblem("You're offline. Connect to send your sentence.");
+    setSending(true);
+    try {
+      await submitSentence({
+        kasiguranin: word.kasiguranin,
+        english: word.english,
+        sentence,
+        translation,
+        contributorName: progress.fullName || (progress.userName !== 'Learner' ? progress.userName : '') || 'Anonymous',
+      });
+      act((d) => d.incrementSubmissionsMade());
+      setSent(true);
+    } catch {
+      setProblem("Couldn't send it. Check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <section class="card stack-sm">
+        <h2 class="t-title-l">Thank you!</h2>
+        <p class="t-body muted">A verifier will check your sentence. Once it's approved it appears here, in lessons and in the sentence games.</p>
+      </section>
+    );
+  }
+  if (!open) {
+    return (
+      <section class="card stack-sm">
+        <h2 class="t-title-l">No example sentence yet</h2>
+        <p class="t-body muted">Know how “{word.kasiguranin}” is used? Add a sentence to help learners and the sentence games.</p>
+        <ClayButton label="Add an example sentence" tone="quiet" icon="addCircle" onClick={() => setOpen(true)} />
+      </section>
+    );
+  }
+  return (
+    <form class="card stack" onSubmit={send} noValidate>
+      <h2 class="t-title-l">Add an example sentence</h2>
+      <label class="field">
+        <span>Sentence in Kasiguranin, using “{word.kasiguranin}”</span>
+        <textarea class="input" rows={2} value={sentence} maxLength={320} onInput={(e) => { setSentence((e.target as HTMLTextAreaElement).value); setProblem(null); }} />
+      </label>
+      <label class="field">
+        <span>What it means in English</span>
+        <textarea class="input" rows={2} value={translation} maxLength={320} onInput={(e) => { setTranslation((e.target as HTMLTextAreaElement).value); setProblem(null); }} />
+      </label>
+      {problem && <p class="t-body" style={{ color: 'var(--red)' }} role="alert">{problem}</p>}
+      <div class="row">
+        <button type="button" class="text-btn muted" onClick={() => { setOpen(false); setProblem(null); }}>Cancel</button>
+        <span class="grow" />
+        <ClayButton label={sending ? 'Sending…' : 'Send for review'} type="submit" disabled={sending} block={false} />
+      </div>
+    </form>
   );
 }
 
@@ -109,6 +187,8 @@ export function WordDetailScreen({ id }: { id: string }) {
             )}
           </section>
         )}
+
+        {!word.exampleSentence && !word.exampleSentence2 && <AddExampleSentence word={word} />}
 
         {word.timesReviewed > 0 && (
           <p class="t-body-s faint">

@@ -1,5 +1,9 @@
 # KasiGuru — handoff prompt
 
+Current admin work is handed to Anthony; see
+[the admin panel handoff](docs/ADMIN_PANEL_HANDOFF.md) (2026-10-09). The brief
+below records earlier operational and design context.
+
 Paste everything below into a new agent session, working in `C:\KasiGuru\KasiGuru-main`.
 
 ---

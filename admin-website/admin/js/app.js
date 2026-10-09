@@ -11,7 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { normaliseWord, findExistingWord } from './word-normalize.js';
 import { vocabularyStore, watchVocabulary } from './vocabulary-cache.mjs';
-import { resolveRole, ROLE_LABEL } from './roles.js';
+import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
 // block or unblock users (appeals included), restore or reset data, and manage the team. The
@@ -191,8 +191,7 @@ function notify(message, kind) {
 
 // ── Auth Guard ──────────────────────────────────────────────────────────────
 // If the user is not authenticated, redirect to login page immediately.
-// If the user is authenticated but lacks the `admin` custom claim, deny access.
-// The claim is set with the bootstrapAdmin Cloud Function (see /functions).
+// Admit admins and listed verifiers. Failed access checks can be retried without signing out.
 onAuthStateChanged(auth, (user) => {
   const loadingScreen = document.getElementById('auth-loading-screen');
 
@@ -237,6 +236,10 @@ onAuthStateChanged(auth, (user) => {
     }
     const denied = document.getElementById('access-denied-screen');
     if (denied) denied.classList.remove('hidden');
+    document.getElementById('access-denied-title').textContent = "Couldn't check your access";
+    document.getElementById('access-denied-message').textContent = accessCheckMessage(err);
+    document.getElementById('access-retry-btn').hidden = false;
+    document.getElementById('access-denied-email-display').textContent = user.email || '';
   });
 });
 
@@ -4175,7 +4178,6 @@ function initSentenceReview() {
 
 // ── Team (admins only) ──────────────────────────────────────────────────────
 // Verifiers are listed by lower-case email in admin_staff; firestore.rules reads the same list.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 let teamMembers = [];
 
 /** One person on the Team page: initial, email, role or status chip, a detail line, an action. */
@@ -4287,13 +4289,16 @@ function initTeam() {
     const email = btn.getAttribute('data-remove-verifier');
     const ok = await confirmDialog({
       title: 'Remove this verifier?',
-      body: `<b>${escapeHtml(email)}</b> loses access to the portal the next time it checks, at the latest when they reload.`,
+      body: `<b>${escapeHtml(email)}</b> will no longer be able to read or change console data.`,
       confirmLabel: 'Remove', danger: true
     });
     if (!ok) return;
     try {
       await deleteDoc(doc(db, 'admin_staff', email));
       await logAudit('staff.remove', { email });
+      if (document.getElementById('team-invite-email')?.textContent === email) {
+        document.getElementById('team-invite').hidden = true;
+      }
       notify(`${email} is no longer a verifier.`, 'info');
     } catch (err) {
       notify('Could not remove the verifier: ' + err.message, 'error');
@@ -4308,18 +4313,13 @@ function initTeam() {
     e.preventDefault();
     if (!requireAdmin('manage the team')) return;
     const email = (input?.value || '').trim().toLowerCase();
-    if (!EMAIL_RE.test(email)) return setTeamError('Enter a full email address, like name@gmail.com.');
-    if (email === (auth.currentUser?.email || '').toLowerCase()) return setTeamError("That's you; admins already have full access.");
-    if (teamMembers.some((m) => (m.email || m.id) === email)) return setTeamError(`${email} is already on the team.`);
     setTeamError('');
     const btn = document.getElementById('team-add-btn');
     const label = btn?.querySelector('.btn-label');
     if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }
     if (label) label.textContent = 'Adding…';
     try {
-      await setDoc(doc(db, 'admin_staff', email), {
-        role: 'verifier', email, addedBy: auth.currentUser?.email || '', addedAt: Date.now()
-      });
+      await addVerifier(email, auth.currentUser?.email || '');
       await logAudit('staff.add', { email });
       if (input) input.value = '';
       showTeamInvite(email);
@@ -5876,5 +5876,4 @@ function initBackupRestore() {
     }
   }
 }
-
 

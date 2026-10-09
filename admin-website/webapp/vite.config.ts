@@ -8,7 +8,9 @@ import crypto from 'node:crypto';
 /**
  * Emits /sw.js with the exact list of files this build produced, so the service worker can precache
  * the whole app shell. Art (Jepjep, avatars, scenes) is left to runtime caching: it is most of the
- * weight, and a learner should not download every pose before the first lesson.
+ * weight, and a learner should not download every pose before the first lesson. Word recordings
+ * (public/audio) are not precached either: src/lib/audio.ts keeps each one once it is played, and
+ * Settings offers all of them for offline use.
  */
 function serviceWorker(): Plugin {
   return {
@@ -17,7 +19,7 @@ function serviceWorker(): Plugin {
     generateBundle(_, bundle) {
       const built = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
       const publicDir = path.resolve(__dirname, 'public');
-      const statics = ['manifest.webmanifest', 'theme-boot.js', 'content/corpus.json', 'content/vocabulary.json', 'content/stories.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/wordmark.svg']
+      const statics = ['manifest.webmanifest', 'theme-boot.js', 'content/corpus.json', 'content/vocabulary.json', 'content/stories.json', 'content/audio.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png', 'icons/wordmark.svg']
         .concat(fs.readdirSync(path.join(publicDir, 'fonts')).map((f) => `fonts/${f}`))
         .concat(fs.readdirSync(path.join(publicDir, 'sounds')).map((f) => `sounds/${f}`))
         .filter((f) => fs.existsSync(path.join(publicDir, f)));

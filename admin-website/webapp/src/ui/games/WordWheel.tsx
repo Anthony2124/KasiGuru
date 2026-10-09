@@ -10,7 +10,8 @@ import { feedbackTone, playSfx } from '../../lib/audio';
 import { navigate } from '../../lib/router';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { ClayButton, Icon, Loading, sceneForIndex } from '../kit';
-import { GameFrame, GameOver, GameUnavailable } from './shell';
+import { GameFrame, GameOver, GameUnavailable, HintButton } from './shell';
+import { wordWheelHint } from '../../domain/gameHints';
 import { tagalogGloss } from './gloss';
 
 type Feedback =
@@ -32,6 +33,8 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
   const [revealed, setRevealed] = useState<string[]>([]);
   const [bonus, setBonus] = useState<string[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
+  // "Show a hint": the hidden words' meanings and lengths. Costs "perfect", never the stars.
+  const [meaningsShown, setMeaningsShown] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [result, setResult] = useState<{ xp: number; stars: number } | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -48,6 +51,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     setRevealed([]);
     setBonus([]);
     setHintsUsed(0);
+    setMeaningsShown(false);
     setFeedback(null);
     setResult(null);
   }, [puzzle]);
@@ -89,7 +93,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     const board = puzzle.slots.length;
     const stars = hints === 0 ? 3 : hints <= 2 ? 2 : 1;
     // Bonus words earn nothing extra: XP comes from completing the board (XP policy 2).
-    const xp = act((d) => (d.met(puzzle.slots.map((s) => s.word.id), GAMES.WORD_WHEEL), d).finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 }));
+    const xp = act((d) => (d.met(puzzle.slots.map((s) => s.word.id), GAMES.WORD_WHEEL), d).finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 && !meaningsShown }));
     setTimeout(() => setResult({ xp, stars }), 700);
   };
 
@@ -209,6 +213,11 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
       score={`Bonus ${bonus.length}`}
       active={foundSlots.length > 0 || hintsUsed > 0 || bonus.length > 0}
     >
+      <HintButton
+        hint={wordWheelHint(puzzle.slots.filter((_, i) => !foundSlots.includes(i)).map((s) => [s.word.letters.length, entries.get(s.word.id)?.meaningEnglish]))}
+        revealed={meaningsShown}
+        onReveal={() => setMeaningsShown(true)}
+      />
       <div class="ww-board" style={{ gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)`, maxWidth: Math.min(puzzle.cols * 44, 440) }} aria-label={`Crossword, ${foundSlots.length} of ${puzzle.slots.length} words found`} role="img">
         {Array.from({ length: puzzle.rows }, (_, r) =>
           Array.from({ length: puzzle.cols }, (_, c) => {

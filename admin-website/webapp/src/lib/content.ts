@@ -9,6 +9,8 @@
 import { collection, getDocs, query, where } from 'firebase/firestore/lite';
 import { buildDictionary, layOver, type CorpusWord } from '../domain/contentMerge';
 import type { Story, WordContent } from '../domain/types';
+import type { BundledClip } from '../domain/audioClips';
+import { setBundledClips } from './audio';
 import { db } from './firebase';
 import { load, save } from './persist';
 import { getState, setState } from './store';
@@ -25,6 +27,10 @@ interface Delta {
   vocabSince: number;
   storiesSince: number;
   checkedAt: number;
+}
+
+interface AudioManifest {
+  clips?: Record<string, BundledClip>;
 }
 
 const DELTA_KEY = 'content-delta:v1';
@@ -96,12 +102,17 @@ function overlay(words: WordContent[], stories: Story[], delta: Delta | undefine
 }
 
 export async function loadContent() {
-  const [corpus, vocab, stories, delta] = await Promise.all([
+  const [corpus, vocab, stories, delta, audio] = await Promise.all([
     fetch('/content/corpus.json').then((r) => r.json() as Promise<{ words?: CorpusWord[] }>),
     fetch('/content/vocabulary.json').then((r) => r.json() as Promise<Snapshot<WordContent>>),
     fetch('/content/stories.json').then((r) => r.json() as Promise<Snapshot<Story>>),
     load<Delta>(DELTA_KEY),
+    // The recordings this site serves (see lib/audio.ts); without it every clip comes from Firestore.
+    fetch('/content/audio.json')
+      .then((r): Promise<AudioManifest> | AudioManifest => (r.ok ? r.json() : {}))
+      .catch((): AudioManifest => ({})),
   ]);
+  setBundledClips(audio.clips);
   snapshotMeta = vocab.meta;
   // A delta older than a newer snapshot has already been folded into it.
   const usable =

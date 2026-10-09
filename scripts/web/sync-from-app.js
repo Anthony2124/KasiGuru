@@ -13,6 +13,7 @@
  *     The APK seeds these sourced senses and lays the cloud dictionary over them; the web
  *     app does the same with this file (see webapp/src/domain/contentMerge.ts).
  *   - the illustrations in res/drawable-nodpi: category icons, badge art, Jepjep, avatars, scenes.
+ *   - the word pronunciation clips in assets/word_audio, as public/audio plus content/audio.json.
  *
  * Sounds are not copied: the APK's are Ogg, which older iPhones cannot play. The web app's `npm run sounds`
  * converts them (it needs ffmpeg). See docs/WEB_APP.md.
@@ -20,9 +21,10 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { PROJECT_ROOT, DATABASE_SEEDER } = require('../lib/project-paths');
+const { PROJECT_ROOT, DATABASE_SEEDER, WORD_AUDIO_ASSETS } = require('../lib/project-paths');
 
 const WEB = path.join(PROJECT_ROOT, 'admin-website', 'webapp', 'public');
+const WEB_AUDIO = path.join(WEB, 'audio');
 const DRAWABLES = path.join(PROJECT_ROOT, 'app', 'src', 'main', 'res', 'drawable-nodpi');
 
 /** Android drawable prefix -> web folder. The prefix is dropped from the file name. */
@@ -107,6 +109,22 @@ function corpusFile() {
   return JSON.stringify({ meta: { source: 'app DatabaseSeeder.getInitialVocabulary()', count: words.length }, words }) + '\n';
 }
 
+/**
+ * The APK's pronunciation clips (scripts/audio/export-word-audio.js): each file to public/audio,
+ * served by the web host so playing one spends no Firestore read, and the manifest to
+ * public/content/audio.json, which the web app reads beside the dictionary.
+ */
+function wordAudioFiles() {
+  const manifest = path.join(WORD_AUDIO_ASSETS, 'manifest.json');
+  if (!fs.existsSync(manifest)) return [];
+  const { clips } = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+  const files = [[path.join(WEB, 'content', 'audio.json'), fs.readFileSync(manifest)]];
+  for (const { file } of Object.values(clips)) {
+    files.push([path.join(WEB_AUDIO, file), fs.readFileSync(path.join(WORD_AUDIO_ASSETS, file))]);
+  }
+  return files;
+}
+
 /** Every [web path, bytes] pair this script owns. */
 function plan() {
   const files = [[path.join(WEB, 'content', 'corpus.json'), Buffer.from(corpusFile(), 'utf8')]];
@@ -115,14 +133,29 @@ function plan() {
     if (!rule) continue;
     files.push([path.join(WEB, rule[1], name.slice(rule[0].length)), fs.readFileSync(path.join(DRAWABLES, name))]);
   }
-  return files;
+  return files.concat(wordAudioFiles());
+}
+
+/** Web clips the APK no longer ships: a re-recorded word's earlier take, or a removed recording. */
+function staleAudio(files) {
+  if (!fs.existsSync(WEB_AUDIO)) return [];
+  const owned = new Set(files.map(([file]) => path.resolve(file)));
+  return fs.readdirSync(WEB_AUDIO).map((name) => path.join(WEB_AUDIO, name)).filter((file) => !owned.has(path.resolve(file)));
 }
 
 function main() {
   const check = process.argv.includes('--check');
   const drift = [];
   let written = 0;
-  for (const [file, bytes] of plan()) {
+  const files = plan();
+  for (const file of staleAudio(files)) {
+    const rel = path.relative(PROJECT_ROOT, file).split(path.sep).join('/');
+    if (check) { drift.push(`${rel} (no longer in the APK)`); continue; }
+    fs.rmSync(file);
+    written++;
+    console.log(`removed ${rel}`);
+  }
+  for (const [file, bytes] of files) {
     // Text is compared without line endings: a Windows checkout may turn the corpus's LF into CRLF.
     const text = file.endsWith('.json');
     const norm = (b) => (text ? Buffer.from(b.toString('utf8').replace(/\r\n/g, '\n'), 'utf8') : b);
