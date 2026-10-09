@@ -95,7 +95,7 @@ window.loadOlderAuditLogs = async function() {
   loadingOlderLogs = true;
   renderAuditLogs();
   try {
-    const snap = await getDocs(query(collection(db, "admin_audit_log"),
+    const snap = await getDocs(query(collection(db, "admin_audit_log"), ...auditLogScope(),
       orderBy("timestamp", "desc"), startAfter(oldestLogSnap), limit(OLDER_LOGS_BATCH)));
     rememberAuditLogs(snap.docs);
     if (snap.size < OLDER_LOGS_BATCH) hasOlderLogs = false;
@@ -531,7 +531,7 @@ function initRealtimeListeners() {
   // 4. Admin Audit Logs Listener
   try {
     const logsCollection = collection(db, "admin_audit_log");
-    const logsQuery = query(logsCollection, orderBy("timestamp", "desc"), limit(LOGS_PER_PAGE));
+    const logsQuery = query(logsCollection, ...auditLogScope(), orderBy("timestamp", "desc"), limit(LOGS_PER_PAGE));
     const unsubLogs = onSnapshot(logsQuery, (snapshot) => {
       // Removals are ignored on purpose: the log is append-only, so a "removed" change only means
       // an entry slid out of the newest-page window, and it is still part of the history shown.
@@ -543,7 +543,7 @@ function initRealtimeListeners() {
       renderAuditLogs();
       // Counted once: one read per 1,000 entries, against one read per entry for loading them.
       if (firstAnswer) {
-        getCountFromServer(logsCollection)
+        getCountFromServer(query(logsCollection, ...auditLogScope()))
           .then((res) => { auditLogTotal = res.data().count; renderAuditLogs(); })
           .catch(() => {});
       }
@@ -552,6 +552,11 @@ function initRealtimeListeners() {
       let msg = "Unable to connect to live Firestore audit log.";
       if (error.code === 'permission-denied') {
         msg = "Permission denied. Ensure Firestore Rules allow read access.";
+      } else if (error.code === 'failed-precondition') {
+        // A verifier's view needs a Firestore index, which takes a few minutes to build after it is
+        // first deployed.
+        renderAuditLogsError('The activity log is still being set up. Try again in a few minutes.', 'Not ready yet');
+        return;
       }
       renderAuditLogsError(msg);
     });
@@ -1104,10 +1109,20 @@ function resetReleaseForm() {
 
 // ── Admin Logs Tab ──────────────────────────────────────────────────────────
 
-// APK releases are admin-only, so a verifier's activity log leaves out their publish, edit and yank
-// entries, and the export does too. The release facts themselves are public (app_releases), so this
-// keeps the log to the work a verifier does rather than protecting anything.
-const isReleaseLog = (log) => String(log.action || '').startsWith('release.');
+// Admins see every entry; a verifier sees only verifiers' entries. firestore.rules enforces that, and
+// rules are not filters: a verifier's query has to ask for exactly those entries or it is refused
+// whole. Ordered by time, it needs the actorRole + timestamp index in firestore.indexes.json.
+function auditLogScope() {
+  return isAdminRole() ? [] : [where('actorRole', '==', 'verifier')];
+}
+
+// Who made an entry, for the chip beside their name. Entries from before roles were recorded carry
+// no actorRole and were all made by admins; the release pipeline writes 'ci'.
+function logRole(log) {
+  if (log.actorRole === 'verifier') return { label: ROLE_LABEL.verifier, cls: 'is-verifier' };
+  if (log.actorRole === 'ci') return { label: 'Automated', cls: 'is-automated' };
+  return { label: ROLE_LABEL.admin, cls: 'is-admin' };
+}
 
 function initLogsControls() {
   if (!isAdminRole()) {
@@ -1138,7 +1153,6 @@ function filteredAuditLogs() {
   const filterAction = document.getElementById('filter-logs-action')?.value || '';
 
   return auditLogs.filter(log => {
-    if (!isAdminRole() && isReleaseLog(log)) return false;
     if (filterAction) {
       if (filterAction === 'user') {
         if (!log.action.startsWith('user.') && !log.action.startsWith('user_') && !log.action.startsWith('appeal.')) return false;
@@ -1152,6 +1166,7 @@ function filteredAuditLogs() {
     if (searchTerm) {
       if (log.actor && log.actor.toLowerCase().includes(searchTerm)) return true;
       if (log.action && log.action.toLowerCase().includes(searchTerm)) return true;
+      if (logRole(log).label.toLowerCase().includes(searchTerm)) return true;
       if (log.details) {
         const detailsStr = JSON.stringify(log.details).toLowerCase();
         if (detailsStr.includes(searchTerm)) return true;
@@ -1190,12 +1205,12 @@ function renderLogsPager(total) {
   pager.innerHTML = h;
 }
 
-function renderAuditLogsError(message) {
+function renderAuditLogsError(message, title = 'Access Denied') {
   const container = document.getElementById('audit-log-list');
   if (!container) return;
   container.innerHTML = `<div class="empty">
     <iconsax-icon name="shield-cross" type="bulk" size="30" color="var(--status-rejected)"></iconsax-icon>
-    <b style="color:var(--status-rejected);">Access Denied</b>
+    <b style="color:var(--status-rejected);">${escapeHtml(title)}</b>
     ${escapeHtml(message)}
   </div>`;
   const count = document.getElementById('logs-result-count');
@@ -1225,7 +1240,9 @@ function renderAuditLogs() {
       <div class="empty">
         <iconsax-icon name="shield-tick" type="bulk" size="30" color="currentColor"></iconsax-icon>
         <b>No logs found</b>
-        The audit log is empty or no entries match your search.
+        ${isAdminRole()
+          ? 'The audit log is empty or no entries match your search.'
+          : 'No verifier activity yet, or no entries match your search. Admin entries are not shown to verifiers.'}
       </div>`;
     return;
   }
@@ -1258,6 +1275,7 @@ function renderAuditLogs() {
     } else if (log.action.includes('unblock') || log.action.includes('approve') || log.action.includes('create')) {
       badgeClass = 'badge-approved';
     }
+    const role = logRole(log);
 
     return `
       <div class="release-row" style="grid-template-columns: auto 1fr; border-bottom: 1px solid var(--hair); padding: var(--s-4) 0;">
@@ -1266,6 +1284,7 @@ function renderAuditLogs() {
           <div class="release-title">
             <span class="badge ${badgeClass}" style="margin-left:0; margin-right:var(--s-2); font-family:var(--sans); font-size:var(--t-xs); font-weight:700;">${escapeHtml(log.action)}</span>
             <b style="font-size: var(--t-sm); font-family:var(--sans);">${escapeHtml(log.actor)}</b>
+            <span class="team-chip ${role.cls}">${escapeHtml(role.label)}</span>
             <small style="font-size: var(--t-xs); color: var(--muted);">${escapeHtml(when)}</small>
             ${summary ? `<small style="margin-left: var(--s-2); color: var(--ink);"><b>${escapeHtml(summary)}</b></small>` : ''}
           </div>
@@ -1281,20 +1300,19 @@ window.exportAuditLogs = async function() {
   // The page holds only the newest entries, so an export reads its range from the server. That
   // costs one read per exported entry, paid only when someone exports.
   const logsCollection = collection(db, "admin_audit_log");
-  let logsQuery = query(logsCollection, orderBy("timestamp", "desc"));
+  let logsQuery = query(logsCollection, ...auditLogScope(), orderBy("timestamp", "desc"));
   let label = 'all';
 
   if (rangeVal !== 'all') {
     const days = parseInt(rangeVal, 10) || 7;
     const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
-    logsQuery = query(logsCollection, where("timestamp", ">=", cutoff), orderBy("timestamp", "desc"));
+    logsQuery = query(logsCollection, ...auditLogScope(), where("timestamp", ">=", cutoff), orderBy("timestamp", "desc"));
     label = `past-${days}-days`;
   }
 
   let targetLogs;
   try {
     targetLogs = (await getDocs(logsQuery)).docs.map(d => ({ id: d.id, ...d.data() }));
-    if (!isAdminRole()) targetLogs = targetLogs.filter(log => !isReleaseLog(log));
   } catch (e) {
     console.warn("Audit log export read failed:", e);
     notify('Could not read the audit log for export. Try again later.', 'error');
@@ -1354,7 +1372,7 @@ window.exportAuditLogs = async function() {
         <td class="num">${i + 1}</td>
         <td>${formatTs(log.timestamp)}</td>
         <td>${badge}</td>
-        <td><b>${esc(log.actor || log.adminEmail || '—')}</b></td>
+        <td><b>${esc(log.actor || log.adminEmail || '—')}</b><br><small>${esc(logRole(log).label)}</small></td>
         <td class="details">${detailsHtml(log.details || log.data || {})}</td>
       </tr>`;
   }).join('');
@@ -1409,7 +1427,7 @@ window.exportAuditLogs = async function() {
 </div>
 <div class="stats">
   <div class="stat-card"><div class="num">${targetLogs.length}</div><div class="lbl">Total Entries</div></div>
-  <div class="stat-card"><div class="num">${[...new Set(targetLogs.map(l => l.actor || l.adminEmail).filter(Boolean))].length}</div><div class="lbl">Unique Admins</div></div>
+  <div class="stat-card"><div class="num">${[...new Set(targetLogs.map(l => l.actor || l.adminEmail).filter(Boolean))].length}</div><div class="lbl">Unique People</div></div>
   <div class="stat-card"><div class="num">${[...new Set(targetLogs.map(l => l.action).filter(Boolean))].length}</div><div class="lbl">Unique Actions</div></div>
 </div>
 <div class="table-wrap">
@@ -1419,7 +1437,7 @@ window.exportAuditLogs = async function() {
         <th>#</th>
         <th>Timestamp</th>
         <th>Action</th>
-        <th>Admin</th>
+        <th>By</th>
         <th>Details</th>
       </tr>
     </thead>
@@ -4670,7 +4688,8 @@ async function acceptConfidentStageProposals() {
 }
 
 // ── Admin Audit Log ─────────────────────────────────────────────────────────
-// Append-only record of admin actions (rules: admins create/read, never update/delete).
+// Append-only record of staff actions (rules: never updated or deleted; a verifier writes only as
+// themselves with actorRole 'verifier', and reads only verifiers' entries).
 async function logAudit(action, details = {}) {
   try {
     const actor = (auth.currentUser && auth.currentUser.email) || "unknown";
@@ -5624,7 +5643,10 @@ window.exportBackup = async function() {
 
     const collections = {};
     for (const name of SCOPE) {
-      const snap = await getDocs(collection(db, name));
+      // A verifier may read only verifiers' log entries, and an unfiltered read is refused whole.
+      const snap = await getDocs(name === 'admin_audit_log'
+        ? query(collection(db, name), ...auditLogScope())
+        : collection(db, name));
       // The id stays beside the fields, not among them: every story has an `id` field of its own.
       collections[name] = snap.docs.map(d => ({ id: d.id, data: encodeBackupValue(d.data()) }));
     }

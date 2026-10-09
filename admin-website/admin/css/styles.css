@@ -1422,6 +1422,9 @@ body.auth { display: grid; place-items: center; min-height: 100dvh; padding: var
 .team-chip.is-admin { background: var(--violet-wash); color: var(--violet); }
 .team-chip.is-active { background: var(--status-approved-tint); color: var(--status-approved); }
 .team-chip.is-invited { background: var(--status-pending-tint); color: var(--status-pending); }
+/* The same chips mark who made each activity-log entry; a verifier in the sidebar's info blue. */
+.team-chip.is-verifier { background: var(--status-info-tint); color: var(--status-info); }
+.team-chip.is-automated { background: var(--sunken); color: var(--muted); }
 .team-remove:hover { border-color: var(--status-rejected); color: var(--status-rejected); background: var(--status-rejected-tint); }
 
 .team-roles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-5); }

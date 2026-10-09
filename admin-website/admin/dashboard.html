@@ -638,8 +638,9 @@
       <div class="pagehead">
         <div>
           <h1>Admin logs</h1>
-          <p>An append-only record of every admin action. Use this to verify data integrity
-             and trace who changed what.</p>
+          <p>An append-only record of every admin and verifier action, each marked with the role of
+             the person who made it. Use this to verify data integrity and trace who changed what.
+             Verifiers see verifier entries only.</p>
         </div>
         <div class="pagehead-actions" style="display:flex; align-items:center; gap:var(--s-3); flex-wrap:wrap;">
           <span class="result-count" id="logs-result-count"></span>
@@ -669,8 +670,8 @@
           <label class="sr-only" for="filter-logs-action">Filter by action</label>
           <select id="filter-logs-action" class="form-control" style="width:auto; min-width:190px;">
             <option value="">All actions</option>
-            <option value="user">User management</option>
-            <option value="appeal">Appeals</option>
+            <option value="user" data-admin-only>User management</option>
+            <option value="appeal" data-admin-only>Appeals</option>
             <option value="vocabulary">Vocabulary</option>
             <option value="submission">Submissions</option>
             <option value="literature">Literature</option>
