@@ -2599,7 +2599,7 @@ window.deleteSubmission = async function(id) {
     notify(`Deleted submission "${sub.kasiguranin}"`, 'success');
     submissions = submissions.filter(s => s.id !== id);
     renderSubmissionsTable();
-    renderOverview();
+    updateDashboardMetrics();
   } catch (error) {
     console.error("Error deleting submission:", error);
     notify("Failed to delete submission: " + error.message, 'error');
@@ -2667,7 +2667,7 @@ async function approveSubmission(id) {
     await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
     notify(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`, 'success');
     renderSubmissionsTable();
-    renderOverview();
+    updateDashboardMetrics();
     return true;
   } catch (error) {
     console.error("Error approving submission:", error);
@@ -2695,7 +2695,7 @@ async function rejectSubmission(id) {
     await logAudit("submission.reject", { submissionId: id, word: sub ? sub.kasiguranin : "" });
     notify(`Rejected "${sub.kasiguranin}"`, 'info');
     renderSubmissionsTable();
-    renderOverview();
+    updateDashboardMetrics();
     return true;
   } catch (error) {
     console.error("Error rejecting submission:", error);
