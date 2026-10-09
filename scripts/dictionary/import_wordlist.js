@@ -167,6 +167,12 @@ function main() {
   const src = fs.readFileSync(SEEDER, 'utf8');
   const { from, to, rows: existing } = readExisting(src);
   const have = new Set(existing.map((r) => senseKey(r.kasiguranin, r.english)));
+  // Senses the dictionary deleted or re-glossed (withdraw_senses.js). The wordlist still holds many
+  // of them, so without this a re-run would put them back on every phone.
+  const withdrawnPath = dictionaryData('withdrawn_senses.json');
+  const withdrawn = new Set(fs.existsSync(withdrawnPath)
+    ? JSON.parse(fs.readFileSync(withdrawnPath, 'utf8')).senses.map((s) => senseKey(s.kasiguranin, s.english))
+    : []);
   const haveHead = new Set(existing.map((r) => norm(r.kasiguranin)));
 
   const wb = XLSX.readFile(xlsxPath);
@@ -178,6 +184,7 @@ function main() {
   const added = [];
   const skippedNoForm = [];
   const skippedDuplicate = [];
+  const skippedWithdrawn = [];
   const multiForm = [];
   const seenThisRun = new Set(have);
 
@@ -194,6 +201,7 @@ function main() {
 
     const notes = V(r, 2);
     const key = senseKey(head, english);
+    if (withdrawn.has(key)) { skippedWithdrawn.push(head + ' / ' + english); continue; }
     if (seenThisRun.has(key)) { skippedDuplicate.push(head + ' / ' + english); continue; }
     seenThisRun.add(key);
 
@@ -227,6 +235,7 @@ function main() {
   console.log('Corpus after import:    ' + merged.length);
   console.log('Slots with no Kasiguranin form recorded (left out): ' + skippedNoForm.length);
   console.log('Wordlist rows already in the corpus:                ' + skippedDuplicate.length);
+  console.log('Withdrawn from the dictionary (left out):           ' + skippedWithdrawn.length);
   console.log('Cells holding more than one form (first kept):      ' + multiForm.length);
   console.log('Entries carrying a field note into the authoring sidecar: ' + added.filter((a) => a._notes).length);
 

@@ -161,6 +161,14 @@ class ContentSyncPolicyTest {
     }
 
     @Test
+    fun aPhoneThatStoredTheThemeVersionReadsEverythingOnceMore() {
+        // Version 3 dropped withdrawn senses from the corpus; only a full read lets the reconcile
+        // prune the copies a phone still holds, so a fingerprint stored under 2 must not match.
+        val raw = "1151:1987000000000000"
+        assertTrue(needsFullRead(stored = "v2/$raw", current = versionedFingerprint(raw)))
+    }
+
+    @Test
     fun theSafetyIntervalStillForcesAFullReadEveryThirtyDays() {
         assertFalse(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(29)))
         assertTrue(needsFullRead(lastFullReadAt = now - TimeUnit.DAYS.toMillis(31)))

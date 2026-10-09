@@ -25,7 +25,7 @@ exercises), alongside the dictionary and eight mini-games.
 
 ## Product truth that must not change
 
-- **Content**: 1,202 seeded vocabulary entries across 12 categories (1,246 live in Firestore, including
+- **Content**: 1,100 seeded vocabulary entries across 12 categories (1,151 live in Firestore, including
   admin additions), each with Kasiguranin / Tagalog / English, IPA and four verb-aspect inflections.
   Plus ten folk stories and cultural context.
 - **Connected Kasiguranin is the scarce resource, not vocabulary.** The corpus carries five example

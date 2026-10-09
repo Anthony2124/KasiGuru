@@ -374,11 +374,14 @@ internal fun storiesToPrune(
 }
 
 /**
- * What the word parser reads. Bump it whenever the parser starts reading a field it used to skip:
- * every phone's stored fingerprint then stops matching and it reads the whole collection once, so
- * the new field reaches words that will never be edited again. 2 added `theme` (1.25.1).
+ * What the word parser reads. Bump it whenever the parser starts reading a field it used to skip, or
+ * the shipped corpus drops senses: every phone's stored fingerprint then stops matching and it reads
+ * the whole collection once, so the new field reaches words that will never be edited again and
+ * [FirestoreSyncManager.pruneWithdrawnWords] removes the dropped senses, which it keeps for as long as
+ * the build seeds them. 2 added `theme` (1.25.1). 3 dropped the 102 senses the portal had deleted or
+ * re-glossed (data/dictionary/withdrawn_senses.json), which phones kept as silent duplicates.
  */
-internal const val VOCABULARY_PARSER_VERSION = 2
+internal const val VOCABULARY_PARSER_VERSION = 3
 
 /** The collection's "count:sum" fingerprint, tagged with [VOCABULARY_PARSER_VERSION]. */
 internal fun versionedFingerprint(raw: String): String = "v$VOCABULARY_PARSER_VERSION/$raw"

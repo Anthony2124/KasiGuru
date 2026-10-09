@@ -10,7 +10,7 @@
  *
  * What it carries:
  *   - the shipping corpus, DatabaseSeeder.getInitialVocabulary(), as public/content/corpus.json.
- *     The APK seeds these 1,202 sourced senses and lays the cloud dictionary over them; the web
+ *     The APK seeds these sourced senses and lays the cloud dictionary over them; the web
  *     app does the same with this file (see webapp/src/domain/contentMerge.ts).
  *   - the illustrations in res/drawable-nodpi: category icons, badge art, Jepjep, avatars, scenes.
  *

@@ -1,0 +1,736 @@
+{
+  "about": "Corpus senses the dictionary no longer has (deleted or re-glossed in the admin portal). Kept out of DatabaseSeeder by scripts/dictionary/withdraw_senses.js; import_wordlist.js skips them.",
+  "senses": [
+    {
+      "kasiguranin": "hayop",
+      "english": "animal",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "braso",
+      "english": "arm",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kili-kile",
+      "english": "armpit",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "abo",
+      "english": "ashes",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kulet",
+      "english": "bark",
+      "dictionaryNow": [
+        "skin"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "umeng",
+      "english": "mustache",
+      "dictionaryNow": [
+        "beard"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "tiyan",
+      "english": "belly",
+      "dictionaryNow": [
+        "stomach"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "apdu",
+      "english": "bile",
+      "dictionaryNow": [
+        "gall, bile"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ibon",
+      "english": "bird",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "paruparo",
+      "english": "butterfly",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "padingel",
+      "english": "cheek",
+      "dictionaryNow": [
+        "cheeks"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "umaga",
+      "english": "daytime",
+      "dictionaryNow": [
+        "morning"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "hamog",
+      "english": "dew",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "pinto",
+      "english": "door",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "tuyo",
+      "english": "dry",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "alikabok",
+      "english": "dust",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "walo",
+      "english": "eight",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ginto",
+      "english": "gold",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "buhok",
+      "english": "hair",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "bituka",
+      "english": "intestines",
+      "dictionaryNow": [
+        "guts"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "dipos",
+      "english": "lastborn",
+      "dictionaryNow": [
+        "youngest child"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kaliwa kariwe",
+      "english": "left",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kasinungalingan kabulean",
+      "english": "lie",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "lalakke",
+      "english": "man",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kuko",
+      "english": "nail",
+      "dictionaryNow": [
+        "fingernail"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "addung",
+      "english": "nose",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "duun",
+      "english": "over there",
+      "dictionaryNow": [
+        "there",
+        "leaf"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "buto/bungaw",
+      "english": "penis",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "hand",
+      "english": "press",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kuyëng",
+      "english": "rat",
+      "dictionaryNow": [
+        "rat, mouse"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kanan",
+      "english": "right (hand)",
+      "dictionaryNow": [
+        "right (side)"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "baddit",
+      "english": "short",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "baddit",
+      "english": "small",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "sangan",
+      "english": "some",
+      "dictionaryNow": [
+        "how much",
+        "how much?"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "aldew",
+      "english": "sun",
+      "dictionaryNow": [
+        "day"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "baga",
+      "english": "swollen",
+      "dictionaryNow": [
+        "lungs",
+        "swell",
+        "coal, ember"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "enak",
+      "english": "child",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "angës",
+      "english": "breath",
+      "dictionaryNow": [
+        "breathe"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "puropor",
+      "english": "shower",
+      "dictionaryNow": [
+        "drizzle"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "arob",
+      "english": "smell",
+      "dictionaryNow": [
+        "smell, general"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kagi",
+      "english": "speak",
+      "dictionaryNow": [
+        "word",
+        "say"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "badu",
+      "english": "garment",
+      "dictionaryNow": [
+        "dress",
+        "clothing"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "dappog",
+      "english": "water buffalo",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "anu",
+      "english": "what",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "babbi",
+      "english": "female",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "lutá",
+      "english": "land, earth, soil",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "alikabuk",
+      "english": "dust, fine earth",
+      "dictionaryNow": [
+        "dust"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "buked",
+      "english": "hill",
+      "dictionaryNow": [
+        "mountain"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "gasangan",
+      "english": "coral (rock)",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "agus",
+      "english": "current",
+      "dictionaryNow": [
+        "flow"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "bulos",
+      "english": "spring",
+      "dictionaryNow": [
+        "river"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "aneno",
+      "english": "shadow",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "parës",
+      "english": "air",
+      "dictionaryNow": [
+        "wind"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "yelo",
+      "english": "snow",
+      "dictionaryNow": [
+        "ice"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ának",
+      "english": "child",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "anák",
+      "english": "offspring",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "tita",
+      "english": "father's sister",
+      "dictionaryNow": [
+        "aunt"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "pensan",
+      "english": "cross-cousin",
+      "dictionaryNow": [
+        "cousin-in-law",
+        "cousin"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "aku",
+      "english": "1sg",
+      "dictionaryNow": [
+        "me"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ikaw",
+      "english": "2sg (informal)",
+      "dictionaryNow": [
+        "2sg (polite)"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "manok",
+      "english": "fowl",
+      "dictionaryNow": [
+        "chicken"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "sida`",
+      "english": "fish",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "bakokol",
+      "english": "tortoise",
+      "dictionaryNow": [
+        "turtle"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "uló",
+      "english": "head",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kiray",
+      "english": "eyebrows",
+      "dictionaryNow": [
+        "eyebrow"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kilekile",
+      "english": "armpit",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "bukong-bukong",
+      "english": "ankle",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "tiyan",
+      "english": "stomach, belly",
+      "dictionaryNow": [
+        "stomach"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ëttot",
+      "english": "flatulence, fart",
+      "dictionaryNow": [
+        "flatulence"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ëttay",
+      "english": "defecate",
+      "dictionaryNow": [
+        "excrement"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kattël",
+      "english": "itchy",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "dede",
+      "english": "suck, breastfeed",
+      "dictionaryNow": [
+        "breast"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "tëllën",
+      "english": "swallow",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "banga",
+      "english": "water jar",
+      "dictionaryNow": [
+        "pot"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "lamon",
+      "english": "grass, brush",
+      "dictionaryNow": [
+        "grass"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "pëgmula",
+      "english": "plant (yam)",
+      "dictionaryNow": [
+        "plant"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "niyog",
+      "english": "old coconut",
+      "dictionaryNow": [
+        "coconut"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "pusu ng biget",
+      "english": "coconut heart",
+      "dictionaryNow": [
+        "banana heart",
+        "banana blossom/heart"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "layâ",
+      "english": "ginger",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "disono",
+      "english": "lift up",
+      "dictionaryNow": [
+        "above",
+        "up"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "presyo",
+      "english": "price",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "lubuk",
+      "english": "inland",
+      "dictionaryNow": [
+        "inside",
+        "gulf, bay"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ditëngnga",
+      "english": "in the middle of",
+      "dictionaryNow": [
+        "middle",
+        "between"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kanluran",
+      "english": "west",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "maniwang",
+      "english": "skinny (human)",
+      "dictionaryNow": [
+        "thin",
+        "skinny"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "natapos na",
+      "english": "finished",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ngay un",
+      "english": "today",
+      "dictionaryNow": [
+        "now"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "bait",
+      "english": "good",
+      "dictionaryNow": [
+        "kind"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "ahëy",
+      "english": "don't know, I do not know",
+      "dictionaryNow": [
+        "i don't know"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "di pwede",
+      "english": "cannot, can't VERB",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kaguman",
+      "english": "with",
+      "dictionaryNow": [
+        "companion",
+        "companion"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "dahil",
+      "english": "because",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kung",
+      "english": "if",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "o",
+      "english": "or / either ... or",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "pa rin",
+      "english": "still, yet",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "hinde",
+      "english": "not",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "hindi pwede",
+      "english": "don't!, do not!",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "anu",
+      "english": "what?",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kwento",
+      "english": "story",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kagi",
+      "english": "language",
+      "dictionaryNow": [
+        "word",
+        "say"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "kaguman",
+      "english": "accompany, go with",
+      "dictionaryNow": [
+        "companion",
+        "companion"
+      ],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    },
+    {
+      "kasiguranin": "inosente",
+      "english": "innocent",
+      "dictionaryNow": [],
+      "missingFrom": "2026-10-09T10-16-30-882Z"
+    }
+  ]
+}
