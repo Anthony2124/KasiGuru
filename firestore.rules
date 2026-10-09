@@ -425,9 +425,20 @@ service cloud.firestore {
       allow update, delete: if isStaff();
     }
 
-    // Admin audit log: admins append and read; no update/delete (append-only).
+    // Admin audit log: append-only. Admins read every entry; a verifier reads only verifiers'
+    // entries, so the portal's verifier queries ask for actorRole == 'verifier' (rules are not
+    // filters - an unfiltered query from a verifier is refused whole). Entries from before roles
+    // were recorded carry no actorRole and were all made by admins.
     match /admin_audit_log/{docId} {
-      allow create, read: if isStaff();
+      allow read: if isAdmin()
+        || (isVerifier() && resource.data.actorRole == 'verifier');
+      // A verifier logs only as themselves and as a verifier, so the role shown on an entry and the
+      // admin/verifier split above cannot be forged from a verifier's session.
+      allow create: if isAdmin()
+        || (isVerifier()
+          && request.resource.data.actorRole == 'verifier'
+          && request.resource.data.actor is string
+          && request.resource.data.actor.lower() == request.auth.token.email.lower());
       allow update, delete: if false;
     }
 
