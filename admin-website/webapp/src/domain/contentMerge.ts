@@ -2,8 +2,9 @@
  * The dictionary as an Android phone holds it: the shipping corpus (DatabaseSeeder, carried as
  * public/content/corpus.json by scripts/web/sync-from-app.js) with the cloud's words laid over it.
  *
- * Without the corpus the web app had only the cloud's copy, which lacks about eighty sourced senses
- * the APK ships, so its word counts, word lists and word of the day differed from the phone's.
+ * Without the corpus the web app had only the cloud's copy, in the cloud's order, so its word lists
+ * and word of the day differed from the phone's. Senses the dictionary withdraws leave the corpus too
+ * (scripts/dictionary/withdraw_senses.js), so a deleted word is not kept alive here.
  */
 import type { WordContent } from './types';
 

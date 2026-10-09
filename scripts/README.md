@@ -75,6 +75,7 @@ extension on each side for launcher motion. Android applies the icon shape.
 | `repair_dictionary.js` | Idempotent, sourced corrections; inspect with `--dry-run` |
 | `import_wordlist.js` | Merge elicitation wordlist; inspect with `--dry-run <workbook.xlsx>` |
 | `apply_meanings.js` | Apply `data/dictionary/meanings.json` to the Android seeder; inspect with `--dry-run` |
+| `withdraw_senses.js` | Record senses a backup no longer has with `--from-backup <folder>`, then remove them from the seeder; inspect with `--dry-run` |
 | `merge_meanings.js` | Merge a supplied authored batch into the definitions JSON; reports collisions and writes the file |
 | `parse_excel_database.js` | Inspect workbook columns and categories; optional workbook path |
 | `parse_sql.js` | Parse a supplied SQL migration into `data/dictionary/kasiguranin_vocabulary_seed.json`; optional SQL path |

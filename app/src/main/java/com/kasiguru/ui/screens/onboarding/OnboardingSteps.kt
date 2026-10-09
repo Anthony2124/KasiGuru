@@ -426,12 +426,13 @@ internal fun WordsStep(ctx: StepContext) {
         modifier = Modifier.readable()
     )
     Spacer(Modifier.height(Space.sm))
-    // 1,202 words in 12 categories in the seeded dictionary, every one with a Tagalog and an English
-    // meaning. Rounded down so the line stays true as words are added.
+    // 1,100 words in 12 categories in the seeded dictionary, every one with a Tagalog and an English
+    // meaning, and 1,151 in the cloud. Rounded down so the line stays true as words are added; the
+    // web app's onboarding says the same.
     StepBody(
         text = highlighted(
-            "Over 1,200 words across 12 topics, each with its Tagalog and English meaning.",
-            "1,200 words"
+            "Over 1,100 words across 12 topics, each with its Tagalog and English meaning.",
+            "1,100 words"
         ),
         modifier = Modifier.readable()
     )

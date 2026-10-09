@@ -54,7 +54,8 @@ describe('the shipped content files', () => {
 
   it('carries the whole shipping corpus', () => {
     expect(corpus.words).toHaveLength(corpus.meta.count);
-    expect(corpus.words.length).toBeGreaterThan(1200);
+    // A floor, not the count: 1,100 since the dictionary's withdrawn senses left the corpus.
+    expect(corpus.words.length).toBeGreaterThan(1000);
   });
   it('the dictionary has every corpus sense and every cloud sense, once each', () => {
     const senses = new Set([...corpus.words, ...vocab.words].map(senseKey));

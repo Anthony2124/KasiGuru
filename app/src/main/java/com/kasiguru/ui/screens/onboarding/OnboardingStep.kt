@@ -116,8 +116,8 @@ fun resolveDailyGoal(chosen: DailyGoal?, level: KnowledgeLevel?): DailyGoal =
 
 /**
  * The first word. "aldew" pays off the "Magandang aldew" Jepjep greets the learner with on the name
- * step, and "Water" is the meaning of "danom". Both are seeded in DatabaseSeeder (aldew = day and
- * aldew = sun, danom = water); nothing here is new Kasiguranin.
+ * step, and "Water" is the meaning of "danom". Both are seeded in DatabaseSeeder (aldew = day,
+ * danom = water); nothing here is new Kasiguranin.
  */
 object FirstWord {
     const val WORD = "aldew"

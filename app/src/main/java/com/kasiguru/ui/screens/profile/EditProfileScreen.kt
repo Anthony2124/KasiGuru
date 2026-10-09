@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -111,9 +114,14 @@ fun EditProfileScreen(
         pattern = GroundPattern.Orbs,
         compactTitle = true,
         content = {
+            // Scrolls, and clears the keyboard. The avatar grid alone is nine portraits, so the form
+            // only fit on the tallest phones: on a shorter screen, a larger text size, or with the
+            // keyboard up, the address field and Save were cut off with no way to reach them.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
                     .padding(Space.gutter),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

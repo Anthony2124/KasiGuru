@@ -67,7 +67,7 @@ object DatabaseSeeder {
     }
 
         /**
-     * The Kasiguranin corpus: 1202 senses.
+     * The Kasiguranin corpus: 1100 senses.
      *
      * Split across 9 private methods rather than written as one list. A JVM method is
      * capped at 64 KB of bytecode and a corpus this size in a single method does not compile;
@@ -123,17 +123,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "hayop",
-            tagalog = "hayop",
-            english = "animal",
-            rootForm = "hayop",
-            category = "Animals & Wildlife",
-            meaningEnglish = "Any living creature that is not a plant or a person.",
-            meaningTagalog = "Anumang nilalang na hindi halaman o tao.",
-            ipaNotation = "ˈhaː.jɔp",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
             kasiguranin = "bukong",
             tagalog = "bukung-bukong",
             english = "ankle",
@@ -153,39 +142,6 @@ object DatabaseSeeder {
             meaningEnglish = "A small insect that lives in large colonies and marches in lines.",
             meaningTagalog = "Maliit na insektong namumuhay nang pangkat at sunod-sunod na naglalakad.",
             ipaNotation = "si.ˈŋət",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "braso",
-            tagalog = "bisig",
-            english = "arm",
-            rootForm = "braso",
-            category = "Body Parts & Health",
-            meaningEnglish = "The limb from the shoulder to the hand.",
-            meaningTagalog = "Ang bahagi ng katawan mula balikat hanggang kamay.",
-            ipaNotation = "ˈbraː.sɔ",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kili-kile",
-            tagalog = "kili-kili",
-            english = "armpit",
-            rootForm = "kilikile",
-            category = "Body Parts & Health",
-            meaningEnglish = "The hollow underneath the arm where it meets the body.",
-            meaningTagalog = "Ang lukot sa ilalim ng braso kung saan ito nakakabit sa katawan.",
-            ipaNotation = "ki.li.ki.ˈlɛɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "abo",
-            tagalog = "abo",
-            english = "ashes",
-            rootForm = "abo",
-            category = "House & Daily Life",
-            meaningEnglish = "The soft grey powder left behind after something has burned.",
-            meaningTagalog = "Ang malambot na abuhing pulbos na naiiwan matapos masunog ang bagay.",
-            ipaNotation = "Ɂa.ˈbɔ",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -241,17 +197,6 @@ object DatabaseSeeder {
             ipaNotation = "ka.wa.ˈjan"
         ),
         VocabularyEntity(
-            kasiguranin = "kulet",
-            tagalog = "balat ng kahoy",
-            english = "bark",
-            rootForm = "kulet",
-            category = "Nature & Environment",
-            meaningEnglish = "The tough outer covering of a tree trunk.",
-            meaningTagalog = "Ang matigas na panlabas na balat ng puno.",
-            ipaNotation = "kʊ.ˈlet naŋ ka.ˈjɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "tiis",
             tagalog = "tiis",
             english = "bear, suffer",
@@ -261,16 +206,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang pagtitiis sa masakit o mahirap nang hindi sumusuko.",
             ipaNotation = "ti.ˈɁis",
             phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "umeng",
-            tagalog = "bigote",
-            english = "mustache",
-            rootForm = "umeng",
-            category = "Body Parts & Health",
-            meaningEnglish = "The hair growing on a man's upper lip.",
-            meaningTagalog = "Ang buhok na tumutubo sa itaas na labi ng lalaki.",
-            ipaNotation = "bal.ˈbas"
         ),
         VocabularyEntity(
             kasiguranin = "maganda",
@@ -283,16 +218,6 @@ object DatabaseSeeder {
             ipaNotation = "ma.ˈgan.da"
         ),
         VocabularyEntity(
-            kasiguranin = "tiyan",
-            tagalog = "tiyan",
-            english = "belly",
-            rootForm = "tiyan",
-            category = "Body Parts & Health",
-            meaningEnglish = "The front of the body below the chest.",
-            meaningTagalog = "Ang harapang bahagi ng katawan sa ibaba ng dibdib.",
-            ipaNotation = "ti.ˈjan"
-        ),
-        VocabularyEntity(
             kasiguranin = "dikkël",
             tagalog = "malaki",
             english = "big",
@@ -302,29 +227,6 @@ object DatabaseSeeder {
             meaningTagalog = "Malaki ang sukat o dami.",
             ipaNotation = "dik.ˈkəl",
             phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "apdu",
-            tagalog = "apdo",
-            english = "bile",
-            rootForm = "apdu",
-            category = "Body Parts & Health",
-            meaningEnglish = "The bitter greenish fluid the liver makes to help digest fat.",
-            meaningTagalog = "Ang mapait na luntiang likido mula sa atay na tumutulong tunawin ang taba.",
-            ipaNotation = "ˈɁap.dʊ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "ibon",
-            tagalog = "ibon",
-            english = "bird",
-            rootForm = "ibon",
-            category = "Animals & Wildlife",
-            meaningEnglish = "A feathered animal with wings and a beak.",
-            meaningTagalog = "Hayop na may balahibo, pakpak at tuka.",
-            ipaNotation = "ˈɁiː.bɔn",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "mapet",
@@ -465,16 +367,6 @@ object DatabaseSeeder {
             phoneticGlottal = true
         ),
         VocabularyEntity(
-            kasiguranin = "paruparo",
-            tagalog = "paruparo",
-            english = "butterfly",
-            rootForm = "paruparo",
-            category = "Animals & Wildlife",
-            meaningEnglish = "An insect with large, often coloured wings that flies by day.",
-            meaningTagalog = "Insektong may malalapad at madalas makukulay na pakpak, lumilipad sa araw.",
-            ipaNotation = "pa.rʊ.pa.ˈrɔ"
-        ),
-        VocabularyEntity(
             kasiguranin = "bule",
             tagalog = "puwit, puwitan",
             english = "buttocks",
@@ -505,16 +397,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang itim na panggatong na natitira kapag dahan-dahang sinunog ang kahoy.",
             ipaNotation = "bi.ˈrɔɁ",
             phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "padingel",
-            tagalog = "pisngi",
-            english = "cheek",
-            rootForm = "padingel",
-            category = "Body Parts & Health",
-            meaningEnglish = "The soft side of the face below the eye.",
-            meaningTagalog = "Ang malambot na gilid ng mukha sa ibaba ng mata.",
-            ipaNotation = "pa.di.ˈŋel"
         ),
         VocabularyEntity(
             kasiguranin = "rakaw",
@@ -729,18 +611,6 @@ object DatabaseSeeder {
             phoneticGlottal = true
         ),
         VocabularyEntity(
-            kasiguranin = "umaga",
-            tagalog = "umaga",
-            english = "daytime",
-            rootForm = "umaga",
-            category = "Numbers & Time",
-            meaningEnglish = "The part of the day when the sun is up.",
-            meaningTagalog = "Ang bahagi ng araw na nakasikat ang araw.",
-            ipaNotation = "Ɂʊ.ˈmaː.ga",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
             kasiguranin = "utang",
             tagalog = "utang",
             english = "debt",
@@ -784,16 +654,6 @@ object DatabaseSeeder {
             ipaNotation = "ti.ˈbag"
         ),
         VocabularyEntity(
-            kasiguranin = "hamog",
-            tagalog = "hamog",
-            english = "dew",
-            rootForm = "hamog",
-            category = "Weather & Climate",
-            meaningEnglish = "Drops of water that settle on things overnight.",
-            meaningTagalog = "Mga patak ng tubig na dumadapo sa mga bagay sa gabi.",
-            ipaNotation = "ha.ˈmɔg"
-        ),
-        VocabularyEntity(
             kasiguranin = "malëgga/marupet",
             tagalog = "marumi",
             english = "dirty",
@@ -813,17 +673,6 @@ object DatabaseSeeder {
             meaningEnglish = "A four-legged animal kept as a pet and a guard.",
             meaningTagalog = "Hayop na may apat na paa, inaalagaan bilang alaga at bantay.",
             ipaNotation = "Ɂa.ˈsɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "pinto",
-            tagalog = "pinto",
-            english = "door",
-            rootForm = "pinto",
-            category = "House & Daily Life",
-            meaningEnglish = "The panel that closes the entrance to a room or house.",
-            meaningTagalog = "Ang tabla o pinid na nagsasara sa pasukan ng silid o bahay.",
-            ipaNotation = "ˈpin.tɔɁ",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -850,17 +699,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "tuyo",
-            tagalog = "tuyo",
-            english = "dry",
-            rootForm = "tuyo",
-            category = "Weather & Climate",
-            meaningEnglish = "Holding no water or moisture.",
-            meaningTagalog = "Walang tubig o basa.",
-            ipaNotation = "tʊ.ˈyɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "mangudël",
             tagalog = "mapurol",
             english = "dull",
@@ -880,17 +718,6 @@ object DatabaseSeeder {
             meaningEnglish = "Unable to hear.",
             meaningTagalog = "Hindi nakakarinig.",
             ipaNotation = "bʊ.ˈlɔl"
-        ),
-        VocabularyEntity(
-            kasiguranin = "alikabok",
-            tagalog = "alikabok",
-            english = "dust",
-            rootForm = "alikabok",
-            category = "House & Daily Life",
-            meaningEnglish = "Fine dry powder that settles on surfaces.",
-            meaningTagalog = "Pinong tuyong alikabok na dumadapo sa mga ibabaw.",
-            ipaNotation = "Ɂa.li.ka.ˈbɔk",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "bëng-bëng",
@@ -944,17 +771,6 @@ object DatabaseSeeder {
             meaningEnglish = "A long purple vegetable with soft flesh.",
             meaningTagalog = "Mahaba at lilang gulay na may malambot na laman.",
             ipaNotation = "ta.ˈluŋ"
-        ),
-        VocabularyEntity(
-            kasiguranin = "walo",
-            tagalog = "walo",
-            english = "eight",
-            rootForm = "walo",
-            category = "Numbers & Time",
-            meaningEnglish = "The number after seven and before nine.",
-            meaningTagalog = "Ang bilang na kasunod ng pito at bago ang siyam.",
-            ipaNotation = "wa.ˈlɔɁ",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "siko",
@@ -1372,17 +1188,6 @@ object DatabaseSeeder {
             ipaNotation = "ˈʤɔs"
         ),
         VocabularyEntity(
-            kasiguranin = "ginto",
-            tagalog = "ginto",
-            english = "gold",
-            rootForm = "ginto",
-            category = "Nature & Environment",
-            meaningEnglish = "A precious yellow metal used for jewellery and money.",
-            meaningTagalog = "Mahalagang diláw na metal na ginagawang alahas at salapi.",
-            ipaNotation = "gin.ˈtɔɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "maigi",
             tagalog = "mabuti",
             english = "good",
@@ -1437,16 +1242,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang mga panloob na bahagi ng tiyan nang sama-sama.",
             ipaNotation = "bi.tʊ.ˈkaɁ",
             phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "buhok",
-            tagalog = "buhok",
-            english = "hair",
-            rootForm = "buhok",
-            category = "Body Parts & Health",
-            meaningEnglish = "The threads that grow from the skin of the head.",
-            meaningTagalog = "Ang mga hibla na tumutubo mula sa balat ng ulo.",
-            ipaNotation = "bʊ.ˈhɔk"
         ),
         VocabularyEntity(
             kasiguranin = "lima",
@@ -1581,17 +1376,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "bituka",
-            tagalog = "bituka",
-            english = "intestines",
-            rootForm = "bituka",
-            category = "Body Parts & Health",
-            meaningEnglish = "The long tube below the stomach that digests food.",
-            meaningTagalog = "Ang mahabang daluyan sa ilalim ng sikmura na tumutunaw ng pagkain.",
-            ipaNotation = "bi.tʊ.ˈkaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "isla",
             tagalog = "pulo",
             english = "island",
@@ -1645,16 +1429,6 @@ object DatabaseSeeder {
             ipaNotation = "di.ˈmɔ.ʤan"
         ),
         VocabularyEntity(
-            kasiguranin = "dipos",
-            tagalog = "bunso",
-            english = "lastborn",
-            rootForm = "dipos",
-            category = "Family & People",
-            meaningEnglish = "The youngest child in a family.",
-            meaningTagalog = "Ang pinakabatang anak sa pamilya.",
-            ipaNotation = "di.ˈpɔs"
-        ),
-        VocabularyEntity(
             kasiguranin = "duun",
             tagalog = "dahon",
             english = "leaf",
@@ -1675,17 +1449,6 @@ object DatabaseSeeder {
             ipaNotation = "tʊ.ˈrɔg"
         ),
         VocabularyEntity(
-            kasiguranin = "kaliwa kariwe",
-            tagalog = "(hand)",
-            english = "left",
-            rootForm = "kaliwa",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The side of the body opposite the right.",
-            meaningTagalog = "Ang panig ng katawan na katapat ng kanan.",
-            ipaNotation = "ka.ri.ˈwɛɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "binti",
             tagalog = "binti",
             english = "leg",
@@ -1699,18 +1462,6 @@ object DatabaseSeeder {
     )
 
     private fun vocabularyChunk2(): List<VocabularyEntity> = listOf(
-        VocabularyEntity(
-            kasiguranin = "kasinungalingan kabulean",
-            tagalog = "(falsehood)",
-            english = "lie",
-            rootForm = "kasinungalingan",
-            category = "Greetings & Essentials",
-            meaningEnglish = "Something said that the speaker knows is untrue.",
-            meaningTagalog = "Bagay na sinasabi kahit alam ng nagsasalita na hindi totoo.",
-            ipaNotation = "kaː.bʊ. ˈlɛː. Ɂan",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
         VocabularyEntity(
             kasiguranin = "malagen",
             tagalog = "magaan",
@@ -1810,17 +1561,6 @@ object DatabaseSeeder {
             ipaNotation = "ˈbaː.gaɁ",
             phoneticGlottal = true,
             phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "lalakke",
-            tagalog = "lalake",
-            english = "man",
-            rootForm = "lalakke",
-            category = "Family & People",
-            meaningEnglish = "An adult male person.",
-            meaningTagalog = "Taong lalaki na nasa hustong gulang.",
-            ipaNotation = "lə.lək.ˈkɛɁ",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "gulpi",
@@ -1946,17 +1686,6 @@ object DatabaseSeeder {
             meaningTagalog = "Malambot at basang lupa.",
             ipaNotation = "ˈpʊː.tik",
             phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kuko",
-            tagalog = "kuko",
-            english = "nail",
-            rootForm = "kuko",
-            category = "Body Parts & Health",
-            meaningEnglish = "The hard plate at the tip of a finger or toe.",
-            meaningTagalog = "Ang matigas na takip sa dulo ng daliri sa kamay o paa.",
-            ipaNotation = "kʊ.ˈkɔɁ",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "ngaran",
@@ -2110,17 +1839,6 @@ object DatabaseSeeder {
             phoneticGlottal = true
         ),
         VocabularyEntity(
-            kasiguranin = "addung",
-            tagalog = "ilong",
-            english = "nose",
-            rootForm = "addung",
-            category = "Body Parts & Health",
-            meaningEnglish = "The part of the face used for breathing and smelling.",
-            meaningTagalog = "Ang bahagi ng mukha na ginagamit sa paghinga at pang-amoy.",
-            ipaNotation = "Ɂad.ˈdʊŋ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "hindi",
             tagalog = "hindi",
             english = "not",
@@ -2239,17 +1957,6 @@ object DatabaseSeeder {
             ipaNotation = "pa.ka.ˈwaj"
         ),
         VocabularyEntity(
-            kasiguranin = "duun",
-            tagalog = "doon",
-            english = "over there",
-            rootForm = "duun",
-            category = "Greetings & Essentials",
-            meaningEnglish = "In that place, away from the speaker.",
-            meaningTagalog = "Sa lugar na iyon, malayo sa nagsasalita.",
-            ipaNotation = "dʊ.ˈɁʊn",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "sagwan",
             tagalog = "sagwan",
             english = "paddle",
@@ -2279,17 +1986,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang panloob na ibabaw ng kamay.",
             ipaNotation = "ˈpaː.lad",
             phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "buto/bungaw",
-            tagalog = "ari ng lalaki",
-            english = "penis",
-            rootForm = "buto/bungaw",
-            category = "Body Parts & Health",
-            meaningEnglish = "The external sex organ of a male.",
-            meaningTagalog = "Ang panlabas na ari ng lalaki.",
-            ipaNotation = "bʊ.ˈtɔɁ",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "tolay",
@@ -2334,15 +2030,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "hand",
-            tagalog = "with",
-            english = "press",
-            rootForm = "hand",
-            category = "Greetings & Essentials",
-            meaningEnglish = "To push down on something steadily.",
-            meaningTagalog = "Ang pagdiin pababa sa isang bagay."
-        ),
-        VocabularyEntity(
             kasiguranin = "nana",
             tagalog = "nana",
             english = "pus",
@@ -2351,17 +2038,6 @@ object DatabaseSeeder {
             meaningEnglish = "The thick yellow fluid that forms in an infected wound.",
             meaningTagalog = "Ang malapot na diláw na likidong nabubuo sa nahawaang sugat.",
             ipaNotation = "na.ˈnaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kuyëng",
-            tagalog = "daga",
-            english = "rat",
-            rootForm = "kuyëng",
-            category = "Animals & Wildlife",
-            meaningEnglish = "A small grey animal with a long tail that lives near people.",
-            meaningTagalog = "Maliit na abuhing hayop na may mahabang buntot, naninirahan malapit sa tao.",
-            ipaNotation = "kʊ.ˈjəŋ",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -2394,17 +2070,6 @@ object DatabaseSeeder {
             meaningTagalog = "Walang mali; ayon sa dapat.",
             ipaNotation = "ˈtaː.maɁ",
             phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kanan",
-            tagalog = "kanan",
-            english = "right (hand)",
-            rootForm = "kanan",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The side of the body opposite the left.",
-            meaningTagalog = "Ang panig ng katawan na katapat ng kaliwa.",
-            ipaNotation = "ˈkaː.nan",
             phoneticVowelLength = true
         ),
         VocabularyEntity(
@@ -2610,16 +2275,6 @@ object DatabaseSeeder {
             ipaNotation = "dig.ˈdig ng di.ˈgɛt"
         ),
         VocabularyEntity(
-            kasiguranin = "baddit",
-            tagalog = "maliit",
-            english = "short",
-            rootForm = "baddit",
-            category = "Numbers & Time",
-            meaningEnglish = "Measuring little from end to end, or low in height.",
-            meaningTagalog = "Maikli ang sukat mula dulo hanggang dulo, o mababa ang taas.",
-            ipaNotation = "bad.ˈdit"
-        ),
-        VocabularyEntity(
             kasiguranin = "abaga",
             tagalog = "balikat",
             english = "shoulder",
@@ -2719,16 +2374,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "baddit",
-            tagalog = "maliit",
-            english = "small",
-            rootForm = "baddit",
-            category = "Colors & Shapes",
-            meaningEnglish = "Little in size or amount.",
-            meaningTagalog = "Maliit ang sukat o dami.",
-            ipaNotation = "bad.ˈdit"
-        ),
-        VocabularyEntity(
             kasiguranin = "asok",
             tagalog = "usok",
             english = "smoke",
@@ -2781,17 +2426,6 @@ object DatabaseSeeder {
             meaningEnglish = "Yielding easily to pressure; not hard.",
             meaningTagalog = "Madaling malubog kapag dinidiinan; hindi matigas.",
             ipaNotation = "ma.lam.ˈmɛn"
-        ),
-        VocabularyEntity(
-            kasiguranin = "sangan",
-            tagalog = "ilan",
-            english = "some",
-            rootForm = "sangan",
-            category = "Numbers & Time",
-            meaningEnglish = "An unstated small number or amount.",
-            meaningTagalog = "Hindi tiyak na maliit na bilang o dami.",
-            ipaNotation = "ˈsaː.ŋan",
-            phoneticVowelLength = true
         ),
         VocabularyEntity(
             kasiguranin = "kaluluwa",
@@ -2999,17 +2633,6 @@ object DatabaseSeeder {
             ipaNotation = "ta.ˈlad"
         ),
         VocabularyEntity(
-            kasiguranin = "aldew",
-            tagalog = "araw",
-            english = "sun",
-            rootForm = "aldew",
-            category = "Numbers & Time",
-            meaningEnglish = "The star that gives the earth its light and heat.",
-            meaningTagalog = "Ang bituing nagbibigay ng liwanag at init sa mundo.",
-            ipaNotation = "ˈɁal.dɛw",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "matam-is",
             tagalog = "matamis",
             english = "sweet",
@@ -3018,17 +2641,6 @@ object DatabaseSeeder {
             meaningEnglish = "Tasting of sugar or honey.",
             meaningTagalog = "May lasang asukal o pulot.",
             ipaNotation = "ma.ˈtam.Ɂis",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "baga",
-            tagalog = "maga",
-            english = "swollen",
-            rootForm = "baga",
-            category = "Body Parts & Health",
-            meaningEnglish = "Enlarged and puffed up, usually from injury or infection.",
-            meaningTagalog = "Lumaki at namamaga, kadalasan dahil sa sugat o impeksiyon.",
-            ipaNotation = "ba.ˈgaɁ",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -3203,17 +2815,6 @@ object DatabaseSeeder {
             ipaNotation = "ˈka.ŋa"
         ),
         VocabularyEntity(
-            kasiguranin = "enak",
-            tagalog = "anak",
-            english = "child",
-            rootForm = "enak",
-            category = "Family & People",
-            meaningEnglish = "A young person; an offspring.",
-            meaningTagalog = "Batang tao; supling.",
-            ipaNotation = "ˈɁɛ.nak",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "yabat",
             tagalog = "palo",
             english = "strike",
@@ -3275,17 +2876,6 @@ object DatabaseSeeder {
             meaningEnglish = "To separate something into pieces by force.",
             meaningTagalog = "Ang paghahati sa isang bagay sa pamamagitan ng lakas.",
             ipaNotation = "pʊ.ˈtɛl"
-        ),
-        VocabularyEntity(
-            kasiguranin = "angës",
-            tagalog = "hinga",
-            english = "breath",
-            rootForm = "angës",
-            category = "Body Parts & Health",
-            meaningEnglish = "The air drawn into and pushed out of the lungs.",
-            meaningTagalog = "Ang hanging pumapasok at lumalabas sa baga.",
-            ipaNotation = "Ɂa.ˈŋəs",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "tawed",
@@ -3875,17 +3465,6 @@ object DatabaseSeeder {
             phoneticVowelLength = true
         ),
         VocabularyEntity(
-            kasiguranin = "puropor",
-            tagalog = "ambon",
-            english = "shower",
-            rootForm = "puropor",
-            category = "Weather & Climate",
-            meaningEnglish = "A brief light fall of rain.",
-            meaningTagalog = "Maikli at mahinang pag-ulan.",
-            ipaNotation = "pʊ.ˈrɔː.pɔr",
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
             kasiguranin = "sarëm",
             tagalog = "lubog",
             english = "sink",
@@ -3917,28 +3496,6 @@ object DatabaseSeeder {
             meaningEnglish = "To rest with the eyes closed and the mind at rest.",
             meaningTagalog = "Ang pagpapahinga nang nakapikit at hindi gising ang isip.",
             ipaNotation = "ti.ˈdʊg"
-        ),
-        VocabularyEntity(
-            kasiguranin = "arob",
-            tagalog = "amoy",
-            english = "smell",
-            rootForm = "arob",
-            category = "Body Parts & Health",
-            meaningEnglish = "To take in a scent through the nose.",
-            meaningTagalog = "Ang pag-amoy gamit ang ilong.",
-            ipaNotation = "Ɂa.ˈrɔb",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "kagi",
-            tagalog = "salita",
-            english = "speak",
-            rootForm = "kagi",
-            category = "Greetings & Essentials",
-            meaningEnglish = "To use the voice to express words.",
-            meaningTagalog = "Ang paggamit ng tinig upang magbigkas ng salita.",
-            ipaNotation = "ka.ˈgiɁ",
-            phoneticGlottal = true
         ),
         VocabularyEntity(
             kasiguranin = "loktab",
@@ -4115,18 +3672,6 @@ object DatabaseSeeder {
             phoneticGlottal = true
         ),
         VocabularyEntity(
-            kasiguranin = "badu",
-            tagalog = "baro",
-            english = "garment",
-            rootForm = "badu",
-            category = "House & Daily Life",
-            meaningEnglish = "A piece of clothing worn on the body.",
-            meaningTagalog = "Kasuotang isinusuot sa katawan.",
-            ipaNotation = "ˈbaː.dʊɁ",
-            phoneticGlottal = true,
-            phoneticVowelLength = true
-        ),
-        VocabularyEntity(
             kasiguranin = "disono",
             tagalog = "taas",
             english = "up",
@@ -4193,16 +3738,6 @@ object DatabaseSeeder {
             ipaNotation = "da.ˈnɔm"
         ),
         VocabularyEntity(
-            kasiguranin = "dappog",
-            tagalog = "kalabaw",
-            english = "water buffalo",
-            rootForm = "dappog",
-            category = "Animals & Wildlife",
-            meaningEnglish = "A large horned animal used to pull ploughs.",
-            meaningTagalog = "Malaking hayop na may sungay, ginagamit sa pag-aararo.",
-            ipaNotation = "dap.ˈpɔg"
-        ),
-        VocabularyEntity(
             kasiguranin = "alun",
             tagalog = "alon",
             english = "wave",
@@ -4223,17 +3758,6 @@ object DatabaseSeeder {
             meaningEnglish = "Covered or soaked with water.",
             meaningTagalog = "Nababalot o nababad sa tubig.",
             ipaNotation = "ba.ˈsaɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
-            kasiguranin = "anu",
-            tagalog = "ano",
-            english = "what",
-            rootForm = "ano",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word used to ask which thing is meant.",
-            meaningTagalog = "Ang salitang ginagamit upang itanong kung aling bagay ang tinutukoy.",
-            ipaNotation = "Ɂa.ˈnɔ",
             phoneticGlottal = true
         ),
         VocabularyEntity(
@@ -4290,17 +3814,6 @@ object DatabaseSeeder {
             phoneticGlottal = true
         ),
         VocabularyEntity(
-            kasiguranin = "babbi",
-            tagalog = "babae",
-            english = "female",
-            rootForm = "babae",
-            category = "Family & People",
-            meaningEnglish = "Of the sex that bears young; a woman or girl.",
-            meaningTagalog = "Sa kasariang nagsisilang; babae o dalagita.",
-            ipaNotation = "bəb.ˈbiɁ",
-            phoneticGlottal = true
-        ),
-        VocabularyEntity(
             kasiguranin = "mali",
             tagalog = "mali",
             english = "wrong",
@@ -4341,33 +3854,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang planetang tinitirhan ng mga tao."
         ),
         VocabularyEntity(
-            kasiguranin = "lutá",
-            tagalog = "lupa'",
-            english = "land, earth, soil",
-            rootForm = "lutá",
-            category = "Nature & Environment",
-            meaningEnglish = "The ground, and the soil that plants grow in.",
-            meaningTagalog = "Ang lupa, at ang lupang tinutubuan ng mga halaman."
-        ),
-        VocabularyEntity(
-            kasiguranin = "alikabuk",
-            tagalog = "alikabok",
-            english = "dust, fine earth",
-            rootForm = "alikabuk",
-            category = "Nature & Environment",
-            meaningEnglish = "Fine dry particles of earth carried by the air.",
-            meaningTagalog = "Pinong tuyong butil ng lupa na dinadala ng hangin."
-        ),
-        VocabularyEntity(
-            kasiguranin = "buked",
-            tagalog = "burol",
-            english = "hill",
-            rootForm = "buked",
-            category = "Nature & Environment",
-            meaningEnglish = "A raised piece of land, lower than a mountain.",
-            meaningTagalog = "Nakataas na lupain, mas mababa kaysa bundok."
-        ),
-        VocabularyEntity(
             kasiguranin = "tok-tok",
             tagalog = "tuktok",
             english = "summit, mountain top, peak",
@@ -4402,15 +3888,6 @@ object DatabaseSeeder {
             category = "Nature & Environment",
             meaningEnglish = "Land with water on every side.",
             meaningTagalog = "Lupaing napapaligiran ng tubig sa lahat ng panig."
-        ),
-        VocabularyEntity(
-            kasiguranin = "gasangan",
-            tagalog = "koral",
-            english = "coral (rock)",
-            rootForm = "gasangan",
-            category = "Nature & Environment",
-            meaningEnglish = "The hard stony material built up by coral animals.",
-            meaningTagalog = "Ang matigas na batong nabubuo mula sa mga korales."
         ),
         VocabularyEntity(
             kasiguranin = "gasang",
@@ -4512,15 +3989,6 @@ object DatabaseSeeder {
             meaningTagalog = "Maliit na agos ng tabang na tubig."
         ),
         VocabularyEntity(
-            kasiguranin = "agus",
-            tagalog = "agos",
-            english = "current",
-            rootForm = "agus",
-            category = "Nature & Environment",
-            meaningEnglish = "The steady movement of water in one direction.",
-            meaningTagalog = "Ang tuloy-tuloy na paggalaw ng tubig sa isang direksyon."
-        ),
-        VocabularyEntity(
             kasiguranin = "pangpang",
             tagalog = "pampang, tabing-ilog",
             english = "riverbank",
@@ -4537,15 +4005,6 @@ object DatabaseSeeder {
             category = "Nature & Environment",
             meaningEnglish = "Water turning rapidly in a circle.",
             meaningTagalog = "Tubig na mabilis umiikot nang paikot."
-        ),
-        VocabularyEntity(
-            kasiguranin = "bulos",
-            tagalog = "tubig sa batis",
-            english = "spring",
-            rootForm = "bulos",
-            category = "Nature & Environment",
-            meaningEnglish = "Water rising naturally from the ground.",
-            meaningTagalog = "Tubig na kusang bumubukal mula sa lupa."
         ),
         VocabularyEntity(
             kasiguranin = "bal-ong",
@@ -4664,15 +4123,6 @@ object DatabaseSeeder {
             meaningTagalog = "Malamig na lugar na natatakpan mula sa sikat ng araw."
         ),
         VocabularyEntity(
-            kasiguranin = "aneno",
-            tagalog = "anino",
-            english = "shadow",
-            rootForm = "aneno",
-            category = "Weather & Climate",
-            meaningEnglish = "The dark outline cast by something blocking light.",
-            meaningTagalog = "Ang madilim na hugis na nabubuo kapag may humaharang sa liwanag."
-        ),
-        VocabularyEntity(
             kasiguranin = "sireno",
             tagalog = "hamog",
             english = "dew",
@@ -4680,15 +4130,6 @@ object DatabaseSeeder {
             category = "Weather & Climate",
             meaningEnglish = "Water that settles in drops overnight.",
             meaningTagalog = "Tubig na dumadapo nang patak-patak sa gabi."
-        ),
-        VocabularyEntity(
-            kasiguranin = "parës",
-            tagalog = "hangin",
-            english = "air",
-            rootForm = "parës",
-            category = "Weather & Climate",
-            meaningEnglish = "The invisible mixture of gases people breathe.",
-            meaningTagalog = "Ang hindi nakikitang hanging nilalanghap ng mga tao."
         ),
         VocabularyEntity(
             kasiguranin = "amian",
@@ -4716,15 +4157,6 @@ object DatabaseSeeder {
             category = "Weather & Climate",
             meaningEnglish = "Fine light rain falling steadily.",
             meaningTagalog = "Pinong at mahinang ulan na tuloy-tuloy."
-        ),
-        VocabularyEntity(
-            kasiguranin = "yelo",
-            tagalog = "niyebe",
-            english = "snow",
-            rootForm = "yelo",
-            category = "Weather & Climate",
-            meaningEnglish = "Frozen water falling as soft white flakes.",
-            meaningTagalog = "Nagyeyelong tubig na bumabagsak bilang malambot na puting nipis."
         ),
         VocabularyEntity(
             kasiguranin = "yelo",
@@ -4829,15 +4261,6 @@ object DatabaseSeeder {
 
     private fun vocabularyChunk4(): List<VocabularyEntity> = listOf(
         VocabularyEntity(
-            kasiguranin = "ának",
-            tagalog = "anak",
-            english = "child",
-            rootForm = "ának",
-            category = "Family & People",
-            meaningEnglish = "A son or daughter, spoken of as kin.",
-            meaningTagalog = "Ang anak, tinutukoy bilang kaanak."
-        ),
-        VocabularyEntity(
             kasiguranin = "binata",
             tagalog = "binata'",
             english = "adolescent male, young man",
@@ -4899,15 +4322,6 @@ object DatabaseSeeder {
             category = "Family & People",
             meaningEnglish = "The female partner in a marriage.",
             meaningTagalog = "Ang babaeng kabiyak sa isang pag-aasawa."
-        ),
-        VocabularyEntity(
-            kasiguranin = "anák",
-            tagalog = "supling, anak",
-            english = "offspring",
-            rootForm = "anák",
-            category = "Family & People",
-            meaningEnglish = "One's own child, in relation to the parent.",
-            meaningTagalog = "Ang sariling anak, kaugnay ng magulang."
         ),
         VocabularyEntity(
             kasiguranin = "kapatkakang lalëkke",
@@ -5018,24 +4432,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang kapatid na babae ng ama o ina."
         ),
         VocabularyEntity(
-            kasiguranin = "tita",
-            tagalog = "tita; tiya",
-            english = "father's sister",
-            rootForm = "tita",
-            category = "Family & People",
-            meaningEnglish = "The sister of one's father.",
-            meaningTagalog = "Ang kapatid na babae ng ama."
-        ),
-        VocabularyEntity(
-            kasiguranin = "pensan",
-            tagalog = "pinsan",
-            english = "cross-cousin",
-            rootForm = "pensan",
-            category = "Family & People",
-            meaningEnglish = "The child of a parent's opposite-sex sibling.",
-            meaningTagalog = "Ang anak ng kapatid ng magulang na kaibang kasarian."
-        ),
-        VocabularyEntity(
             kasiguranin = "pensan",
             tagalog = "pinsan sa batas",
             english = "cousin-in-law",
@@ -5117,15 +4513,6 @@ object DatabaseSeeder {
             meaningTagalog = "Tinanggap sa pamilya at pinalaking parang tunay na anak."
         ),
         VocabularyEntity(
-            kasiguranin = "aku",
-            tagalog = "ako",
-            english = "1sg",
-            rootForm = "aku",
-            category = "Family & People",
-            meaningEnglish = "The word a speaker uses for themselves.",
-            meaningTagalog = "Ang salitang ginagamit ng nagsasalita para sa sarili."
-        ),
-        VocabularyEntity(
             kasiguranin = "kita",
             tagalog = "tayo",
             english = "1pl incl",
@@ -5133,15 +4520,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "We, counting the person being spoken to.",
             meaningTagalog = "Tayo, kabilang ang kausap."
-        ),
-        VocabularyEntity(
-            kasiguranin = "ikaw",
-            tagalog = "kayo",
-            english = "2sg (informal)",
-            rootForm = "ikaw",
-            category = "Greetings & Essentials",
-            meaningEnglish = "You, one person, spoken to familiarly.",
-            meaningTagalog = "Ikaw, iisang tao, sa palagayang pananalita."
         ),
         VocabularyEntity(
             kasiguranin = "ikaw",
@@ -5250,15 +4628,6 @@ object DatabaseSeeder {
             category = "Animals & Wildlife",
             meaningEnglish = "A fenced enclosure for keeping animals.",
             meaningTagalog = "Nabakurang lugar na pinaglalagyan ng mga hayop."
-        ),
-        VocabularyEntity(
-            kasiguranin = "manok",
-            tagalog = "manok",
-            english = "fowl",
-            rootForm = "manok",
-            category = "Animals & Wildlife",
-            meaningEnglish = "A bird kept for its meat and eggs.",
-            meaningTagalog = "Ibong inaalagaan para sa karne at itlog nito."
         ),
         VocabularyEntity(
             kasiguranin = "tandang",
@@ -5421,15 +4790,6 @@ object DatabaseSeeder {
             category = "Animals & Wildlife",
             meaningEnglish = "A small long-tailed animal that lives near people.",
             meaningTagalog = "Maliit na hayop na may mahabang buntot, naninirahan malapit sa tao."
-        ),
-        VocabularyEntity(
-            kasiguranin = "sida`",
-            tagalog = "isda'",
-            english = "fish",
-            rootForm = "sida`",
-            category = "Animals & Wildlife",
-            meaningEnglish = "An animal that lives in water and breathes through gills.",
-            meaningTagalog = "Hayop na nabubuhay sa tubig at humihinga sa hasang."
         ),
         VocabularyEntity(
             kasiguranin = "bunay ng sidâ",
@@ -5792,15 +5152,6 @@ object DatabaseSeeder {
             meaningTagalog = "Malaking butiki na mahaba ang buntot at sanga ang dila."
         ),
         VocabularyEntity(
-            kasiguranin = "bakokol",
-            tagalog = "pagong",
-            english = "tortoise",
-            rootForm = "bakokol",
-            category = "Animals & Wildlife",
-            meaningEnglish = "A shelled reptile that lives on land.",
-            meaningTagalog = "Reptilyang may talukab na naninirahan sa lupa."
-        ),
-        VocabularyEntity(
             kasiguranin = "kulet",
             tagalog = "balat",
             english = "skin",
@@ -5917,15 +5268,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang matigas at matulis na tubo sa ulo ng hayop."
         ),
         VocabularyEntity(
-            kasiguranin = "uló",
-            tagalog = "ulo",
-            english = "head",
-            rootForm = "uló",
-            category = "Body Parts & Health",
-            meaningEnglish = "The top part of the body, holding the face and brain.",
-            meaningTagalog = "Ang itaas na bahagi ng katawan, kinalalagyan ng mukha at utak."
-        ),
-        VocabularyEntity(
             kasiguranin = "bunbunan",
             tagalog = "bumbunan",
             english = "fontanelle",
@@ -5933,15 +5275,6 @@ object DatabaseSeeder {
             category = "Body Parts & Health",
             meaningEnglish = "The soft spot on a baby's skull before the bones close.",
             meaningTagalog = "Ang malambot na bahagi ng bungo ng sanggol bago magsara ang buto."
-        ),
-        VocabularyEntity(
-            kasiguranin = "kiray",
-            tagalog = "kilay",
-            english = "eyebrows",
-            rootForm = "kiray",
-            category = "Body Parts & Health",
-            meaningEnglish = "The lines of hair above the eyes.",
-            meaningTagalog = "Ang mga hanay ng buhok sa itaas ng mga mata."
         ),
         VocabularyEntity(
             kasiguranin = "pilikmata",
@@ -6132,15 +5465,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang buong braso mula balikat hanggang mga daliri."
         ),
         VocabularyEntity(
-            kasiguranin = "kilekile",
-            tagalog = "kilikili",
-            english = "armpit",
-            rootForm = "kilekile",
-            category = "Body Parts & Health",
-            meaningEnglish = "The hollow under the arm where it meets the body.",
-            meaningTagalog = "Ang lukot sa ilalim ng braso kung saan ito nakakabit sa katawan."
-        ),
-        VocabularyEntity(
             kasiguranin = "ituldu",
             tagalog = "turo",
             english = "point at",
@@ -6206,15 +5530,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang markang naiiwan ng paa sa lupa."
         ),
         VocabularyEntity(
-            kasiguranin = "bukong-bukong",
-            tagalog = "bukung-bukong",
-            english = "ankle",
-            rootForm = "bukong-bukong",
-            category = "Body Parts & Health",
-            meaningEnglish = "The joint connecting the foot to the leg.",
-            meaningTagalog = "Ang kasukasuang nag-uugnay sa paa at binti."
-        ),
-        VocabularyEntity(
             kasiguranin = "guramët sa bësset",
             tagalog = "daliri ng paa",
             english = "toe",
@@ -6249,15 +5564,6 @@ object DatabaseSeeder {
             category = "Body Parts & Health",
             meaningEnglish = "The raised tip of the breast through which milk passes.",
             meaningTagalog = "Ang nakausling dulo ng suso kung saan dumadaloy ang gatas."
-        ),
-        VocabularyEntity(
-            kasiguranin = "tiyan",
-            tagalog = "tiyan",
-            english = "stomach, belly",
-            rootForm = "tiyan",
-            category = "Body Parts & Health",
-            meaningEnglish = "The front of the body below the chest, and the organ inside it.",
-            meaningTagalog = "Ang harapan ng katawan sa ibaba ng dibdib, at ang sikmura sa loob nito."
         ),
         VocabularyEntity(
             kasiguranin = "apdu",
@@ -6440,15 +5746,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang paggising sa ibang tao mula sa pagtulog."
         ),
         VocabularyEntity(
-            kasiguranin = "ëttot",
-            tagalog = "utot",
-            english = "flatulence, fart",
-            rootForm = "ëttot",
-            category = "Body Parts & Health",
-            meaningEnglish = "Gas released from the bowels.",
-            meaningTagalog = "Ang hanging inilalabas mula sa bituka."
-        ),
-        VocabularyEntity(
             kasiguranin = "pantug",
             tagalog = "pantog",
             english = "bladder",
@@ -6465,15 +5762,6 @@ object DatabaseSeeder {
             category = "Body Parts & Health",
             meaningEnglish = "To pass urine from the body.",
             meaningTagalog = "Ang paglabas ng ihi mula sa katawan."
-        ),
-        VocabularyEntity(
-            kasiguranin = "ëttay",
-            tagalog = "tǝ",
-            english = "defecate",
-            rootForm = "ëttay",
-            category = "Body Parts & Health",
-            meaningEnglish = "To pass solid waste from the body.",
-            meaningTagalog = "Ang paglabas ng matigas na dumi mula sa katawan."
         ),
         VocabularyEntity(
             kasiguranin = "bulus",
@@ -6656,15 +5944,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang matigas na balat na nabubuo sa gumagaling na sugat."
         ),
         VocabularyEntity(
-            kasiguranin = "kattël",
-            tagalog = "kati",
-            english = "itchy",
-            rootForm = "kattël",
-            category = "Body Parts & Health",
-            meaningEnglish = "Causing the urge to scratch.",
-            meaningTagalog = "Nagdudulot ng pagnanais kumamot."
-        ),
-        VocabularyEntity(
             kasiguranin = "gus-gus",
             tagalog = "kamot",
             english = "scratch",
@@ -6818,15 +6097,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang ulam na kinakain kasabay ng kanin."
         ),
         VocabularyEntity(
-            kasiguranin = "dede",
-            tagalog = "suso",
-            english = "suck, breastfeed",
-            rootForm = "dede",
-            category = "Food & Dining",
-            meaningEnglish = "To take milk from the breast.",
-            meaningTagalog = "Ang pagsuso ng gatas mula sa dibdib."
-        ),
-        VocabularyEntity(
             kasiguranin = "sopsop",
             tagalog = "sipsip",
             english = "suck",
@@ -6861,15 +6131,6 @@ object DatabaseSeeder {
             category = "Food & Dining",
             meaningEnglish = "To bite and chew sugarcane for its juice.",
             meaningTagalog = "Ang pagpangos ng tubo para sa katas nito."
-        ),
-        VocabularyEntity(
-            kasiguranin = "tëllën",
-            tagalog = "lunok",
-            english = "swallow",
-            rootForm = "tëllën",
-            category = "Food & Dining",
-            meaningEnglish = "To make food or drink pass down the throat.",
-            meaningTagalog = "Ang paglunok ng pagkain o inumin sa lalamunan."
         ),
         VocabularyEntity(
             kasiguranin = "lëbbut",
@@ -6924,15 +6185,6 @@ object DatabaseSeeder {
             category = "Food & Dining",
             meaningEnglish = "A round open dish for food or liquid.",
             meaningTagalog = "Bilog at bukas na lalagyan ng pagkain o likido."
-        ),
-        VocabularyEntity(
-            kasiguranin = "banga",
-            tagalog = "banga ng tubig",
-            english = "water jar",
-            rootForm = "banga",
-            category = "Food & Dining",
-            meaningEnglish = "A large clay vessel for storing water.",
-            meaningTagalog = "Malaking lalagyang luwad para sa pag-iimbak ng tubig."
         ),
         VocabularyEntity(
             kasiguranin = "tasa",
@@ -7532,15 +6784,6 @@ object DatabaseSeeder {
 
     private fun vocabularyChunk6(): List<VocabularyEntity> = listOf(
         VocabularyEntity(
-            kasiguranin = "lamon",
-            tagalog = "damo",
-            english = "grass, brush",
-            rootForm = "lamon",
-            category = "Nature & Environment",
-            meaningEnglish = "Low wild growth covering open ground.",
-            meaningTagalog = "Mababang halamang tumutubo sa bukas na lupa."
-        ),
-        VocabularyEntity(
             kasiguranin = "kugun",
             tagalog = "kogon",
             english = "cogon grass",
@@ -7557,15 +6800,6 @@ object DatabaseSeeder {
             category = "Food & Dining",
             meaningEnglish = "To set rice seedlings into a flooded field.",
             meaningTagalog = "Ang pagtatanim ng punla ng palay sa binabahang bukid."
-        ),
-        VocabularyEntity(
-            kasiguranin = "pëgmula",
-            tagalog = "pagtanim",
-            english = "plant (yam)",
-            rootForm = "pëgmula",
-            category = "Nature & Environment",
-            meaningEnglish = "To set a root crop into the ground to grow.",
-            meaningTagalog = "Ang pagtatanim ng halamang-ugat sa lupa."
         ),
         VocabularyEntity(
             kasiguranin = "tangkay",
@@ -7667,15 +6901,6 @@ object DatabaseSeeder {
             meaningTagalog = "Palmang kinukunan ng katas para sa asukal at inumin."
         ),
         VocabularyEntity(
-            kasiguranin = "niyog",
-            tagalog = "niyog",
-            english = "old coconut",
-            rootForm = "niyog",
-            category = "Nature & Environment",
-            meaningEnglish = "A mature coconut with firm meat and little water.",
-            meaningTagalog = "Hinog na niyog na matigas ang laman at kaunti ang tubig."
-        ),
-        VocabularyEntity(
             kasiguranin = "buko",
             tagalog = "buko",
             english = "young coconut",
@@ -7701,15 +6926,6 @@ object DatabaseSeeder {
             category = "Nature & Environment",
             meaningEnglish = "The fibrous outer layer of a coconut.",
             meaningTagalog = "Ang mahibla at panlabas na balat ng niyog."
-        ),
-        VocabularyEntity(
-            kasiguranin = "pusu ng biget",
-            tagalog = "puso ng niyog",
-            english = "coconut heart",
-            rootForm = "pusu ng biget",
-            category = "Nature & Environment",
-            meaningEnglish = "The tender growing shoot at the top of a coconut palm.",
-            meaningTagalog = "Ang malambot na ubod sa tuktok ng puno ng niyog."
         ),
         VocabularyEntity(
             kasiguranin = "biget",
@@ -7861,15 +7077,6 @@ object DatabaseSeeder {
             category = "Nature & Environment",
             meaningEnglish = "A starch taken from the pith of a palm.",
             meaningTagalog = "Almirol na kinukuha mula sa ubod ng palma."
-        ),
-        VocabularyEntity(
-            kasiguranin = "layâ",
-            tagalog = "luya",
-            english = "ginger",
-            rootForm = "layâ",
-            category = "Nature & Environment",
-            meaningEnglish = "A hot-tasting root used to flavour food and drink.",
-            meaningTagalog = "Ugat na maanghang ang lasa, ginagamit sa pagkain at inumin."
         ),
         VocabularyEntity(
             kasiguranin = "kuneg",
@@ -8347,15 +7554,6 @@ object DatabaseSeeder {
             category = "House & Daily Life",
             meaningEnglish = "To turn something around on itself.",
             meaningTagalog = "Ang pagpilipit ng bagay paikot sa sarili nito."
-        ),
-        VocabularyEntity(
-            kasiguranin = "disono",
-            tagalog = "taas",
-            english = "lift up",
-            rootForm = "disono",
-            category = "House & Daily Life",
-            meaningEnglish = "To raise something to a higher place.",
-            meaningTagalog = "Ang pag-angat ng bagay patungo sa mas mataas na lugar."
         ),
         VocabularyEntity(
             kasiguranin = "matëknag",
@@ -8892,15 +8090,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang pagpapalitan ng mga bagay sa halip na salapi."
         ),
         VocabularyEntity(
-            kasiguranin = "presyo",
-            tagalog = "halaga",
-            english = "price",
-            rootForm = "presyo",
-            category = "Occupations & Tools",
-            meaningEnglish = "The amount of money a thing costs.",
-            meaningTagalog = "Ang halagang kailangang bayaran para sa isang bagay."
-        ),
-        VocabularyEntity(
             kasiguranin = "mahal",
             tagalog = "mahal, magastos",
             english = "expensive",
@@ -9016,15 +8205,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "In the direction of the sea.",
             meaningTagalog = "Sa direksyon patungo sa dagat."
-        ),
-        VocabularyEntity(
-            kasiguranin = "lubuk",
-            tagalog = "looban",
-            english = "inland",
-            rootForm = "lubuk",
-            category = "Greetings & Essentials",
-            meaningEnglish = "Away from the sea, towards the interior.",
-            meaningTagalog = "Palayo sa dagat, patungo sa loob ng lupain."
         ),
         VocabularyEntity(
             kasiguranin = "disono ng bulos",
@@ -9243,15 +8423,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang pinakalabas na linya o hangganan ng isang bagay."
         ),
         VocabularyEntity(
-            kasiguranin = "ditëngnga",
-            tagalog = "gitna",
-            english = "in the middle of",
-            rootForm = "ditëngnga",
-            category = "Greetings & Essentials",
-            meaningEnglish = "At the point equally far from the edges.",
-            meaningTagalog = "Sa puntong pantay ang layo mula sa mga gilid."
-        ),
-        VocabularyEntity(
             kasiguranin = "kanan",
             tagalog = "kanan",
             english = "right (side)",
@@ -9277,15 +8448,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "The direction in which the sun rises.",
             meaningTagalog = "Ang direksyon kung saan sumisikat ang araw."
-        ),
-        VocabularyEntity(
-            kasiguranin = "kanluran",
-            tagalog = "kanluran",
-            english = "west",
-            rootForm = "kanluran",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The direction in which the sun sets.",
-            meaningTagalog = "Ang direksyon kung saan lumulubog ang araw."
         ),
         VocabularyEntity(
             kasiguranin = "sikatan",
@@ -9394,15 +8556,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "Small in width, as a road.",
             meaningTagalog = "Makipot ang lapad, gaya ng daan."
-        ),
-        VocabularyEntity(
-            kasiguranin = "maniwang",
-            tagalog = "payat",
-            english = "skinny (human)",
-            rootForm = "maniwang",
-            category = "Greetings & Essentials",
-            meaningEnglish = "Having very little flesh on the body.",
-            meaningTagalog = "Napakakaunti ang laman ng katawan."
         ),
         VocabularyEntity(
             kasiguranin = "dissëllad",
@@ -9765,15 +8918,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang paghinto sa paggalaw o paggawa."
         ),
         VocabularyEntity(
-            kasiguranin = "natapos na",
-            tagalog = "tapos na",
-            english = "finished",
-            rootForm = "natapos na",
-            category = "Numbers & Time",
-            meaningEnglish = "Brought to an end; no longer going on.",
-            meaningTagalog = "Natapos na; hindi na nagpapatuloy."
-        ),
-        VocabularyEntity(
             kasiguranin = "sole",
             tagalog = "balik",
             english = "come back, return",
@@ -9853,15 +8997,6 @@ object DatabaseSeeder {
             category = "Numbers & Time",
             meaningEnglish = "The moment the sun drops below the horizon.",
             meaningTagalog = "Ang sandaling lumulubog ang araw sa abot-tanaw."
-        ),
-        VocabularyEntity(
-            kasiguranin = "ngay un",
-            tagalog = "ngayon",
-            english = "today",
-            rootForm = "ngay un",
-            category = "Numbers & Time",
-            meaningEnglish = "This present day.",
-            meaningTagalog = "Ang kasalukuyang araw na ito."
         ),
         VocabularyEntity(
             kasiguranin = "sa esa aldew",
@@ -10560,15 +9695,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang pagsasabi ng alam nang hindi totoo."
         ),
         VocabularyEntity(
-            kasiguranin = "bait",
-            tagalog = "buti, bait",
-            english = "good",
-            rootForm = "bait",
-            category = "Emotions & Feelings",
-            meaningEnglish = "Of fine quality, or well behaved.",
-            meaningTagalog = "Mataas ang kalidad, o mabuti ang asal."
-        ),
-        VocabularyEntity(
             kasiguranin = "madukës ang ugali",
             tagalog = "sama'",
             english = "bad",
@@ -10677,15 +9803,6 @@ object DatabaseSeeder {
             meaningTagalog = "Ang pagkakaroon ng tiyak na kaalaman sa isang bagay."
         ),
         VocabularyEntity(
-            kasiguranin = "ahëy",
-            tagalog = "ewan, hindi ko alam",
-            english = "don't know, I do not know",
-            rootForm = "ahëy",
-            category = "Emotions & Feelings",
-            meaningEnglish = "To have no knowledge of the thing asked about.",
-            meaningTagalog = "Ang kawalan ng kaalaman sa bagay na itinatanong."
-        ),
-        VocabularyEntity(
             kasiguranin = "pwede",
             tagalog = "maari, puwede",
             english = "can, able",
@@ -10693,15 +9810,6 @@ object DatabaseSeeder {
             category = "Emotions & Feelings",
             meaningEnglish = "Having the power or permission to do something.",
             meaningTagalog = "May kakayahan o pahintulot na gawin ang isang bagay."
-        ),
-        VocabularyEntity(
-            kasiguranin = "di pwede",
-            tagalog = "hindi",
-            english = "cannot, can't VERB",
-            rootForm = "di pwede",
-            category = "Emotions & Feelings",
-            meaningEnglish = "Lacking the power or permission to do something.",
-            meaningTagalog = "Walang kakayahan o pahintulot na gawin ang isang bagay."
         ),
         VocabularyEntity(
             kasiguranin = "kaalaman",
@@ -10830,51 +9938,6 @@ object DatabaseSeeder {
             meaningTagalog = "Bukod pa sa nabanggit na."
         ),
         VocabularyEntity(
-            kasiguranin = "kaguman",
-            tagalog = "na may, kasama ng, pati",
-            english = "with",
-            rootForm = "kaguman",
-            category = "Greetings & Essentials",
-            meaningEnglish = "In the company of; together with.",
-            meaningTagalog = "Kasama ng; kapiling ng."
-        ),
-        VocabularyEntity(
-            kasiguranin = "dahil",
-            tagalog = "dahil",
-            english = "because",
-            rootForm = "dahil",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word giving the reason for something.",
-            meaningTagalog = "Ang salitang nagbibigay ng dahilan sa isang bagay."
-        ),
-        VocabularyEntity(
-            kasiguranin = "kung",
-            tagalog = "kung",
-            english = "if",
-            rootForm = "kung",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word introducing a condition.",
-            meaningTagalog = "Ang salitang nagpapasimula ng isang kundisyon."
-        ),
-        VocabularyEntity(
-            kasiguranin = "o",
-            tagalog = "o",
-            english = "or / either ... or",
-            rootForm = "o",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word offering a choice between things.",
-            meaningTagalog = "Ang salitang nagbibigay ng pagpipilian sa dalawang bagay."
-        ),
-        VocabularyEntity(
-            kasiguranin = "pa rin",
-            tagalog = "pa rin, pa",
-            english = "still, yet",
-            rootForm = "pa rin",
-            category = "Greetings & Essentials",
-            meaningEnglish = "Going on up to now, without having stopped.",
-            meaningTagalog = "Nagpapatuloy hanggang ngayon, hindi pa humihinto."
-        ),
-        VocabularyEntity(
             kasiguranin = "oo",
             tagalog = "oo",
             english = "yes",
@@ -10882,24 +9945,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "The word used to agree or approve.",
             meaningTagalog = "Ang salitang ginagamit sa pagsang-ayon o pagpayag."
-        ),
-        VocabularyEntity(
-            kasiguranin = "hinde",
-            tagalog = "hindi",
-            english = "not",
-            rootForm = "hinde",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word that turns an action into its opposite.",
-            meaningTagalog = "Ang salitang nagpapasalungat sa isang kilos."
-        ),
-        VocabularyEntity(
-            kasiguranin = "hindi pwede",
-            tagalog = "huwag",
-            english = "don't!, do not!",
-            rootForm = "hindi pwede",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word used to forbid an action.",
-            meaningTagalog = "Ang salitang ginagamit sa pagbabawal ng isang kilos."
         ),
         VocabularyEntity(
             kasiguranin = "di ngani",
@@ -10954,15 +9999,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "The words used to ask the number of things.",
             meaningTagalog = "Ang salitang ginagamit upang itanong ang bilang ng mga bagay."
-        ),
-        VocabularyEntity(
-            kasiguranin = "anu",
-            tagalog = "ano ?",
-            english = "what?",
-            rootForm = "anu",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The word used to ask which thing is meant.",
-            meaningTagalog = "Ang salitang ginagamit upang itanong kung aling bagay ang tinutukoy."
         ),
         VocabularyEntity(
             kasiguranin = "kelan",
@@ -11073,15 +10109,6 @@ object DatabaseSeeder {
             meaningTagalog = "Sinasabi bilang usap-usapan, walang tiyak na pinagmulan."
         ),
         VocabularyEntity(
-            kasiguranin = "kwento",
-            tagalog = "kuwento",
-            english = "story",
-            rootForm = "kwento",
-            category = "Greetings & Essentials",
-            meaningEnglish = "An account of events, told or written.",
-            meaningTagalog = "Salaysay ng mga pangyayari, sinasabi o isinusulat."
-        ),
-        VocabularyEntity(
             kasiguranin = "walang perëng",
             tagalog = "tahimik",
             english = "silent",
@@ -11089,15 +10116,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "Making no sound; saying nothing.",
             meaningTagalog = "Walang tunog; walang sinasabi."
-        ),
-        VocabularyEntity(
-            kasiguranin = "kagi",
-            tagalog = "wika'",
-            english = "language",
-            rootForm = "kagi",
-            category = "Greetings & Essentials",
-            meaningEnglish = "The whole system of words a people speaks.",
-            meaningTagalog = "Ang buong sistema ng mga salitang ginagamit ng isang bayan."
         ),
         VocabularyEntity(
             kasiguranin = "kagi",
@@ -11224,15 +10242,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "To tell someone to do something, or to send them on an errand.",
             meaningTagalog = "Ang pag-uutos sa iba na gumawa o magtungo sa isang gawain."
-        ),
-        VocabularyEntity(
-            kasiguranin = "kaguman",
-            tagalog = "hatid",
-            english = "accompany, go with",
-            rootForm = "kaguman",
-            category = "Greetings & Essentials",
-            meaningEnglish = "To travel along with another person.",
-            meaningTagalog = "Ang pagsama sa paglalakbay ng ibang tao."
         ),
         VocabularyEntity(
             kasiguranin = "itugën",
@@ -11467,15 +10476,6 @@ object DatabaseSeeder {
             category = "Greetings & Essentials",
             meaningEnglish = "Having done the wrong one is charged with.",
             meaningTagalog = "Nagawa ang maling ipinaparatang."
-        ),
-        VocabularyEntity(
-            kasiguranin = "inosente",
-            tagalog = "walang sala; inosente",
-            english = "innocent",
-            rootForm = "inosente",
-            category = "Greetings & Essentials",
-            meaningEnglish = "Not having done the wrong one is charged with.",
-            meaningTagalog = "Hindi nagawa ang maling ipinaparatang."
         ),
         VocabularyEntity(
             kasiguranin = "parusa",
