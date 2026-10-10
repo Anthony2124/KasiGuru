@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -125,7 +124,7 @@ fun GameOverView(
                         Icon(
                             painter = painterResource(id = Iconsax.StarBold),
                             contentDescription = null,
-                            tint = if (isEarned) GoldText else Color(0xFFE2E8F0),
+                            tint = if (isEarned) GoldText else NodeLocked, // the level picker's unearned star, which follows the theme
                             modifier = Modifier.size(32.dp)
                         )
                     }

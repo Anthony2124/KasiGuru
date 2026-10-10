@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
@@ -397,14 +398,14 @@ private fun DictionaryEntry(
                 Icon(
                     painter = painterResource(id = Iconsax.InfoCircle),
                     contentDescription = null,
-                    tint = Muted,
+                    tint = RedText,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = "Report an issue with this word",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Muted
+                    color = RedText
                 )
             }
         }
@@ -591,7 +592,8 @@ private fun WordLinkList(words: List<VocabularyEntity>, onOpenWord: (Int) -> Uni
                         listOf(word.english, word.tagalog).filter { it.isNotBlank() }.joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = Muted,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Icon(painterResource(Iconsax.ArrowRight), null, tint = Faint, modifier = Modifier.size(16.dp))
