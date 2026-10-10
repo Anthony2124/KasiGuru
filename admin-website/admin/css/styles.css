@@ -1443,30 +1443,3 @@ body.auth { display: grid; place-items: center; min-height: 100dvh; padding: var
 }
 .team-invite-note { color: var(--muted); font-size: var(--t-xs); }
 .team-invite-actions, .team-row-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; flex: none; }
-
-/* The invite goes out as two emails, in order: the link, then the one-time code. */
-.team-invite-steps { list-style: none; display: flex; flex-direction: column; gap: var(--s-3); width: 100%; }
-.team-invite-steps li { display: flex; align-items: flex-start; gap: var(--s-3); }
-.team-invite-step-n {
-  flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); display: grid; place-items: center;
-  background: var(--surface); color: var(--status-approved); font-weight: 700; font-size: var(--t-xs);
-}
-.team-invite-step-body { display: flex; flex-direction: column; gap: var(--s-2); align-items: flex-start; min-width: 0; }
-.team-invite-code { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: 0.12em; user-select: all; }
-
-/* An invited verifier's one-time code, asked for after Google sign-in and before the console. */
-.invite-code-screen {
-  position: fixed; inset: 0; z-index: 9999; background: var(--ground);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; text-align: center; padding: 24px;
-}
-.invite-code-lede { color: var(--muted); max-width: 420px; margin: 0; }
-.invite-code-lede b { color: var(--ink); overflow-wrap: anywhere; }
-.invite-code-form { display: flex; gap: var(--s-2); width: 100%; max-width: 320px; }
-.invite-code-input {
-  flex: 1; min-width: 0; text-align: center; font-size: var(--t-lg); font-weight: 700;
-  letter-spacing: 0.3em; font-variant-numeric: tabular-nums;
-}
-.invite-code-form .btn { flex: none; }
-.invite-code-status { min-height: 1.4em; margin: 0; max-width: 420px; color: var(--muted); font-size: var(--t-sm); }
-.invite-code-status.is-error { color: var(--status-rejected); }

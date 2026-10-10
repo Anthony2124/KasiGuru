@@ -123,50 +123,6 @@ const request = (method, path, data, auth) => fetch(`${base}/${path}`, {
   await expect('an admin reads a flag', 'GET', 'user_flags/troll', null, ADMIN, 200);
   await expect('an admin dismisses a flag', 'DELETE', 'user_flags/troll', null, ADMIN, 200);
 
-  // Invite codes: a verifier added since codes gets nothing until they enter the code from the
-  // admin's second email. Each try is recorded before it can open the entry, five per code.
-  const NEW = token('new', { email: 'New@Example.com', email_verified: true });
-  const later = Date.now() + 60 * 60 * 1000;
-  const invite = (email, extra = {}) => ({ role: 'verifier', email, addedBy: 'boss@example.com', addedAt: 1,
-    pending: true, attempts: 0, tried: '', codeExpiresAt: later, ...extra });
-  const invited = invite('new@example.com');
-  await expect('admin invites with a code', 'PATCH', 'admin_staff/new@example.com', invited, ADMIN, 200);
-  await expect('admin stores the code', 'PATCH', 'admin_staff_codes/new@example.com', { code: '123456', expiresAt: later }, ADMIN, 200);
-  await expect('a code is six digits', 'PATCH', 'admin_staff_codes/x@example.com', { code: '12ab56', expiresAt: later }, ADMIN, 403);
-  await expect('a verifier cannot store codes', 'PATCH', 'admin_staff_codes/x@example.com', { code: '123456', expiresAt: later }, VERIFIER, 403);
-  await expect('an invitee reads their own entry', 'GET', 'admin_staff/new@example.com', null, NEW, 200);
-  await expect('an invitee cannot read their code', 'GET', 'admin_staff_codes/new@example.com', null, NEW, 403);
-  await expect('a verifier cannot read codes', 'GET', 'admin_staff_codes/new@example.com', null, VERIFIER, 403);
-  await expect('an admin reads codes', 'GET', 'admin_staff_codes/new@example.com', null, ADMIN, 200);
-  await expect('an invitee has no access yet', 'PATCH', 'vocabulary/w5', word, NEW, 403);
-  await expect('an invitee cannot read moderation data', 'GET', 'user_bans/learner', null, NEW, 403);
-  await expect('an invitee cannot stamp a sign-in', 'PATCH', 'admin_staff/new@example.com', { ...invited, lastSeenAt: 5 }, NEW, 403);
-  await expect('an invitee cannot open their entry unchecked', 'PATCH', 'admin_staff/new@example.com', { ...invited, pending: false, activatedAt: 5 }, NEW, 403);
-  await expect('a try must be counted', 'PATCH', 'admin_staff/new@example.com', { ...invited, tried: '111111' }, NEW, 403);
-  await expect('a try cannot skip the count', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '111111' }, NEW, 403);
-  await expect('a try is six digits', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 1, tried: '1234567' }, NEW, 403);
-  await expect('a wrong try is recorded', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 1, tried: '111111' }, NEW, 200);
-  await expect('a wrong try does not open the entry', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 1, tried: '111111', pending: false, activatedAt: 5 }, NEW, 403);
-  await expect('a try and the opening are separate writes', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '123456', pending: false, activatedAt: 5 }, NEW, 403);
-  await expect("someone else cannot try an invitee's code", 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '123456' }, VERIFIER, 403);
-  await expect('the right try is recorded', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '123456' }, NEW, 200);
-  await expect('the right try opens the entry', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '123456', pending: false, activatedAt: 5, lastSeenAt: 5 }, NEW, 200);
-  await expect('an opened invitee is a verifier', 'PATCH', 'vocabulary/w6', word, NEW, 200);
-  await expect('an opened invitee stamps sign-ins like any verifier', 'PATCH', 'admin_staff/new@example.com', { ...invited, attempts: 2, tried: '123456', pending: false, activatedAt: 5, lastSeenAt: 6 }, NEW, 200);
-
-  const CAPPED = token('cap', { email: 'cap@example.com', email_verified: true });
-  await expect('seed an invite with every try used', 'PATCH', 'admin_staff/cap@example.com', invite('cap@example.com', { attempts: 5, tried: '000000' }), ADMIN, 200);
-  await expect('seed its code', 'PATCH', 'admin_staff_codes/cap@example.com', { code: '222222', expiresAt: later }, ADMIN, 200);
-  await expect('no sixth try', 'PATCH', 'admin_staff/cap@example.com', invite('cap@example.com', { attempts: 6, tried: '222222' }), CAPPED, 403);
-  await expect('an admin resets the tries with a new code', 'PATCH', 'admin_staff/cap@example.com', invite('cap@example.com'), ADMIN, 200);
-  await expect('a fresh try after the reset', 'PATCH', 'admin_staff/cap@example.com', invite('cap@example.com', { attempts: 1, tried: '222222' }), CAPPED, 200);
-
-  const LATE = token('late', { email: 'late@example.com', email_verified: true });
-  await expect('seed an invite whose code expired', 'PATCH', 'admin_staff/late@example.com', invite('late@example.com', { attempts: 1, tried: '333333' }), ADMIN, 200);
-  await expect('seed the expired code', 'PATCH', 'admin_staff_codes/late@example.com', { code: '333333', expiresAt: Date.now() - 1000 }, ADMIN, 200);
-  await expect('an expired code does not open the entry', 'PATCH', 'admin_staff/late@example.com', invite('late@example.com', { attempts: 1, tried: '333333', pending: false, activatedAt: 5 }), LATE, 403);
-  await expect('an admin deletes a code', 'DELETE', 'admin_staff_codes/late@example.com', null, ADMIN, 200);
-
   await expect('admin removes the verifier', 'DELETE', 'admin_staff/ver@example.com', null, ADMIN, 200);
   await expect('a removed verifier loses access', 'PATCH', 'vocabulary/w4', word, VERIFIER, 403);
 
