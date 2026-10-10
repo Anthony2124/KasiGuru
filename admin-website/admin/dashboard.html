@@ -34,26 +34,6 @@
     <button type="button" class="btn btn-primary" onclick="window.adminSignOut()">Use a different account</button>
   </div>
 
-  <!-- Invited verifier: signed in with the invited email, but not yet past the one-time code the
-       admin sent in a second email. -->
-  <div id="invite-code-screen" class="invite-code-screen hidden">
-    <img class="logo-wordmark" src="img/wordmark.svg" alt="KasiGuru" width="132" height="24">
-    <h2 style="margin:0;">Enter your invite code</h2>
-    <p class="invite-code-lede">
-      Signed in as <b id="invite-code-email"></b>. The admin who invited you sent a 6-digit code in a
-      second email, after the one with this link.
-    </p>
-    <form id="invite-code-form" class="invite-code-form" novalidate>
-      <label for="invite-code-input" class="sr-only">6-digit invite code</label>
-      <input type="text" id="invite-code-input" class="form-control invite-code-input" inputmode="numeric"
-             autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"
-             aria-describedby="invite-code-status" required>
-      <button type="submit" class="btn btn-primary" id="invite-code-btn"><span class="btn-label">Continue</span></button>
-    </form>
-    <p class="invite-code-status" id="invite-code-status" role="status"></p>
-    <button type="button" class="btn btn-outline" onclick="window.adminSignOut()">Use a different account</button>
-  </div>
-
   <div class="app">
 
     <!-- Sidebar. A moderator alternates between the queue and the dictionary constantly, so both
@@ -745,7 +725,7 @@
       <div class="team">
         <!-- Add. One row: the address and the button. Problems show under the field, not in a toast. -->
         <div class="card">
-          <div class="card-head"><div><h2>Add a verifier</h2><p>Use their Google account email. You send them two emails: the console link, then a one-time code they enter after they first choose "Continue with Google".</p></div></div>
+          <div class="card-head"><div><h2>Add a verifier</h2><p>Use their Google account email. Their account is set up when they first choose "Continue with Google". You send them the invite.</p></div></div>
           <form id="team-add-form" class="team-add" novalidate>
             <label for="team-email" class="sr-only">Verifier's email address</label>
             <div class="team-add-field">
@@ -764,35 +744,17 @@
           <!-- The console cannot send email itself (no server on the Spark plan), so the invite goes
                out from the admin's own mail app: it arrives from a person, not a noreply address. -->
           <div class="team-invite" id="team-invite" hidden>
-            <p class="team-invite-title">Added. Now send <b id="team-invite-email"></b> two emails, in this order</p>
-            <p class="team-invite-note">No email is sent automatically. Each button opens your email app with that message ready to send.</p>
-            <ol class="team-invite-steps">
-              <li>
-                <span class="team-invite-step-n" aria-hidden="true">1</span>
-                <div class="team-invite-step-body">
-                  <p class="team-invite-text" id="team-invite-text"></p>
-                  <div class="team-invite-actions">
-                    <a class="btn btn-primary btn-sm" id="team-invite-mail" href="#">
-                      <iconsax-icon name="sms" type="bulk" size="16" color="currentColor"></iconsax-icon> Email link
-                    </a>
-                    <button type="button" class="btn btn-outline btn-sm" id="team-invite-copy">
-                      <iconsax-icon name="copy" type="bulk" size="16" color="currentColor"></iconsax-icon> <span class="btn-label">Copy invite</span>
-                    </button>
-                  </div>
-                </div>
-              </li>
-              <li>
-                <span class="team-invite-step-n" aria-hidden="true">2</span>
-                <div class="team-invite-step-body">
-                  <p class="team-invite-text">One-time code <span class="team-invite-code" id="team-invite-code"></span>, <span id="team-invite-expiry"></span></p>
-                  <div class="team-invite-actions">
-                    <a class="btn btn-primary btn-sm" id="team-invite-code-mail" href="#">
-                      <iconsax-icon name="sms" type="bulk" size="16" color="currentColor"></iconsax-icon> Email code
-                    </a>
-                  </div>
-                </div>
-              </li>
-            </ol>
+            <p class="team-invite-title">Added. Now send <b id="team-invite-email"></b> an invite</p>
+            <p class="team-invite-note">No email is sent automatically. "Email invite" opens your email app with this message ready to send.</p>
+            <p class="team-invite-text" id="team-invite-text"></p>
+            <div class="team-invite-actions">
+              <a class="btn btn-primary btn-sm" id="team-invite-mail" href="#">
+                <iconsax-icon name="sms" type="bulk" size="16" color="currentColor"></iconsax-icon> Email invite
+              </a>
+              <button type="button" class="btn btn-outline btn-sm" id="team-invite-copy">
+                <iconsax-icon name="copy" type="bulk" size="16" color="currentColor"></iconsax-icon> <span class="btn-label">Copy invite</span>
+              </button>
+            </div>
           </div>
         </div>
 

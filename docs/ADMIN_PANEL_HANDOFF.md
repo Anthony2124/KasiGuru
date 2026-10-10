@@ -18,23 +18,6 @@ The portal source is `admin-website/admin/`; the learner web app is separate in
 - `firestore.rules`: requires verified email for reading a member's own entry,
   enforces lowercase invitation keys, and restricts last-seen updates to verifiers.
 
-## Invite codes (2026-10-10)
-
-A new verifier now gets two emails from the admin's own mail app, in order: the console
-link, then a one-time 6-digit code. After "Continue with Google" they see "Enter your invite
-code"; nothing else opens until the code is accepted.
-
-- `admin_staff/{email}` carries `pending`, `attempts`, `tried` and `codeExpiresAt` while the
-  invite waits. `isVerifier()` refuses a pending entry; entries from before codes have no
-  `pending` field and keep their access.
-- The code itself is in `admin_staff_codes/{email}`, readable only by admins, because an
-  invitee can read their own `admin_staff` entry.
-- Redeeming is two writes: the try is recorded (attempts + 1, at most five), then the entry
-  opens only if the recorded try equals the unexpired code. One write could not count wrong
-  guesses, since a denied write leaves no trace.
-- "New code" on the Team page replaces the code and resets the tries. On a verifier added
-  before codes who has not signed in yet, it also starts requiring a code.
-
 ## Continue here
 
 1. Run the local rules suite with Java 21 and the Firebase CLI:

@@ -12,10 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { normaliseWord, findExistingWord } from './word-normalize.js';
 import { vocabularyStore, watchVocabulary, FINGERPRINT_SUMS } from './vocabulary-cache.mjs';
-import {
-  resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier, renewInviteCode, inviteStatus, redeemInviteCode,
-  CODE_TRIES
-} from './roles.js';
+import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
 // block or unblock users (appeals included; they flag a user for an admin instead), back up, restore
@@ -253,13 +250,7 @@ onAuthStateChanged(auth, (user) => {
 
   // Admin claim or listed verifier (enforced server-side by Firestore rules too).
   resolveRole(user).then((role) => {
-    if (role === 'invited') {
-      if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-        setTimeout(() => loadingScreen.remove(), 500);
-      }
-      showInviteCodeScreen(user);
-    } else if (role) {
+    if (role) {
       currentRole = role;
       document.body.dataset.role = role;
       document.querySelectorAll('[data-role-label]').forEach((el) => { el.textContent = ROLE_LABEL[role]; });
@@ -310,78 +301,6 @@ window.adminSignOut = async function () {
     console.error('Sign out error:', err);
   }
 };
-
-// ── Invite code ─────────────────────────────────────────────────────────────
-// A verifier added since invite codes signs in with Google, then enters the code from the admin's
-// second email. The rules open their entry only for the right, unexpired code, five tries per code.
-const expiryText = (ms) => new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-const triesText = (n) => `${n} ${n === 1 ? 'try' : 'tries'} left.`;
-
-function showInviteCodeScreen(user) {
-  const screen = document.getElementById('invite-code-screen');
-  const form = document.getElementById('invite-code-form');
-  const input = document.getElementById('invite-code-input');
-  const btn = document.getElementById('invite-code-btn');
-  const status = document.getElementById('invite-code-status');
-  if (!screen || !form || !input || !btn || !status) return;
-  document.getElementById('invite-code-email').textContent = user.email || '';
-  screen.classList.remove('hidden');
-
-  const say = (message, isError = false) => {
-    status.textContent = message;
-    status.classList.toggle('is-error', isError);
-  };
-  // An expired or used-up code cannot be fixed from here, so the form stops asking for one.
-  const settled = (state) => {
-    const why = state.expiresAt <= Date.now() ? 'This code has expired.'
-      : state.triesLeft === 0 ? 'No tries are left on this code.' : '';
-    if (!why) return false;
-    say(`${why} Ask the admin who invited you to send a new one, then reload this page.`, true);
-    input.disabled = true;
-    btn.disabled = true;
-    return true;
-  };
-
-  input.focus();
-  // Only a hint: the form works without it.
-  inviteStatus(user).then((state) => {
-    if (!settled(state)) say(`The code works until ${expiryText(state.expiresAt)}. ${triesText(state.triesLeft)}`);
-  }).catch(() => {});
-
-  input.addEventListener('input', () => {
-    input.value = input.value.replace(/\D/g, '').slice(0, 6);
-  });
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const code = input.value;
-    if (!/^\d{6}$/.test(code)) {
-      say('Enter all 6 digits.', true);
-      input.focus();
-      return;
-    }
-    btn.disabled = true;
-    btn.classList.add('is-busy');
-    try {
-      await redeemInviteCode(user, code);
-      say('Code accepted. Opening the console…');
-      window.location.reload();
-      return;
-    } catch (err) {
-      if (err.status && settled(err.status)) return;
-      if (err.code === 'invite/wrong-code') {
-        say(`That code isn't right. ${triesText(err.status.triesLeft)}`, true);
-        input.select();
-      } else {
-        console.warn('Invite code check failed:', err);
-        say("Couldn't check the code. Check your connection and try again.", true);
-      }
-    } finally {
-      btn.classList.remove('is-busy');
-    }
-    btn.disabled = false;
-  });
-}
 
 // ── Tab Switcher ────────────────────────────────────────────────────────────
 // Tabs are routes, not just visual states. Without a URL per section the dashboard could not be
@@ -4353,8 +4272,6 @@ function initSentenceReview() {
 // ── Team (admins only) ──────────────────────────────────────────────────────
 // Verifiers are listed by lower-case email in admin_staff; firestore.rules reads the same list.
 let teamMembers = [];
-// email → { code, expiresAt } for invites still waiting for their one-time code (admin_staff_codes).
-let teamCodes = new Map();
 
 /** One person on the Team page: initial, email, role or status chip, a detail line, an action. */
 function teamRow({ email, chip, chipClass, detail, action = '' }) {
@@ -4393,34 +4310,13 @@ function renderTeam(error) {
     const seen = toMillis(m.lastSeenAt);
     const added = [m.addedBy ? `Added by ${escapeHtml(m.addedBy)}` : 'Added', m.addedAt ? escapeHtml(relativeTime(toMillis(m.addedAt))) : '']
       .filter(Boolean).join(' · ');
-    const remove = `<button type="button" class="btn btn-outline btn-sm team-remove" data-remove-verifier="${escapeHtml(email)}">Remove</button>`;
-    const newCode = `<button type="button" class="btn btn-outline btn-sm" data-renew-code="${escapeHtml(email)}">New code</button>`;
-    const emailLink = (withCode) => `<a class="btn btn-outline btn-sm" href="${escapeHtml(inviteMailto(email, withCode))}">Email link</a>`;
-
-    if (m.pending === true) {
-      // Waiting for the one-time code: offer both emails again, and a fresh code when this one is spent.
-      const code = teamCodes.get(email);
-      const usedUp = (Number(m.attempts) || 0) >= CODE_TRIES;
-      const live = code && code.expiresAt > Date.now() && !usedUp;
-      const state = !code ? 'No code yet'
-        : usedUp ? `Code used up after ${CODE_TRIES} wrong tries`
-        : !live ? 'Code expired'
-        : `Code <span class="team-invite-code">${escapeHtml(code.code)}</span> works until ${escapeHtml(expiryText(code.expiresAt))}`;
-      return teamRow({
-        email, chip: 'Needs code', chipClass: 'is-invited',
-        detail: `${state} · ${added}`,
-        action: `<div class="team-row-actions">${emailLink(true)}${live
-          ? `<a class="btn btn-outline btn-sm" href="${escapeHtml(codeMailto(email, code))}">Email code</a>` : ''}${newCode}${remove}</div>`
-      });
-    }
     return teamRow({
       email,
       chip: seen ? 'Active' : 'Invited',
       chipClass: seen ? 'is-active' : 'is-invited',
-      detail: `${seen ? `Last signed in ${escapeHtml(relativeTime(seen))}` : "Hasn't signed in yet, and was added before invite codes"} · ${added}`,
-      // Someone who has not signed in yet may never have received the invite: offer it again, or
-      // a code, which they will then need too.
-      action: `<div class="team-row-actions">${seen ? '' : `${emailLink(false)}${newCode}`}${remove}</div>`
+      detail: `${seen ? `Last signed in ${escapeHtml(relativeTime(seen))}` : "Hasn't signed in yet"} · ${added}`,
+      // Someone who has not signed in yet may never have received the invite: offer it again.
+      action: `<div class="team-row-actions">${seen ? '' : `<a class="btn btn-outline btn-sm" href="${escapeHtml(inviteMailto(email))}">Email invite</a>`}<button type="button" class="btn btn-outline btn-sm team-remove" data-remove-verifier="${escapeHtml(email)}">Remove</button></div>`
     });
   });
   host.innerHTML = you + (rows.length
@@ -4450,34 +4346,18 @@ function inviteMessage(email) {
  * Spark plan), so it opens the admin's own mail app; the message then comes from a person the
  * verifier knows rather than a noreply address that lands in spam.
  */
-function inviteMailto(email, withCode = true) {
+function inviteMailto(email) {
   const subject = 'You can now verify words on KasiGuru';
-  const next = withCode
-    ? '\n\nI will send you a one-time code in a separate email. The console asks for it the first time you sign in.'
-    : '';
-  const body = `Hi,\n\n${inviteMessage(email)}${next}\n\nThank you for helping keep the Kasiguranin dictionary right.\n`;
+  const body = `Hi,\n\n${inviteMessage(email)}\n\nThank you for helping keep the Kasiguranin dictionary right.\n`;
   return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-/** The second email: the one-time code, sent on its own after the link. */
-function codeMailto(email, { code, expiresAt }) {
-  const subject = 'Your KasiGuru verifier code';
-  const body = `Hi,\n\nYour one-time code for the KasiGuru moderation console is:\n\n${code}\n\n` +
-    `Enter it after you choose "Continue with Google" and sign in with ${email}. ` +
-    `It works until ${expiryText(expiresAt)}, and you have ${CODE_TRIES} tries.\n\n` +
-    `Don't share this code. If you weren't expecting it, you can ignore this email.\n`;
-  return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-function showTeamInvite(email, invite) {
+function showTeamInvite(email) {
   const box = document.getElementById('team-invite');
   if (!box) return;
   document.getElementById('team-invite-email').textContent = email;
   document.getElementById('team-invite-text').textContent = inviteMessage(email);
   document.getElementById('team-invite-mail').href = inviteMailto(email);
-  document.getElementById('team-invite-code').textContent = invite.code;
-  document.getElementById('team-invite-expiry').textContent = `works until ${expiryText(invite.expiresAt)}`;
-  document.getElementById('team-invite-code-mail').href = codeMailto(email, invite);
   box.hidden = false;
 }
 
@@ -4496,32 +4376,7 @@ function initTeam() {
   });
   unsubscribeFns.push(unsub);
 
-  // One small document per invite still waiting for its code. Without them the rows simply offer
-  // "New code" instead of "Email code".
-  const unsubCodes = onSnapshot(collection(db, 'admin_staff_codes'), (snap) => {
-    teamCodes = new Map(snap.docs.map((d) => [d.id, d.data()]));
-    renderTeam();
-  }, (err) => console.warn('Invite codes listener error:', err));
-  unsubscribeFns.push(unsubCodes);
-
   host?.addEventListener('click', async (e) => {
-    const renew = e.target.closest('[data-renew-code]');
-    if (renew) {
-      if (!requireAdmin('manage the team')) return;
-      const email = renew.getAttribute('data-renew-code');
-      renew.disabled = true;
-      try {
-        const invite = await renewInviteCode(email);
-        await logAudit('staff.code', { email });
-        showTeamInvite(email, invite);
-        document.getElementById('team-invite')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        notify(`New code for ${email}. The old one no longer works.`, 'success');
-      } catch (err) {
-        renew.disabled = false;
-        notify("Couldn't make a new code: " + err.message, 'error');
-      }
-      return;
-    }
     const btn = e.target.closest('[data-remove-verifier]');
     if (!btn || !requireAdmin('manage the team')) return;
     const email = btn.getAttribute('data-remove-verifier');
@@ -4532,10 +4387,7 @@ function initTeam() {
     });
     if (!ok) return;
     try {
-      const batch = writeBatch(db);
-      batch.delete(doc(db, 'admin_staff', email));
-      batch.delete(doc(db, 'admin_staff_codes', email));
-      await batch.commit();
+      await deleteDoc(doc(db, 'admin_staff', email));
       await logAudit('staff.remove', { email });
       if (document.getElementById('team-invite-email')?.textContent === email) {
         document.getElementById('team-invite').hidden = true;
@@ -4560,10 +4412,10 @@ function initTeam() {
     if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }
     if (label) label.textContent = 'Adding…';
     try {
-      const invite = await addVerifier(email, auth.currentUser?.email || '');
+      await addVerifier(email, auth.currentUser?.email || '');
       await logAudit('staff.add', { email });
       if (input) input.value = '';
-      showTeamInvite(email, invite);
+      showTeamInvite(email);
     } catch (err) {
       setTeamError(err.code === 'permission-denied'
         ? 'The database rules that allow verifiers have not been published yet.'
