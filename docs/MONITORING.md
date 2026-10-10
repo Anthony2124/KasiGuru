@@ -30,8 +30,10 @@ npm run firebase:usage -- --hours
    freeze bulk dictionary work and avoid repeated production deployments. CI and preview
    builds use the committed content snapshot.
 2. **Admin dictionary** — the portal saves a copy per admin and listens to stamped edits.
-   It performs cheap count checks while visible and a daily full reconciliation, instead
-   of attaching a whole-dictionary listener on every opening.
+   A fingerprint (count plus sums of `updatedAt` and `themeProposedAt`, a few reads) on
+   opening and every five visible minutes decides whether the copy is still current; every
+   word is re-read only when it disagrees twice, or weekly per admin and browser. The users
+   list and activity log load when their tabs are first opened, not with the Overview.
 3. **Leaderboards** — both clients reuse each top-50 board for three minutes per account/week.
    A refresh also fetches the signed-in learner's row and counted rank when outside the top 50.
 4. **Learner dictionary sync** — Android uses `updatedAt` deltas and a daily fingerprint

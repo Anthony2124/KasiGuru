@@ -194,9 +194,11 @@ plan's 50,000 reads for the whole project, Android included. Instead:
   when the account or ISO week changes. Android uses the same refresh window over its Room cache.
 
 The admin portal keeps its dictionary in IndexedDB per admin, then listens only for
-`updatedAt > checkpoint` changes with a two-minute overlap. A count check on opening and every five
-minutes while visible catches withdrawals; a full read once a day catches unstamped edits and
-equal-count replacements. Deleting a word in that portal updates its saved copy immediately.
+`updatedAt > checkpoint` changes with a two-minute overlap. A fingerprint check on opening and every
+five minutes while visible (count plus sums of `updatedAt` and `themeProposedAt`) catches withdrawals
+and stage-tagger runs; a full read happens when it disagrees twice in a row, or once a week to catch
+edits that carry no stamp, such as one made in the Firebase console. Deleting a word in that portal
+updates its saved copy immediately.
 Use `npm run firebase:usage` from the repository root to track the shared Spark budget.
 
 Admin edits and additions reach web learners within six hours. **A word deleted in the admin portal

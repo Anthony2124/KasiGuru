@@ -4,16 +4,20 @@ const assert = require('node:assert/strict');
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 async function setup(cached, options = {}) {
-  const { watchVocabulary } = await import('../../admin-website/admin/js/vocabulary-cache.mjs');
+  const { watchVocabulary, fingerprintOf } = await import('../../admin-website/admin/js/vocabulary-cache.mjs');
   let time = options.now ?? 1_000_000;
   let next, fail, timer;
-  let reads = 0, listens = 0, removals = 0;
+  let reads = 0, listens = 0, removals = 0, fingerprints = 0;
   const published = [], saved = [], errors = [];
   let remote = options.remote ?? [{ id: '1', updatedAt: 100 }];
   const watcher = watchVocabulary({
     store: { load: async () => cached, save: async (value) => saved.push(structuredClone(value)) },
     readAll: async () => { reads++; if (options.offline) throw Error('offline'); return remote; },
-    count: async () => { await options.count?.(); return remote.length; },
+    fingerprint: async () => {
+      await options.count?.();
+      fingerprints++;
+      return options.fingerprint ? options.fingerprint(remote) : fingerprintOf(remote);
+    },
     listen: (since, callback, error) => {
       listens++; next = callback; fail = error;
       assert.ok(since < time);
@@ -25,7 +29,7 @@ async function setup(cached, options = {}) {
   await watcher.ready;
   return {
     watcher, published, saved, errors,
-    get reads() { return reads; }, get listens() { return listens; }, get removals() { return removals; },
+    get reads() { return reads; }, get fingerprints() { return fingerprints; }, get listens() { return listens; }, get removals() { return removals; },
     snapshot(changes = [], extra = {}) { next({ changes, fromCache: false, pending: false, ...extra }); },
     fail() { fail(Error('disconnected')); },
     advance(ms) { time += ms; }, setRemote(rows) { remote = rows; },
@@ -68,26 +72,80 @@ test('offline and pending snapshots do not advance the saved checkpoint', async 
   assert.equal(s.saved.at(-1).since, 1_000_000);
 });
 
-test('a withdrawal outside the delta query is caught by the count check', async () => {
+const DAY = 24 * 60 * 60 * 1000;
+
+test('a withdrawal outside the delta query is caught by the fingerprint, confirmed once', async () => {
   const s = await setup(cached(), { remote: [] });
   s.snapshot();
   await settle();
+  assert.equal(s.reads, 0);
+  await s.tick();
   assert.equal(s.reads, 1);
   assert.deepEqual(s.published.at(-1), []);
   assert.equal(s.removals, 1);
 });
 
-test('daily reconciliation catches an unstamped edit even when the count stays equal', async () => {
+test('an unchanged dictionary is not read again the next day', async () => {
   const s = await setup(cached());
-  s.setRemote([{ id: '1', updatedAt: 100, acceptedStage: 'changed' }]);
-  s.advance(24 * 60 * 60 * 1000);
+  s.snapshot();
+  await settle();
+  s.advance(DAY);
+  await s.tick();
+  await s.tick();
+  assert.equal(s.reads, 0);
+  assert.ok(s.fingerprints >= 2);
+});
+
+test('a stage tagger run is caught by its own stamp although updatedAt is unchanged', async () => {
+  const s = await setup(cached());
+  s.snapshot();
+  await settle();
+  s.setRemote([{ id: '1', updatedAt: 100, themeProposed: 'Stage 2', themeProposedAt: 990_000 }]);
+  await s.tick();
   await s.tick();
   assert.equal(s.reads, 1);
-  assert.equal(s.published.at(-1)[0].acceptedStage, 'changed');
+  assert.equal(s.published.at(-1)[0].themeProposed, 'Stage 2');
+});
+
+test('an edit the listener delivers before the confirmation costs no full read', async () => {
+  const s = await setup(cached());
+  s.snapshot();
+  await settle();
+  s.setRemote([{ id: '1', updatedAt: 990_000 }]);
+  await s.tick();
+  s.snapshot([{ type: 'modified', id: '1', row: { id: '1', updatedAt: 990_000 } }]);
+  await s.tick();
+  await s.tick();
+  assert.equal(s.reads, 0);
+});
+
+test('the weekly read still catches an edit that carries no stamp', async () => {
+  const s = await setup(cached());
+  s.setRemote([{ id: '1', updatedAt: 100, english: 'changed in the console' }]);
+  s.advance(DAY);
+  await s.tick();
+  assert.equal(s.reads, 0);
+  s.advance(6 * DAY);
+  await s.tick();
+  assert.equal(s.reads, 1);
+  assert.equal(s.published.at(-1)[0].english, 'changed in the console');
+});
+
+test('a fingerprint that never matches falls back to the count instead of re-reading', async () => {
+  const skewed = (rows) => ({ count: rows.length, sums: { updatedAt: NaN, themeProposedAt: 0 } });
+  const s = await setup(undefined, { fingerprint: skewed });
+  assert.equal(s.reads, 1);
+  assert.equal(s.saved.at(-1).exact, false);
+  for (let i = 0; i < 4; i++) await s.tick();
+  assert.equal(s.reads, 1);
+  s.setRemote([]);
+  await s.tick();
+  await s.tick();
+  assert.equal(s.reads, 2);
 });
 
 test('an offline refresh preserves cached rows and retries after reconnecting', async () => {
-  const options = { offline: true, now: 24 * 60 * 60 * 1000 + 1 };
+  const options = { offline: true, now: 7 * DAY + 1 };
   const old = cached(); old.fullAt = old.since = 1;
   const s = await setup(old, options);
   assert.equal(s.errors.length, 1);
@@ -123,7 +181,7 @@ test('sign-out stops callbacks, timers and further cache writes', async () => {
   assert.equal(s.removals, 1);
 });
 
-test('sign-out during a count check cannot start a full dictionary read', async () => {
+test('sign-out during a fingerprint check cannot start a full dictionary read', async () => {
   let finish;
   const waiting = new Promise((resolve) => { finish = resolve; });
   const s = await setup(cached(), { remote: [], count: () => waiting });

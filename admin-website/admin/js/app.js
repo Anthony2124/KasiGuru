@@ -3,14 +3,15 @@
 
 import { 
   db, auth,
-  collection, doc, getDoc, getDocs, getDocsFromServer, getCountFromServer, setDoc, addDoc, updateDoc, deleteDoc,
+  collection, doc, getDoc, getDocs, getDocsFromServer, getCountFromServer, getAggregateFromServer,
+  aggregateCount, aggregateSum, setDoc, addDoc, updateDoc, deleteDoc,
   query, orderBy, where, limit, startAfter, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { normaliseWord, findExistingWord } from './word-normalize.js';
-import { vocabularyStore, watchVocabulary } from './vocabulary-cache.mjs';
+import { vocabularyStore, watchVocabulary, FINGERPRINT_SUMS } from './vocabulary-cache.mjs';
 import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
@@ -334,6 +335,7 @@ function applyTab(targetTab) {
     tc.classList.toggle('active', on);
     tc.style.setProperty('display', on ? 'flex' : 'none', 'important');
   });
+  startTabFeed(targetTab);
 }
 
 window.switchTab = function(targetTab, fromHistory) {
@@ -355,6 +357,8 @@ window.addEventListener('popstate', () => {
 function init() {
   initNavigation();
   initRealtimeListeners();
+  tabFeeds.set('tab-users', startUsersFeed);
+  tabFeeds.set('tab-logs', startAuditLogFeed);
   initExcelImporter();
   initSqlImporter();
   initFormListeners();
@@ -514,7 +518,16 @@ function initRealtimeListeners() {
       store: vocabularyStore(auth.currentUser.uid),
       isVisible: () => !document.hidden,
       readAll: async () => (await getDocsFromServer(vocabCollection)).docs.map(toRow),
-      count: async () => (await getCountFromServer(vocabCollection)).data().count,
+      fingerprint: async () => {
+        const totals = (await getAggregateFromServer(vocabCollection, {
+          count: aggregateCount(),
+          ...Object.fromEntries(FINGERPRINT_SUMS.map((field) => [field, aggregateSum(field)])),
+        })).data();
+        return {
+          count: totals.count,
+          sums: Object.fromEntries(FINGERPRINT_SUMS.map((field) => [field, totals[field] ?? 0])),
+        };
+      },
       listen: (since, next, error) => onSnapshot(query(vocabCollection, where('updatedAt', '>', since)),
         { includeMetadataChanges: true }, (snapshot) => next({
           fromCache: snapshot.metadata.fromCache,
@@ -574,8 +587,22 @@ function initRealtimeListeners() {
   } catch (e) {
     console.error("Firestore release query error:", e);
   }
+}
 
-  // 4. Admin Audit Logs Listener
+// ── Tab-opened feeds ────────────────────────────────────────────────────────
+// Read the first time their tab opens, not on every dashboard load: the Overview shows neither,
+// and the users list costs two reads per learner (the public row and the progress doc).
+const tabFeeds = new Map();
+
+function startTabFeed(tabId) {
+  const start = tabFeeds.get(tabId);
+  if (!start) return;
+  tabFeeds.delete(tabId);
+  start();
+}
+
+// Admin Audit Logs Listener
+function startAuditLogFeed() {
   try {
     const logsCollection = collection(db, "admin_audit_log");
     const logsQuery = query(logsCollection, ...auditLogScope(), orderBy("timestamp", "desc"), limit(LOGS_PER_PAGE));
@@ -4755,6 +4782,9 @@ async function logAudit(action, details = {}) {
 // ── Users Listener ──────────────────────────────────────────────────────────
 // ── Users Listener & Helpers ────────────────────────────────────────────────
 let usersList = [];
+// Bans and flags answer on every load and render the table; until the list itself has answered,
+// that render would claim there are no accounts.
+let usersLoaded = false;
 let bansMap = new Map(); // uid → ban doc
 let flagsMap = new Map(); // uid → open flag, raised by a verifier for an admin to review
 // uid → users/{uid}/progress/main data. The table and the details modal both
@@ -4838,10 +4868,11 @@ function resolveUserDisplayName(user, progressData = null) {
   return 'Registered User';
 }
 
-function initUsersListener() {
+function startUsersFeed() {
   const usersQuery = query(collection(db, "leaderboard_public"), orderBy("totalXp", "desc"));
   const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
     usersList = snapshot.docs.map(d => applyProgress({ id: d.id, ...d.data() }));
+    usersLoaded = true;
     renderUsersTable();
     enrichUsersWithProgress();
   }, (error) => {
@@ -4852,7 +4883,9 @@ function initUsersListener() {
     }
   });
   unsubscribeFns.push(unsubUsers);
+}
 
+function initUsersListener() {
   // Search + filter controls
   const searchInput = document.getElementById('search-users-input');
   const filterSelect = document.getElementById('filter-users-status');
@@ -4937,7 +4970,7 @@ function userRegisteredMs(user) {
 function renderUsersTable() {
   const tbody = document.getElementById('users-tbody');
   const countEl = document.getElementById('users-result-count');
-  if (!tbody) return;
+  if (!tbody || !usersLoaded) return;
 
   // ── Step 1: Filter anonymous / generic accounts ───────────────────
   const validUsers = usersList.filter(user => {
