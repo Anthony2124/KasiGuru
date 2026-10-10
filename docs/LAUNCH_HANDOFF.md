@@ -115,7 +115,7 @@ one hour) and are near zero overnight, so today's load is **development, not lea
 
 | Source | Cost |
 |---|---|
-| Admin portal open | ~1,200 reads: `admin/js/app.js:394` keeps an `onSnapshot` on the **whole** `vocabulary` collection |
+| Admin portal open | Was ~1,200 reads (a whole-`vocabulary` listener). Now about 50 with a saved dictionary; the full ~1,150 only on a first visit, a weekly backstop, or a fingerprint mismatch, per admin and browser |
 | Each production web deploy | ~1,200+ reads: `webapp/scripts/export-content.mjs` snapshots `vocabulary` and `stories` |
 | Bulk dictionary scripts / audio uploads | Large; see [DICTIONARY_MEANINGS.md](DICTIONARY_MEANINGS.md) and `scripts/README.md` |
 | Learner, per active day (estimate) | ~100–300: leaderboard 50 per tab viewed (Android `LeaderboardRepository` listener, web `TOP_N = 50`), progress sync (5 docs + new receipts), announcements, ban check |
@@ -155,10 +155,12 @@ couple of hundred active learners on a quiet dev day and close to none on a busy
 3. **Whatever the plan, cut the development reads**, cheapest first:
    - **Launch week: freeze bulk dictionary work and avoid needless web deploys.** Pushes that touch
      only Android already skip the web build (`vercel.json` `ignoreCommand`).
-   - **Admin portal:** implemented locally in `admin/js/vocabulary-cache.mjs` and connected in
-     `app.js`. Cached rows survive reloads; the delta preserves unchanged words. Count checks on
-     opening and every five visible minutes catch withdrawals, and daily reconciliation catches
-     unstamped edits. Local deletions update all dictionary views and the cache immediately.
+   - **Admin portal:** `admin/js/vocabulary-cache.mjs`, connected in `app.js` and live since
+     2026-10-07. Cached rows survive reloads; the delta preserves unchanged words. A fingerprint
+     (count and sums) on opening and every five visible minutes catches withdrawals and tagger
+     runs; the full read that was daily is now weekly, since it was most of the remaining cost.
+     The users list and activity log wait for their tabs. Local deletions update all dictionary
+     views and the cache immediately.
    - **Leaderboards:** Android uses a three-minute refresh gate over Room. The web's existing
      three-minute cache now separates accounts/weeks and coalesces concurrent requests. Tests cover
      expiry, account/week switches, tied ranks, and failure/reconnect paths.
