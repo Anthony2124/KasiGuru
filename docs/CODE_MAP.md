@@ -94,7 +94,10 @@ unit-test source root. Game completion and level persistence use
   and `css/styles.css`. Verifiers are listed in Firestore `admin_staff/{email}` from the
   portal's Team page; `firestore.rules` (`isStaff()`) lets them do everything except APK
   releases, blocking users (they flag one for an admin in `user_flags`), reading admins'
-  activity-log entries, and backing up, restoring or resetting data. Rules test:
+  activity-log entries, and backing up, restoring or resetting data. A verifier added since
+  invite codes stays `pending` until they enter the 6-digit code the admin emails after the
+  link; the code lives in admin-only `admin_staff_codes/{email}`, and the rules check it
+  (five tries per code, 48-hour expiry). Rules test:
   `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).
 - Download: `admin-website/download/index.html`, `js/` and `css/styles.css`.
 - Rules: `firestore.rules` and `storage.rules`; deployment configuration is in
