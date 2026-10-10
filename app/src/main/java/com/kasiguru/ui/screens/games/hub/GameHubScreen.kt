@@ -5,7 +5,10 @@ import com.kasiguru.ui.screens.games.shared.GameRulesDialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -234,12 +237,16 @@ fun GameHubScreen(
                     val columns = if (rememberWidthClass() == WidthClass.COMPACT) 2 else 3
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                         games.chunked(columns).forEach { row ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                            // One height per row, so a title that takes two lines does not leave its neighbour short.
+                            Row(
+                                modifier = Modifier.height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.spacedBy(Space.sm)
+                            ) {
                                 row.forEach { game ->
                                     GameTile(
                                         entry = game,
                                         isUnlocked = game.isPlayable(uiState.totalStars),
-                                        modifier = Modifier.weight(1f),
+                                        modifier = Modifier.weight(1f).fillMaxHeight(),
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             onGameTap(game.gameType)
@@ -397,7 +404,10 @@ private fun GameTile(
             text = entry.title,
             style = MaterialTheme.typography.titleMedium,
             color = if (isUnlocked) Ink else NodeLockedInk,
-            maxLines = 1
+            // Two lines: in the wide display face, "Sentence Order" overflows a compact phone's tile and
+            // one line dropped "Order" without a trace.
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
         Spacer(Modifier.height(2.dp))
         if (entry.comingSoon) {

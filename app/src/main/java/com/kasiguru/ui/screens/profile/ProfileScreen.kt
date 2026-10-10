@@ -483,7 +483,9 @@ private fun StatColumn(iconRes: Int, tint: Color, value: String, label: String, 
             style = MaterialTheme.typography.labelMedium,
             color = Muted,
             textAlign = TextAlign.Center,
-            maxLines = 1
+            // "words practised" needs a second line at larger text sizes; one line dropped "practised".
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

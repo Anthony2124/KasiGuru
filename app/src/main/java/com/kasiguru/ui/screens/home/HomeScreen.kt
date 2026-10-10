@@ -96,6 +96,8 @@ import com.kasiguru.ui.theme.Info
 import com.kasiguru.ui.theme.Ink
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.LimeTint
+import com.kasiguru.ui.theme.RedText
+import com.kasiguru.ui.theme.RedTint
 import com.kasiguru.ui.theme.Muted
 import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Shapes
@@ -263,7 +265,11 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(Space.sm)
         ) {
             QuickPracticeTile("Add a word", IconSax.Bold.AddCircle, onOpenSubmitWord, Modifier.weight(1f))
-            QuickPracticeTile("Report an issue", IconSax.Bold.Danger, onOpenReport, Modifier.weight(1f))
+            // Red, like every "Report an issue" in the app: it flags something wrong.
+            QuickPracticeTile(
+                "Report an issue", IconSax.Bold.Danger, onOpenReport, Modifier.weight(1f),
+                disc = RedTint, iconTint = RedText
+            )
         }
         // Notices last, one line each: they are news, not the day's work.
         if (uiState.announcements.isNotEmpty() || uiState.showBackupPrompt) {
@@ -637,9 +643,16 @@ private fun PrimaryAction(
     }
 }
 
-/** One of Home's shortcut tiles: the icon on a lime disc, the name under it. */
+/** One of Home's shortcut tiles: the icon on a tinted disc (lime unless [disc] says otherwise), the name under it. */
 @Composable
-private fun QuickPracticeTile(label: String, iconRes: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun QuickPracticeTile(
+    label: String,
+    iconRes: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    disc: Color = LimeTint,
+    iconTint: Color = LimeText
+) {
     SoftCard(
         modifier = modifier.fillMaxHeight(),
         shape = Shapes.tile,
@@ -652,10 +665,10 @@ private fun QuickPracticeTile(label: String, iconRes: Int, onClick: () -> Unit, 
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(LimeTint),
+                    .background(disc),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(painterResource(iconRes), null, tint = LimeText, modifier = Modifier.size(22.dp))
+                Icon(painterResource(iconRes), null, tint = iconTint, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(Space.xs))
             Text(

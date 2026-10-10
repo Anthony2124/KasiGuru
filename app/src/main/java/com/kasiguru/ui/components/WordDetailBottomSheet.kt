@@ -215,14 +215,14 @@ fun WordDetailBottomSheet(
                         Icon(
                             painter = painterResource(id = Iconsax.InfoCircle),
                             contentDescription = null,
-                            tint = Muted,
+                            tint = RedText,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Report an issue with this word",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Muted,
+                            color = RedText,
                             fontWeight = FontWeight.Medium
                         )
                     }
