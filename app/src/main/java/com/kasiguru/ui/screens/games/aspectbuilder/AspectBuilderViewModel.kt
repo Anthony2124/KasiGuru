@@ -6,9 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
 import com.kasiguru.data.repository.buildPracticeRoundFromPool
+import com.kasiguru.domain.games.SavedRound
+import com.kasiguru.ui.screens.games.shared.toReviewItem
+import com.kasiguru.ui.screens.games.shared.toSavedAnswer
+import com.kasiguru.ui.screens.games.shared.wordsOf
 import java.time.LocalDate
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
@@ -56,10 +61,12 @@ class AspectBuilderViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
+    /** The level being played; Start over replays it. */
+    val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private var usedHint = false
     private var finishing = false
@@ -81,6 +88,13 @@ class AspectBuilderViewModel @Inject constructor(
             val levelInfo = gameLevelRepository.getLevel("aspect_builder", levelNumber)
             if (levelInfo != null) {
                 totalInitialQuestions = levelInfo.questionsCount
+            }
+
+            val saved = savedGames.load("aspect_builder", levelNumber) as? SavedRound
+            val savedVerbs = saved?.let { vocabularyRepository.wordsOf(it) }
+            if (saved != null && savedVerbs != null) {
+                resume(saved, savedVerbs.map { questionFor(it) })
+                return@launch
             }
 
             val list = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -106,10 +120,32 @@ class AspectBuilderViewModel @Inject constructor(
         }
     }
 
-    private suspend fun generateAspectQuestions(vocabList: List<VocabularyEntity>, questionCount: Int): List<AspectQuestion> {
-        val aspectList = listOf("Neutral", "Imperfective", "Perfective", "Contemplative")
-        val result = mutableListOf<AspectQuestion>()
+    /**
+     * Picks a saved round up where the learner left it. Its questions are dealt again from the same
+     * verbs; only the unanswered ones are ever shown, so a new aspect for those changes nothing given.
+     */
+    private fun resume(saved: SavedRound, questions: List<AspectQuestion>) {
+        questionQueue.clear()
+        questionQueue.addAll(questions)
+        totalInitialQuestions = saved.totalQuestions
+        reviewItems.clear()
+        reviewItems.addAll(saved.answers.map { it.toReviewItem() })
+        usedHint = saved.usedHint
+        questionStartTimeMs = System.currentTimeMillis()
+        _uiState.update {
+            it.copy(
+                questions = questionQueue.toList(),
+                currentIndex = saved.nextIndex,
+                score = saved.score,
+                hintRevealed = saved.hintRevealed,
+                totalQuestions = totalInitialQuestions
+            )
+        }
+        // Every question answered before leaving: straight to the results.
+        if (saved.nextIndex >= questionQueue.size) finishRound() else _uiState.update { it.copy(isLoading = false) }
+    }
 
+    private suspend fun generateAspectQuestions(vocabList: List<VocabularyEntity>, questionCount: Int): List<AspectQuestion> {
         val conjugatable = vocabList.filter {
             it.neutralForm.isNotBlank() || it.perfectiveForm.isNotBlank() || it.imperfectiveForm.isNotBlank() || it.contemplativeForm.isNotBlank()
         }
@@ -120,33 +156,32 @@ class AspectBuilderViewModel @Inject constructor(
         // this game writes an SM-2 schedule like the others and should read it back too.
         val verbs = buildPracticeRoundFromPool(conjugatable, LocalDate.now().toString(), questionCount)
 
-        for (vocab in verbs) {
-            val aspect = aspectList.random()
-            val correct = when (aspect) {
-                "Neutral" -> vocab.neutralForm.ifEmpty { vocab.kasiguranin }
-                "Imperfective" -> vocab.imperfectiveForm.ifEmpty { vocab.kasiguranin }
-                "Perfective" -> vocab.perfectiveForm.ifEmpty { vocab.kasiguranin }
-                "Contemplative" -> vocab.contemplativeForm.ifEmpty { vocab.kasiguranin }
-                else -> vocab.kasiguranin
-            }
+        return verbs.map { questionFor(it) }
+    }
 
-            val distractorEntities = vocabularyRepository.getDistractorsForWord(vocab, 3)
-            val distractors = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
-
-            val options = (distractors + correct).distinct().shuffled()
-
-            result.add(
-                AspectQuestion(
-                    targetVocab = vocab,
-                    rootWord = vocab.rootForm.ifEmpty { vocab.kasiguranin },
-                    translation = vocab.english,
-                    targetAspect = aspect,
-                    correctAnswer = correct,
-                    options = options
-                )
-            )
+    private suspend fun questionFor(vocab: VocabularyEntity): AspectQuestion {
+        val aspect = listOf("Neutral", "Imperfective", "Perfective", "Contemplative").random()
+        val correct = when (aspect) {
+            "Neutral" -> vocab.neutralForm.ifEmpty { vocab.kasiguranin }
+            "Imperfective" -> vocab.imperfectiveForm.ifEmpty { vocab.kasiguranin }
+            "Perfective" -> vocab.perfectiveForm.ifEmpty { vocab.kasiguranin }
+            "Contemplative" -> vocab.contemplativeForm.ifEmpty { vocab.kasiguranin }
+            else -> vocab.kasiguranin
         }
-        return result
+
+        val distractorEntities = vocabularyRepository.getDistractorsForWord(vocab, 3)
+        val distractors = distractorEntities.map { it.kasiguranin }.filter { it.isNotBlank() }
+
+        val options = (distractors + correct).distinct().shuffled()
+
+        return AspectQuestion(
+            targetVocab = vocab,
+            rootWord = vocab.rootForm.ifEmpty { vocab.kasiguranin },
+            translation = vocab.english,
+            targetAspect = aspect,
+            correctAnswer = correct,
+            options = options
+        )
     }
 
     /** The learner asked for the definition. Costs the speed bonus; see the rating in submitAnswer. */
@@ -154,6 +189,22 @@ class AspectBuilderViewModel @Inject constructor(
         if (_uiState.value.selectedAnswer != null) return
         usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
+        saveProgress(hintRevealed = true)
+    }
+
+    /** Keeps the round so far, so that leaving the game does not lose it. */
+    private fun saveProgress(hintRevealed: Boolean = false) {
+        savedGames.save(
+            "aspect_builder", levelNumber,
+            SavedRound(
+                questionKeys = questionQueue.map { it.targetVocab.id.toString() },
+                answers = reviewItems.map { it.toSavedAnswer() },
+                score = _uiState.value.score,
+                totalQuestions = totalInitialQuestions,
+                usedHint = usedHint,
+                hintRevealed = hintRevealed
+            )
+        )
     }
 
     fun submitAnswer(answer: String) {
@@ -188,6 +239,7 @@ class AspectBuilderViewModel @Inject constructor(
                 questions = questionQueue.toList()
             )
         }
+        saveProgress()
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(currentQ.targetVocab, rating)
@@ -197,47 +249,7 @@ class AspectBuilderViewModel @Inject constructor(
     fun nextQuestion() {
         val state = _uiState.value
         if (state.currentIndex + 1 >= questionQueue.size) {
-            if (finishing) return
-            finishing = true
-            viewModelScope.launch {
-                val isPerfect = state.score >= totalInitialQuestions && !usedHint
-
-                val successRate = state.score.toFloat() / totalInitialQuestions
-                val starsEarned = when {
-                    successRate >= 1.0f -> 3
-                    successRate >= 0.7f -> 2
-                    successRate >= 0.4f -> 1
-                    else -> 0
-                }
-                val finalXp = userProgressRepository.awardGame("aspect_builder","aspect_builder",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,
-                    state.questions.map { it.targetVocab.id })
-                gameLevelRepository.saveLevelResult("aspect_builder", levelNumber, starsEarned)
-
-                gameRepository.saveGameScore(
-                    gameType = "aspect_builder",
-                    score = state.score,
-                    totalQuestions = totalInitialQuestions,
-                    xpEarned = finalXp
-                )
-                userProgressRepository.incrementGamesPlayed()
-                userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
-
-
-                val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("aspect_builder", levelNumber + 1)?.isUnlocked == true)) {
-                    levelNumber + 1
-                } else null
-
-                _uiState.update {
-                    it.copy(
-                        isGameOver = true,
-                        xpEarned = finalXp,
-                        starsEarned = starsEarned,
-                        totalQuestions = totalInitialQuestions,
-                        reviewItems = reviewItems.toList(),
-                        nextLevel = nextLevel
-                    )
-                }
-            }
+            finishRound()
         } else {
             questionStartTimeMs = System.currentTimeMillis()
             _uiState.update {
@@ -246,6 +258,54 @@ class AspectBuilderViewModel @Inject constructor(
                     selectedAnswer = null,
                     isCorrect = null,
                     hintRevealed = false
+                )
+            }
+        }
+    }
+
+    private fun finishRound() {
+        if (finishing) return
+        finishing = true
+        // Before the reward, so the round can never be picked up and rewarded again.
+        savedGames.clear("aspect_builder", levelNumber)
+        val state = _uiState.value
+        viewModelScope.launch {
+            val isPerfect = state.score >= totalInitialQuestions && !usedHint
+
+            val successRate = state.score.toFloat() / totalInitialQuestions
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            val finalXp = userProgressRepository.awardGame("aspect_builder","aspect_builder",levelNumber,state.score,totalInitialQuestions,starsEarned,isPerfect,
+                state.questions.map { it.targetVocab.id })
+            gameLevelRepository.saveLevelResult("aspect_builder", levelNumber, starsEarned)
+
+            gameRepository.saveGameScore(
+                gameType = "aspect_builder",
+                score = state.score,
+                totalQuestions = totalInitialQuestions,
+                xpEarned = finalXp
+            )
+            userProgressRepository.incrementGamesPlayed()
+            userProgressRepository.updateGameStats(state.score, totalInitialQuestions)
+
+
+            val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("aspect_builder", levelNumber + 1)?.isUnlocked == true)) {
+                levelNumber + 1
+            } else null
+
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    isGameOver = true,
+                    xpEarned = finalXp,
+                    starsEarned = starsEarned,
+                    totalQuestions = totalInitialQuestions,
+                    reviewItems = reviewItems.toList(),
+                    nextLevel = nextLevel
                 )
             }
         }

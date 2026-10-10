@@ -154,6 +154,8 @@ dependencies {
 
     // Testing
     testImplementation("junit:junit:4.13.2")
+    // The real org.json for JVM tests: android.jar ships only stubs that throw. Tests the saved-game codec.
+    testImplementation("org.json:json:20240303")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation(composeBom)

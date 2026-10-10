@@ -6,8 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.domain.games.SavedRound
+import com.kasiguru.ui.screens.games.shared.toReviewItem
+import com.kasiguru.ui.screens.games.shared.toSavedAnswer
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
@@ -57,10 +61,12 @@ class SentenceOrderViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
+    /** The level being played; Start over replays it. */
+    val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private var finishing = false
     private var usedHint = false
@@ -141,23 +147,59 @@ class SentenceOrderViewModel @Inject constructor(
                 return if (matchedWords > 0) totalReviews / matchedWords else 0
             }
 
-            val sampleSentences = rawSentences.sortedBy { sentenceScore(it) }.take(questionsCount).shuffled()
+            // A saved round is dealt its own sentences again, unless one has since left the corpus.
+            val saved = savedGames.load("sentence_order", levelNumber) as? SavedRound
+            val sentencesByKey = rawSentences.associateBy { keyOf(it) }
+            val savedSentences = saved?.questionKeys
+                ?.let { keys -> keys.mapNotNull { sentencesByKey[it] }.takeIf { it.size == keys.size } }
+            val resumed = saved?.takeIf { savedSentences != null }
+
+            val sampleSentences = (savedSentences ?: rawSentences.sortedBy { sentenceScore(it) }.take(questionsCount).shuffled())
                 .map { q -> q.copy(hint = sentenceHint(q.correctKasiguraninWords) { vocabMap[it] ?: vocabNeutralMap[it] }) }
 
             questionQueue.clear()
             questionQueue.addAll(sampleSentences)
             questionStartTimeMs = System.currentTimeMillis()
+            if (resumed != null) {
+                reviewItems.addAll(resumed.answers.map { it.toReviewItem() })
+                usedHint = resumed.usedHint
+            }
+            val startIndex = resumed?.nextIndex ?: 0
 
             _uiState.update {
                 it.copy(
                     questions = questionQueue.toList(),
-                    availableWords = questionQueue.firstOrNull()?.shuffledWords ?: emptyList(),
+                    currentQuestionIndex = startIndex,
+                    availableWords = questionQueue.getOrNull(startIndex)?.shuffledWords ?: emptyList(),
                     constructedWords = emptyList(),
                     isCorrect = null,
-                    totalQuestions = questionsCount
+                    score = resumed?.score ?: 0,
+                    hintRevealed = resumed?.hintRevealed ?: false,
+                    totalQuestions = resumed?.totalQuestions ?: questionsCount
                 )
             }
+            // Every sentence answered before leaving: straight to the results.
+            if (resumed != null && startIndex >= questionQueue.size) finishRound()
         }
+    }
+
+    /** How a sentence is known in a saved round: its Kasiguranin words, as the corpus is deduplicated. */
+    private fun keyOf(sentence: SentenceQuestion): String =
+        sentence.correctKasiguraninWords.joinToString(" ").lowercase()
+
+    /** Keeps the round so far, so that leaving the game does not lose it. */
+    private fun saveProgress(hintRevealed: Boolean = false) {
+        savedGames.save(
+            "sentence_order", levelNumber,
+            SavedRound(
+                questionKeys = questionQueue.map { keyOf(it) },
+                answers = reviewItems.map { it.toSavedAnswer() },
+                score = _uiState.value.score,
+                totalQuestions = _uiState.value.totalQuestions,
+                usedHint = usedHint,
+                hintRevealed = hintRevealed
+            )
+        )
     }
 
     fun selectWord(word: String) {
@@ -194,6 +236,7 @@ class SentenceOrderViewModel @Inject constructor(
         if (state.hintRevealed || state.isCorrect != null) return
         usedHint = true
         _uiState.update { it.copy(hintRevealed = true) }
+        saveProgress(hintRevealed = true)
     }
 
     fun checkAnswer() {
@@ -226,6 +269,7 @@ class SentenceOrderViewModel @Inject constructor(
                 questions = questionQueue.toList()
             )
         }
+        saveProgress()
 
         // Feeds SM-2 only on success, and only ever as a mild positive.
         //
@@ -275,43 +319,50 @@ class SentenceOrderViewModel @Inject constructor(
                 )
             }
         } else {
-            if (finishing) return
-            finishing = true
-            viewModelScope.launch {
-                val totalQs = questionQueue.size
-                val successRate = currentState.score.toFloat() / totalQs.coerceAtLeast(1)
-                val starsEarned = when {
-                    successRate >= 1.0f -> 3
-                    successRate >= 0.7f -> 2
-                    successRate >= 0.4f -> 1
-                    else -> 0
-                }
-                val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs && !usedHint,
-                    currentState.questions.mapNotNull { it.wordId })
-                gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
+            finishRound()
+        }
+    }
 
-                gameRepository.saveGameScore(
-                    gameType = Constants.Games.SENTENCE_ORDER,
-                    score = currentState.score,
+    private fun finishRound() {
+        if (finishing) return
+        finishing = true
+        // Before the reward, so the round can never be picked up and rewarded again.
+        savedGames.clear("sentence_order", levelNumber)
+        val currentState = _uiState.value
+        viewModelScope.launch {
+            val totalQs = questionQueue.size
+            val successRate = currentState.score.toFloat() / totalQs.coerceAtLeast(1)
+            val starsEarned = when {
+                successRate >= 1.0f -> 3
+                successRate >= 0.7f -> 2
+                successRate >= 0.4f -> 1
+                else -> 0
+            }
+            val earned = userProgressRepository.awardGame("sentence_order","sentence_order",levelNumber,currentState.score,totalQs,starsEarned,currentState.score == totalQs && !usedHint,
+                currentState.questions.mapNotNull { it.wordId })
+            gameLevelRepository.saveLevelResult("sentence_order", levelNumber, starsEarned)
+
+            gameRepository.saveGameScore(
+                gameType = Constants.Games.SENTENCE_ORDER,
+                score = currentState.score,
+                totalQuestions = totalQs,
+                xpEarned = earned
+            )
+            userProgressRepository.incrementGamesPlayed()
+            userProgressRepository.updateGameStats(currentState.score, totalQs)
+            val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("sentence_order", levelNumber + 1)?.isUnlocked == true)) {
+                levelNumber + 1
+            } else null
+
+            _uiState.update {
+                it.copy(
+                    isGameFinished = true,
+                    finalXp = earned,
+                    starsEarned = starsEarned,
                     totalQuestions = totalQs,
-                    xpEarned = earned
+                    reviewItems = reviewItems.toList(),
+                    nextLevel = nextLevel
                 )
-                userProgressRepository.incrementGamesPlayed()
-                userProgressRepository.updateGameStats(currentState.score, totalQs)
-                val nextLevel = if (levelNumber < 30 && (starsEarned >= 1 || gameLevelRepository.getLevel("sentence_order", levelNumber + 1)?.isUnlocked == true)) {
-                    levelNumber + 1
-                } else null
-
-                _uiState.update {
-                    it.copy(
-                        isGameFinished = true,
-                        finalXp = earned,
-                        starsEarned = starsEarned,
-                        totalQuestions = totalQs,
-                        reviewItems = reviewItems.toList(),
-                        nextLevel = nextLevel
-                    )
-                }
             }
         }
     }

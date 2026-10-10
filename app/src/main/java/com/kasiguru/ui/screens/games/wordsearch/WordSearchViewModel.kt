@@ -7,8 +7,10 @@ import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.domain.games.SavedWordSearch
 import com.kasiguru.domain.wordsearch.GridCell
 import com.kasiguru.domain.wordsearch.WordSearchCandidate
 import com.kasiguru.domain.wordsearch.WordSearchGenerator
@@ -53,6 +55,7 @@ class WordSearchViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -81,13 +84,36 @@ class WordSearchViewModel @Inject constructor(
             level = levelNumber,
             seed = seed
         )
+        // The same seed deals the same grid, so a saved game only needs what was found on it. A
+        // dictionary update can still change the grid; its words then no longer match and it starts over.
+        val wordIds = puzzle?.words?.map { it.id }
+        val saved = (savedGames.load(levelKey, levelNumber) as? SavedWordSearch)
+            ?.takeIf { wordIds != null && it.puzzleWordIds == wordIds && wordIds.containsAll(it.foundIds) }
         _uiState.value = _uiState.value.copy(
             isLoading = false,
             isUnavailable = puzzle == null,
             category = category,
             tier = WordSearchTier.forLevel(levelNumber),
             puzzle = puzzle,
-            entries = words.associateBy { it.id }
+            entries = words.associateBy { it.id },
+            foundIds = saved?.foundIds.orEmpty(),
+            misses = saved?.misses ?: 0,
+            hintRevealed = saved?.hintRevealed ?: false
+        )
+    }
+
+    /** Keeps the grid so far, so that leaving the game does not lose it. */
+    private fun saveProgress() {
+        val state = _uiState.value
+        val puzzle = state.puzzle ?: return
+        savedGames.save(
+            levelKey, levelNumber,
+            SavedWordSearch(
+                puzzleWordIds = puzzle.words.map { it.id },
+                foundIds = state.foundIds,
+                misses = state.misses,
+                hintRevealed = state.hintRevealed
+            )
         )
     }
 
@@ -126,6 +152,7 @@ class WordSearchViewModel @Inject constructor(
         val state = _uiState.value
         if (state.isGameOver || state.hintRevealed) return
         _uiState.value = state.copy(hintRevealed = true)
+        saveProgress()
     }
 
     private fun judgeLine(state: WordSearchUiState, from: GridCell, to: GridCell) {
@@ -133,10 +160,11 @@ class WordSearchViewModel @Inject constructor(
         val hit = puzzle.match(from, to, state.foundIds.toSet())
         if (hit == null) {
             _uiState.value = state.copy(selectionStart = null, lastTapMissed = true, misses = state.misses + 1)
+            saveProgress()
         } else {
             val found = state.foundIds + hit.id
             _uiState.value = state.copy(selectionStart = null, lastTapMissed = false, foundIds = found)
-            if (found.size == puzzle.words.size) finish()
+            if (found.size == puzzle.words.size) finish() else saveProgress()
         }
     }
 
@@ -144,6 +172,8 @@ class WordSearchViewModel @Inject constructor(
         val state = _uiState.value
         if (state.isGameOver) return
         val wordCount = state.puzzle?.words?.size ?: return
+        // Before the reward, so the grid can never be picked up and rewarded again.
+        savedGames.clear(levelKey, levelNumber)
         val stars = when {
             state.misses == 0 -> 3
             state.misses <= 2 -> 2

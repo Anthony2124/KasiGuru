@@ -1,6 +1,9 @@
 package com.kasiguru.ui.screens.games.wordwheel
 
 import com.kasiguru.domain.games.tagalogGloss
+import com.kasiguru.domain.games.wordWheelHint
+import com.kasiguru.ui.components.HintLanguages
+import com.kasiguru.ui.components.hintFor
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -9,8 +12,10 @@ import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.domain.games.SavedWordWheel
 import com.kasiguru.domain.wordwheel.BoardCell
 import com.kasiguru.domain.wordwheel.WheelWord
 import com.kasiguru.domain.wordwheel.WordWheelCandidate
@@ -34,7 +39,6 @@ sealed interface WheelFeedback {
     data class AlreadyFound(val word: String) : WheelFeedback
     data class NotAWord(val attempt: String) : WheelFeedback
     data object TooShort : WheelFeedback
-    data class Revealed(val letter: String) : WheelFeedback
 }
 
 data class WordWheelUiState(
@@ -49,12 +53,11 @@ data class WordWheelUiState(
     val selection: List<Int> = emptyList(),
     /** Board slots found, in the order found. */
     val foundSlots: List<Int> = emptyList(),
-    /** Board cells uncovered by a hint. */
-    val revealed: Set<BoardCell> = emptySet(),
     val bonusFound: List<WheelWord> = emptyList(),
+    /** Each hint is a clue for one hidden word; see [WordWheelViewModel.hint]. */
     val hintsUsed: Int = 0,
-    /** The learner opened the hidden words' meanings; like a letter hint, it costs "perfect" (not stars). */
-    val meaningsShown: Boolean = false,
+    /** The board slot whose clue is showing, until that word is found. */
+    val cluedSlot: Int? = null,
     val feedback: WheelFeedback? = null,
     val entries: Map<Int, VocabularyEntity> = emptyMap(),
     val isGameOver: Boolean = false,
@@ -68,12 +71,37 @@ data class WordWheelUiState(
     val attempt: String
         get() = puzzle?.let { p -> selection.joinToString("") { p.wheel[it] } }.orEmpty()
 
-    /** Board cells whose letter is showing: every cell of a found word, plus hinted cells. */
+    /** Board cells whose letter is showing: every cell of a found word. */
     val shownCells: Set<BoardCell>
         get() {
             val p = puzzle ?: return emptySet()
-            return foundSlots.flatMap { p.slots[it].cells }.toSet() + revealed
+            return foundSlots.flatMap { p.slots[it].cells }.toSet()
         }
+
+    /** The clue showing under the board, or null when no hint is in play. */
+    val clue: String?
+        get() = cluedSlot?.let { puzzle?.slots?.getOrNull(it) }?.let { clueFor(it.word) }
+
+    /** The word the next hint clues: the shortest still hidden that has a meaning to give. */
+    val nextClueSlot: Int?
+        get() {
+            val p = puzzle ?: return null
+            return p.slots.indices
+                .filter { it !in foundSlots && clueFor(p.slots[it].word) != null }
+                .minByOrNull { p.slots[it].word.letters.size }
+        }
+
+    /** The hint button does something: shows the clue again, or gives the next one. */
+    val canHint: Boolean
+        get() = cluedSlot != null || (hintsLeft > 0 && nextClueSlot != null)
+
+    /**
+     * A hint's clue for [word]: its length and English meaning, never the word itself. English only,
+     * since the Tagalog is often spelled close to the Kasiguranin it would give away. Null when the
+     * dictionary has no meaning written for it.
+     */
+    private fun clueFor(word: WheelWord): String? =
+        wordWheelHint(listOf(word.letters.size to entries[word.id]?.let { hintFor(it, HintLanguages.EnglishOnly) }))
 }
 
 @HiltViewModel
@@ -82,6 +110,7 @@ class WordWheelViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -98,15 +127,52 @@ class WordWheelViewModel @Inject constructor(
                 words.map { WordWheelCandidate(it.id, it.kasiguranin) },
                 levelNumber
             )
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isUnavailable = puzzle == null,
-                tier = WordWheelTier.forLevel(levelNumber),
-                puzzle = puzzle,
-                wheelOrder = puzzle?.wheel?.indices?.toList().orEmpty(),
-                entries = words.associateBy { it.id }
+            val saved = savedGames.load(Constants.Games.WORD_WHEEL, levelNumber) as? SavedWordWheel
+            _uiState.value = withSavedProgress(
+                _uiState.value.copy(
+                    isLoading = false,
+                    isUnavailable = puzzle == null,
+                    tier = WordWheelTier.forLevel(levelNumber),
+                    puzzle = puzzle,
+                    wheelOrder = puzzle?.wheel?.indices?.toList().orEmpty(),
+                    entries = words.associateBy { it.id }
+                ),
+                saved
             )
         }
+    }
+
+    /**
+     * [state] with [saved]'s progress put back on its board. The board is rebuilt from the dictionary,
+     * so when an update has since changed it, the saved words no longer match and the level starts over.
+     */
+    private fun withSavedProgress(state: WordWheelUiState, saved: SavedWordWheel?): WordWheelUiState {
+        val puzzle = state.puzzle ?: return state
+        if (saved == null || saved.boardWords != puzzle.slots.map { it.word.key }) return state
+        if (saved.foundSlots.any { it !in puzzle.slots.indices }) return state
+        return state.copy(
+            foundSlots = saved.foundSlots,
+            bonusFound = saved.bonusWords.mapNotNull { key -> puzzle.bonusWords.firstOrNull { it.key == key } },
+            hintsUsed = saved.hintsUsed.coerceAtMost(MAX_HINTS),
+            cluedSlot = saved.cluedSlot?.takeIf { it in puzzle.slots.indices && it !in saved.foundSlots }
+        )
+    }
+
+    /** Keeps the board so far, so that leaving the game does not lose it. */
+    private fun saveProgress() {
+        val state = _uiState.value
+        val puzzle = state.puzzle ?: return
+        if (state.isGameOver) return
+        savedGames.save(
+            Constants.Games.WORD_WHEEL, levelNumber,
+            SavedWordWheel(
+                boardWords = puzzle.slots.map { it.word.key },
+                foundSlots = state.foundSlots,
+                bonusWords = state.bonusFound.map { it.key },
+                hintsUsed = state.hintsUsed,
+                cluedSlot = state.cluedSlot
+            )
+        )
     }
 
     /**
@@ -187,46 +253,39 @@ class WordWheelViewModel @Inject constructor(
             else -> cleared.copy(feedback = WheelFeedback.NotAWord(letters.joinToString("")))
         }
         finishIfSolved()
-    }
-
-    /** The meanings of the words still hidden; see [com.kasiguru.domain.games.wordWheelHint]. */
-    fun showMeanings() {
-        val state = _uiState.value
-        if (state.isGameOver || state.meaningsShown) return
-        _uiState.value = state.copy(meaningsShown = true)
+        val after = _uiState.value
+        if (after.foundSlots != state.foundSlots || after.bonusFound != state.bonusFound) saveProgress()
     }
 
     /**
-     * Uncovers one letter: the first hidden cell of the first unfinished word. At most [MAX_HINTS] per
+     * A clue for one hidden word, its length and meaning, as Word Match's hint gives a meaning. The
+     * clue stays under the board until that word is found; only then does the next hint give another,
+     * and pressing for one before that just shows the current clue again. At most [MAX_HINTS] per
      * level, and each one lowers the stars the level can earn, so the choice stays the learner's.
      */
     fun hint() {
         val state = _uiState.value
-        val puzzle = state.puzzle ?: return
-        if (state.isGameOver || state.hintsLeft <= 0) return
-        val shown = state.shownCells
-        val cell = puzzle.slots.indices
-            .filter { it !in state.foundSlots }
-            .sortedBy { puzzle.slots[it].word.letters.size }
-            .firstNotNullOfOrNull { i -> puzzle.slots[i].cells.firstOrNull { it !in shown } }
-            ?: return
-        _uiState.value = completeFilledSlots(
-            state.copy(
-                revealed = state.revealed + cell,
-                hintsUsed = state.hintsUsed + 1,
-                selection = emptyList(),
-                feedback = WheelFeedback.Revealed(puzzle.letterAt.getValue(cell))
-            )
-        )
-        finishIfSolved()
+        if (state.isGameOver) return
+        if (state.cluedSlot != null) {
+            _uiState.value = state.copy(feedback = null)
+            return
+        }
+        if (state.hintsLeft <= 0) return
+        val slot = state.nextClueSlot ?: return
+        _uiState.value = state.copy(cluedSlot = slot, hintsUsed = state.hintsUsed + 1, feedback = null)
+        saveProgress()
     }
 
-    /** A word whose every letter is showing, through crossings and hints, counts as found. */
+    /**
+     * A word whose every letter is showing through crossings counts as found. A clue whose word is now
+     * found is done with, which frees the hint button for the next one.
+     */
     private fun completeFilledSlots(state: WordWheelUiState): WordWheelUiState {
         val puzzle = state.puzzle ?: return state
         val shown = state.shownCells
         val completed = puzzle.slots.indices.filter { it !in state.foundSlots && puzzle.slots[it].cells.all(shown::contains) }
-        return if (completed.isEmpty()) state else state.copy(foundSlots = state.foundSlots + completed)
+        val found = state.foundSlots + completed
+        return state.copy(foundSlots = found, cluedSlot = state.cluedSlot?.takeIf { it !in found })
     }
 
     private fun glossFor(word: WheelWord): String = _uiState.value.entries[word.id]?.let(::tagalogGloss).orEmpty()
@@ -235,6 +294,8 @@ class WordWheelViewModel @Inject constructor(
         val state = _uiState.value
         val puzzle = state.puzzle ?: return
         if (state.isGameOver || state.foundSlots.size < puzzle.slots.size) return
+        // Before the reward, so the board can never be picked up and rewarded again.
+        savedGames.clear(Constants.Games.WORD_WHEEL, levelNumber)
 
         val boardWords = puzzle.slots.size
         val stars = when {
@@ -247,7 +308,7 @@ class WordWheelViewModel @Inject constructor(
         _uiState.value = state.copy(isGameOver = true)
 
         viewModelScope.launch {
-            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0 && !state.meaningsShown,
+            val xp = userProgressRepository.awardGame("word_wheel",Constants.Games.WORD_WHEEL,levelNumber,boardWords,boardWords,stars,state.hintsUsed == 0,
                 puzzle.slots.map { it.word.id } + state.bonusFound.map { it.id })
             gameRepository.saveScore(
                 GameScoreEntity(

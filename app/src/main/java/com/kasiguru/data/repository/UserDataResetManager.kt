@@ -26,6 +26,7 @@ class UserDataResetManager @Inject constructor(
     private val leaderboardDao: LeaderboardDao,
     private val profileDao: ProfileDao,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val savedGameRepository: SavedGameRepository,
     private val progressSyncManager: dagger.Lazy<ProgressSyncManager>,
     private val database: com.kasiguru.data.local.KasiGuruDatabase
 ) {
@@ -50,8 +51,10 @@ class UserDataResetManager @Inject constructor(
 
         // 1. Tell SyncManager to cancel active uploads and clear cached sync hashes
         progressSyncManager.get().onUserSignedOut()
-        // 2. Clear DataStore daily streak quota and session preferences
+        // 2. Clear DataStore daily streak quota and session preferences, and any game left
+        //    partway through, so the next learner on this device does not resume it
         userPreferencesRepository.clearUserSessionData()
+        savedGameRepository.clearAll()
 
         database.withTransaction {
             database.rewardDao().clearReceipts()

@@ -7,9 +7,14 @@ import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameLevelRepository
 import com.kasiguru.data.repository.GameRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.domain.games.SavedRound
 import com.kasiguru.ui.components.GameReviewItem
+import com.kasiguru.ui.screens.games.shared.toReviewItem
+import com.kasiguru.ui.screens.games.shared.toSavedAnswer
+import com.kasiguru.ui.screens.games.shared.wordsOf
 import com.kasiguru.util.Constants
 import com.kasiguru.util.RecallAnswerMatcher
 import com.kasiguru.util.RecallGrading
@@ -46,10 +51,12 @@ class RecallGameViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val levelNumber = savedStateHandle.get<Int>("level") ?: 1
+    /** The level being played; Start over replays it. */
+    val levelNumber = savedStateHandle.get<Int>("level") ?: 1
 
     private var usedHint = false
     private var finishing = false
@@ -74,6 +81,23 @@ class RecallGameViewModel @Inject constructor(
             val levelInfo = gameLevelRepository.getLevel(Constants.Games.RECALL, levelNumber)
             if (levelInfo != null) {
                 totalInitialQuestions = levelInfo.questionsCount
+            }
+
+            // A saved word whose meaning has since been removed can no longer be asked for.
+            val saved = savedGames.load(Constants.Games.RECALL, levelNumber) as? SavedRound
+            val savedWords = saved?.let { vocabularyRepository.wordsOf(it) }
+                ?.takeIf { words -> words.all { promptFor(it) != null } }
+            if (saved != null && savedWords != null) {
+                questionQueue.clear()
+                questionQueue.addAll(savedWords)
+                totalInitialQuestions = saved.totalQuestions
+                reviewItems.clear()
+                reviewItems.addAll(saved.answers.map { it.toReviewItem() })
+                metWordIds += savedWords.take(saved.nextIndex).map { it.id }
+                usedHint = saved.usedHint
+                _uiState.value = _uiState.value.copy(currentQuestionIndex = saved.nextIndex, score = saved.score)
+                loadNextQuestion(hintRevealed = saved.hintRevealed)
+                return@launch
             }
 
             // Review-first, then new material — see VocabularyRepository.buildPracticeRound.
@@ -106,7 +130,7 @@ class RecallGameViewModel @Inject constructor(
     private fun promptFor(word: VocabularyEntity): String? =
         RecallPrompt.meaningFor(word.kasiguranin, word.tagalog, word.english)
 
-    private fun loadNextQuestion() {
+    private fun loadNextQuestion(hintRevealed: Boolean = false) {
         val state = _uiState.value
         if (state.currentQuestionIndex >= questionQueue.size) {
             endGame()
@@ -123,7 +147,7 @@ class RecallGameViewModel @Inject constructor(
             promptMeaning = promptFor(targetWord).orEmpty(),
             typedAnswer = "",
             match = null,
-            hintRevealed = false,
+            hintRevealed = hintRevealed,
             totalQuestions = totalInitialQuestions
         )
     }
@@ -133,6 +157,22 @@ class RecallGameViewModel @Inject constructor(
         if (_uiState.value.hasAnswered) return
         usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
+        saveProgress(hintRevealed = true)
+    }
+
+    /** Keeps the round so far, so that leaving the game does not lose it. */
+    private fun saveProgress(hintRevealed: Boolean = false) {
+        savedGames.save(
+            Constants.Games.RECALL, levelNumber,
+            SavedRound(
+                questionKeys = questionQueue.map { it.id.toString() },
+                answers = reviewItems.map { it.toSavedAnswer() },
+                score = _uiState.value.score,
+                totalQuestions = totalInitialQuestions,
+                usedHint = usedHint,
+                hintRevealed = hintRevealed
+            )
+        )
     }
 
     /** Live text from the input field. Committing it is [submit]. */
@@ -169,6 +209,7 @@ class RecallGameViewModel @Inject constructor(
         )
 
         _uiState.value = state.copy(match = match, score = newScore)
+        saveProgress()
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
@@ -183,6 +224,8 @@ class RecallGameViewModel @Inject constructor(
     private fun endGame() {
         if (finishing) return
         finishing = true
+        // Before the reward, so the round can never be picked up and rewarded again.
+        savedGames.clear(Constants.Games.RECALL, levelNumber)
         val state = _uiState.value
         val isPerfect = state.score >= totalInitialQuestions && !usedHint
 
@@ -215,6 +258,8 @@ class RecallGameViewModel @Inject constructor(
             } else null
 
             _uiState.value = state.copy(
+                // Still loading when a resumed round had every question answered already.
+                isLoading = false,
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,

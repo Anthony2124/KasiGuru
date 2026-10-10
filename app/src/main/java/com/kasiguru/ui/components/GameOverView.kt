@@ -35,6 +35,10 @@ data class GameReviewItem(
     val subPrompt: String? = null
 )
 
+/**
+ * [onStartOver] replays the same level from scratch, with every hint back, for a learner going for
+ * more stars.
+ */
 @Composable
 fun GameOverView(
     score: Int,
@@ -44,7 +48,8 @@ fun GameOverView(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
     reviewItems: List<GameReviewItem> = emptyList(),
-    onNextLevel: (() -> Unit)? = null
+    onNextLevel: (() -> Unit)? = null,
+    onStartOver: (() -> Unit)? = null
 ) {
     val haptic = LocalHapticFeedback.current
     val sounds = LocalSoundEffects.current
@@ -190,7 +195,23 @@ fun GameOverView(
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
+                }
 
+                if (onStartOver != null) {
+                    ClayButton(
+                        label = "Start over",
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onStartOver()
+                        },
+                        // The main action when there is no next level to go to.
+                        tone = if (onNextLevel != null) ClayButtonTone.Quiet else ClayButtonTone.Primary
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                if (onNextLevel != null || onStartOver != null) {
                     TextButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
