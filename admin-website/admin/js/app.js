@@ -518,15 +518,16 @@ function initRealtimeListeners() {
       store: vocabularyStore(auth.currentUser.uid),
       isVisible: () => !document.hidden,
       readAll: async () => (await getDocsFromServer(vocabCollection)).docs.map(toRow),
+      // One query per total. Combined in one query, Firestore demands a composite index and counts
+      // only the words that carry every summed field.
       fingerprint: async () => {
-        const totals = (await getAggregateFromServer(vocabCollection, {
-          count: aggregateCount(),
-          ...Object.fromEntries(FINGERPRINT_SUMS.map((field) => [field, aggregateSum(field)])),
-        })).data();
-        return {
-          count: totals.count,
-          sums: Object.fromEntries(FINGERPRINT_SUMS.map((field) => [field, totals[field] ?? 0])),
-        };
+        const total = async (aggregate) =>
+          (await getAggregateFromServer(vocabCollection, { value: aggregate })).data().value ?? 0;
+        const [count, ...sums] = await Promise.all([
+          total(aggregateCount()),
+          ...FINGERPRINT_SUMS.map((field) => total(aggregateSum(field))),
+        ]);
+        return { count, sums: Object.fromEntries(FINGERPRINT_SUMS.map((field, i) => [field, sums[i]])) };
       },
       listen: (since, next, error) => onSnapshot(query(vocabCollection, where('updatedAt', '>', since)),
         { includeMetadataChanges: true }, (snapshot) => next({

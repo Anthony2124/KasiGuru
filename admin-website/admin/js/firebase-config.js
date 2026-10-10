@@ -7,7 +7,7 @@ import {
   getDocs, 
   getDocsFromServer,
   getCountFromServer,
-  // Count and sums in one request fingerprint the dictionary for a few reads instead of ~1,150.
+  // A count and sums fingerprint the dictionary for a few reads instead of ~1,150.
   getAggregateFromServer,
   count as aggregateCount,
   sum as aggregateSum,
