@@ -30,13 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
-import com.kasiguru.domain.games.wordWheelHint
-import com.kasiguru.ui.components.HintLanguages
-import com.kasiguru.ui.components.hintFor
-import com.kasiguru.ui.components.tapSounds
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +64,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -99,7 +94,6 @@ import com.kasiguru.ui.theme.Surface
 import com.kasiguru.ui.theme.TrackNeutral
 import com.kasiguru.ui.theme.Lime
 import com.kasiguru.ui.theme.LimeLip
-import com.kasiguru.ui.theme.LimeTint
 import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.runtime.LaunchedEffect
@@ -114,10 +108,11 @@ fun WordWheelGameScreen(
     viewModel: WordWheelViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    // Sounds when a word joins the found list, not for state restored on entry.
+    // Sounds when a word joins the found list, not for state restored on entry: a saved board
+    // arrives with its words already found, as loading ends.
     val sounds = LocalSoundEffects.current
     val foundCount = uiState.foundSlots.size + uiState.bonusFound.size
-    var heardCount by remember { mutableIntStateOf(foundCount) }
+    var heardCount by remember(uiState.isLoading) { mutableIntStateOf(foundCount) }
     LaunchedEffect(foundCount) {
         if (foundCount > heardCount) sounds?.play(Sfx.Found)
         heardCount = foundCount
@@ -156,7 +151,8 @@ fun WordWheelGameScreen(
                     onFinish = onNavigateBack,
                     onNextLevel = uiState.nextLevel?.let { next ->
                         onNavigateToNextLevel?.let { navigate -> { navigate(next) } }
-                    }
+                    },
+                    onStartOver = onNavigateToNextLevel?.let { navigate -> { navigate(uiState.level) } }
                 )
                 else -> Playing(uiState, puzzle, viewModel)
             }
@@ -180,7 +176,8 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
 
     CasiguranBackdrop(scene) {
     // No vertical scroll: a scroll container would steal the vertical part of every swipe across the
-    // wheel. The board takes whatever height is left and scales its tiles to fit instead.
+    // wheel. The board takes whatever height is left and scales its tiles to fit instead. Everything
+    // else in this column keeps one height whatever it shows, so the tiles keep their size all game.
     //
     // The scaffold only pads the top, so this pads the bottom and sides itself: without it the
     // gesture handle or three-button bar sits on top of the Check button.
@@ -210,14 +207,14 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                 modifier = Modifier.fillMaxWidth(),
                 overScene = true
             )
-            MeaningsHint(puzzle = puzzle, uiState = uiState, onShow = viewModel::showMeanings)
             Spacer(Modifier.height(Space.sm))
             Board(puzzle = puzzle, uiState = uiState)
             Spacer(Modifier.height(Space.sm))
             FeedbackLine(uiState)
             Spacer(Modifier.height(Space.xs))
             // Clear sits with the word it clears; the pill stays centred over the wheel either way.
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            // At least the Clear button's height, so the row does not grow when Clear appears.
+            Box(Modifier.fillMaxWidth().heightIn(min = ControlSize), contentAlignment = Alignment.Center) {
                 AttemptPill(uiState.attempt)
                 if (uiState.selection.isNotEmpty()) {
                     ControlIcon(
@@ -251,7 +248,7 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
                     },
                     onDragEnd = viewModel::submit
                 )
-                HintButton(hintsLeft = uiState.hintsLeft, onClick = viewModel::hint)
+                HintButton(uiState = uiState, onClick = viewModel::hint)
             }
             Spacer(Modifier.height(Space.sm))
             ClayButton(
@@ -265,44 +262,9 @@ private fun Playing(uiState: WordWheelUiState, puzzle: WordWheelPuzzle, viewMode
     }
 }
 
-/**
- * "Show meanings": what the hidden words mean and how long they are, never the words. A dialog rather
- * than a panel, because this screen does not scroll and a panel would shrink the board.
- */
-@Composable
-private fun MeaningsHint(puzzle: WordWheelPuzzle, uiState: WordWheelUiState, onShow: () -> Unit) {
-    val hint = wordWheelHint(
-        puzzle.slots.indices
-            .filter { it !in uiState.foundSlots }
-            .map { i ->
-                val word = puzzle.slots[i].word
-                word.letters.size to uiState.entries[word.id]?.let { hintFor(it, HintLanguages.EnglishOnly) }
-            }
-    ) ?: return
-    var open by remember { mutableStateOf(false) }
-    TextButton(
-        onClick = { onShow(); open = true },
-        modifier = Modifier.backdropPill(Surface)
-    ) {
-        Icon(painterResource(Iconsax.InfoCircle), contentDescription = null, tint = Muted, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(Space.xxs))
-        Text("Show meanings", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Muted)
-    }
-    if (open) {
-        AlertDialog(
-            modifier = Modifier.tapSounds(),
-            onDismissRequest = { open = false },
-            title = { Text("Words still hidden") },
-            text = { Text(hint, style = MaterialTheme.typography.bodyLarge, color = Ink) },
-            confirmButton = { TextButton(onClick = { open = false }) { Text("Got it") } }
-        )
-    }
-}
-
 @Composable
 private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState) {
-    val shown = uiState.shownCells
-    val foundCells = uiState.foundSlots.flatMap { puzzle.slots[it].cells }.toSet()
+    val foundCells = uiState.shownCells
     val gap = 4.dp
     BoxWithConstraints(
         modifier = Modifier
@@ -330,31 +292,24 @@ private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState
                             continue
                         }
                         val isFound = cell in foundCells
-                        val isShown = cell in shown
                         Box(
                             modifier = Modifier
                                 .size(tile)
                                 .clip(RoundedCornerShape(tile * 0.22f))
-                                .background(
-                                    when {
-                                        isFound -> Lime
-                                        isShown -> LimeTint
-                                        else -> Surface
-                                    }
-                                )
+                                .background(if (isFound) Lime else Surface)
                                 .then(
-                                    if (isShown) Modifier
+                                    if (isFound) Modifier
                                     else Modifier.border(1.5.dp, TrackNeutral, RoundedCornerShape(tile * 0.22f))
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isShown) {
+                            if (isFound) {
                                 Text(
                                     text = letter,
                                     fontSize = letterSize,
                                     fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = if (isFound) OnLime else LimeText
+                                    color = OnLime
                                 )
                             }
                         }
@@ -365,35 +320,41 @@ private fun ColumnScope.Board(puzzle: WordWheelPuzzle, uiState: WordWheelUiState
     }
 }
 
+/**
+ * The line under the board: what the last move did, and otherwise the hint's clue, which stays
+ * until its word is found. Always two lines tall, so a long message never shrinks the board.
+ */
 @Composable
 private fun FeedbackLine(uiState: WordWheelUiState) {
+    val clue = uiState.clue
     val (text, isMiss) = when (val f = uiState.feedback) {
         is WheelFeedback.Found -> (if (f.gloss.isBlank()) "Found ${f.word}!" else "Found ${f.word}: ${f.gloss}") to false
         is WheelFeedback.Bonus -> (if (f.gloss.isBlank()) "Bonus word ${f.word}!" else "Bonus word ${f.word}: ${f.gloss}") to false
         is WheelFeedback.AlreadyFound -> "You already found ${f.word}." to false
         is WheelFeedback.NotAWord -> "${f.attempt.lowercase()} isn't in the dictionary." to true
         WheelFeedback.TooShort -> "Words need at least 3 letters." to true
-        is WheelFeedback.Revealed -> when (val left = uiState.hintsLeft) {
-            0 -> "Hint: one letter uncovered. That was your last hint."
-            else -> "Hint: one letter uncovered. $left left."
-        } to false
-        null -> "Swipe across the letters, or tap them and press Check." to false
+        null -> (if (clue != null) "Hint: $clue" else "Swipe across the letters, or tap them and press Check.") to false
     }
+    val style = MaterialTheme.typography.bodyMedium
+    // Two lines plus the pill's padding, and 2 dp so rounding never clips the second line.
+    val twoLines = with(LocalDensity.current) { (style.lineHeight * 2).toDp() } + Space.xxs * 2 + 2.dp
     Row(
         verticalAlignment = Alignment.CenterVertically,
         // The message pill hugs its text, so this keeps the Bonus badge pinned to the right edge.
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 24.dp)
+            .height(twoLines)
             .semantics { liveRegion = LiveRegionMode.Polite }
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
+            style = style,
             // Ink, not Red: red text on the Ground falls under 4.5:1, so a miss is marked by weight.
             fontWeight = if (isMiss) FontWeight.Bold else FontWeight.Normal,
             color = if (isMiss) Ink else Muted,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             // The pill keeps this small text readable over the scenery.
             modifier = Modifier
                 .weight(1f, fill = false)
@@ -543,15 +504,24 @@ private fun LetterWheel(
 
 private val ControlSize = 48.dp
 
-/** Hint with a badge counting what's left, so the limit is visible before it's reached. */
+/**
+ * Hint: a clue for one hidden word, with a badge counting what's left, so the limit is visible before
+ * it's reached. While a clue's word is still hidden, the button shows that clue again for free.
+ */
 @Composable
-private fun HintButton(hintsLeft: Int, onClick: () -> Unit) {
+private fun HintButton(uiState: WordWheelUiState, onClick: () -> Unit) {
+    val hintsLeft = uiState.hintsLeft
     Box {
         ControlIcon(
             iconRes = Iconsax.Flash,
-            label = if (hintsLeft > 0) "Hint: uncover a letter, $hintsLeft left" else "No hints left",
+            label = when {
+                uiState.cluedSlot != null -> "Show the clue again"
+                uiState.canHint -> "Hint: a clue for a hidden word, $hintsLeft left"
+                hintsLeft > 0 -> "No clues for the words left"
+                else -> "No hints left"
+            },
             onClick = onClick,
-            enabled = hintsLeft > 0
+            enabled = uiState.canHint
         )
         Box(
             modifier = Modifier

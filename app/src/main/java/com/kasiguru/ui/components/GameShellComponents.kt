@@ -317,10 +317,10 @@ fun GameAnswerFeedback(
 }
 
 /**
- * Guards a mid-round exit — system/gesture back and the top bar's back icon both used to leave
- * instantly with no confirmation, silently discarding the round's progress (there was no
- * `BackHandler` in any of the six games). Returns the click handler to wire onto the top bar's back
- * icon; system back is intercepted automatically while [active] is true.
+ * Asks before a mid-round exit: system/gesture back and the top bar's back icon both used to leave
+ * instantly. Leaving no longer loses anything, since every game saves its round as it is played
+ * (see `SavedGameRepository`), so the dialog says where to pick it up. Returns the click handler to
+ * wire onto the top bar's back icon; system back is intercepted automatically while [active] is true.
  */
 @Composable
 fun rememberGameExitGuard(active: Boolean, onExit: () -> Unit): () -> Unit {
@@ -328,14 +328,12 @@ fun rememberGameExitGuard(active: Boolean, onExit: () -> Unit): () -> Unit {
     BackHandler(enabled = active) { showConfirm = true }
 
     if (showConfirm) {
-        AlertDialog(modifier = Modifier.tapSounds(), 
+        AlertDialog(modifier = Modifier.tapSounds(),
             onDismissRequest = { showConfirm = false },
             title = { Text("Quit this game?") },
-            text = { Text("Your progress in this round won't be saved.") },
+            text = { Text("Your progress is saved. Open this level again to continue where you left off.") },
             confirmButton = {
-                TextButton(onClick = { showConfirm = false; onExit() }) {
-                    Text("Quit", color = RedText)
-                }
+                TextButton(onClick = { showConfirm = false; onExit() }) { Text("Quit") }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirm = false }) { Text("Keep playing") }

@@ -4,12 +4,17 @@ import com.kasiguru.ui.theme.GoldText
 import com.kasiguru.ui.theme.LimeText
 import com.kasiguru.ui.screens.games.shared.GameRulesRegistry
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import com.kasiguru.ui.theme.OnLime
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -110,6 +115,7 @@ fun LevelSelectionScreen(
                     items(uiState.levels) { level ->
                         LevelCell(
                             level = level,
+                            inProgress = level.levelNumber in uiState.inProgressLevels,
                             onClick = {
                                 if (level.isUnlocked) onNavigateToGame(uiState.gameType, level.levelNumber)
                             }
@@ -121,12 +127,13 @@ fun LevelSelectionScreen(
     )
 }
 
+/** [inProgress]: the level was left partway through, and opening it carries on from there. */
 @Composable
-private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
+private fun LevelCell(level: GameLevelEntity, inProgress: Boolean, onClick: () -> Unit) {
     // The cell's own text ("3") plus three star icons with individually-null descriptions read as
     // just a bare number to a screen reader — nothing ever announced how many stars were earned.
     val a11yLabel = if (level.isUnlocked) {
-        "Level ${level.levelNumber}, ${level.starsEarned} of 3 stars"
+        "Level ${level.levelNumber}, ${level.starsEarned} of 3 stars" + if (inProgress) ", game in progress" else ""
     } else {
         "Level ${level.levelNumber}, locked"
     }
@@ -154,6 +161,24 @@ private fun LevelCell(level: GameLevelEntity, onClick: () -> Unit) {
                         modifier = Modifier.size(20.dp)
                     )
                 }
+            }
+        }
+        if (level.isUnlocked && inProgress) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(Space.xxs)
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(Lime),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = Iconsax.PlayBold),
+                    contentDescription = null,
+                    tint = OnLime,
+                    modifier = Modifier.size(10.dp)
+                )
             }
         }
         if (level.isUnlocked) {

@@ -87,6 +87,13 @@ Grid and wheel generation remain in `domain/wordsearch/` and
 unit-test source root. Game completion and level persistence use
 `data/repository/GameRepository.kt` and `GameLevelRepository.kt`.
 
+A game left partway through is saved per level after every answer and resumed
+when that level is opened again: `domain/games/SavedGame.kt` describes what is
+kept, `data/repository/SavedGameRepository.kt` stores it in DataStore on the
+device (cleared on sign-out), and `games/shared/SavedRounds.kt` holds the
+helpers the six question games share. Each game clears its save before giving
+the round's reward.
+
 ## Web and backend entry points
 
 - Admin: `admin-website/admin/index.html` (login), `dashboard.html`,

@@ -191,7 +191,8 @@ fun WordSearchGameScreen(
                     onFinish = onNavigateBack,
                     onNextLevel = uiState.nextLevel?.let { next ->
                         onNavigateToNextLevel?.let { navigate -> { navigate(next) } }
-                    }
+                    },
+                    onStartOver = onNavigateToNextLevel?.let { navigate -> { navigate(uiState.level) } }
                 )
                 else -> PlayingState(
                     uiState = uiState,

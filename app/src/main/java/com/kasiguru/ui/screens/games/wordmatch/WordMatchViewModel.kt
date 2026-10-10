@@ -7,8 +7,13 @@ import com.kasiguru.data.local.entity.GameScoreEntity
 import com.kasiguru.data.local.entity.VocabularyEntity
 import com.kasiguru.data.repository.GameRepository
 import com.kasiguru.data.repository.GameLevelRepository
+import com.kasiguru.data.repository.SavedGameRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.VocabularyRepository
+import com.kasiguru.domain.games.SavedRound
+import com.kasiguru.ui.screens.games.shared.toReviewItem
+import com.kasiguru.ui.screens.games.shared.toSavedAnswer
+import com.kasiguru.ui.screens.games.shared.wordsOf
 import com.kasiguru.util.Constants
 import com.kasiguru.util.srs.ReviewRating
 import com.kasiguru.util.srs.ReviewRatingMapper
@@ -30,6 +35,7 @@ class WordMatchViewModel @Inject constructor(
     private val userProgressRepository: UserProgressRepository,
     private val gameRepository: GameRepository,
     private val gameLevelRepository: GameLevelRepository,
+    private val savedGames: SavedGameRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,7 +65,22 @@ class WordMatchViewModel @Inject constructor(
             if (levelInfo != null) {
                 totalInitialQuestions = levelInfo.questionsCount
             }
-            
+
+            val saved = savedGames.load("word_match", levelNumber) as? SavedRound
+            val savedWords = saved?.let { vocabularyRepository.wordsOf(it) }
+            if (saved != null && savedWords != null) {
+                questionQueue.clear()
+                questionQueue.addAll(savedWords)
+                totalInitialQuestions = saved.totalQuestions
+                reviewItems.clear()
+                reviewItems.addAll(saved.answers.map { it.toReviewItem() })
+                metWordIds += savedWords.take(saved.nextIndex).map { it.id }
+                usedHint = saved.usedHint
+                _uiState.value = _uiState.value.copy(currentQuestionIndex = saved.nextIndex, score = saved.score)
+                loadNextQuestion(hintRevealed = saved.hintRevealed)
+                return@launch
+            }
+
             var words = vocabularyRepository.getPracticeWords(totalInitialQuestions)
             if (words.isEmpty()) {
                 val all = vocabularyRepository.getAllVocabulary().firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -82,7 +103,7 @@ class WordMatchViewModel @Inject constructor(
         }
     }
 
-    private fun loadNextQuestion() {
+    private fun loadNextQuestion(hintRevealed: Boolean = false) {
         val state = _uiState.value
         if (state.currentQuestionIndex >= questionQueue.size) {
             endGame()
@@ -90,7 +111,7 @@ class WordMatchViewModel @Inject constructor(
         }
 
         val targetWord = questionQueue[state.currentQuestionIndex]
-        
+
         viewModelScope.launch {
             val wrongEntities = vocabularyRepository.getDistractorsForWord(targetWord, 3)
             val wrongOptions = wrongEntities.map { it.tagalog }.filter { it.isNotBlank() }
@@ -105,7 +126,7 @@ class WordMatchViewModel @Inject constructor(
                 options = allOptions,
                 selectedOption = null,
                 isCorrect = null,
-                hintRevealed = false,
+                hintRevealed = hintRevealed,
                 totalQuestions = totalInitialQuestions
             )
         }
@@ -116,6 +137,22 @@ class WordMatchViewModel @Inject constructor(
         if (_uiState.value.selectedOption != null) return
         usedHint = true
         _uiState.value = _uiState.value.copy(hintRevealed = true)
+        saveProgress(hintRevealed = true)
+    }
+
+    /** Keeps the round so far, so that leaving the game does not lose it. */
+    private fun saveProgress(hintRevealed: Boolean = false) {
+        savedGames.save(
+            "word_match", levelNumber,
+            SavedRound(
+                questionKeys = questionQueue.map { it.id.toString() },
+                answers = reviewItems.map { it.toSavedAnswer() },
+                score = _uiState.value.score,
+                totalQuestions = totalInitialQuestions,
+                usedHint = usedHint,
+                hintRevealed = hintRevealed
+            )
+        )
     }
 
     fun selectOption(option: String) {
@@ -147,6 +184,7 @@ class WordMatchViewModel @Inject constructor(
             isCorrect = isCorrect,
             score = newScore
         )
+        saveProgress()
 
         viewModelScope.launch {
             vocabularyRepository.processWordReview(targetWord, rating)
@@ -162,6 +200,8 @@ class WordMatchViewModel @Inject constructor(
     private fun endGame() {
         if (finishing) return
         finishing = true
+        // Before the reward, so the round can never be picked up and rewarded again.
+        savedGames.clear("word_match", levelNumber)
         val state = _uiState.value
         val isPerfect = state.score >= totalInitialQuestions && !usedHint
 
@@ -194,6 +234,8 @@ class WordMatchViewModel @Inject constructor(
             } else null
 
             _uiState.value = state.copy(
+                // Still loading when a resumed round had every question answered already.
+                isLoading = false,
                 isGameOver = true,
                 finalXp = xpEarned,
                 starsEarned = starsEarned,

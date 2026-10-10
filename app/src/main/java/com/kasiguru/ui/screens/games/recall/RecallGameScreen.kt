@@ -110,6 +110,7 @@ fun RecallGameScreen(
                     onNextLevel = if (uiState.nextLevel != null && onNavigateToNextLevel != null) {
                         { onNavigateToNextLevel(uiState.nextLevel!!) }
                     } else null,
+                    onStartOver = onNavigateToNextLevel?.let { navigate -> { navigate(viewModel.levelNumber) } },
                     modifier = Modifier
                 )
                 return@GroundScaffold
