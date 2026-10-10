@@ -49,8 +49,12 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -366,71 +370,134 @@ private fun HomeHero(
     onOpenXp: () -> Unit
 ) {
     val displayName = progress.fullName.ifBlank { progress.userName }
+    val greetingStyle = MaterialTheme.typography.bodyMedium
+    val greetingWidth = with(LocalDensity.current) {
+        rememberTextMeasurer().measure(GREETING, greetingStyle).size.width.toDp()
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            JepjepAvatarPortrait(
-                avatar = JepjepAvatar.fromId(progress.profileIconId),
-                size = 48.dp,
-                level = progress.level,
-                contentDescription = "Your profile, level ${progress.level}",
-                onClick = onOpenProfile
-            )
-            Spacer(Modifier.width(Space.sm))
-            // The name is the highlighted word, as on the onboarding's "Nice to meet you" screen.
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = "Magandang aldew,",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Muted,
-                    maxLines = 1
-                )
-                Text(
-                    text = displayName,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = BrandLime,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+        HeroRow(
+            minLeadWidth = HeroAvatarSize + Space.sm + greetingWidth,
+            chipsIndent = HeroAvatarSize + Space.sm,
+            lead = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    JepjepAvatarPortrait(
+                        avatar = JepjepAvatar.fromId(progress.profileIconId),
+                        size = HeroAvatarSize,
+                        level = progress.level,
+                        contentDescription = "Your profile, level ${progress.level}",
+                        onClick = onOpenProfile
+                    )
+                    Spacer(Modifier.width(Space.sm))
+                    // The name is the highlighted word, as on the onboarding's "Nice to meet you" screen.
+                    Column {
+                        Text(
+                            text = GREETING,
+                            style = greetingStyle,
+                            color = Muted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = BrandLime,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            },
+            chips = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HeroChip(
+                        iconRes = Iconsax.FlashBold,
+                        tint = Coral,
+                        text = "${progress.currentStreak}",
+                        spoken = "Streak, ${progress.currentStreak} ${if (progress.currentStreak == 1) "day" else "days"}. " +
+                            "Shows what keeps it going.",
+                        onClick = onOpenStreak,
+                        modifier = Modifier.tourAnchor(TourAnchor.StreakBadge)
+                    )
+                    Spacer(Modifier.width(Space.xxs))
+                    HeroChip(
+                        iconRes = Iconsax.StarBold,
+                        tint = Gold,
+                        text = "${progress.totalXp}",
+                        spoken = "${progress.totalXp} XP in total. Shows your level and where your XP comes from.",
+                        onClick = onOpenXp
+                    )
+                }
+            },
+            bell = {
+                Box(
+                    modifier = Modifier
+                        .tourAnchor(TourAnchor.NotificationBell)
+                        .size(Touch.minTarget)
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = LocalIndication.current,
+                            role = Role.Button,
+                            onClick = onOpenNotifications
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = Iconsax.Notification),
+                        contentDescription = "Notifications",
+                        tint = Ink,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
-            Spacer(Modifier.width(Space.xs))
-            HeroChip(
-                iconRes = Iconsax.FlashBold,
-                tint = Coral,
-                text = "${progress.currentStreak}",
-                spoken = "Streak, ${progress.currentStreak} ${if (progress.currentStreak == 1) "day" else "days"}. " +
-                    "Shows what keeps it going.",
-                onClick = onOpenStreak,
-                modifier = Modifier.tourAnchor(TourAnchor.StreakBadge)
-            )
-            Spacer(Modifier.width(Space.xxs))
-            HeroChip(
-                iconRes = Iconsax.StarBold,
-                tint = Gold,
-                text = "${progress.totalXp}",
-                spoken = "${progress.totalXp} XP in total. Shows your level and where your XP comes from.",
-                onClick = onOpenXp
-            )
-            Spacer(Modifier.width(Space.xxs))
-            Box(
-                modifier = Modifier
-                    .tourAnchor(TourAnchor.NotificationBell)
-                    .size(Touch.minTarget)
-                    .clip(CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = LocalIndication.current,
-                        role = Role.Button,
-                        onClick = onOpenNotifications
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = Iconsax.Notification),
-                    contentDescription = "Notifications",
-                    tint = Ink,
-                    modifier = Modifier.size(22.dp)
-                )
+        )
+    }
+}
+
+private const val GREETING = "Magandang aldew,"
+private val HeroAvatarSize = 48.dp
+
+/**
+ * The hero's one row: who you are, then the streak and XP chips, then the bell.
+ *
+ * On a phone too narrow for that, the chips drop to a line of their own under the name, rather than
+ * squeezing the greeting down to its first word. [minLeadWidth] is what the avatar and the whole
+ * greeting need; [chipsIndent] lines the dropped chips up under the name.
+ */
+@Composable
+private fun HeroRow(
+    minLeadWidth: Dp,
+    chipsIndent: Dp,
+    lead: @Composable () -> Unit,
+    chips: @Composable () -> Unit,
+    bell: @Composable () -> Unit
+) {
+    Layout(contents = listOf(lead, chips, bell)) { (leadPart, chipsPart, bellPart), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val width = constraints.maxWidth
+        val leadGap = Space.xs.roundToPx()
+        val bellGap = Space.xxs.roundToPx()
+        val chipsP = chipsPart.single().measure(loose)
+        val bellP = bellPart.single().measure(loose)
+        val oneRowLeadWidth = width - leadGap - chipsP.width - bellGap - bellP.width
+
+        if (oneRowLeadWidth >= minLeadWidth.roundToPx()) {
+            val leadP = leadPart.single().measure(loose.copy(maxWidth = oneRowLeadWidth))
+            val height = maxOf(leadP.height, chipsP.height, bellP.height)
+            layout(width, height) {
+                leadP.place(0, (height - leadP.height) / 2)
+                chipsP.place(width - bellP.width - bellGap - chipsP.width, (height - chipsP.height) / 2)
+                bellP.place(width - bellP.width, (height - bellP.height) / 2)
+            }
+        } else {
+            val leadP = leadPart.single().measure(loose.copy(maxWidth = (width - leadGap - bellP.width).coerceAtLeast(0)))
+            val top = maxOf(leadP.height, bellP.height)
+            val height = top + Space.xxs.roundToPx() + chipsP.height
+            layout(width, height) {
+                leadP.place(0, (top - leadP.height) / 2)
+                bellP.place(width - bellP.width, (top - bellP.height) / 2)
+                chipsP.place(chipsIndent.roundToPx(), top + Space.xxs.roundToPx())
             }
         }
     }
