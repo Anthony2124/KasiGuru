@@ -1,7 +1,7 @@
 {
   "name": "kasiguru-webapp",
   "private": true,
-  "version": "1.25.0",
+  "version": "1.26.0",
   "type": "module",
   "description": "KasiGuru in the browser: the learner app as an installable web app, for iPhone and anyone without the APK.",
   "scripts": {

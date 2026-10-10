@@ -53,3 +53,12 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 | 1.25.0 | Reminders at the chosen time; 8:00 AM Word of the Day notification; inbox times | Android-only: browsers cannot schedule reliable reminders |
 | 1.25.0 | Home and the Library share one word of the day | Ported (2026-10-06): the same word list and order as a phone, so both apps pick the same word |
 | 1.25.0 | The shipping corpus under the cloud dictionary (since 1.0) | Ported (2026-10-06): `corpus.json` + `contentMerge.ts`, the APK's merge rules |
+| 1.26.0 | Word recordings shipped with the app; only re-recorded words are downloaded | Ported (2026-10-09): `public/audio` via `sync:web`, `audioClips.ts`; Settings → Recordings offline saves them all |
+| 1.26.0 | Game hints in Word Search and Word Wheel | Ported (2026-10-09): `gameHints.ts`, `WordSearch.tsx`, `WordWheel.tsx` |
+| 1.26.0 | Sentence Order hint | Not needed: the web app has no Sentence Order game |
+| 1.26.0 | Add an example sentence on a word with none, sent to the verifiers | Ported (2026-10-09): `exampleSentence.ts`, `Words.tsx` |
+| 1.26.0 | Home: Help the dictionary (Add a word, Report an issue) | Ported (2026-10-09): `Home.tsx` |
+| 1.26.0 | Section tags for new installs (the parser read no `theme`) | Not needed: `content.ts` has read `theme` since the web app began |
+| 1.26.0 | Withdrawn senses leave the Library | Ported (2026-10-09): `corpus.json` regenerated, `contentMerge.ts` |
+| 1.26.0 | Leaderboard refreshes at most every three minutes | Ported (2026-10-07): `remote.ts` reuses each tab's top 50 for three minutes |
+| 1.26.0 | Edit profile scrolls and its back arrow asks before discarding | Android-only: a web page scrolls and the browser keeps its own back behaviour |
