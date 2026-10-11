@@ -208,10 +208,14 @@ jobs:
       # the marketing copy, it does not withhold the release. This step failing while
       # everything else succeeded is exactly what stranded v1.14.0 (a VERCEL_TOKEN belonging
       # to an account that no longer owns the project), and it must not strand one again.
+      #
+      # Deployed from a copy outside the git checkout. Run inside it, the Vercel CLI quietly
+      # connects the project to this GitHub repository, and from then on every push to main
+      # redeploys the repository root over the download site, which serves a 404 (2026-10-02, and
+      # again 2026-10-11 after the v1.27.0 release). The site must change only on releases.
       - name: Deploy download site to Vercel
         id: deploy
         continue-on-error: true
-        working-directory: admin-website/download
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           # Not secret — just identifiers for which Vercel project this is, the same ones
@@ -224,7 +228,38 @@ jobs:
           # the old account fails here with "Could not retrieve Project Settings".
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_i73rboyOEhnvrzQexyvfsHyR' }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_iVOI7ueqHNurVNtHYHcS2ynNzLYY' }}
-        run: npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+        run: |
+          set -euo pipefail
+          SITE="$RUNNER_TEMP/download-site"
+          rm -rf "$SITE"
+          cp -r admin-website/download "$SITE"
+          rm -rf "$SITE/.vercel"
+          cd "$SITE"
+          if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "$SITE is inside a git repository; the CLI would connect the project to it." >&2
+            exit 1
+          fi
+          npx vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      # Belt and braces for the step above: if the project is connected to a Git repository
+      # however that happened, disconnect it, so pushes to main cannot replace the release's site.
+      - name: Keep the download project off Git
+        if: steps.deploy.outcome == 'success'
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_i73rboyOEhnvrzQexyvfsHyR' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_iVOI7ueqHNurVNtHYHcS2ynNzLYY' }}
+        run: |
+          set -euo pipefail
+          API="https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID"
+          LINK=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" "$API?teamId=$VERCEL_ORG_ID" | jq -c '.link // null')
+          if [ "$LINK" = "null" ]; then
+            echo "The download project is not connected to Git."
+          else
+            curl -fsS -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" "$API/link?teamId=$VERCEL_ORG_ID" >/dev/null
+            echo "::warning title=Download project was connected to Git::Disconnected it, so pushes to main cannot redeploy the download site."
+          fi
 
       - name: Note a skipped site deploy
         if: steps.deploy.outcome == 'failure'
