@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildDictionary, layOver, mergeWord, senseKey, type CorpusWord } from '../src/domain/contentMerge';
+import { buildDictionary, layOver, mergeWord, senseKey, withdrawnSenses, withoutRemoved, type CorpusWord } from '../src/domain/contentMerge';
 import type { WordContent } from '../src/domain/types';
 import { Corpus } from '../src/domain/corpus';
 
@@ -57,10 +57,42 @@ describe('the shipped content files', () => {
     // A floor, not the count: 1,100 since the dictionary's withdrawn senses left the corpus.
     expect(corpus.words.length).toBeGreaterThan(1000);
   });
-  it('the dictionary has every corpus sense and every cloud sense, once each', () => {
-    const senses = new Set([...corpus.words, ...vocab.words].map(senseKey));
-    expect(new Set(dictionary.map(senseKey)).size).toBe(senses.size);
+  it('the dictionary has every cloud sense and every corpus sense the cloud kept, once each', () => {
+    const withdrawn = withdrawnSenses(corpus.words, vocab.words);
+    expect(withdrawn).not.toBeNull();
+    const senses = new Set([...corpus.words.map(senseKey).filter((k: string) => !withdrawn!.has(k)), ...vocab.words.map(senseKey)]);
+    expect(new Set(dictionary.map(senseKey))).toEqual(senses);
+    expect(dictionary).toHaveLength(senses.size);
     expect(new Corpus(dictionary, {}).all.length).toBe(dictionary.length);
+  });
+});
+
+describe('words deleted or re-glossed in the portal (FirestoreSyncManager.pruneWithdrawnWords)', () => {
+  const corpus = Array.from({ length: 20 }, (_, i) => seed(`word${i + 1}`, 'gloss'));
+  const upstream = corpus.map((w, i) => cloud(`c${i + 1}`, w.kasiguranin, w.english));
+
+  it('a shipped word the cloud lacks is left out, and every other word keeps its id and place', () => {
+    const d = buildDictionary([...corpus.slice(0, 5), seed('abaga', 'shoulder'), ...corpus.slice(5)], upstream);
+    expect(d.map((w) => w.kasiguranin)).not.toContain('abaga');
+    expect(d).toHaveLength(20);
+    expect(d[5]).toMatchObject({ kasiguranin: 'word6', order: 7 });
+  });
+  it('a re-glossed word keeps only its new sense', () => {
+    const d = buildDictionary([...corpus, seed('masena', 'jealou')], [...upstream, cloud('c99', 'masena', 'jealous')]);
+    expect(d.filter((w) => w.kasiguranin === 'masena').map((w) => w.english)).toEqual(['jealous']);
+  });
+  it('a cloud missing over a tenth of the shipped words withdraws none of them', () => {
+    expect(withdrawnSenses(corpus, upstream.slice(0, 15))).toBeNull();
+    expect(buildDictionary(corpus, upstream.slice(0, 15))).toHaveLength(20);
+    expect(withdrawnSenses(corpus, upstream.slice(0, 18))?.size).toBe(2);
+  });
+  it('a word removed after the snapshot goes, unless it was saved again since', () => {
+    const d = buildDictionary([...corpus, seed('abaga', 'shoulder')], [...upstream, cloud('c50', 'abaga', 'shoulder', { updatedAt: 100 })]);
+    const removed = { [senseKey({ kasiguranin: 'abaga', english: 'shoulder' })]: 200 };
+    expect(withoutRemoved(d, removed).map((w) => w.kasiguranin)).not.toContain('abaga');
+    // Restored from the Recycle bin: a fresh updatedAt, later than the removal.
+    const restored = layOver(d, [cloud('c50', 'abaga', 'shoulder', { updatedAt: 300 })]);
+    expect(withoutRemoved(restored, removed).map((w) => w.kasiguranin)).toContain('abaga');
   });
 });
 

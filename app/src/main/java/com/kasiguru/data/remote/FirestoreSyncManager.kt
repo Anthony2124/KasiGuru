@@ -5,6 +5,7 @@ import com.google.firebase.firestore.AggregateField
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kasiguru.data.local.dao.StoryDao
+import com.kasiguru.data.local.ContentTopUp
 import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.StoryEntity
@@ -264,21 +265,31 @@ class FirestoreSyncManager @Inject constructor(
      * an incremental pull it is just the recent changes, and treating that as the whole world would
      * delete the entire dictionary.
      *
-     * A word is removed only when it is missing from the cloud *and* from the corpus this build
-     * ships, so anything seeded locally survives a Firestore that has never heard of it. The
-     * learner's history for a withdrawn word goes with it, which is the point: the word is gone.
+     * The cloud is the dictionary for the words this build ships too. Every one of them is in
+     * Firestore unless the portal deleted it or re-glossed it into another sense, so one the cloud
+     * lacks is withdrawn ([withdrawnSeededSenses]), and remembered, because [ContentTopUp] puts every
+     * missing seeded sense back on launch. Keeping them instead left a word deleted in the portal in
+     * every phone's Library, counted in its category and reported as "already in the dictionary"
+     * to a learner submitting it again. The learner's history for a withdrawn word goes with it,
+     * which is the point: the word is gone.
      */
     private suspend fun pruneWithdrawnWords(cloud: List<VocabularyEntity>) {
-        val keep = HashSet<String>()
-        cloud.forEach { keep.add(senseKey(it.kasiguranin, it.english)) }
-        DatabaseSeeder.getInitialVocabulary().forEach { keep.add(senseKey(it.kasiguranin, it.english)) }
+        val cloudSenses = cloud.mapTo(HashSet()) { ContentTopUp.senseKey(it.kasiguranin, it.english) }
+        val seeded = DatabaseSeeder.getInitialVocabulary()
+            .mapTo(HashSet()) { ContentTopUp.senseKey(it.kasiguranin, it.english) }
+        val stored = userPreferencesRepository.withdrawnSensesOnce()
+        val withdrawn = withdrawnSeededSenses(seeded, cloudSenses) ?: stored.also {
+            Log.w(TAG, "upstream lacks over a tenth of the shipped words; withdrawing none of them")
+        }
+        if (withdrawn != stored) userPreferencesRepository.setWithdrawnSenses(withdrawn)
 
-        val withdrawn = vocabularyDao.getAllVocabularyOnce()
-            .filter { senseKey(it.kasiguranin, it.english) !in keep }
-        if (withdrawn.isEmpty()) return
+        val rows = vocabularyDao.getAllVocabularyOnce()
+        val prune = sensesToPrune(rows.map { ContentTopUp.senseKey(it.kasiguranin, it.english) }, cloudSenses, seeded, withdrawn)
+        val gone = rows.filter { ContentTopUp.senseKey(it.kasiguranin, it.english) in prune }
+        if (gone.isEmpty()) return
 
-        Log.i(TAG, "pruning " + withdrawn.size + " words withdrawn upstream")
-        vocabularyDao.deleteWords(withdrawn.map { it.id })
+        Log.i(TAG, "pruning " + gone.size + " words withdrawn upstream")
+        vocabularyDao.deleteWords(gone.map { it.id })
     }
 
     private suspend fun syncStories(since: Long, fullReconcile: Boolean) {
@@ -374,14 +385,44 @@ internal fun storiesToPrune(
 }
 
 /**
+ * The largest share of the shipped corpus a complete dictionary can lack. The portal deletes words
+ * one at a time and each release drops the ones it deleted, so a handful are missing at any time; an
+ * upstream lacking more than this is a wipe or a half-finished restore, and its silence is not a
+ * deletion.
+ */
+internal const val MAX_WITHDRAWN_SHARE = 0.1
+
+/**
+ * The shipped senses ([seeded], as ContentTopUp.senseKey) the complete upstream collection lacks:
+ * the ones the portal deleted or re-glossed. Null when more than [MAX_WITHDRAWN_SHARE] of them are
+ * missing, which withdraws none.
+ */
+internal fun withdrawnSeededSenses(seeded: Set<String>, cloud: Set<String>): Set<String>? {
+    val missing = seeded - cloud
+    return if (missing.size > seeded.size * MAX_WITHDRAWN_SHARE) null else missing
+}
+
+/**
+ * The local senses a full reconcile removes: those not upstream, unless this build ships them and
+ * the dictionary has not withdrawn them. Pure, for the same reason as [storiesToPrune].
+ */
+internal fun sensesToPrune(
+    local: Collection<String>,
+    cloud: Set<String>,
+    seeded: Set<String>,
+    withdrawn: Set<String>
+): Set<String> = local.filterTo(HashSet()) { it !in cloud && (it !in seeded || it in withdrawn) }
+
+/**
  * What the word parser reads. Bump it whenever the parser starts reading a field it used to skip, or
  * the shipped corpus drops senses: every phone's stored fingerprint then stops matching and it reads
  * the whole collection once, so the new field reaches words that will never be edited again and
- * [FirestoreSyncManager.pruneWithdrawnWords] removes the dropped senses, which it keeps for as long as
- * the build seeds them. 2 added `theme` (1.25.1). 3 dropped the 102 senses the portal had deleted or
- * re-glossed (data/dictionary/withdrawn_senses.json), which phones kept as silent duplicates.
+ * [FirestoreSyncManager.pruneWithdrawnWords] removes the dropped senses. 2 added `theme` (1.25.1).
+ * 3 dropped the 102 senses the portal had deleted or re-glossed (data/dictionary/withdrawn_senses.json),
+ * which phones kept as silent duplicates. 4 withdraws shipped senses the cloud lacks, so a word
+ * deleted in the portal leaves phones without a release.
  */
-internal const val VOCABULARY_PARSER_VERSION = 3
+internal const val VOCABULARY_PARSER_VERSION = 4
 
 /** The collection's "count:sum" fingerprint, tagged with [VOCABULARY_PARSER_VERSION]. */
 internal fun versionedFingerprint(raw: String): String = "v$VOCABULARY_PARSER_VERSION/$raw"

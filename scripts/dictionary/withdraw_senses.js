@@ -1,10 +1,10 @@
 /**
  * Takes senses the dictionary has withdrawn out of the shipping corpus, and keeps them out.
  *
- * A word deleted in the admin portal leaves Firestore, but the copy DatabaseSeeder ships stays on every
- * phone: FirestoreSyncManager.pruneWithdrawnWords keeps anything the build seeds, and the web app lays
- * the cloud over the same corpus. So a deleted or re-glossed word lingered in the Library as a second,
- * silent entry (the recordings belong to the cloud's senses) until the corpus dropped it too.
+ * Since VOCABULARY_PARSER_VERSION 4 the apps leave out a seeded sense Firestore lacks by themselves
+ * (FirestoreSyncManager.pruneWithdrawnWords, the web app's contentMerge.withdrawnSenses), so this is
+ * tidying before a release rather than the fix: it keeps the corpus equal to the dictionary, and
+ * keeps the number of withdrawn senses well under the share past which the apps withdraw none.
  *
  *   node scripts/dictionary/withdraw_senses.js --from-backup <backup-folder>
  *       Records every corpus sense that backup's vocabulary.json lacks in
@@ -13,8 +13,7 @@
  *       Removes every recorded sense from getInitialVocabulary(), leaving all other entries as written.
  *
  * import_wordlist.js skips recorded senses, so a re-import cannot bring them back. After removing,
- * run `npm run sync:web`, and bump VOCABULARY_PARSER_VERSION in FirestoreSyncManager.kt so every phone
- * reads the dictionary once and prunes its copies.
+ * run `npm run sync:web`.
  */
 const fs = require('fs');
 const path = require('path');

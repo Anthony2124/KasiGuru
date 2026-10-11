@@ -1,6 +1,8 @@
 package com.kasiguru.data.remote
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -175,5 +177,58 @@ class ContentSyncPolicyTest {
         // Never read in full, or a clock that has since moved backwards.
         assertTrue(needsFullRead(lastFullReadAt = 0L))
         assertTrue(needsFullRead(lastFullReadAt = now + TimeUnit.DAYS.toMillis(2)))
+    }
+
+    @Test
+    fun aPhoneThatStoredVersionThreeReadsEverythingOnceMore() {
+        // Version 4 withdraws shipped words the cloud lacks; a phone needs one full read to find them.
+        val raw = "1141:1987000000000000"
+        assertTrue(needsFullRead(stored = "v3/$raw", current = versionedFingerprint(raw)))
+    }
+
+    // ── Words deleted in the portal ──
+
+    private val shipped = (1..100).map { "word$it|gloss" }.toSet()
+
+    @Test
+    fun aShippedWordTheCloudLacksIsWithdrawn() {
+        // abaga / shoulder ships in the APK and was deleted in the portal.
+        val seeded = shipped + "abaga|shoulder"
+        val withdrawn = withdrawnSeededSenses(seeded, cloud = shipped)
+
+        assertEquals(setOf("abaga|shoulder"), withdrawn)
+        assertEquals(
+            setOf("abaga|shoulder"),
+            sensesToPrune(listOf("abaga|shoulder", "word1|gloss"), cloud = shipped, seeded = seeded, withdrawn = withdrawn!!)
+        )
+    }
+
+    @Test
+    fun aReglossInThePortalLeavesOnlyTheNewSense() {
+        // masena / "jealou" was corrected to "jealous": the old shipped sense goes, the new one stays.
+        val seeded = shipped + "masena|jealou"
+        val cloud = shipped + "masena|jealous"
+        val withdrawn = withdrawnSeededSenses(seeded, cloud)!!
+
+        assertEquals(setOf("masena|jealou"), sensesToPrune(listOf("masena|jealou", "masena|jealous"), cloud, seeded, withdrawn))
+    }
+
+    @Test
+    fun anUpstreamMissingOverATenthOfTheShippedWordsWithdrawsNone() {
+        // A wipe or a half-finished restore says nothing about what the dictionary deleted.
+        val halfRestored = shipped.take(80).toSet()
+
+        assertNull(withdrawnSeededSenses(shipped, halfRestored))
+        assertTrue(sensesToPrune(shipped, halfRestored, shipped, withdrawn = emptySet()).isEmpty())
+        // Exactly a tenth is still a dictionary that deleted ten words.
+        assertEquals(10, withdrawnSeededSenses(shipped, shipped.take(90).toSet())!!.size)
+    }
+
+    @Test
+    fun aWordOnlyThisDeviceHasIsStillPrunedAndAShippedOneKept() {
+        val seeded = shipped
+        val prune = sensesToPrune(listOf("renamed|old", "word5|gloss"), cloud = shipped - "word5|gloss", seeded = seeded, withdrawn = emptySet())
+
+        assertEquals(setOf("renamed|old"), prune)
     }
 }

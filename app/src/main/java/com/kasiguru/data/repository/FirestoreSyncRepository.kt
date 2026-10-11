@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.kasiguru.data.local.ContentTopUp
 import com.kasiguru.data.local.dao.ConjugationDao
 import com.kasiguru.data.local.dao.VocabularyDao
 import com.kasiguru.data.local.entity.ConjugationEntity
@@ -84,6 +85,8 @@ class FirestoreSyncRepository @Inject constructor(
                         when (change.type) {
                             DocumentChange.Type.REMOVED -> {
                                 vocabularyDao.deleteBySense(word, cleanEnglish)
+                                // Or ContentTopUp puts a word this build ships back on the next launch.
+                                userPreferencesRepository.addWithdrawnSense(ContentTopUp.senseKey(word, cleanEnglish))
                                 Log.d(TAG, "Removed: $word ($cleanEnglish)")
                             }
 

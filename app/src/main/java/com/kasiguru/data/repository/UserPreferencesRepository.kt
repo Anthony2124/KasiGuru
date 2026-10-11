@@ -70,6 +70,7 @@ class UserPreferencesRepository @Inject constructor(
         val LAST_FULL_RECONCILE_AT = longPreferencesKey("last_full_reconcile_at")
         val LAST_FULL_VOCABULARY_READ_AT = longPreferencesKey("last_full_vocabulary_read_at")
         val VOCABULARY_FINGERPRINT = stringPreferencesKey("vocabulary_fingerprint")
+        val WITHDRAWN_SENSES = stringSetPreferencesKey("withdrawn_senses")
         val DAILY_REVIEW_COMPLETED_DATE = stringPreferencesKey("daily_review_completed_date")
         val DAILY_GAMES_DATE = stringPreferencesKey("daily_games_date")
         val DAILY_GAMES_COUNT = intPreferencesKey("daily_games_count")
@@ -155,6 +156,26 @@ class UserPreferencesRepository @Inject constructor(
             prefs[PreferencesKeys.LAST_FULL_VOCABULARY_READ_AT] = epochMillis
             if (fingerprint != null) prefs[PreferencesKeys.VOCABULARY_FINGERPRINT] = fingerprint
             else prefs.remove(PreferencesKeys.VOCABULARY_FINGERPRINT)
+        }
+    }
+
+    /**
+     * Senses this build ships that the dictionary has withdrawn: deleted, or re-glossed into another
+     * sense, in the admin portal. As ContentTopUp.senseKey. ContentTopUp leaves them out, or every
+     * launch would put back the words the content sync removed (FirestoreSyncManager.pruneWithdrawnWords).
+     * Content, not the learner's, so it needs no entry in [clearUserSessionData].
+     */
+    suspend fun withdrawnSensesOnce(): Set<String> =
+        dataStore.data.first()[PreferencesKeys.WITHDRAWN_SENSES] ?: emptySet()
+
+    suspend fun setWithdrawnSenses(senses: Set<String>) {
+        dataStore.edit { prefs -> prefs[PreferencesKeys.WITHDRAWN_SENSES] = senses }
+    }
+
+    /** One sense the realtime listener saw deleted, until the next full read recounts them all. */
+    suspend fun addWithdrawnSense(sense: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.WITHDRAWN_SENSES] = (prefs[PreferencesKeys.WITHDRAWN_SENSES] ?: emptySet()) + sense
         }
     }
 

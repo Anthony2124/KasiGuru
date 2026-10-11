@@ -198,7 +198,11 @@ plan's 50,000 reads for the whole project, Android included. Instead:
   (plus the seven stories only the APK ships, parsed from `DatabaseSeeder.kt`) into
   `public/content/*.json`. The committed snapshot is used if Firestore cannot be reached.
 - In the browser, the app asks Firestore only for documents with `updatedAt` after the snapshot,
-  at most every six hours — usually a single read that returns nothing.
+  at most every six hours — usually a single read that returns nothing. A deleted word never
+  matches that query, so the same pull reads `dictionary_updates` entries since the snapshot
+  (usually none) and leaves out the words they removed. Corpus words the snapshot lacks were
+  deleted or re-glossed in the portal and are left out too (see
+  [DICTIONARY_MEANINGS.md](DICTIONARY_MEANINGS.md#withdrawing-a-sense)).
 - Word recordings are served by this site, not Firestore: `npm run audio:export` (repository root)
   copies every `word_audio` clip into the APK's `assets/word_audio`, and `npm run sync:web` copies
   them to `public/audio` with the list in `public/content/audio.json`. Playing one costs no

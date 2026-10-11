@@ -15,7 +15,9 @@ import com.kasiguru.data.local.entity.VocabularyEntity
  * What this does, and deliberately no more:
  *
  *  - Inserts senses the device does not have. Keyed on headword *and* English gloss, so the three
- *    senses of `baga` are three rows and not one.
+ *    senses of `baga` are three rows and not one. A sense the dictionary has withdrawn (deleted or
+ *    re-glossed in the admin portal, see FirestoreSyncManager.pruneWithdrawnWords) stays out: this
+ *    runs on every launch, and putting it back undid every deletion of a word this build ships.
  *  - Fills in a definition or part of speech that is blank locally.
  *
  * It never overwrites a non-blank field, and it never touches a single learning column -- no
@@ -27,8 +29,11 @@ import com.kasiguru.data.local.entity.VocabularyEntity
  */
 object ContentTopUp {
 
-    private fun senseKey(word: VocabularyEntity): String =
-        word.kasiguranin.trim().lowercase() + "|" + word.english.trim().lowercase()
+    /** One sense of a word: its headword and English gloss, trimmed and lowercased. */
+    fun senseKey(kasiguranin: String, english: String): String =
+        kasiguranin.trim().lowercase() + "|" + english.trim().lowercase()
+
+    private fun senseKey(word: VocabularyEntity): String = senseKey(word.kasiguranin, word.english)
 
     /** What a top-up would change. Separated from the database so it can be tested directly. */
     data class Plan(
@@ -38,8 +43,15 @@ object ContentTopUp {
         val isEmpty: Boolean get() = toInsert.isEmpty() && toUpdate.isEmpty()
     }
 
-    /** Pure: what [local] is missing from [corpus], and which of its rows need a definition. */
-    fun plan(local: List<VocabularyEntity>, corpus: List<VocabularyEntity>): Plan {
+    /**
+     * Pure: what [local] is missing from [corpus], and which of its rows need a definition.
+     * [withdrawn] holds [senseKey]s never to put back.
+     */
+    fun plan(
+        local: List<VocabularyEntity>,
+        corpus: List<VocabularyEntity>,
+        withdrawn: Set<String> = emptySet()
+    ): Plan {
         // An empty table means onCreate is about to seed it, or already has. Nothing to top up.
         if (local.isEmpty()) return Plan(emptyList(), emptyList())
 
@@ -50,6 +62,7 @@ object ContentTopUp {
         for (word in corpus) {
             val existing = localByKey[senseKey(word)]
             if (existing == null) {
+                if (senseKey(word) in withdrawn) continue
                 // id 0 so Room assigns one; the corpus row carries no learning state to begin with.
                 toInsert.add(word.copy(id = 0))
                 continue
@@ -67,8 +80,8 @@ object ContentTopUp {
         return Plan(toInsert, toUpdate)
     }
 
-    suspend fun run(vocabularyDao: VocabularyDao) {
-        val plan = plan(vocabularyDao.getAllVocabularyOnce(), DatabaseSeeder.getInitialVocabulary())
+    suspend fun run(vocabularyDao: VocabularyDao, withdrawn: Set<String>) {
+        val plan = plan(vocabularyDao.getAllVocabularyOnce(), DatabaseSeeder.getInitialVocabulary(), withdrawn)
 
         if (plan.toInsert.isNotEmpty()) vocabularyDao.insertAll(plan.toInsert)
         // insertAll is REPLACE on the primary key, so an update is an insert of a row that already
