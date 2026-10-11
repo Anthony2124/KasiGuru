@@ -194,17 +194,13 @@ fun WordMatchGameScreen(
             }
 
             if (hasAnswered) {
+                // No speaker in the panel: the word it would play is the round's word at the top,
+                // which already has its own play button.
                 GameAnswerFeedback(
                     isCorrect = uiState.selectedOption == uiState.currentWord?.tagalog,
                     correctAnswer = uiState.currentWord?.tagalog ?: "",
                     word = uiState.currentWord,
-                    onContinue = { viewModel.nextQuestion() },
-                    onPlayAudio = uiState.currentWord?.let { word ->
-                        {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            audioPlayerManager.playWord(word)
-                        }
-                    }
+                    onContinue = { viewModel.nextQuestion() }
                 )
             }
         }
