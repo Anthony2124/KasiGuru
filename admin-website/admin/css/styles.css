@@ -1218,6 +1218,49 @@ body[data-role="verifier"] .role-chip { background: var(--status-info-tint); col
   .todo-n { font-size: var(--t-md); }
 }
 
+/* ══ Report photos ═══════════════════════════════════════════════════════════
+   A thumbnail in the reports table opens the photo across the whole screen, fitted to it first;
+   "Actual size", or a click on the photo, shows every pixel and scrolls where it is larger. A
+   click on the dark space around it closes the viewer. */
+.evidence-thumb {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: 0; padding: 0; cursor: zoom-in; color: var(--violet);
+  font-size: var(--t-xs); font-weight: 700;
+}
+.evidence-thumb img {
+  width: 64px; height: 64px; object-fit: cover; border-radius: var(--r-ctl);
+  border: 1px solid var(--hair-strong);
+}
+.evidence-thumb:hover img, .evidence-thumb:focus-visible img { border-color: var(--violet); }
+/* Solid: the photo is the only thing to look at, and the page showing through behind it is noise. */
+.modal-overlay.evidence-viewer { background: rgb(8, 10, 8); padding: 0; }
+.evidence-viewer .evidence-card {
+  max-width: none !important; width: 100vw; height: 100dvh; min-height: 0; max-height: none;
+  border-radius: 0; padding: 0; background: transparent; box-shadow: none; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.evidence-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4); flex: none;
+}
+.evidence-bar h2 {
+  min-width: 0; color: #fff; font-size: var(--t-md);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.evidence-tools { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+.evidence-bar .close-btn { color: #fff; }
+.evidence-bar .close-btn:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+/* One grid cell the size of the stage, so the fitted photo's 100% limits have a height to read. */
+.evidence-stage {
+  flex: 1 1 auto; min-height: 0; overflow: auto; display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center;
+  padding: 0 var(--s-4) var(--s-4);
+}
+.evidence-stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-ctl); cursor: zoom-in; }
+/* Actual size: centred while it fits, and scrollable to every edge once it is wider or taller. */
+.evidence-stage.is-actual { display: block; text-align: center; }
+.evidence-stage.is-actual img { max-width: none; max-height: none; cursor: zoom-out; vertical-align: top; }
+
 /* ══ Example sentences ═══════════════════════════════════════════════════════
    Listed like the verification queue, two lines of each sentence per row. A row opens the review
    window, where the sentence has room to be read and corrected and says where it will land. */
