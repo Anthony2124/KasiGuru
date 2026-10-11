@@ -53,7 +53,11 @@ class ReportRepository @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                val reports = snapshot?.toObjects(IssueReportDto::class.java) ?: emptyList()
+                // Per document, inside the listener where a throw would crash the app: a report sent
+                // from the web app carries an `id` field, which IssueReportDto's @DocumentId cannot map.
+                val reports = snapshot?.documents.orEmpty().mapNotNull { doc ->
+                    runCatching { doc.toObject(IssueReportDto::class.java) }.getOrNull()
+                }
                 trySend(reports)
             }
 

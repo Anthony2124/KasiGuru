@@ -26,7 +26,9 @@ class AppUpdateRepository @Inject constructor(
 
             val release = snapshot.documents
                 .asSequence()
-                .mapNotNull { it.toObject(AppReleaseDto::class.java) }
+                // One release that cannot be mapped (a field named `id` against @DocumentId, a wrong
+                // type) is skipped, rather than failing the whole update check.
+                .mapNotNull { runCatching { it.toObject(AppReleaseDto::class.java) }.getOrNull() }
                 .firstOrNull { !it.yanked }
             Result.success(release)
         } catch (e: Exception) {

@@ -3031,37 +3031,86 @@ function renderAnnouncementsList() {
   if (!container) return;
 
   const active = announcements.filter(a => a.active !== false);
-  if (active.length === 0) {
-    container.innerHTML = '<p style="color:var(--muted); padding:0.5rem 0;">No active announcements.</p>';
-    return;
-  }
+  const hidden = announcements.filter(a => a.active === false);
+  const none = '<p style="color:var(--muted); padding:0.5rem 0;">No active announcements.</p>';
 
-  container.innerHTML = '';
-  active.forEach(a => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:0.75rem 0; border-bottom:1px solid var(--border, #eee);';
-    row.innerHTML = `
-      <div>
+  // One row per announcement: what it says, and what can be done with it. Hidden ones stay listed
+  // underneath, so they can be shown again or removed for good.
+  const row = (a, isActive) => `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:0.75rem 0; border-bottom:1px solid var(--hair);">
+      <div style="min-width:0;">
         ${a.title ? `<strong>${escapeHtml(a.title)}</strong><br>` : ''}
         <span style="color:var(--muted);">${escapeHtml(a.message || '')}</span>
       </div>
-      <button class="btn btn-outline btn-sm deactivate-announcement-btn" data-id="${a.id}">Deactivate</button>
-    `;
-    container.appendChild(row);
-  });
+      <div class="row-actions" style="flex-shrink:0;">
+        ${isActive
+          ? `<button type="button" class="btn btn-outline btn-sm" data-announcement-act="hide" data-id="${safeId(a.id)}" title="Hide it in the app; it stays listed here">Deactivate</button>`
+          : `<button type="button" class="btn btn-outline btn-sm" data-announcement-act="show" data-id="${safeId(a.id)}" title="Show it in the app again">Show again</button>`}
+        <button type="button" class="btn btn-danger btn-sm" data-announcement-act="remove" data-id="${safeId(a.id)}" title="Delete it for good">
+          <iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon> Remove
+        </button>
+      </div>
+    </div>`;
 
-  container.querySelectorAll('.deactivate-announcement-btn').forEach(btn => {
-    btn.addEventListener('click', () => deactivateAnnouncement(btn.getAttribute('data-id')));
+  container.innerHTML =
+    (active.length ? active.map(a => row(a, true)).join('') : none) +
+    (hidden.length
+      ? `<p style="margin-top:var(--s-4); font-size:var(--t-xs); font-weight:700; color:var(--muted);">Hidden (${hidden.length})</p>` +
+        hidden.map(a => row(a, false)).join('')
+      : '');
+
+  container.querySelectorAll('[data-announcement-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = announcements.find(x => safeId(x.id) === btn.getAttribute('data-id'));
+      if (!a) return;
+      const act = btn.getAttribute('data-announcement-act');
+      if (act === 'hide') deactivateAnnouncement(a.id);
+      else if (act === 'show') reactivateAnnouncement(a.id);
+      else removeAnnouncement(a.id);
+    });
   });
+}
+
+/** Shows a hidden announcement in the app again. */
+async function reactivateAnnouncement(id) {
+  try {
+    await updateDoc(doc(db, "announcements", id), { active: true });
+    await logAudit("announcement.reactivate", { announcementId: id });
+    notify('Announcement shown in the app again.', 'success');
+  } catch (error) {
+    console.error("Error reactivating announcement:", error);
+    notify("Failed to show it again: " + error.message, 'error');
+  }
 }
 
 async function deactivateAnnouncement(id) {
   try {
     await updateDoc(doc(db, "announcements", id), { active: false });
     await logAudit("announcement.deactivate", { announcementId: id });
+    notify('Announcement hidden in the app.', 'success');
   } catch (error) {
     console.error("Error deactivating announcement:", error);
     notify("Failed to deactivate: " + error.message, 'error');
+  }
+}
+
+/** Deletes an announcement for good: it leaves the app at once, and this list. */
+async function removeAnnouncement(id) {
+  const a = announcements.find(x => x.id === id);
+  if (!a) return;
+  const ok = await confirmDialog({
+    title: 'Remove this announcement?',
+    body: `<b>${escapeHtml(a.title || a.message || 'This announcement')}</b> is deleted and disappears from the app straight away. This can't be undone; post it again if you need it back.`,
+    confirmLabel: 'Remove', danger: true
+  });
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, "announcements", a.id));
+    await logAudit("announcement.remove", { announcementId: a.id, title: a.title || '' });
+    notify('Announcement removed.', 'success');
+  } catch (error) {
+    console.error("Error removing announcement:", error);
+    notify("Failed to remove: " + error.message, 'error');
   }
 }
 
@@ -3756,8 +3805,10 @@ function initFormListeners() {
 
       try {
         const ref = doc(collection(db, "announcements"));
+        // No `id` field: the document's own id is the id. Android up to 1.27 maps announcements
+        // with @DocumentId, which refuses a document that also has an `id` field, and that refusal
+        // crashed the app on launch for every learner while such an announcement was active.
         await setDoc(ref, {
-          id: ref.id,
           title,
           message,
           active: true,
