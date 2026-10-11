@@ -51,6 +51,7 @@ fun AppUpdateBanner(
     updates: AppUpdateViewModel = hiltViewModel()
 ) {
     val download by updates.state.collectAsState()
+    val problem by updates.problem.collectAsState()
     LaunchedEffect(release.versionCode) { updates.watch(release) }
 
     SoftCard(
@@ -82,7 +83,7 @@ fun AppUpdateBanner(
                 Text(
                     text = when (val state = download) {
                         is UpdateDownload.Downloading -> state.percent?.let { "Downloading… $it%" } ?: "Downloading…"
-                        UpdateDownload.Ready -> "Downloaded. Tap to install"
+                        UpdateDownload.Ready -> if (problem == null) "Downloaded. Tap to install" else "Not installed yet. Tap to see why"
                         UpdateDownload.Failed -> "Download failed. Tap to try again"
                         UpdateDownload.Idle -> "See what's new"
                     },
