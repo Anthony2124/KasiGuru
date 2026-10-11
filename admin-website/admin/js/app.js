@@ -2621,7 +2621,11 @@ function pendingSubmissionIds() {
 
 /** The waiting submission [step] places from [id], or null at either end. */
 function neighbourPending(id, step) {
-  const ids = pendingSubmissionIds();
+  return neighbourIn(pendingSubmissionIds(), id, step);
+}
+
+/** The id [step] places from [id] in [ids], or null at either end; the first when [id] is not listed. */
+function neighbourIn(ids, id, step) {
   const at = ids.indexOf(id);
   if (at < 0) return ids[0] && ids[0] !== id ? ids[0] : null;
   return ids[at + step] || null;
@@ -4109,12 +4113,28 @@ function initTodoStrip() {
 }
 
 // ── Example sentences ───────────────────────────────────────────────────────
-// Sentences learners offer for words that have none. Only the pending ones are read, so the
-// listener costs one read per waiting sentence. Approving writes the (possibly corrected) sentence
-// onto the word's first empty example slot with a fresh updatedAt, which is what carries it to the
-// apps' sync and from there into the dictionary, lessons and sentence games.
-let pendingSentences = [];
+// Sentences learners offer for words that have none, listed like the verification queue: every
+// submission with its status, newest first, each opening in a review window with room to correct
+// it. The listener reads each sentence once on opening, then only what changes. Approving writes
+// the (possibly corrected) sentence onto the word's first empty example slot with a fresh
+// updatedAt, which is what carries it to the apps' sync and from there into the dictionary, lessons
+// and sentence games. Rejecting only marks the record, so a mistaken reject can be moved back to
+// waiting; deleting a record is a separate, confirmed step.
+let sentenceSubmissions = [];
 let sentencesLoaded = false;
+// The sentence open in the review window, for the keyboard shortcuts.
+let currentSentenceId = null;
+
+const sentenceStatus = (sub) => sub.status || 'pending';
+
+/** Waiting sentences in the order the table lists them. */
+function pendingSentenceIds() {
+  return sentenceSubmissions.filter(s => sentenceStatus(s) === 'pending').map(s => s.id);
+}
+
+function sentenceBadgeClass(status) {
+  return status === 'approved' ? 'badge-approved' : (status === 'rejected' ? 'badge-rejected' : 'badge-pending');
+}
 
 /** The dictionary entry a submission names: same headword and English gloss, else the only headword match. */
 function wordForSentence(sub) {
@@ -4132,73 +4152,199 @@ function sentenceSlot(word) {
   return null;
 }
 
-function renderSentences() {
-  const host = document.getElementById('sentences-list');
-  const count = document.getElementById('nav-sentences-count');
-  if (count) {
-    count.textContent = pendingSentences.length;
-    count.hidden = pendingSentences.length === 0;
-  }
-  if (!host) return;
-  if (!sentencesLoaded) {
-    host.innerHTML = '<div class="item"><span class="item-mark skeleton"></span><span class="item-body"><span class="item-title skeleton">&nbsp;</span></span></div>'.repeat(3);
-    return;
-  }
-  if (!pendingSentences.length) {
-    host.innerHTML = `<div class="card"><div class="empty"><b>No sentences waiting</b>Sentences learners send from a word's page appear here.</div></div>`;
-    return;
-  }
-  host.innerHTML = pendingSentences
-    .slice()
-    .sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0))
-    .map((sub) => {
-      const word = wordForSentence(sub);
-      const slot = sentenceSlot(word);
-      const where = !word
-        ? `<p class="sentence-note is-warn">"${escapeHtml(sub.kasiguranin)}" is not in the online dictionary (it may be a built-in word). Add it on the Dictionary tab first.</p>`
-        : !slot
-          ? `<p class="sentence-note is-warn">This word already has two example sentences. Reject this one, or edit the word to replace one.</p>`
-          : `<p class="sentence-note">Approving adds it as ${slot.label} of the word.</p>`;
-      const id = safeId(sub.id);
-      return `
-        <form class="card sentence-card" data-sentence-id="${id}">
-          <div class="card-head">
-            <div>
-              <h2>${escapeHtml(sub.kasiguranin)} <span class="sentence-gloss">${escapeHtml(sub.english || '')}</span></h2>
-              <p>From ${escapeHtml(sub.contributorName || 'Anonymous')} · ${escapeHtml(relativeTime(toMillis(sub.submittedAt)))}</p>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="sent-k-${id}">Sentence (Kasiguranin)</label>
-            <textarea id="sent-k-${id}" name="sentence" rows="2">${escapeHtml(sub.sentence || '')}</textarea>
-          </div>
-          <div class="form-group">
-            <label for="sent-e-${id}">English translation</label>
-            <textarea id="sent-e-${id}" name="translation" rows="2">${escapeHtml(sub.translation || '')}</textarea>
-          </div>
-          ${where}
-          <div class="row-actions">
-            <button type="button" class="btn btn-danger btn-sm" data-sentence-act="reject">
-              <iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject
-            </button>
-            <button type="button" class="btn btn-success btn-sm" data-sentence-act="approve" ${word && slot ? '' : 'disabled'}>
-              <iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Approve
-            </button>
-          </div>
-        </form>`;
-    }).join('');
+/** Where an approval would put the sentence, or why it cannot go anywhere yet. Plain text. */
+function sentenceLanding(sub) {
+  const word = wordForSentence(sub);
+  const slot = sentenceSlot(word);
+  if (!word) return { ok: false, note: `"${sub.kasiguranin}" is not in the online dictionary (it may be a built-in word). Add it on the Dictionary tab first.` };
+  if (!slot) return { ok: false, note: 'This word already has two example sentences. Reject this one, or edit the word to replace one.' };
+  return { ok: true, note: `Approving adds it as ${slot.label} of the word.` };
 }
 
+function renderSentences() {
+  const tbody = document.getElementById('sentences-tbody');
+  const waiting = pendingSentenceIds().length;
+  const count = document.getElementById('nav-sentences-count');
+  if (count) {
+    count.textContent = waiting;
+    count.hidden = waiting === 0;
+  }
+  const resultCount = document.getElementById('sentences-result-count');
+  if (resultCount) {
+    resultCount.textContent = !sentenceSubmissions.length ? ''
+      : waiting === 0 ? `${sentenceSubmissions.length} reviewed, none waiting`
+        : `${waiting} waiting of ${sentenceSubmissions.length}`;
+  }
+  if (!tbody) return;
+  if (!sentencesLoaded) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading example sentences&hellip;</td></tr>`;
+    return;
+  }
+  if (!sentenceSubmissions.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">
+          <iconsax-icon name="clock" type="bulk" size="32" color="var(--gold-ink)"></iconsax-icon>
+          <div style="margin-top:8px;">No example sentences yet. Sentences learners send from a word's page appear here.</div>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = sentenceSubmissions.map((sub) => {
+    const status = sentenceStatus(sub);
+    const id = safeId(sub.id);
+    const landing = status === 'pending' ? sentenceLanding(sub) : null;
+    return `
+      <tr class="sentence-row" data-sentence-id="${id}">
+        <td data-label="Word">
+          <div class="sentence-word">
+            <button type="button" class="table-link-btn" data-sentence-act="open" title="Open the sentence for ${escapeHtml(sub.kasiguranin)}">
+              <strong>${escapeHtml(sub.kasiguranin)}</strong>
+            </button>
+            ${sub.english ? `<span class="sentence-gloss">${escapeHtml(sub.english)}</span>` : ''}
+          </div>
+        </td>
+        <td data-label="Sentence"><span class="sentence-cell">${escapeHtml(sub.sentence || '')}</span></td>
+        <td data-label="English translation"><span class="sentence-cell">${escapeHtml(sub.translation || '')}</span></td>
+        <td data-label="Contributor">${escapeHtml(sub.contributorName || 'Anonymous')}</td>
+        <td data-label="Status"><span class="badge ${sentenceBadgeClass(status)}">${status.toUpperCase()}</span></td>
+        <td data-label="Actions">
+          ${status === 'pending' ? `
+          <div class="row-actions">
+            <button type="button" class="btn btn-success btn-sm" data-sentence-act="approve" ${landing.ok ? '' : `disabled title="${escapeHtml(landing.note)}"`}><iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Approve</button>
+            <button type="button" class="btn btn-danger btn-sm" data-sentence-act="reject"><iconsax-icon name="close-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Reject</button>
+          </div>
+          ` : `
+          <div class="row-actions">
+            <span style="color:var(--muted); font-size:0.85rem; margin-right:4px;">Processed</span>
+            <button type="button" class="btn btn-outline btn-sm" data-sentence-act="delete" title="Delete this record" aria-label="Delete this record"><iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon></button>
+          </div>
+          `}
+        </td>
+      </tr>`;
+  }).join('');
+
+  applyTableSemantics();
+}
+
+// ── Example sentence review window ──────────────────────────────────────────
+function openSentenceModal(id) {
+  const sub = sentenceSubmissions.find(s => s.id === id);
+  const body = document.getElementById('sentence-modal-body');
+  const actions = document.getElementById('sentence-modal-actions');
+  if (!sub || !body || !actions) return;
+
+  const status = sentenceStatus(sub);
+  const isPending = status === 'pending';
+  const landing = isPending ? sentenceLanding(sub) : null;
+  const when = (ms) => ms
+    ? new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'Not recorded';
+  const reviewed = toMillis(sub.reviewedAt);
+
+  body.innerHTML = `
+    <div class="entry-detail-head">
+      <span class="headword">${escapeHtml(sub.kasiguranin || '—')}</span>
+      ${sub.english ? `<span class="sentence-gloss">${escapeHtml(sub.english)}</span>` : ''}
+    </div>
+    ${isPending ? `
+      <div class="form-group">
+        <label for="sentence-modal-sentence">Sentence (Kasiguranin)</label>
+        <textarea id="sentence-modal-sentence" class="form-control sentence-field" rows="4">${escapeHtml(sub.sentence || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label for="sentence-modal-translation">English translation</label>
+        <textarea id="sentence-modal-translation" class="form-control sentence-field" rows="4">${escapeHtml(sub.translation || '')}</textarea>
+      </div>
+      <p class="sentence-note${landing.ok ? '' : ' is-warn'}">${escapeHtml(landing.note)}</p>
+    ` : `
+      <figure class="sentence-quote">
+        <blockquote>${escapeHtml(sub.sentence || '')}</blockquote>
+        <figcaption>${escapeHtml(sub.translation || '')}</figcaption>
+      </figure>
+    `}
+    <dl class="deflist">
+      <dt>Contributor</dt><dd><strong>${escapeHtml(sub.contributorName || 'Anonymous')}</strong></dd>
+      <dt>Submitted</dt><dd>${when(toMillis(sub.submittedAt))}</dd>
+      <dt>Status</dt><dd><span class="badge ${sentenceBadgeClass(status)}">${status.toUpperCase()}</span></dd>
+      ${reviewed ? `<dt>Reviewed</dt><dd>${when(reviewed)}</dd>` : ''}
+    </dl>`;
+
+  const icon = (name) => `<iconsax-icon name="${name}" type="bulk" size="17" color="currentColor"></iconsax-icon>`;
+  actions.innerHTML = `
+    <button type="button" class="btn btn-outline" onclick="closeModal('sentence-modal')">Close</button>
+    ${isPending ? `
+      <button type="button" class="btn btn-danger" id="sentence-modal-reject">${icon('close-circle')} Reject</button>
+      <button type="button" class="btn btn-success" id="sentence-modal-approve" ${landing.ok ? '' : 'disabled'}>${icon('tick-circle')} Approve</button>
+    ` : `
+      <button type="button" class="btn btn-danger" id="sentence-modal-delete">${icon('trash')} Delete record</button>
+      ${status === 'rejected' ? `<button type="button" class="btn btn-primary" id="sentence-modal-reopen">${icon('clock')} Move back to waiting</button>` : ''}
+    `}`;
+
+  // After a decision the next waiting sentence opens, as in the verification queue.
+  const decideThenNext = async (decide) => {
+    const waiting = pendingSentenceIds();
+    const next = neighbourIn(waiting, id, 1) || neighbourIn(waiting, id, -1);
+    window.closeModal('sentence-modal');
+    if (!(await decide())) return;
+    if (next) openSentenceModal(next);
+    else notify('No more sentences waiting.', 'success');
+  };
+  const approveBtn = document.getElementById('sentence-modal-approve');
+  if (approveBtn) approveBtn.onclick = () => {
+    const sentence = document.getElementById('sentence-modal-sentence').value.trim();
+    const translation = document.getElementById('sentence-modal-translation').value.trim();
+    decideThenNext(() => approveSentence(sub, sentence, translation));
+  };
+  const rejectBtn = document.getElementById('sentence-modal-reject');
+  if (rejectBtn) rejectBtn.onclick = () => decideThenNext(() => rejectSentence(sub));
+  const deleteBtn = document.getElementById('sentence-modal-delete');
+  if (deleteBtn) deleteBtn.onclick = async () => {
+    if (await deleteSentence(sub)) window.closeModal('sentence-modal');
+  };
+  const reopenBtn = document.getElementById('sentence-modal-reopen');
+  if (reopenBtn) reopenBtn.onclick = async () => {
+    if (await reopenSentence(sub)) window.closeModal('sentence-modal');
+  };
+
+  // Where this sentence sits among those waiting, with a step either way.
+  const waiting = pendingSentenceIds();
+  const at = waiting.indexOf(id);
+  if (at >= 0) {
+    const prev = neighbourIn(waiting, id, -1);
+    const next = neighbourIn(waiting, id, 1);
+    body.insertAdjacentHTML('afterbegin', `
+      <div class="review-nav">
+        <button type="button" class="btn btn-outline btn-sm" ${prev ? `onclick="window.openSentenceModal('${safeId(prev)}')"` : 'disabled'} aria-label="Previous waiting sentence">
+          <iconsax-icon name="arrow-left" type="linear" size="16" color="currentColor"></iconsax-icon>
+        </button>
+        <span class="review-pos">Sentence ${at + 1} of ${waiting.length} waiting</span>
+        <button type="button" class="btn btn-outline btn-sm" ${next ? `onclick="window.openSentenceModal('${safeId(next)}')"` : 'disabled'} aria-label="Next waiting sentence">
+          <iconsax-icon name="arrow-right" type="linear" size="16" color="currentColor"></iconsax-icon>
+        </button>
+      </div>`);
+    body.insertAdjacentHTML('beforeend', `<p class="shortcut-legend">Keys: <kbd>A</kbd> approve · <kbd>R</kbd> reject · <kbd>J</kbd>/<kbd>K</kbd> next/previous</p>`);
+  }
+
+  currentSentenceId = id;
+  // Stepping to the next sentence re-opens this window; close it first so it is stacked only once.
+  if (document.getElementById('sentence-modal')?.classList.contains('active')) window.closeModal('sentence-modal');
+  window.openModal('sentence-modal');
+}
+window.openSentenceModal = openSentenceModal;
+
+/** True when the sentence was written onto its word. */
 async function approveSentence(sub, sentence, translation) {
   const word = wordForSentence(sub);
   const slot = sentenceSlot(word);
   if (!word || !slot) {
-    notify('This sentence cannot be added to its word; see the note on its card.', 'error');
-    return;
+    notify('This sentence cannot be added to its word; open it to see why.', 'error');
+    return false;
   }
   if (sentence.split(/\s+/).filter(Boolean).length < 3 || translation.length < 2) {
     notify('A sentence needs at least 3 words and an English translation.', 'error');
-    return;
+    return false;
   }
   try {
     await updateDoc(doc(db, 'vocabulary', word.id), withUpdatedAt({
@@ -4210,61 +4356,135 @@ async function approveSentence(sub, sentence, translation) {
     });
     await logAudit('sentence.approve', { word: word.kasiguranin, wordId: word.id, slot: slot.sentence });
     notify(`Added the sentence to "${word.kasiguranin}".`, 'success');
+    return true;
   } catch (err) {
     notify('Could not approve the sentence: ' + err.message, 'error');
+    return false;
   }
 }
 
+/** Marks the sentence rejected. The record stays listed until someone deletes it. */
 async function rejectSentence(sub) {
   const ok = await confirmDialog({
     title: 'Reject this sentence?',
-    body: `The sentence for <b>${escapeHtml(sub.kasiguranin)}</b> will not be added.`,
+    body: `The sentence for <b>${escapeHtml(sub.kasiguranin)}</b> will not be added. It stays in this list as rejected, where you can move it back to waiting or delete it.`,
     confirmLabel: 'Reject', danger: true
   });
-  if (!ok) return;
+  if (!ok) return false;
   try {
     await updateDoc(doc(db, 'sentence_submissions', sub.id), { status: 'rejected', reviewedAt: Date.now() });
     await logAudit('sentence.reject', { word: sub.kasiguranin });
-    notify('Sentence rejected.', 'info');
+    notify('Sentence rejected. It stays listed until you delete it.', 'info');
+    return true;
   } catch (err) {
     notify('Could not reject the sentence: ' + err.message, 'error');
+    return false;
+  }
+}
+
+/** Undoes a reject: the sentence waits for review again. */
+async function reopenSentence(sub) {
+  try {
+    await updateDoc(doc(db, 'sentence_submissions', sub.id), { status: 'pending', reviewedAt: null });
+    await logAudit('sentence.reopen', { word: sub.kasiguranin });
+    notify('The sentence is waiting for review again.', 'success');
+    return true;
+  } catch (err) {
+    notify('Could not move the sentence back: ' + err.message, 'error');
+    return false;
+  }
+}
+
+/** Removes a reviewed record for good. An approved sentence stays on its word. */
+async function deleteSentence(sub) {
+  const approved = sentenceStatus(sub) === 'approved';
+  const ok = await confirmDialog({
+    title: 'Delete this record?',
+    body: approved
+      ? `This removes the submission record for <b>${escapeHtml(sub.kasiguranin)}</b> only. The sentence stays on the word; edit the word on the Dictionary tab to change it.`
+      : `The rejected sentence for <b>${escapeHtml(sub.kasiguranin)}</b> will be removed permanently. This cannot be undone.`,
+    confirmLabel: 'Delete', danger: true
+  });
+  if (!ok) return false;
+  try {
+    await deleteDoc(doc(db, 'sentence_submissions', sub.id));
+    await logAudit('sentence.delete', { word: sub.kasiguranin, status: sentenceStatus(sub) });
+    notify('Record deleted.', 'info');
+    return true;
+  } catch (err) {
+    notify('Could not delete the record: ' + err.message, 'error');
+    return false;
   }
 }
 
 function initSentenceReview() {
   renderSentences();
   const unsub = onSnapshot(
-    query(collection(db, 'sentence_submissions'), where('status', '==', 'pending')),
+    query(collection(db, 'sentence_submissions'), orderBy('submittedAt', 'desc')),
     (snap) => {
-      pendingSentences = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      sentenceSubmissions = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       sentencesLoaded = true;
       renderSentences();
     },
     (err) => {
       console.warn('Sentence submissions listener error:', err);
       sentencesLoaded = true;
-      pendingSentences = [];
-      const host = document.getElementById('sentences-list');
-      if (host) host.innerHTML = `<div class="card"><div class="empty"><b>Couldn't load the sentences</b>${err.code === 'permission-denied' ? 'The database rules for example sentences have not been published yet.' : 'Check your connection and reload.'}</div></div>`;
+      sentenceSubmissions = [];
+      renderSentences();
+      const tbody = document.getElementById('sentences-tbody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--status-rejected); padding:2rem;">${err.code === 'permission-denied' ? 'The database rules for example sentences have not been published yet.' : "Couldn't load the sentences. Check your connection and reload."}</td></tr>`;
     }
   );
   unsubscribeFns.push(unsub);
 
-  document.getElementById('sentences-list')?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-sentence-act]');
-    if (!btn) return;
-    const card = btn.closest('[data-sentence-id]');
-    const sub = pendingSentences.find((s) => safeId(s.id) === card?.getAttribute('data-sentence-id'));
+  // A row opens its sentence; its buttons act on it directly, as in the verification queue.
+  document.getElementById('sentences-tbody')?.addEventListener('click', async (e) => {
+    const row = e.target.closest('[data-sentence-id]');
+    const sub = sentenceSubmissions.find((s) => safeId(s.id) === row?.getAttribute('data-sentence-id'));
     if (!sub) return;
+    const btn = e.target.closest('[data-sentence-act]');
+    const act = btn?.getAttribute('data-sentence-act') || 'open';
+    if (act === 'open') {
+      if (!btn && e.target.closest('button, a, input')) return;
+      openSentenceModal(sub.id);
+      return;
+    }
+    if (btn.disabled) return;
     btn.disabled = true;
     try {
-      if (btn.getAttribute('data-sentence-act') === 'approve') {
-        await approveSentence(sub, card.querySelector('[name="sentence"]').value.trim(), card.querySelector('[name="translation"]').value.trim());
-      } else {
-        await rejectSentence(sub);
-      }
+      if (act === 'approve') await approveSentence(sub, (sub.sentence || '').trim(), (sub.translation || '').trim());
+      else if (act === 'reject') await rejectSentence(sub);
+      else if (act === 'delete') await deleteSentence(sub);
     } finally {
       btn.disabled = false;
+    }
+  });
+
+  // The verification queue's keys, for this window: A approve, R reject, J/K next/previous. On the
+  // tab itself, J opens the first waiting sentence. Never while typing or while a dialog asks.
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+    if (document.querySelector('.confirm-overlay.active, .modal-overlay.active:not(#sentence-modal)')) return;
+    const key = e.key.toLowerCase();
+    if (!document.getElementById('sentence-modal')?.classList.contains('active')) {
+      const onTab = document.getElementById('tab-sentences')?.classList.contains('active');
+      const waiting = pendingSentenceIds();
+      if (onTab && key === 'j' && waiting.length) {
+        e.preventDefault();
+        openSentenceModal(waiting[0]);
+      }
+      return;
+    }
+    const click = (sel) => { const b = document.getElementById(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (key === 'a') click('sentence-modal-approve');
+    else if (key === 'r') click('sentence-modal-reject');
+    else if ((key === 'j' || key === 'arrowright') && currentSentenceId) {
+      const next = neighbourIn(pendingSentenceIds(), currentSentenceId, 1);
+      if (next) { e.preventDefault(); openSentenceModal(next); }
+    } else if ((key === 'k' || key === 'arrowleft') && currentSentenceId) {
+      const prev = neighbourIn(pendingSentenceIds(), currentSentenceId, -1);
+      if (prev) { e.preventDefault(); openSentenceModal(prev); }
     }
   });
 }
