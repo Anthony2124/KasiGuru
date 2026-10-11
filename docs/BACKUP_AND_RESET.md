@@ -59,25 +59,22 @@ The app is offline-first, so a learner's device keeps working if Firestore is un
 Firestore loss would destroy is the curated corpus, the moderation queues, and cross-device progress
 recovery for anyone who reinstalls.
 
-## Why there is no single "reset everything" button
+## Why backup, restore and reset are not in the admin dashboard
 
 `firestore.rules` makes learner data **owner-writable only**. An admin may read `users/{uid}` for the
 dashboard, but not write it. `security_questions` and `device_tokens` are invisible to admins
 entirely. `admin_audit_log` is append-only (`allow delete: if false`).
 
 That is deliberate. It means a compromised admin session cannot rewrite or destroy anyone's learning
-record. The cost is that a full reset cannot be a button in a web page — it needs the service-account
-key, which is a stronger credential held on one machine and never shipped to a browser.
+record. The cost is that backup, restore and reset need the service-account key, which is a stronger
+credential held on one machine and never shipped to a browser. The dashboard has no controls for any
+of them; its old Backup & Reset page was removed on 2026-10-11 (see *History worth knowing*).
 
-So the controls are split:
-
-| Task | Where | Credential |
+| Task | Command | Credential |
 |---|---|---|
-| Content + moderation backup | Admin dashboard → Backup & Reset | Admin login |
-| Restore content from a file | Admin dashboard → Backup & Reset | Admin login |
-| Clear moderation queues | Admin dashboard → Backup & Reset | Admin login |
-| **Full backup incl. learner progress** | `functions/backup_firestore.js` | Service-account key |
-| **Full restore** | `functions/restore_firestore.js` | Service-account key |
+| **Daily full backup**, wipe check and OneDrive copy | Task Scheduler → `functions/backup_daily.js` | Service-account key |
+| **One full backup now** | `functions/backup_firestore.js` | Service-account key |
+| **Restore** | `functions/restore_firestore.js` | Service-account key |
 | **Learner or factory reset** | `functions/reset_firestore.js` | Service-account key |
 
 ---
@@ -150,20 +147,6 @@ fields on the parent.
 **A `format` below 2, or no `format` at all, means the backup predates the subcollection fix and
 contains no learner progress.** Those backups are still restorable, but only for content.
 
-### Content-only backup from the dashboard
-
-Admin dashboard → **Backup & Reset** → *Export content backup*. Produces
-`kasiguru-content-backup-<date>.json` covering vocabulary, stories, story images, announcements,
-releases, the three moderation queues, and the admin audit log. It does not cover `word_audio`
-(pronunciation clips) or `user_bans`.
-
-Files are `version: 3`: each document is `{ id, data }`, with timestamps, bytes, geopoints and
-references tagged (`{"__t": "bytes", "v": "<base64>"}`) the same way the CLI backup tags them.
-
-It does **not** contain learner progress, and says so in the file's `scope` and `note` fields. A
-browser cannot enumerate `users/{uid}` documents that have no fields of their own, and that is all of
-them — the Web SDK has no `listDocuments()`.
-
 ---
 
 ## Restore
@@ -202,16 +185,12 @@ compare against, it keeps nothing, so a phone that had already synced past the b
 overwritten. That is harmless minutes after the backup and risky days later. Run the normal
 comparison once reads are back, and it should plan zero writes.
 
-From the dashboard, drop a `.json` content backup onto *Restore from backup*. Same semantics: merge,
-not replace. One exception the browser cannot get around: the rules only let a queue item
-(`word_submissions`, `literature_submissions`, `issue_reports`) be *created* as the app submits it,
-status `pending` with no review fields. A reviewed item that still exists is restored; one that is
-gone is skipped, counted in the result, and needs `restore_firestore.js`. Restored `vocabulary` and
-`stories` documents get a fresh `updatedAt`, so the app's incremental sync delivers them on the next
-pull instead of waiting for its daily full reconcile.
+The restore cannot tell an integer from a whole-number double: JavaScript has one number type, so a
+field stored as `3.0` comes back as `3`. Nothing in this schema depends on the difference.
 
-Neither restore path can tell an integer from a whole-number double: JavaScript has one number type,
-so a field stored as `3.0` comes back as `3`. Nothing in this schema depends on the difference.
+The restore reads backup folders only. A `kasiguru-content-backup-<date>.json` file exported by the
+old dashboard page is not a folder and is refused; every daily backup folder holds the same content
+and more.
 
 ---
 
@@ -325,6 +304,16 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 ---
 
 ## History worth knowing
+
+**The dashboard's Backup & Reset page was removed on 2026-10-11.** It offered a content-only JSON
+export, a restore from that file, and a button that cleared the moderation queues. It could not back
+up or restore learner progress, so it was never the backup that mattered. Its restore wrote every
+document in the file and gave every word a fresh `updatedAt`, so after a restore each phone would
+download the whole dictionary again on its next sync, against the 50,000-read daily limit. In an
+emergency it was a second, weaker path beside the scripts, and its queue-clearing button let any
+admin login delete the moderation queues at once. Everything it did is covered by the scripts above,
+except clearing the queues alone: delete reviewed items one at a time from the Verification queue, or
+use the learner reset, which clears the queues together with learner data.
 
 **The full reset test on 2026-10-05 used up the day's free reads before the restore.** The factory
 reset itself went as planned. Then every read was refused with `Quota exceeded`: the free plan
