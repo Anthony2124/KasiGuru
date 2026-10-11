@@ -983,6 +983,7 @@ window.openEntryModal = function(id) {
         await deleteDoc(doc(db, "vocabulary", id));
         vocabularyWatch?.remove(id);
         await logAudit("vocabulary.delete", { id, kasiguranin: item.kasiguranin });
+        await logDictionaryUpdate('removed', item.kasiguranin, item.english);
         window.closeModal('entry-modal');
         notify(`Deleted ${item.kasiguranin}`, 'success');
         vocabulary = vocabulary.filter(v => v.id !== id);
@@ -2767,14 +2768,19 @@ async function approveSubmission(id) {
 
     await updateDoc(doc(db, "word_submissions", id), {
       status: "approved",
-      reviewedAt: Date.now()
+      reviewedAt: Date.now(),
+      // What the approval is worth to its sender. The app gives 100 XP only for approvals stamped
+      // so; words approved before 1.28 keep the 10 they gave (CommunityUpdates.approvalXp).
+      rewardXp: CONTRIBUTION_XP
     });
 
     sub.status = 'approved';
     sub.reviewedAt = Date.now();
 
     await logAudit("submission.approve", { submissionId: id, word: sub.kasiguranin });
-    notify(`Successfully approved "${sub.kasiguranin}" and migrated to master dictionary!`, 'success');
+    // Every learner hears about the new word; its sender hears about it as their own instead.
+    await logDictionaryUpdate('added', sub.kasiguranin, sub.english, id);
+    notify(`Approved "${sub.kasiguranin}". It is in the dictionary, and its sender gets ${CONTRIBUTION_XP} XP.`, 'success');
     renderSubmissionsTable();
     updateDashboardMetrics();
     return true;
@@ -3207,10 +3213,13 @@ window.deleteVocabWord = async function(id) {
     body: 'It is removed from the master dictionary and stops reaching learners on their next sync.',
     confirmLabel: 'Delete word', danger: true
   }))) return;
+  // Its name before it goes, for the notice learners get.
+  const removed = vocabulary.find(v => v.id === id);
   try {
     await deleteDoc(doc(db, "vocabulary", id));
     vocabularyWatch?.remove(id);
     await logAudit("vocabulary.delete", { id });
+    await logDictionaryUpdate('removed', removed?.kasiguranin, removed?.english);
   } catch (e) {
     notify("Error deleting word: " + e.message, 'error');
   }
@@ -3786,6 +3795,7 @@ function initFormListeners() {
           ...audioFields
         });
         await logAudit("vocabulary.create", { word });
+        await logDictionaryUpdate('added', word, english);
         addVocabForm.reset();
         resetAudioEditor('input');
         closeModal('add-vocab-modal');
@@ -3853,6 +3863,7 @@ function initFormListeners() {
           ...audioFields
         });
         await logAudit("vocabulary.update", { id, word });
+        await logDictionaryUpdate('edited', word, english);
         editVocabForm.reset();
         resetAudioEditor('edit-input');
         closeModal('edit-vocab-modal');
@@ -4353,6 +4364,8 @@ async function approveSentence(sub, sentence, translation) {
       status: 'approved', sentence, translation, wordId: word.id, reviewedAt: Date.now(), approvedAt: Date.now()
     });
     await logAudit('sentence.approve', { word: word.kasiguranin, wordId: word.id, slot: slot.sentence });
+    // The word now has an example sentence: an edit every learner can see.
+    await logDictionaryUpdate('edited', word.kasiguranin, word.english);
     notify(`Added the sentence to "${word.kasiguranin}".`, 'success');
     return true;
   } catch (err) {
@@ -4718,6 +4731,24 @@ function escapeHtml(str) {
 
 
 
+
+// ── Dictionary updates ──────────────────────────────────────────────────────
+// One entry per word added, edited or removed here, in dictionary_updates. The apps read new
+// entries when they open and every few hours, and tell every learner (CommunityUpdatesRepository
+// on Android). Never blocks the change itself: a failed entry only means no notice about it.
+const CONTRIBUTION_XP = 100;
+
+async function logDictionaryUpdate(kind, word, english, submissionId) {
+  const name = String(word || '').trim().slice(0, 120);
+  if (!name) return;
+  const entry = { kind, word: name, english: String(english || '').trim().slice(0, 300), at: Date.now() };
+  if (submissionId) entry.submissionId = String(submissionId).slice(0, 128);
+  try {
+    await addDoc(collection(db, 'dictionary_updates'), entry);
+  } catch (e) {
+    console.warn('Dictionary update notice not recorded:', e);
+  }
+}
 
 // ── Admin Audit Log ─────────────────────────────────────────────────────────
 // Append-only record of staff actions (rules: never updated or deleted; a verifier writes only as

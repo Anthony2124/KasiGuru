@@ -27,11 +27,11 @@ export function HomeScreen() {
 
   useEffect(() => {
     document.title = 'KasiGuru';
-    // Community Contributor: each approved submission is a one-time 10 XP receipt. Approvals are only
-    // visible from here, as on Android.
+    // Community Contributor: each approved submission is a one-time receipt, 100 XP for a word approved
+    // from 1.28 on and 10 before. Approvals are only visible from here, as on Android.
     if (!account.uid) return;
     approvedContributions().then((list) => {
-      const fresh = list?.filter((c) => !learner.receipts[`approved:${c.id}`]) ?? [];
+      const fresh = list?.filter((c) => !learner.receipts[`${c.xp === 100 && c.id.startsWith('word:') ? 'contribution' : 'approved'}:${c.id}`]) ?? [];
       if (fresh.length) act((d) => d.approved(fresh));
     });
   }, [account.uid]);

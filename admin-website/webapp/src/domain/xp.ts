@@ -47,6 +47,8 @@ export type ReceiptKind =
   | 'story'
   | 'mastery'
   | 'approved'
+  /** A word approved from 1.28 on: 100 XP, and its 10-XP 'approved' twin (from an older app) is not counted. */
+  | 'contribution'
   | 'badge'
   | 'perfect'
   | 'retrieval'
@@ -81,7 +83,7 @@ export interface XpTotals {
   total: number;
 }
 
-const ONE_TIME = new Set(['badge', 'mastery', 'story', 'approved']);
+const ONE_TIME = new Set(['badge', 'mastery', 'story', 'approved', 'contribution']);
 const CONTENT = new Set(['lesson', 'game', 'replay']);
 
 /** Two copies of one receipt: the earliest day and the strongest evidence win. Idempotent and commutative. */
@@ -137,8 +139,11 @@ export function totals(records: RewardRecord[]): XpTotals {
     activity += Math.min(60, rows.reduce((s, r) => s + r.xp, 0));
     addDay(day, Math.min(60, rows.filter((r) => !r.imported).reduce((s, r) => s + r.xp, 0)));
   }
+  // A submission worth a 100-XP 'contribution' is not also counted by an older app's 10-XP 'approved'.
+  const contributed = new Set(records.filter((r) => r.kind === 'contribution').map((r) => r.source));
   for (const r of records) {
     if (CONTENT.has(r.kind) || r.kind === 'review') continue;
+    if (r.kind === 'approved' && contributed.has(r.source)) continue;
     if (r.kind === 'badge') bonus += r.xp;
     else {
       activity += r.xp;
@@ -184,7 +189,8 @@ export function xpBySource(records: RewardRecord[]): Partial<Record<XpSource, nu
       case 'review':
       case 'mastery': add('Reviews', [r]); break;
       case 'story': add('Stories', [r]); break;
-      case 'approved': add('Community', [r]); break;
+      case 'approved':
+      case 'contribution': add('Community', [r]); break;
       case 'badge': add('Badges', [r]); break;
     }
   }
@@ -258,6 +264,7 @@ export function decodeReceipt(data: Record<string, unknown>): RewardRecord | nul
     case 'story': validXp = xp === 20; break;
     case 'mastery': validXp = xp === 5; break;
     case 'approved': validXp = xp === 10; break;
+    case 'contribution': validXp = xp === 100; break;
     case 'badge': validXp = !!family && xp === (family.bonus ? tierFor(id)!.bonus : 0); break;
     case 'perfect':
     case 'retrieval':
@@ -291,6 +298,7 @@ export function decodeReceipt(data: Record<string, unknown>): RewardRecord | nul
       break;
     }
     case 'approved': validSource = source.startsWith('word:') || source.startsWith('literature:'); break;
+    case 'contribution': validSource = source.startsWith('word:') && source.length > 5; break;
     case 'badge': validSource = source.startsWith(BADGE_PREFIX) && !!familyFor(source); break;
     case 'access': validSource = source.startsWith('story:') || source.startsWith('section:'); break;
     default: validSource = true; // category

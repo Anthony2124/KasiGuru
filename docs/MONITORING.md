@@ -39,6 +39,11 @@ npm run firebase:usage -- --hours
 4. **Learner dictionary sync** — Android uses `updatedAt` deltas and a daily fingerprint
    aggregation, reading the full collection only when needed or after 30 days. The web
    uses a bundled snapshot plus deltas at most every six hours.
+5. **Word and dictionary notices** — Android checks the learner's own `word_submissions` and
+   new `dictionary_updates` entries when it comes to the foreground (at most every five
+   minutes) and every six hours in the background: a read per own submission and per new
+   change, one when nothing is new. A bulk dictionary edit made through the portal's
+   single-word forms adds one entry per word.
 
 The report uses the existing gcloud or Firebase CLI sign-in, groups by Pacific quota day,
 and flags any operation at 70% of its daily free limit. It reads only Cloud Monitoring.

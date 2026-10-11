@@ -34,6 +34,7 @@ object RewardReceiptCodec {
             "story" -> xp == 20
             "mastery" -> xp == 5
             "approved" -> xp == 10
+            "contribution" -> xp == 100
             "badge" -> BadgeCatalog.familyFor(id) != null &&
                 xp == if(BadgeCatalog.familyFor(id)?.bonus == true) BadgeCatalog.tierFor(id)?.bonus else 0
             "perfect","retrieval","category","access" -> xp == 0
@@ -52,6 +53,7 @@ object RewardReceiptCodec {
             "review","retrieval","mastery" -> source.startsWith("word:") && source.length > 5
             "story" -> source.startsWith("story:") && source.substringAfter(':').toIntOrNull()?.let { it > 0 } == true
             "approved" -> source.startsWith("word:") || source.startsWith("literature:")
+            "contribution" -> source.startsWith("word:") && source.length > 5
             "badge" -> BadgeCatalog.familyFor(source) != null
             "access" -> source.startsWith("story:") || source.startsWith("section:")
             "category" -> true

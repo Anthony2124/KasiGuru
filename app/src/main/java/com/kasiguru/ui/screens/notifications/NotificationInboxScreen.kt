@@ -49,6 +49,8 @@ fun NotificationInboxScreen(
         "All" to "All",
         "Streak" to "Streaks",
         "WordOfDay" to "Word of the day",
+        "Contribution" to "Your words",
+        "Dictionary" to "Dictionary",
         NEWS_FILTER to "News"
     )
 
@@ -228,6 +230,8 @@ fun NotificationCard(
     val (iconRes, iconTint) = when (notification.category.lowercase()) {
         "streak" -> Iconsax.Flash to Gold
         "wordofday" -> Iconsax.Book to Lime
+        "contribution" -> Iconsax.TickCircle to Green
+        "dictionary" -> Iconsax.Edit to Lime
         "leaderboard" -> Iconsax.MedalStar to Coral
         else -> Iconsax.Cup to Green
     }

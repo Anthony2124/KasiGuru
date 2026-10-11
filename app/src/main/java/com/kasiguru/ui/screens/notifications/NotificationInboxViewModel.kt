@@ -72,7 +72,7 @@ class NotificationInboxViewModel @Inject constructor(
 internal const val NEWS_FILTER = "News"
 
 /** Categories the app writes itself; anything else came from the team. */
-private val APP_CATEGORIES = listOf("Streak", "WordOfDay")
+private val APP_CATEGORIES = listOf("Streak", "WordOfDay", "Contribution", "Dictionary")
 
 /**
  * When a message arrived, relative to [now]: "Just now", "5 min ago", "3 h ago", "Yesterday",
