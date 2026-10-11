@@ -361,7 +361,25 @@ service cloud.firestore {
     // (functions/send_push.js) run by hand, same limitation the release pipeline already has.
     match /announcements/{docId} {
       allow read: if true;
-      allow create, update, delete: if isStaff();
+      allow create: if isStaff() && isValidAnnouncement();
+      // An announcement written before 2026-10-11 may carry an `id` field, and Android 1.27 and
+      // older crash on launch reading one while it is active. Such an announcement can still be
+      // hidden or removed, but never shown again.
+      allow update: if isStaff() && (isValidAnnouncement() || request.resource.data.active == false);
+      allow delete: if isStaff();
+    }
+
+    // Exactly what the portal posts. No `id` field above all: Android up to 1.27 maps announcements
+    // with @DocumentId, which throws on a document that has one, inside a listener nothing can
+    // catch, so every learner's app crashed on launch. The portal stopped writing it, but a portal
+    // tab left open from before that still did (2026-10-11), so the rule is what makes it impossible.
+    function isValidAnnouncement() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['title', 'message', 'active', 'createdAt'])
+        && d.title is string && d.title.size() <= 120
+        && d.message is string && d.message.size() >= 1 && d.message.size() <= 1000
+        && d.active is bool
+        && d.createdAt is int;
     }
 
     // App releases: public read (download page + in-app update), admin-only writes.

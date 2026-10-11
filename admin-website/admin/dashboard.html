@@ -891,11 +891,11 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
       <form id="announcement-form">
         <div class="form-group">
           <label>Title (optional)</label>
-          <input type="text" id="input-announcement-title" class="form-control" placeholder="e.g. New words this week">
+          <input type="text" id="input-announcement-title" class="form-control" maxlength="120" placeholder="e.g. New words this week">
         </div>
         <div class="form-group">
           <label>Message *</label>
-          <textarea id="input-announcement-message" class="form-control" rows="3" required placeholder="Shown live to every learner with the app open."></textarea>
+          <textarea id="input-announcement-message" class="form-control" rows="3" required maxlength="1000" placeholder="Shown live to every learner with the app open."></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('announcement-modal')">Cancel</button>
