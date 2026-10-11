@@ -59,7 +59,7 @@ The app is offline-first, so a learner's device keeps working if Firestore is un
 Firestore loss would destroy is the curated corpus, the moderation queues, and cross-device progress
 recovery for anyone who reinstalls.
 
-## Why backup, restore and reset are not in the admin dashboard
+## Why backup, restore and reset run from the terminal
 
 `firestore.rules` makes learner data **owner-writable only**. An admin may read `users/{uid}` for the
 dashboard, but not write it. `security_questions` and `device_tokens` are invisible to admins
@@ -67,8 +67,10 @@ entirely. `admin_audit_log` is append-only (`allow delete: if false`).
 
 That is deliberate. It means a compromised admin session cannot rewrite or destroy anyone's learning
 record. The cost is that backup, restore and reset need the service-account key, which is a stronger
-credential held on one machine and never shipped to a browser. The dashboard has no controls for any
-of them; its old Backup & Reset page was removed on 2026-10-11 (see *History worth knowing*).
+credential held on one machine and never shipped to a browser. The dashboard's admin-only
+**Backup & Restore** page lists the steps below with each command and a Copy button, and runs none of
+them; it replaced the old export, restore and clear-queue controls on 2026-10-11 (see *History worth
+knowing*). Keep that page and this runbook in step: `admin-website/admin/dashboard.html`, `#tab-backup`.
 
 | Task | Command | Credential |
 |---|---|---|
@@ -305,7 +307,8 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 
 ## History worth knowing
 
-**The dashboard's Backup & Reset page was removed on 2026-10-11.** It offered a content-only JSON
+**The dashboard's Backup & Reset controls were replaced on 2026-10-11.** The page now shows the
+steps and commands from this runbook and runs nothing. Before, it offered a content-only JSON
 export, a restore from that file, and a button that cleared the moderation queues. It could not back
 up or restore learner progress, so it was never the backup that mattered. Its restore wrote every
 document in the file and gave every word a fresh `updatedAt`, so after a restore each phone would

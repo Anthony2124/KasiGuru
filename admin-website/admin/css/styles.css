@@ -335,6 +335,37 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .span-3 { grid-column: span 3; }
 .row-2 { grid-row: span 2; }
 
+/* ── Backup & Restore guide ─────────────────────────────────────────────────
+   Numbered steps, each with the command to paste into the operator's terminal and its own Copy
+   button beside it. Commands wrap rather than scroll, so the whole command, --confirm included, is
+   always in view; Copy takes the text as written, without the wrapping. */
+.cli-guide { display: flex; flex-direction: column; gap: var(--s-4); }
+.cli-steps { list-style: none; counter-reset: cli-step; display: flex; flex-direction: column; gap: var(--s-5); margin: 0; padding: 0; }
+.cli-steps > li { counter-increment: cli-step; position: relative; padding-left: 40px; min-width: 0; }
+.cli-steps > li::before {
+  content: counter(cli-step); position: absolute; left: 0; top: -2px;
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-content: center;
+  background: var(--sunken); border: 1px solid var(--hair-strong);
+  font-size: var(--t-xs); font-weight: 700; color: var(--muted);
+}
+.cli-steps p { font-size: var(--t-sm); color: var(--ink); line-height: 1.55; max-width: 75ch; }
+.cli-steps p code, .cli-guide .card-head code, #tab-backup .pagehead code { font-size: 0.85em; white-space: nowrap; }
+.cli-guide .cli-label { margin-top: var(--s-3); font-size: var(--t-xs); font-weight: 700; color: var(--muted); }
+.cli-guide .cli-note { margin-top: var(--s-2); font-size: var(--t-xs); color: var(--muted); }
+.cli-foot { margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px solid var(--hair); line-height: 1.55; }
+.cli-code { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }
+.cli-code pre {
+  flex: 1; min-width: 0; margin: 0; padding: 12px 14px;
+  background: var(--sunken); border: 1px solid var(--hair-strong); border-radius: var(--r-ctl);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.cli-code pre code { font-size: inherit; }
+.cli-code [data-copy] { flex-shrink: 0; min-width: 72px; justify-content: center; }
+@media (max-width: 760px) {
+  .cli-steps > li { padding-left: 34px; }
+}
+
 /* Bar chart. Real counts, drawn as divs — there is no chart library on this page and a corpus
    histogram does not justify one. Every bar states its own number, so the figure is readable
    without relying on bar length or colour. */

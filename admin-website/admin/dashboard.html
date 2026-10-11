@@ -94,6 +94,9 @@
           <button data-tab="tab-logs" onclick="window.switchTab('tab-logs')">
             <iconsax-icon name="shield-tick" type="bulk" size="18" color="currentColor"></iconsax-icon> Activity log
           </button>
+          <button data-tab="tab-backup" data-admin-only onclick="window.switchTab('tab-backup')">
+            <iconsax-icon name="cloud-change" type="bulk" size="18" color="currentColor"></iconsax-icon> Backup &amp; Restore
+          </button>
         </nav>
       </div>
 
@@ -675,8 +678,8 @@
     </section>
 
     <!-- Team (admins only). Verifiers do everything here except APK releases, blocking users,
-         and managing this list. firestore.rules enforces the same. Backup, restore and reset are not
-         in this console at all: they run from the operator scripts (docs/BACKUP_AND_RESET.md). -->
+         and managing this list. firestore.rules enforces the same. Backup, restore and reset run from
+         the operator scripts; the Backup & Restore page only shows their commands. -->
     <section id="tab-team" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
@@ -748,6 +751,128 @@
               </ul>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Backup & Restore (admins only). A guide, not controls: every step is a command for the
+         operator's terminal with the service-account key. Nothing on this page reads or writes
+         data, so a stolen admin login cannot back up, restore or wipe anything from here.
+         Matches docs/BACKUP_AND_RESET.md; change both together. -->
+    <section id="tab-backup" class="tab-content" data-admin-only style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Backup, restore &amp; reset</h1>
+          <p>These run in PowerShell on the operator PC, from the repository folder, with the
+             service-account key. This console only shows the steps. Every restore and reset is a
+             dry run until you add <code>--confirm=kasiguru-86042</code>.</p>
+        </div>
+      </div>
+
+      <div class="cli-guide">
+        <div class="card">
+          <div class="card-head"><div><h2>Before you start</h2><p>Once per PowerShell window.</p></div></div>
+          <ol class="cli-steps">
+            <li>
+              <p>Open PowerShell in the repository folder, the one that holds <code>functions</code>.</p>
+            </li>
+            <li>
+              <p>Point <code>$key</code> at the service-account key. Every command below uses it.</p>
+              <div class="cli-code"><pre><code>$key = "C:\path\to\service-account.json"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p class="cli-note">The key can wipe the database. Keep it on this PC only: never in the repository, never in a message.</p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h2>Backup</h2><p>A full backup includes learner progress, the dictionary, stories, audio and the queues.</p></div></div>
+          <ol class="cli-steps">
+            <li>
+              <p>Backups run on their own. The <b>KasiGuru Daily Backup</b> task saves one at noon and 10 minutes
+                 after sign-in, as a dated folder in <code>..\KasiGuruBackups</code>, and copies it to
+                 <code>OneDrive\KasiGuruBackups</code>.</p>
+            </li>
+            <li>
+              <p>Check the last run. <code>LastTaskResult</code> 0 is fine, 1 means the backup or the copy failed,
+                 2 means a backup looks wiped: the log names the folder to restore from.</p>
+              <div class="cli-code"><pre><code>Get-ScheduledTaskInfo -TaskName 'KasiGuru Daily Backup' | Select-Object LastRunTime, LastTaskResult
+Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>Take one now, before a reset, a big dictionary import or a release.</p>
+              <div class="cli-code"><pre><code>node functions/backup_firestore.js $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>On a new PC, register the daily task once.</p>
+              <div class="cli-code"><pre><code>.\scripts\register_backup_task.ps1 -KeyFile $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h2>Restore</h2><p>Puts back what is missing or changed and never deletes. A learner whose phone synced past the backup is kept as is.</p></div></div>
+          <ol class="cli-steps">
+            <li>
+              <p>If the database was attacked, lock the attacker out first. Disable the admin account they used
+                 (Firebase console &rarr; Authentication), or replace the service-account key (Google Cloud console
+                 &rarr; IAM &amp; Admin &rarr; Service accounts &rarr; Keys). Restoring before that gives them a
+                 second database to wipe.</p>
+            </li>
+            <li>
+              <p>Pick the backup: the newest folder from before the problem. List them, then set <code>$b</code> to
+                 the one you chose.</p>
+              <div class="cli-code"><pre><code>Get-ChildItem ..\KasiGuruBackups -Directory | Sort-Object Name -Descending | Select-Object -First 7 Name</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>Dry run. It only reads, and lists what it would restore, overwrite, keep or leave the same.</p>
+              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>Restore. If it stops part-way, run it again: documents already back are skipped.
+                 To restore only some collections, add <code>--only=vocabulary,stories</code>.</p>
+              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>If it fails with <b>Quota exceeded</b>, the day's 50,000 free reads are used up; they reset at
+                 3 PM Philippine time. Writes still work, so learner data can come back now without reading.
+                 Run the normal restore again once reads are back.</p>
+              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b --only=users,leaderboard_public,public_profiles,device_tokens,word_submissions,issue_reports --write-only --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p>Check it: take a fresh backup and compare its <code>manifest.json</code> with the one in
+                 <code>$b</code>. The counts should match, apart from the activity log.</p>
+              <div class="cli-code"><pre><code>node functions/backup_firestore.js $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h2>Reset</h2><p>Take a backup first. Run each command without <code>--confirm</code>, read what it will delete, then run it with.</p></div></div>
+          <ol class="cli-steps">
+            <li>
+              <p><b>Learner reset</b> clears learner data and keeps the content. It deletes users and their
+                 progress, leaderboard rows, public profiles, device tokens, security questions, word and
+                 literature submissions, and issue reports. The dictionary, stories, story pictures,
+                 announcements and releases stay.</p>
+              <p class="cli-label">Dry run, deletes nothing:</p>
+              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p class="cli-label">Then, to delete:</p>
+              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+            <li>
+              <p><b>Factory reset</b> does the same, then deletes the dictionary, stories, story pictures,
+                 announcements and releases and writes them back from the backup in <code>$b</code>, so the
+                 content ends at exactly that backup. It refuses a backup with no content in it.</p>
+              <p class="cli-label">Dry run, deletes nothing:</p>
+              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p class="cli-label">Then, to reset:</p>
+              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
+          </ol>
+          <p class="cli-note cli-foot">The activity log is never cleared: it records who ran the reset. A reset and
+             the restore after it use many reads, so start right after 3 PM Philippine time.
+             Full runbook: <code>docs/BACKUP_AND_RESET.md</code>.</p>
         </div>
       </div>
     </section>

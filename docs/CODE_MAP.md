@@ -101,8 +101,9 @@ the round's reward.
   and `css/styles.css`. Verifiers are listed in Firestore `admin_staff/{email}` from the
   portal's Team page; `firestore.rules` (`isStaff()`) lets them do everything except APK
   releases, blocking users (they flag one for an admin in `user_flags`), and reading admins'
-  activity-log entries. Backup, restore and reset are not in the portal for anyone; they run
-  from the operator scripts in `functions/` (`docs/BACKUP_AND_RESET.md`). Rules test:
+  activity-log entries. Backup, restore and reset run from the operator scripts in
+  `functions/`; the portal's admin-only Backup & Restore page shows their commands and runs
+  none of them (keep it in step with `docs/BACKUP_AND_RESET.md`). Rules test:
   `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).
 - Download: `admin-website/download/index.html`, `js/` and `css/styles.css`.
 - Rules: `firestore.rules` and `storage.rules`; deployment configuration is in
