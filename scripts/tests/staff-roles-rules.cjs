@@ -138,6 +138,21 @@ const request = (method, path, data, auth) => fetch(`${base}/${path}`, {
   await expect('a verifier cannot prune the log', 'DELETE', 'dictionary_updates/u2', null, VERIFIER, 403);
   await expect('an admin prunes the log', 'DELETE', 'dictionary_updates/u2', null, ADMIN, 200);
 
+  // announcements: never with an `id` field, which crashes Android 1.27 and older on launch.
+  const notice = { title: 'New words', message: 'Ten new words this week.', active: true, createdAt: 1760000000000 };
+  await expect('an admin posts an announcement', 'PATCH', 'announcements/a1', notice, ADMIN, 200);
+  await expect('a verifier posts an announcement', 'PATCH', 'announcements/a2', notice, VERIFIER, 200);
+  await expect('an announcement with an id field is refused', 'PATCH', 'announcements/a3', { ...notice, id: 'a3' }, ADMIN, 403);
+  await expect('an empty message is refused', 'PATCH', 'announcements/a4', { ...notice, message: '' }, ADMIN, 403);
+  await expect('a learner cannot post', 'PATCH', 'announcements/a5', notice, LEARNER, 403);
+  await expect('anyone reads announcements', 'GET', 'announcements/a1', null, null, 200);
+  await expect('an admin hides one', 'PATCH', 'announcements/a1?updateMask.fieldPaths=active', { active: false }, ADMIN, 200);
+  await expect('an admin shows it again', 'PATCH', 'announcements/a1?updateMask.fieldPaths=active', { active: true }, ADMIN, 200);
+  await expect('seed an old-format announcement', 'PATCH', 'announcements/old', { ...notice, id: 'old' }, OWNER, 200);
+  await expect('an old one can be hidden', 'PATCH', 'announcements/old?updateMask.fieldPaths=active', { active: false }, ADMIN, 200);
+  await expect('an old one cannot be shown again', 'PATCH', 'announcements/old?updateMask.fieldPaths=active', { active: true }, ADMIN, 403);
+  await expect('an old one can be removed', 'DELETE', 'announcements/old', null, VERIFIER, 200);
+
   await expect('admin removes the verifier', 'DELETE', 'admin_staff/ver@example.com', null, ADMIN, 200);
   await expect('a removed verifier loses access', 'PATCH', 'vocabulary/w4', word, VERIFIER, 403);
 

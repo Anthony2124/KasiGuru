@@ -499,7 +499,11 @@ function initRealtimeListeners() {
   try {
     const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
     const unsubAnn = onSnapshot(annQuery, (snapshot) => {
-      announcements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // legacyId: posted by the old portal with an `id` field, which Android 1.27 and older crash on.
+      announcements = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { ...data, id: doc.id, legacyId: Object.prototype.hasOwnProperty.call(data, 'id') };
+      });
       renderAnnouncementsList();
     }, (error) => {
       console.warn("Announcements listener error:", error);
@@ -3045,7 +3049,9 @@ function renderAnnouncementsList() {
       <div class="row-actions" style="flex-shrink:0;">
         ${isActive
           ? `<button type="button" class="btn btn-outline btn-sm" data-announcement-act="hide" data-id="${safeId(a.id)}" title="Hide it in the app; it stays listed here">Deactivate</button>`
-          : `<button type="button" class="btn btn-outline btn-sm" data-announcement-act="show" data-id="${safeId(a.id)}" title="Show it in the app again">Show again</button>`}
+          : a.legacyId
+            ? `<span style="font-size:0.8rem; color:var(--muted);" title="It has an id field that crashes Android 1.27 and older">Old format: remove it and post it again</span>`
+            : `<button type="button" class="btn btn-outline btn-sm" data-announcement-act="show" data-id="${safeId(a.id)}" title="Show it in the app again">Show again</button>`}
         <button type="button" class="btn btn-danger btn-sm" data-announcement-act="remove" data-id="${safeId(a.id)}" title="Delete it for good">
           <iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon> Remove
         </button>
@@ -3073,6 +3079,13 @@ function renderAnnouncementsList() {
 
 /** Shows a hidden announcement in the app again. */
 async function reactivateAnnouncement(id) {
+  // Posted by the old portal, with an `id` field that crashes Android 1.27 and older on launch.
+  // The rules refuse to show it again; say why, rather than a bare permission error.
+  const a = announcements.find(x => x.id === id);
+  if (a?.legacyId) {
+    notify('This announcement was posted before the fix and would crash older app versions. Remove it and post it again.', 'error');
+    return;
+  }
   try {
     await updateDoc(doc(db, "announcements", id), { active: true });
     await logAudit("announcement.reactivate", { announcementId: id });
