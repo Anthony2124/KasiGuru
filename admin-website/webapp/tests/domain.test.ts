@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { calculateNextReview, ReviewRating } from '../src/domain/sm2';
 import { DEFAULT_WORD_STATE, initialProgress, type UserProgress, type WordContent, type WordState } from '../src/domain/types';
-import { fromMainDoc, MAIN_PROGRESS_KEYS, mergeProgress, mergeWordStates, toMainDoc } from '../src/domain/merge';
+import { changedEntries, fromMainDoc, hasEntry, MAIN_PROGRESS_KEYS, mergeProgress, mergeWordStates, toMainDoc } from '../src/domain/merge';
 import { matchRecall, meaningFor } from '../src/domain/recall';
 import { buildExercises, buildTree, nextLesson, openLessons, teachingOrder, wordsFor } from '../src/domain/lesson';
 import { Corpus } from '../src/domain/corpus';
@@ -141,6 +141,33 @@ describe('progress merge (ProgressSyncTest)', () => {
     );
     expect(m.a.nextReviewDate).toBe('2026-10-10');
     expect(m.a.lapses).toBe(2);
+  });
+});
+
+describe('learning document uploads (LearningStateMergeTest: changedEntries)', () => {
+  const lesson = (timesCompleted: number, lastCompletedAt: number) => ({ isComplete: true, bestAccuracy: 1, timesCompleted, lastCompletedAt });
+  it('sends only the entries the document does not hold as they are', () => {
+    const known = { 'theme:pamilya#0': lesson(1, 10), 'theme:pamilya#1': lesson(2, 20) };
+    const local = { 'theme:pamilya#0': lesson(1, 10), 'theme:pamilya#1': lesson(3, 30), 'theme:pamilya#2': lesson(1, 40) };
+    expect(Object.keys(changedEntries(local, known)).sort()).toEqual(['theme:pamilya#1', 'theme:pamilya#2']);
+  });
+  it('never mentions an entry only the cloud has, so the merged write keeps it', () => {
+    // A phone finished a lesson this browser has not downloaded yet.
+    const known = { 'theme:pamilya#0': lesson(1, 10) };
+    const local = { 'theme:hayop#0': lesson(1, 50) };
+    expect(changedEntries(local, known)).toEqual(local);
+  });
+  it('field order does not count as a change', () => {
+    const known = { bahay: { timesReviewed: 2, isLearned: true, easinessFactor: 2.5, intervalDays: 1, nextReviewDate: '', lapses: 0, relearningStep: 0 } };
+    expect(changedEntries({ bahay: card({ isLearned: true, timesReviewed: 2, intervalDays: 1 }) }, known)).toEqual({});
+  });
+  it('a document not read yet gets every entry', () => {
+    const local = { word_match_1: { starsEarned: 2, isUnlocked: true } };
+    expect(changedEntries(local, undefined)).toEqual(local);
+  });
+  it('a headword named like an Object method is still an entry of its own', () => {
+    expect(hasEntry({}, 'constructor')).toBe(false);
+    expect(Object.keys(changedEntries({ constructor: card({ timesReviewed: 1 }) }, {}))).toEqual(['constructor']);
   });
 });
 

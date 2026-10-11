@@ -152,4 +152,45 @@ class LearningStateMergeTest {
 
         assertEquals(local, merged)
     }
+
+    // ── changedEntries: what an upload writes into a learning document ──
+
+    @Test
+    fun uploadSendsOnlyEntriesTheCloudDoesNotHold() {
+        val known = mapOf(
+            "theme:pamilya#0" to LessonState(isComplete = true, bestAccuracy = 0.8f, timesCompleted = 1, lastCompletedAt = 10),
+            "theme:pamilya#1" to LessonState(isComplete = true, bestAccuracy = 1f, timesCompleted = 2, lastCompletedAt = 20)
+        )
+        val local = mapOf(
+            "theme:pamilya#0" to LessonState(isComplete = true, bestAccuracy = 0.8f, timesCompleted = 1, lastCompletedAt = 10),
+            "theme:pamilya#1" to LessonState(isComplete = true, bestAccuracy = 1f, timesCompleted = 3, lastCompletedAt = 30),
+            "theme:pamilya#2" to LessonState(isComplete = true, bestAccuracy = 0.9f, timesCompleted = 1, lastCompletedAt = 40)
+        )
+
+        assertEquals(setOf("theme:pamilya#1", "theme:pamilya#2"), changedEntries(local, known).keys)
+    }
+
+    @Test
+    fun entriesOnlyTheCloudHasAreNeverPartOfAnUpload() {
+        // The web app finished a lesson this phone has not downloaded yet: the phone's upload must
+        // not mention it, so the merged write leaves it in the document.
+        val known = mapOf("theme:pamilya#0" to LessonState(isComplete = true, timesCompleted = 1))
+        val local = mapOf("theme:hayop#0" to LessonState(isComplete = true, timesCompleted = 1))
+
+        assertEquals(local, changedEntries(local, known))
+    }
+
+    @Test
+    fun nothingChangedMeansNothingToWrite() {
+        val words = mapOf("bahay" to WordState(isLearned = true, timesReviewed = 2, easinessFactor = 2.6))
+
+        assertTrue(changedEntries(words, words).isEmpty())
+    }
+
+    @Test
+    fun aDocumentNotReadYetGetsEveryEntry() {
+        val local = mapOf("word_match_1" to GameLevelState(starsEarned = 2, isUnlocked = true))
+
+        assertEquals(local, changedEntries(local, null))
+    }
 }

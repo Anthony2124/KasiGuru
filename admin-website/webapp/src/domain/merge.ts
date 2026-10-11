@@ -24,6 +24,30 @@ function mergeKeys<T>(local: Map_<T>, remote: Map_<T>, both: (l: T, r: T) => T):
   return out;
 }
 
+/** An own key only: a headword such as "constructor" must not find Object.prototype's. */
+export const hasEntry = (m: Map_<unknown>, key: string) => Object.prototype.hasOwnProperty.call(m, key);
+
+/** One entry as text, keys sorted, so the order its fields were set in cannot make it look changed. */
+const entryText = (v: unknown) =>
+  v !== null && typeof v === 'object' ? JSON.stringify(v, Object.keys(v).sort()) : JSON.stringify(v);
+
+/**
+ * changedEntries in LearningStateMerge.kt: the entries of `local` a learning document does not
+ * already hold as they are. `known` is what this browser last read from the document plus what it
+ * has written there since; undefined before the first read, so everything is sent.
+ *
+ * Only these are written, merged into the document entry by entry. Replacing the whole document let
+ * a device that had not downloaded lately erase lessons and words another device had added.
+ */
+export function changedEntries<T>(local: Map_<T>, known: Map_<unknown> | undefined): Map_<T> {
+  if (!known) return { ...local };
+  const out: Map_<T> = {};
+  for (const [key, state] of Object.entries(local)) {
+    if (!hasEntry(known, key) || entryText(known[key]) !== entryText(state)) out[key] = state;
+  }
+  return out;
+}
+
 export const mergeAchievements = (l: Map_<AchievementState>, r: Map_<AchievementState>) =>
   mergeKeys(l, r, (a, b) => {
     const dates = [a.unlockedDate, b.unlockedDate].filter((d): d is string => !!d).sort();

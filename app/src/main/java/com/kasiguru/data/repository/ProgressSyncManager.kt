@@ -17,6 +17,7 @@ import com.kasiguru.domain.gamification.BadgeCatalog
 import com.kasiguru.domain.gamification.RewardLedger
 import com.kasiguru.domain.gamification.XpPolicy
 import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import androidx.room.withTransaction
 import kotlinx.coroutines.flow.first
@@ -42,7 +43,10 @@ import javax.inject.Singleton
  * - On sign-in: downloads the users/{uid}/progress documents, merges each with the
  *   local tables (always additively — see LearningStateMerge), and persists.
  * - Afterwards: observes the local tables (debounced) and uploads changes, so a
- *   second device or a reinstall can continue from the same place.
+ *   second device or a reinstall can continue from the same place. The learning
+ *   documents are written entry by entry, merged, never replaced whole.
+ * - When the app comes back to the foreground: downloads and merges again
+ *   ([refreshFromCloud]), so play on the web app or another phone shows up here.
  *
  * Identity is the Firebase Auth uid. Linking an anonymous account to
  * email/Google keeps that uid, so progress survives the upgrade untouched; a
@@ -73,7 +77,20 @@ class ProgressSyncManager @Inject constructor(
     @Volatile
     private var lastUploaded: Pair<String, String>? = null
 
-    private val lastUploadedLearning = java.util.concurrent.ConcurrentHashMap<String, String>()
+    /**
+     * What each learning document holds as far as this device knows, by `uid/name`: the entries it
+     * last read there plus those it has written since. An upload sends only entries that differ.
+     */
+    private val cloudLearning = java.util.concurrent.ConcurrentHashMap<String, Map<String, Any>>()
+
+    /** One upload at a time per learning document, so two cannot send the same entry out of order. */
+    private val learningUploadLocks = ProgressDocuments.LEARNING.associateWith { Mutex() }
+
+    /** When this session last finished downloading the account, for [refreshFromCloud]'s throttle. */
+    @Volatile private var lastPulledAt = 0L
+
+    /** A foreground refresh in flight; cancelled with the session it belongs to. */
+    private var refreshJob: Job? = null
 
     /** Uploader jobs for the signed-in uid; cancelled when the account changes. */
     private var uploadJobs: List<Job> = emptyList()
@@ -138,10 +155,11 @@ class ProgressSyncManager @Inject constructor(
         // The account changed (sign-in, link, sign-out): stop uploading to the
         // previous uid before touching local data, so nothing leaks across accounts.
         sessionJob?.cancel()
+        refreshJob?.cancel()
         uploadJobs.forEach { it.cancel() }
         activeUid = uid
         lastUploaded = null
-        lastUploadedLearning.clear()
+        cloudLearning.clear()
         readyForNormalizedUpload = false
         uploadedRewards.clear()
         rewardCursor = null
@@ -155,6 +173,7 @@ class ProgressSyncManager @Inject constructor(
                 wait = (wait * 2).coerceAtMost(5 * 60_000L)
             }
             if(activeUid != uid) return@launch
+            lastPulledAt = System.currentTimeMillis()
             if(legacyCloud) gamification.importLegacyLearningState()
             readyForNormalizedUpload = true
             uploadJobs = listOf(
@@ -174,11 +193,13 @@ class ProgressSyncManager @Inject constructor(
     fun onUserSignedOut() {
         sessionJob?.cancel()
         sessionJob = null
+        refreshJob?.cancel()
+        refreshJob = null
         uploadJobs.forEach { it.cancel() }
         uploadJobs = emptyList()
         activeUid = null
         lastUploaded = null
-        lastUploadedLearning.clear()
+        cloudLearning.clear()
         readyForNormalizedUpload = false
         uploadedRewards.clear()
         rewardCursor = null
@@ -436,10 +457,30 @@ class ProgressSyncManager @Inject constructor(
 
     suspend fun syncNow(uid: String): Boolean {
         if(!syncFromCloud(uid) || !syncRewardsFromCloud(uid) || !syncLearningStateFromCloud(uid)) return false
+        lastPulledAt = System.currentTimeMillis()
         if(legacyCloud) gamification.importLegacyLearningState()
         readyForNormalizedUpload = true
         upload(uid,userProgressDao.getUserProgressOnce() ?: return false)
         return true
+    }
+
+    /**
+     * Downloads what the web app or another phone has saved since this session last looked.
+     *
+     * A session downloads only when it starts, and Android keeps an app alive in the background, so
+     * coming back to it showed the XP, lessons and words it had before the learner played elsewhere
+     * until the app was closed for good. Called when the app comes to the foreground; at most every
+     * [REFRESH_INTERVAL_MS], since a refresh reads about eight documents from the project's shared
+     * daily quota. Does nothing until the session's first download has finished: that one retries
+     * by itself.
+     */
+    fun refreshFromCloud() {
+        val uid = activeUid ?: return
+        if(!readyForNormalizedUpload || auth.currentUser?.uid != uid) return
+        val now = System.currentTimeMillis()
+        if(now - lastPulledAt < REFRESH_INTERVAL_MS) return
+        lastPulledAt = now
+        refreshJob = scope.launch { syncNow(uid) }
     }
 
     private suspend fun mergeAchievementsFromCloud(uid: String) {
@@ -582,63 +623,75 @@ class ProgressSyncManager @Inject constructor(
     }
 
     private suspend fun uploadAchievements(uid: String, states: Map<String, AchievementState>) {
-        val payload = states.mapValues {
+        uploadLearningDoc(uid, DOC_ACHIEVEMENTS, states) {
             mapOf(
-                "isUnlocked" to it.value.isUnlocked,
-                "currentValue" to it.value.currentValue,
-                "unlockedDate" to it.value.unlockedDate
+                "isUnlocked" to it.isUnlocked,
+                "currentValue" to it.currentValue,
+                "unlockedDate" to it.unlockedDate
             )
         }
-        uploadLearningDoc(uid, DOC_ACHIEVEMENTS, payload)
     }
 
     private suspend fun uploadGameLevels(uid: String, states: Map<String, GameLevelState>) {
-        val payload = states.mapValues {
-            mapOf("starsEarned" to it.value.starsEarned, "isUnlocked" to it.value.isUnlocked)
+        uploadLearningDoc(uid, DOC_GAME_LEVELS, states) {
+            mapOf("starsEarned" to it.starsEarned, "isUnlocked" to it.isUnlocked)
         }
-        uploadLearningDoc(uid, DOC_GAME_LEVELS, payload)
     }
 
     private suspend fun uploadLessonProgress(uid: String, states: Map<String, LessonState>) {
-        val payload = states.mapValues {
+        uploadLearningDoc(uid, DOC_LESSON_PROGRESS, states) {
             mapOf(
-                "isComplete" to it.value.isComplete,
-                "bestAccuracy" to it.value.bestAccuracy,
-                "timesCompleted" to it.value.timesCompleted,
-                "lastCompletedAt" to it.value.lastCompletedAt
+                "isComplete" to it.isComplete,
+                "bestAccuracy" to it.bestAccuracy,
+                "timesCompleted" to it.timesCompleted,
+                "lastCompletedAt" to it.lastCompletedAt
             )
         }
-        uploadLearningDoc(uid, DOC_LESSON_PROGRESS, payload)
     }
 
     private suspend fun uploadWordStates(uid: String, states: Map<String, WordState>) {
         // Only words the user has actually touched: keeps the document small
-        // instead of mirroring the whole 400+ word dictionary per user.
-        val payload = states
-            .filterValues { it.isLearned || it.timesReviewed > 0 }
-            .mapValues {
-                mapOf(
-                    "isLearned" to it.value.isLearned,
-                    "timesReviewed" to it.value.timesReviewed,
-                    "easinessFactor" to it.value.easinessFactor,
-                    "intervalDays" to it.value.intervalDays,
-                    "nextReviewDate" to it.value.nextReviewDate,
-                    "lapses" to it.value.lapses,
-                    "relearningStep" to it.value.relearningStep
-                )
-            }
-        uploadLearningDoc(uid, DOC_WORD_STATES, payload)
+        // instead of mirroring the whole 400+ word dictionary per user. A word the
+        // document already holds stays in even once unmarked as learned, so the
+        // reset is written over its old state rather than left behind.
+        val inCloud = cloudLearning[uid + "/" + DOC_WORD_STATES].orEmpty()
+        val touched = states.filter { (key, state) -> state.isLearned || state.timesReviewed > 0 || key in inCloud }
+        uploadLearningDoc(uid, DOC_WORD_STATES, touched) {
+            mapOf(
+                "isLearned" to it.isLearned,
+                "timesReviewed" to it.timesReviewed,
+                "easinessFactor" to it.easinessFactor,
+                "intervalDays" to it.intervalDays,
+                "nextReviewDate" to it.nextReviewDate,
+                "lapses" to it.lapses,
+                "relearningStep" to it.relearningStep
+            )
+        }
     }
 
-    private suspend fun uploadLearningDoc(uid: String, name: String, payload: Map<String, Any?>) {
-        if (payload.isEmpty()) return
+    /**
+     * Writes the entries that differ from what the document holds ([changedEntries]), merged into
+     * it. Entries this device has not changed are left alone, so a device that has not downloaded
+     * lately cannot erase what another has added. Older app versions still replace the whole
+     * document; the next download here writes back whatever they dropped.
+     */
+    private suspend fun <T : Any> uploadLearningDoc(
+        uid: String,
+        name: String,
+        states: Map<String, T>,
+        encode: (T) -> Map<String, Any?>
+    ): Unit = learningUploadLocks.getValue(name).withLock {
         val cacheKey = uid + "/" + name
-        val key = payload.toString()
-        if (lastUploadedLearning[cacheKey] == key) return
+        @Suppress("UNCHECKED_CAST")
+        val changed = changedEntries(states, cloudLearning[cacheKey] as Map<String, T>?)
+        if (changed.isEmpty()) return@withLock
         runCatching {
-            learningDoc(uid, name).set(mapOf("entries" to payload, "updatedAt" to System.currentTimeMillis())).await()
+            learningDoc(uid, name).set(
+                mapOf("entries" to changed.mapValues { encode(it.value) }, "updatedAt" to System.currentTimeMillis()),
+                SetOptions.merge()
+            ).await()
         }.onSuccess {
-            lastUploadedLearning[cacheKey] = key
+            cloudLearning.compute(cacheKey) { _, known -> known.orEmpty() + changed }
         }.onFailure { e ->
             Log.w(TAG, "upload $name FAILED", e)
         }
@@ -649,7 +702,7 @@ class ProgressSyncManager @Inject constructor(
      * does not exist yet, and null only when the read itself failed — the caller
      * must not treat a failed read as "the cloud has nothing".
      */
-    private suspend fun <T> readMap(
+    private suspend fun <T : Any> readMap(
         uid: String,
         name: String,
         parse: (Map<String, Any?>) -> T
@@ -659,8 +712,11 @@ class ProgressSyncManager @Inject constructor(
             throw it
         }
         @Suppress("UNCHECKED_CAST")
-        val entries = snapshot.data?.get("entries") as? Map<String, Map<String, Any?>> ?: return emptyMap()
-        return entries.mapValues { parse(it.value) }
+        val entries = snapshot.data?.get("entries") as? Map<String, Map<String, Any?>>
+        val parsed = entries.orEmpty().mapValues { parse(it.value) }
+        // What the document holds now: the merged upload that follows writes back only what differs.
+        if (activeUid == uid) cloudLearning[uid + "/" + name] = parsed
+        return parsed
     }
 
     private fun rewardCollection(uid: String) = firestore.collection("users").document(uid)
@@ -727,6 +783,7 @@ class ProgressSyncManager @Inject constructor(
     private companion object {
         const val TAG = "ProgressSync"
         const val DEBOUNCE_MS = 5_000L
+        const val REFRESH_INTERVAL_MS = 60_000L
         const val DOC_ACHIEVEMENTS = ProgressDocuments.ACHIEVEMENTS
         const val DOC_GAME_LEVELS = ProgressDocuments.GAME_LEVELS
         const val DOC_LESSON_PROGRESS = ProgressDocuments.LESSON_PROGRESS

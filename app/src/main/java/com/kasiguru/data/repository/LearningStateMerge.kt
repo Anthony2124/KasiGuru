@@ -43,6 +43,17 @@ data class WordState(
     val relearningStep: Int = 0
 )
 
+/**
+ * The entries of [local] that a learning document does not already hold as they are. [known] is
+ * what this device last read from the document plus what it has written there since; null when it
+ * has not read it yet, so everything is sent.
+ *
+ * Only these are written, merged into the document entry by entry. Replacing the whole document
+ * let a device that had not downloaded lately erase lessons and words another device had added.
+ */
+internal fun <T> changedEntries(local: Map<String, T>, known: Map<String, T>?): Map<String, T> =
+    if (known == null) local else local.filter { (key, state) -> known[key] != state }
+
 internal fun mergeAchievements(
     local: Map<String, AchievementState>,
     remote: Map<String, AchievementState>

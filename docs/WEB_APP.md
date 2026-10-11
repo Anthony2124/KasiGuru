@@ -93,6 +93,22 @@ headwords…), merges additively, and publishes `leaderboard_public/{uid}` and
 `public_profiles/{uid}` for signed-in accounts only. The main document carries exactly the keys
 `isValidMainProgress()` allows; a test asserts it.
 
+Both apps download the account when a session starts **and again when the app comes back to the
+foreground**: `refresh()` here on `visibilitychange`, window focus and reconnecting, and
+`ProgressSyncManager.refreshFromCloud()` from `MainActivity.onResume` on Android, each at most once
+a minute (a refresh reads about eight documents of the shared daily quota). Settings → Sync now
+downloads too, at once. Without this, an installed iPhone app or an Android app left in the
+background kept showing the XP, lessons and words it had before the learner played on the other.
+
+The four learning documents (`achievements`, `gameLevels`, `lessonProgress`, `wordStates`) are
+written **entry by entry, merged** into the document (`changedEntries` in `merge.ts` and
+`LearningStateMerge.kt`): each app remembers what the document held when it last read it, plus
+what it has written since, and sends only the entries that differ. A device that has not
+downloaded lately therefore cannot erase lessons or words another device added. A word unmarked
+as learned is still written, as its reset state, if the document already holds it. APKs up to
+1.27.0 replace the whole document on every upload; the next download by a current app writes back
+whatever they dropped.
+
 ### XP policy 2 (Android 1.18)
 
 XP is never added to a counter. Every reward is a **receipt** with a stable id (`lesson:<unit>#<i>:<day>`,
