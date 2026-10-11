@@ -82,16 +82,32 @@ work, not code work.
 
 ### Withdrawing a sense
 
-Deleting a word in the admin portal removes it from Firestore, but not from the corpus the APK and
-the web app ship. Phones keep every seeded sense through the daily prune, so the deleted word stays
-in the Library; when only its gloss was edited, it sits beside the new entry as a silent duplicate,
-because the recording belongs to the cloud's sense. To carry a deletion through:
+Firestore is the dictionary, for the words the APK and the web app ship as well. Every corpus sense
+is in Firestore unless the portal deleted it or re-glossed it into another sense, so the apps treat a
+corpus sense Firestore lacks as withdrawn:
+
+- **Android** (`FirestoreSyncManager.pruneWithdrawnWords`, from `VOCABULARY_PARSER_VERSION` 4):
+  each full read of the dictionary records the missing senses and removes them, and `ContentTopUp`
+  no longer puts them back on launch. A deletion reaches a phone within about a day, or at once
+  while the app is open (the realtime listener), with no release.
+- **Web app** (`contentMerge.ts`): the build's snapshot is the whole collection, so corpus senses it
+  lacks are left out; words removed after the snapshot are read from `dictionary_updates`.
+- **Safety cap:** if Firestore lacks more than a tenth of the corpus (a wipe, or a restore half
+  done), neither app withdraws any of it.
+
+Before this, a deleted word stayed in every Library, counted in its category and reported as
+"already in the dictionary" to a learner who submitted it again, and a re-glossed one sat beside its
+new entry as a silent duplicate.
+
+**A sense added to the corpus must reach Firestore before the release that ships it**
+(`functions/backfill_meanings.js --create-missing`); otherwise phones treat it as deleted.
+
+Removing withdrawn senses from the corpus itself is now tidying, not a fix. Do it when preparing a
+release:
 
 1. Take a backup (`functions/backup_daily.js`), then run
    `node scripts/dictionary/withdraw_senses.js --from-backup <backup-folder>` and review what it recorded.
 2. Run `node scripts/dictionary/withdraw_senses.js`, then `npm run sync:web`.
-3. Bump `VOCABULARY_PARSER_VERSION` in `FirestoreSyncManager.kt`, so each phone reads the dictionary
-   once more after updating and prunes its copies.
 
 ## The state of Firestore
 

@@ -105,6 +105,17 @@ class ContentTopUpTest {
     }
 
     @Test
+    fun aWordTheDictionaryWithdrewIsNotPutBack() {
+        // abaga ships in the APK and was deleted in the portal; the content sync removed it from the
+        // phone, and this runs on every launch.
+        val abaga = VocabularyEntity(kasiguranin = "abaga", english = "shoulder")
+
+        val plan = ContentTopUp.plan(listOf(learned), listOf(corpusAnt, abaga), withdrawn = setOf(ContentTopUp.senseKey("Abaga ", "Shoulder")))
+
+        assertTrue(plan.toInsert.isEmpty())
+    }
+
+    @Test
     fun aSecondRunFindsNothingToDo() {
         val upToDate = learned.copy(
             meaningEnglish = corpusAnt.meaningEnglish,

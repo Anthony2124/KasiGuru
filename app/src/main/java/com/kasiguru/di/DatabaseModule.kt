@@ -9,6 +9,7 @@ import com.kasiguru.data.local.DatabaseSeeder
 import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.KasiGuruMigrations
 import com.kasiguru.data.local.dao.*
+import com.kasiguru.data.repository.UserPreferencesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,7 +36,8 @@ object DatabaseModule {
         achievementDaoProvider: Provider<AchievementDao>,
         leaderboardDaoProvider: Provider<LeaderboardDao>,
         notificationDaoProvider: Provider<NotificationDao>,
-        gameLevelDaoProvider: Provider<GameLevelDao>
+        gameLevelDaoProvider: Provider<GameLevelDao>,
+        preferencesProvider: Provider<UserPreferencesRepository>
     ): KasiGuruDatabase {
         return Room.databaseBuilder(
             context,
@@ -82,7 +84,7 @@ object DatabaseModule {
                 super.onOpen(db)
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     try {
-                        ContentTopUp.run(vocabularyDaoProvider.get())
+                        ContentTopUp.run(vocabularyDaoProvider.get(), preferencesProvider.get().withdrawnSensesOnce())
                         // Level rows added after install (Word Search's per-category tracks) arrive
                         // here, before progress sync reads the table. IGNORE keeps every played row.
                         gameLevelDaoProvider.get().insertMissing(DatabaseSeeder.getInitialGameLevels())

@@ -3,8 +3,8 @@
  * public/content/corpus.json by scripts/web/sync-from-app.js) with the cloud's words laid over it.
  *
  * Without the corpus the web app had only the cloud's copy, in the cloud's order, so its word lists
- * and word of the day differed from the phone's. Senses the dictionary withdraws leave the corpus too
- * (scripts/dictionary/withdraw_senses.js), so a deleted word is not kept alive here.
+ * and word of the day differed from the phone's. A corpus sense the cloud lacks was deleted or
+ * re-glossed in the portal, and is left out (withdrawnSenses), as FirestoreSyncManager prunes it.
  */
 import type { WordContent } from './types';
 
@@ -121,7 +121,41 @@ export function layOver(base: WordContent[], cloud: WordContent[]): WordContent[
   return rows;
 }
 
-/** The dictionary a phone ends up with: the corpus first, in seeding order, then the cloud over it. */
+/** FirestoreSyncManager's MAX_WITHDRAWN_SHARE: the most of the corpus a complete dictionary can lack. */
+export const MAX_WITHDRAWN_SHARE = 0.1;
+
+/**
+ * withdrawnSeededSenses: the corpus senses the complete cloud collection lacks, which the portal
+ * deleted or re-glossed. Null when more than MAX_WITHDRAWN_SHARE are missing: that is a wipe or a
+ * half-finished restore, not the dictionary's choice, and withdraws none.
+ */
+export function withdrawnSenses(corpus: CorpusWord[], cloud: WordContent[]): Set<string> | null {
+  const seeded = new Set(corpus.filter((w) => w.kasiguranin).map(senseKey));
+  const upstream = new Set(cloud.map(senseKey));
+  const missing = new Set([...seeded].filter((k) => !upstream.has(k)));
+  return missing.size > seeded.size * MAX_WITHDRAWN_SHARE ? null : missing;
+}
+
+/**
+ * The dictionary a phone ends up with: the corpus first, in seeding order, then the cloud over it.
+ * [cloud] is the whole collection (the build's snapshot), so corpus senses it lacks are left out.
+ */
 export function buildDictionary(corpus: CorpusWord[], cloud: WordContent[]): WordContent[] {
-  return layOver(corpus.filter((w) => w.kasiguranin).map(fromCorpus), cloud);
+  const withdrawn = withdrawnSenses(corpus, cloud) ?? new Set<string>();
+  // Numbered before filtering, so every other word keeps the id and place a phone gives it.
+  const seeded = corpus.filter((w) => w.kasiguranin).map(fromCorpus);
+  return layOver(seeded.filter((w) => !withdrawn.has(senseKey(w))), cloud);
+}
+
+/**
+ * Leaves out words the portal removed after the snapshot (dictionary_updates, kind 'removed'):
+ * [removed] maps a sense to when it was removed. A word saved since, such as one restored from the
+ * Recycle bin, is newer than its removal and stays.
+ */
+export function withoutRemoved(words: WordContent[], removed: Record<string, number> | undefined): WordContent[] {
+  if (!removed || !Object.keys(removed).length) return words;
+  return words.filter((w) => {
+    const at = Object.prototype.hasOwnProperty.call(removed, senseKey(w)) ? removed[senseKey(w)] : 0;
+    return !(at > (w.updatedAt || 0));
+  });
 }

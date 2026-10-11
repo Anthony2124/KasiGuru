@@ -5,9 +5,12 @@
  * scripts/export-content.mjs) and asks Firestore only for documents stamped after it - the same
  * `updatedAt > lastSync` pull FirestoreSyncManager does, throttled to once every six hours for the
  * same reason: the Spark plan's 50,000 reads a day are shared by every learner on both apps.
+ *
+ * A deleted document never matches that query, so the same pull reads the portal's
+ * dictionary_updates since the snapshot (usually none) and leaves out the words it removed.
  */
 import { collection, getDocs, query, where } from 'firebase/firestore/lite';
-import { buildDictionary, layOver, type CorpusWord } from '../domain/contentMerge';
+import { buildDictionary, layOver, senseKey, withoutRemoved, type CorpusWord } from '../domain/contentMerge';
 import type { Story, WordContent } from '../domain/types';
 import type { BundledClip } from '../domain/audioClips';
 import { setBundledClips } from './audio';
@@ -27,6 +30,10 @@ interface Delta {
   vocabSince: number;
   storiesSince: number;
   checkedAt: number;
+  /** Senses the portal removed after the snapshot, with when (absent in deltas saved before it existed). */
+  removed?: Record<string, number>;
+  /** The newest dictionary_updates entry read. */
+  updatesSince?: number;
 }
 
 interface AudioManifest {
@@ -36,7 +43,7 @@ interface AudioManifest {
 const DELTA_KEY = 'content-delta:v1';
 const MIN_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
-let snapshotMeta = { vocabularyUpdatedAt: 0, storiesUpdatedAt: 0 };
+let snapshotMeta = { generatedAt: 0, vocabularyUpdatedAt: 0, storiesUpdatedAt: 0 };
 
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v)).trim();
 
@@ -93,12 +100,16 @@ function storyFromDoc(d: Record<string, unknown>): Story | null {
 /**
  * Lays changed documents over the dictionary the way a phone's sync does (contentMerge.layOver): a
  * changed word is merged into the row with its id or sense, keeping that row's place, or is added.
+ * Words the portal removed since are left out.
  */
 function overlay(words: WordContent[], stories: Story[], delta: Delta | undefined) {
   if (!delta) return { words, stories };
   const storiesById = new Map(stories.map((s) => [s.id, s]));
   for (const s of delta.stories) storiesById.set(s.id, s);
-  return { words: layOver(words, delta.words), stories: [...storiesById.values()].sort((a, b) => a.id - b.id) };
+  return {
+    words: withoutRemoved(layOver(words, delta.words), delta.removed),
+    stories: [...storiesById.values()].sort((a, b) => a.id - b.id),
+  };
 }
 
 export async function loadContent() {
@@ -140,17 +151,38 @@ export async function refreshContent(force = false) {
     delta.vocabSince = snapshotMeta.vocabularyUpdatedAt;
     delta.storiesSince = snapshotMeta.storiesUpdatedAt;
     delta.checkedAt = 0;
+    delta.removed = {};
+    delta.updatesSince = snapshotMeta.generatedAt;
   }
   const now = Date.now();
   if (!force && delta.checkedAt > 0 && now - delta.checkedAt >= 0 && now - delta.checkedAt < MIN_SYNC_INTERVAL_MS) return;
 
   try {
-    const [vSnap, sSnap] = await Promise.all([
+    const updatesSince = delta.updatesSince ?? snapshotMeta.generatedAt;
+    const [vSnap, sSnap, uSnap] = await Promise.all([
       getDocs(query(collection(db, 'vocabulary'), where('updatedAt', '>', delta.vocabSince))),
       getDocs(query(collection(db, 'stories'), where('updatedAt', '>', delta.storiesSince))),
+      // Optional: without it, removals still arrive with the next deploy's snapshot.
+      getDocs(query(collection(db, 'dictionary_updates'), where('at', '>', updatesSince))).catch((e) => {
+        console.warn('dictionary updates unavailable', e);
+        return null;
+      }),
     ]);
     const words = vSnap.docs.map((d) => wordFromDoc(d.id, d.data())).filter((w): w is WordContent => !!w);
     const stories = sSnap.docs.map((d) => storyFromDoc(d.data())).filter((s): s is Story => !!s);
+
+    const removed = { ...(delta.removed ?? {}) };
+    let newestUpdate = updatesSince;
+    let removedNow = 0;
+    for (const d of uSnap?.docs ?? []) {
+      const u = d.data();
+      const at = Number(u.at) || 0;
+      newestUpdate = Math.max(newestUpdate, at);
+      if (u.kind !== 'removed') continue;
+      const key = senseKey({ kasiguranin: str(u.word), english: str(u.english) });
+      removed[key] = Math.max(removed[key] ?? 0, at);
+      removedNow++;
+    }
 
     const wordMap = new Map(delta.words.map((w) => [w.id, w]));
     for (const w of words) wordMap.set(w.id, w);
@@ -163,9 +195,11 @@ export async function refreshContent(force = false) {
       vocabSince: Math.max(delta.vocabSince, ...words.map((w) => w.updatedAt)),
       storiesSince: Math.max(delta.storiesSince, ...stories.map((s) => s.updatedAt)),
       checkedAt: now,
+      removed,
+      updatesSince: newestUpdate,
     };
     await save(DELTA_KEY, next);
-    if (words.length || stories.length) {
+    if (words.length || stories.length || removedNow) {
       const st = getState();
       const merged = overlay(st.words, st.stories, { ...next, words, stories });
       setState((s) => ({ words: merged.words, stories: merged.stories, contentVersion: s.contentVersion + 1 }));
