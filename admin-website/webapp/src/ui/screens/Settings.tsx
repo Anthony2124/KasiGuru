@@ -10,7 +10,7 @@ import { navigate } from '../../lib/router';
 import { canVibrate, offlineAudioStatus, previewSfx, saveAllClips, type OfflineAudioStatus } from '../../lib/audio';
 import { previewMusicVolume } from '../../lib/music';
 import { setPrefs, useApp } from '../../lib/store';
-import { flush } from '../../lib/sync';
+import { refresh } from '../../lib/sync';
 import { APP_VERSION } from '../../lib/remote';
 import { replayCoreTour } from '../../lib/tour';
 import type { IconName } from '../icons.generated';
@@ -255,14 +255,20 @@ export function SettingsScreen() {
             <div class="row">
               <div class="grow">
                 <p class="t-title-s">Sync now</p>
-                <p class="t-body-s muted">Save this device's progress to your account and fetch dictionary updates</p>
+                <p class="t-body-s muted">Merge this device with your saved cloud progress and fetch dictionary updates</p>
               </div>
               <button
                 class="clay small"
                 disabled={syncStatus === 'syncing'}
                 onClick={async () => {
-                  await Promise.all([flush(), refreshContent(true)]);
-                  toast(recoverable ? 'Progress synced with your account.' : 'Dictionary updated. Sign in to back up your progress.');
+                  const [synced] = await Promise.all([refresh(true), refreshContent(true)]);
+                  toast(
+                    !recoverable
+                      ? 'Dictionary updated. Sign in to back up your progress.'
+                      : synced
+                        ? 'Progress synced with your account.'
+                        : 'Could not reach your account. Check your connection and try again.'
+                  );
                 }}
               >
                 {syncStatus === 'syncing' ? 'Syncing…' : 'Sync'}

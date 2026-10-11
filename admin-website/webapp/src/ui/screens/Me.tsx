@@ -70,7 +70,9 @@ export function MeScreen() {
   const displayName = p.fullName || p.userName;
   const toNext = xpToNextLevel(p.totalXp);
   const mastered = corpus.learnedCount();
-  const practised = Object.values(learner.wordStates).filter((s) => s.timesReviewed > 0).length;
+  // The lifetime tally, as Android's Profile shows it: it only rises, and it syncs with the account.
+  // Mastered, which can fall when a word lapses, is in the overview.
+  const practised = p.wordsLearned;
   const lessons = Object.entries(learner.lessons).filter(([k, s]) => s.isComplete && !k.startsWith('mastery:')).length;
   const isGuest = account.isAnonymous;
 

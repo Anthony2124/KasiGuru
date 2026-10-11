@@ -7,6 +7,7 @@ import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.NotificationRepository
 import com.kasiguru.data.repository.CommunityUpdatesRepository
+import com.kasiguru.data.repository.ProgressSyncManager
 import com.kasiguru.util.AppVisibility
 import com.kasiguru.domain.preferences.AppearanceMode
 import android.os.Bundle
@@ -53,6 +54,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var notificationRepository: NotificationRepository
 
     @Inject lateinit var communityUpdates: CommunityUpdatesRepository
+
+    @Inject lateinit var progressSync: ProgressSyncManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -116,6 +119,8 @@ class MainActivity : ComponentActivity() {
         // News about the learner's words and the dictionary, shown as the in-app pop-up.
         AppVisibility.isForeground = true
         lifecycleScope.launch { communityUpdates.checkInForeground() }
+        // Progress saved on the web app or another phone while this one sat in the background.
+        progressSync.refreshFromCloud()
     }
 
     override fun onPause() {
