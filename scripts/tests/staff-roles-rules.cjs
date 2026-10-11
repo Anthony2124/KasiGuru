@@ -153,6 +153,38 @@ const request = (method, path, data, auth) => fetch(`${base}/${path}`, {
   await expect('an old one cannot be shown again', 'PATCH', 'announcements/old?updateMask.fieldPaths=active', { active: true }, ADMIN, 403);
   await expect('an old one can be removed', 'DELETE', 'announcements/old', null, VERIFIER, 200);
 
+  // vocabulary_trash: the recycle bin. Moves and restores are batches, as the portal sends them.
+  const docName = (p) => `projects/${project}/databases/(default)/documents/${p}`;
+  const fieldsOf = (data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [k, encode(v)]));
+  const expectCommit = async (label, writes, auth, status) => {
+    const res = await fetch(`${base}:commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Authorization: `Bearer ${auth}` },
+      body: JSON.stringify({ writes }),
+    });
+    const body = await res.text();
+    assert.equal(res.status, status, `${label}: commit -> ${res.status} ${body}`);
+    checks++;
+  };
+  const trashed = { data: word, kasiguranin: 'bale', english: 'house', category: 'Home', deletedAt: 1760000000000, deletedBy: 'ver@example.com' };
+  await expect('seed a word to delete', 'PATCH', 'vocabulary/t1', word, ADMIN, 200);
+  await expectCommit('a verifier moves a word to the bin', [
+    { update: { name: docName('vocabulary_trash/t1'), fields: fieldsOf(trashed) } },
+    { delete: docName('vocabulary/t1') },
+  ], VERIFIER, 200);
+  await expect('a verifier reads the bin', 'GET', 'vocabulary_trash/t1', null, VERIFIER, 200);
+  await expect('a learner cannot read the bin', 'GET', 'vocabulary_trash/t1', null, LEARNER, 403);
+  await expect('a learner cannot fill the bin', 'PATCH', 'vocabulary_trash/t2', trashed, LEARNER, 403);
+  await expect('a bin entry with an extra field is refused', 'PATCH', 'vocabulary_trash/t3', { ...trashed, note: 'x' }, ADMIN, 403);
+  await expect('a verifier cannot delete a word for good', 'DELETE', 'vocabulary_trash/t1', null, VERIFIER, 403);
+  await expectCommit('a verifier restores a word', [
+    { update: { name: docName('vocabulary/t1'), fields: fieldsOf(word) } },
+    { delete: docName('vocabulary_trash/t1') },
+  ], VERIFIER, 200);
+  await expect('the restored word is back', 'GET', 'vocabulary/t1', null, LEARNER, 200);
+  await expect('an admin bins a word', 'PATCH', 'vocabulary_trash/t4', trashed, ADMIN, 200);
+  await expect('an admin deletes a word for good', 'DELETE', 'vocabulary_trash/t4', null, ADMIN, 200);
+
   await expect('admin removes the verifier', 'DELETE', 'admin_staff/ver@example.com', null, ADMIN, 200);
   await expect('a removed verifier loses access', 'PATCH', 'vocabulary/w4', word, VERIFIER, 403);
 

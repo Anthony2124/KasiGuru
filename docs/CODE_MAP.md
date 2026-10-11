@@ -101,8 +101,10 @@ the round's reward.
   `js/auth.js`, `js/app.js`, `js/roles.js` (admin vs verifier), `js/word-normalize.js`,
   and `css/styles.css`. Verifiers are listed in Firestore `admin_staff/{email}` from the
   portal's Team page; `firestore.rules` (`isStaff()`) lets them do everything except APK
-  releases, blocking users (they flag one for an admin in `user_flags`), and reading admins'
-  activity-log entries. Backup, restore and reset run from the operator scripts in
+  releases, blocking users (they flag one for an admin in `user_flags`), reading admins'
+  activity-log entries, and deleting words for good from the Recycle bin. A word deleted in the
+  portal moves whole to `vocabulary_trash` under its own id (`moveWordToTrash`), from where staff
+  restore it and admins delete it for good. Backup, restore and reset run from the operator scripts in
   `functions/`; the portal's admin-only Backup & Restore page shows their commands and runs
   none of them (keep it in step with `docs/BACKUP_AND_RESET.md`). Rules test:
   `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).

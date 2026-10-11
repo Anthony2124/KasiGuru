@@ -318,7 +318,8 @@ const TAB_ROUTES = {
   'tab-users': 'users',
   'tab-team': 'team',
   'tab-logs': 'logs',
-  'tab-backup': 'backup'
+  'tab-backup': 'backup',
+  'tab-trash': 'trash'
 };
 // Sections a verifier cannot open, even from a bookmarked URL; they land on the Overview instead.
 const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team', 'tab-backup']);
@@ -359,6 +360,8 @@ function init() {
   initRealtimeListeners();
   tabFeeds.set('tab-users', startUsersFeed);
   tabFeeds.set('tab-logs', startAuditLogFeed);
+  tabFeeds.set('tab-trash', startTrashFeed);
+  initRecycleBin();
   initExcelImporter();
   initSqlImporter();
   initFormListeners();
@@ -979,20 +982,17 @@ window.openEntryModal = function(id) {
     deleteBtn.onclick = async () => {
       if (!(await confirmDialog({
         title: 'Delete Dictionary Entry?',
-        body: `Are you sure you want to delete the entry for "${escapeHtml(item.kasiguranin)}"? This action cannot be undone.`,
+        body: `"${escapeHtml(item.kasiguranin)}" leaves the dictionary and stops reaching learners on their next sync. It goes to the Recycle bin, where it can be restored.`,
         confirmLabel: 'Delete',
         danger: true
       }))) return;
 
       try {
-        await deleteDoc(doc(db, "vocabulary", id));
-        vocabularyWatch?.remove(id);
-        await logAudit("vocabulary.delete", { id, kasiguranin: item.kasiguranin });
+        await moveWordToTrash(id);
+        await logAudit("vocabulary.delete", { id, kasiguranin: item.kasiguranin, recycleBin: true });
         await logDictionaryUpdate('removed', item.kasiguranin, item.english);
         window.closeModal('entry-modal');
-        notify(`Deleted ${item.kasiguranin}`, 'success');
-        vocabulary = vocabulary.filter(v => v.id !== id);
-        renderVocabularyTable();
+        notify(`Deleted ${item.kasiguranin}. It is in the Recycle bin if you need it back.`, 'success');
       } catch (error) {
         console.error("Error deleting entry:", error);
         notify("Failed to delete entry: " + error.message, 'error');
@@ -3320,20 +3320,178 @@ function renderVocabularyError(message) {
 window.deleteVocabWord = async function(id) {
   if (!(await confirmDialog({
     title: 'Delete this word?',
-    body: 'It is removed from the master dictionary and stops reaching learners on their next sync.',
+    body: 'It is removed from the master dictionary and stops reaching learners on their next sync. It goes to the Recycle bin, where it can be restored.',
     confirmLabel: 'Delete word', danger: true
   }))) return;
-  // Its name before it goes, for the notice learners get.
-  const removed = vocabulary.find(v => v.id === id);
   try {
-    await deleteDoc(doc(db, "vocabulary", id));
-    vocabularyWatch?.remove(id);
-    await logAudit("vocabulary.delete", { id });
+    const removed = await moveWordToTrash(id);
+    await logAudit("vocabulary.delete", { id, recycleBin: true });
     await logDictionaryUpdate('removed', removed?.kasiguranin, removed?.english);
   } catch (e) {
     notify("Error deleting word: " + e.message, 'error');
   }
 };
+
+// ── Recycle bin ─────────────────────────────────────────────────────────────
+// A word deleted here is kept in vocabulary_trash, whole and under its own id, so Restore can put
+// it back exactly as it was: the same id keeps every learner's review history attached to it. The
+// move is one batch, so a word is never gone without its copy. Staff restore; only an admin
+// deletes for good (firestore.rules enforces both). Kept until someone deletes it.
+let trashEntries = [];
+let trashLoaded = false;
+
+/** Moves dictionary word [id] into the recycle bin. Returns the word's fields as they were. */
+async function moveWordToTrash(id) {
+  const ref = doc(db, 'vocabulary', id);
+  // The server's copy, every field, rather than the trimmed one this page keeps for display.
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('This word is no longer in the dictionary.');
+  const data = snap.data();
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'vocabulary_trash', id), {
+    data,
+    kasiguranin: String(data.kasiguranin || '').slice(0, 200),
+    english: String(data.english || '').slice(0, 500),
+    category: String(data.category || '').slice(0, 100),
+    deletedAt: Date.now(),
+    deletedBy: String(auth.currentUser?.email || 'staff').slice(0, 200)
+  });
+  batch.delete(ref);
+  await batch.commit();
+  vocabularyWatch?.remove(id);
+  vocabulary = vocabulary.filter(v => v.id !== id);
+  renderVocabularyTable();
+  return data;
+}
+
+/** Puts a deleted word back in the dictionary as it was, under its own id. */
+async function restoreWord(entry) {
+  const ref = doc(db, 'vocabulary', entry.id);
+  if ((await getDoc(ref)).exists()) {
+    notify(`"${entry.kasiguranin}" is already back in the dictionary. Delete this copy instead.`, 'error');
+    return;
+  }
+  const batch = writeBatch(db);
+  // A fresh updatedAt, so phones pull it back on their next incremental sync.
+  batch.set(ref, withUpdatedAt({ ...entry.data }));
+  batch.delete(doc(db, 'vocabulary_trash', entry.id));
+  await batch.commit();
+  await logAudit('vocabulary.restore', { id: entry.id, kasiguranin: entry.kasiguranin });
+  await logDictionaryUpdate('added', entry.kasiguranin, entry.english);
+  notify(`Restored "${entry.kasiguranin}" to the dictionary.`, 'success');
+}
+
+/** Deletes a word from the recycle bin for good. Admins only. */
+async function deleteWordForever(entry) {
+  if (!requireAdmin('delete words for good')) return;
+  const ok = await confirmDialog({
+    title: 'Delete this word for good?',
+    body: `<b>${escapeHtml(entry.kasiguranin)}</b> is removed from the recycle bin and cannot be restored. Take a backup first if you might need it.`,
+    confirmLabel: 'Delete for good', danger: true
+  });
+  if (!ok) return;
+  await deleteDoc(doc(db, 'vocabulary_trash', entry.id));
+  await logAudit('vocabulary.purge', { id: entry.id, kasiguranin: entry.kasiguranin });
+  notify(`"${entry.kasiguranin}" deleted for good.`, 'info');
+}
+
+/** Empties the recycle bin. Admins only. */
+async function emptyRecycleBin() {
+  if (!requireAdmin('empty the recycle bin')) return;
+  if (!trashEntries.length) return;
+  const ok = await confirmDialog({
+    title: 'Empty the recycle bin?',
+    body: `All ${plural(trashEntries.length, 'deleted word')} are removed for good and cannot be restored. Take a backup first if you might need them.`,
+    confirmLabel: 'Empty recycle bin', danger: true
+  });
+  if (!ok) return;
+  const entries = [...trashEntries];
+  for (let i = 0; i < entries.length; i += 400) {
+    const batch = writeBatch(db);
+    entries.slice(i, i + 400).forEach(e => batch.delete(doc(db, 'vocabulary_trash', e.id)));
+    await batch.commit();
+  }
+  await logAudit('vocabulary.purge_all', { count: entries.length });
+  notify(`Emptied the recycle bin: ${plural(entries.length, 'word')} deleted for good.`, 'info');
+}
+
+function renderRecycleBin() {
+  const tbody = document.getElementById('trash-tbody');
+  const count = document.getElementById('trash-result-count');
+  const emptyBtn = document.getElementById('trash-empty-btn');
+  if (count) count.textContent = trashLoaded ? plural(trashEntries.length, 'word') : '';
+  if (emptyBtn) emptyBtn.hidden = !trashEntries.length;
+  if (!tbody) return;
+  if (!trashLoaded) return;
+  if (!trashEntries.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2.5rem; color:var(--muted);">The recycle bin is empty. Words deleted from the dictionary appear here.</td></tr>`;
+    return;
+  }
+  const admin = isAdminRole();
+  tbody.innerHTML = trashEntries.map(e => {
+    const when = e.deletedAt ? relativeTime(e.deletedAt) : 'date unknown';
+    return `
+      <tr>
+        <td data-label="Word">
+          <strong>${escapeHtml(e.kasiguranin || '(no headword)')}</strong>
+          ${e.english ? `<div style="font-size:0.85rem; color:var(--muted);">${escapeHtml(e.english)}</div>` : ''}
+        </td>
+        <td data-label="Category">${e.category ? `<span class="badge badge-category">${escapeHtml(e.category)}</span>` : '-'}</td>
+        <td data-label="Deleted" style="font-size:0.85rem;">
+          ${escapeHtml(when)}
+          ${e.deletedBy ? `<div style="color:var(--muted);">by ${escapeHtml(e.deletedBy)}</div>` : ''}
+        </td>
+        <td data-label="Actions">
+          <div class="row-actions">
+            <button type="button" class="btn btn-success btn-sm" data-trash-act="restore" data-id="${safeId(e.id)}">
+              <iconsax-icon name="tick-circle" type="bulk" size="16" color="currentColor"></iconsax-icon> Restore
+            </button>
+            ${admin ? `
+            <button type="button" class="btn btn-outline btn-sm" data-trash-act="delete" data-id="${safeId(e.id)}" title="Delete for good" aria-label="Delete ${escapeHtml(e.kasiguranin || 'this word')} for good">
+              <iconsax-icon name="trash" type="bulk" size="14" color="currentColor"></iconsax-icon>
+            </button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+  applyTableSemantics();
+}
+
+function startTrashFeed() {
+  const unsub = onSnapshot(
+    query(collection(db, 'vocabulary_trash'), orderBy('deletedAt', 'desc')),
+    (snap) => {
+      trashEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      trashLoaded = true;
+      renderRecycleBin();
+    },
+    (err) => {
+      console.warn('Recycle bin listener error:', err);
+      const tbody = document.getElementById('trash-tbody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--status-rejected);">${err.code === 'permission-denied' ? 'The database rules for the recycle bin have not been published yet.' : "Couldn't load the recycle bin. Check your connection and reload."}</td></tr>`;
+    }
+  );
+  unsubscribeFns.push(unsub);
+}
+
+function initRecycleBin() {
+  document.getElementById('trash-empty-btn')?.addEventListener('click', () => emptyRecycleBin());
+  document.getElementById('trash-tbody')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-trash-act]');
+    if (!btn || btn.disabled) return;
+    const entry = trashEntries.find(x => safeId(x.id) === btn.getAttribute('data-id'));
+    if (!entry) return;
+    btn.disabled = true;
+    try {
+      if (btn.getAttribute('data-trash-act') === 'restore') await restoreWord(entry);
+      else await deleteWordForever(entry);
+    } catch (err) {
+      notify('Recycle bin: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
 
 // ── Edit Vocabulary Word ────────────────────────────────────────────────────
 window.openEditVocabModal = function(id) {

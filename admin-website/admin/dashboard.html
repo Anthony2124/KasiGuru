@@ -62,6 +62,9 @@
           <button data-tab="tab-vocabulary" onclick="window.switchTab('tab-vocabulary')">
             <iconsax-icon name="book-1" type="bulk" size="18" color="currentColor"></iconsax-icon> Dictionary
           </button>
+          <button data-tab="tab-trash" onclick="window.switchTab('tab-trash')">
+            <iconsax-icon name="trash" type="bulk" size="18" color="currentColor"></iconsax-icon> Recycle bin
+          </button>
           <button data-tab="tab-stories" onclick="window.switchTab('tab-stories')">
             <iconsax-icon name="document-text" type="bulk" size="18" color="currentColor"></iconsax-icon> Stories
           </button>
@@ -507,6 +510,43 @@
       </div>
     </section>
 
+    <!-- Recycle bin: words deleted from the dictionary, kept whole in vocabulary_trash under their own
+         ids. Restore puts one back exactly as it was; only an admin can delete one for good.
+         Read when the tab is first opened, not with the Overview. -->
+    <section id="tab-trash" class="tab-content" style="display: none;">
+      <div class="pagehead">
+        <div>
+          <h1>Recycle bin</h1>
+          <p>Words deleted from the dictionary. Restore puts a word back exactly as it was, and it
+             reaches learners on their next sync. Deleting a word from here is permanent.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="trash-result-count"></span>
+          <button type="button" class="btn btn-danger btn-sm" id="trash-empty-btn" data-admin-only hidden>
+            <iconsax-icon name="trash" type="bulk" size="16" color="currentColor"></iconsax-icon> Empty recycle bin
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Word</th>
+                <th>Category</th>
+                <th>Deleted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="trash-tbody">
+              <tr><td colspan="4" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading the recycle bin&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- Tab 6: Users -->
     <section id="tab-users" class="tab-content" style="display: none;">
       <div class="pagehead">
@@ -738,6 +778,7 @@
               <ul>
                 <li>Review word and example-sentence submissions</li>
                 <li>Edit the dictionary and stories</li>
+                <li>Restore deleted words from the recycle bin</li>
                 <li>Handle issue and word reports</li>
                 <li>See users and the activity log</li>
               </ul>
@@ -747,6 +788,7 @@
               <ul>
                 <li>Publish or yank APK releases</li>
                 <li>Block or unblock users, or decide appeals</li>
+                <li>Delete words from the recycle bin for good</li>
                 <li>Manage the team</li>
               </ul>
             </div>
