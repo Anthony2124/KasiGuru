@@ -96,17 +96,6 @@ test('an unchanged dictionary is not read again the next day', async () => {
   assert.ok(s.fingerprints >= 2);
 });
 
-test('a stage tagger run is caught by its own stamp although updatedAt is unchanged', async () => {
-  const s = await setup(cached());
-  s.snapshot();
-  await settle();
-  s.setRemote([{ id: '1', updatedAt: 100, themeProposed: 'Stage 2', themeProposedAt: 990_000 }]);
-  await s.tick();
-  await s.tick();
-  assert.equal(s.reads, 1);
-  assert.equal(s.published.at(-1)[0].themeProposed, 'Stage 2');
-});
-
 test('an edit the listener delivers before the confirmation costs no full read', async () => {
   const s = await setup(cached());
   s.snapshot();
@@ -132,7 +121,7 @@ test('the weekly read still catches an edit that carries no stamp', async () => 
 });
 
 test('a fingerprint that never matches falls back to the count instead of re-reading', async () => {
-  const skewed = (rows) => ({ count: rows.length, sums: { updatedAt: NaN, themeProposedAt: 0 } });
+  const skewed = (rows) => ({ count: rows.length, sums: { updatedAt: NaN } });
   const s = await setup(undefined, { fingerprint: skewed });
   assert.equal(s.reads, 1);
   assert.equal(s.saved.at(-1).exact, false);

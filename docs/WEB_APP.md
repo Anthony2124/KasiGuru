@@ -195,10 +195,9 @@ plan's 50,000 reads for the whole project, Android included. Instead:
 
 The admin portal keeps its dictionary in IndexedDB per admin, then listens only for
 `updatedAt > checkpoint` changes with a two-minute overlap. A fingerprint check on opening and every
-five minutes while visible (count plus sums of `updatedAt` and `themeProposedAt`) catches withdrawals
-and stage-tagger runs; a full read happens when it disagrees twice in a row, or once a week to catch
-edits that carry no stamp, such as one made in the Firebase console. Deleting a word in that portal
-updates its saved copy immediately.
+five minutes while visible (count plus the sum of `updatedAt`) catches withdrawals; a full read
+happens when it disagrees twice in a row, or once a week to catch edits that carry no stamp, such as
+one made in the Firebase console. Deleting a word in that portal updates its saved copy immediately.
 Use `npm run firebase:usage` from the repository root to track the shared Spark budget.
 
 Admin edits and additions reach web learners within six hours. **A word deleted in the admin portal

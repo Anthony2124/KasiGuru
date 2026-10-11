@@ -30,7 +30,7 @@ npm run firebase:usage -- --hours
    freeze bulk dictionary work and avoid repeated production deployments. CI and preview
    builds use the committed content snapshot.
 2. **Admin dictionary** — the portal saves a copy per admin and listens to stamped edits.
-   A fingerprint (count plus sums of `updatedAt` and `themeProposedAt`, a few reads) on
+   A fingerprint (count plus the sum of `updatedAt`, a few reads) on
    opening and every five visible minutes decides whether the copy is still current; every
    word is re-read only when it disagrees twice, or weekly per admin and browser. The users
    list and activity log load when their tabs are first opened, not with the Overview.

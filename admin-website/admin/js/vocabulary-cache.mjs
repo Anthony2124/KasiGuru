@@ -11,11 +11,10 @@ const OVERLAP_MS = 2 * 60 * 1000;
 
 /**
  * Numeric fields whose collection-wide sums, with the count, fingerprint the dictionary, as the
- * Android sync does. `updatedAt` moves with every stamped edit; `themeProposedAt` is what the stage
- * tagger (functions/tag_themes.js) stamps instead, so its proposals reach Stage Review without
- * waiting for a full read.
+ * Android sync does. `updatedAt` moves with every stamped edit. The stage tagger's `themeProposedAt`
+ * is not summed: the portal no longer shows its proposals, so a tagger run is not worth the reads.
  */
-export const FINGERPRINT_SUMS = ['updatedAt', 'themeProposedAt'];
+export const FINGERPRINT_SUMS = ['updatedAt'];
 
 /** The fingerprint of saved rows. Like Firestore's sum(), it skips values that are not numbers. */
 export function fingerprintOf(rows) {
@@ -64,8 +63,8 @@ export function vocabularyStore(uid) {
 
 /**
  * Load once, then listen only for stamped edits. A fingerprint (count and sums, a few reads)
- * compared with the saved rows catches withdrawals outside the delta query and tagger runs; a
- * full read happens only when it disagrees twice in a row, or weekly as the backstop.
+ * compared with the saved rows catches withdrawals outside the delta query; a full read happens
+ * only when it disagrees twice in a row, or weekly as the backstop.
  * A fingerprint that disagrees right after a full read cannot be trusted (an odd stored value, or
  * an edit landing mid-read), so the count alone decides until the two agree again. That keeps one
  * odd value from causing a full read at every check.
