@@ -742,13 +742,13 @@
 
           <!-- Shown right after someone is added: what to send them. -->
           <!-- The console cannot send email itself (no server on the Spark plan), so the invite goes
-               out from the admin's own mail app: it arrives from a person, not a noreply address. -->
+               out from the admin's own Gmail: it arrives from a person, not a noreply address. -->
           <div class="team-invite" id="team-invite" hidden>
             <p class="team-invite-title">Added. Now send <b id="team-invite-email"></b> an invite</p>
-            <p class="team-invite-note">No email is sent automatically. "Email invite" opens your email app with this message ready to send.</p>
+            <p class="team-invite-note">No email is sent automatically. "Email invite" opens Gmail in a new tab with this message ready. Press Send there.</p>
             <p class="team-invite-text" id="team-invite-text"></p>
             <div class="team-invite-actions">
-              <a class="btn btn-primary btn-sm" id="team-invite-mail" href="#">
+              <a class="btn btn-primary btn-sm" id="team-invite-mail" href="#" target="_blank" rel="noopener" title="Opens Gmail in a new tab">
                 <iconsax-icon name="sms" type="bulk" size="16" color="currentColor"></iconsax-icon> Email invite
               </a>
               <button type="button" class="btn btn-outline btn-sm" id="team-invite-copy">
