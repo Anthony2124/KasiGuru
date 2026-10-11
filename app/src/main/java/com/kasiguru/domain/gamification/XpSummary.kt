@@ -38,7 +38,7 @@ object XpSummary {
             when (row.kind) {
                 "review", "mastery" -> add(XpSource.Reviews, listOf(row))
                 "story" -> add(XpSource.Stories, listOf(row))
-                "approved" -> add(XpSource.Community, listOf(row))
+                "approved", "contribution" -> add(XpSource.Community, listOf(row))
                 "badge" -> add(XpSource.Badges, listOf(row))
             }
         }

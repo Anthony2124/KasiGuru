@@ -25,4 +25,15 @@ class RewardReceiptCodecTest {
         assertNull(RewardReceiptCodec.decode(payload + ("kind" to "welcome")))
         assertNull(RewardReceiptCodec.decode(payload + ("policyVersion" to 1)))
     }
+    @Test fun aWordApprovedFrom128IsAHundredXpContributionAndNothingElse() {
+        val row = RewardReceiptEntity("contribution:word:abc","contribution","word:abc","2026-10-12",100)
+        val payload = RewardReceiptCodec.encode(row)
+        assertEquals(row,RewardReceiptCodec.decode(payload))
+        assertNull(RewardReceiptCodec.decode(payload + ("xp" to 10)))
+        assertNull(RewardReceiptCodec.decode(payload + mapOf("source" to "literature:abc","id" to "contribution:literature:abc")))
+        // The older receipt keeps its 10 XP, and only that.
+        val old = RewardReceiptEntity("approved:word:abc","approved","word:abc","2026-10-01",10)
+        assertEquals(old,RewardReceiptCodec.decode(RewardReceiptCodec.encode(old)))
+        assertNull(RewardReceiptCodec.decode(RewardReceiptCodec.encode(old) + ("xp" to 100)))
+    }
 }

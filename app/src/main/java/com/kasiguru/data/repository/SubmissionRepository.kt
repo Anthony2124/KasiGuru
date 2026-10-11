@@ -5,13 +5,27 @@ import com.google.firebase.auth.FirebaseAuth
 import com.kasiguru.data.remote.model.LiteratureSubmissionDto
 import com.kasiguru.data.remote.model.SentenceSubmissionDto
 import com.kasiguru.data.remote.model.WordSubmissionDto
+import com.kasiguru.domain.contribute.CommunityUpdates
+import com.kasiguru.domain.contribute.SubmissionState
+import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.time.Instant
 import java.time.ZoneId
 
-data class ApprovedContribution(val id: String,val approvedDay: String?)
+/**
+ * An approved submission and what its approval is worth: [CommunityUpdates.APPROVAL_XP] for words
+ * the portal approved from 1.28 on, [CommunityUpdates.LEGACY_APPROVAL_XP] for everything else.
+ */
+data class ApprovedContribution(
+    val id: String,
+    val approvedDay: String?,
+    val xp: Int = CommunityUpdates.LEGACY_APPROVAL_XP
+)
+
+/** One of this learner's word submissions, in any status, with the day it was approved if it was. */
+data class OwnWordSubmission(val state: SubmissionState, val approvedDay: String?)
 
 @Singleton
 class SubmissionRepository @Inject constructor(
@@ -85,16 +99,36 @@ class SubmissionRepository @Inject constructor(
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@runCatching emptyList()
         val words = submissionsCollection.whereEqualTo("uid",uid).whereEqualTo("status","approved").get().await()
         val literature = literatureSubmissionsCollection.whereEqualTo("uid",uid).whereEqualTo("status","approved").get().await()
-        fun contribution(prefix: String,doc: com.google.firebase.firestore.DocumentSnapshot): ApprovedContribution {
-            val timestamp = doc.get("approvedAt") ?: doc.get("reviewedAt")
-            val millis = when(timestamp) {
-                is Number -> timestamp.toLong()
-                is com.google.firebase.Timestamp -> timestamp.toDate().time
-                else -> null
-            }
-            val day = millis?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().toString() }
-            return ApprovedContribution("$prefix:${doc.id}",day)
+        words.documents.map { ApprovedContribution("word:${it.id}", approvedDayOf(it), CommunityUpdates.approvalXp(it.get("rewardXp"))) } +
+            literature.documents.map { ApprovedContribution("literature:${it.id}", approvedDayOf(it)) }
+    }
+
+    /**
+     * Every word this account has sent, whatever its status, for the approved / rejected notices.
+     * Owner-only reads, like the counts above: the query must name this uid for the rules to allow it.
+     */
+    suspend fun getOwnWordSubmissions(): Result<List<OwnWordSubmission>> = runCatching {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@runCatching emptyList()
+        submissionsCollection.whereEqualTo("uid", uid).get().await().documents.map { doc ->
+            OwnWordSubmission(
+                state = SubmissionState(
+                    id = doc.id,
+                    word = doc.getString("kasiguranin").orEmpty(),
+                    status = doc.getString("status") ?: "pending",
+                    rewardXp = CommunityUpdates.approvalXp(doc.get("rewardXp"))
+                ),
+                approvedDay = approvedDayOf(doc)
+            )
         }
-        words.documents.map { contribution("word",it) } + literature.documents.map { contribution("literature",it) }
+    }
+
+    /** The local day a submission was approved, from the portal's approvedAt or reviewedAt stamp. */
+    private fun approvedDayOf(doc: DocumentSnapshot): String? {
+        val millis = when (val timestamp = doc.get("approvedAt") ?: doc.get("reviewedAt")) {
+            is Number -> timestamp.toLong()
+            is com.google.firebase.Timestamp -> timestamp.toDate().time
+            else -> null
+        }
+        return millis?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().toString() }
     }
 }

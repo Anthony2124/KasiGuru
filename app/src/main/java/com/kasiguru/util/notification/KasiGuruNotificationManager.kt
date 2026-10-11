@@ -13,34 +13,65 @@ import com.kasiguru.R
 /**
  * Posts every system notification the app makes.
  *
- * Three channels, so a learner can silence one kind in Android's settings and keep the others:
- * the streak reminder, the word of the day, and news pushed by the team. Everything used to share
+ * Four channels, so a learner can silence one kind in Android's settings and keep the others:
+ * the streak reminder, the word of the day, news pushed by the team, and news about the dictionary
+ * (their own word approved or rejected, words added, edited or removed). Everything used to share
  * the streak channel, so muting pushes also muted the streak.
  */
 object KasiGuruNotificationManager {
 
-    enum class Channel(val id: String, val title: String, val description: String) {
+    enum class Channel(
+        val id: String,
+        val title: String,
+        val description: String,
+        val importance: Int = NotificationManager.IMPORTANCE_DEFAULT
+    ) {
         // The id is the one the old single channel had, so a learner's existing setting carries over.
         Streak("kasiguru_streak_channel", "Streak reminders", "A reminder in the evening when today's streak isn't safe yet."),
         WordOfDay("kasiguru_word_of_day_channel", "Word of the day", "One Kasiguranin word each morning."),
-        News("kasiguru_news_channel", "News and updates", "Announcements and messages from the KasiGuru team.")
+        News("kasiguru_news_channel", "News and updates", "Announcements and messages from the KasiGuru team."),
+        // High importance: these pop up on screen. A channel's importance is fixed once created, so
+        // this is a new channel rather than a change to News.
+        Dictionary(
+            "kasiguru_dictionary_channel",
+            "Your words and the dictionary",
+            "When a word you sent is approved or rejected, and when words are added, edited or removed.",
+            NotificationManager.IMPORTANCE_HIGH
+        )
     }
 
     private const val STREAK_NOTIFICATION_ID = 1001
     private const val WORD_OF_DAY_NOTIFICATION_ID = 1002
+
+    /** One dictionary notice at a time: a newer summary replaces the last one if it is still showing. */
+    private const val DICTIONARY_NOTIFICATION_ID = 1003
 
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             Channel.entries.forEach { channel ->
                 manager.createNotificationChannel(
-                    NotificationChannel(channel.id, channel.title, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    NotificationChannel(channel.id, channel.title, channel.importance).apply {
                         description = channel.description
                     }
                 )
             }
         }
     }
+
+    /**
+     * A word the learner sent was approved or rejected, or the dictionary changed. A learner's own
+     * verdicts each keep their notification; a dictionary summary replaces the previous one.
+     */
+    fun sendDictionaryNotification(context: Context, title: String, body: String, eventKey: String, summary: Boolean) =
+        post(
+            context,
+            Channel.Dictionary,
+            if (summary) DICTIONARY_NOTIFICATION_ID else 2000 + (eventKey.hashCode() and 0x3fffffff) % 1_000_000,
+            title,
+            body,
+            deepLinkRoute = "notifications"
+        )
 
     /** Tonight's streak reminder. One at a time: a new one replaces yesterday's if it is still there. */
     fun sendStreakReminderNotification(context: Context, title: String, body: String) =
@@ -86,7 +117,8 @@ object KasiGuruNotificationManager {
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            // Android before 8.0 reads priority instead of the channel's importance.
+            .setPriority(if (channel.importance >= NotificationManager.IMPORTANCE_HIGH) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

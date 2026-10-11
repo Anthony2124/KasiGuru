@@ -216,9 +216,10 @@ function approvedDay(x: DocumentData): string | null {
 
 /**
  * Approved submissions for this account (SubmissionRepository.getApprovedSubmissions), each worth a
- * one-time 10 XP receipt keyed `word:<id>` or `literature:<id>`. Null when the query failed.
+ * one-time receipt keyed `word:<id>` or `literature:<id>`: 100 XP for a word the portal stamped
+ * rewardXp 100 (approved from 1.28 on), 10 otherwise. Null when the query failed.
  */
-export async function approvedContributions(): Promise<{ id: string; approvedDay: string | null }[] | null> {
+export async function approvedContributions(): Promise<{ id: string; approvedDay: string | null; xp: number }[] | null> {
   // The live Auth user, not the store's copy: during a sign-in or sign-out the two briefly differ,
   // and a query naming another uid is refused by the owner-read rule.
   const uid = auth.currentUser?.uid;
@@ -229,8 +230,8 @@ export async function approvedContributions(): Promise<{ id: string; approvedDay
       getDocs(query(collection(db, 'literature_submissions'), where('uid', '==', uid), where('status', '==', 'approved'))),
     ]);
     return [
-      ...w.docs.map((d) => ({ id: `word:${d.id}`, approvedDay: approvedDay(d.data()) })),
-      ...l.docs.map((d) => ({ id: `literature:${d.id}`, approvedDay: approvedDay(d.data()) })),
+      ...w.docs.map((d) => ({ id: `word:${d.id}`, approvedDay: approvedDay(d.data()), xp: d.data().rewardXp === 100 ? 100 : 10 })),
+      ...l.docs.map((d) => ({ id: `literature:${d.id}`, approvedDay: approvedDay(d.data()), xp: 10 })),
     ];
   } catch {
     return null;

@@ -157,7 +157,13 @@ class UserProgressRepository @Inject constructor(
         return award { gamification.review(id,rating,due,mastered,updatedWord) }
     }
     suspend fun recordApprovals(contributions: List<ApprovedContribution>): Int =
-        award { gamification.approved(contributions.map { it.id },contributions.associate { it.id to it.approvedDay }) }
+        award {
+            gamification.approved(
+                contributions.map { it.id },
+                contributions.associate { it.id to it.approvedDay },
+                contributions.associate { it.id to it.xp }
+            )
+        }
 
     suspend fun incrementGamesPlayed() {
         userProgressDao.incrementGamesPlayed()

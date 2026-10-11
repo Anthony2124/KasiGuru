@@ -45,6 +45,7 @@ import com.kasiguru.ui.components.KasiGuruBottomBar
 import com.kasiguru.ui.components.RewardCelebrationDialog
 import com.kasiguru.ui.components.StreakCelebrationDialog
 import com.kasiguru.ui.components.AppUpdateDialog
+import com.kasiguru.ui.components.CommunityUpdateDialog
 import com.kasiguru.ui.screens.about.AboutScreen
 import com.kasiguru.ui.screens.help.HowToUseScreen
 import com.kasiguru.ui.tour.LocalTourAnchors
@@ -126,6 +127,17 @@ fun KasiGuruNavGraph(initialDeepLink: String? = null) {
         val calm = pendingReward == null && pendingStreakActivation == null && currentRoute in Screen.tabRoots
         if (appUpdate.showDialog && (release.forceUpdate || calm)) {
             AppUpdateDialog(release = release, onLater = appUpdateViewModel::later)
+        }
+    }
+
+    // News about the learner's words and the dictionary, one at a time, once nothing else is
+    // showing: on a tab, after any celebration and any update prompt.
+    val communityUpdateViewModel: CommunityUpdateViewModel = hiltViewModel()
+    val communityNews by communityUpdateViewModel.pending.collectAsState()
+    val updatePromptShowing = appUpdate.release != null && appUpdate.showDialog
+    communityNews.firstOrNull()?.let { event ->
+        if (pendingReward == null && pendingStreakActivation == null && !updatePromptShowing && currentRoute in Screen.tabRoots) {
+            CommunityUpdateDialog(event = event, onDismiss = { communityUpdateViewModel.dismiss(event) })
         }
     }
 

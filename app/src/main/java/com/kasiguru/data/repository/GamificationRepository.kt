@@ -3,6 +3,7 @@ package com.kasiguru.data.repository
 import androidx.room.withTransaction
 import com.kasiguru.data.local.KasiGuruDatabase
 import com.kasiguru.data.local.entity.*
+import com.kasiguru.domain.contribute.CommunityUpdates
 import com.kasiguru.domain.gamification.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -165,11 +166,29 @@ class GamificationRepository @Inject constructor(private val db: KasiGuruDatabas
             if(dao.get("mastery:$source") == null) put(RewardReceiptEntity("mastery:$source","mastery",source,day,5))
     }
 
-    suspend fun approved(ids: List<String>,days: Map<String,String?> = emptyMap()): RewardOutcome = transact {
+    /**
+     * One receipt per approved submission. A word approved from 1.28 on is worth
+     * [CommunityUpdates.APPROVAL_XP] and gets a `contribution` receipt; everything approved before
+     * keeps its 10-XP `approved` one. A separate kind rather than a bigger `approved`: an older app
+     * cannot read a 100-XP `approved` receipt, would write its own 10 over it, and the rules refuse a
+     * receipt losing XP, which would stall that phone's every reward upload. RewardLedger counts a
+     * submission once when a phone on the old version gave it both.
+     */
+    suspend fun approved(
+        ids: List<String>,
+        days: Map<String,String?> = emptyMap(),
+        xp: Map<String,Int> = emptyMap()
+    ): RewardOutcome = transact {
         ids.distinct().forEach { id ->
-            val key = "approved:$id"
             val day = if(days.isEmpty()) today() else days[id].orEmpty()
-            if(dao.get(key) == null) put(RewardReceiptEntity(key,"approved",id,day,10,1,day != today()))
+            val worth = xp[id] ?: CommunityUpdates.LEGACY_APPROVAL_XP
+            val (kind, points) = if (worth == CommunityUpdates.APPROVAL_XP && id.startsWith("word:")) {
+                "contribution" to CommunityUpdates.APPROVAL_XP
+            } else {
+                "approved" to CommunityUpdates.LEGACY_APPROVAL_XP
+            }
+            val key = "$kind:$id"
+            if(dao.get(key) == null) put(RewardReceiptEntity(key,kind,id,day,points,1,day != today()))
         }
     }
 
@@ -195,7 +214,8 @@ class GamificationRepository @Inject constructor(private val db: KasiGuruDatabas
             "gameModesPlayed" to games.map { if(it.source.startsWith("game:word_search_")) "word_search" else it.source.substringAfter("game:").substringBefore('#') }.distinct().size,
             "storiesCompleted" to records.count { it.kind == "story" },
             "verifiedCategories" to records.count { it.kind == "category" },
-            "submissionsApproved" to records.count { it.kind == "approved" },
+            // A submission counts once, whichever receipt (or both, after an update) records it.
+            "submissionsApproved" to records.filter { it.kind == "approved" || it.kind == "contribution" }.distinctBy { it.source }.size,
             "level" to XpPolicy.level(totals.total))
         val promotions = mutableListOf<String>()
         val rows = db.achievementDao().getAllAchievementsOnce()

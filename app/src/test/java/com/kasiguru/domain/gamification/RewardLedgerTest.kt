@@ -75,4 +75,17 @@ class RewardLedgerTest {
         assertTrue(BadgeCatalog.rows().filter { it.metricType == "level" }.all { it.xpReward == 0 })
         assertNull(BadgeCatalog.familyFor("badge:word_explorer:7"))
     }
+    @Test fun aWordApprovedFrom128CountsItsHundredXpOnceEvenWhenAnOlderAppAlsoGaveTen() {
+        val old = r("approved:word:a","approved","word:a",xp = 10)
+        val now = r("contribution:word:b","contribution","word:b",xp = 100)
+        // Before 1.28 an approval is worth 10; from 1.28 on, 100.
+        assertEquals(110,RewardLedger.totals(listOf(old,now)).activity)
+        // The same submission rewarded by an older phone (10) and this one (100) counts 100.
+        val twin = r("approved:word:b","approved","word:b",xp = 10)
+        assertEquals(110,RewardLedger.totals(listOf(old,now,twin)).activity)
+        assertEquals(110,RewardLedger.totals(listOf(old,now,twin)).byDay["2026-10-01"])
+        // A contribution keeps the earliest day another device saw, like other one-time rewards.
+        val later = now.copy(day = "2026-10-05")
+        assertEquals("2026-10-01",RewardLedger.merge(later,now).day)
+    }
 }

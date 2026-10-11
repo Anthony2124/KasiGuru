@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import com.kasiguru.data.repository.UserPreferencesRepository
 import com.kasiguru.data.repository.UserProgressRepository
 import com.kasiguru.data.repository.NotificationRepository
+import com.kasiguru.data.repository.CommunityUpdatesRepository
+import com.kasiguru.util.AppVisibility
 import com.kasiguru.domain.preferences.AppearanceMode
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -49,6 +51,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var userProgressRepository: UserProgressRepository
 
     @Inject lateinit var notificationRepository: NotificationRepository
+
+    @Inject lateinit var communityUpdates: CommunityUpdatesRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -109,9 +113,13 @@ class MainActivity : ComponentActivity() {
         // An app left open overnight, or resumed days later, would otherwise show a streak that
         // has already been broken until the Learn screen happened to be rebuilt.
         lifecycleScope.launch { userProgressRepository.validateAndResetExpiredStreak() }
+        // News about the learner's words and the dictionary, shown as the in-app pop-up.
+        AppVisibility.isForeground = true
+        lifecycleScope.launch { communityUpdates.checkInForeground() }
     }
 
     override fun onPause() {
+        AppVisibility.isForeground = false
         musicPlayer.onBackground()
         super.onPause()
     }

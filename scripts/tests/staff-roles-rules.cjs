@@ -123,6 +123,21 @@ const request = (method, path, data, auth) => fetch(`${base}/${path}`, {
   await expect('an admin reads a flag', 'GET', 'user_flags/troll', null, ADMIN, 200);
   await expect('an admin dismisses a flag', 'DELETE', 'user_flags/troll', null, ADMIN, 200);
 
+  // dictionary_updates: the log the apps read to tell every learner what changed.
+  const change = { kind: 'added', word: 'bale', english: 'house', at: 1760000000000 };
+  await expect('an admin logs a new word', 'PATCH', 'dictionary_updates/u1', change, ADMIN, 200);
+  await expect('a verifier logs an edit', 'PATCH', 'dictionary_updates/u2', { ...change, kind: 'edited' }, VERIFIER, 200);
+  await expect('an approval names its submission', 'PATCH', 'dictionary_updates/u3', { ...change, submissionId: 'sub1' }, ADMIN, 200);
+  await expect('a learner cannot log a change', 'PATCH', 'dictionary_updates/u4', change, LEARNER, 403);
+  await expect('an unknown kind is refused', 'PATCH', 'dictionary_updates/u5', { ...change, kind: 'renamed' }, ADMIN, 403);
+  await expect('an extra field is refused', 'PATCH', 'dictionary_updates/u6', { ...change, note: 'x' }, ADMIN, 403);
+  await expect('a word is required', 'PATCH', 'dictionary_updates/u7', { ...change, word: '' }, ADMIN, 403);
+  await expect('a learner reads the log', 'GET', 'dictionary_updates/u1', null, LEARNER, 200);
+  await expect('anyone reads the log', 'GET', 'dictionary_updates/u1', null, null, 200);
+  await expect('an entry is never rewritten', 'PATCH', 'dictionary_updates/u1', { ...change, word: 'aso' }, ADMIN, 403);
+  await expect('a verifier cannot prune the log', 'DELETE', 'dictionary_updates/u2', null, VERIFIER, 403);
+  await expect('an admin prunes the log', 'DELETE', 'dictionary_updates/u2', null, ADMIN, 200);
+
   await expect('admin removes the verifier', 'DELETE', 'admin_staff/ver@example.com', null, ADMIN, 200);
   await expect('a removed verifier loses access', 'PATCH', 'vocabulary/w4', word, VERIFIER, 403);
 

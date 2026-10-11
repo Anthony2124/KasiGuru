@@ -299,7 +299,8 @@ export class Draft {
       ),
       storiesCompleted: count('story'),
       verifiedCategories: count('category'),
-      submissionsApproved: count('approved'),
+      // A submission counts once, whichever receipt (or both, after an update) records it.
+      submissionsApproved: new Set(Object.values(this.d.receipts).filter((r) => r.kind === 'approved' || r.kind === 'contribution').map((r) => r.source)).size,
     };
     const promotions: string[] = [];
     const setRow = (id: string, next: AchievementState) => {
@@ -426,13 +427,19 @@ export class Draft {
     });
   }
 
-  /** Approved submissions, `word:<id>` or `literature:<id>`, with the day each was approved if known. */
-  approved(contributions: { id: string; approvedDay: string | null }[]): RewardOutcome {
+  /**
+   * Approved submissions, `word:<id>` or `literature:<id>`, with the day each was approved if known
+   * and what it is worth (GamificationRepository.approved): a word the portal approved from 1.28 on
+   * is a 100-XP 'contribution', everything else a 10-XP 'approved'.
+   */
+  approved(contributions: { id: string; approvedDay: string | null; xp?: number }[]): RewardOutcome {
     return this.transact(() => {
       for (const c of contributions) {
-        const key = `approved:${c.id}`;
+        const contribution = c.xp === 100 && c.id.startsWith('word:');
+        const kind = contribution ? 'contribution' : 'approved';
+        const key = `${kind}:${c.id}`;
         const day = c.approvedDay ?? '';
-        if (!this.d.receipts[key]) this.put(receipt(key, 'approved', c.id, day, 10, 1, day !== this.today));
+        if (!this.d.receipts[key]) this.put(receipt(key, kind, c.id, day, contribution ? 100 : 10, 1, day !== this.today));
       }
     });
   }

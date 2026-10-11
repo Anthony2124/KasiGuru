@@ -30,7 +30,7 @@ data class XpTotals(val activity: Int, val bonus: Int, val byDay: Map<String, In
 object RewardLedger {
     fun merge(a: RewardRecord, b: RewardRecord): RewardRecord {
         require(a.id == b.id && a.kind == b.kind && a.source == b.source)
-        require(a.day == b.day || a.kind in setOf("badge","mastery","story","approved"))
+        require(a.day == b.day || a.kind in setOf("badge","mastery","story","approved","contribution"))
         return a.copy(day = minOf(a.day,b.day), xp = maxOf(a.xp,b.xp), value = maxOf(a.value,b.value), imported = a.imported || b.imported)
     }
     /** Cumulative lesson/game targets + daily replay offers settle to max(improvement,replay). */
@@ -59,7 +59,12 @@ object RewardLedger {
             activity += earned
             addDay(day, rows.filter { !it.imported }.sumOf { it.xp }.coerceAtMost(60))
         }
-        records.filter { it.kind !in setOf("lesson","game","replay","review") }.forEach { row ->
+        // A word approved from 1.28 on is worth its 100-XP `contribution` alone. An older app that saw
+        // the same approval also wrote a 10-XP `approved` receipt for it, which is then not counted.
+        val contributed = records.filter { it.kind == "contribution" }.map { it.source }.toSet()
+        records.filter { it.kind !in setOf("lesson","game","replay","review") }
+            .filterNot { it.kind == "approved" && it.source in contributed }
+            .forEach { row ->
             if(row.kind == "badge") bonus += row.xp
             else { activity += row.xp; if(!row.imported) addDay(row.day,row.xp) }
         }

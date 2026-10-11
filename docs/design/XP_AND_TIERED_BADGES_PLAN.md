@@ -16,6 +16,7 @@ icon with family and tier labels.
 | Lesson/game replay | Larger of improvement credit or replay credit | Once per content identity/day; game replay is floor(run reward / 4), capped at 10; lesson replay is 5. Same-day repeat grants no replay credit. |
 | Story | 20 | First completion by story ID. Pages and rereads earn no XP. |
 | Approved contribution | 10 | Once per approved submission ID. Earlier or undated approvals discovered during backfill are imported and excluded from daily/weekly activity. |
+| Approved word (from 1.28) | 100 | A word submission the portal approved from 1.28 on, which it stamps `rewardXp: 100`. Receipt kind `contribution`, once per submission ID; approvals before keep their 10. A separate kind because an older app cannot read a 100-XP `approved` receipt and would try to lower it, which the rules refuse; a submission an older phone also gave 10 for counts 100 once. |
 | Onboarding/app open | 0 | No welcome XP or artificial practice-day streak. Existing streak history is retained. |
 
 Tier bonuses are **20/40/80/120/160/200 badge XP**. Journey Rank grants zero
