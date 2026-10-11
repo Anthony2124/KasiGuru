@@ -21,9 +21,10 @@
  *
  * **This script proposes; it is never authoritative.** It writes to `themeProposed` and
  * `partOfSpeechProposed`, never to `theme` or `partOfSpeech`, so a run can never overwrite a human
- * decision and can always be discarded. The admin portal's review screen is where a proposal becomes
- * a fact. A word that already carries a hand-set value, or that is marked `verifiedByAdmin`, is not
- * proposed over at all.
+ * decision and can always be discarded. Nothing reads the proposal fields: the admin portal's Stage
+ * review page, which accepted them, was removed. A stage or part of speech goes live only when someone
+ * sets it in the portal's Edit word form, with this script's `--show` list as a guide. A word that
+ * already carries a hand-set value, or that is marked `verifiedByAdmin`, is not proposed over at all.
  *
  * Usage:
  *   node tag_themes.js <service-account.json> [--apply]
@@ -246,9 +247,9 @@ function matches(hay, tokens, key) {
  * Confidence attached to a proposal, by which pass produced it.
  *
  * The gloss *is* the word's meaning; the definition merely mentions it. That difference is the whole
- * reason the two passes are kept apart, so it is carried through to the review screen: a reviewer
- * accepting a hundred proposals at once should be able to take the gloss matches on trust and read
- * the definition matches one by one.
+ * reason the two passes are kept apart, so it is carried through to every proposal: a person setting
+ * a hundred stages at once can take the gloss matches on trust and read the definition matches one
+ * by one.
  */
 const CONFIDENCE = { GLOSS: 0.9, DEFINITION: 0.6 };
 
@@ -446,9 +447,8 @@ async function main() {
     return;
   }
 
-  // Proposals only. `theme` and `partOfSpeech` are never touched here — a proposal becomes a fact in
-  // the admin portal's review screen and nowhere else, which is what makes a bad run discardable
-  // rather than a restore from backup.
+  // Proposals only. `theme` and `partOfSpeech` are never touched here, which is what makes a bad run
+  // discardable rather than a restore from backup.
   let written = 0;
   let heldByHuman = 0;
   let batch = db.batch();
@@ -484,7 +484,7 @@ async function main() {
   console.log(`\nWrote ${written} proposal(s) to themeProposed / partOfSpeechProposed.`);
   console.log(`Left ${heldByHuman} word(s) alone — already themed by hand or marked verifiedByAdmin.`);
   console.log(`${unmatched.length} word(s) remain unplaced, by design.`);
-  console.log('\nNothing is live yet. Review and accept them in the admin portal.');
+  console.log('\nNothing is live. Set a stage or part of speech in the admin portal\'s Edit word form to make it live.');
 }
 
 main().catch((err) => {
