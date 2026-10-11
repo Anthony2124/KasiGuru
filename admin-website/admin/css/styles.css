@@ -1304,14 +1304,25 @@ body[data-role="verifier"] .role-chip { background: var(--status-info-tint); col
 }
 
 /* ══ Example sentences ═══════════════════════════════════════════════════════
-   One card per waiting sentence, editable before approval, saying where it will land. */
-#sentences-list { gap: var(--s-4); }
-.sentence-card .card-head { margin-bottom: var(--s-3); }
-.sentence-gloss { font-family: var(--sans); font-weight: 500; font-size: var(--t-sm); color: var(--muted); margin-left: var(--s-2); }
-.sentence-card textarea { width: 100%; resize: vertical; }
-.sentence-note { font-size: var(--t-xs); color: var(--muted); margin: var(--s-1) 0 var(--s-3); }
+   Listed like the verification queue, two lines of each sentence per row. A row opens the review
+   window, where the sentence has room to be read and corrected and says where it will land. */
+.sentence-row { cursor: pointer; }
+.sentence-word { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.sentence-gloss { font-family: var(--sans); font-weight: 500; font-size: var(--t-sm); color: var(--muted); }
+.sentence-cell {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  max-width: 36ch; line-height: 1.45; overflow-wrap: anywhere;
+}
+.sentence-field { font-size: var(--t-base); line-height: 1.5; min-height: 7.5em; }
+.sentence-note { font-size: var(--t-xs); color: var(--muted); margin: var(--s-1) 0 var(--s-5); }
 .sentence-note.is-warn { color: var(--status-pending); }
-.sentence-card .row-actions { justify-content: flex-end; }
+.sentence-quote { margin: 0 0 var(--s-5); padding-left: var(--s-4); border-left: 3px solid var(--hair-strong); }
+.sentence-quote blockquote { margin: 0; font-size: var(--t-base); font-style: italic; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+.sentence-quote figcaption { margin-top: var(--s-2); font-size: var(--t-sm); line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .sentence-word { align-items: flex-end; text-align: right; }
+  .sentence-cell { max-width: none; text-align: right; }
+}
 
 /* ══ Sign-in ═════════════════════════════════════════════════════════════════
    One card that never needs a scroll: on a desktop a canopy panel with Jepjep beside the form, on a

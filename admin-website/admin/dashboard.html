@@ -699,17 +699,42 @@
       </div>
     </section>
 
-    <!-- Example sentences learners offered for words with none (sentence_submissions). Approving
-         writes the sentence onto the word, which is how it reaches the dictionary, lessons and the
-         sentence games. Admins and verifiers. -->
+    <!-- Example sentences learners offered for words with none (sentence_submissions), listed like
+         the verification queue. Approving writes the sentence onto the word, which is how it reaches
+         the dictionary, lessons and the sentence games. Rejecting only marks the record; deleting it
+         is a separate step. Admins and verifiers. -->
     <section id="tab-sentences" class="tab-content" style="display: none;">
       <div class="pagehead">
         <div>
           <h1>Example sentences</h1>
-          <p>Sentences learners sent for words that have none. Correct the Kasiguranin or the English if needed, then approve; it is added to the word and used in lessons and the sentence games.</p>
+          <p>Sentences learners sent for words that have none, newest first. Open one to correct the
+             Kasiguranin or the English, then approve; it is added to the word and used in lessons and
+             the sentence games. A rejected sentence stays here until you delete it.</p>
+        </div>
+        <div class="pagehead-actions">
+          <span class="result-count" id="sentences-result-count"></span>
         </div>
       </div>
-      <div class="itemlist" id="sentences-list"></div>
+
+      <div class="panel">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Word</th>
+                <th>Sentence</th>
+                <th>English translation</th>
+                <th>Contributor</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sentences-tbody">
+              <tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--muted);">Loading example sentences&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- Team (admins only). Verifiers do everything here except APK releases, blocking users,
@@ -1435,6 +1460,18 @@ node functions/reset_firestore.js &lt;service-account.json&gt; --mode=factory --
       </div>
       <div id="submission-modal-body"></div>
       <div class="modal-actions" id="submission-modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Modal: one example sentence, opened from the Example sentences table -->
+  <div id="sentence-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:720px;">
+      <div class="modal-header modal-header--bare">
+        <h2 class="sr-only">Example sentence</h2>
+        <button class="close-btn" onclick="closeModal('sentence-modal')" aria-label="Close">&times;</button>
+      </div>
+      <div id="sentence-modal-body"></div>
+      <div class="modal-actions" id="sentence-modal-actions"></div>
     </div>
   </div>
 
