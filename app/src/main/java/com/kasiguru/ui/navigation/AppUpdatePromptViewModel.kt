@@ -6,6 +6,7 @@ import com.kasiguru.BuildConfig
 import com.kasiguru.data.remote.model.AppReleaseDto
 import com.kasiguru.data.repository.AppUpdateRepository
 import com.kasiguru.data.repository.UserPreferencesRepository
+import com.kasiguru.util.update.UpdateDownloader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +35,8 @@ data class AppUpdatePromptState(
 @HiltViewModel
 class AppUpdatePromptViewModel @Inject constructor(
     private val appUpdateRepository: AppUpdateRepository,
-    private val preferences: UserPreferencesRepository
+    private val preferences: UserPreferencesRepository,
+    private val downloader: UpdateDownloader
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AppUpdatePromptState())
@@ -43,7 +45,11 @@ class AppUpdatePromptViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val latest = appUpdateRepository.getLatestRelease().getOrNull() ?: return@launch
-            if (latest.versionCode <= BuildConfig.VERSION_CODE) return@launch
+            if (latest.versionCode <= BuildConfig.VERSION_CODE) {
+                // Up to date, so any update file still downloaded is the one already installed.
+                downloader.deleteDownloads()
+                return@launch
+            }
             val prompted = preferences.promptedUpdateVersion.first()
             val dismissed = preferences.dismissedUpdateVersion.first()
             _state.value = AppUpdatePromptState(

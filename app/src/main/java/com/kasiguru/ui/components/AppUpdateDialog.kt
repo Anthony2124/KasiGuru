@@ -1,9 +1,12 @@
 package com.kasiguru.ui.components
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +65,10 @@ import com.kasiguru.ui.theme.OnLime
 import com.kasiguru.ui.theme.Shapes
 import com.kasiguru.ui.theme.Space
 import com.kasiguru.ui.theme.Surface as SurfaceColor
+import com.kasiguru.util.update.InstallProblem
 import com.kasiguru.util.update.UpdateDownload
+import com.kasiguru.util.update.megabytesToFree
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -86,7 +93,7 @@ fun AppUpdateDialog(
 ) {
     val actions = rememberUpdateActions(release, updates)
     val download by updates.state.collectAsState()
-    val signedByAnotherKey by updates.signedByAnotherKey.collectAsState()
+    val problem by updates.problem.collectAsState()
     val forced = release.forceUpdate
     val notes = remember(release.releaseNotes) { releaseNoteLines(release.releaseNotes) }
     val released = remember(release.releasedAt) { releaseDate(release.releasedAt) }
@@ -109,71 +116,74 @@ fun AppUpdateDialog(
                 .fillMaxWidth()
         ) {
             Column(Modifier.fillMaxWidth()) {
-                // The colour band: Jepjep with the news, the version change beneath him.
+                // Everything above the buttons scrolls when the card is taller than the screen. The
+                // notes used to be measured first and the button took what was left, so on a short
+                // phone or at a large text size it was squashed and its words were cut off.
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LimeTint)
-                        .padding(top = Space.lg, bottom = Space.md)
+                    Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Jepjep(pose = if (forced) JepjepPose.Pointing else JepjepPose.Celebrating, height = 104.dp)
-                    Spacer(Modifier.height(Space.sm))
-                    Text(
-                        text = if (forced) "Update required" else "A new version is here",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Ink,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(Space.xs))
-                    VersionChange(from = actions.installedVersion, to = release.versionName)
-                    if (released != null) {
-                        Spacer(Modifier.height(Space.xxs))
-                        Text("Released $released", style = MaterialTheme.typography.bodySmall, color = Muted)
-                    }
-                }
-
-                Column(Modifier.padding(horizontal = Space.lg, vertical = Space.md)) {
-                    Text(
-                        text = if (forced) "This version replaces the one you have. Your progress is kept when you update."
-                            else "Your progress is kept when you update.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (forced) Ink else Muted
-                    )
-
-                    if (notes.isNotEmpty()) {
-                        Spacer(Modifier.height(Space.md))
-                        Text("What's new", style = MaterialTheme.typography.titleSmall, color = Ink)
+                    // The colour band: Jepjep with the news, the version change beneath him.
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(LimeTint)
+                            .padding(top = Space.lg, bottom = Space.md)
+                    ) {
+                        Jepjep(pose = if (forced) JepjepPose.Pointing else JepjepPose.Celebrating, height = 104.dp)
+                        Spacer(Modifier.height(Space.sm))
+                        Text(
+                            text = if (forced) "Update required" else "A new version is here",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Ink,
+                            textAlign = TextAlign.Center
+                        )
                         Spacer(Modifier.height(Space.xs))
-                        // Long notes scroll inside the card, so the buttons never leave the screen.
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(Space.xs),
-                            modifier = Modifier
-                                .heightIn(max = 200.dp)
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            notes.forEach { line -> NoteLine(line) }
+                        VersionChange(from = actions.installedVersion, to = release.versionName)
+                        if (released != null) {
+                            Spacer(Modifier.height(Space.xxs))
+                            Text("Released $released", style = MaterialTheme.typography.bodySmall, color = Muted)
                         }
                     }
 
-                    Spacer(Modifier.height(Space.lg))
-                    DownloadProgress(download)
-                    val blocked = download == UpdateDownload.Ready && signedByAnotherKey
-                    if (blocked) {
+                    Column(Modifier.padding(start = Space.lg, end = Space.lg, top = Space.md)) {
                         Text(
-                            text = "Android can't install this update over your copy of KasiGuru: it is a test build, " +
-                                "signed differently from the official app. Make sure you are signed in so your progress " +
-                                "is saved, uninstall KasiGuru, then install it from the download page. Updates after " +
-                                "that install here as usual.",
+                            text = if (forced) "This version replaces the one you have. Your progress is kept when you update."
+                                else "Your progress is kept when you update.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Ink
+                            color = if (forced) Ink else Muted
                         )
+
+                        if (notes.isNotEmpty()) {
+                            Spacer(Modifier.height(Space.md))
+                            Text("What's new", style = MaterialTheme.typography.titleSmall, color = Ink)
+                            Spacer(Modifier.height(Space.xs))
+                            // Long notes scroll in their own box, so the card stays a pop-up on a tall screen.
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(Space.xs),
+                                modifier = Modifier
+                                    .heightIn(max = 200.dp)
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                notes.forEach { line -> NoteLine(line) }
+                            }
+                        }
+                    }
+                }
+
+                Column(Modifier.padding(start = Space.lg, end = Space.lg, top = Space.lg, bottom = Space.md)) {
+                    DownloadProgress(download)
+                    val blocked = download == UpdateDownload.Ready && problem == InstallProblem.SignedDifferently
+                    problem?.let {
+                        Text(text = installProblemMessage(it), style = MaterialTheme.typography.bodyMedium, color = Ink)
                         Spacer(Modifier.height(Space.sm))
                     }
                     ClayButton(
                         label = when (val state = download) {
                             is UpdateDownload.Downloading -> state.percent?.let { "Downloading… $it%" } ?: "Downloading…"
-                            UpdateDownload.Ready -> if (blocked) "Open the download page" else "Install update"
+                            UpdateDownload.Ready -> if (blocked) "Open download page" else "Install update"
                             UpdateDownload.Failed -> "Try again"
                             UpdateDownload.Idle -> "Update now"
                         },
@@ -193,7 +203,7 @@ fun AppUpdateDialog(
                             )
                         }
                     )
-                    if (download == UpdateDownload.Failed) {
+                    if (download == UpdateDownload.Failed || problem is InstallProblem.Refused) {
                         TextButton(onClick = actions.openInBrowser, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                             Text("Download in the browser instead", color = LimeText, style = MaterialTheme.typography.labelLarge)
                         }
@@ -293,10 +303,16 @@ internal fun rememberUpdateActions(release: AppReleaseDto, updates: AppUpdateVie
     }
 
     val download by updates.state.collectAsState()
-    val signedByAnotherKey by updates.signedByAnotherKey.collectAsState()
+    val problem by updates.problem.collectAsState()
     LaunchedEffect(release.versionCode) { updates.watch(release) }
     var installWhenReady by remember { mutableStateOf(false) }
     var waitingForPermission by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // Started for a result, the installer comes back with its reason when it does not install,
+    // which the pop-up puts into words. A successful update never returns: Android stops the app.
+    val installer = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        updates.onInstallerResult(release, result.resultCode, result.data)
+    }
     val openDownloadPage: () -> Unit = {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(DOWNLOAD_PAGE)))
     }
@@ -306,7 +322,19 @@ internal fun rememberUpdateActions(release: AppReleaseDto, updates: AppUpdateVie
             waitingForPermission = true
             context.startActivity(updates.installPermissionIntent())
         } else {
-            updates.installIntent(release)?.let(context::startActivity) ?: openInBrowser()
+            scope.launch {
+                if (!updates.checkBeforeInstall(release)) return@launch
+                val intent = updates.installIntent(release)
+                if (intent == null) {
+                    openInBrowser()
+                } else {
+                    try {
+                        installer.launch(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        openInBrowser()
+                    }
+                }
+            }
         }
     }
     val startDownload: () -> Unit = {
@@ -323,7 +351,7 @@ internal fun rememberUpdateActions(release: AppReleaseDto, updates: AppUpdateVie
             installWhenReady = false
             // Signed by another key, Android would refuse it with "package conflicts with an
             // existing package"; the pop-up explains instead.
-            if (!signedByAnotherKey) install()
+            if (problem != InstallProblem.SignedDifferently) install()
         }
     }
     LifecycleResumeEffect(waitingForPermission) {
@@ -335,6 +363,24 @@ internal fun rememberUpdateActions(release: AppReleaseDto, updates: AppUpdateVie
     }
     val installed = remember(context) { installedVersionName(context) }
     return UpdateActions(installed, startDownload, install, openInBrowser, openDownloadPage)
+}
+
+/** Why the update did not install and what to do next, in place of Android's bare "App not installed". */
+internal fun installProblemMessage(problem: InstallProblem): String = when (problem) {
+    InstallProblem.SignedDifferently ->
+        "Android can't install this update over your copy of KasiGuru: it is a test build, signed differently " +
+            "from the official app. Make sure you are signed in so your progress is saved, uninstall KasiGuru, " +
+            "then install it from the download page. Updates after that install here as usual."
+    is InstallProblem.NoSpace -> {
+        val amount = problem.shortBytes?.let { "about ${megabytesToFree(it)} MB" } ?: "some space"
+        "Your phone is too full to install this update. Free up $amount, for example by deleting videos or " +
+            "apps you no longer use, then tap Install update."
+    }
+    InstallProblem.Damaged ->
+        "The update didn't download properly, so it has been deleted. Tap Try again to download it again."
+    is InstallProblem.Refused ->
+        "Android didn't install the update (error ${problem.code}). Tap Install update to try again, or " +
+            "download it in the browser instead."
 }
 
 /**
