@@ -32,7 +32,14 @@ class AnnouncementRepository @Inject constructor(
                     return@addSnapshotListener
                 }
                 if (snapshot == null) return@addSnapshotListener
-                trySend(snapshot.toObjects(AnnouncementDto::class.java))
+                // Anything thrown here escapes the flow's catch and takes the app down with it, so
+                // each document is read on its own and one that cannot be read is skipped.
+                val announcements = snapshot.documents.mapNotNull { doc ->
+                    runCatching { AnnouncementDto.from(doc) }
+                        .onFailure { Log.w(TAG, "announcement ${doc.id} unreadable", it) }
+                        .getOrNull()
+                }
+                trySend(announcements)
             }
         awaitClose { registration.remove() }
     }.catch { e ->
