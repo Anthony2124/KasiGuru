@@ -308,7 +308,7 @@ export function Dialog({ children, onClose, glow, label }: { children: Component
   );
 }
 
-export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel, danger }: { title: string; message: string; confirmLabel: string; onConfirm: () => void; onCancel: () => void; danger?: boolean }) {
+export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel, danger, cancelLabel = 'Cancel' }: { title: string; message: string; confirmLabel: string; onConfirm: () => void; onCancel: () => void; danger?: boolean; cancelLabel?: string }) {
   return (
     <Dialog onClose={onCancel} label={title}>
       <div class="stack">
@@ -316,7 +316,7 @@ export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCance
         <p class="t-body-l muted">{message}</p>
         <div class="stack-sm">
           <ClayButton label={confirmLabel} tone={danger ? 'danger' : 'primary'} onClick={onConfirm} />
-          <ClayButton label="Cancel" tone="quiet" onClick={onCancel} />
+          <ClayButton label={cancelLabel} tone="quiet" onClick={onCancel} />
         </div>
       </div>
     </Dialog>

@@ -17,12 +17,13 @@ export function GameFrame({
     <div class="game">
       <img class="game-scene" src={sceneUrl(scene)} alt="" />
       <div class="game-shade" />
+      {/* Leaving loses nothing: every game saves as it is played (lib/savedGames.ts). */}
       {confirm && (
         <ConfirmDialog
           title="Quit this game?"
-          message="Your progress in this round won't be saved."
+          message="Your progress is saved. Open this level again to continue where you left off."
           confirmLabel="Quit"
-          danger
+          cancelLabel="Keep playing"
           onCancel={() => setConfirm(false)}
           onConfirm={() => {
             setConfirm(false);

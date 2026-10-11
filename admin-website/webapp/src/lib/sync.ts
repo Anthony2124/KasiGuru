@@ -50,6 +50,7 @@ import {
 import { decodeReceipt, encodeReceipt, mergeRecord, receiptDocumentId, RECEIPTS_COLLECTION, XP_POLICY_VERSION, type RewardRecord } from '../domain/xp';
 import { auth, db } from './firebase';
 import { load, save } from './persist';
+import { clearAllSavedGames } from './savedGames';
 import { act, getCorpus, getState, onLearnerChanged, persistLearnerNow, replaceLearner, setState } from './store';
 
 export const PROGRESS_DOCS = ['main', 'achievements', 'gameLevels', 'lessonProgress', 'wordStates'] as const;
@@ -478,6 +479,8 @@ export async function wipeLocal(uploadFirst: boolean, requireSaved = false) {
   replaceLearner(initialLearner());
   await persistLearnerNow();
   await save('leaderboard-week', null);
+  // Games left partway are this learner's: the next one on this device starts their own.
+  await clearAllSavedGames();
 }
 
 export async function deleteCloudData(uid: string) {

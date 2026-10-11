@@ -1,25 +1,28 @@
 /**
  * Word Wheel (WordWheelViewModel): spell dictionary words from one wheel of letters to fill a small
- * crossword. Swipe across the letters, or tap them and press Check. Three hints per level.
+ * crossword. Swipe across the letters, or tap them and press Check. Three hints per level, each a
+ * clue for one hidden word: its length and meaning. The board is saved as it is played and picked
+ * up again when the level is reopened (lib/savedGames.ts).
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { GAMES } from '../../domain/constants';
 import { shuffled } from '../../domain/random';
+import { resumableWordWheel } from '../../domain/savedGame';
 import { cellKey, generateWordWheel, MAX_HINTS, MIN_WORD_LENGTH, slotCells, WORD_WHEEL_MAX_LEVEL, wordWheelTier } from '../../domain/wordWheel';
 import { feedbackTone, playSfx } from '../../lib/audio';
 import { navigate } from '../../lib/router';
+import { clearSavedGame, loadSavedGame, saveGame } from '../../lib/savedGames';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { ClayButton, Icon, Loading, sceneForIndex } from '../kit';
-import { GameFrame, GameOver, GameUnavailable, HintButton } from './shell';
-import { wordWheelHint } from '../../domain/gameHints';
+import { GameFrame, GameOver, GameUnavailable } from './shell';
+import { nextClueSlot, wordWheelHint } from '../../domain/gameHints';
 import { tagalogGloss } from './gloss';
 
 type Feedback =
   | { kind: 'found' | 'bonus'; word: string; gloss: string }
   | { kind: 'already'; word: string }
   | { kind: 'notWord'; attempt: string }
-  | { kind: 'tooShort' }
-  | { kind: 'revealed'; left: number };
+  | { kind: 'tooShort' };
 
 export function WordWheelGame({ level: rawLevel }: { level: number }) {
   const ready = useApp((s) => s.contentReady);
@@ -30,11 +33,10 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
   const [order, setOrder] = useState<number[]>([]);
   const [selection, setSelection] = useState<number[]>([]);
   const [foundSlots, setFoundSlots] = useState<number[]>([]);
-  const [revealed, setRevealed] = useState<string[]>([]);
   const [bonus, setBonus] = useState<string[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
-  // "Show a hint": the hidden words' meanings and lengths. Costs "perfect", never the stars.
-  const [meaningsShown, setMeaningsShown] = useState(false);
+  // The board slot whose clue is showing, until that word is found.
+  const [cluedSlot, setCluedSlot] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [result, setResult] = useState<{ xp: number; stars: number } | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -45,13 +47,20 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
 
   useEffect(() => {
     if (!puzzle) return;
+    // The board is rebuilt from the dictionary; a saved one carries on only if it still matches.
+    const saved = loadSavedGame(GAMES.WORD_WHEEL, level);
+    const resumed = resumableWordWheel(
+      saved?.kind === 'word_wheel' ? saved : null,
+      puzzle.slots.map((s) => s.word.key),
+      puzzle.bonusWords.map((w) => w.key),
+      MAX_HINTS
+    );
     setOrder(puzzle.wheel.map((_, i) => i));
     setSelection([]);
-    setFoundSlots([]);
-    setRevealed([]);
-    setBonus([]);
-    setHintsUsed(0);
-    setMeaningsShown(false);
+    setFoundSlots(resumed ? [...resumed.foundSlots] : []);
+    setBonus(resumed ? [...resumed.bonusWords] : []);
+    setHintsUsed(resumed?.hintsUsed ?? 0);
+    setCluedSlot(resumed?.cluedSlot ?? null);
     setFeedback(null);
     setResult(null);
   }, [puzzle]);
@@ -79,22 +88,48 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     const e = entries.get(id);
     return e ? tagalogGloss(e) : '';
   };
-  const shown = new Set<string>([...foundSlots.flatMap((i) => slotCells(puzzle.slots[i]).map(([r, c]) => cellKey(r, c))), ...revealed]);
+  const cellsOf = (slots: number[]) => slots.flatMap((i) => slotCells(puzzle.slots[i]).map(([r, c]) => cellKey(r, c)));
+  const shown = new Set<string>(cellsOf(foundSlots));
   const attempt = selection.map((i) => puzzle.wheel[i]).join('');
 
-  const completeFilled = (fs: number[], rev: string[]) => {
-    const s = new Set<string>([...fs.flatMap((i) => slotCells(puzzle.slots[i]).map(([r, c]) => cellKey(r, c))), ...rev]);
+  // A hint's clue: one hidden word's length and English meaning, never the word itself. English
+  // only, since the Tagalog is often spelled close to the Kasiguranin it would give away.
+  const clueSlots = puzzle.slots.map((s): [number, string | undefined] => [s.word.letters.length, entries.get(s.word.id)?.meaningEnglish]);
+  const clue = cluedSlot === null ? null : wordWheelHint([clueSlots[cluedSlot]]);
+  const nextClue = nextClueSlot(clueSlots, foundSlots);
+  const hintsLeft = Math.max(MAX_HINTS - hintsUsed, 0);
+  // The button shows the current clue again, or gives the next one.
+  const canHint = cluedSlot !== null || (hintsLeft > 0 && nextClue !== null);
+
+  /** A word whose every letter shows through crossings counts as found. */
+  const completeFilled = (fs: number[]) => {
+    const s = new Set<string>(cellsOf(fs));
     const done = puzzle.slots.map((_, i) => i).filter((i) => !fs.includes(i) && slotCells(puzzle.slots[i]).every(([r, c]) => s.has(cellKey(r, c))));
     return done.length ? [...fs, ...done] : fs;
   };
 
+  /** Keeps the board so far, so that leaving the game does not lose it. */
+  const saveProgress = (fs: number[], bonusKeys: string[], hints: number, clued: number | null) =>
+    saveGame(GAMES.WORD_WHEEL, level, {
+      kind: 'word_wheel',
+      boardWords: puzzle.slots.map((s) => s.word.key),
+      foundSlots: fs,
+      bonusWords: bonusKeys,
+      hintsUsed: hints,
+      cluedSlot: clued,
+    });
+
+  /** True when the board is complete; the reward follows. */
   const maybeFinish = (fs: number[], hints: number) => {
-    if (fs.length < puzzle.slots.length) return;
+    if (fs.length < puzzle.slots.length) return false;
+    // Before the reward, so the board can never be picked up and rewarded again.
+    clearSavedGame(GAMES.WORD_WHEEL, level);
     const board = puzzle.slots.length;
     const stars = hints === 0 ? 3 : hints <= 2 ? 2 : 1;
     // Bonus words earn nothing extra: XP comes from completing the board (XP policy 2).
-    const xp = act((d) => (d.met(puzzle.slots.map((s) => s.word.id), GAMES.WORD_WHEEL), d).finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 && !meaningsShown }));
+    const xp = act((d) => (d.met(puzzle.slots.map((s) => s.word.id), GAMES.WORD_WHEEL), d).finishGame({ mode: GAMES.WORD_WHEEL, level, correct: board, total: board, statsTotal: board + hints, stars, perfect: hints === 0 }));
     setTimeout(() => setResult({ xp, stars }), 700);
+    return true;
   };
 
   const submit = (sel = selection) => {
@@ -111,40 +146,43 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     if (slot >= 0 && foundSlots.includes(slot)) setFeedback({ kind: 'already', word: puzzle.slots[slot].word.word });
     else if (slot >= 0) {
       const w = puzzle.slots[slot].word;
-      const fs = completeFilled([...foundSlots, slot], revealed);
+      const fs = completeFilled([...foundSlots, slot]);
+      // A clue whose word is now found is done with, which frees the hint button for the next one.
+      const clued = cluedSlot !== null && fs.includes(cluedSlot) ? null : cluedSlot;
       setFoundSlots(fs);
+      setCluedSlot(clued);
       setFeedback({ kind: 'found', word: w.word, gloss: glossFor(w.id) });
       playSfx('found');
-      maybeFinish(fs, hintsUsed);
+      if (!maybeFinish(fs, hintsUsed)) saveProgress(fs, bonus, hintsUsed, clued);
     } else if (b && bonus.includes(b.key)) setFeedback({ kind: 'already', word: b.word });
     else if (b) {
-      setBonus([...bonus, b.key]);
+      const bonusKeys = [...bonus, b.key];
+      setBonus(bonusKeys);
       setFeedback({ kind: 'bonus', word: b.word, gloss: glossFor(b.id) });
       playSfx('found');
+      saveProgress(foundSlots, bonusKeys, hintsUsed, cluedSlot);
     } else {
       setFeedback({ kind: 'notWord', attempt: key });
       feedbackTone(false);
     }
   };
 
+  /**
+   * A clue for one hidden word, its length and meaning. The clue stays under the board until that
+   * word is found; only then does the next hint give another, and asking before that just shows the
+   * current clue again. At most MAX_HINTS per level, and each lowers the stars the level can earn.
+   */
   const hint = () => {
-    if (hintsUsed >= MAX_HINTS) return;
-    const cell = puzzle.slots
-      .map((s, i) => ({ s, i }))
-      .filter(({ i }) => !foundSlots.includes(i))
-      .sort((a, b) => a.s.word.letters.length - b.s.word.letters.length)
-      .map(({ s }) => slotCells(s).map(([r, c]) => cellKey(r, c)).find((k) => !shown.has(k)))
-      .find(Boolean);
-    if (!cell) return;
-    const rev = [...revealed, cell];
+    if (cluedSlot !== null) {
+      setFeedback(null);
+      return;
+    }
+    if (hintsLeft <= 0 || nextClue === null) return;
     const used = hintsUsed + 1;
-    const fs = completeFilled(foundSlots, rev);
-    setRevealed(rev);
+    setCluedSlot(nextClue);
     setHintsUsed(used);
-    setSelection([]);
-    setFoundSlots(fs);
-    setFeedback({ kind: 'revealed', left: MAX_HINTS - used });
-    maybeFinish(fs, used);
+    setFeedback(null);
+    saveProgress(foundSlots, bonus, used, nextClue);
   };
 
   const tapLetter = (i: number) => {
@@ -183,8 +221,9 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
     if (dragged.current) submit(selRef.current);
   };
 
+  // What the last move did, and otherwise the hint's clue, which stays until its word is found.
   const text = (() => {
-    if (!feedback) return { t: 'Swipe across the letters, or tap them and press Check.', bad: false };
+    if (!feedback) return { t: clue ? `Hint: ${clue}` : 'Swipe across the letters, or tap them and press Check.', bad: false };
     switch (feedback.kind) {
       case 'found':
         return { t: feedback.gloss ? `Found ${feedback.word}: ${feedback.gloss}` : `Found ${feedback.word}!`, bad: false };
@@ -196,8 +235,6 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
         return { t: `${feedback.attempt.toLowerCase()} isn't in the dictionary.`, bad: true };
       case 'tooShort':
         return { t: 'Words need at least 3 letters.', bad: true };
-      case 'revealed':
-        return { t: feedback.left === 0 ? 'Hint: one letter uncovered. That was your last hint.' : `Hint: one letter uncovered. ${feedback.left} left.`, bad: false };
     }
   })();
 
@@ -213,11 +250,6 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
       score={`Bonus ${bonus.length}`}
       active={foundSlots.length > 0 || hintsUsed > 0 || bonus.length > 0}
     >
-      <HintButton
-        hint={wordWheelHint(puzzle.slots.filter((_, i) => !foundSlots.includes(i)).map((s) => [s.word.letters.length, entries.get(s.word.id)?.meaningEnglish]))}
-        revealed={meaningsShown}
-        onReveal={() => setMeaningsShown(true)}
-      />
       <div class="ww-board" style={{ gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)`, maxWidth: Math.min(puzzle.cols * 44, 440) }} aria-label={`Crossword, ${foundSlots.length} of ${puzzle.slots.length} words found`} role="img">
         {Array.from({ length: puzzle.rows }, (_, r) =>
           Array.from({ length: puzzle.cols }, (_, c) => {
@@ -226,7 +258,7 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
             if (!letter) return <span key={k} />;
             const vis = shown.has(k);
             return (
-              <span key={k} class={`ww-cell${vis ? ' shown' : ''}${revealed.includes(k) && !foundSlots.some((i) => slotCells(puzzle.slots[i]).some(([rr, cc]) => cellKey(rr, cc) === k)) ? ' hinted' : ''}`}>
+              <span key={k} class={`ww-cell${vis ? ' shown' : ''}`}>
                 {vis ? letter : ''}
               </span>
             );
@@ -234,9 +266,12 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
         )}
       </div>
 
-      <p class={`t-body pill-over center${text.bad ? ' shake' : ''}`} style={{ alignSelf: 'center', color: text.bad ? 'var(--red)' : 'var(--ink)', maxWidth: '100%' }} role="status" aria-live="polite" key={text.t}>
-        {text.t}
-      </p>
+      {/* Always two lines tall, so a long clue or message never shrinks the board. */}
+      <div class="ww-status">
+        <p class={`t-body pill-over center${text.bad ? ' shake' : ''}`} style={{ color: text.bad ? 'var(--red)' : 'var(--ink)' }} role="status" aria-live="polite" key={text.t}>
+          {text.t}
+        </p>
+      </div>
 
       <div class="ww-attempt" aria-label={attempt ? `Spelling ${attempt}` : 'No letters picked'}>{attempt || ' '}</div>
 
@@ -299,9 +334,23 @@ export function WordWheelGame({ level: rawLevel }: { level: number }) {
           })}
         </div>
 
-        <button class="icon-btn boxed" aria-label={MAX_HINTS - hintsUsed > 0 ? `Hint: uncover a letter, ${MAX_HINTS - hintsUsed} left` : 'No hints left'} disabled={hintsUsed >= MAX_HINTS} onClick={hint} style={{ position: 'relative', opacity: hintsUsed >= MAX_HINTS ? 0.5 : 1 }}>
+        <button
+          class="icon-btn boxed"
+          aria-label={
+            cluedSlot !== null
+              ? 'Show the clue again'
+              : canHint
+                ? `Hint: a clue for a hidden word, ${hintsLeft} left`
+                : hintsLeft > 0
+                  ? 'No clues for the words left'
+                  : 'No hints left'
+          }
+          disabled={!canHint}
+          onClick={hint}
+          style={{ position: 'relative', opacity: canHint ? 1 : 0.5 }}
+        >
           <Icon name="lampOn" size={22} color="var(--gold)" />
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: 'var(--gold-fill)', color: 'var(--reward-ink)', fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{MAX_HINTS - hintsUsed}</span>
+          <span aria-hidden="true" style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: 'var(--gold-fill)', color: 'var(--reward-ink)', fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{hintsLeft}</span>
         </button>
       </div>
 

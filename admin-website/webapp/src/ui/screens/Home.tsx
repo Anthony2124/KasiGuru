@@ -238,12 +238,13 @@ export function HomeScreen() {
             <SectionHeading text="Help the dictionary" />
             <div class="quick-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               {[
-                { label: 'Add a word', icon: 'addCircle' as const, go: () => navigate('/submit-word') },
-                { label: 'Report an issue', icon: 'danger' as const, go: () => navigate(`/report?screen=${encodeURIComponent('Home')}`) },
+                { label: 'Add a word', icon: 'addCircle' as const, go: () => navigate('/submit-word'), disc: 'var(--lime-tint)', ink: 'var(--lime)' },
+                // Red, like every "Report an issue" in the app: it flags something wrong.
+                { label: 'Report an issue', icon: 'danger' as const, go: () => navigate(`/report?screen=${encodeURIComponent('Home')}`), disc: 'var(--red-tint)', ink: 'var(--red)' },
               ].map((q) => (
                 <button key={q.label} class="card center" onClick={q.go} style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 'var(--s-md) var(--s-xs)' }}>
-                  <span style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--lime-tint)', display: 'grid', placeItems: 'center' }}>
-                    <Icon name={q.icon} size={24} color="var(--lime)" />
+                  <span style={{ width: 48, height: 48, borderRadius: '50%', background: q.disc, display: 'grid', placeItems: 'center' }}>
+                    <Icon name={q.icon} size={24} color={q.ink} />
                   </span>
                   <span class="t-title-s">{q.label}</span>
                 </button>
