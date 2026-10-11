@@ -367,6 +367,7 @@ function init() {
   initStoryImageInput();
   initTopbar();
   initModalBehaviour();
+  initEvidenceViewer();
   initDictionaryControls();
   initLogsControls();
   initUsersListener();
@@ -2850,8 +2851,8 @@ function renderReportsTable() {
     const statusBadgeClass = status === 'resolved' ? 'badge-approved' : (status === 'dismissed' ? 'badge-rejected' : 'badge-pending');
     const dateFormatted = rep.submittedAt ? new Date(rep.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
-    const hasPhoto = (rep.photoBase64 && rep.photoBase64.length > 50) || (rep.photoUrl && rep.photoUrl.length > 0);
-    const photoSrc = rep.photoBase64 || rep.photoUrl;
+    const photoSrc = reportPhotoSrc(rep);
+    const hasPhoto = !!photoSrc;
 
     tr.innerHTML = `
       <td data-label="Date" style="white-space:nowrap; font-size:0.85rem; color:var(--muted);">${dateFormatted}</td>
@@ -2866,10 +2867,10 @@ function renderReportsTable() {
       </td>
       <td data-label="Evidence">
         ${hasPhoto ? `
-          <div style="cursor:pointer; display:inline-block;" onclick="window.viewReportEvidence('${photoSrc}', '${escapeHtml(rep.title || 'Evidence')}')" title="Click to enlarge">
-            <img src="${photoSrc}" alt="Evidence Thumbnail" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm);" />
-            <div style="font-size:0.75rem; color:var(--violet); font-weight:600; text-align:center;">Enlarge</div>
-          </div>
+          <button type="button" class="evidence-thumb" data-evidence-id="${safeId(rep.id)}" aria-label="Enlarge the photo for ${escapeHtml(rep.title || 'this report')}">
+            <img src="${escapeHtml(photoSrc)}" alt="" />
+            <span>Enlarge</span>
+          </button>
         ` : `<span style="color:var(--muted); font-size:0.82rem;">None</span>`}
       </td>
       <td data-label="Reporter & Device" style="font-size:0.82rem;">
@@ -2892,6 +2893,12 @@ function renderReportsTable() {
     tbody.appendChild(tr);
   });
 
+  tbody.querySelectorAll('.evidence-thumb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rep = reports.find(r => safeId(r.id) === btn.getAttribute('data-evidence-id'));
+      if (rep) window.viewReportEvidence(reportPhotoSrc(rep), rep.title || 'Photo evidence');
+    });
+  });
   tbody.querySelectorAll('.resolve-report-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       markRowLeaving(btn);
@@ -2921,14 +2928,55 @@ function renderReportsError(message) {
   }
 }
 
+/**
+ * A report's photo, or '' when it has none this page will show. Reports are written by anyone
+ * using the app, and the rules only bound these fields' length, so only a base64 image or an https
+ * link is shown. Anything else, such as text written to break out of an attribute, is ignored.
+ */
+function reportPhotoSrc(rep) {
+  const dataImage = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=\s]+$/;
+  const httpsLink = /^https:\/\/[^\s"'<>`]+$/;
+  const base64 = String(rep.photoBase64 || '').trim();
+  if (dataImage.test(base64)) return base64;
+  const url = String(rep.photoUrl || '').trim();
+  return httpsLink.test(url) ? url : '';
+}
+
+/** Opens a report's photo in the viewer, fitted to the screen. */
 window.viewReportEvidence = function(imgSrc, title) {
+  if (!imgSrc) return;
   const modalImg = document.getElementById('evidence-modal-img');
   const modalTitle = document.getElementById('evidence-modal-title');
   if (modalImg) modalImg.src = imgSrc;
-  if (modalTitle) modalTitle.textContent = title || "Photo Evidence";
-  const modal = document.getElementById('evidence-modal');
-  if (modal) modal.classList.add('active');
+  if (modalTitle) modalTitle.textContent = title || 'Photo evidence';
+  setEvidenceActualSize(false);
+  window.openModal('evidence-modal');
 };
+
+/** Fit the photo to the screen, or show it at its actual size, scrolling where it is larger. */
+function setEvidenceActualSize(actual) {
+  const stage = document.getElementById('evidence-stage');
+  const zoom = document.getElementById('evidence-zoom');
+  if (stage) {
+    stage.classList.toggle('is-actual', actual);
+    stage.scrollTo(0, 0);
+  }
+  if (zoom) {
+    zoom.textContent = actual ? 'Fit to screen' : 'Actual size';
+    zoom.setAttribute('aria-pressed', String(actual));
+  }
+}
+
+function initEvidenceViewer() {
+  const stage = document.getElementById('evidence-stage');
+  const toggle = () => setEvidenceActualSize(!stage?.classList.contains('is-actual'));
+  document.getElementById('evidence-zoom')?.addEventListener('click', toggle);
+  document.getElementById('evidence-modal-img')?.addEventListener('click', toggle);
+  // A click on the dark space around the photo closes the viewer, like the backdrop of any dialog.
+  stage?.addEventListener('click', (e) => {
+    if (e.target === stage) window.closeModal('evidence-modal');
+  });
+}
 
 async function resolveReport(id) {
   try {

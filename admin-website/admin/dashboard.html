@@ -1607,19 +1607,21 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
   </div>
 
   <!-- Modal: Image / Photo Evidence Lightbox -->
-  <div id="evidence-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width:800px; text-align:center;">
-      <div class="modal-header">
-        <h2 id="evidence-modal-title">Photo Evidence</h2>
-        <button class="close-btn" onclick="closeModal('evidence-modal')" aria-label="Close">&times;</button>
+  <!-- A report's photo, as large as the screen allows. Fitted to the screen first; "Actual size"
+       (or a click on the photo) shows every pixel, scrolling where it is larger than the screen. -->
+  <div id="evidence-modal" class="modal-overlay evidence-viewer">
+    <div class="modal-card evidence-card">
+      <div class="evidence-bar">
+        <h2 id="evidence-modal-title">Photo evidence</h2>
+        <div class="evidence-tools">
+          <button type="button" class="btn btn-outline btn-sm" id="evidence-zoom" aria-pressed="false">Actual size</button>
+          <button class="close-btn" onclick="closeModal('evidence-modal')" aria-label="Close">&times;</button>
+        </div>
       </div>
-      <div style="padding:16px 0; max-height:75vh; overflow-y:auto; display:flex; justify-content:center; align-items:center;">
+      <div class="evidence-stage" id="evidence-stage">
         <!-- No src attribute: viewReportEvidence() assigns it when a report is opened. An empty
              src="" makes some browsers re-request the current page as an image. -->
-        <img id="evidence-modal-img" alt="Evidence" style="max-width:100%; max-height:70vh; height:auto; border-radius:8px;  object-fit:contain;" />
-      </div>
-      <div class="modal-actions" style="justify-content:flex-end;">
-        <button type="button" class="btn btn-outline" onclick="closeModal('evidence-modal')">Close</button>
+        <img id="evidence-modal-img" alt="Photo attached to the report" />
       </div>
     </div>
   </div>
