@@ -197,7 +197,7 @@ export function WordDetailScreen({ id }: { id: string }) {
           </p>
         )}
 
-        <button class="text-btn muted row-xs" style={{ fontFamily: 'var(--body)', fontSize: 14 }} onClick={() => navigate(`/report?category=${encodeURIComponent('Wrong Word / Translation')}&word=${encodeURIComponent(word.kasiguranin)}&screen=${encodeURIComponent('Word detail')}`)}>
+        <button class="text-btn row-xs" style={{ fontFamily: 'var(--body)', fontSize: 14, color: 'var(--red)' }} onClick={() => navigate(`/report?category=${encodeURIComponent('Wrong Word / Translation')}&word=${encodeURIComponent(word.kasiguranin)}&screen=${encodeURIComponent('Word detail')}`)}>
           <Icon name="danger" size={18} /> Report an issue with this word
         </button>
       </div>

@@ -17,3 +17,17 @@ export function wordWheelHint(words: [letters: number, meaning: string | null | 
   const lines = words.flatMap(([letters, meaning]) => (firstLine(meaning) ? [`${letters} letters — ${firstLine(meaning)}`] : []));
   return lines.length ? lines.join('\n') : null;
 }
+
+/**
+ * Word Wheel's hint since 1.27 (WordWheelUiState.nextClueSlot): one hidden word's clue at a time.
+ * The next clue goes to the shortest word still hidden that has a meaning to give, the first on the
+ * board when two are as short. Null when no hidden word has one.
+ */
+export function nextClueSlot(slots: [letters: number, meaning: string | null | undefined][], found: number[]): number | null {
+  let best: number | null = null;
+  slots.forEach(([letters, meaning], i) => {
+    if (found.includes(i) || wordWheelHint([[letters, meaning]]) === null) return;
+    if (best === null || letters < slots[best][0]) best = i;
+  });
+  return best;
+}

@@ -36,7 +36,9 @@ needs a Mac and the paid Apple account either way.
   streak page after the day's first lesson.
 - **Review** — the flashcard deck, SM-2 with lapses and the relearning ladder.
 - **Games** — Word Match, Word Search (per category, drag or tap) and Word Wheel (swipe or tap).
-  The other five show *Coming soon*, exactly as the Android app ships them.
+  The other five show *Coming soon*, exactly as the Android app ships them. A game left partway is
+  saved on the device after every move and resumed when its level is opened again
+  (`lib/savedGames.ts`; cleared on sign-out).
 - **Library** — dictionary with search, categories, word of the day, recordings (see below);
   My words (Android 1.22: every word met in a lesson, review or game, with filters; kept on the
   device like `WordEncounterRepository`, and refilled from history after a sign-in); stories with

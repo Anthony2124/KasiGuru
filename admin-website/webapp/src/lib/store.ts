@@ -12,6 +12,7 @@ import { today as todayIso } from '../domain/dates';
 import { Draft, initialLearner, type LearnerData, type LearnerEvent } from '../domain/learner';
 import type { AnnouncementDto, Story, WordContent } from '../domain/types';
 import { load, save } from './persist';
+import { hydrateSavedGames } from './savedGames';
 import { applyTheme, type ThemeChoice } from './theme';
 import type { ActiveTour } from './tour';
 
@@ -224,7 +225,8 @@ export function setPrefs(patch: Partial<Prefs>) {
 }
 
 export async function loadLocal() {
-  const [learner, prefs] = await Promise.all([load<LearnerData>(LEARNER_KEY), load<Prefs>(PREFS_KEY)]);
+  // Saved games load here, before learnerLoaded opens the app, so a game finds its save as it opens.
+  const [learner, prefs] = await Promise.all([load<LearnerData>(LEARNER_KEY), load<Prefs>(PREFS_KEY), hydrateSavedGames()]);
   const base = initialLearner();
   setState({
     learner: learner

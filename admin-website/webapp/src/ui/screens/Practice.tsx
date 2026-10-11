@@ -45,6 +45,7 @@ export const GAME_RULES: Record<string, { title: string; description: string; ru
     rules: [
       'Swipe across the letters, or tap them and press Check. Words need 3 letters or more.',
       'Other real words you spell are bonus words; XP comes from completing the board.',
+      'You have 3 hints. Each gives a clue for one hidden word; find it to get the next clue.',
       'Solve the board with no hints for three stars.',
     ],
   },

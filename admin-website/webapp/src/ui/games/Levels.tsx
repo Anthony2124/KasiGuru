@@ -8,6 +8,7 @@ import { levelKey } from '../../domain/merge';
 import { plural } from '../../domain/plural';
 import { categoryPlayable } from '../../domain/wordSearch';
 import { navigate, enc } from '../../lib/router';
+import { useSavedLevels } from '../../lib/savedGames';
 import { useCorpus, useLearner } from '../../lib/store';
 import { GroundScaffold, Icon, Scene, sceneForCategory } from '../kit';
 import { GAME_RULES } from '../screens/Practice';
@@ -28,6 +29,7 @@ function Stars({ count, size = 12 }: { count: number; size?: number }) {
 
 export function LevelSelectScreen({ gameType }: { gameType: string }) {
   const learner = useLearner();
+  const inProgress = useSavedLevels(gameType);
   const wsCategory = categoryForWordSearchKey(gameType);
   const title = wsCategory ?? GAME_RULES[gameType]?.title ?? 'Levels';
   const subtitle = wsCategory ? 'Word Search · clear a level to unlock the next' : 'Clear a level to unlock the next one';
@@ -50,16 +52,22 @@ export function LevelSelectScreen({ gameType }: { gameType: string }) {
               {Array.from({ length: to - from + 1 }, (_, i) => {
                 const n = from + i;
                 const st = levelState(learner.gameLevels, gameType, n);
+                const resumes = st.isUnlocked && inProgress.has(n);
                 return (
                   <button
                     key={n}
                     class={`level-cell${st.isUnlocked ? '' : ' locked'}${st.starsEarned > 0 ? ' cleared' : ''}`}
                     disabled={!st.isUnlocked}
                     onClick={() => open(n)}
-                    aria-label={st.isUnlocked ? `Level ${n}, ${st.starsEarned} of 3 stars` : `Level ${n}, locked`}
+                    aria-label={st.isUnlocked ? `Level ${n}, ${st.starsEarned} of 3 stars${resumes ? ', game in progress' : ''}` : `Level ${n}, locked`}
                   >
                     {st.isUnlocked ? <span class="t-title-l">{n}</span> : <Icon name="lock" size={18} />}
                     {st.isUnlocked && <Stars count={st.starsEarned} />}
+                    {resumes && (
+                      <span class="resume-mark" aria-hidden="true">
+                        <Icon name="play" size={10} />
+                      </span>
+                    )}
                   </button>
                 );
               })}

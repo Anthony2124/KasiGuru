@@ -62,11 +62,11 @@ Status: **Ported** (in the web app), **Android-only** (on purpose, with the reas
 | 1.26.0 | Withdrawn senses leave the Library | Ported (2026-10-09): `corpus.json` regenerated, `contentMerge.ts` |
 | 1.26.0 | Leaderboard refreshes at most every three minutes | Ported (2026-10-07): `remote.ts` reuses each tab's top 50 for three minutes |
 | 1.26.0 | Edit profile scrolls and its back arrow asks before discarding | Android-only: a web page scrolls and the browser keeps its own back behaviour |
-| 1.27.0 | Unfinished games saved after every answer and resumed per level; levels in progress are marked | Not yet: the web quit dialog still says the round is not saved (`ui/games/shell.tsx`) |
+| 1.27.0 | Unfinished games saved after every answer and resumed per level; levels in progress are marked | Ported (2026-10-11): `domain/savedGame.ts`, `lib/savedGames.ts` (IndexedDB, cleared on sign-out), Word Match, Word Search and Word Wheel, the level picker's mark and the quit dialog |
 | 1.27.0 | Results screen: Start over replays the level fresh, hints back | Not needed: the web results screen already has Play again / Try again, which starts the level fresh |
-| 1.27.0 | Word Wheel: a hint gives one clue (a hidden word's length and meaning) instead of a letter; "Show meanings" removed | Not yet: the web hint still shows every hidden word's meaning and length at once (`WordWheel.tsx`) |
+| 1.27.0 | Word Wheel: a hint gives one clue (a hidden word's length and meaning) instead of a letter; "Show meanings" removed | Ported (2026-10-11): `nextClueSlot` in `gameHints.ts`, `WordWheel.tsx`; the line under the board keeps two lines' height |
 | 1.27.0 | Word Match: no speaker in the answer panel; the word at the top keeps its own | Not needed: the web answer panel never had one |
 | 1.27.0 | Home greeting shown in full beside the avatar | Not needed: the web header gives the greeting a line of its own |
-| 1.27.0 | Report an issue is red on Home and on the word page | Not yet: the web Home tile and word-page button are not red (`Home.tsx`, `Words.tsx`) |
+| 1.27.0 | Report an issue is red on Home and on the word page | Ported (2026-10-11): `Home.tsx`, `Words.tsx` |
 | 1.27.0 | Titles and labels no longer drop words (Game Hub tiles, profile stats, related words) | Android-only: a fix for Compose one-line text, which drops whole words; browser text wraps or ends in "…" |
 | 1.27.0 | Unearned results stars no longer look lit in the dark theme | Not needed: the web draws unearned stars in the theme's `--track` colour |

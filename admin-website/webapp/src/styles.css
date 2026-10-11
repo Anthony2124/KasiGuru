@@ -650,6 +650,12 @@ button.avatar { cursor: pointer; }
 .level-cell:active:not(:disabled) { transform: scale(0.95); }
 .level-cell.cleared { background: var(--selected); border-color: var(--selected-edge); }
 .level-cell.locked { background: var(--sunken); color: var(--faint); }
+/* A level left partway: opening it carries on from there. */
+.level-cell { position: relative; }
+.level-cell .resume-mark {
+  position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--lime-fill); color: var(--on-lime);
+}
 
 /* ── Game frame ── */
 .game { position: relative; width: 100%; min-height: 100dvh; display: flex; flex-direction: column; max-width: 640px; margin: 0 auto; isolation: isolate; }
@@ -682,7 +688,9 @@ button.avatar { cursor: pointer; }
 .ww-board > span { aspect-ratio: 1; }
 .ww-cell { display: grid; place-items: center; border-radius: 8px; background: var(--glass); border: 1px solid var(--hair); font-family: var(--display); font-weight: 700; font-size: clamp(14px, 4vw, 20px); }
 .ww-cell.shown { background: var(--olive); border-color: var(--olive-deep); color: var(--cream); animation: pop 300ms var(--ease-out); }
-.ww-cell.hinted { background: var(--gold-fill); color: var(--reward-ink); border-color: var(--gold-deep); }
+/* The line under the board: always two lines tall, so a long clue never shrinks the board. */
+.ww-status { display: flex; align-items: center; justify-content: center; height: calc(0.875rem * 1.43 * 2 + 10px); }
+.ww-status > p { max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .ww-attempt { align-self: center; min-width: 120px; min-height: 44px; padding: 6px 18px; border-radius: var(--r-pill); background: var(--glass); border: 1px solid var(--hair); text-align: center; font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: 3px; }
 .ww-controls { display: flex; align-items: center; justify-content: center; gap: var(--s-sm); }
 .ww-wheel { position: relative; flex: none; width: min(calc(100vw - 172px), 260px); aspect-ratio: 1; border-radius: 50%; background: var(--glass); border: 1px solid var(--hair); touch-action: none; user-select: none; -webkit-user-select: none; }

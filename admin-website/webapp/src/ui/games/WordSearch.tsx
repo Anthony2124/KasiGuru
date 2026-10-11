@@ -14,8 +14,10 @@ import {
   wordSearchTier,
   type Cell,
 } from '../../domain/wordSearch';
+import { resumableWordSearch } from '../../domain/savedGame';
 import { feedbackTone, playSfx, playWord } from '../../lib/audio';
 import { navigate, enc } from '../../lib/router';
+import { clearSavedGame, loadSavedGame, saveGame } from '../../lib/savedGames';
 import { act, getCorpus, useApp } from '../../lib/store';
 import { Icon, Loading, sceneForCategory } from '../kit';
 import { GameFrame, GameOver, GameUnavailable, HintButton } from './shell';
@@ -46,12 +48,15 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
   const pointerDown = useRef<Cell | null>(null);
 
   useEffect(() => {
-    setFound([]);
+    // The same seed deals the same grid, so a grid left partway only needs what was found on it.
+    const saved = board ? loadSavedGame(levelKey, level) : null;
+    const resumed = board ? resumableWordSearch(saved?.kind === 'word_search' ? saved : null, board.placements.map((p) => p.id)) : null;
+    setFound(resumed ? [...resumed.foundIds] : []);
     setStart(null);
     setDrag(null);
     setMissed(false);
-    setMisses(0);
-    setHintShown(false);
+    setMisses(resumed?.misses ?? 0);
+    setHintShown(resumed?.hintRevealed ?? false);
     setResult(null);
   }, [board]);
 
@@ -84,11 +89,16 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
   const preview = drag ? lineBetween(drag.from, drag.to) : null;
   const previewSet = new Set((preview ?? []).map(([r, c]) => `${r},${c}`));
 
+  /** Keeps the grid so far, so that leaving the game does not lose it. */
+  const saveProgress = (foundIds: string[], missCount: number, hintRevealed: boolean) =>
+    saveGame(levelKey, level, { kind: 'word_search', puzzleWordIds: board.placements.map((p) => p.id), foundIds, misses: missCount, hintRevealed });
+
   const judge = (from: Cell, to: Cell) => {
     const hit = matchLine(board, from, to, foundSet);
     if (!hit) {
       setMissed(true);
-      setMisses((m) => m + 1);
+      setMisses(misses + 1);
+      saveProgress(found, misses + 1, hintShown);
       feedbackTone(false);
       return;
     }
@@ -97,9 +107,12 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
     const next = [...found, hit.id];
     setFound(next);
     if (next.length === board.placements.length) finish(misses);
+    else saveProgress(next, misses, hintShown);
   };
 
   const finish = (missCount: number) => {
+    // Before the reward, so the grid can never be picked up and rewarded again.
+    clearSavedGame(levelKey, level);
     const count = board.placements.length;
     const stars = missCount === 0 ? 3 : missCount <= 2 ? 2 : 1;
     const xp = act((d) =>
@@ -214,7 +227,10 @@ export function WordSearchGame({ levelKey, level: rawLevel }: { levelKey: string
           <HintButton
             hint={wordSearchHint(board.placements.filter((p) => !foundSet.has(p.id)).map((p) => [p.word, entries.get(p.id)?.meaningEnglish]))}
             revealed={hintShown}
-            onReveal={() => setHintShown(true)}
+            onReveal={() => {
+              setHintShown(true);
+              saveProgress(found, misses, true);
+            }}
           />
         </div>
         <div class="ws-words">

@@ -1,17 +1,20 @@
 /**
  * Word Match (WordMatchViewModel): a Kasiguranin word, four Tagalog meanings. Rounds draw due words
  * first and every answer is an SM-2 review. A cleared round earns 5 XP + 2 per correct answer, and an
- * unassisted perfect round 5 more (XP policy 2).
+ * unassisted perfect round 5 more (XP policy 2). The round is saved after every answer and hint, and
+ * picked up again when the level is reopened (lib/savedGames.ts).
  */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { GAMES } from '../../domain/constants';
 import { questionsForLevel, starsFor } from '../../domain/gamification';
 import { shuffled } from '../../domain/random';
 import { meaningOf } from '../../domain/lesson';
+import { nextIndexOf, wordsOfRound } from '../../domain/savedGame';
 import { ratingForAnswer } from '../../domain/sm2';
 import type { Word } from '../../domain/types';
 import { feedbackTone, playWord } from '../../lib/audio';
 import { navigate } from '../../lib/router';
+import { clearSavedGame, loadSavedGame, saveGame } from '../../lib/savedGames';
 import { act, getCorpus, getState, useApp } from '../../lib/store';
 import { ClayButton, Icon, Loading, sceneForIndex } from '../kit';
 import { GameFrame, GameOver, GameUnavailable, HintButton, type ReviewItem } from './shell';
@@ -40,25 +43,57 @@ export function WordMatchGame({ level }: { level: number }) {
   useEffect(() => {
     if (!ready) return;
     const corpus = getCorpus();
-    let words = corpus.practiceWords(total);
+    // A round left partway carries on: the same words in the same order, from the first one not yet
+    // answered. Options are dealt again, so an open question can come back in a different order.
+    const saved = loadSavedGame(GAMES.WORD_MATCH, level);
+    const savedRound = saved?.kind === 'round' ? saved : null;
+    const savedWords = savedRound ? wordsOfRound(savedRound, (id) => corpus.byId(id), total) : null;
+    let words = savedWords ?? corpus.practiceWords(total);
     if (!words.length) words = corpus.fresh(total);
-    setQuestions(
-      words.map((w) => ({
-        word: w,
-        // The meaning as lessons print it: a Tagalog gloss that only repeats the headword would
-        // hand the answer over, so such a word is offered by its English meaning instead.
-        options: shuffled([...new Set([...corpus.distractorsFor(w, 3).map(meaningOf).filter(Boolean), meaningOf(w)])]),
-      }))
-    );
-    setIndex(0);
+    const dealt = words.map((w) => ({
+      word: w,
+      // The meaning as lessons print it: a Tagalog gloss that only repeats the headword would
+      // hand the answer over, so such a word is offered by its English meaning instead.
+      options: shuffled([...new Set([...corpus.distractorsFor(w, 3).map(meaningOf).filter(Boolean), meaningOf(w)])]),
+    }));
+    const resumed = savedWords && savedRound ? savedRound : null;
+    setQuestions(dealt);
+    setIndex(resumed ? nextIndexOf(resumed) : 0);
     setSelected(null);
-    setHint(false);
-    setScore(0);
+    setHint(resumed?.hintRevealed ?? false);
+    setScore(resumed?.score ?? 0);
     setResult(null);
-    usedHint.current = false;
-    review.current = [];
+    usedHint.current = resumed?.usedHint ?? false;
+    review.current = resumed ? [...resumed.answers] : [];
     shownAt.current = Date.now();
+    // Every question was answered before the learner left: the round ends here, as on Android.
+    if (resumed && nextIndexOf(resumed) >= dealt.length) setResult(finish(resumed.score));
   }, [ready, level, round]);
+
+  /** Keeps the round so far, so that leaving the game does not lose it. */
+  const saveProgress = (answeredScore: number, hintRevealed: boolean) => {
+    if (!questions) return;
+    saveGame(GAMES.WORD_MATCH, level, {
+      kind: 'round',
+      questionKeys: questions.map((x) => x.word.id),
+      answers: [...review.current],
+      score: answeredScore,
+      totalQuestions: total,
+      usedHint: usedHint.current,
+      hintRevealed,
+    });
+  };
+
+  /** Ends the round and gives its reward. */
+  function finish(finalScore: number) {
+    // Before the reward, so the round can never be picked up and rewarded again.
+    clearSavedGame(GAMES.WORD_MATCH, level);
+    const perfect = finalScore >= total && !usedHint.current;
+    const stars = starsFor(finalScore / total);
+    const earned = act((d) => d.finishGame({ mode: GAMES.WORD_MATCH, level, correct: finalScore, total, stars, perfect }));
+    const nextUnlocked = level < 30 && (stars >= 1 || !!getState().learner.gameLevels[`word_match_${level + 1}`]?.isUnlocked);
+    return { xp: earned, stars, next: nextUnlocked ? level + 1 : null };
+  }
 
   if (!questions) return <Loading label="Setting up the round" />;
   if (!questions.length) return <GameUnavailable message="The dictionary is still loading. Try again in a moment." />;
@@ -87,12 +122,20 @@ export function WordMatchGame({ level }: { level: number }) {
     if (answered) return;
     const isCorrect = option === answerOf(q.word);
     const rating = ratingForAnswer(isCorrect, Date.now() - shownAt.current, hint);
-    if (isCorrect) setScore((s) => s + 1);
+    const newScore = isCorrect ? score + 1 : score;
+    setScore(newScore);
     review.current.push({ prompt: q.word.kasiguranin, subPrompt: q.word.english || undefined, userAnswer: option, correctAnswer: answerOf(q.word), isCorrect });
     setSelected(option);
+    saveProgress(newScore, false);
     feedbackTone(isCorrect);
     const word = getCorpus().byId(q.word.id) ?? q.word;
     act((d) => { d.reviewWord(word, rating); d.met([word.id], GAMES.WORD_MATCH); });
+  };
+
+  const revealHint = () => {
+    setHint(true);
+    usedHint.current = true;
+    saveProgress(score, true);
   };
 
   const next = () => {
@@ -103,12 +146,7 @@ export function WordMatchGame({ level }: { level: number }) {
       shownAt.current = Date.now();
       return;
     }
-    const finalScore = score;
-    const perfect = finalScore >= total && !usedHint.current;
-    const stars = starsFor(finalScore / total);
-    const earned = act((d) => d.finishGame({ mode: GAMES.WORD_MATCH, level, correct: finalScore, total, stars, perfect }));
-    const nextUnlocked = level < 30 && (stars >= 1 || !!getState().learner.gameLevels[`word_match_${level + 1}`]?.isUnlocked);
-    setResult({ xp: earned, stars, next: nextUnlocked ? level + 1 : null });
+    setResult(finish(score));
   };
 
   return (
@@ -144,7 +182,7 @@ export function WordMatchGame({ level }: { level: number }) {
           </button>
         )}
       </div>
-      {!answered && <HintButton hint={hintText} revealed={hint} onReveal={() => { setHint(true); usedHint.current = true; }} />}
+      {!answered && <HintButton hint={hintText} revealed={hint} onReveal={revealHint} />}
       <div class="stack-sm" role="radiogroup" aria-label="Meanings">
         {q.options.map((o) => {
           const cls = answered ? (o === answerOf(q.word) ? 'correct' : o === selected ? 'wrong' : 'dim') : '';
