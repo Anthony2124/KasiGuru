@@ -27,11 +27,7 @@ import {
   // every picture by a third for an audience that is explicitly data-sensitive.
   Bytes,
   writeBatch,
-  runTransaction,
-  // The backup export has to recognise these to write them into JSON as what they are.
-  Timestamp,
-  GeoPoint,
-  DocumentReference
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -75,8 +71,5 @@ export {
   onSnapshot,
   Bytes,
   writeBatch,
-  runTransaction,
-  Timestamp,
-  GeoPoint,
-  DocumentReference
+  runTransaction
 };

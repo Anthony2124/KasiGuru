@@ -5,7 +5,7 @@ import {
   db, auth,
   collection, doc, getDoc, getDocs, getDocsFromServer, getCountFromServer, getAggregateFromServer,
   aggregateCount, aggregateSum, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, where, limit, startAfter, onSnapshot, Bytes, writeBatch, Timestamp, GeoPoint, DocumentReference
+  query, orderBy, where, limit, startAfter, onSnapshot, Bytes, writeBatch
 } from './firebase-config.js';
 import { 
   onAuthStateChanged, signOut 
@@ -15,8 +15,9 @@ import { vocabularyStore, watchVocabulary, FINGERPRINT_SUMS } from './vocabulary
 import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
-// block or unblock users (appeals included; they flag a user for an admin instead), back up, restore
-// or reset data, and manage the team. Their activity log shows verifiers' entries only. The
+// block or unblock users (appeals included; they flag a user for an admin instead), and manage the
+// team. Their activity log shows verifiers' entries only. Backup, restore and reset are not in this
+// console for anyone: they run from the operator scripts (docs/BACKUP_AND_RESET.md). The
 // [data-admin-only] markup hides those controls; requireAdmin() refuses them in code; and
 // firestore.rules refuses them server-side, which is the part that actually protects anything.
 let currentRole = null;
@@ -316,11 +317,10 @@ const TAB_ROUTES = {
   'tab-releases': 'releases',
   'tab-users': 'users',
   'tab-team': 'team',
-  'tab-logs': 'logs',
-  'tab-backup': 'backup'
+  'tab-logs': 'logs'
 };
 // Sections a verifier cannot open, even from a bookmarked URL; they land on the Overview instead.
-const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team', 'tab-backup']);
+const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team']);
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
 function applyTab(targetTab) {
@@ -371,7 +371,6 @@ function init() {
   initUsersListener();
   initBansListener();
   initFlagsListener();
-  initBackupRestore();
   initNavDrawer();
   initSentenceReview();
   initTodoStrip();
@@ -5722,326 +5721,4 @@ window.rejectAppeal = async function(uid, displayName) {
     notify('Failed to decline appeal: ' + (e.message || String(e)), 'danger');
   }
 };
-
-// ── Backup & Restore ────────────────────────────────────────────────────────
-// JSON has no timestamp or bytes type. Left to JSON.stringify, a Timestamp comes out as a plain
-// {seconds, nanoseconds} map and a Bytes as its private {_byteString} internals, and restoring those
-// stores a map where the value used to be. The story_page_images rule (`data is bytes`) rejects that,
-// so restoring this page's own export failed at the first story picture and never reached the
-// collections after it. Tagged the way functions/firestore_backup_util.js tags them.
-function encodeBackupValue(value) {
-  if (value instanceof Bytes) return { __t: 'bytes', v: value.toBase64() };
-  if (value instanceof Timestamp) return { __t: 'timestamp', s: value.seconds, n: value.nanoseconds };
-  if (value instanceof GeoPoint) return { __t: 'geopoint', v: [value.latitude, value.longitude] };
-  if (value instanceof DocumentReference) return { __t: 'ref', v: value.path };
-  if (Array.isArray(value)) return value.map(encodeBackupValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, encodeBackupValue(v)]));
-  }
-  return value;
-}
-
-function decodeBackupValue(value) {
-  if (Array.isArray(value)) return value.map(decodeBackupValue);
-  if (!value || typeof value !== 'object') return value;
-  switch (value.__t) {
-    case 'bytes': return Bytes.fromBase64String(value.v);
-    case 'timestamp': return new Timestamp(value.s, value.n);
-    case 'geopoint': return new GeoPoint(value.v[0], value.v[1]);
-    case 'ref': return doc(db, value.v);
-  }
-  // Files exported before version 3 hold what JSON.stringify made of these types. Both shapes are
-  // specific enough to recognise, so those files restore to the values they were taken from.
-  const keys = Object.keys(value);
-  if (keys.length === 1 && value._byteString && typeof value._byteString.binaryString === 'string') {
-    return Bytes.fromUint8Array(Uint8Array.from(value._byteString.binaryString, (c) => c.charCodeAt(0)));
-  }
-  if (keys.length === 2 && Number.isInteger(value.seconds) && Number.isInteger(value.nanoseconds)) {
-    return new Timestamp(value.seconds, value.nanoseconds);
-  }
-  return Object.fromEntries(keys.map((k) => [k, decodeBackupValue(value[k])]));
-}
-
-window.exportBackup = async function() {
-  if (!requireAdmin('export a backup')) return;
-  const btn = document.getElementById('btn-export-backup');
-  if (btn) btn.disabled = true;
-  notify("Preparing database backup...", "info");
-
-  try {
-    // Collections this page can completely enumerate. Deliberately does NOT include learner data:
-    // the browser SDK has no listDocuments(), so it cannot see a `users/{uid}` document that owns a
-    // progress subcollection but has no fields of its own - and that is every user. A backup that
-    // silently omitted learner progress is the exact failure this scope note exists to prevent.
-    // Full-fidelity backup is functions/backup_firestore.js, which runs on the Admin SDK.
-    const SCOPE = [
-      "vocabulary",
-      "stories",
-      "story_page_images",
-      // Was "system_announcements" - a name no collection has ever had. AnnouncementRepository.kt
-      // and firestore.rules both say `announcements`, so every export before this quietly wrote an
-      // empty array, and a restore would have been denied by the rules.
-      "announcements",
-      "app_releases",
-      "word_submissions",
-      "sentence_submissions",
-      "literature_submissions",
-      "issue_reports",
-      "admin_audit_log"
-    ];
-
-    const collections = {};
-    for (const name of SCOPE) {
-      const snap = await getDocs(collection(db, name));
-      // The id stays beside the fields, not among them: every story has an `id` field of its own.
-      collections[name] = snap.docs.map(d => ({ id: d.id, data: encodeBackupValue(d.data()) }));
-    }
-
-    const backupData = {
-      version: 3,
-      scope: "content-and-moderation",
-      note: "Learner progress (users/*/progress) is not included; use functions/backup_firestore.js for a full backup.",
-      exportedAt: new Date().toISOString(),
-      timestamp: Date.now(),
-      collections
-    };
-
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const dateStr = new Date().toISOString().split('T')[0];
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `kasiguru-content-backup-${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    const summary = Object.entries(backupData.collections)
-      .map(([k, v]) => `${v.length} ${k}`)
-      .join(', ');
-    notify(`Backup downloaded: ${summary}.`, "success");
-    logAudit("backup_export", {
-      scope: backupData.scope,
-      counts: Object.fromEntries(Object.entries(backupData.collections).map(([k, v]) => [k, v.length]))
-    });
-  } catch (e) {
-    console.error("Backup export failed:", e);
-    notify("Backup export failed: " + e.message, "danger");
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-};
-
-/**
- * Clears the moderation queues: pending word and literature submissions, and issue reports.
- *
- * Scoped to exactly the collections `firestore.rules` lets an admin delete. Learner progress,
- * leaderboard rows, public profiles, device tokens and security questions are owner-writable only by design, so a
- * full database reset is deliberately not a button here - it runs from functions/reset_firestore.js
- * with the service-account key. Weakening the rules to make this button do more would give every
- * admin session the power to rewrite any learner's data.
- */
-window.resetModerationQueues = async function () {
-  if (!requireAdmin('clear the moderation queues')) return;
-  const btn = document.getElementById('btn-reset-queues');
-  const QUEUES = ['word_submissions', 'sentence_submissions', 'literature_submissions', 'issue_reports'];
-
-  try {
-    if (btn) btn.disabled = true;
-
-    const snaps = {};
-    let total = 0;
-    for (const name of QUEUES) {
-      const snap = await getDocs(collection(db, name));
-      snaps[name] = snap.docs;
-      total += snap.docs.length;
-    }
-
-    if (total === 0) {
-      notify('Moderation queues are already empty.', 'info');
-      return;
-    }
-
-    const breakdown = QUEUES.map((n) => `${snaps[n].length} ${n.replace(/_/g, ' ')}`).join(', ');
-    const confirmed = await confirmDialog({
-      title: 'Clear moderation queues?',
-      body:
-        `<p>This permanently deletes <strong>${escapeHtml(breakdown)}</strong>.</p>` +
-        `<p style="color:var(--status-rejected); margin-top:8px;">Approved words already merged into the dictionary are not affected. ` +
-        `Pending and rejected items are gone for good. Export a backup first if you have not.</p>`,
-      confirmLabel: `Delete ${plural(total, 'item')}`,
-      danger: true
-    });
-    if (!confirmed) return;
-
-    notify('Clearing moderation queues...', 'info');
-
-    let removed = 0;
-    for (const name of QUEUES) {
-      let batch = writeBatch(db);
-      let n = 0;
-      for (const d of snaps[name]) {
-        batch.delete(doc(db, name, d.id));
-        n++;
-        removed++;
-        if (n % 400 === 0) {
-          await batch.commit();
-          batch = writeBatch(db);
-        }
-      }
-      if (n % 400 !== 0) await batch.commit();
-    }
-
-    await logAudit('reset_moderation_queues', {
-      counts: Object.fromEntries(QUEUES.map((n) => [n, snaps[n].length]))
-    });
-    notify(`Cleared ${plural(removed, 'item')} from the moderation queues.`, 'success');
-  } catch (e) {
-    console.error('Queue reset failed:', e);
-    notify('Reset failed: ' + e.message, 'danger');
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-};
-
-function initBackupRestore() {
-  const dropzone = document.getElementById('backup-dropzone');
-  const fileInput = document.getElementById('backup-file-input');
-  const statusEl = document.getElementById('backup-restore-status');
-
-  if (!dropzone || !fileInput) return;
-
-  dropzone.addEventListener('click', () => fileInput.click());
-
-  dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('dragover');
-  });
-
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleBackupFile(files[0]);
-    }
-  });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files && fileInput.files.length > 0) {
-      handleBackupFile(fileInput.files[0]);
-      fileInput.value = '';
-    }
-  });
-
-  async function handleBackupFile(file) {
-    if (!requireAdmin('restore a backup')) return;
-    if (!file.name.endsWith('.json')) {
-      notify("Please select a valid .json backup file.", "danger");
-      return;
-    }
-
-    try {
-      const text = await file.text();
-      const backup = JSON.parse(text);
-
-      // Support both full database backup files and audit-log-specific export files
-      if (backup.exportType === "kasiguru_admin_audit_logs" && Array.isArray(backup.logs)) {
-        backup.collections = {
-          admin_audit_log: backup.logs
-        };
-      }
-
-      if (!backup.collections) {
-        notify("Invalid backup file structure.", "danger");
-        return;
-      }
-
-      const counts = Object.entries(backup.collections)
-        .map(([k, v]) => `${Array.isArray(v) ? v.length : 0} ${k}`)
-        .join(', ');
-
-      const confirmed = await confirmDialog({
-        title: 'Restore Database Backup?',
-        body: `<p>Found: <strong>${escapeHtml(counts)}</strong>.</p><p style="color:var(--status-rejected); margin-top:8px;">Warning: This will write/overwrite documents in Firestore.</p>`,
-        confirmLabel: 'Restore Backup',
-        danger: true
-      });
-
-      if (!confirmed) return;
-
-      if (statusEl) statusEl.textContent = 'Restoring database records...';
-      notify("Restoring backup...", "info");
-
-      // Version 3 keeps each document's id apart from its fields. Before that the id was spread into
-      // the fields, so a document's own `id` field overwrote it, and the restore then deleted that
-      // field as if it were the document id. Every story lost its numeric id, and the app skips a
-      // story without one. In an old file a non-string `id` can only have come from the fields.
-      const unpack = (entry) => {
-        if (backup.version >= 3) return { id: entry.id, data: decodeBackupValue(entry.data) };
-        const { id, ...fields } = entry;
-        const data = decodeBackupValue(fields);
-        if (id != null && typeof id !== 'string') data.id = id;
-        return { id: id == null ? '' : String(id), data };
-      };
-
-      // The rules only accept a queue item created in the shape the app submits it: status
-      // 'pending' and none of the fields review adds. A reviewed item that is gone from Firestore
-      // therefore cannot be recreated from a browser, and one in a batch sinks the whole batch.
-      const APP_CREATED_QUEUES = new Set(['word_submissions', 'sentence_submissions', 'literature_submissions', 'issue_reports']);
-
-      // The file carries each document's updatedAt from when it was exported, which is older than
-      // most devices' last pull, so the app's incremental sync would skip what was just restored
-      // until its daily full reconcile. Stamping now makes a restore reach phones like any edit.
-      const APP_SYNCED_CONTENT = new Set(['vocabulary', 'stories']);
-
-      let totalRestored = 0;
-      let notRecreatable = 0;
-
-      for (const [collName, entries] of Object.entries(backup.collections)) {
-        if (!Array.isArray(entries)) continue;
-        const docs = entries.filter(Boolean).map(unpack).filter((d) => d.id);
-
-        let writes = docs;
-        if (collName === 'admin_audit_log') {
-          // Append-only by rule (update denied): insert only entries that are not already there.
-          // Read from the server, since the page only holds the newest entries.
-          const existingIds = new Set((await getDocs(collection(db, collName))).docs.map((d) => d.id));
-          writes = docs.filter((d) => !existingIds.has(d.id));
-        } else if (APP_CREATED_QUEUES.has(collName)) {
-          const existingIds = new Set((await getDocs(collection(db, collName))).docs.map((d) => d.id));
-          writes = docs.filter((d) => existingIds.has(d.id) || d.data.status === 'pending');
-          notRecreatable += docs.length - writes.length;
-        }
-
-        for (let i = 0; i < writes.length; i += 450) {
-          const batch = writeBatch(db);
-          for (const d of writes.slice(i, i + 450)) {
-            const data = APP_SYNCED_CONTENT.has(collName) ? withUpdatedAt(d.data) : d.data;
-            batch.set(doc(db, collName, d.id), data, { merge: true });
-          }
-          await batch.commit();
-        }
-        totalRestored += writes.length;
-      }
-
-      const skippedNote = notRecreatable
-        ? ` ${plural(notRecreatable, 'reviewed moderation item')} no longer in Firestore could not be recreated from the browser; restore those from the operator's full backup (functions/restore_firestore.js).`
-        : '';
-      if (statusEl) statusEl.textContent = `Restore completed! Restored ${plural(totalRestored, 'document')}.${skippedNote}`;
-      notify(`Restored ${plural(totalRestored, 'document')} from backup.${skippedNote}`, notRecreatable ? "info" : "success");
-      logAudit("backup_restore", { totalRestored, notRecreatable });
-
-    } catch (e) {
-      console.error("Restore failed:", e);
-      if (statusEl) statusEl.textContent = 'Restore failed: ' + e.message;
-      notify("Restore failed: " + e.message, "danger");
-    }
-  }
-}
 
