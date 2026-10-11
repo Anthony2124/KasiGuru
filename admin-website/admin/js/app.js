@@ -16,8 +16,8 @@ import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './role
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
 // block or unblock users (appeals included; they flag a user for an admin instead), and manage the
-// team. Their activity log shows verifiers' entries only. Backup, restore and reset are not in this
-// console for anyone: they run from the operator scripts (docs/BACKUP_AND_RESET.md). The
+// team. Their activity log shows verifiers' entries only. Backup, restore and reset run from the
+// operator scripts; the admin-only Backup & Restore page shows their commands and runs none. The
 // [data-admin-only] markup hides those controls; requireAdmin() refuses them in code; and
 // firestore.rules refuses them server-side, which is the part that actually protects anything.
 let currentRole = null;
@@ -317,10 +317,11 @@ const TAB_ROUTES = {
   'tab-releases': 'releases',
   'tab-users': 'users',
   'tab-team': 'team',
-  'tab-logs': 'logs'
+  'tab-logs': 'logs',
+  'tab-backup': 'backup'
 };
 // Sections a verifier cannot open, even from a bookmarked URL; they land on the Overview instead.
-const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team']);
+const ADMIN_ONLY_TABS = new Set(['tab-releases', 'tab-team', 'tab-backup']);
 const ROUTE_TABS = Object.fromEntries(Object.entries(TAB_ROUTES).map(([k, v]) => [v, k]));
 
 function applyTab(targetTab) {
@@ -372,6 +373,7 @@ function init() {
   initBansListener();
   initFlagsListener();
   initNavDrawer();
+  initBackupGuide();
   initSentenceReview();
   initTodoStrip();
   initQueueShortcuts();
@@ -5722,3 +5724,27 @@ window.rejectAppeal = async function(uid, displayName) {
   }
 };
 
+// ── Backup & Restore guide ──────────────────────────────────────────────────
+// The page is a list of terminal commands (docs/BACKUP_AND_RESET.md); it reads and writes nothing.
+// Each command has its own Copy button, and a dry run never shares a block with its --confirm twin,
+// so one paste cannot run the destructive step by accident.
+function initBackupGuide() {
+  document.getElementById('tab-backup')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-copy]');
+    const code = btn?.closest('.cli-code')?.querySelector('code');
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      btn.textContent = 'Copied';
+    } catch {
+      // No clipboard permission: select the command so Ctrl+C copies it.
+      const range = document.createRange();
+      range.selectNodeContents(code);
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.textContent = 'Selected';
+    }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
