@@ -6,7 +6,7 @@
   "scripts": {
     "check:structure": "node scripts/check-project-structure.js",
     "check:web": "node scripts/check-web-tokens.js",
-    "test:launch": "node --test scripts/tests/vocabulary-cache.test.cjs scripts/tests/firestore-usage.test.cjs",
+    "test:launch": "node --test scripts/tests/vocabulary-cache.test.cjs scripts/tests/firestore-usage.test.cjs scripts/tests/database-backup.test.cjs",
     "firebase:usage": "node scripts/diagnostics/firestore-usage.js",
     "dictionary:audit": "node scripts/dictionary/audit_dictionary.js",
     "dictionary:repair:preview": "node scripts/dictionary/repair_dictionary.js --dry-run",

@@ -104,9 +104,13 @@ the round's reward.
   releases, blocking users (they flag one for an admin in `user_flags`), reading admins'
   activity-log entries, and deleting words for good from the Recycle bin. A word deleted in the
   portal moves whole to `vocabulary_trash` under its own id (`moveWordToTrash`), from where staff
-  restore it and admins delete it for good. Backup, restore and reset run from the operator scripts in
-  `functions/`; the portal's admin-only Backup & Restore page shows their commands and runs
-  none of them (keep it in step with `docs/BACKUP_AND_RESET.md`). Rules test:
+  restore it and admins delete it for good. The admin-only Backup & Restore page downloads a full
+  backup and restores a dropped one with the service-account key the operator drops on it, not the
+  admin login: `js/backup-page.mjs` (page), `js/database-backup.mjs` (deep read, backup format,
+  restore decisions ported from `functions/firestore_backup_util.js`), `js/firestore-rest.mjs` (key
+  to Google token, Firestore REST) and `js/zip.mjs`; tests in `scripts/tests/database-backup.test.cjs`,
+  parity with the scripts in `functions/verify_backup_util.js`. Reset and the daily backup run from
+  the operator scripts in `functions/` (keep both in step with `docs/BACKUP_AND_RESET.md`). Rules test:
   `scripts/tests/staff-roles-rules.cjs` (local emulator, needs Java 21).
 - Download: `admin-website/download/index.html`, `js/` and `css/styles.css`.
 - Rules: `firestore.rules` and `storage.rules`; deployment configuration is in

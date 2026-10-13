@@ -129,8 +129,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Dictionary cache and quota report tests
-        run: node --test scripts/tests/vocabulary-cache.test.cjs scripts/tests/firestore-usage.test.cjs
+      - name: Dictionary cache, quota report and portal backup tests
+        run: node --test scripts/tests/vocabulary-cache.test.cjs scripts/tests/firestore-usage.test.cjs scripts/tests/database-backup.test.cjs
       - name: Project folders and local imports agree
         run: node scripts/check-project-structure.js
       # This check used to grep only admin-website/index.html for the admin script, so it

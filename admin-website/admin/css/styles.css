@@ -335,7 +335,7 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .span-3 { grid-column: span 3; }
 .row-2 { grid-row: span 2; }
 
-/* ── Backup & Restore guide ─────────────────────────────────────────────────
+/* ── Backup & Restore: terminal commands ────────────────────────────────────
    Numbered steps, each with the command to paste into the operator's terminal and its own Copy
    button beside it. Commands wrap rather than scroll, so the whole command, --confirm included, is
    always in view; Copy takes the text as written, without the wrapping. */
@@ -364,6 +364,88 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .cli-code [data-copy] { flex-shrink: 0; min-width: 72px; justify-content: center; }
 @media (max-width: 760px) {
   .cli-steps > li { padding-left: 34px; }
+}
+
+/* Backup and restore themselves (backup-page.mjs): a drop zone for the key and one for the backup,
+   then a progress line, a preview table and the typed confirmation, each step in the order it runs. */
+#tab-backup .dropzone { margin-top: var(--s-3); }
+#tab-backup .dropzone:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+#tab-backup .dropzone.is-disabled { pointer-events: none; opacity: .5; }
+#tab-backup .dz-title { font-weight: 800; margin-bottom: 6px; }
+#tab-backup .dz-help { max-width: 62ch; margin: 0 auto; font-size: var(--t-xs); color: var(--muted); line-height: 1.5; }
+.bk-key-loaded {
+  display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); padding: 14px 16px;
+  border-radius: var(--r-ctl); background: var(--status-approved-tint); color: var(--status-approved);
+}
+.bk-key-loaded[hidden], .bk-progress[hidden], .bk-alert[hidden] { display: none; }
+.bk-key-loaded > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bk-key-loaded b { font-size: var(--t-sm); font-weight: 700; }
+.bk-key-loaded span { font-size: var(--t-xs); color: var(--ink); overflow-wrap: anywhere; }
+.bk-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-3); }
+.bk-hint { font-size: var(--t-xs); color: var(--muted); }
+#tab-backup .bk-alt { margin-top: var(--s-2); font-size: var(--t-xs); color: var(--muted); }
+.bk-progress { margin-top: var(--s-3); max-width: 75ch; }
+.bk-progress progress { display: block; width: 100%; height: 8px; accent-color: var(--violet); }
+.bk-progress p { margin-top: 6px; font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+.bk-alert {
+  margin-top: var(--s-3); padding: 12px 15px; max-width: 75ch; border-radius: var(--r-ctl);
+  font-size: var(--t-sm); line-height: 1.5;
+}
+.bk-alert b { font-weight: 700; }
+.bk-alert .btn { margin-top: var(--s-2); }
+.bk-alert.is-ok { background: var(--status-approved-tint); color: var(--status-approved); }
+.bk-alert.is-warn { background: var(--status-pending-tint); color: var(--status-pending); }
+.bk-alert.is-error { background: var(--status-rejected-tint); color: var(--status-rejected); }
+.bk-summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-3);
+  margin: var(--s-3) 0 0; padding: 14px 16px; max-width: 75ch;
+  background: var(--sunken); border: 1px solid var(--hair); border-radius: var(--r-ctl);
+}
+.bk-summary dt { font-size: var(--t-xs); font-weight: 700; color: var(--muted); }
+.bk-summary dd { margin: 2px 0 0; font-size: var(--t-sm); color: var(--ink); overflow-wrap: anywhere; }
+.bk-collections {
+  min-width: 0; max-width: 75ch; margin: var(--s-3) 0 0; padding: var(--s-2) var(--s-4) var(--s-2);
+  border: 1px solid var(--hair); border-radius: var(--r-ctl);
+}
+.bk-collections legend { padding: 0 6px; font-size: var(--t-xs); font-weight: 700; color: var(--muted); }
+.bk-collections:disabled { opacity: .6; }
+.bk-tick { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: var(--s-1) 0 var(--s-2); }
+.bk-collection-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); column-gap: var(--s-5); }
+.bk-collection-list .check-label { min-height: 38px; }
+.bk-collection-list .check-label span:first-of-type { min-width: 0; overflow-wrap: anywhere; }
+.bk-collection-list .bk-hint { padding: var(--s-2) 0; }
+.bk-count { margin-left: auto; font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+label.check-label.bk-write-only { align-items: flex-start; margin-top: var(--s-3); max-width: 75ch; }
+.bk-write-only input { margin-top: 1px; }
+.bk-write-only span { font-size: var(--t-xs); color: var(--muted); line-height: 1.5; }
+.bk-link {
+  background: none; border: none; padding: 0; font: inherit; font-size: var(--t-xs); font-weight: 700;
+  color: var(--violet); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.bk-link:hover { color: var(--ink); }
+.bk-link:disabled { color: var(--muted); cursor: not-allowed; }
+table.bk-table { min-width: 0; max-width: 75ch; margin-top: var(--s-3); }
+.bk-table th.num, .bk-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.bk-table .bk-total td { font-weight: 700; border-bottom: none; }
+#tab-backup .bk-legend { margin-top: var(--s-3); max-width: 75ch; font-size: var(--t-xs); color: var(--muted); line-height: 1.55; }
+.bk-legend b { color: var(--ink); font-weight: 700; }
+.bk-confirm { margin-top: var(--s-3); max-width: 560px; }
+.bk-confirm .bk-actions { margin-top: 0; flex-wrap: nowrap; }
+.bk-confirm .form-control { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.bk-confirm .btn { flex-shrink: 0; }
+.bk-details { margin-top: var(--s-4); padding-top: var(--s-2); border-top: 1px solid var(--hair); }
+.bk-details > summary {
+  display: flex; align-items: center; min-height: var(--tap-min); cursor: pointer;
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink);
+}
+.bk-details > summary::before { content: "\25B8"; margin-right: 8px; color: var(--muted); transition: transform .15s ease; }
+.bk-details[open] > summary::before { transform: rotate(90deg); }
+.bk-details[open] > summary { margin-bottom: var(--s-3); }
+.bk-details > summary::-webkit-details-marker { display: none; }
+.bk-details > summary { list-style: none; }
+@media (max-width: 760px) {
+  .bk-confirm .bk-actions { flex-wrap: wrap; }
+  .bk-confirm .btn { width: 100%; justify-content: center; }
 }
 
 /* Bar chart. Real counts, drawn as divs — there is no chart library on this page and a corpus
