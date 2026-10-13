@@ -13,13 +13,15 @@ import {
 import { normaliseWord, findExistingWord } from './word-normalize.js';
 import { vocabularyStore, watchVocabulary, FINGERPRINT_SUMS } from './vocabulary-cache.mjs';
 import { resolveRole, ROLE_LABEL, accessCheckMessage, addVerifier } from './roles.js';
+import { initBackupPage } from './backup-page.mjs';
 
 // 'admin' or 'verifier', settled before init(). Verifiers do everything except publish APK releases,
 // block or unblock users (appeals included; they flag a user for an admin instead), and manage the
-// team. Their activity log shows verifiers' entries only. Backup, restore and reset run from the
-// operator scripts; the admin-only Backup & Restore page shows their commands and runs none. The
-// [data-admin-only] markup hides those controls; requireAdmin() refuses them in code; and
-// firestore.rules refuses them server-side, which is the part that actually protects anything.
+// team. Their activity log shows verifiers' entries only. The [data-admin-only] markup hides those
+// controls; requireAdmin() refuses them in code; and firestore.rules refuses them server-side, which
+// is the part that actually protects anything. Backup and restore, on the admin-only Backup &
+// Restore page, work only with the service-account key dropped on it (backup-page.mjs); reset runs
+// from the operator scripts.
 let currentRole = null;
 const isAdminRole = () => currentRole === 'admin';
 function requireAdmin(what) {
@@ -382,6 +384,7 @@ function init() {
   initTodoStrip();
   initQueueShortcuts();
   if (isAdminRole()) initTeam();
+  if (isAdminRole()) initBackupPage({ projectId: db.app.options.projectId, notify, logAudit, escapeHtml });
 
   // Open whatever the URL asks for, so a bookmarked or shared link lands on the right section.
   const routed = ROUTE_TABS[location.hash.slice(1)];
@@ -1347,6 +1350,8 @@ function renderAuditLogs() {
     else if (d.title) summary = `Title: ${d.title}`;
     else if (d.kasiguranin) summary = `Word: ${d.kasiguranin}`;
     else if (d.versionName) summary = `v${d.versionName}`;
+    else if (d.restoredFrom) summary = `From ${d.restoredFrom}: ${Number(d.written || 0).toLocaleString()} written`;
+    else if (log.action === 'database.backup') summary = `${Number(d.documents || 0).toLocaleString()} documents downloaded`;
 
     let badgeClass = 'badge-category';
     if (log.action.includes('block') || log.action.includes('delete') || log.action.includes('reject')) {
@@ -6025,10 +6030,10 @@ window.rejectAppeal = async function(uid, displayName) {
   }
 };
 
-// ── Backup & Restore guide ──────────────────────────────────────────────────
-// The page is a list of terminal commands (docs/BACKUP_AND_RESET.md); it reads and writes nothing.
-// Each command has its own Copy button, and a dry run never shares a block with its --confirm twin,
-// so one paste cannot run the destructive step by accident.
+// ── Backup & Restore: terminal commands ─────────────────────────────────────
+// Backup and restore run on the page itself (backup-page.mjs). Reset and the daily task are still
+// terminal commands (docs/BACKUP_AND_RESET.md), each with its own Copy button; a dry run never
+// shares a block with its --confirm twin, so one paste cannot run the destructive step by accident.
 function initBackupGuide() {
   document.getElementById('tab-backup')?.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-copy]');

@@ -381,6 +381,57 @@ async function check(name, fn) {
     assert.deepStrictEqual(shrunk, ['users 820 -> 0']);
   });
 
+  console.log('\nAdmin portal parity');
+
+  // The portal's Backup & Restore page cannot load the Admin SDK, so it carries its own copy of the
+  // restore decisions and reads values through the REST API. Both must agree with this file.
+  const portal = await import('../admin-website/admin/js/database-backup.mjs');
+  const rest = await import('../admin-website/admin/js/firestore-rest.mjs');
+
+  await check('the portal decides every restore exactly as this script does', () => {
+    const cases = [
+      ['users', [
+        { id: 'uidAAA', path: 'users/uidAAA', data: null, missing: true },
+        { id: 'main', path: 'users/uidAAA/progress/main', data: { totalXp: 1200 } },
+        { id: 'main', path: 'users/uidBBB/progress/main', data: { totalXp: 900 } },
+        { id: 'main', path: 'users/uidCCC/progress/main', data: { totalXp: 500 } },
+        { id: 'w', path: 'users/uidAAA/progress/wordStates', data: { entries: { a: 1, b: 2 } } }
+      ], new Map([
+        ['users/uidAAA/progress/main', { totalXp: 3900 }],
+        ['users/uidBBB/progress/main', { totalXp: 40 }],
+        ['users/uidAAA/progress/wordStates', { entries: { b: 2, a: 1 } }]
+      ]), []],
+      ['leaderboard_public', [{ id: 'u1', path: 'leaderboard_public/u1', data: { totalXp: 100 } }], new Map([['leaderboard_public/u1', { totalXp: 90 }]]), []],
+      ['device_tokens', [{ id: 'u1', path: 'device_tokens/u1', data: { token: 'old' } }], new Map([['device_tokens/u1', { token: 'new' }]]), []],
+      ['vocabulary', [{ id: 'w1', data: { kasiguranin: 'apak', updatedAt: 1 } }, { id: 'w2', data: { kasiguranin: 'lima', updatedAt: 1 } }],
+        new Map([['vocabulary/w1', { kasiguranin: 'x', updatedAt: 9 }], ['vocabulary/w2', { kasiguranin: 'lima', updatedAt: 9 }]]), ['updatedAt']]
+    ];
+    for (const [collection, entries, current, ignore] of cases) {
+      assert.deepStrictEqual(portal.planRestore(collection, entries, current, ignore), planRestore(collection, entries, current, ignore), collection);
+    }
+  });
+
+  await check('a value the portal reads over REST is stored as this script stores it', () => {
+    if (!admin.apps.length) admin.initializeApp({ projectId: 'demo-verify' });
+    const fromAdmin = serialize({
+      at: new admin.firestore.Timestamp(1759000001, 123456789),
+      place: new admin.firestore.GeoPoint(14.5, 121),
+      audio: Buffer.from([0, 1, 2, 255]),
+      owner: admin.firestore().doc('users/u1'),
+      list: [1, 'a', null, { nested: true }],
+      gone: null
+    });
+    const fromRest = rest.fromRestFields({
+      at: { timestampValue: '2025-09-27T19:06:41.123456789Z' },
+      place: { geoPointValue: { latitude: 14.5, longitude: 121 } },
+      audio: { bytesValue: 'AAEC/w==' },
+      owner: { referenceValue: 'projects/demo-verify/databases/(default)/documents/users/u1' },
+      list: { arrayValue: { values: [{ integerValue: '1' }, { stringValue: 'a' }, { nullValue: null }, { mapValue: { fields: { nested: { booleanValue: true } } } }] } },
+      gone: { nullValue: null }
+    });
+    assert.deepStrictEqual(fromRest, fromAdmin);
+  });
+
   console.log('');
   if (failures > 0) {
     console.error(`${failures} check(s) failed.`);

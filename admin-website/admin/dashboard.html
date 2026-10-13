@@ -668,6 +668,7 @@
             <option value="story">Stories</option>
             <option value="release" data-admin-only>Releases</option>
             <option value="announcement">Announcements</option>
+            <option value="database" data-admin-only>Backup &amp; restore</option>
           </select>
         </div>
 
@@ -718,8 +719,9 @@
     </section>
 
     <!-- Team (admins only). Verifiers do everything here except APK releases, blocking users,
-         and managing this list. firestore.rules enforces the same. Backup, restore and reset run from
-         the operator scripts; the Backup & Restore page only shows their commands. -->
+         and managing this list. firestore.rules enforces the same. Backup and restore run from the
+         admin-only Backup & Restore page with the service-account key; reset runs from the operator
+         scripts. -->
     <section id="tab-team" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
@@ -797,58 +799,73 @@
       </div>
     </section>
 
-    <!-- Backup & Restore (admins only). A guide, not controls: every step is a command for the
-         operator's terminal with the service-account key. Nothing on this page reads or writes
-         data, so a stolen admin login cannot back up, restore or wipe anything from here.
-         Matches docs/BACKUP_AND_RESET.md; change both together. -->
+    <!-- Backup & Restore (admins only). Backup and restore run here, in the browser, with the
+         service-account key the operator drops on the page (js/backup-page.mjs): it reads and writes
+         every collection, learner data included, which no admin login can. Without the key the page
+         does nothing, so a stolen admin session still cannot back up, restore or wipe anything from
+         here. The key stays in the tab; it is never uploaded or saved. Reset still runs from the
+         terminal. Matches docs/BACKUP_AND_RESET.md; change both together. -->
     <section id="tab-backup" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
           <h1>Backup, restore &amp; reset</h1>
-          <p>These run in PowerShell on the operator PC, from the repository folder, with the
-             service-account key. This console only shows the steps. Every restore and reset is a
-             dry run until you add <code>--confirm=kasiguru-86042</code>.</p>
+          <p>Download a backup of the whole database, or drop one here to restore it. Both use the
+             service-account key, which stays in this browser tab.</p>
         </div>
       </div>
 
       <div class="cli-guide">
         <div class="card">
-          <div class="card-head"><div><h2>Before you start</h2><p>Once per PowerShell window.</p></div></div>
-          <ol class="cli-steps">
-            <li>
-              <p>Open PowerShell in the repository folder, the one that holds <code>functions</code>.</p>
-            </li>
-            <li>
-              <p>Point <code>$key</code> at the service-account key. Every command below uses it.</p>
-              <div class="cli-code"><pre><code>$key = "C:\path\to\service-account.json"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-              <p class="cli-note">The key can wipe the database. Keep it on this PC only: never in the repository, never in a message.</p>
-            </li>
-          </ol>
+          <div class="card-head"><div><h2>Service-account key</h2><p>Backup and restore read and write every collection with it, learner data included.</p></div></div>
+          <div class="dropzone" id="bk-key-drop" role="button" tabindex="0" aria-describedby="bk-key-help">
+            <p class="dz-title">Drop the service-account key here, or click to choose it</p>
+            <p class="dz-help" id="bk-key-help">The <code>.json</code> key for <span data-bk-project>kasiguru-86042</span>. It stays in this
+               tab: it is never uploaded or saved, and closing the tab forgets it.</p>
+            <input type="file" id="bk-key-input" accept=".json,application/json" hidden>
+          </div>
+          <div class="bk-key-loaded" id="bk-key-loaded" hidden>
+            <iconsax-icon name="lock-1" type="bulk" size="22" color="currentColor"></iconsax-icon>
+            <div><b>Key loaded</b><span id="bk-key-email"></span></div>
+            <button type="button" class="btn btn-outline btn-sm" id="bk-key-forget">Forget key</button>
+          </div>
+          <p class="bk-alert is-error" id="bk-key-error" role="alert" hidden></p>
+          <p class="cli-note">Anyone holding this key can read and erase the whole database. Use it only on your own
+             computer, and never send it in a message.</p>
         </div>
 
         <div class="card">
-          <div class="card-head"><div><h2>Backup</h2><p>A full backup includes learner progress, the dictionary, stories, audio and the queues.</p></div></div>
-          <ol class="cli-steps">
-            <li>
-              <p>Backups run on their own. The <b>KasiGuru Daily Backup</b> task saves one at noon and 10 minutes
-                 after sign-in, as a dated folder in <code>..\KasiGuruBackups</code>, and copies it to
-                 <code>OneDrive\KasiGuruBackups</code>.</p>
-            </li>
-            <li>
-              <p>Check the last run. <code>LastTaskResult</code> 0 is fine, 1 means the backup or the copy failed,
-                 2 means a backup looks wiped: the log names the folder to restore from.</p>
-              <div class="cli-code"><pre><code>Get-ScheduledTaskInfo -TaskName 'KasiGuru Daily Backup' | Select-Object LastRunTime, LastTaskResult
+          <div class="card-head"><div><h2>Backup</h2><p>Everything: learner progress, the dictionary, stories, audio, the queues, security questions and device tokens.</p></div></div>
+          <div class="bk-actions">
+            <button type="button" class="btn btn-primary" id="bk-download" disabled>
+              <iconsax-icon name="document-download" type="bulk" size="18" color="currentColor"></iconsax-icon> Download full backup
+            </button>
+            <span class="bk-hint" id="bk-download-hint">Load the key first.</span>
+          </div>
+          <div class="bk-progress" id="bk-backup-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+          <div id="bk-backup-result" aria-live="polite"></div>
+          <p class="cli-note">Reads every document once: a few thousand of the 50,000 free reads a day. The zip holds every
+             learner's data, so keep it private. Unzipped, it is the same folder the daily backup writes.</p>
+          <details class="bk-details">
+            <summary>Daily backups on the backup PC</summary>
+            <ol class="cli-steps">
+              <li>
+                <p>The <b>KasiGuru Daily Backup</b> task saves one at noon and 10 minutes after sign-in, as a dated
+                   folder in <code>..\KasiGuruBackups</code>, and copies it to <code>OneDrive\KasiGuruBackups</code>.
+                   Those folders can be dropped straight into Restore below.</p>
+              </li>
+              <li>
+                <p>Check the last run in PowerShell, from the repository folder. <code>LastTaskResult</code> 0 is fine,
+                   1 means the backup or the copy failed, 2 means a backup looks wiped: the log names the folder to
+                   restore from.</p>
+                <div class="cli-code"><pre><code>Get-ScheduledTaskInfo -TaskName 'KasiGuru Daily Backup' | Select-Object LastRunTime, LastTaskResult
 Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-            </li>
-            <li>
-              <p>Take one now, before a reset, a big dictionary import or a release.</p>
-              <div class="cli-code"><pre><code>node functions/backup_firestore.js $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-            </li>
-            <li>
-              <p>On a new PC, register the daily task once.</p>
-              <div class="cli-code"><pre><code>.\scripts\register_backup_task.ps1 -KeyFile $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-            </li>
-          </ol>
+              </li>
+              <li>
+                <p>On a new PC, register the task once, with <code>$key</code> set to the key's path.</p>
+                <div class="cli-code"><pre><code>.\scripts\register_backup_task.ps1 -KeyFile $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              </li>
+            </ol>
+          </details>
         </div>
 
         <div class="card">
@@ -857,41 +874,72 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
             <li>
               <p>If the database was attacked, lock the attacker out first. Disable the admin account they used
                  (Firebase console &rarr; Authentication), or replace the service-account key (Google Cloud console
-                 &rarr; IAM &amp; Admin &rarr; Service accounts &rarr; Keys). Restoring before that gives them a
-                 second database to wipe.</p>
+                 &rarr; IAM &amp; Admin &rarr; Service accounts &rarr; Keys) and load the new one above. Restoring
+                 before that gives them a second database to wipe.</p>
             </li>
             <li>
-              <p>Pick the backup: the newest folder from before the problem. List them, then set <code>$b</code> to
-                 the one you chose.</p>
-              <div class="cli-code"><pre><code>Get-ChildItem ..\KasiGuruBackups -Directory | Sort-Object Name -Descending | Select-Object -First 7 Name</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-              <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Drop the backup: the newest one from before the problem. A <code>.zip</code> from this page, or a
+                 dated folder from <code>KasiGuruBackups</code> or its OneDrive copy.</p>
+              <div class="dropzone" id="bk-restore-drop" role="button" tabindex="0" aria-describedby="bk-restore-help">
+                <p class="dz-title">Drop a backup .zip or folder here, or click to choose a .zip</p>
+                <p class="dz-help" id="bk-restore-help">Zip a backup folder, or drop the folder itself.</p>
+                <input type="file" id="bk-restore-input" accept=".zip,application/zip" hidden>
+              </div>
+              <p class="bk-hint bk-alt">Or <button type="button" class="bk-link" id="bk-restore-folder-btn">choose a backup folder</button>
+                 <input type="file" id="bk-restore-folder" webkitdirectory hidden></p>
+              <div class="bk-progress" id="bk-load-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <p class="bk-alert is-error" id="bk-restore-error" role="alert" hidden></p>
+              <div id="bk-restore-summary"></div>
             </li>
             <li>
-              <p>Dry run. It only reads, and lists what it would restore, overwrite, keep or leave the same.</p>
-              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Preview. It only reads, and lists what the restore would put back, overwrite, keep or leave the same.</p>
+              <fieldset class="bk-collections" id="bk-collections" disabled>
+                <legend>Collections to restore</legend>
+                <div class="bk-tick">
+                  <button type="button" class="bk-link" data-bk-tick="all">All</button>
+                  <button type="button" class="bk-link" data-bk-tick="none">None</button>
+                  <button type="button" class="bk-link" data-bk-tick="learner">Learner data only</button>
+                </div>
+                <div class="bk-collection-list" id="bk-collection-list"></div>
+              </fieldset>
+              <label class="check-label bk-write-only"><input type="checkbox" id="bk-write-only" disabled>
+                <span>Don't read Firestore first. Only for when the preview fails with <b>Quota exceeded</b>: every
+                   ticked collection is written in full, without comparing.</span></label>
+              <div class="bk-actions">
+                <button type="button" class="btn btn-outline" id="bk-preview" disabled>Preview restore</button>
+                <span class="bk-hint" id="bk-preview-hint"></span>
+              </div>
+              <div class="bk-progress" id="bk-preview-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <div id="bk-preview-result" aria-live="polite"></div>
             </li>
             <li>
-              <p>Restore. If it stops part-way, run it again: documents already back are skipped.
-                 To restore only some collections, add <code>--only=vocabulary,stories</code>.</p>
-              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Restore. Type the project id to confirm. If it stops part-way, preview and restore again: documents
+                 already back count as same.</p>
+              <div class="bk-confirm">
+                <label class="form-label" for="bk-confirm-input">Type <b data-bk-project>kasiguru-86042</b> to confirm</label>
+                <div class="bk-actions">
+                  <input type="text" id="bk-confirm-input" class="form-control" autocomplete="off" spellcheck="false" disabled>
+                  <button type="button" class="btn btn-danger" id="bk-restore" disabled>Restore</button>
+                </div>
+              </div>
+              <div class="bk-progress" id="bk-restore-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <div id="bk-restore-result" aria-live="polite"></div>
             </li>
             <li>
-              <p>If it fails with <b>Quota exceeded</b>, the day's 50,000 free reads are used up; they reset at
-                 3 PM Philippine time. Writes still work, so learner data can come back now without reading.
-                 Run the normal restore again once reads are back.</p>
-              <div class="cli-code"><pre><code>node functions/restore_firestore.js $key $b --only=users,leaderboard_public,public_profiles,device_tokens,word_submissions,issue_reports --write-only --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-            </li>
-            <li>
-              <p>Check it: take a fresh backup and compare its <code>manifest.json</code> with the one in
-                 <code>$b</code>. The counts should match, apart from the activity log.</p>
-              <div class="cli-code"><pre><code>node functions/backup_firestore.js $key</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Check it: download a fresh backup and compare its counts with the backup you restored. They should
+                 match, apart from the activity log.</p>
             </li>
           </ol>
         </div>
 
         <div class="card">
-          <div class="card-head"><div><h2>Reset</h2><p>Take a backup first. Run each command without <code>--confirm</code>, read what it will delete, then run it with.</p></div></div>
+          <div class="card-head"><div><h2>Reset</h2><p>Runs in PowerShell on the operator PC. Take a backup first. Run each command without <code>--confirm</code>, read what it will delete, then run it with.</p></div></div>
           <ol class="cli-steps">
+            <li>
+              <p>Open PowerShell in the repository folder, the one that holds <code>functions</code>, and point
+                 <code>$key</code> at the service-account key. The commands below use it.</p>
+              <div class="cli-code"><pre><code>$key = "C:\path\to\service-account.json"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+            </li>
             <li>
               <p><b>Learner reset</b> clears learner data and keeps the content. It deletes users and their
                  progress, leaderboard rows, public profiles, device tokens, security questions, word and
@@ -904,8 +952,10 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
             </li>
             <li>
               <p><b>Factory reset</b> does the same, then deletes the dictionary, stories, story pictures,
-                 announcements and releases and writes them back from the backup in <code>$b</code>, so the
-                 content ends at exactly that backup. It refuses a backup with no content in it.</p>
+                 announcements and releases and writes them back from a backup folder, so the content ends at
+                 exactly that backup. Set <code>$b</code> to the folder (unzip a downloaded backup first). It
+                 refuses a backup with no content in it.</p>
+              <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
               <p class="cli-label">Dry run, deletes nothing:</p>
               <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
               <p class="cli-label">Then, to reset:</p>

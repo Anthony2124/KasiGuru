@@ -20,24 +20,29 @@ to wipe.
      delete every old one. Use the new key for everything below.
    - Check that the rules in the Firebase console match `firestore.rules` in the repository.
 2. **Pick the backup.** The newest folder in the backup folder, or its OneDrive copy, from *before*
-   the attack, with a `manifest.json` whose counts look normal. `backup_daily.log` marks a backup
-   that looks wiped with `WARNING`, and the scheduled task's last result is then 2.
-3. **Dry run** — reads only:
+   the attack, with a `manifest.json` whose counts look normal; or a `.zip` downloaded from the
+   portal. `backup_daily.log` marks a backup that looks wiped with `WARNING`, and the scheduled
+   task's last result is then 2.
+3. **Preview** — reads only. In the portal: **Backup & Restore**, drop the service-account key, drop
+   the backup folder or zip, **Preview restore**. From a terminal:
    ```
    node functions/restore_firestore.js <key> <backup-folder>
    ```
    After a full wipe nearly every row is *restore*. *Overwrite* rows are documents changed since the
-   backup: vandalism, or your own edits. If only some collections were hit, restore just those with
-   `--only=users,leaderboard_public`.
-4. **Restore:** the same command with `--confirm=kasiguru-86042`. If it stops part-way, run it
-   again: documents already back count as *same* and are skipped.
-   If it fails with **Quota exceeded**, the free plan's 50,000 reads for the day are used up. They
-   reset at midnight Pacific time (3 PM in the Philippines). Writes have their own limit and still
-   work, so the learner data can come back now without reading:
+   backup: vandalism, or your own edits. If only some collections were hit, untick the others (or
+   pass `--only=users,leaderboard_public`).
+4. **Restore:** type `kasiguru-86042` and press **Restore** (or run the same command with
+   `--confirm=kasiguru-86042`). If it stops part-way, preview and restore again: documents already
+   back count as *same* and are skipped.
+   If the preview fails with **Quota exceeded**, the free plan's 50,000 reads for the day are used
+   up. They reset at midnight Pacific time (3 PM in the Philippines). Writes have their own limit and
+   still work, so the learner data can come back now without reading: the page offers **Set up a
+   restore of learner data without reading**, which ticks the learner collections and *Don't read
+   Firestore first*. From a terminal:
    ```
    node functions/restore_firestore.js <key> <backup-folder> --only=users,leaderboard_public,public_profiles,device_tokens,word_submissions,issue_reports --write-only --confirm=kasiguru-86042
    ```
-5. **Check:** take a fresh backup and compare its `manifest.json` with the one you restored from.
+5. **Check:** take a fresh backup and compare its counts with the backup you restored from.
 
 Learners need do nothing. Phones keep working offline through the outage, and an empty cloud never
 deletes a phone's dictionary (`FirestoreSyncManager.syncVocabulary`). The restore leaves alone any
@@ -59,31 +64,55 @@ The app is offline-first, so a learner's device keeps working if Firestore is un
 Firestore loss would destroy is the curated corpus, the moderation queues, and cross-device progress
 recovery for anyone who reinstalls.
 
-## Why backup, restore and reset run from the terminal
+## Why everything needs the service-account key
 
 `firestore.rules` makes learner data **owner-writable only**. An admin may read `users/{uid}` for the
 dashboard, but not write it. `security_questions` and `device_tokens` are invisible to admins
 entirely. `admin_audit_log` is append-only (`allow delete: if false`).
 
 That is deliberate. It means a compromised admin session cannot rewrite or destroy anyone's learning
-record. The cost is that backup, restore and reset need the service-account key, which is a stronger
-credential held on one machine and never shipped to a browser. The dashboard's admin-only
-**Backup & Restore** page lists the steps below with each command and a Copy button, and runs none of
-them; it replaced the old export, restore and clear-queue controls on 2026-10-11 (see *History worth
-knowing*). Keep that page and this runbook in step: `admin-website/admin/dashboard.html`, `#tab-backup`.
+record. The cost is that backup, restore and reset need the service-account key, a stronger
+credential that security rules do not apply to. An admin login alone cannot take a full backup or put
+learner data back, and the rules are not loosened to let it.
 
-| Task | Command | Credential |
+The key is used in one of two places:
+
+- **The portal's Backup & Restore page** (admin-only). The operator drops the key file on the page.
+  The browser signs a one-hour Google access token with it and talks to Firestore's REST API
+  directly, so **Download full backup** and the drag-and-drop **Restore** need no terminal. The key is
+  imported as a non-extractable WebCrypto key, never uploaded or saved, and forgotten with the tab or
+  on **Forget key**. A key for any other project is refused. Without the key the page does nothing,
+  so a stolen admin login still cannot back up, restore or wipe anything from it. The trade-off is
+  that the key's contents pass through a browser tab: load it only on your own computer, and only on
+  the real portal address.
+- **The operator scripts in `functions/`**, for the scheduled daily backup, for reset, and as a
+  fallback for backup and restore.
+
+The page and the scripts read and write the same backup format, so either restores the other's
+backups. Keep the page and this runbook in step: `admin-website/admin/dashboard.html` `#tab-backup`,
+`js/backup-page.mjs`, `js/database-backup.mjs`, `js/firestore-rest.mjs`, `js/zip.mjs`.
+
+| Task | Where | Credential |
 |---|---|---|
 | **Daily full backup**, wipe check and OneDrive copy | Task Scheduler → `functions/backup_daily.js` | Service-account key |
-| **One full backup now** | `functions/backup_firestore.js` | Service-account key |
-| **Restore** | `functions/restore_firestore.js` | Service-account key |
+| **One full backup now** | Portal → **Download full backup**, or `functions/backup_firestore.js` | Service-account key |
+| **Restore** | Portal → drop a backup → Preview → Restore, or `functions/restore_firestore.js` | Service-account key |
 | **Learner or factory reset** | `functions/reset_firestore.js` | Service-account key |
 
 ---
 
 ## Backup
 
-### Full backup (the one that matters)
+### From the portal
+
+Backup & Restore → drop the service-account key → **Download full backup**. The browser reads every
+collection the way `backup_firestore.js` does, deep and with missing parents recorded, and saves
+`kasiguru-backup-<timestamp>.zip`. Inside is one `<timestamp>` folder holding the same
+`<collection>.json` files and `manifest.json` the script writes, so unzipped it is a backup folder
+like any other. A full backup reads every document once, a few thousand of the day's 50,000 reads.
+The download is logged in the activity log as `database.backup`.
+
+### Full backup from a terminal
 
 ```
 node functions/backup_firestore.js <service-account.json> [output-dir]
@@ -153,11 +182,18 @@ contains no learner progress.** Those backups are still restorable, but only for
 
 ## Restore
 
+In the portal: Backup & Restore → drop the service-account key → drop a backup on the Restore zone (a
+zip from the page, a zip of a backup folder, or the folder itself; **choose a backup folder** opens a
+folder picker) → tick the collections → **Preview restore** → type the project id → **Restore**.
+From a terminal:
+
 ```
 node functions/restore_firestore.js <service-account.json> <backup-dir> [--only=a,b] [--confirm=<projectId>]
 ```
 
-A **dry run** until `--confirm` matches the key's project id. It reads what is in Firestore now and
+Both make the same decisions; the page's copy of them (`database-backup.mjs`) is checked against the
+script's by `verify_backup_util.js`. The script is a **dry run** until `--confirm` matches the key's
+project id; the page previews first and writes only once the project id is typed. It reads what is in Firestore now and
 prints what the armed run will do with every document, addressed by its full path:
 
 | Action | When | |
@@ -173,6 +209,10 @@ Writing the older backup copy over it would leave each of those phones further a
 allow, and every write it made afterwards would be rejected, silently and for good. Other learner
 documents are overwritten when they differ: they carry no such caps, and the app merges them back
 additively at its next sync.
+
+On the page, minutes may pass between the preview and the click on **Restore**, and a phone can sync
+in between. So just before writing, the page reads again every planned progress, leaderboard and
+device-token write and keeps any that a phone has since moved past. That costs one read for each.
 
 Documents created *since* the backup are left alone. This is a **roll-forward, not a rollback** — if
 you need the database to end at exactly the state of a backup, use a factory reset instead.
@@ -190,9 +230,10 @@ comparison once reads are back, and it should plan zero writes.
 The restore cannot tell an integer from a whole-number double: JavaScript has one number type, so a
 field stored as `3.0` comes back as `3`. Nothing in this schema depends on the difference.
 
-The restore reads backup folders only. A `kasiguru-content-backup-<date>.json` file exported by the
-old dashboard page is not a folder and is refused; every daily backup folder holds the same content
-and more.
+The restore reads backups only: a folder with `manifest.json`, or on the page a zip of one. A
+`kasiguru-content-backup-<date>.json` file exported by the old dashboard page has no manifest and is
+refused; every daily backup folder holds the same content and more. Dropping a folder that holds
+several backups, such as the whole `KasiGuruBackups` folder, is refused before anything is read.
 
 ---
 
@@ -255,13 +296,19 @@ A backup nobody has restored is a hypothesis.
 node functions/verify_backup_util.js
 ```
 
-Twenty-three checks. Thirteen run over a fixture that reproduces the exact shape that broke: users
+Twenty-five checks. Thirteen run over a fixture that reproduces the exact shape that broke: users
 with no fields owning progress subcollections. They assert that the deep read finds them, that missing
 parents are recorded without inventing data, that restore puts nested documents back at their
 original paths, that pre-format-2 backups still restore, that the reset counts and deletes the same
 documents, children before parents, and that null fields and nanosecond timestamps survive a trip
-through JSON. The other ten cover the restore decisions after a wipe, batches staying under the
-request size limit, and the rotation and wipe checks of the daily backup.
+through JSON. Ten cover the restore decisions after a wipe, batches staying under the request size
+limit, and the rotation and wipe checks of the daily backup. The last two check that the portal's
+copy of the restore decisions and its REST reading of values agree with this script.
+
+The portal's own modules have tests that CI runs, with no network or credentials:
+`node --test scripts/tests/database-backup.test.cjs`. They cover the zip, the value format, the deep
+read, the restore decisions, the re-check before writing, batching and retries, and the key's token
+signing.
 
 **2. Attack drill — on the emulator, with no key and no risk to the live project:**
 
@@ -300,6 +347,18 @@ reinstalled from zero. Results:
 - With the backup copy written over the phone that was ahead, as the old restore did, its next sync
   was denied.
 
+The portal page was rehearsed the same way on 2026-10-13, against seeded data with nanosecond
+timestamps, GeoPoints, references, 300 KB audio bytes, nulls, an empty document, 650 words (more than
+one page) and document ids containing spaces, `#?&` and `%`:
+
+- A backup from the page and one from `backup_firestore.js` held the same documents in the same order.
+- Windows' *Extract All* opened the page's zip, and the page read a zip made by `Compress-Archive`.
+- After a learner reset, with a word vandalised and one phone re-uploaded past the backup, the page's
+  restore kept that phone, put the rest back, and `restore_firestore.js` then planned zero writes.
+  The reverse also held: the script restored from the page's zip, and the page then planned zero writes.
+- The page itself was driven in headless Chrome: key refused for another project, key loaded and
+  signed with WebCrypto, backup downloaded, zip dropped, preview, typed confirmation, restore.
+
 **3. Reset rehearsal:** run `reset_firestore.js` without `--confirm`. It prints exactly what it would
 delete and, in factory mode, what it would restore. The armed run reports the same numbers.
 
@@ -307,8 +366,14 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 
 ## History worth knowing
 
-**The dashboard's Backup & Reset controls were replaced on 2026-10-11.** The page now shows the
-steps and commands from this runbook and runs nothing. Before, it offered a content-only JSON
+**Backup and restore moved onto the portal page on 2026-10-13**, by request: a download button and a
+drag-and-drop restore instead of terminal commands. Unlike the controls removed two days before,
+the page uses the service-account key, not the admin login. So it covers the whole database,
+learner progress, security questions and device tokens included, makes the same restore decisions
+as the script, and an admin login alone still cannot use it. Reset stayed in the terminal.
+
+**The dashboard's Backup & Reset controls were replaced on 2026-10-11.** The page then showed the
+steps and commands from this runbook and ran nothing. Before, it offered a content-only JSON
 export, a restore from that file, and a button that cleared the moderation queues. It could not back
 up or restore learner progress, so it was never the backup that mattered. Its restore wrote every
 document in the file and gave every word a fresh `updatedAt`, so after a restore each phone would
