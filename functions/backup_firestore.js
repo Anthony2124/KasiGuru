@@ -48,7 +48,8 @@ if (!keyFile) {
 if (process.env.KASIGURU_BACKUP_DAILY === '1') {
   const todayPrefix = new Date().toISOString().slice(0, 10);
   if (listBackups(outDir).some((b) => b.name.startsWith(todayPrefix))) {
-    console.log(`Backup already exists for ${todayPrefix} — skipping.`);
+    // Plain ASCII: backup_daily.log has no BOM, and Windows PowerShell reads it as ANSI.
+    console.log(`Backup already exists for ${todayPrefix}, skipping.`);
     process.exit(0);
   }
 }
@@ -111,7 +112,8 @@ try {
 
   console.log('Backup complete ->', runDir);
   console.log('Collections:', JSON.stringify(manifest.collections));
-  console.log('WARNING: keep this folder private (contains user-submitted data).');
+  // Not "WARNING": in backup_daily.log that word is kept for a backup that looks wiped.
+  console.log('Keep this folder private: it holds learner data.');
 
   const bucketName = process.env.KASIGURU_BACKUP_BUCKET;
   if (bucketName) {
@@ -125,7 +127,7 @@ try {
     }
     console.log(`Off-site copy uploaded -> gs://${bucketName}/${destPrefix}`);
   } else {
-    console.log('KASIGURU_BACKUP_BUCKET not set — backup stayed local-only.');
+    console.log('Saved on this computer. Upload to Firebase Storage is off (KASIGURU_BACKUP_BUCKET not set).');
   }
 })().catch((err) => {
   console.error('Backup failed:', err.message);
