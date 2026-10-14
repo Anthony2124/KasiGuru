@@ -951,10 +951,11 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
               <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
             </li>
             <li>
-              <p><b>Factory reset</b> does the same, then deletes the dictionary, stories, story pictures,
-                 announcements and releases and writes them back from a backup folder, so the content ends at
-                 exactly that backup. Set <code>$b</code> to the folder (unzip a downloaded backup first). It
-                 refuses a backup with no content in it.</p>
+              <p><b>Factory reset</b> does the same, then deletes the dictionary with its pronunciation
+                 clips, recycle bin and update feed, stories, story pictures, announcements, releases and
+                 example-sentence submissions, and writes them back from a backup folder, so the content ends
+                 at exactly that backup. Set <code>$b</code> to the folder (unzip a downloaded backup first).
+                 It refuses a backup with no content in it.</p>
               <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
               <p class="cli-label">Dry run, deletes nothing:</p>
               <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>

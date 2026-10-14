@@ -17,8 +17,10 @@
  *   learner   Clears learner-generated data: synced progress, submissions, issue reports,
  *             leaderboard rows, public profiles, device tokens, security questions. The curated corpus - the
  *             dictionary, stories and releases - is untouched.
- *   factory   Everything `learner` clears, plus the content collections are deleted and rewritten
- *             from the backup given by --from, so the database ends at exactly that snapshot.
+ *   factory   Everything `learner` clears, plus the content collections - the dictionary with its
+ *             pronunciation clips, recycle bin and change feed, stories, announcements, releases and
+ *             the example-sentence queue - are deleted and rewritten from the backup given by --from,
+ *             so the content ends at exactly that snapshot.
  *
  * Safety:
  *   Dry run by default. Nothing is deleted until you pass --confirm=<projectId>, and the project
@@ -62,10 +64,16 @@ const LEARNER_COLLECTIONS = [
  */
 const CONTENT_COLLECTIONS = [
   'vocabulary',
+  'word_audio',               // pronunciation clips, one per sense; vocabulary points at them
+  'vocabulary_trash',         // the portal's recycle bin of deleted words
+  'dictionary_updates',       // the feed of dictionary changes the apps show learners
   'stories',
   'story_page_images',
   'announcements',
-  'app_releases'
+  'app_releases',
+  // Learners send these, but unlike word and literature submissions a factory reset restores them,
+  // so the example sentences waiting for review come back with the dictionary they belong to.
+  'sentence_submissions'
 ];
 
 /**
@@ -169,10 +177,16 @@ function readContentFromBackup(db, backupDir) {
   if (mode === 'factory') {
     console.log('\nDocuments to restore afterwards:');
     let restoreTotal = 0;
-    for (const item of restorable) {
+    for (const name of CONTENT_COLLECTIONS) {
+      const item = restorable.find((r) => r.collection === name);
+      // An older backup may predate a collection; the reset still empties it, so say so.
+      if (!item) {
+        console.log(`  ${name.padEnd(24)} ${'0'.padStart(6)}  (not in this backup, stays empty)`);
+        continue;
+      }
       const n = item.entries.filter((e) => !e.missing && e.data !== null).length;
       restoreTotal += n;
-      console.log(`  ${item.collection.padEnd(24)} ${String(n).padStart(6)}`);
+      console.log(`  ${name.padEnd(24)} ${String(n).padStart(6)}`);
     }
     console.log(`  ${'TOTAL'.padEnd(24)} ${String(restoreTotal).padStart(6)}`);
   }

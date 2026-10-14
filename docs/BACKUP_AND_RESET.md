@@ -265,12 +265,16 @@ node functions/reset_firestore.js <service-account.json> --mode=factory --from=<
 ```
 
 Everything `learner` clears, plus the content collections are deleted and rewritten from the backup
-you name — so the database ends at exactly that snapshot, with nothing left over.
+you name: `vocabulary`, `word_audio`, `vocabulary_trash`, `dictionary_updates`, `stories`,
+`story_page_images`, `announcements`, `app_releases` and `sentence_submissions`. The content ends at
+exactly that snapshot, with nothing left over. Learner data is deleted, not restored.
 
 It **refuses to run** if the backup folder contains no content collections. A factory reset with
-nothing to restore from is just a delete, and the script will not do that by accident.
+nothing to restore from is just a delete, and the script will not do that by accident. A content
+collection the backup has no file for is still emptied; the dry run marks it *not in this backup*.
 
-`admin_audit_log` is never cleared by either mode. It is append-only by rule and it is the record of
+Neither mode touches `admin_staff`, `user_bans` or `user_flags`, so verifiers keep their access and
+blocked learners stay blocked. `admin_audit_log` is never cleared by either mode. It is append-only by rule and it is the record of
 who ran the reset — erasing it as part of the reset would destroy the evidence of the reset.
 
 ---
@@ -365,6 +369,11 @@ delete and, in factory mode, what it would restore. The armed run reports the sa
 ---
 
 ## History worth knowing
+
+**Until 2026-10-14 a factory reset left four collections as they were**: `word_audio`,
+`vocabulary_trash`, `dictionary_updates` and `sentence_submissions`. The dictionary went back to the
+backup while clips, recycle-bin entries and change-feed entries made after it stayed, so the database
+did not end at the backup's state. They are now deleted and restored with the rest of the content.
 
 **Backup and restore moved onto the portal page on 2026-10-13**, by request: a download button and a
 drag-and-drop restore instead of terminal commands. Unlike the controls removed two days before,
