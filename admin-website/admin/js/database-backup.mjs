@@ -1,4 +1,5 @@
-// database-backup.mjs — the full backup and restore behind the portal's Backup & Restore page.
+// database-backup.mjs — the full backup, restore and factory reset behind the portal's Backup &
+// Restore page.
 //
 // A backup is what functions/backup_firestore.js writes: one <collection>.json per root collection,
 // every document with its full path (users/{uid}/progress/* included) and manifest.json, format 2.
@@ -12,7 +13,8 @@
 // all of it nor put it back.
 //
 // readAllDocsDeep and planRestore are ports of functions/firestore_backup_util.js, whose Admin SDK
-// cannot load in a browser. functions/verify_backup_util.js runs both copies on the same fixtures;
+// cannot load in a browser, and the factory reset is a port of functions/reset_firestore.js.
+// functions/verify_backup_util.js runs both copies on the same fixtures and checks the reset lists;
 // change them together.
 
 export const FORMAT = 2;
@@ -25,8 +27,21 @@ export const DEEP_COLLECTIONS = ['users'];
 // one, so phones pull them on their next sync instead of at the daily full reconcile.
 export const APP_SYNCED_CONTENT = new Set(['vocabulary', 'stories']);
 
-// What the runbook restores without reading when the day's reads are used up.
-export const LEARNER_COLLECTIONS = ['users', 'leaderboard_public', 'public_profiles', 'device_tokens', 'word_submissions', 'issue_reports'];
+// What a factory reset deletes, the same lists as functions/firestore_backup_util.js
+// RESET_LEARNER_COLLECTIONS and RESET_CONTENT_COLLECTIONS; verify_backup_util.js checks they agree.
+// The content is written back from the backup; the learner data is not.
+export const RESET_LEARNER_COLLECTIONS = [
+  'users', 'leaderboard_public', 'public_profiles', 'device_tokens', 'security_questions',
+  'word_submissions', 'literature_submissions', 'issue_reports'
+];
+export const RESET_CONTENT_COLLECTIONS = [
+  'vocabulary', 'word_audio', 'vocabulary_trash', 'dictionary_updates', 'stories', 'story_page_images',
+  'announcements', 'app_releases', 'sentence_submissions'
+];
+
+// Learner data: what "Learner data only" puts back after a reset, and what the runbook restores
+// without reading when the day's reads are used up.
+export const LEARNER_COLLECTIONS = RESET_LEARNER_COLLECTIONS;
 
 // A daily backup folder's name: the time it was taken with `:` and `.` made filename-safe.
 export function backupStamp(date) {
@@ -299,4 +314,96 @@ export async function runRestore(client, plans, { now = Date.now(), onProgress =
 export function sumPlans(plans) {
   const sum = (key) => plans.reduce((n, p) => n + p.plan[key], 0);
   return { restore: sum('restore'), overwrite: sum('overwrite'), same: sum('same'), kept: sum('kept'), writes: sum('restore') + sum('overwrite') };
+}
+
+// ── Factory reset (port of functions/reset_firestore.js --mode=factory) ────────────────────────
+
+/**
+ * The content a factory reset writes back: collection -> its real documents, for each content
+ * collection the backup has a file for. Throws when it has none, because a factory reset with
+ * nothing to restore from would only delete.
+ */
+export function resetContent(backup) {
+  const content = new Map();
+  for (const name of RESET_CONTENT_COLLECTIONS) {
+    const c = backup.collections.find((x) => x.collection === name);
+    if (c) content.set(name, c.documents.filter((d) => !d.missing && d.data !== null && (d.path || d.id)));
+  }
+  if (content.size === 0) {
+    throw new Error('This backup holds none of the content collections, so a factory reset from it would only delete. Pick a full backup.');
+  }
+  return content;
+}
+
+/**
+ * The dry run, as reset_firestore.js prints it: for every collection the reset empties, how many
+ * documents it holds now and, for the content, how many the backup writes back (null when the
+ * backup has no file for it, so it stays empty). Reads every document once.
+ */
+export async function previewFactoryReset(client, backup, { onProgress = () => {} } = {}) {
+  const content = resetContent(backup);
+  const targets = [...RESET_LEARNER_COLLECTIONS, ...RESET_CONTENT_COLLECTIONS];
+  const rows = [];
+  let documents = 0;
+  for (const [index, collection] of targets.entries()) {
+    onProgress({ collection, index, total: targets.length, documents });
+    const live = await readAllDocsDeep(client, collection, (n) => {
+      documents += n;
+      onProgress({ collection, index, total: targets.length, documents });
+    });
+    const isContent = RESET_CONTENT_COLLECTIONS.includes(collection);
+    rows.push({
+      collection,
+      content: isContent,
+      delete: live.filter((d) => !d.missing).length,
+      restore: isContent && content.has(collection) ? content.get(collection).length : null
+    });
+  }
+  return rows;
+}
+
+/**
+ * Deletes every document of the learner and content collections, then writes the content back
+ * from the backup as it was stored, with the backup's own updatedAt, as reset_firestore.js does.
+ * Each collection is read again first, so whatever was written since the preview goes too.
+ * onProgress({ phase: 'read' | 'delete' | 'write', collection, done, total }).
+ *
+ * Returns { deleted, restored }, collection -> count. If it stops part-way the error carries
+ * err.deleted and err.restored as far as they got, so the page can say what is left to put back.
+ */
+export async function runFactoryReset(client, backup, { onProgress = () => {} } = {}) {
+  const content = resetContent(backup);
+  const deleted = {};
+  const restored = {};
+  try {
+    for (const collection of [...RESET_LEARNER_COLLECTIONS, ...RESET_CONTENT_COLLECTIONS]) {
+      onProgress({ phase: 'read', collection, done: 0, total: 0 });
+      const live = await readAllDocsDeep(client, collection);
+      // Children before their parent, as the script deletes. A missing parent is no document: it
+      // goes when the last document under it does.
+      const paths = live.filter((d) => !d.missing).map((d) => d.path)
+        .sort((a, b) => b.split('/').length - a.split('/').length);
+      deleted[collection] = 0;
+      onProgress({ phase: 'delete', collection, done: 0, total: paths.length });
+      await client.deleteDocuments(paths, (done) => {
+        deleted[collection] = done;
+        onProgress({ phase: 'delete', collection, done, total: paths.length });
+      });
+    }
+    for (const [collection, docs] of content) {
+      const entries = docs.map((d) => ({ path: entryPath(collection, d), data: d.data }));
+      restored[collection] = 0;
+      if (entries.length === 0) continue;
+      onProgress({ phase: 'write', collection, done: 0, total: entries.length });
+      await client.writeDocuments(entries, (done) => {
+        restored[collection] = done;
+        onProgress({ phase: 'write', collection, done, total: entries.length });
+      });
+    }
+  } catch (err) {
+    err.deleted = deleted;
+    err.restored = restored;
+    throw err;
+  }
+  return { deleted, restored };
 }

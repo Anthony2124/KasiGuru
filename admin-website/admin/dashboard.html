@@ -719,9 +719,9 @@
     </section>
 
     <!-- Team (admins only). Verifiers do everything here except APK releases, blocking users,
-         and managing this list. firestore.rules enforces the same. Backup and restore run from the
-         admin-only Backup & Restore page with the service-account key; reset runs from the operator
-         scripts. -->
+         and managing this list. firestore.rules enforces the same. Backup, restore and factory reset
+         run from the admin-only Backup & Restore page with the service-account key; the learner reset
+         runs from the operator scripts. -->
     <section id="tab-team" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
@@ -799,24 +799,24 @@
       </div>
     </section>
 
-    <!-- Backup & Restore (admins only). Backup and restore run here, in the browser, with the
-         service-account key the operator drops on the page (js/backup-page.mjs): it reads and writes
-         every collection, learner data included, which no admin login can. Without the key the page
-         does nothing, so a stolen admin session still cannot back up, restore or wipe anything from
-         here. The key stays in the tab; it is never uploaded or saved. Reset still runs from the
-         terminal. Matches docs/BACKUP_AND_RESET.md; change both together. -->
+    <!-- Backup & Restore (admins only). Backup, restore and factory reset run here, in the browser,
+         with the service-account key the operator drops on the page (js/backup-page.mjs): it reads,
+         writes and deletes every collection, learner data included, which no admin login can. Without
+         the key the page does nothing, so a stolen admin session still cannot back up, restore or wipe
+         anything from here. The key stays in the tab; it is never uploaded or saved. The learner reset
+         runs from the terminal. Matches docs/BACKUP_AND_RESET.md; change both together. -->
     <section id="tab-backup" class="tab-content" data-admin-only style="display: none;">
       <div class="pagehead">
         <div>
           <h1>Backup, restore &amp; reset</h1>
-          <p>Download a backup of the whole database, or drop one here to restore it. Both use the
-             service-account key, which stays in this browser tab.</p>
+          <p>Download a backup of the whole database, drop one here to restore it, or factory reset the
+             database to one. All of them use the service-account key, which stays in this browser tab.</p>
         </div>
       </div>
 
       <div class="cli-guide">
         <div class="card">
-          <div class="card-head"><div><h2>Service-account key</h2><p>Backup and restore read and write every collection with it, learner data included.</p></div></div>
+          <div class="card-head"><div><h2>Service-account key</h2><p>Backup, restore and reset read, write and delete every collection with it, learner data included.</p></div></div>
           <div class="dropzone" id="bk-key-drop" role="button" tabindex="0" aria-describedby="bk-key-help">
             <p class="dz-title">Drop the service-account key here, or click to choose it</p>
             <p class="dz-help" id="bk-key-help">The <code>.json</code> key for <span data-bk-project>kasiguru-86042</span>. It stays in this
@@ -933,39 +933,87 @@ Get-Content ..\KasiGuruBackups\backup_daily.log -Tail 20</code></pre><button typ
         </div>
 
         <div class="card">
-          <div class="card-head"><div><h2>Reset</h2><p>Runs in PowerShell on the operator PC. Take a backup first. Run each command without <code>--confirm</code>, read what it will delete, then run it with.</p></div></div>
+          <div class="card-head"><div><h2>Factory reset</h2><p>Deletes all learner data and all content, then writes the content back from a backup, so it ends at exactly that backup. Learner data is not written back by the reset: put it back with Restore afterwards.</p></div></div>
           <ol class="cli-steps">
             <li>
-              <p>Open PowerShell in the repository folder, the one that holds <code>functions</code>, and point
-                 <code>$key</code> at the service-account key. The commands below use it.</p>
-              <div class="cli-code"><pre><code>$key = "C:\path\to\service-account.json"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Download a full backup above, just before the reset. Once the reset runs it is the only copy of
+                 learner progress, submissions and reports. Start right after 3 PM Philippine time: the preview and
+                 the reset each read every document, and the backup and the restore after it read more.</p>
             </li>
             <li>
-              <p><b>Learner reset</b> clears learner data and keeps the content. It deletes users and their
-                 progress, leaderboard rows, public profiles, device tokens, security questions, word and
-                 literature submissions, and issue reports. The dictionary, stories, story pictures,
-                 announcements and releases stay.</p>
-              <p class="cli-label">Dry run, deletes nothing:</p>
-              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-              <p class="cli-label">Then, to delete:</p>
-              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Drop the backup the content should end at: the one you just downloaded, or an older one to roll
+                 the dictionary, stories and releases back to that day. Anything added to them since is deleted.</p>
+              <div class="dropzone" id="bk-reset-drop" role="button" tabindex="0" aria-describedby="bk-reset-help">
+                <p class="dz-title">Drop a backup .zip or folder here, or click to choose a .zip</p>
+                <p class="dz-help" id="bk-reset-help">The same backups Restore takes.</p>
+                <input type="file" id="bk-reset-input" accept=".zip,application/zip" hidden>
+              </div>
+              <p class="bk-hint bk-alt">Or <button type="button" class="bk-link" id="bk-reset-folder-btn">choose a backup folder</button>
+                 <input type="file" id="bk-reset-folder" webkitdirectory hidden></p>
+              <div class="bk-progress" id="bk-reset-load-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <p class="bk-alert is-error" id="bk-reset-error" role="alert" hidden></p>
+              <div id="bk-reset-summary"></div>
             </li>
             <li>
-              <p><b>Factory reset</b> does the same, then deletes the dictionary with its pronunciation
-                 clips, recycle bin and update feed, stories, story pictures, announcements, releases and
-                 example-sentence submissions, and writes them back from a backup folder, so the content ends
-                 at exactly that backup. Set <code>$b</code> to the folder (unzip a downloaded backup first).
-                 It refuses a backup with no content in it.</p>
-              <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-              <p class="cli-label">Dry run, deletes nothing:</p>
-              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
-              <p class="cli-label">Then, to reset:</p>
-              <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              <p>Preview. It only reads, and counts what the reset would delete and write back.</p>
+              <div class="bk-actions">
+                <button type="button" class="btn btn-outline" id="bk-reset-preview" disabled>Preview factory reset</button>
+                <span class="bk-hint" id="bk-reset-preview-hint"></span>
+              </div>
+              <div class="bk-progress" id="bk-reset-preview-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <div id="bk-reset-preview-result" aria-live="polite"></div>
+            </li>
+            <li>
+              <p>Reset. Keep this tab open until it finishes; closing it stops the reset part-way.</p>
+              <label class="check-label bk-check"><input type="checkbox" id="bk-reset-ack" disabled>
+                <span>I downloaded a full backup just before this reset, and I know learner data stays empty until I
+                   restore it.</span></label>
+              <div class="bk-confirm">
+                <label class="form-label" for="bk-reset-confirm-input">Type <b data-bk-project>kasiguru-86042</b> to confirm</label>
+                <div class="bk-actions">
+                  <input type="text" id="bk-reset-confirm-input" class="form-control" autocomplete="off" spellcheck="false" disabled>
+                  <button type="button" class="btn btn-danger" id="bk-reset-run" disabled>Factory reset</button>
+                </div>
+              </div>
+              <div class="bk-progress" id="bk-reset-progress" hidden><progress></progress><p aria-live="polite"></p></div>
+              <div id="bk-reset-result" aria-live="polite"></div>
+            </li>
+            <li>
+              <p>Put learner data back: in Restore above, drop the backup from step 1, choose <b>Learner data only</b>,
+                 preview and restore. Phones keep working meanwhile and upload their own progress again.</p>
             </li>
           </ol>
-          <p class="cli-note cli-foot">The activity log is never cleared: it records who ran the reset. A reset and
-             the restore after it use many reads, so start right after 3 PM Philippine time.
-             Full runbook: <code>docs/BACKUP_AND_RESET.md</code>.</p>
+          <details class="bk-details">
+            <summary>From PowerShell, and the learner reset</summary>
+            <ol class="cli-steps">
+              <li>
+                <p>Open PowerShell in the repository folder, the one that holds <code>functions</code>, and point
+                   <code>$key</code> at the service-account key. Run each command without <code>--confirm</code> first,
+                   read what it will delete, then run it with.</p>
+                <div class="cli-code"><pre><code>$key = "C:\path\to\service-account.json"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              </li>
+              <li>
+                <p><b>Learner reset</b> clears learner data and keeps the content. It deletes users and their
+                   progress, leaderboard rows, public profiles, device tokens, security questions, word and
+                   literature submissions, and issue reports.</p>
+                <p class="cli-label">Dry run, deletes nothing:</p>
+                <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+                <p class="cli-label">Then, to delete:</p>
+                <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=learner --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              </li>
+              <li>
+                <p><b>Factory reset</b>, the same as the page does. Set <code>$b</code> to the backup folder (unzip a
+                   downloaded backup first; it is the folder that holds <code>manifest.json</code>).</p>
+                <div class="cli-code"><pre><code>$b = "..\KasiGuruBackups\&lt;folder name&gt;"</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+                <p class="cli-label">Dry run, deletes nothing:</p>
+                <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+                <p class="cli-label">Then, to reset:</p>
+                <div class="cli-code"><pre><code>node functions/reset_firestore.js $key --mode=factory --from=$b --confirm=kasiguru-86042</code></pre><button type="button" class="btn btn-outline btn-sm" data-copy>Copy</button></div>
+              </li>
+            </ol>
+          </details>
+          <p class="cli-note cli-foot">The activity log is never cleared: it records who ran the reset. The team list,
+             blocked users and flags are left as they are. Full runbook: <code>docs/BACKUP_AND_RESET.md</code>.</p>
         </div>
       </div>
     </section>

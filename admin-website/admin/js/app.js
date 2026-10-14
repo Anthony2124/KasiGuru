@@ -19,9 +19,9 @@ import { initBackupPage } from './backup-page.mjs';
 // block or unblock users (appeals included; they flag a user for an admin instead), and manage the
 // team. Their activity log shows verifiers' entries only. The [data-admin-only] markup hides those
 // controls; requireAdmin() refuses them in code; and firestore.rules refuses them server-side, which
-// is the part that actually protects anything. Backup and restore, on the admin-only Backup &
-// Restore page, work only with the service-account key dropped on it (backup-page.mjs); reset runs
-// from the operator scripts.
+// is the part that actually protects anything. Backup, restore and factory reset, on the admin-only
+// Backup & Restore page, work only with the service-account key dropped on it (backup-page.mjs); the
+// learner reset runs from the operator scripts.
 let currentRole = null;
 const isAdminRole = () => currentRole === 'admin';
 function requireAdmin(what) {

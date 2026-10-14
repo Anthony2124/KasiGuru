@@ -11,6 +11,42 @@ const path = require('path');
 const PAGE_SIZE = 300;
 
 /**
+ * What a reset deletes (reset_firestore.js). The portal's Backup & Restore page carries the same
+ * lists in database-backup.mjs; verify_backup_util.js checks that they agree.
+ *
+ * Learner-generated data. Everything here is produced by using the app and can be recreated by
+ * using it again; none of it is authored content.
+ */
+const RESET_LEARNER_COLLECTIONS = [
+  'users',                    // walked deep: users/{uid}/progress/{doc}
+  'leaderboard_public',
+  'public_profiles',          // the badges and stats a learner's profile shows to other players
+  'device_tokens',
+  'security_questions',
+  'word_submissions',
+  'literature_submissions',
+  'issue_reports'
+];
+
+/**
+ * Curated content. Authored by the team and moderators, expensive to recreate, and the reason a
+ * factory reset must restore rather than merely delete.
+ */
+const RESET_CONTENT_COLLECTIONS = [
+  'vocabulary',
+  'word_audio',               // pronunciation clips, one per sense; vocabulary points at them
+  'vocabulary_trash',         // the portal's recycle bin of deleted words
+  'dictionary_updates',       // the feed of dictionary changes the apps show learners
+  'stories',
+  'story_page_images',
+  'announcements',
+  'app_releases',
+  // Learners send these, but unlike word and literature submissions a factory reset restores them,
+  // so the example sentences waiting for review come back with the dictionary they belong to.
+  'sentence_submissions'
+];
+
+/**
  * Starts the Admin SDK and reports where it points, so every script can say "LIVE project" before
  * it does anything.
  *
@@ -429,5 +465,7 @@ module.exports = {
   planRotation,
   shrunkCollections,
   BATCH_MAX_BYTES,
-  DEEP_COLLECTIONS
+  DEEP_COLLECTIONS,
+  RESET_LEARNER_COLLECTIONS,
+  RESET_CONTENT_COLLECTIONS
 };

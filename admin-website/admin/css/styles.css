@@ -415,9 +415,10 @@ main { min-width: 0; padding: var(--s-5) var(--gutter) 72px; display: flex; flex
 .bk-collection-list .check-label span:first-of-type { min-width: 0; overflow-wrap: anywhere; }
 .bk-collection-list .bk-hint { padding: var(--s-2) 0; }
 .bk-count { margin-left: auto; font-size: var(--t-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
-label.check-label.bk-write-only { align-items: flex-start; margin-top: var(--s-3); max-width: 75ch; }
-.bk-write-only input { margin-top: 1px; }
+label.check-label.bk-write-only, label.check-label.bk-check { align-items: flex-start; margin-top: var(--s-3); max-width: 75ch; }
+.bk-write-only input, .bk-check input { margin-top: 1px; }
 .bk-write-only span { font-size: var(--t-xs); color: var(--muted); line-height: 1.5; }
+.bk-check span { font-size: var(--t-sm); color: var(--ink); line-height: 1.5; }
 .bk-link {
   background: none; border: none; padding: 0; font: inherit; font-size: var(--t-xs); font-weight: 700;
   color: var(--violet); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
