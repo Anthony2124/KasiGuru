@@ -4,10 +4,11 @@
  * This runs through the Admin SDK with a service-account key, and it has to. `firestore.rules`
  * deliberately makes learner data owner-writable only: an admin may read `users/{uid}` for the
  * dashboard but may not write it, `security_questions` and `device_tokens` are invisible to
- * admins entirely, and `admin_audit_log` is append-only with `allow delete: if false`. A reset
- * button in the browser therefore cannot clear learner data, and weakening the rules so it could
- * would hand every admin session the ability to rewrite any learner's progress. Holding the
- * service-account key is the stronger credential, and it stays off the web.
+ * admins entirely, and `admin_audit_log` is append-only with `allow delete: if false`. An admin
+ * login therefore cannot clear learner data, and weakening the rules so it could would hand every
+ * admin session the ability to rewrite any learner's progress. Holding the service-account key is
+ * the stronger credential. The portal's Backup & Restore page runs the same factory reset in the
+ * browser with that key (admin-website/admin/js/database-backup.mjs), never with the login.
  *
  * Usage:
  *   node reset_firestore.js <service-account.json> --mode=learner
@@ -40,41 +41,10 @@ const {
   deserialize,
   writeAllDocsByPath,
   deleteCollectionDeep,
-  countCollectionDeep
+  countCollectionDeep,
+  RESET_LEARNER_COLLECTIONS: LEARNER_COLLECTIONS,
+  RESET_CONTENT_COLLECTIONS: CONTENT_COLLECTIONS
 } = require('./firestore_backup_util');
-
-/**
- * Learner-generated data. Everything here is produced by using the app and can be recreated by
- * using it again; none of it is authored content.
- */
-const LEARNER_COLLECTIONS = [
-  'users',                    // walked deep: users/{uid}/progress/{doc}
-  'leaderboard_public',
-  'public_profiles',          // the badges and stats a learner's profile shows to other players
-  'device_tokens',
-  'security_questions',
-  'word_submissions',
-  'literature_submissions',
-  'issue_reports'
-];
-
-/**
- * Curated content. Authored by the team and moderators, expensive to recreate, and the reason a
- * factory reset must restore rather than merely delete.
- */
-const CONTENT_COLLECTIONS = [
-  'vocabulary',
-  'word_audio',               // pronunciation clips, one per sense; vocabulary points at them
-  'vocabulary_trash',         // the portal's recycle bin of deleted words
-  'dictionary_updates',       // the feed of dictionary changes the apps show learners
-  'stories',
-  'story_page_images',
-  'announcements',
-  'app_releases',
-  // Learners send these, but unlike word and literature submissions a factory reset restores them,
-  // so the example sentences waiting for review come back with the dictionary they belong to.
-  'sentence_submissions'
-];
 
 /**
  * Deliberately in neither list. The audit log is append-only by rule (`allow delete: if false`)

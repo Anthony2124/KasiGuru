@@ -1,7 +1,8 @@
 // firestore-rest.mjs — Firestore as the service account sees it, from the browser, for the Backup &
 // Restore page. The Firebase web SDK signs in as a person and is bound by firestore.rules; this
-// signs with the service-account key the operator drops on the page, so it reads and writes every
-// collection, as functions/backup_firestore.js and restore_firestore.js do with the Admin SDK.
+// signs with the service-account key the operator drops on the page, so it reads, writes and deletes
+// every collection, as functions/backup_firestore.js, restore_firestore.js and reset_firestore.js do
+// with the Admin SDK.
 //
 // The key never leaves the tab. Its private key is imported as a non-extractable CryptoKey, used
 // only to sign a one-hour token request to Google, and forgotten with the tab. Values cross in the
@@ -294,6 +295,18 @@ export function firestoreRest({ projectId, getToken, fetchImpl = fetch, host = '
       bytes += size;
     }
     if (pending.length > 0) await flush();
+    return done;
+  };
+
+  /** Deletes each document path, BATCH_MAX_DOCS to a commit; onDeleted(count so far). */
+  client.deleteDocuments = async (paths, onDeleted = () => {}) => {
+    let done = 0;
+    for (let i = 0; i < paths.length; i += BATCH_MAX_DOCS) {
+      const chunk = paths.slice(i, i + BATCH_MAX_DOCS);
+      await commitSplitting(chunk.map((p) => ({ json: JSON.stringify({ delete: `${root}/${p}` }) })));
+      done += chunk.length;
+      onDeleted(done);
+    }
     return done;
   };
 

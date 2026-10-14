@@ -40,7 +40,7 @@ to wipe.
    restore of learner data without reading**, which ticks the learner collections and *Don't read
    Firestore first*. From a terminal:
    ```
-   node functions/restore_firestore.js <key> <backup-folder> --only=users,leaderboard_public,public_profiles,device_tokens,word_submissions,issue_reports --write-only --confirm=kasiguru-86042
+   node functions/restore_firestore.js <key> <backup-folder> --only=users,leaderboard_public,public_profiles,device_tokens,security_questions,word_submissions,literature_submissions,issue_reports --write-only --confirm=kasiguru-86042
    ```
 5. **Check:** take a fresh backup and compare its counts with the backup you restored from.
 
@@ -79,14 +79,15 @@ The key is used in one of two places:
 
 - **The portal's Backup & Restore page** (admin-only). The operator drops the key file on the page.
   The browser signs a one-hour Google access token with it and talks to Firestore's REST API
-  directly, so **Download full backup** and the drag-and-drop **Restore** need no terminal. The key is
-  imported as a non-extractable WebCrypto key, never uploaded or saved, and forgotten with the tab or
-  on **Forget key**. A key for any other project is refused. Without the key the page does nothing,
-  so a stolen admin login still cannot back up, restore or wipe anything from it. The trade-off is
-  that the key's contents pass through a browser tab: load it only on your own computer, and only on
-  the real portal address.
-- **The operator scripts in `functions/`**, for the scheduled daily backup, for reset, and as a
-  fallback for backup and restore.
+  directly, so **Download full backup**, the drag-and-drop **Restore** and the **Factory reset** need
+  no terminal. The key is imported as a non-extractable WebCrypto key, never uploaded or saved, and
+  forgotten with the tab or on **Forget key**. A key for any other project is refused. Without the key
+  the page does nothing, so a stolen admin login still cannot back up, restore or wipe anything from
+  it. The trade-off is that the key's contents pass through a browser tab, and that with it the page
+  can delete the whole database: load it only on your own computer, and only on the real portal
+  address.
+- **The operator scripts in `functions/`**, for the scheduled daily backup, for the learner reset,
+  and as a fallback for the rest.
 
 The page and the scripts read and write the same backup format, so either restores the other's
 backups. Keep the page and this runbook in step: `admin-website/admin/dashboard.html` `#tab-backup`,
@@ -97,7 +98,8 @@ backups. Keep the page and this runbook in step: `admin-website/admin/dashboard.
 | **Daily full backup**, wipe check and OneDrive copy | Task Scheduler → `functions/backup_daily.js` | Service-account key |
 | **One full backup now** | Portal → **Download full backup**, or `functions/backup_firestore.js` | Service-account key |
 | **Restore** | Portal → drop a backup → Preview → Restore, or `functions/restore_firestore.js` | Service-account key |
-| **Learner or factory reset** | `functions/reset_firestore.js` | Service-account key |
+| **Factory reset** | Portal → drop a backup → Preview → Factory reset, or `functions/reset_firestore.js --mode=factory` | Service-account key |
+| **Learner reset** | `functions/reset_firestore.js --mode=learner` | Service-account key |
 
 ---
 
@@ -277,6 +279,33 @@ Neither mode touches `admin_staff`, `user_bans` or `user_flags`, so verifiers ke
 blocked learners stay blocked. `admin_audit_log` is never cleared by either mode. It is append-only by rule and it is the record of
 who ran the reset — erasing it as part of the reset would destroy the evidence of the reset.
 
+#### From the portal
+
+Backup & Restore → load the key → **Download full backup** → drop the backup to reset to on
+**Factory reset** → **Preview factory reset** → tick that you have a backup from just before → type
+the project id → **Factory reset**. Then put the learners back: **Restore learner data from this
+backup** sets up Restore with *Learner data only* ticked, or drop the backup from just before the
+reset there yourself if you reset to an older one. Preview, type the project id, **Restore**.
+
+The page does what `--mode=factory` does, with the same lists of collections (`database-backup.mjs`,
+checked against `firestore_backup_util.js` by `verify_backup_util.js`). The preview reads every
+document once and lists, per collection, what is deleted and what is written back. The reset reads
+each collection again, so whatever was written after the preview goes too, then deletes and writes.
+Restored content keeps the backup's own `updatedAt`, as the script writes it. The reset is logged as
+`database.factory_reset`.
+
+Keep the tab open until it finishes: closing it stops the reset part-way, and the page asks first. If
+it stops part-way, for example with **Quota exceeded**, it says how many documents were deleted and
+offers **Set up a restore of the content without reading** for any content collection it had started
+deleting. Writes have their own limit, so the content can come back the same day. Run the factory
+reset again once reads are back.
+
+On the live database the sequence costs roughly: the backup, a read of every document; the preview
+and the reset, a read of every document each; the learner restore afterwards, little, since the
+collections it compares against are empty. With about 10,300 documents that is some 30,000 of the
+day's 50,000 reads, plus about 8,700 deletes and 9,000 writes of the 20,000 each. One factory reset
+and restore a day fits; two do not.
+
 ---
 
 ## Resetting a single device
@@ -300,19 +329,20 @@ A backup nobody has restored is a hypothesis.
 node functions/verify_backup_util.js
 ```
 
-Twenty-five checks. Thirteen run over a fixture that reproduces the exact shape that broke: users
+Twenty-six checks. Thirteen run over a fixture that reproduces the exact shape that broke: users
 with no fields owning progress subcollections. They assert that the deep read finds them, that missing
 parents are recorded without inventing data, that restore puts nested documents back at their
 original paths, that pre-format-2 backups still restore, that the reset counts and deletes the same
 documents, children before parents, and that null fields and nanosecond timestamps survive a trip
 through JSON. Ten cover the restore decisions after a wipe, batches staying under the request size
-limit, and the rotation and wipe checks of the daily backup. The last two check that the portal's
-copy of the restore decisions and its REST reading of values agree with this script.
+limit, and the rotation and wipe checks of the daily backup. The last three check that the portal's
+copy of the restore decisions, its factory reset's lists of collections and its REST reading of
+values agree with this script.
 
 The portal's own modules have tests that CI runs, with no network or credentials:
 `node --test scripts/tests/database-backup.test.cjs`. They cover the zip, the value format, the deep
-read, the restore decisions, the re-check before writing, batching and retries, and the key's token
-signing.
+read, the restore decisions, the re-check before writing, the factory reset's preview, order and
+partial stop, batching and retries, and the key's token signing.
 
 **2. Attack drill — on the emulator, with no key and no risk to the live project:**
 
@@ -363,12 +393,33 @@ one page) and document ids containing spaces, `#?&` and `%`:
 - The page itself was driven in headless Chrome: key refused for another project, key loaded and
   signed with WebCrypto, backup downloaded, zip dropped, preview, typed confirmation, restore.
 
+The page's factory reset was rehearsed on 2026-10-14 with the 2026-10-14 production backup, after
+changing every content collection on the emulator (a clip added and one edited, a recycle-bin entry
+emptied, a feed entry and a sentence added, a sentence reviewed):
+
+- Driven in headless Chrome: backup downloaded, the backup zip dropped on Factory reset, preview,
+  the reset refused until the box was ticked and the right project id typed, reset, then **Restore
+  learner data from this backup**, preview, restore. No console errors.
+- The preview counted 8,716 documents to delete and 2,337 to write back, and read 9,091.
+- The reset took about 9 seconds on the emulator, and the learner restore wrote 6,377 documents.
+- A backup taken afterwards matched the production backup in every collection, document for
+  document, apart from the activity log.
+
 **3. Reset rehearsal:** run `reset_firestore.js` without `--confirm`. It prints exactly what it would
 delete and, in factory mode, what it would restore. The armed run reports the same numbers.
 
 ---
 
 ## History worth knowing
+
+**The factory reset moved onto the portal page on 2026-10-14**, by request, so it can be shown
+without a terminal. Like backup and restore there, it works only with the service-account key, not
+the admin login, so a stolen login still cannot wipe anything. What it adds is that whoever holds
+the key and a portal login can now wipe the database from a browser instead of a terminal; the key
+could always do that through the scripts. The learner reset stayed in the terminal. The learner
+collections the page ticks for *Learner data only* became the reset's full list at the same time,
+adding `security_questions` and `literature_submissions`, so a restore after a reset puts back
+everything the reset deleted for good.
 
 **Until 2026-10-14 a factory reset left four collections as they were**: `word_audio`,
 `vocabulary_trash`, `dictionary_updates` and `sentence_submissions`. The dictionary went back to the

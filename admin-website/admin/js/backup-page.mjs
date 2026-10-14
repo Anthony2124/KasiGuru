@@ -3,15 +3,18 @@
 // Download: reads the whole database with the service-account key and saves it as a zip holding the
 // same folder functions/backup_firestore.js writes. Restore: takes a dropped zip or backup folder,
 // previews what it would change, and writes it once the operator types the project id: the steps
-// and safeguards of functions/restore_firestore.js, on a page. docs/BACKUP_AND_RESET.md is the
-// runbook for both; change them together.
+// and safeguards of functions/restore_firestore.js, on a page. Factory reset: the same for
+// reset_firestore.js --mode=factory, from a dropped backup. docs/BACKUP_AND_RESET.md is the runbook
+// for all three; change them together.
 //
-// The admin login only opens the page. Every read and write goes through the key, which stays in
-// this tab: it is never uploaded, never saved, and forgotten when the tab closes or on Forget key.
+// The admin login only opens the page. Every read, write and delete goes through the key, which
+// stays in this tab: it is never uploaded, never saved, and forgotten when the tab closes or on
+// Forget key.
 
 import { loadServiceAccount, firestoreRest, isQuotaError } from './firestore-rest.mjs';
 import {
-  takeBackup, selectBackupFiles, readBackupFiles, previewRestore, recheckGuarded, runRestore, sumPlans, LEARNER_COLLECTIONS
+  takeBackup, selectBackupFiles, readBackupFiles, previewRestore, recheckGuarded, runRestore, sumPlans, LEARNER_COLLECTIONS,
+  RESET_CONTENT_COLLECTIONS, resetContent, previewFactoryReset, runFactoryReset
 } from './database-backup.mjs';
 import { createZip, readZip } from './zip.mjs';
 
@@ -59,6 +62,9 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
   let backup = null;    // the dropped backup, from readBackupFiles
   let plans = null;     // the preview for the current choice of collections
   let planWriteOnly = false;
+  let resetBackup = null;  // the backup a factory reset writes the content back from
+  let resetRows = null;    // its preview, from previewFactoryReset
+  let resetReads = 0;      // documents the preview read, which the reset reads again
   let busy = false;
 
   const client = () => firestoreRest({ projectId, getToken: account.getToken });
@@ -83,6 +89,13 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
     $('bk-confirm-input').disabled = !ready || writes === 0;
     $('bk-restore').disabled = !ready || writes === 0 || $('bk-confirm-input').value.trim() !== projectId;
     $('bk-restore').textContent = writes ? `Restore ${plural(writes, 'document')}` : 'Restore';
+
+    $('bk-reset-preview').disabled = !ready || !resetBackup;
+    $('bk-reset-preview-hint').textContent = !resetBackup ? 'Drop a backup first.' : !account ? 'Load the key first.' : '';
+    $('bk-reset-ack').disabled = !ready || !resetRows;
+    const armed = ready && Boolean(resetRows) && $('bk-reset-ack').checked;
+    $('bk-reset-confirm-input').disabled = !armed;
+    $('bk-reset-run').disabled = !armed || $('bk-reset-confirm-input').value.trim() !== projectId;
     page.querySelectorAll('.dropzone').forEach((z) => z.classList.toggle('is-disabled', busy));
   }
 
@@ -165,7 +178,7 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
     plans = null;
     $('bk-preview-result').innerHTML = '';
     $('bk-confirm-input').value = '';
-    refresh();
+    invalidateReset();
     notify('Key forgotten.', 'info');
   });
 
@@ -204,6 +217,57 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
     }
   }));
 
+  // ── Dropped backups, for Restore and Factory reset ──────────────────────────────────────────
+  // What a backup holds and when it was taken, with the warnings both cards share.
+  function backupSummary(b, { contentOnlyWarning }) {
+    const m = b.manifest;
+    const total = b.collections.reduce((n, c) => n + c.real, 0);
+    const taken = m.createdAt ? new Date(m.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'unknown';
+    const warnings = [];
+    if (m.projectId && m.projectId !== projectId) {
+      warnings.push(alert('warn', `This backup is from another project, <b>${escapeHtml(m.projectId)}</b>. Using it copies that project's data into ${escapeHtml(projectId)}.`));
+    }
+    if (contentOnlyWarning && (!m.format || m.format < 2)) {
+      warnings.push(alert('warn', 'This backup is from before September 2026 and holds no learner progress. It can restore content only.'));
+    }
+    return `
+      <dl class="bk-summary">
+        <div><dt>Backup</dt><dd>${escapeHtml(b.name)}</dd></div>
+        <div><dt>Taken</dt><dd>${escapeHtml(taken)}</dd></div>
+        <div><dt>Project</dt><dd>${escapeHtml(m.projectId || 'unknown')}</dd></div>
+        <div><dt>Holds</dt><dd>${plural(total, 'document')} in ${plural(b.collections.length, 'collection')}</dd></div>
+      </dl>${warnings.join('')}`;
+  }
+
+  // The backup in a drop or a file choice: a zip, a dropped folder, or a chosen folder's files.
+  async function readDropped({ entries = [], files = [] }, prefix) {
+    const dirs = entries.filter((e) => e.isDirectory);
+    let found;
+    let fallback = 'the dropped files';
+    if (dirs.length > 1) throw new Error('Drop one backup folder at a time.');
+    if (dirs.length === 1) {
+      found = await walkDirectory(dirs[0]);
+      fallback = dirs[0].name;
+    } else if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
+      progress(prefix, { text: `Opening ${files[0].name}…` });
+      const decoder = new TextDecoder();
+      const inside = await readZip(await files[0].arrayBuffer(), (name) => /\.json$/i.test(name));
+      found = inside.map((f) => ({ path: f.name, text: decoder.decode(f.data) }));
+      fallback = files[0].name.replace(/\.zip$/i, '');
+    } else {
+      found = files.map((f) => ({ path: f.webkitRelativePath || f.name, read: async () => f }));
+    }
+    if (found.length === 0) throw new Error('Nothing to read there. Drop a backup folder or zip.');
+
+    const wanted = new Set(selectBackupFiles(found.map((f) => f.path)));
+    const texts = [];
+    for (const f of found.filter((x) => wanted.has(x.path))) {
+      progress(prefix, { text: `Reading ${f.path.split('/').pop()}…` });
+      texts.push({ path: f.path, text: f.text ?? await (await f.read()).text() });
+    }
+    return readBackupFiles(texts, fallback);
+  }
+
   // ── Restore: the backup ─────────────────────────────────────────────────────────────────────
   function renderBackup() {
     const box = $('bk-restore-summary');
@@ -213,62 +277,26 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
       list.innerHTML = '<p class="bk-hint">Drop a backup first.</p>';
       return;
     }
-    const m = backup.manifest;
-    const total = backup.collections.reduce((n, c) => n + c.real, 0);
-    const taken = m.createdAt ? new Date(m.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'unknown';
-    const warnings = [];
-    if (m.projectId && m.projectId !== projectId) {
-      warnings.push(alert('warn', `This backup is from another project, <b>${escapeHtml(m.projectId)}</b>. Restoring it copies that project's data into ${escapeHtml(projectId)}.`));
-    }
-    if (!m.format || m.format < 2) {
-      warnings.push(alert('warn', 'This backup is from before September 2026 and holds no learner progress. It can restore content only.'));
-    }
-    box.innerHTML = `
-      <dl class="bk-summary">
-        <div><dt>Backup</dt><dd>${escapeHtml(backup.name)}</dd></div>
-        <div><dt>Taken</dt><dd>${escapeHtml(taken)}</dd></div>
-        <div><dt>Project</dt><dd>${escapeHtml(m.projectId || 'unknown')}</dd></div>
-        <div><dt>Holds</dt><dd>${plural(total, 'document')} in ${plural(backup.collections.length, 'collection')}</dd></div>
-      </dl>${warnings.join('')}`;
+    box.innerHTML = backupSummary(backup, { contentOnlyWarning: true });
     list.innerHTML = backup.collections.map((c) => `
       <label class="check-label"><input type="checkbox" value="${escapeHtml(c.collection)}" checked>
         <span>${escapeHtml(c.collection)}</span><span class="bk-count">${fmt(c.real)}</span></label>`).join('');
   }
 
-  async function loadBackup({ entries = [], files = [] }) {
+  function useForRestore(b) {
+    backup = b;
+    plans = null;
+    $('bk-preview-result').innerHTML = '';
+    $('bk-write-only').checked = false;
+    renderBackup();
+  }
+
+  async function loadBackup(drop) {
     const error = $('bk-restore-error');
     error.hidden = true;
     await run(async () => {
       try {
-        const dirs = entries.filter((e) => e.isDirectory);
-        let found;
-        let fallback = 'the dropped files';
-        if (dirs.length > 1) throw new Error('Drop one backup folder at a time.');
-        if (dirs.length === 1) {
-          found = await walkDirectory(dirs[0]);
-          fallback = dirs[0].name;
-        } else if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
-          progress('bk-load', { text: `Opening ${files[0].name}…` });
-          const decoder = new TextDecoder();
-          const inside = await readZip(await files[0].arrayBuffer(), (name) => /\.json$/i.test(name));
-          found = inside.map((f) => ({ path: f.name, text: decoder.decode(f.data) }));
-          fallback = files[0].name.replace(/\.zip$/i, '');
-        } else {
-          found = files.map((f) => ({ path: f.webkitRelativePath || f.name, read: async () => f }));
-        }
-        if (found.length === 0) throw new Error('Nothing to read there. Drop a backup folder or zip.');
-
-        const wanted = new Set(selectBackupFiles(found.map((f) => f.path)));
-        const texts = [];
-        for (const f of found.filter((x) => wanted.has(x.path))) {
-          progress('bk-load', { text: `Reading ${f.path.split('/').pop()}…` });
-          texts.push({ path: f.path, text: f.text ?? await (await f.read()).text() });
-        }
-        backup = readBackupFiles(texts, fallback);
-        plans = null;
-        $('bk-preview-result').innerHTML = '';
-        $('bk-write-only').checked = false;
-        renderBackup();
+        useForRestore(await readDropped(drop, 'bk-load'));
       } catch (err) {
         error.textContent = err.message;
         error.hidden = false;
@@ -299,6 +327,15 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
     });
     invalidate();
   }));
+
+  // Points Restore at a backup with only `names` ticked, ready for the operator to preview.
+  function setUpRestore(b, names, { writeOnly = false } = {}) {
+    if (b !== backup) useForRestore(b);
+    page.querySelectorAll('#bk-collection-list input').forEach((i) => { i.checked = names.includes(i.value); });
+    $('bk-write-only').checked = writeOnly;
+    invalidate();
+    $('bk-preview').focus();
+  }
 
   // ── Restore: preview ────────────────────────────────────────────────────────────────────────
   function renderPreview() {
@@ -347,12 +384,7 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
       if (isQuotaError(err) && !writeOnly) {
         out.innerHTML += alert('warn', `Writes have their own limit and still work, so learner data can come back now without reading.
           <button type="button" class="btn btn-outline btn-sm" id="bk-quota-setup">Set up a restore of learner data without reading</button>`);
-        $('bk-quota-setup').addEventListener('click', () => {
-          page.querySelectorAll('#bk-collection-list input').forEach((i) => { i.checked = LEARNER_COLLECTIONS.includes(i.value); });
-          $('bk-write-only').checked = true;
-          invalidate();
-          $('bk-preview').focus();
-        });
+        $('bk-quota-setup').addEventListener('click', () => setUpRestore(backup, LEARNER_COLLECTIONS, { writeOnly: true }));
       }
     } finally {
       progress('bk-preview', null);
@@ -399,6 +431,148 @@ export function initBackupPage({ projectId, notify, logAudit, escapeHtml }) {
     }
   }));
 
+  // ── Factory reset: the backup ───────────────────────────────────────────────────────────────
+  // A content collection the backup has no file for is flagged by the preview, and only when there
+  // is something in it to lose: a backup leaves out collections that were empty when it was taken.
+  function renderResetBackup() {
+    $('bk-reset-summary').innerHTML = resetBackup ? backupSummary(resetBackup, { contentOnlyWarning: false }) : '';
+  }
+
+  // Any change to what the reset would do makes its preview stale; the reset needs a fresh one.
+  function invalidateReset() {
+    resetRows = null;
+    renderResetPreview();
+    $('bk-reset-ack').checked = false;
+    $('bk-reset-confirm-input').value = '';
+    refresh();
+  }
+
+  async function loadResetBackup(drop) {
+    const error = $('bk-reset-error');
+    error.hidden = true;
+    await run(async () => {
+      try {
+        const dropped = await readDropped(drop, 'bk-reset-load');
+        resetContent(dropped); // refuses a backup with no content, before anything is read from Firestore
+        resetBackup = dropped;
+        $('bk-reset-result').innerHTML = '';
+        renderResetBackup();
+        invalidateReset();
+      } catch (err) {
+        error.textContent = err.message;
+        error.hidden = false;
+      } finally {
+        progress('bk-reset-load', null);
+      }
+    });
+  }
+
+  dropzone($('bk-reset-drop'), $('bk-reset-input'), loadResetBackup);
+  $('bk-reset-input').addEventListener('change', (e) => { loadResetBackup({ files: [...e.target.files] }); e.target.value = ''; });
+  $('bk-reset-folder-btn').addEventListener('click', () => { if (!busy) $('bk-reset-folder').click(); });
+  $('bk-reset-folder').addEventListener('change', (e) => { loadResetBackup({ files: [...e.target.files] }); e.target.value = ''; });
+
+  // ── Factory reset: preview ──────────────────────────────────────────────────────────────────
+  function renderResetPreview() {
+    const out = $('bk-reset-preview-result');
+    if (!resetRows) { out.innerHTML = ''; return; }
+    const deletes = resetRows.reduce((n, r) => n + r.delete, 0);
+    const writes = resetRows.reduce((n, r) => n + (r.restore || 0), 0);
+    const back = (r) => !r.content ? '<span class="bk-hint">not restored</span>'
+      : r.restore === null ? '<span class="bk-hint">not in backup</span>' : fmt(r.restore);
+    const notes = [];
+    const emptied = resetRows.filter((r) => r.content && r.restore === null && r.delete > 0);
+    if (emptied.length) {
+      notes.push(alert('warn', `${emptied.map((r) => `<b>${escapeHtml(r.collection)}</b>`).join(', ')} will be deleted and stay empty: this backup has none of it.`));
+    }
+    if (deletes > 20000 || writes > 20000) {
+      notes.push(alert('warn', 'That is more than the free plan allows in a day (20,000 deletes, 20,000 writes). The reset would stop part-way; do not run it.'));
+    }
+    out.innerHTML = `
+      <div class="table-responsive"><table class="bk-table">
+        <thead><tr><th>Collection</th><th class="num">Delete</th><th class="num">Write back</th></tr></thead>
+        <tbody>${resetRows.map((r) => `<tr><td>${escapeHtml(r.collection)}</td><td class="num">${fmt(r.delete)}</td><td class="num">${back(r)}</td></tr>`).join('')}
+          <tr class="bk-total"><td>Total</td><td class="num">${fmt(deletes)}</td><td class="num">${fmt(writes)}</td></tr></tbody>
+      </table></div>
+      <p class="bk-legend"><b>Delete</b>: every document there now. <b>Write back</b>: from <b>${escapeHtml(resetBackup.name)}</b>, so the
+        content ends at that backup. Learner data is not written back: restore it afterwards. The activity log, the team list,
+        blocked users and flags are left alone.</p>
+      <p class="bk-legend">The reset reads about ${plural(resetReads, 'document')} again, deletes ${fmt(deletes)} and writes ${fmt(writes)}.
+        The free plan allows 50,000 reads, 20,000 deletes and 20,000 writes a day.</p>
+      ${notes.join('')}`;
+  }
+
+  $('bk-reset-preview').addEventListener('click', () => run(async () => {
+    resetRows = null;
+    renderResetPreview();
+    $('bk-reset-result').innerHTML = '';
+    const c = client();
+    try {
+      resetRows = await previewFactoryReset(c, resetBackup, {
+        onProgress: ({ collection, index, total, documents }) => progress('bk-reset-preview', {
+          text: `Reading ${collection} from Firestore (${index + 1} of ${total}), ${plural(documents, 'document')} so far`,
+          value: index, max: total
+        })
+      });
+      resetReads = c.reads;
+      renderResetPreview();
+    } catch (err) {
+      $('bk-reset-preview-result').innerHTML = alert('error', `The preview did not finish: ${escapeHtml(err.message)} Nothing was deleted.`);
+    } finally {
+      progress('bk-reset-preview', null);
+    }
+  }));
+
+  // ── Factory reset: run ──────────────────────────────────────────────────────────────────────
+  $('bk-reset-ack').addEventListener('change', () => {
+    if (!$('bk-reset-ack').checked) $('bk-reset-confirm-input').value = '';
+    refresh();
+  });
+  $('bk-reset-confirm-input').addEventListener('input', refresh);
+
+  $('bk-reset-run').addEventListener('click', () => run(async () => {
+    const out = $('bk-reset-result');
+    out.innerHTML = '';
+    const from = resetBackup;
+    const sum = (counts) => Object.values(counts).reduce((n, x) => n + x, 0);
+    const verbs = { read: 'Reading', delete: 'Deleting', write: 'Writing back' };
+    try {
+      const result = await runFactoryReset(client(), from, {
+        onProgress: ({ phase, collection, done, total }) => progress('bk-reset', {
+          text: phase === 'read' ? `Reading ${collection}…` : `${verbs[phase]} ${collection}: ${fmt(done)} of ${fmt(total)}`,
+          value: done, max: total
+        })
+      });
+      const deleted = sum(result.deleted);
+      const restored = sum(result.restored);
+      logAudit('database.factory_reset', { resetTo: from.name, deleted, restored, completed: true });
+      out.innerHTML =
+        alert('ok', `Factory reset complete: ${plural(deleted, 'document')} deleted, and ${plural(restored, 'document')} of content written back ` +
+          `from <b>${escapeHtml(from.name)}</b>. Learner data is empty until you restore it.`) +
+        `<div class="bk-actions"><button type="button" class="btn btn-primary" id="bk-reset-learners">Restore learner data from this backup</button>
+          <span class="bk-hint">Right if this is the backup you took just before the reset. If you reset to an older one, drop the newer backup in Restore instead.</span></div>`;
+      $('bk-reset-learners').addEventListener('click', () => setUpRestore(from, LEARNER_COLLECTIONS));
+      notify('Factory reset complete.', 'success');
+    } catch (err) {
+      const deleted = sum(err.deleted || {});
+      logAudit('database.factory_reset', { resetTo: from.name, deleted, restored: sum(err.restored || {}), completed: false, error: err.message });
+      // Content whose documents were already deleted, and which the reset did not finish writing back.
+      const touched = RESET_CONTENT_COLLECTIONS.filter((name) => (err.deleted || {})[name] > 0 &&
+        from.collections.some((c) => c.collection === name));
+      out.innerHTML = alert('error', `The reset stopped: ${escapeHtml(err.message)} ` +
+          (deleted ? `${plural(deleted, 'document')} had been deleted.` : 'Nothing was deleted.')) +
+        (touched.length ? alert('warn', `Some content is deleted and not yet back. Writes have their own limit and usually still work, so put it back now.
+          <button type="button" class="btn btn-outline btn-sm" id="bk-reset-content">Set up a restore of the content without reading</button>
+          Then run the factory reset again after 3 PM Philippine time.`) : '') +
+        (deleted ? alert('warn', 'Learner data that was deleted comes back with Restore: drop the backup you took just before the reset and choose Learner data only.') : '');
+      if (touched.length) $('bk-reset-content').addEventListener('click', () => setUpRestore(from, touched, { writeOnly: true }));
+    } finally {
+      progress('bk-reset', null);
+      invalidateReset();
+    }
+  }));
+
   renderBackup();
+  renderResetBackup();
   refresh();
 }

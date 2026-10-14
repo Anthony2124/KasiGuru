@@ -125,6 +125,16 @@ function fakeClient(tree, log = {}) {
       for (const e of entries) { writes.push(e); tree[e.path] = e.data; }
       onWritten(entries.length);
       return entries.length;
+    },
+    deleteDocuments: async (paths, onDeleted) => {
+      let done = 0;
+      for (const p of paths) {
+        if (log.failDeleteAt === p) throw Object.assign(new Error('Quota exceeded.'), { status: 'RESOURCE_EXHAUSTED' });
+        (log.deleted = log.deleted || []).push(p);
+        delete tree[p];
+        onDeleted(++done);
+      }
+      return done;
     }
   };
 }
@@ -254,6 +264,78 @@ test('write-only reads nothing and writes every chosen document', async () => {
   assert.equal(sumPlans(plans).writes, 6, 'nothing to compare against, so nothing is kept');
 });
 
+// ── Factory reset: the same lists and order as functions/reset_firestore.js ────────────────────
+
+// A database with learner data, content, and what a reset leaves alone.
+const LIVE = () => ({
+  ...TREE(),
+  'vocabulary/w3': { kasiguranin: 'added after the backup', updatedAt: 9 },
+  'word_audio/w1': { data: { __t: 'bytes', v: 'AAEC' } },
+  'leaderboard_public/uidAAA': { totalXp: 1200 },
+  'sentence_submissions/s1': { status: 'pending' },
+  'admin_audit_log/a1': { action: 'database.backup' },
+  'admin_staff/v@example.com': { role: 'verifier' },
+  'user_bans/uidBBB': { isBanned: true }
+});
+
+async function backupOf(tree) {
+  const { takeBackup, readBackupFiles } = await load('database-backup.mjs');
+  const { files } = await takeBackup(fakeClient(tree));
+  return readBackupFiles(files.map((f) => ({ path: `b/${f.name}`, text: f.text })));
+}
+
+test('the reset preview counts what each collection holds now and what the backup writes back', async () => {
+  const { previewFactoryReset, RESET_LEARNER_COLLECTIONS, RESET_CONTENT_COLLECTIONS } = await load('database-backup.mjs');
+  const backup = await backupOf(TREE()); // has vocabulary, but no word_audio or sentence_submissions
+  const log = {};
+  const rows = await previewFactoryReset(fakeClient(LIVE(), log), backup);
+  assert.deepEqual(rows.map((r) => r.collection), [...RESET_LEARNER_COLLECTIONS, ...RESET_CONTENT_COLLECTIONS]);
+  const row = (name) => rows.find((r) => r.collection === name);
+  assert.deepEqual(row('users'), { collection: 'users', content: false, delete: 5, restore: null }, 'missing parents are not documents');
+  assert.deepEqual(row('vocabulary'), { collection: 'vocabulary', content: true, delete: 3, restore: 2 });
+  assert.deepEqual(row('word_audio'), { collection: 'word_audio', content: true, delete: 1, restore: null }, 'not in the backup: stays empty');
+  assert.equal(log.deleted, undefined, 'the preview deletes nothing');
+});
+
+test('a factory reset empties learner data, puts the content back exactly, and leaves the rest alone', async () => {
+  const { runFactoryReset } = await load('database-backup.mjs');
+  const backup = await backupOf({ ...TREE(), 'word_audio/w1': { data: { __t: 'bytes', v: 'AAEC' } }, 'sentence_submissions/s0': { status: 'pending' } });
+  const live = LIVE();
+  live['vocabulary/w1'] = { kasiguranin: 'vandalised', updatedAt: 5 };
+  const log = {};
+  const result = await runFactoryReset(fakeClient(live, log), backup);
+
+  // A null entry is a missing parent, which is no document: it is gone once nothing is under it.
+  assert.deepEqual(Object.keys(live).filter((p) => live[p] !== null).sort(), [
+    'admin_audit_log/a1', 'admin_staff/v@example.com', 'sentence_submissions/s0', 'user_bans/uidBBB',
+    'vocabulary/w1', 'vocabulary/w2', 'word_audio/w1'
+  ]);
+  assert.deepEqual(live['vocabulary/w1'], { kasiguranin: 'apak', updatedAt: 1 }, "written back with the backup's own updatedAt");
+  assert.equal(result.deleted.users, 5);
+  assert.equal(result.deleted.device_tokens, 1);
+  assert.equal(result.deleted.vocabulary, 3);
+  assert.deepEqual(result.restored, { vocabulary: 2, word_audio: 1, sentence_submissions: 1 });
+  const users = log.deleted.filter((p) => p.startsWith('users/'));
+  assert.ok(users.indexOf('users/uidCCC/progress/lessonProgress') < users.indexOf('users/uidCCC'), 'children before their parent');
+});
+
+test('a factory reset refuses a backup with no content, and says how far it got when it stops', async () => {
+  const { runFactoryReset, previewFactoryReset } = await load('database-backup.mjs');
+  const learnersOnly = await backupOf({ 'users/u1/progress/main': { totalXp: 1 } });
+  const untouched = LIVE();
+  await assert.rejects(previewFactoryReset(fakeClient(untouched), learnersOnly), /would only delete/);
+  await assert.rejects(runFactoryReset(fakeClient(untouched), learnersOnly), /would only delete/);
+  assert.deepEqual(untouched, LIVE(), 'nothing was deleted');
+
+  const live = LIVE();
+  const err = await runFactoryReset(fakeClient(live, { failDeleteAt: 'vocabulary/w2' }), await backupOf(TREE())).catch((e) => e);
+  assert.equal(err.status, 'RESOURCE_EXHAUSTED');
+  assert.equal(err.deleted.users, 5);
+  assert.equal(err.deleted.vocabulary, 1, 'w1 went before the quota ran out');
+  assert.deepEqual(err.restored, {});
+  assert.ok(live['vocabulary/w2'], 'what it had not reached is still there');
+});
+
 // ── REST client ────────────────────────────────────────────────────────────────────────────────
 
 function fakeFetch(handler) {
@@ -300,6 +382,20 @@ test('the client splits a commit Firestore refuses as too big, and keeps batches
   await firestoreRest({ projectId: 'demo-test', getToken: async () => 'owner', fetchImpl: sized.fetchImpl })
     .writeDocuments(Array.from({ length: 400 }, (_, i) => ({ path: `word_audio/w${i}`, data: { audio: clip } })));
   assert.ok(sizes.length >= 2 && sizes.every((s) => s <= 8 * 1024 * 1024 + 64), `batches of ${sizes.join(', ')} bytes`);
+});
+
+test('the client deletes by full document name, at most 400 to a commit', async () => {
+  const { firestoreRest } = await load('firestore-rest.mjs');
+  const commits = [];
+  const { fetchImpl } = fakeFetch(({ url, body }) => { commits.push({ url, writes: body.writes }); return [200, {}]; });
+  const client = firestoreRest({ projectId: 'demo-test', getToken: async () => 'owner', fetchImpl });
+  const progress = [];
+  const paths = Array.from({ length: 900 }, (_, i) => `users/u${i}/progress/main`);
+  assert.equal(await client.deleteDocuments(paths, (n) => progress.push(n)), 900);
+  assert.deepEqual(commits.map((c) => c.writes.length), [400, 400, 100]);
+  assert.ok(commits.every((c) => c.url.endsWith(':commit')));
+  assert.deepEqual(commits[0].writes[0], { delete: `${ROOT}/users/u0/progress/main` });
+  assert.deepEqual(progress, [400, 800, 900]);
 });
 
 test('the client retries a brief outage but not a used-up quota', async () => {

@@ -25,7 +25,9 @@ const {
   approxBytes,
   planRotation,
   shrunkCollections,
-  BATCH_MAX_BYTES
+  BATCH_MAX_BYTES,
+  RESET_LEARNER_COLLECTIONS,
+  RESET_CONTENT_COLLECTIONS
 } = require('./firestore_backup_util');
 
 // ── Minimal Firestore stand-ins ───────────────────────────────────────────────
@@ -409,6 +411,11 @@ async function check(name, fn) {
     for (const [collection, entries, current, ignore] of cases) {
       assert.deepStrictEqual(portal.planRestore(collection, entries, current, ignore), planRestore(collection, entries, current, ignore), collection);
     }
+  });
+
+  await check('the portal factory reset empties and restores the same collections as reset_firestore.js', () => {
+    assert.deepStrictEqual(portal.RESET_LEARNER_COLLECTIONS, RESET_LEARNER_COLLECTIONS);
+    assert.deepStrictEqual(portal.RESET_CONTENT_COLLECTIONS, RESET_CONTENT_COLLECTIONS);
   });
 
   await check('a value the portal reads over REST is stored as this script stores it', () => {
